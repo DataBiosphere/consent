@@ -33,6 +33,8 @@ public class VoteResource extends Resource {
   private final UserService userService;
   private final VoteService voteService;
   private final ElectionService electionService;
+  // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+  // investigation
   private final Gson gson = new Gson();
 
   @Inject
@@ -136,6 +138,8 @@ public class VoteResource extends Resource {
     User user = userService.findUserByEmail(authUser.getEmail());
     Vote.RationaleUpdate update;
     try {
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       update = new Gson().fromJson(json, Vote.RationaleUpdate.class);
     } catch (Exception e) {
       return createExceptionResponse(

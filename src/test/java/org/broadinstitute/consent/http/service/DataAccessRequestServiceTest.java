@@ -76,6 +76,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -184,6 +185,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             institutionService,
             emailService,
             ruleService,
+            new CountryValidator(),
             config);
   }
 

@@ -113,6 +113,7 @@ public class DataAccessRequestService implements ConsentLogger {
       InstitutionService institutionService,
       EmailService emailService,
       DACAutomationRuleService ruleService,
+      CountryValidator countryValidator,
       ConsentConfiguration config) {
     this.counterService = counterService;
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
@@ -130,7 +131,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.institutionService = institutionService;
     this.emailService = emailService;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
-    this.countryValidator = new CountryValidator();
+    this.countryValidator = countryValidator;
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {

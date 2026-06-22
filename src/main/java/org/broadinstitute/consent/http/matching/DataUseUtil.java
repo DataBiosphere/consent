@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.matching;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
+import com.google.inject.Inject;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,6 +22,7 @@ public final class DataUseUtil {
 
   private final OntologyService ontologyService;
 
+  @Inject
   public DataUseUtil(OntologyService ontologyService) {
     this.ontologyService = ontologyService;
   }

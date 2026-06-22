@@ -37,8 +37,13 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseUtil;
+import org.broadinstitute.consent.http.matching.TranslationUtil;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -79,7 +84,10 @@ import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.InstitutionUtil;
+import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -109,53 +117,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private final DraftDAO draftDAO;
   private final ExecutorService executorService;
 
-  // Lazily-memoized singletons. @Singleton on a @Provides method only covers resolution
-  // through Guice; providers in this module also call each other directly, which bypasses
-  // Guice scoping, so these fields guarantee a single instance on both paths.
-  private OntologyService ontologyService;
-  private DatasetRegistrationService datasetRegistrationService;
-  private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
-  private SamDAO samDAO;
-  private EmailService emailService;
-  private ElasticSearchService elasticSearchService;
-  private DatasetServiceDAO datasetServiceDAO;
-  private VoteService voteService;
-  private DatasetService datasetService;
-  private UserService userService;
-  private InstitutionService institutionService;
-  private LibraryCardService libraryCardService;
-  private DacService dacService;
-  private DaaService daaService;
-  private CounterService counterService;
-  private VoteServiceDAO voteServiceDAO;
-  private DaaServiceDAO daaServiceDAO;
-  private DacServiceDAO dacServiceDAO;
-  private DarCollectionServiceDAO darCollectionServiceDAO;
-  private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
-  private DataAccessRequestService dataAccessRequestService;
-  private UserServiceDAO userServiceDAO;
-  private DACAutomationRuleService ruleService;
-  private GCSService gcsService;
-  private SendGridAPI sendGridAPI;
-  private FreeMarkerTemplateHelper freeMarkerTemplateHelper;
-  private DarCollectionService darCollectionService;
-  private FileStorageObjectService fileStorageObjectService;
-  private ElectionService electionService;
-  private FeatureFlagService featureFlagService;
-  private MatchService matchService;
-  private MetricsService metricsService;
-  private NihService nihService;
-  private NihServiceDAO nihServiceDAO;
-  private AcknowledgementService acknowledgementService;
-  private DraftFileStorageServiceDAO draftFileStorageServiceDAO;
-  private DraftServiceDAO draftServiceDAO;
-  private HttpClientUtil httpClientUtil;
-  private OntologyIndexService ontologyIndexService;
-  private SamService samService;
-  private OidcAuthorityDAO oidcAuthorityDAO;
-  private OidcService oidcService;
-  private SupportRequestService supportRequestService;
-
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
     this.environment = environment;
@@ -180,8 +141,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
     this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
     this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
-    this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
-    this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
+    this.libraryCardDAO = this.jdbi.onDemand(LibraryCardDAO.class);
+    this.fileStorageObjectDAO = this.jdbi.onDemand(FileStorageObjectDAO.class);
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
 
     // All async work in this application is blocking I/O (Sam calls, Elasticsearch indexing,
@@ -222,603 +183,559 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  ExecutorService providesExecutorService() {
+  @Singleton
+  private ExecutorService providesExecutorService() {
     return executorService;
   }
 
   @Provides
-  Client providesClient() {
+  @Singleton
+  private Client providesClient() {
     return client;
   }
 
   @Provides
   @Singleton
-  synchronized HttpClientUtil providesHttpClientUtil() {
-    if (httpClientUtil == null) {
-      httpClientUtil = new HttpClientUtil(config.getServicesConfiguration());
-    }
-    return httpClientUtil;
+  private HttpClientUtil providesHttpClientUtil() {
+    return new HttpClientUtil(config.getServicesConfiguration());
   }
 
   @Provides
-  Jdbi providesJdbi() {
+  @Singleton
+  private Jdbi providesJdbi() {
     return jdbi;
   }
 
   @Provides
-  ElasticSearchConfiguration providesElasticSearchConfiguration() {
+  @Singleton
+  private ElasticSearchConfiguration providesElasticSearchConfiguration() {
     return config.getElasticSearchConfiguration();
   }
 
   @Provides
-  MailConfiguration providesMailConfiguration() {
+  @Singleton
+  private MailConfiguration providesMailConfiguration() {
     return config.getMailConfiguration();
   }
 
   @Provides
-  ServicesConfiguration providesServicesConfiguration() {
+  @Singleton
+  private ServicesConfiguration providesServicesConfiguration() {
     return config.getServicesConfiguration();
   }
 
   @Provides
-  HealthCheckRegistry providesHealthCheckRegistry() {
+  @Singleton
+  private HealthCheckRegistry providesHealthCheckRegistry() {
     return environment.healthChecks();
   }
 
   @Provides
-  UseRestrictionConverter providesUseRestrictionConverter() {
-    return new UseRestrictionConverter();
-  }
-
-  @Provides
   @Singleton
-  synchronized OntologyService providesOntologyService() {
-    if (ontologyService == null) {
-      ontologyService =
-          new OntologyService(
-              providesJdbi(), providesOntologyIndexService(), providesExecutorService());
-    }
-    return ontologyService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized OntologyIndexService providesOntologyIndexService() {
-    if (ontologyIndexService == null) {
-      ontologyIndexService =
-          new OntologyIndexService(providesGCSService(), config.getCloudStoreConfiguration());
-    }
-    return ontologyIndexService;
-  }
-
-  @Provides
-  AuthorizationHelper providesAuthorizationHelper() {
-    return new AuthorizationHelper(providesSamService(), providesUserService());
-  }
-
-  @Provides
-  OAuthAuthenticator providesOAuthAuthenticator() {
-    return new OAuthAuthenticator(providesAuthorizationHelper());
-  }
-
-  @Provides
-  DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
-    return new DuosUserAuthenticator(providesAuthorizationHelper());
-  }
-
-  @Provides
-  @Singleton
-  synchronized DarCollectionService providesDarCollectionService() {
-    if (darCollectionService == null) {
-      darCollectionService =
-          new DarCollectionService(
-              providesJdbi(),
-              providesDarCollectionServiceDAO(),
-              providesEmailService(),
-              providesRuleService());
-    }
-    return darCollectionService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized FileStorageObjectService providesFileStorageObjectService() {
-    if (fileStorageObjectService == null) {
-      fileStorageObjectService =
-          new FileStorageObjectService(
-              providesJdbi(),
-              providesGCSService(),
-              providesDatasetService(),
-              providesDacService(),
-              providesDaaService(),
-              providesDataAccessRequestService());
-    }
-    return fileStorageObjectService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized GCSService providesGCSService() {
-    if (gcsService == null) {
-      gcsService = new GCSService(config.getCloudStoreConfiguration());
-    }
-    return gcsService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized CounterService providesCounterService() {
-    if (counterService == null) {
-      counterService = new CounterService(providesJdbi());
-    }
-    return counterService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DACAutomationRuleService providesRuleService() {
-    if (ruleService == null) {
-      ruleService =
-          new DACAutomationRuleService(
-              providesJdbi(), providesVoteServiceDAO(), providesVoteService());
-    }
-    return ruleService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DataAccessRequestService providesDataAccessRequestService() {
-    if (dataAccessRequestService == null) {
-      dataAccessRequestService =
-          new DataAccessRequestService(
-              providesJdbi(),
-              providesDataAccessRequestServiceDAO(),
-              providesCounterService(),
-              providesDacService(),
-              providesUserService(),
-              providesInstitutionService(),
-              providesEmailService(),
-              providesRuleService(),
-              config);
-    }
-    return dataAccessRequestService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DatasetServiceDAO providesDatasetServiceDAO() {
-    if (datasetServiceDAO == null) {
-      datasetServiceDAO = new DatasetServiceDAO(providesJdbi());
-    }
-    return datasetServiceDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DatasetService providesDatasetService() {
-    if (datasetService == null) {
-      datasetService =
-          new DatasetService(
-              providesJdbi(),
-              providesDatasetServiceDAO(),
-              providesElasticSearchService(),
-              providesEmailService(),
-              providesOntologyService());
-    }
-    return datasetService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized ElectionService providesElectionService() {
-    if (electionService == null) {
-      electionService = new ElectionService(providesJdbi());
-    }
-    return electionService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
-    if (freeMarkerTemplateHelper == null) {
-      freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
-    }
-    return freeMarkerTemplateHelper;
-  }
-
-  @Provides
-  @Singleton
-  synchronized EmailService providesEmailService() {
-    if (emailService == null) {
-      emailService =
-          new EmailService(
-              providesJdbi(), providesSendGridAPI(), providesFreeMarkerTemplateHelper(), config);
-    }
-    return emailService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized FeatureFlagService providesFeatureFlagService() {
-    if (featureFlagService == null) {
-      featureFlagService = new FeatureFlagService(providesJdbi());
-    }
-    return featureFlagService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized SendGridAPI providesSendGridAPI() {
-    if (sendGridAPI == null) {
-      sendGridAPI = new SendGridAPI(config.getMailConfiguration(), providesJdbi());
-    }
-    return sendGridAPI;
-  }
-
-  @Provides
-  DataAccessRequestDAO providesDataAccessRequestDAO() {
-    return dataAccessRequestDAO;
-  }
-
-  @Provides
-  DarCollectionDAO providesDARCollectionDAO() {
-    return darCollectionDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DarCollectionServiceDAO providesDarCollectionServiceDAO() {
-    if (darCollectionServiceDAO == null) {
-      darCollectionServiceDAO = new DarCollectionServiceDAO(providesJdbi());
-    }
-    return darCollectionServiceDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
-    if (dataAccessRequestServiceDAO == null) {
-      dataAccessRequestServiceDAO = new DataAccessRequestServiceDAO(providesJdbi());
-    }
-    return dataAccessRequestServiceDAO;
-  }
-
-  @Provides
-  ElectionDAO providesElectionDAO() {
-    return electionDAO;
-  }
-
-  @Provides
-  VoteDAO providesVoteDAO() {
-    return voteDAO;
-  }
-
-  @Provides
-  StudyDAO providesStudyDAO() {
-    return studyDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized VoteServiceDAO providesVoteServiceDAO() {
-    if (voteServiceDAO == null) {
-      voteServiceDAO = new VoteServiceDAO(providesJdbi());
-    }
-    return voteServiceDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized VoteService providesVoteService() {
-    if (voteService == null) {
-      voteService =
-          new VoteService(
-              providesJdbi(),
-              providesVoteServiceDAO(),
-              providesEmailService(),
-              providesOntologyService());
-    }
-    return voteService;
-  }
-
-  @Provides
-  DatasetAuthorizationReaderDAO providesDatasetAuthorizationReaderDAO() {
-    return datasetAuthorizationReaderDAO;
-  }
-
-  @Provides
-  DatasetDAO providesDatasetDAO() {
-    return datasetDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DaaServiceDAO providesDaaServiceDAO() {
-    if (daaServiceDAO == null) {
-      daaServiceDAO = new DaaServiceDAO(providesJdbi());
-    }
-    return daaServiceDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DacServiceDAO providesDacServiceDAO() {
-    if (dacServiceDAO == null) {
-      dacServiceDAO = new DacServiceDAO(providesJdbi());
-    }
-    return dacServiceDAO;
-  }
-
-  @Provides
-  DaaDAO providesDaaDAO() {
-    return daaDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DaaService providesDaaService() {
-    if (daaService == null) {
-      daaService =
-          new DaaService(
-              providesJdbi(),
-              providesDaaServiceDAO(),
-              providesGCSService(),
-              providesEmailService(),
-              providesUserService(),
-              providesLibraryCardService());
-    }
-    return daaService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DacService providesDacService() {
-    if (dacService == null) {
-      dacService =
-          new DacService(
-              providesJdbi(),
-              providesDacServiceDAO(),
-              providesVoteService(),
-              providesElasticSearchService(),
-              providesDaaService());
-    }
-    return dacService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized ElasticSearchService providesElasticSearchService() {
-    if (elasticSearchService == null) {
-      elasticSearchService =
-          new ElasticSearchService(
-              providesJdbi(),
-              providesDatasetServiceDAO(),
-              ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
-              config.getElasticSearchConfiguration(),
-              providesOntologyService());
-    }
-    return elasticSearchService;
-  }
-
-  @Provides
-  UserDAO providesUserDAO() {
-    return userDAO;
-  }
-
-  @Provides
-  UserRoleDAO providesUserRoleDAO() {
-    return userRoleDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized MatchService providesMatchService() {
-    if (matchService == null) {
-      matchService =
-          new MatchService(
-              providesJdbi(), providesUseRestrictionConverter(), providesOntologyService());
-    }
-    return matchService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized MetricsService providesMetricsService() {
-    if (metricsService == null) {
-      metricsService = new MetricsService(providesJdbi());
-    }
-    return metricsService;
-  }
-
-  @Provides
-  FileStorageObjectDAO providesFileStorageObjectDAO() {
-    return fileStorageObjectDAO;
-  }
-
-  @Provides
-  LibraryCardDAO providesLibraryCardDAO() {
-    return libraryCardDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized InstitutionService providesInstitutionService() {
-    if (institutionService == null) {
-      institutionService =
-          new InstitutionService(providesJdbi(), providesInstitutionAndLibraryCardEnforcement());
-    }
-    return institutionService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized LibraryCardService providesLibraryCardService() {
-    if (libraryCardService == null) {
-      libraryCardService =
-          new LibraryCardService(
-              providesJdbi(), providesInstitutionService(), providesEmailService());
-    }
-    return libraryCardService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized AcknowledgementService providesAcknowledgementService() {
-    if (acknowledgementService == null) {
-      acknowledgementService = new AcknowledgementService(providesJdbi(), providesEmailService());
-    }
-    return acknowledgementService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized DatasetRegistrationService providesDatasetRegistrationService() {
-    if (datasetRegistrationService == null) {
-      datasetRegistrationService =
-          new DatasetRegistrationService(
-              providesJdbi(),
-              providesDatasetServiceDAO(),
-              providesGCSService(),
-              providesElasticSearchService(),
-              providesEmailService(),
-              providesExecutorService());
-    }
-    return datasetRegistrationService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized UserServiceDAO providesUserServiceDAO() {
-    if (userServiceDAO == null) {
-      userServiceDAO = new UserServiceDAO(providesJdbi());
-    }
-    return userServiceDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized UserService providesUserService() {
-    if (userService == null) {
-      userService =
-          new UserService(
-              providesJdbi(),
-              providesUserServiceDAO(),
-              providesInstitutionService(),
-              providesInstitutionAndLibraryCardEnforcement());
-    }
-    return userService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement() {
-    if (institutionAndLibraryCardEnforcement == null) {
-      institutionAndLibraryCardEnforcement =
-          new InstitutionAndLibraryCardEnforcement(
-              providesJdbi(), providesUserServiceDAO(), providesExecutorService());
-    }
-    return institutionAndLibraryCardEnforcement;
-  }
-
-  @Provides
-  @Singleton
-  synchronized NihService providesNihService() {
-    if (nihService == null) {
-      nihService =
-          new NihService(
-              providesJdbi(),
-              providesNIHServiceDAO(),
-              providesHttpClientUtil(),
-              config.getServicesConfiguration());
-    }
-    return nihService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized NihServiceDAO providesNIHServiceDAO() {
-    if (nihServiceDAO == null) {
-      nihServiceDAO = new NihServiceDAO(providesJdbi());
-    }
-    return nihServiceDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized SamService providesSamService() {
-    if (samService == null) {
-      samService = new SamService(providesSamDAO());
-    }
-    return samService;
-  }
-
-  @Provides
-  @Singleton
-  synchronized SamDAO providesSamDAO() {
-    if (samDAO == null) {
-      samDAO =
-          new SamDAO(
-              providesHttpClientUtil(),
-              config.getServicesConfiguration(),
-              providesExecutorService());
-    }
-    return samDAO;
-  }
-
-  @Provides
-  OidcConfiguration providesOidcConfiguration() {
+  private OidcConfiguration providesOidcConfiguration() {
     return config.getOidcConfiguration();
   }
 
   @Provides
   @Singleton
-  synchronized OidcAuthorityDAO providesOidcAuthorityDAO() {
-    if (oidcAuthorityDAO == null) {
-      oidcAuthorityDAO =
-          new OidcAuthorityDAO(providesHttpClientUtil(), providesOidcConfiguration());
-    }
-    return oidcAuthorityDAO;
+  private UseRestrictionConverter providesUseRestrictionConverter() {
+    return new UseRestrictionConverter();
   }
 
   @Provides
   @Singleton
-  synchronized OidcService providesOidcService() {
-    if (oidcService == null) {
-      oidcService = new OidcService(providesOidcAuthorityDAO(), providesOidcConfiguration());
-    }
-    return oidcService;
+  private ElectionDAO providesElectionDAO() {
+    return electionDAO;
   }
 
   @Provides
   @Singleton
-  synchronized SupportRequestService providesSupportRequestService() {
-    if (supportRequestService == null) {
-      supportRequestService = new SupportRequestService(config.getServicesConfiguration());
-    }
-    return supportRequestService;
+  private VoteDAO providesVoteDAO() {
+    return voteDAO;
   }
 
   @Provides
-  DraftDAO providesDraftDAO() {
+  @Singleton
+  private StudyDAO providesStudyDAO() {
+    return studyDAO;
+  }
+
+  @Provides
+  @Singleton
+  private DatasetDAO providesDatasetDAO() {
+    return datasetDAO;
+  }
+
+  @Provides
+  @Singleton
+  private DatasetAuthorizationReaderDAO providesDatasetAuthorizationReaderDAO() {
+    return datasetAuthorizationReaderDAO;
+  }
+
+  @Provides
+  @Singleton
+  private DaaDAO providesDaaDAO() {
+    return daaDAO;
+  }
+
+  @Provides
+  @Singleton
+  private UserDAO providesUserDAO() {
+    return userDAO;
+  }
+
+  @Provides
+  @Singleton
+  private UserRoleDAO providesUserRoleDAO() {
+    return userRoleDAO;
+  }
+
+  @Provides
+  @Singleton
+  private DataAccessRequestDAO providesDataAccessRequestDAO() {
+    return dataAccessRequestDAO;
+  }
+
+  @Provides
+  @Singleton
+  private DarCollectionDAO providesDARCollectionDAO() {
+    return darCollectionDAO;
+  }
+
+  @Provides
+  @Singleton
+  private LibraryCardDAO providesLibraryCardDAO() {
+    return libraryCardDAO;
+  }
+
+  @Provides
+  @Singleton
+  private FileStorageObjectDAO providesFileStorageObjectDAO() {
+    return fileStorageObjectDAO;
+  }
+
+  @Provides
+  @Singleton
+  private DraftDAO providesDraftDAO() {
     return draftDAO;
   }
 
   @Provides
   @Singleton
-  synchronized DraftFileStorageServiceDAO providesDraftFileStorageService() {
-    if (draftFileStorageServiceDAO == null) {
-      draftFileStorageServiceDAO =
-          new DraftFileStorageServiceDAO(providesJdbi(), providesGCSService());
-    }
-    return draftFileStorageServiceDAO;
+  private TranslationUtil providesTranslationUtil(Jdbi jdbi) {
+    return new TranslationUtil(jdbi);
   }
 
   @Provides
   @Singleton
-  synchronized DraftServiceDAO providesDraftServiceDAO() {
-    if (draftServiceDAO == null) {
-      draftServiceDAO = new DraftServiceDAO(providesJdbi(), providesDraftFileStorageService());
-    }
-    return draftServiceDAO;
+  private GCSService providesGCSService() {
+    return new GCSService(config.getCloudStoreConfiguration());
+  }
+
+  @Provides
+  @Singleton
+  private OntologyIndexService providesOntologyIndexService(GCSService gcsService) {
+    return new OntologyIndexService(gcsService, config.getCloudStoreConfiguration());
+  }
+
+  @Provides
+  @Singleton
+  private OntologyService providesOntologyService(
+      Jdbi jdbi,
+      OntologyIndexService indexService,
+      ExecutorService executorService,
+      TranslationUtil translationUtil) {
+    return new OntologyService(jdbi, indexService, executorService, translationUtil);
+  }
+
+  @Provides
+  @Singleton
+  private DataUseUtil providesDataUseUtil(OntologyService ontologyService) {
+    return new DataUseUtil(ontologyService);
+  }
+
+  @Provides
+  @Singleton
+  private DataUseMatcherV4 providesDataUseMatcherV4(DataUseUtil dataUseUtil) {
+    return new DataUseMatcherV4(dataUseUtil);
+  }
+
+  @Provides
+  @Singleton
+  private ElasticSearchService providesElasticSearchService(
+      Jdbi jdbi,
+      DatasetServiceDAO datasetServiceDAO,
+      ElasticSearchConfiguration elasticSearchConfiguration,
+      OntologyService ontologyService) {
+    return new ElasticSearchService(
+        jdbi,
+        datasetServiceDAO,
+        ElasticSearchSupport.createRestClient(elasticSearchConfiguration),
+        elasticSearchConfiguration,
+        ontologyService);
+  }
+
+  @Provides
+  @Singleton
+  private FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
+    return new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
+  }
+
+  @Provides
+  @Singleton
+  private SendGridAPI providesSendGridAPI(Jdbi jdbi, MailConfiguration mailConfiguration) {
+    return new SendGridAPI(mailConfiguration, jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private EmailService providesEmailService(
+      Jdbi jdbi, SendGridAPI sendGridAPI, FreeMarkerTemplateHelper freeMarkerTemplateHelper) {
+    return new EmailService(jdbi, sendGridAPI, freeMarkerTemplateHelper, config);
+  }
+
+  @Provides
+  @Singleton
+  private SamDAO providesSamDAO(
+      HttpClientUtil httpClientUtil,
+      ServicesConfiguration servicesConfiguration,
+      ExecutorService executorService) {
+    return new SamDAO(httpClientUtil, servicesConfiguration, executorService);
+  }
+
+  @Provides
+  @Singleton
+  private SamService providesSamService(SamDAO samDAO) {
+    return new SamService(samDAO);
+  }
+
+  @Provides
+  @Singleton
+  private OidcAuthorityDAO providesOidcAuthorityDAO(
+      HttpClientUtil httpClientUtil, OidcConfiguration oidcConfiguration) {
+    return new OidcAuthorityDAO(httpClientUtil, oidcConfiguration);
+  }
+
+  @Provides
+  @Singleton
+  private OidcService providesOidcService(
+      OidcAuthorityDAO oidcAuthorityDAO, OidcConfiguration oidcConfiguration) {
+    return new OidcService(oidcAuthorityDAO, oidcConfiguration);
+  }
+
+  @Provides
+  @Singleton
+  private ClaimsCache providesClaimsCache() {
+    return new ClaimsCache();
+  }
+
+  @Provides
+  @Singleton
+  private AuthorizationHelper providesAuthorizationHelper(
+      SamService samService, UserService userService, ClaimsCache claimsCache) {
+    return new AuthorizationHelper(samService, userService, claimsCache);
+  }
+
+  @Provides
+  @Singleton
+  private OAuthAuthenticator providesOAuthAuthenticator(AuthorizationHelper authorizationHelper) {
+    return new OAuthAuthenticator(authorizationHelper);
+  }
+
+  @Provides
+  @Singleton
+  private DuosUserAuthenticator providesDuosUserOAuthAuthenticator(
+      AuthorizationHelper authorizationHelper) {
+    return new DuosUserAuthenticator(authorizationHelper);
+  }
+
+  @Provides
+  @Singleton
+  private DatasetServiceDAO providesDatasetServiceDAO(Jdbi jdbi) {
+    return new DatasetServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private VoteServiceDAO providesVoteServiceDAO(Jdbi jdbi) {
+    return new VoteServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private DarCollectionServiceDAO providesDarCollectionServiceDAO(Jdbi jdbi) {
+    return new DarCollectionServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO(Jdbi jdbi) {
+    return new DataAccessRequestServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private DaaServiceDAO providesDaaServiceDAO(Jdbi jdbi) {
+    return new DaaServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private DacServiceDAO providesDacServiceDAO(Jdbi jdbi) {
+    return new DacServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private NihServiceDAO providesNIHServiceDAO(Jdbi jdbi) {
+    return new NihServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private UserServiceDAO providesUserServiceDAO(Jdbi jdbi) {
+    return new UserServiceDAO(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private DraftFileStorageServiceDAO providesDraftFileStorageService(
+      Jdbi jdbi, GCSService gcsService) {
+    return new DraftFileStorageServiceDAO(jdbi, gcsService);
+  }
+
+  @Provides
+  @Singleton
+  private DraftServiceDAO providesDraftServiceDAO(
+      Jdbi jdbi, DraftFileStorageServiceDAO draftFileStorageServiceDAO) {
+    return new DraftServiceDAO(jdbi, draftFileStorageServiceDAO);
+  }
+
+  @Provides
+  @Singleton
+  private ElectionService providesElectionService(Jdbi jdbi) {
+    return new ElectionService(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private FeatureFlagService providesFeatureFlagService(Jdbi jdbi) {
+    return new FeatureFlagService(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private CounterService providesCounterService(Jdbi jdbi) {
+    return new CounterService(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private MetricsService providesMetricsService(Jdbi jdbi) {
+    return new MetricsService(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement(
+      Jdbi jdbi, UserServiceDAO userServiceDAO, ExecutorService executorService) {
+    return new InstitutionAndLibraryCardEnforcement(jdbi, userServiceDAO, executorService);
+  }
+
+  @Provides
+  @Singleton
+  private InstitutionService providesInstitutionService(
+      Jdbi jdbi, InstitutionAndLibraryCardEnforcement enforcement) {
+    return new InstitutionService(jdbi, enforcement);
+  }
+
+  @Provides
+  @Singleton
+  private LibraryCardService providesLibraryCardService(
+      Jdbi jdbi, InstitutionService institutionService, EmailService emailService) {
+    return new LibraryCardService(jdbi, institutionService, emailService);
+  }
+
+  @Provides
+  @Singleton
+  private UserService providesUserService(
+      Jdbi jdbi,
+      UserServiceDAO userServiceDAO,
+      InstitutionService institutionService,
+      InstitutionAndLibraryCardEnforcement enforcement) {
+    return new UserService(jdbi, userServiceDAO, institutionService, enforcement);
+  }
+
+  @Provides
+  @Singleton
+  private AcknowledgementService providesAcknowledgementService(
+      Jdbi jdbi, EmailService emailService) {
+    return new AcknowledgementService(jdbi, emailService);
+  }
+
+  @Provides
+  @Singleton
+  private VoteService providesVoteService(
+      Jdbi jdbi,
+      VoteServiceDAO voteServiceDAO,
+      EmailService emailService,
+      OntologyService ontologyService) {
+    return new VoteService(jdbi, voteServiceDAO, emailService, ontologyService);
+  }
+
+  @Provides
+  @Singleton
+  private DACAutomationRuleService providesRuleService(
+      Jdbi jdbi, VoteServiceDAO voteServiceDAO, VoteService voteService) {
+    return new DACAutomationRuleService(jdbi, voteServiceDAO, voteService);
+  }
+
+  @Provides
+  @Singleton
+  private DaaService providesDaaService(
+      Jdbi jdbi,
+      DaaServiceDAO daaServiceDAO,
+      GCSService gcsService,
+      EmailService emailService,
+      UserService userService,
+      LibraryCardService libraryCardService) {
+    return new DaaService(
+        jdbi, daaServiceDAO, gcsService, emailService, userService, libraryCardService);
+  }
+
+  @Provides
+  @Singleton
+  private DacService providesDacService(
+      Jdbi jdbi,
+      DacServiceDAO dacServiceDAO,
+      VoteService voteService,
+      ElasticSearchService elasticSearchService,
+      DaaService daaService) {
+    return new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService, daaService);
+  }
+
+  @Provides
+  @Singleton
+  private DatasetService providesDatasetService(
+      Jdbi jdbi,
+      DatasetServiceDAO datasetServiceDAO,
+      ElasticSearchService elasticSearchService,
+      EmailService emailService,
+      OntologyService ontologyService) {
+    return new DatasetService(
+        jdbi, datasetServiceDAO, elasticSearchService, emailService, ontologyService);
+  }
+
+  @Provides
+  @Singleton
+  private DataAccessRequestService providesDataAccessRequestService(
+      Jdbi jdbi,
+      DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
+      CounterService counterService,
+      DacService dacService,
+      UserService userService,
+      InstitutionService institutionService,
+      EmailService emailService,
+      DACAutomationRuleService ruleService,
+      CountryValidator countryValidator) {
+    return new DataAccessRequestService(
+        jdbi,
+        dataAccessRequestServiceDAO,
+        counterService,
+        dacService,
+        userService,
+        institutionService,
+        emailService,
+        ruleService,
+        countryValidator,
+        config);
+  }
+
+  @Provides
+  @Singleton
+  private DarCollectionService providesDarCollectionService(
+      Jdbi jdbi,
+      DarCollectionServiceDAO darCollectionServiceDAO,
+      EmailService emailService,
+      DACAutomationRuleService ruleService) {
+    return new DarCollectionService(jdbi, darCollectionServiceDAO, emailService, ruleService);
+  }
+
+  @Provides
+  @Singleton
+  private FileStorageObjectService providesFileStorageObjectService(
+      Jdbi jdbi,
+      GCSService gcsService,
+      DatasetService datasetService,
+      DacService dacService,
+      DaaService daaService,
+      DataAccessRequestService dataAccessRequestService) {
+    return new FileStorageObjectService(
+        jdbi, gcsService, datasetService, dacService, daaService, dataAccessRequestService);
+  }
+
+  @Provides
+  @Singleton
+  private DatasetRegistrationService providesDatasetRegistrationService(
+      Jdbi jdbi,
+      DatasetServiceDAO datasetServiceDAO,
+      GCSService gcsService,
+      ElasticSearchService elasticSearchService,
+      EmailService emailService,
+      ExecutorService executorService) {
+    return new DatasetRegistrationService(
+        jdbi, datasetServiceDAO, gcsService, elasticSearchService, emailService, executorService);
+  }
+
+  @Provides
+  @Singleton
+  private MatchService providesMatchService(
+      Jdbi jdbi,
+      UseRestrictionConverter useRestrictionConverter,
+      DataUseMatcherV4 dataUseMatcherV4) {
+    return new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV4);
+  }
+
+  @Provides
+  @Singleton
+  private NihService providesNihService(
+      Jdbi jdbi,
+      NihServiceDAO nihServiceDAO,
+      HttpClientUtil httpClientUtil,
+      ServicesConfiguration servicesConfiguration) {
+    return new NihService(jdbi, nihServiceDAO, httpClientUtil, servicesConfiguration);
+  }
+
+  @Provides
+  @Singleton
+  private SupportRequestService providesSupportRequestService(
+      HttpClientUtil httpClientUtil,
+      TicketFactory ticketFactory,
+      ServicesConfiguration servicesConfiguration) {
+    return new SupportRequestService(httpClientUtil, ticketFactory, servicesConfiguration);
+  }
+
+  @Provides
+  @Singleton
+  private CountryValidator providesCountryValidator() {
+    return new CountryValidator();
+  }
+
+  @Provides
+  @Singleton
+  private InstitutionUtil providesInstitutionUtil() {
+    return new InstitutionUtil();
+  }
+
+  @Provides
+  @Singleton
+  private JsonSchemaUtil providesJsonSchemaUtil() {
+    return new JsonSchemaUtil();
+  }
+
+  @Provides
+  @Singleton
+  private TicketFactory providesTicketFactory() {
+    return new TicketFactory();
   }
 }

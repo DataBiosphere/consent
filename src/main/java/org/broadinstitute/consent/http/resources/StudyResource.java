@@ -84,6 +84,8 @@ public class StudyResource extends Resource {
     try {
       User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
       Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
       return Response.ok(study).build();
@@ -105,6 +107,8 @@ public class StudyResource extends Resource {
       @Auth AuthUser authUser, @PathParam("studyId") Integer studyId, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       Gson gson = new Gson();
       Type listOfStringObject = new TypeToken<ArrayList<String>>() {}.getType();
       List<String> custodians = gson.fromJson(json, listOfStringObject);

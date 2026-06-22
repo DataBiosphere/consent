@@ -56,6 +56,7 @@ class OntologyServiceTest extends AbstractTestHelper {
   private OntologyService service;
   private ExecutorService executorService;
   private TestAppender testAppender;
+  private TranslationUtil translationUtil;
   private final Gson gson = GsonUtil.getInstance();
   @Mock private Jdbi jdbi;
   @Mock private OntologyDAO ontologyDAO;
@@ -74,7 +75,8 @@ class OntologyServiceTest extends AbstractTestHelper {
     // so tests can assert on their effects without sleeps or teardown races.
     executorService = MoreExecutors.newDirectExecutorService();
     when(jdbi.onDemand(OntologyDAO.class)).thenReturn(ontologyDAO);
-    service = new OntologyService(jdbi, indexService, executorService);
+    translationUtil = new TranslationUtil(jdbi);
+    service = new OntologyService(jdbi, indexService, executorService, translationUtil);
   }
 
   @AfterEach

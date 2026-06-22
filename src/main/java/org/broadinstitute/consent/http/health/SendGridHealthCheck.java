@@ -30,6 +30,8 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
         SimpleResponse response = clientUtil.getCachedResponse(httpGet);
         if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
           String content = response.entity();
+          // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson
+          // configuration investigation
           SendGridStatus status = new Gson().fromJson(content, SendGridStatus.class);
           return status.getResult();
         } else {

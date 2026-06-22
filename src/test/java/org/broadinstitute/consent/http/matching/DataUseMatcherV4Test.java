@@ -101,7 +101,7 @@ class DataUseMatcherV4Test {
 
   @Test
   void testMatchPurposeAndDatasetV4Failure() {
-    DataUseMatcherV4 matcher = new DataUseMatcherV4(ontologyService);
+    DataUseMatcherV4 matcher = new DataUseMatcherV4(new DataUseUtil(ontologyService));
 
     MatchResult result = matcher.matchPurposeAndDatasetV4(null, null);
     assertEquals(DataUseMatchResultType.DENY, result.getMatchResultType());
@@ -347,7 +347,7 @@ class DataUseMatcherV4Test {
   }
 
   private MatchResult matchPurposeAndDataset(DataUse purpose, DataUse dataset) {
-    DataUseMatcherV4 matcher = new DataUseMatcherV4(ontologyService);
+    DataUseMatcherV4 matcher = new DataUseMatcherV4(new DataUseUtil(ontologyService));
     return matcher.matchPurposeAndDatasetV4(purpose, dataset);
   }
 }

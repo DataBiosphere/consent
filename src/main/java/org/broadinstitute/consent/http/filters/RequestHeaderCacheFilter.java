@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.filters;
 
+import com.google.inject.Inject;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -11,7 +12,12 @@ import java.io.IOException;
 @Priority(Integer.MIN_VALUE)
 public class RequestHeaderCacheFilter implements ContainerRequestFilter {
 
-  private final ClaimsCache claimsCache = ClaimsCache.getInstance();
+  private final ClaimsCache claimsCache;
+
+  @Inject
+  public RequestHeaderCacheFilter(ClaimsCache claimsCache) {
+    this.claimsCache = claimsCache;
+  }
 
   @Override
   public void filter(ContainerRequestContext containerRequestContext) throws IOException {

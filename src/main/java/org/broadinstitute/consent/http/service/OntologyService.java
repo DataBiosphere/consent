@@ -31,11 +31,14 @@ public class OntologyService implements ConsentLogger {
 
   @Inject
   public OntologyService(
-      Jdbi jdbi, OntologyIndexService indexService, ExecutorService executorService) {
+      Jdbi jdbi,
+      OntologyIndexService indexService,
+      ExecutorService executorService,
+      TranslationUtil translationUtil) {
     this.ontologyDAO = jdbi.onDemand(OntologyDAO.class);
     this.indexService = indexService;
     this.executorService = executorService;
-    this.translationUtil = new TranslationUtil(this.ontologyDAO);
+    this.translationUtil = translationUtil;
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {

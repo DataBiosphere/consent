@@ -215,7 +215,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(feature);
     env.jersey().register(binder);
 
-    env.jersey().register(RequestHeaderCacheFilter.class);
+    // Filters and providers that have @Inject dependencies must be registered via
+    // injector.getInstance() so Guice performs field/constructor injection. Class-literal
+    // registration (e.g. RolesAllowedDynamicFeature.class below) is only safe for classes
+    // with a public no-arg constructor and no @Inject dependencies.
+    env.jersey().register(injector.getInstance(RequestHeaderCacheFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
   }
 

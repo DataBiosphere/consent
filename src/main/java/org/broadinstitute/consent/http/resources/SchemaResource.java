@@ -14,8 +14,8 @@ public class SchemaResource extends Resource {
   private final JsonSchemaUtil jsonSchemaUtil;
 
   @Inject
-  public SchemaResource() {
-    this.jsonSchemaUtil = new JsonSchemaUtil();
+  public SchemaResource(JsonSchemaUtil jsonSchemaUtil) {
+    this.jsonSchemaUtil = jsonSchemaUtil;
   }
 
   @GET

@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,6 +44,7 @@ public class CountryValidator {
           "russia",
           "venezuela");
 
+  @Inject
   public CountryValidator() {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(FILEPATH)) {
       if (is != null) {

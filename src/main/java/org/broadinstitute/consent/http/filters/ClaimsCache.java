@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.filters;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.inject.Inject;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.AbstractMap;
 import java.util.List;
@@ -16,22 +17,15 @@ import java.util.stream.Collectors;
  */
 public class ClaimsCache {
 
-  private static ClaimsCache INSTANCE;
   public final Cache<String, Map<String, String>> cache;
   public static final String OAUTH2_CLAIM_email = "OAUTH2_CLAIM_email";
   public static final String OAUTH2_CLAIM_name = "OAUTH2_CLAIM_name";
   public static final String OAUTH2_CLAIM_access_token = "OAUTH2_CLAIM_access_token";
   public static final String OAUTH2_CLAIM_aud = "OAUTH2_CLAIM_aud";
 
-  private ClaimsCache() {
+  @Inject
+  public ClaimsCache() {
     cache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
-  }
-
-  public static ClaimsCache getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new ClaimsCache();
-    }
-    return INSTANCE;
   }
 
   private String getFirst(List<String> headerValues) {

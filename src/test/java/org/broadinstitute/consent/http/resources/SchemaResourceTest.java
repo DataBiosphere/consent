@@ -16,7 +16,7 @@ class SchemaResourceTest {
 
   @Test
   void testGetDatasetRegistrationSchemaV1() {
-    SchemaResource resource = new SchemaResource();
+    SchemaResource resource = new SchemaResource(jsonSchemaUtil);
 
     Response response = resource.getDatasetRegistrationSchemaV1();
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

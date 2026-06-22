@@ -418,6 +418,8 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Path("datasets")
   public Response findDaaForDatasets(@Auth DuosUser duosUser, String json) {
     try {
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       Gson gson = new Gson();
       Type setType = new TypeToken<Set<Integer>>() {}.getType();
       Set<Integer> set = gson.fromJson(json, setType);

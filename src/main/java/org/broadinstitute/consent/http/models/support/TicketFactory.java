@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.support;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.zendesk.client.v2.model.Ticket;
@@ -12,6 +13,7 @@ public class TicketFactory implements ConsentLogger {
   private static final String REQUEST = "request";
   private static final String SUSPENDED_TICKET = "suspended_ticket";
 
+  @Inject
   public TicketFactory() {
     // public constructor to allow instantiation for instance methods
   }

@@ -16,15 +16,14 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.matching.DataUseMatchResultType;
-import org.broadinstitute.consent.http.service.OntologyService;
 
 public class DataUseMatcherV4 {
 
   private final DataUseUtil dataUseUtil;
 
   @Inject
-  public DataUseMatcherV4(OntologyService ontologyService) {
-    dataUseUtil = new DataUseUtil(ontologyService);
+  public DataUseMatcherV4(DataUseUtil dataUseUtil) {
+    this.dataUseUtil = dataUseUtil;
   }
 
   // Matching Algorithm

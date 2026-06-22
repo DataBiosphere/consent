@@ -22,6 +22,8 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -44,6 +46,7 @@ class MatchServiceTest extends AbstractTestHelper {
   @Mock private UseRestrictionConverter useRestrictionConverter;
   @Mock private OntologyService ontologyService;
 
+  private DataUseMatcherV4 dataUseMatcherV4;
   private MatchService service;
 
   @BeforeEach
@@ -51,7 +54,8 @@ class MatchServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(MatchDAO.class)).thenReturn(matchDAO);
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
-    service = new MatchService(jdbi, useRestrictionConverter, ontologyService);
+    dataUseMatcherV4 = new DataUseMatcherV4(new DataUseUtil(ontologyService));
+    service = new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV4);
   }
 
   @Test

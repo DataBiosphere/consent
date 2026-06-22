@@ -35,11 +35,13 @@ public class InstitutionResource extends Resource {
     As such, any @PermitAll route would require the entity (Institution) to be formatted with the GsonBuilder
     as opposed to being passed into the response directly.
   */
-  private final InstitutionUtil institutionUtil = new InstitutionUtil();
+  private final InstitutionUtil institutionUtil;
 
   @Inject
-  public InstitutionResource(InstitutionService institutionService) {
+  public InstitutionResource(
+      InstitutionService institutionService, InstitutionUtil institutionUtil) {
     this.institutionService = institutionService;
+    this.institutionUtil = institutionUtil;
   }
 
   @GET

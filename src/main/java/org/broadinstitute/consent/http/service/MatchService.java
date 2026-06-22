@@ -30,12 +30,14 @@ public class MatchService implements ConsentLogger {
 
   @Inject
   public MatchService(
-      Jdbi jdbi, UseRestrictionConverter useRestrictionConverter, OntologyService ontologyService) {
+      Jdbi jdbi,
+      UseRestrictionConverter useRestrictionConverter,
+      DataUseMatcherV4 dataUseMatcherV4) {
     this.matchDAO = jdbi.onDemand(MatchDAO.class);
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.useRestrictionConverter = useRestrictionConverter;
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
-    this.dataUseMatcherV4 = new DataUseMatcherV4(ontologyService);
+    this.dataUseMatcherV4 = dataUseMatcherV4;
   }
 
   public void insertMatches(List<Match> match) {

@@ -68,6 +68,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -108,7 +109,8 @@ class DatasetResourceTest extends AbstractTestHelper {
             datasetRegistrationService,
             elasticSearchService,
             tdrService,
-            gcsService);
+            gcsService,
+            new JsonSchemaUtil());
   }
 
   @Test
