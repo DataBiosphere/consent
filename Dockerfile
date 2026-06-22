@@ -22,8 +22,15 @@ COPY --from=build \
 # Register bc-fips as the primary JCE security provider in the JVM's security
 # configuration. Existing providers are renumbered (N → N+1) so non-crypto
 # subsystems (XML, GSSAPI, SASL) retain their fallback providers.
-# The TLSv1/TLSv1.1 guard is belt-and-suspenders: JDK 25 already disables them,
-# but the explicit sed ensures they stay out even if the base image is upgraded.
+# The TLSv1/1.1 guard is belt-and-suspenders: JDK 25 already disables them,
+# but the explicit sed ensures they stay out if the base image is upgraded.
+#
+# Note: OS-level OpenSSL FIPS is not configured here. Ubuntu's standard package
+# repositories do not ship the OpenSSL FIPS provider module (fips.so); it requires
+# an Ubuntu Pro subscription with the ubuntu-fips kernel and fips-updates channel.
+# This is not a coverage gap for this application: consent is a pure-Java service
+# with no native crypto code. Conscrypt is excluded from all dependencies, and every
+# cryptographic operation goes through JCE → bc-fips (FIPS 140-3 targeted).
 RUN JAVA_SECURITY="${JAVA_HOME}/conf/security/java.security" \
     && i=20 \
     && while [ "$i" -ge 1 ]; do \
