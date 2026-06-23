@@ -3,7 +3,7 @@ package org.broadinstitute.consent.http.filters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -81,14 +81,36 @@ class ClaimsCacheTest {
   }
 
   @Test
-  void testLoadCacheWithNullHeaderValueListThrows() {
-    // A null value list reaches the null branch in getFirst(), but Collectors.toMap
-    // does not support null values, so NPE is thrown before the entry is stored.
+  void testLoadCacheWithNullHeaderValueListOmitsKey() {
     Set<Map.Entry<String, List<String>>> entries = new HashSet<>();
     entries.add(new AbstractMap.SimpleEntry<>(ClaimsCache.OAUTH2_CLAIM_email, null));
     when(mockHeaders.entrySet()).thenReturn(entries);
 
-    assertThrows(
-        NullPointerException.class, () -> claimsCache.loadCache("test-token", mockHeaders));
+    claimsCache.loadCache("test-token", mockHeaders);
+
+    Map<String, String> cached = claimsCache.cache.getIfPresent("test-token");
+    assertNotNull(cached);
+    assertFalse(cached.containsKey(ClaimsCache.OAUTH2_CLAIM_email));
+  }
+
+  @Test
+  void testLoadCacheWithEmptyHeaderValueListOmitsKey() {
+    MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
+    headers.put(ClaimsCache.OAUTH2_CLAIM_email, List.of());
+
+    claimsCache.loadCache("test-token", headers);
+
+    Map<String, String> cached = claimsCache.cache.getIfPresent("test-token");
+    assertNotNull(cached);
+    assertFalse(cached.containsKey(ClaimsCache.OAUTH2_CLAIM_email));
+  }
+
+  @Test
+  void testLoadCacheDoesNotThrowWhenHeadersThrow() {
+    when(mockHeaders.entrySet()).thenThrow(new RuntimeException("simulated failure"));
+
+    claimsCache.loadCache("test-token", mockHeaders);
+
+    assertNull(claimsCache.cache.getIfPresent("test-token"));
   }
 }

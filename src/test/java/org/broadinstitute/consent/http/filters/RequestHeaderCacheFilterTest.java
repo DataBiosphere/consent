@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,9 +31,10 @@ class RequestHeaderCacheFilterTest {
     when(requestContext.getHeaders()).thenReturn(headers);
   }
 
-  @Test
-  void testFilterCallsLoadCacheWhenTokenPresent() throws Exception {
-    when(headers.getFirst(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer test-token");
+  @ParameterizedTest
+  @ValueSource(strings = {"Bearer test-token", "bearer test-token", "BEARER test-token"})
+  void testFilterStripsBeaererPrefixCaseInsensitively(String authHeader) throws Exception {
+    when(headers.getFirst(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
     filter.filter(requestContext);
 

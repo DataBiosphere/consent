@@ -24,7 +24,7 @@ public class RequestHeaderCacheFilter implements ContainerRequestFilter {
     var headers = containerRequestContext.getHeaders();
     var token = headers.getFirst(HttpHeaders.AUTHORIZATION);
     if (token != null) {
-      var bearer = token.replace("Bearer ", "");
+      var bearer = token.replaceFirst("(?i)^Bearer ", "");
       claimsCache.loadCache(bearer, headers);
     }
   }
