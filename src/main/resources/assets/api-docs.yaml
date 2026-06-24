@@ -330,7 +330,7 @@ paths:
       tags:
         - Data Access Request
       responses:
-        201:
+        200:
           description: Returns the draft Data Access Request.
           content:
             application/json:
@@ -595,7 +595,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LibraryCard'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LibraryCard'
         401:
           description: User not authorized
         500:
