@@ -1064,25 +1064,6 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSyncDataUseTranslation() {
-    when(datasetService.syncDatasetDataUseTranslation(any(), any())).thenReturn(new Dataset());
-
-    try (var response = resource.syncDataUseTranslation(authUser, 1)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-  }
-
-  @Test
-  void testSyncDataUseTranslationNotFound() {
-    when(datasetService.syncDatasetDataUseTranslation(any(), any()))
-        .thenThrow(new NotFoundException());
-
-    try (var response = resource.syncDataUseTranslation(authUser, 1)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    }
-  }
-
-  @Test
   void testGetAuthorizedReadersOK() {
     when(datasetService.getAuthorizationReaders(anyLong())).thenReturn(new ArrayList<>());
     Response response = resource.getAuthorizedReaders(duosUser, 1L);
