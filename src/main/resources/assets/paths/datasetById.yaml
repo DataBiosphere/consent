@@ -3,17 +3,17 @@ patch:
   operationId: apiDatasetIdPatch
   description: |
     This API allows Admins, Chairpersons, and Data Submitters to patch the dataset name and a 
-    limited set of dataset properties. Data Location must conform to the schema defined in
-    [/schemas/dataset-registration/v1](#/Schema/getDatasetRegistrationSchemaV1)
+    limited set of dataset properties.
       * The dataset name. This is an optional field
       * List of optional properties to update
         * \# of participants must be an integer value greater than zero
         * URL must be a valid url
         * Data Location must be a valid data location:
-          * AnVIL Workspace
-          * Terra Workspace
-          * TDR Location
-          * Not Determined
+          - AnVIL Workspace
+          - Terra Workspace
+          - TDR Location
+          - Not Determined
+          - Other
   parameters:
     - name: id
       in: path
