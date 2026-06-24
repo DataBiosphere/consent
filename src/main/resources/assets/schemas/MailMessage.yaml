@@ -29,13 +29,13 @@ properties:
     type: string
     format: date
     description: Date the email was created
-example:
-  emailId: 1
-  voteId: 2
-  dacUserId: 3
-  emailType: 8
-  dateSent: May 19, 2021
-  emailText: An email message body.
-  sendgridResponse: Ok
-  sendgridStatus: 0
-  createDate: May 19, 2021
+examples:
+  - emailId: 1
+    voteId: 2
+    dacUserId: 3
+    emailType: 8
+    dateSent: May 19, 2021
+    emailText: An email message body.
+    sendgridResponse: Ok
+    sendgridStatus: 0
+    createDate: May 19, 2021

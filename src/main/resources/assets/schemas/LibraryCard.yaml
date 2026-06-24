@@ -26,14 +26,14 @@ properties:
   updateUserId:
     type: integer
     description: User who last updated the LibraryCard
-example:
-  id: 1
-  userId: 2
-  institutionId: 3
-  eraCommonsId: CommonsId
-  userName: User Smith
-  userEmail: email@somewhere.com
-  createDate: date
-  createUserId: 3
-  updateDate: date
-  updateUserId: 4
+examples:
+  - id: 1
+    userId: 2
+    institutionId: 3
+    eraCommonsId: CommonsId
+    userName: User Smith
+    userEmail: email@somewhere.com
+    createDate: date
+    createUserId: 3
+    updateDate: date
+    updateUserId: 4

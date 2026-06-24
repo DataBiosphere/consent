@@ -35,17 +35,17 @@ properties:
   usersWithAccessRemoved:
     type: integer
     description: Number of distinct users impacted by approval revocations.
-example:
-  dacId: 42
-  dryRun: false
-  reason: Policy change to external access model
-  startedAt: 1745420591000
-  completedAt: 1745420592417
-  datasetsTotalInDac: 12
-  datasetsConvertedToExternal: 9
-  datasetsAlreadyExternal: 3
-  darDatasetApprovalsRevoked: 41
-  openElectionsCanceled: 7
-  usersWithAccessRemoved: 29
+examples:
+  - dacId: 42
+    dryRun: false
+    reason: Policy change to external access model
+    startedAt: 1745420591000
+    completedAt: 1745420592417
+    datasetsTotalInDac: 12
+    datasetsConvertedToExternal: 9
+    datasetsAlreadyExternal: 3
+    darDatasetApprovalsRevoked: 41
+    openElectionsCanceled: 7
+    usersWithAccessRemoved: 29
 
 

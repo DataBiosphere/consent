@@ -34,7 +34,7 @@ properties:
     type: array
     items:
       $ref: './DatasetProperty.yaml'
-    example:
+    examples:
       - propertyName: Data Type
         propertyValue: Whole Genome
       - propertyName: Species

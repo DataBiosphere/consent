@@ -26,12 +26,12 @@ properties:
   actionDate:
     type: integer
     description: The UTC epoch time this action was created.
-example:
-  id: 1
-  daaId: 10
-  lcId: 5
-  lcUserId: 42
-  userId: 7
-  action: ADD
-  actionDate: 1775312038006
+examples:
+  - id: 1
+    daaId: 10
+    lcId: 5
+    lcUserId: 42
+    userId: 7
+    action: ADD
+    actionDate: 1775312038006
 

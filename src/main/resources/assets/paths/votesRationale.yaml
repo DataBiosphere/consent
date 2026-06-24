@@ -13,10 +13,9 @@ put:
       application/json:
         schema:
           type: string
-          example: {
-            "rationale": "rationale",
-            "voteIds": [1, 2, 3]
-          }
+          examples:
+            - rationale: "rationale"
+              voteIds: [1, 2, 3]
   tags:
     - Vote
   responses:

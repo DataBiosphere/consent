@@ -12,7 +12,8 @@ get:
       required: true
       schema:
         type: string
-        example: "http://purl.obolibrary.org/obo/DOID_162, DOID_14566"
+        examples:
+          - "http://purl.obolibrary.org/obo/DOID_162, DOID_14566"
   tags:
     - Ontology
   responses:

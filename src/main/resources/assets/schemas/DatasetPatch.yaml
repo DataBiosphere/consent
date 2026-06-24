@@ -7,7 +7,7 @@ properties:
     type: array
     items:
       $ref: './DatasetProperty.yaml'
-    example:
+    examples:
       - propertyName: "# of participants"
         propertyValue: 20
         schemaProperty: numberOfParticipants
