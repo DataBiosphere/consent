@@ -9,12 +9,10 @@ properties:
     type: integer
     description: The ID of the Data Access Agreement involved in the action.
   lcId:
-    type: integer
-    nullable: true
+    type: [integer, 'null']
     description: The ID of the Library Card. May be null if the library card has since been deleted.
   lcUserId:
-    type: integer
-    nullable: true
+    type: [integer, 'null']
     description: The ID of the user associated with the library card at the time of the audit action.
   userId:
     type: integer

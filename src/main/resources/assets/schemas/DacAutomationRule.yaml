@@ -18,16 +18,13 @@ properties:
       - DEPRECATED
       - UNAVAILABLE
   activationDate:
-    type: integer
-    nullable: true
+    type: [integer, 'null']
     description: 'When the rule was most recently activated, in the number of seconds since the epoch.'
   enabledByUserId:
-    type: integer
-    nullable: true
+    type: [integer, 'null']
     description: 'The id of the user who last enabled the rule'
   displayName:
-    type: string
-    nullable: true
+    type: [string, 'null']
     description: 'The name of the user who last enabled the rule'
   userEmail:
     type: string
