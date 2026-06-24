@@ -8,15 +8,15 @@ properties:
     items:
       $ref: './DatasetProperty.yaml'
     examples:
-      - propertyName: "# of participants"
-        propertyValue: 20
-        schemaProperty: numberOfParticipants
-        propertyType: Number
-      - propertyName: URL
-        propertyValue: https://duos.org
-        schemaProperty: url
-        propertyType: String
-      - propertyName: Data Location
-        propertyValue: Terra Workspace
-        schemaProperty: dataLocation
-        propertyType: String
+      - - propertyName: "# of participants"
+          propertyValue: 20
+          schemaProperty: numberOfParticipants
+          propertyType: Number
+        - propertyName: URL
+          propertyValue: https://duos.org
+          schemaProperty: url
+          propertyType: String
+        - propertyName: Data Location
+          propertyValue: Terra Workspace
+          schemaProperty: dataLocation
+          propertyType: String

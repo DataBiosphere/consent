@@ -35,20 +35,20 @@ properties:
     items:
       $ref: './DatasetProperty.yaml'
     examples:
-      - propertyName: Data Type
-        propertyValue: Whole Genome
-      - propertyName: Species
-        propertyValue: Human
-      - propertyName: Phenotype/Indication
-        propertyValue: Cardiovascular System Disease
-      - propertyName: "# of participants"
-        propertyValue: 20
-      - propertyName: Description
-        propertyValue: Description of Dataset
-      - propertyName: url
-        propertyValue: http://...
-      - propertyName: Sample Collection ID
-        propertyValue: SC-000
+      - - propertyName: Data Type
+          propertyValue: Whole Genome
+        - propertyName: Species
+          propertyValue: Human
+        - propertyName: Phenotype/Indication
+          propertyValue: Cardiovascular System Disease
+        - propertyName: "# of participants"
+          propertyValue: 20
+        - propertyName: Description
+          propertyValue: Description of Dataset
+        - propertyName: url
+          propertyValue: http://...
+        - propertyName: Sample Collection ID
+          propertyValue: SC-000
   studyId:
     type: integer
     format: int32

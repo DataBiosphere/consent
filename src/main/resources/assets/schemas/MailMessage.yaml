@@ -33,9 +33,9 @@ examples:
   - emailId: 1
     voteId: 2
     dacUserId: 3
-    emailType: 8
-    dateSent: May 19, 2021
+    emailType: "8"
+    dateSent: "2021-05-19"
     emailText: An email message body.
     sendgridResponse: Ok
     sendgridStatus: 0
-    createDate: May 19, 2021
+    createDate: "2021-05-19"
