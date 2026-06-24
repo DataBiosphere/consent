@@ -974,6 +974,7 @@ paths:
           * Postgres DB
           * Sam
           * Sendgrid
+      security: []
       tags:
         - Status
       responses:
@@ -994,6 +995,7 @@ paths:
       summary: Current application version
       operationId: versionGet
       description: The current short hash and version of the application.
+      security: []
       tags:
         - Status
       responses:
