@@ -300,19 +300,6 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetById(datasetId);
   }
 
-  public Dataset syncDatasetDataUseTranslation(Integer datasetId, User user) {
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (dataset == null) {
-      throw new NotFoundException("Dataset not found");
-    }
-
-    String translation =
-        ontologyService.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
-    datasetServiceDAO.updateDatasetDataUse(user, dataset, dataset.getDataUse(), translation);
-    elasticSearchService.synchronizeDatasetInESIndex(dataset, false);
-    return datasetDAO.findDatasetById(datasetId);
-  }
-
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {

@@ -481,20 +481,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @PUT
-  @Produces("application/json")
-  @RolesAllowed(ADMIN)
-  @Path("/{id}/reprocess/datause")
-  public Response syncDataUseTranslation(@Auth AuthUser authUser, @PathParam("id") Integer id) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Dataset ds = datasetService.syncDatasetDataUseTranslation(id, user);
-      return Response.ok(ds).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   private void validateDatasetDacAccess(User user, Dataset dataset) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
       return;

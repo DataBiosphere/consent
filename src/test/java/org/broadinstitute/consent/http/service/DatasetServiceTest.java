@@ -525,24 +525,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     verify(emailService, never()).sendMessage(any(DatasetDeniedMessage.class), any());
   }
 
-  @Test
-  void testSyncDataUseTranslation() {
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(1);
-    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
-
-    Dataset updated = datasetService.syncDatasetDataUseTranslation(1, mockUser);
-    assertNotNull(updated);
-    assertEquals(dataset.getDatasetId(), updated.getDatasetId());
-  }
-
-  @Test
-  void testSyncDataUseTranslationNotFound() {
-    when(datasetDAO.findDatasetById(1)).thenReturn(null);
-    assertThrows(
-        NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, mockUser));
-  }
-
   @ParameterizedTest
   @ValueSource(ints = {200, 500})
   void testDeleteDataset(int status) throws Exception {
