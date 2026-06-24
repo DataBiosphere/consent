@@ -34,11 +34,11 @@ post:
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             consentGroups[0].nihInstitutionalCertificationFile:
               description: Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   tags:
     - Dataset
   responses:

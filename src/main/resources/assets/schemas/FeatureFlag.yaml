@@ -3,11 +3,13 @@ properties:
   id:
     type: string
     description: Unique identifier for the feature flag
-    example: "enable-new-dar-workflow"
+    examples:
+      - "enable-new-dar-workflow"
   value:
     type: string
     description: Value of the feature flag
-    example: "true"
+    examples:
+      - "true"
   createDate:
     type: string
     format: date-time

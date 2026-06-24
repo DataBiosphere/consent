@@ -23,12 +23,12 @@ properties:
     type: boolean
     default: false
     description: If true, converts both controlled and open datasets; otherwise controlled only.
-example:
-  reason: Policy change to external access model
-  dryRun: true
-  revokeApprovedAccess: true
-  cancelOpenElections: true
-  convertOpenAccessDatasets: false
+examples:
+  - reason: Policy change to external access model
+    dryRun: true
+    revokeApprovedAccess: true
+    cancelOpenElections: true
+    convertOpenAccessDatasets: false
 
 
 

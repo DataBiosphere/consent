@@ -23,9 +23,7 @@ get:
       description: File contents.
       content:
         application/octet-stream:
-          schema:
-            type: string
-            format: binary
+          schema: {}
     401:
       description: User not authorized to get file attachment
     404:

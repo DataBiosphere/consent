@@ -24,9 +24,9 @@ post:
               type: array
               items:
                 type: integer
-            example:
-              100: [ 1, 2, 3 ]
-              101: [ 5 ]
+            examples:
+              - 100: [ 1, 2, 3 ]
+              - 101: [ 5 ]
       description: A Map of DAA to Datasets the DAA applies to.
     400:
       description: Bad Request (malformed list of dataset ids)

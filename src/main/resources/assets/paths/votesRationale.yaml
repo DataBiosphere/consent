@@ -12,11 +12,20 @@ put:
     content:
       application/json:
         schema:
-          type: string
-          example: {
-            "rationale": "rationale",
-            "voteIds": [1, 2, 3]
-          }
+          type: object
+          required: [voteIds]
+          properties:
+            rationale:
+              type: string
+              description: The rationale for the vote
+            voteIds:
+              type: array
+              items:
+                type: integer
+              description: List of vote IDs to update
+          examples:
+            - rationale: "rationale"
+              voteIds: [1, 2, 3]
   tags:
     - Vote
   responses:

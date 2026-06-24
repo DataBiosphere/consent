@@ -7,9 +7,7 @@ post:
   requestBody:
     content:
       application/binary:
-        schema:
-          type: string
-          format: binary
+        schema: {}
   responses:
     201:
       description: A token that represents the uploaded file

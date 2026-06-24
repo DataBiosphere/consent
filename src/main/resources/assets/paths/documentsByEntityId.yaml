@@ -63,7 +63,7 @@ post:
           properties:
             file:
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
               description: The file to upload
             category:
               type: string

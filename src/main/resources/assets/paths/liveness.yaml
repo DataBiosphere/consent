@@ -2,6 +2,7 @@ get:
   operationId: livenessGet
   summary: Liveness Endpoint
   description: Liveness endpoint for conducting quick health checks on the application.
+  security: []
   tags:
     - Status
   responses:

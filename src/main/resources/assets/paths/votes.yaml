@@ -21,12 +21,24 @@ put:
     content:
       application/json:
         schema:
-          type: string
-          example: {
-            "vote": true|false,
-            "rationale": "rationale string",
-            "voteIds": [1, 2, 3]
-          }
+          type: object
+          required: [vote, voteIds]
+          properties:
+            vote:
+              type: boolean
+              description: The vote value
+            rationale:
+              type: string
+              description: Optional rationale for the vote
+            voteIds:
+              type: array
+              items:
+                type: integer
+              description: List of vote IDs to update
+          examples:
+            - vote: true
+              rationale: "rationale string"
+              voteIds: [1, 2, 3]
   tags:
     - Vote
   responses:
