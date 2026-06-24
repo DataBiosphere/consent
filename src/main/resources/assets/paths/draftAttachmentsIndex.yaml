@@ -48,11 +48,11 @@ post:
             file[0]:
               description: Example - Optional alternative data sharing plan
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             file[1]:
               description: Example - Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   responses:
     200:
       description: The attachment(s) were uploaded successfully.  Response payload only includes references to the posted files

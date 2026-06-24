@@ -16,9 +16,7 @@ get:
       description: The Data Access Agreement File matching the provided ID
       content:
         application/octet-stream:
-          schema:
-            type: string
-            format: binary
+          schema: {}
     404:
       description: No DAA File found with the given ID
       content:

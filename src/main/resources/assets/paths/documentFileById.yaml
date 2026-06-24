@@ -38,9 +38,7 @@ get:
             type: string
       content:
         application/octet-stream:
-          schema:
-            type: string
-            format: binary
+          schema: {}
     401:
       description: Unauthorized
     403:

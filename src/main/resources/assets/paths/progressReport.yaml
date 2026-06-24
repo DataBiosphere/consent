@@ -28,10 +28,10 @@ post:
               description: An object that follows the Data Access Request schema
             collaboratorRequiredFile:
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             ethicsApprovalRequiredFile:
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   responses:
     200:
       description: Returns the Data Access Request with progress report

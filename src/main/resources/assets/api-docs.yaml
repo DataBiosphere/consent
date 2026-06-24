@@ -359,9 +359,7 @@ paths:
           description: Returns the document
           content:
             application/octet-stream:
-              schema:
-                type: string
-                format: binary
+              schema: {}
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
@@ -386,7 +384,7 @@ paths:
               properties:
                 file:
                   type: string
-                  format: binary
+                  contentMediaType: application/octet-stream
       tags:
         - Data Access Request
       responses:
@@ -415,9 +413,7 @@ paths:
           description: Returns the document
           content:
             application/octet-stream:
-              schema:
-                type: string
-                format: binary
+              schema: {}
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
@@ -442,7 +438,7 @@ paths:
               properties:
                 file:
                   type: string
-                  format: binary
+                  contentMediaType: application/octet-stream
       tags:
         - Data Access Request
       responses:

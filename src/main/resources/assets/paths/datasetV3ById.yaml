@@ -53,11 +53,11 @@ put:
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             consentGroups[0].nihInstitutionalCertificationFile:
               description: Certification file
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   tags:
     - Dataset
   responses:
