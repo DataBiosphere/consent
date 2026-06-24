@@ -34,22 +34,22 @@ put:
                   items:
                     $ref: '../schemas/DatasetProperty.yaml'
                   examples:
-                    - - propertyName: Data Type
-                        propertyValue: Whole Genome
-                      - propertyName: Species
-                        propertyValue: Human
-                      - propertyName: Phenotype/Indication
-                        propertyValue: Cardiovascular System Disease
-                      - propertyName: "# of participants"
-                        propertyValue: 20
-                      - propertyName: Description
-                        propertyValue: Description of Dataset
-                      - propertyName: URL
-                        propertyValue: http://...
-                      - propertyName: Request Location
-                        propertyValue: https://...
-                      - propertyName: Sample Collection ID
-                        propertyValue: SC-000
+                    - propertyName: Data Type
+                      propertyValue: Whole Genome
+                    - propertyName: Species
+                      propertyValue: Human
+                    - propertyName: Phenotype/Indication
+                      propertyValue: Cardiovascular System Disease
+                    - propertyName: "# of participants"
+                      propertyValue: 20
+                    - propertyName: Description
+                      propertyValue: Description of Dataset
+                    - propertyName: URL
+                      propertyValue: http://...
+                    - propertyName: Request Location
+                      propertyValue: https://...
+                    - propertyName: Sample Collection ID
+                      propertyValue: SC-000
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
