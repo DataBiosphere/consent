@@ -389,6 +389,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               latest_dar.requires_so_approval, latest_dar.approving_so_id, latest_dar.approving_so_timestamp,
               latest_dar.update_date, u.display_name, i.institution_name,
               e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
+          ORDER BY c.dar_code
       """)
   List<DarCollectionSummary> getDarCollectionSummariesByDatasetId(
       @Bind("datasetId") Integer datasetId);
