@@ -78,7 +78,7 @@ public class DarCollectionSummary {
   }
 
   public void addParentChildRelationship(Integer parentId, String childReferenceId) {
-    parentToReferenceIds.computeIfAbsent(parentId, k -> new HashSet<>()).add(childReferenceId);
+    parentToReferenceIds.computeIfAbsent(parentId, _ -> new HashSet<>()).add(childReferenceId);
     updateProgressReportStatus();
   }
 
