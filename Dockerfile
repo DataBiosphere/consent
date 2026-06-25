@@ -11,14 +11,12 @@ COPY src /usr/src/app/src
 RUN mvn clean package -Dmaven.test.skip=true --no-transfer-progress
 
 # Runtime — FIPS 140-3 hardened
-FROM us.gcr.io/broad-dsp-gcr-public/base/jre:25-jre
+# FROM us.gcr.io/broad-dsp-gcr-public/base/jre:25-jre
+FROM dhi.io/eclipse-temurin:25 AS runtime-base
 
-# Copy the bc-fips 2.0.0 jar (FIPS 140-3 targeted) from the Maven local cache
-# populated during the build stage into a stable location in the runtime image.
-COPY --from=build \
-     /root/.m2/repository/org/bouncycastle/bc-fips/2.0.0/bc-fips-2.0.0.jar \
-     /opt/bc-fips-2.0.0.jar
-
+# Security patcher — dhi.io/eclipse-temurin:25 is distroless (no shell), so use the
+# maven image's shell to patch java.security extracted from the runtime image.
+#
 # Register bc-fips as the primary JCE security provider in the JVM's security
 # configuration. Existing providers are renumbered (N → N+1) so non-crypto
 # subsystems (XML, GSSAPI, SASL) retain their fallback providers.
@@ -31,18 +29,29 @@ COPY --from=build \
 # This is not a coverage gap for this application: consent is a pure-Java service
 # with no native crypto code. Conscrypt is excluded from all dependencies, and every
 # cryptographic operation goes through JCE → bc-fips (FIPS 140-3 targeted).
-RUN JAVA_SECURITY="${JAVA_HOME}/conf/security/java.security" \
-    && i=20 \
+FROM maven:3.9.11-eclipse-temurin-25 AS security-patcher
+COPY --from=runtime-base /opt/java/openjdk/25-jre/conf/security/java.security /java.security
+RUN i=20 \
     && while [ "$i" -ge 1 ]; do \
          j=$((i+1)); \
-         sed -i "s/^security\\.provider\\.${i}=/security.provider.${j}=/" "$JAVA_SECURITY"; \
+         sed -i "s/^security\\.provider\\.${i}=/security.provider.${j}=/" /java.security; \
          i=$((i-1)); \
        done \
     && sed -i '/^security\.provider\.2=/i security.provider.1=org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider' \
-         "$JAVA_SECURITY" \
-    && if ! grep -q 'TLSv1,' "$JAVA_SECURITY"; then \
-         sed -i 's/^jdk\.tls\.disabledAlgorithms=/jdk.tls.disabledAlgorithms=TLSv1, TLSv1.1, /' "$JAVA_SECURITY"; \
+         /java.security \
+    && if ! grep -q 'TLSv1,' /java.security; then \
+         sed -i 's/^jdk\.tls\.disabledAlgorithms=/jdk.tls.disabledAlgorithms=TLSv1, TLSv1.1, /' /java.security; \
        fi
+
+FROM dhi.io/eclipse-temurin:25
+
+# Copy the bc-fips 2.0.0 jar (FIPS 140-3 targeted) from the Maven local cache
+# populated during the build stage into a stable location in the runtime image.
+COPY --from=build \
+     /root/.m2/repository/org/bouncycastle/bc-fips/2.0.0/bc-fips-2.0.0.jar \
+     /opt/bc-fips-2.0.0.jar
+
+COPY --from=security-patcher /java.security /opt/java/openjdk/25-jre/conf/security/java.security
 
 # Add bc-fips to the JVM boot classpath so the security provider class is resolvable
 # during JVM initialisation before any application class is loaded.
