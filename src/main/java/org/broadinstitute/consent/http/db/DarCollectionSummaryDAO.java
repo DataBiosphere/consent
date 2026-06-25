@@ -291,25 +291,24 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(@Bind("userId") Integer userId);
 
   /**
-   * Returns one {@link DarCollectionSummary} per DAR collection that contains at least one
-   * approved DAR or closeout supplement for the given dataset, ordered by DAR code ascending.
+   * Returns one {@link DarCollectionSummary} per DAR collection that contains at least one approved
+   * DAR or closeout supplement for the given dataset, ordered by DAR code ascending.
    *
    * <p>A collection is included when either of the following is true for the given dataset:
    *
    * <ul>
-   *   <li>At least one submitted, non-archived DAR in the collection has a terminal
-   *       {@code final} or {@code radar_approve} vote whose last value is {@code TRUE}.
-   *   <li>At least one submitted DAR in the collection carries a {@code closeoutSupplement}
-   *       (no election required).
+   *   <li>At least one submitted, non-archived DAR in the collection has a terminal {@code final}
+   *       or {@code radar_approve} vote whose last value is {@code TRUE}.
+   *   <li>At least one submitted DAR in the collection carries a {@code closeoutSupplement} (no
+   *       election required).
    * </ul>
    *
-   * <p>The summary represents the most recently submitted DAR in the collection as
-   * {@code latest_dar}, from which {@code updateDate}, {@code nonTechRus}, and other fields
-   * are sourced.
+   * <p>The summary represents the most recently submitted DAR in the collection as {@code
+   * latest_dar}, from which {@code updateDate}, {@code nonTechRus}, and other fields are sourced.
    *
    * @param datasetId the dataset to filter by
-   * @return list of {@link DarCollectionSummary}, one per qualifying collection, ordered by
-   *     {@code dar_code}
+   * @return list of {@link DarCollectionSummary}, one per qualifying collection, ordered by {@code
+   *     dar_code}
    */
   @RegisterBeanMapper(value = DarCollectionSummary.class)
   @RegisterBeanMapper(value = DarCollection.class)
