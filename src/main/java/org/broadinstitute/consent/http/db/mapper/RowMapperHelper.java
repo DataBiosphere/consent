@@ -26,7 +26,7 @@ public interface RowMapperHelper extends ConsentLogger {
   default boolean hasColumn(RowView rowView, String columnName, Class clazz) {
     try {
       return rowView.getColumn(columnName, clazz) != null;
-    } catch (Exception e) {
+    } catch (Exception _) {
       logDebug("RowView does not contain column %s".formatted(columnName));
       return false;
     }
@@ -43,7 +43,7 @@ public interface RowMapperHelper extends ConsentLogger {
     try {
       return rowView.getColumn(columnName, Integer.class) != null
           && rowView.getColumn(columnName, Integer.class) > 0;
-    } catch (Exception e) {
+    } catch (Exception _) {
       logDebug("RowView does not contain column %s".formatted(columnName));
       return false;
     }
@@ -59,8 +59,8 @@ public interface RowMapperHelper extends ConsentLogger {
    */
   default <T> Optional<T> hasOptionalColumn(RowView rowView, String columnName, Class<T> clazz) {
     try {
-      return Optional.of(rowView.getColumn(columnName, clazz));
-    } catch (Exception e) {
+      return Optional.ofNullable(rowView.getColumn(columnName, clazz));
+    } catch (Exception _) {
       logDebug("RowView does not contain column %s".formatted(columnName));
       return Optional.empty();
     }
@@ -113,7 +113,7 @@ public interface RowMapperHelper extends ConsentLogger {
     DataAccessRequestData data = null;
     if (Objects.nonNull(darDataString)) {
       // Handle nested quotes
-      String quoteFixedDataString = darDataString.replaceAll("\\\\\"", "'");
+      String quoteFixedDataString = darDataString.replace("\\\\\"", "'");
       // Inserted json data ends up double-escaped via standard jdbi insert.
       String escapedDataString = unescapeJava(quoteFixedDataString);
       try {
