@@ -22,7 +22,7 @@ public class DataUseMatchCasesV4 {
       "The HMB Research Purpose does not match the Disease-Specific data use limitations.";
   private static final String HMB_F3 =
       "The HMB Research Purpose does not match the POA data use limitations.";
-  private static final String DS_F2 =
+  static final String DS_F2 =
       "The Disease-Specific: %s Research Purpose is not a valid subclass of the Disease-Specific data use limitations.";
   private static final String MDS_F1 =
       "The Methods development Research Purpose does not match the Disease-Specific data use limitations.";
@@ -32,9 +32,9 @@ public class DataUseMatchCasesV4 {
       "The For-Profit Research Purpose does not match the Non-Profit Use (NPU) only data use limitation.";
 
   // rationale for approvals - based on dataset terms
-  private static final String DS_APPROVE_GRU =
+  static final String DS_APPROVE_GRU =
       "The proposed disease-specific research is within the bounds of the general research use permissions of the dataset(s)";
-  private static final String DS_APPROVE_HMB =
+  static final String DS_APPROVE_HMB =
       "The proposed disease-specific research is within the bounds of the health, medical, biomedical use permissions of the dataset(s)";
   private static final String HMB_APPROVE_HMB =
       "The proposed health, medical, biomedical research is within the bounds of the health, medical, biomedical use permissions of the dataset(s)";
@@ -84,11 +84,15 @@ public class DataUseMatchCasesV4 {
           DataUseMatchResultType.APPROVE, Collections.singletonList(DS_APPROVE_HMB));
     }
 
-    // We want all-purpose disease IDs to be a subclass of any dataset disease ID
+    // We want all-purpose disease IDs to be a subclass of any dataset disease ID. The dataset's
+    // disease restrictions may be null (e.g. a POA- or NPU-only dataset), so guard against it.
+    List<String> datasetDiseaseRestrictions =
+        isNullOrEmpty(dataset.getDiseaseRestrictions())
+            ? Collections.emptyList()
+            : dataset.getDiseaseRestrictions();
     List<String> failures = new ArrayList<>();
     for (Map.Entry<String, List<String>> entry : purposeDiseaseIdMap.entrySet()) {
-      boolean match =
-          entry.getValue().stream().anyMatch(dataset.getDiseaseRestrictions()::contains);
+      boolean match = entry.getValue().stream().anyMatch(datasetDiseaseRestrictions::contains);
       if (!match) {
         failures.add(String.format(DS_F2, entry.getKey()));
       }
