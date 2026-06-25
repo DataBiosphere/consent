@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.mapper.MappingException;
+import org.jdbi.v3.core.mapper.NoSuchMapperException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
@@ -73,7 +74,7 @@ public class DarCollectionSummaryReducer
         summary.addElection(election);
         summary.addDatasetId(election.getDatasetId());
       }
-    } catch (MappingException _) {
+    } catch (MappingException | NoSuchMapperException _) {
       // Indicates that we do not have an election for this summary
     }
   }
@@ -84,8 +85,8 @@ public class DarCollectionSummaryReducer
       if (Objects.nonNull(vote.getVoteId())) {
         summary.addVote(vote);
       }
-    } catch (MappingException _) {
-      // Indicates that we do not have an election for this summary
+    } catch (MappingException | NoSuchMapperException _) {
+      // Indicates that we do not have a vote for this summary
     }
   }
 }
