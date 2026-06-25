@@ -338,6 +338,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                   AND dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              -- Pull in all closeouts for this dataset. Closeouts do not have elections,
+              -- but we want to include them in the dataset usage metrics.
               UNION
               SELECT DISTINCT dar.collection_id
               FROM data_access_request dar
