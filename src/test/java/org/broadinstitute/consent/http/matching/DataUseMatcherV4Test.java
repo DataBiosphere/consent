@@ -30,6 +30,7 @@ class DataUseMatcherV4Test {
 
   private static final String CANCER_NODE = "http://purl.obolibrary.org/obo/DOID_162";
   private static final String INTESTINAL_CANCER_NODE = "http://purl.obolibrary.org/obo/DOID_10155";
+  private static final String BRAIN_CANCER_NODE = "http://purl.obolibrary.org/obo/DOID_1319";
   private final Gson gson = GsonUtil.getInstance();
 
   @Mock private OntologyService ontologyService;
@@ -96,6 +97,69 @@ class DataUseMatcherV4Test {
               // Streaming output that writes terms
               output.write(gson.toJson(termResources).getBytes(StandardCharsets.UTF_8));
             });
+    MatchResult match = matchPurposeAndDataset(purpose, dataset);
+    assertTrue(Deny(match.getMatchResultType()));
+    assertTrue(match.getMessage().contains(String.format(DataUseMatchCasesV4.DS_F2, CANCER_NODE)));
+  }
+
+  @Test
+  void testDiseaseMatching_datasetGRU() {
+    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
+    DataUse purpose = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    mockOntologyTerm(CANCER_NODE, "http://purl.obolibrary.org/obo/DOID_14566");
+    MatchResult match = matchPurposeAndDataset(purpose, dataset);
+    assertTrue(Approve(match.getMatchResultType()));
+    assertTrue(match.getMessage().contains(DataUseMatchCasesV4.DS_APPROVE_GRU));
+  }
+
+  @Test
+  void testDiseaseMatching_datasetHMB() {
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    mockOntologyTerm(CANCER_NODE, "http://purl.obolibrary.org/obo/DOID_14566");
+    MatchResult match = matchPurposeAndDataset(purpose, dataset);
+    assertTrue(Approve(match.getMatchResultType()));
+    assertTrue(match.getMessage().contains(DataUseMatchCasesV4.DS_APPROVE_HMB));
+  }
+
+  // An exact disease match (purpose term == dataset term, with no ontology parents) should approve.
+  @Test
+  void testDiseaseMatching_exactMatch() {
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse purpose = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    mockOntologyTerm(CANCER_NODE);
+    assertApprove(purpose, dataset);
+  }
+
+  // When the purpose lists multiple diseases, every one must be a subclass of a dataset disease.
+  // Here one term matches and one does not, so the result is a denial naming the unmatched term.
+  @Test
+  void testDiseaseMatching_multipleDiseases_partialMatch() {
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse purpose =
+        new DataUseBuilder()
+            .setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE, BRAIN_CANCER_NODE))
+            .build();
+    // Intestinal cancer is a subclass of cancer; brain cancer is not.
+    mockOntologyTerm(INTESTINAL_CANCER_NODE, CANCER_NODE);
+    mockOntologyTerm(BRAIN_CANCER_NODE, "http://purl.obolibrary.org/obo/DOID_14566");
+    MatchResult match = matchPurposeAndDataset(purpose, dataset);
+    assertTrue(Deny(match.getMatchResultType()));
+    assertTrue(
+        match.getMessage().contains(String.format(DataUseMatchCasesV4.DS_F2, BRAIN_CANCER_NODE)));
+    assertFalse(
+        match
+            .getMessage()
+            .contains(String.format(DataUseMatchCasesV4.DS_F2, INTESTINAL_CANCER_NODE)));
+  }
+
+  // A disease-specific purpose against a dataset that has no disease restrictions and is neither
+  // GRU nor HMB cannot match, and must not throw on the dataset's null restriction list.
+  @Test
+  void testDiseaseMatching_datasetHasNoDiseaseRestrictions() {
+    DataUse dataset = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse purpose = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    mockOntologyTerm(CANCER_NODE, "http://purl.obolibrary.org/obo/DOID_14566");
     assertDeny(purpose, dataset);
   }
 
@@ -349,5 +413,22 @@ class DataUseMatcherV4Test {
   private MatchResult matchPurposeAndDataset(DataUse purpose, DataUse dataset) {
     DataUseMatcherV4 matcher = new DataUseMatcherV4(new DataUseUtil(ontologyService));
     return matcher.matchPurposeAndDatasetV4(purpose, dataset);
+  }
+
+  /**
+   * Stub the ontology service so that a lookup of {@code termId} returns a term whose parents are
+   * {@code parentIds}. Pass no parent ids to model a leaf term (e.g. for exact-match scenarios).
+   */
+  private void mockOntologyTerm(String termId, String... parentIds) {
+    OntologyTerm resource = new OntologyTerm(termId, "v1", OntologyType.DOID.name());
+    for (String parentId : parentIds) {
+      ParentTerm parent = new ParentTerm();
+      parent.setId(parentId);
+      resource.addParent(parent);
+    }
+    List<OntologyTerm> termResources = List.of(resource);
+    when(ontologyService.findByTermIds(new String[] {termId}))
+        .thenReturn(
+            output -> output.write(gson.toJson(termResources).getBytes(StandardCharsets.UTF_8)));
   }
 }
