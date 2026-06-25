@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -250,7 +252,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
                 List.of(collectionTwoVoteChair.getVoteId(), collectionTwoVoteThree.getVoteId());
             electionId = collectionTwoElection.getElectionId();
           }
-          s.getElections().forEach((key, value) -> assertEquals(electionId, key));
+          s.getElections().forEach((key, _) -> assertEquals(electionId, key));
           s.getVotes().forEach(v -> assertTrue(targetVotes.contains(v.getVoteId())));
           assertEquals(1, s.getDatasetCount());
         });
@@ -334,9 +336,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // test that only the non-archived collection was pulled by the query
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
-    assertNull(summaries.get(0).getSoApproverId());
-    assertNull(summaries.get(0).getSoApproverTimestamp());
+    assertEquals(collectionOneId, summaries.getFirst().getDarCollectionId());
+    assertNull(summaries.getFirst().getSoApproverId());
+    assertNull(summaries.getFirst().getSoApproverTimestamp());
   }
 
   @Test
@@ -389,7 +391,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
           assertTrue(s.getDacNames().contains(dacOneName));
 
           Integer electionId = collectionOneElection.getElectionId();
-          s.getElections().forEach((key, value) -> assertEquals(electionId, key));
+          s.getElections().forEach((key, _) -> assertEquals(electionId, key));
           assertEquals(1, s.getDatasetCount());
           assertEquals(userOneId, s.getSoApproverId());
           assertNotNull(s.getSoApproverTimestamp());
@@ -528,9 +530,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // test that only the non-archived collection was pulled by the query
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+    assertEquals(collectionOneId, summaries.getFirst().getDarCollectionId());
     assertEquals(
-        darOne.getData().getSigningOfficialEmail(), summaries.get(0).getSigningOfficialEmail());
+        darOne.getData().getSigningOfficialEmail(), summaries.getFirst().getSigningOfficialEmail());
   }
 
   @Test
@@ -578,7 +580,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
           assertTrue(s.getDacNames().contains(dacOneName));
 
           Integer electionId = collectionOneElection.getElectionId();
-          s.getElections().forEach((key, value) -> assertEquals(electionId, key));
+          s.getElections().forEach((key, _) -> assertEquals(electionId, key));
           assertEquals(1, s.getDarStatuses().size());
           s.getDarStatuses().values().forEach(status -> assertEquals("test", status));
           assertEquals(1, s.getDatasetCount());
@@ -649,7 +651,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // test that only the non-archived collection was pulled by the query
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+    assertEquals(collectionOneId, summaries.getFirst().getDarCollectionId());
   }
 
   @Test
@@ -731,7 +733,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
             electionId = collectionTwoElection.getElectionId();
           }
 
-          s.getElections().forEach((key, value) -> assertEquals(electionId, key));
+          s.getElections().forEach((key, _) -> assertEquals(electionId, key));
           assertEquals(1, s.getDatasetCount());
         });
   }
@@ -802,7 +804,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // test that only the non-archived collection was pulled by the query
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+    assertEquals(collectionOneId, summaries.getFirst().getDarCollectionId());
   }
 
   @ParameterizedTest
@@ -854,7 +856,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    DarCollectionSummary summary = summaries.get(0);
+    DarCollectionSummary summary = summaries.getFirst();
     assertEquals(collectionId, summary.getDarCollectionId());
 
     // Ensure the reference IDs include only the non-draft non-archived DAR
@@ -923,7 +925,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         };
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    DarCollectionSummary summary = summaries.get(0);
+    DarCollectionSummary summary = summaries.getFirst();
     assertEquals(collectionId, summary.getDarCollectionId());
 
     // Ensure the reference IDs include both DARs and latest represents the newer DAR
@@ -994,7 +996,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    DarCollectionSummary summary = summaries.get(0);
+    DarCollectionSummary summary = summaries.getFirst();
     assertEquals(collectionId, summary.getDarCollectionId());
 
     assertNotNull(summary.getDacNames());
@@ -1064,7 +1066,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertTrue(summary.getDacNames().contains(dacOneName));
 
     Integer electionId = collectionOneElection.getElectionId();
-    summary.getElections().forEach((key, value) -> assertEquals(electionId, key));
+    summary.getElections().forEach((key, _) -> assertEquals(electionId, key));
     assertEquals(1, summary.getDarStatuses().size());
     summary.getDarStatuses().values().forEach(status -> assertEquals("test", status));
     assertEquals(1, summary.getDatasetCount());
@@ -1198,7 +1200,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         List.of(collectionOneVoteChair.getVoteId(), collectionOneVoteThree.getVoteId());
     Integer electionId = collectionOneElection.getElectionId();
 
-    summary.getElections().forEach((key, value) -> assertEquals(electionId, key));
+    summary.getElections().forEach((key, _) -> assertEquals(electionId, key));
     summary.getVotes().forEach(v -> assertTrue(targetVotes.contains(v.getVoteId())));
     assertEquals(2, summary.getDatasetCount());
   }
@@ -1307,7 +1309,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForResearcher =
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertEquals(1, summariesForResearcher.size());
-    Optional<String> firstId = summariesForResearcher.get(0).getReferenceIds().stream().findFirst();
+    Optional<String> firstId = summariesForResearcher.getFirst().getReferenceIds().stream().findFirst();
     assertTrue(firstId.isPresent());
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(firstId.get());
 
@@ -1353,8 +1355,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForResearcher =
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertEquals(1, summariesForResearcher.size());
-    assertTrue(summariesForResearcher.get(0).getProgressReport());
-    assertNotNull(summariesForResearcher.get(0).getCloseoutSupplement());
+    assertTrue(summariesForResearcher.getFirst().getProgressReport());
+    assertNotNull(summariesForResearcher.getFirst().getCloseoutSupplement());
   }
 
   @ParameterizedTest
@@ -1372,7 +1374,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForDAC =
         darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
             chairId, UserRoles.CHAIRPERSON.getRoleId());
-    assertTrue(summariesForDAC.get(0).getProgressReport());
+    assertTrue(summariesForDAC.getFirst().getProgressReport());
   }
 
   @ParameterizedTest
@@ -1392,7 +1394,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     List<DarCollectionSummary> summariesForDAC =
         darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
-    assertTrue(summariesForDAC.get(0).getProgressReport());
+    assertTrue(summariesForDAC.getFirst().getProgressReport());
   }
 
   @ParameterizedTest
@@ -1409,7 +1411,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     List<DarCollectionSummary> summariesForDAC =
         darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
-    assertTrue(summariesForDAC.get(0).getProgressReport());
+    assertTrue(summariesForDAC.getFirst().getProgressReport());
   }
 
   @ParameterizedTest
@@ -1431,6 +1433,207 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertTrue(summaryForDAC.getProgressReport());
   }
 
+  // ---- getDarCollectionSummariesByDatasetId tests ----
+
+  @Test
+  void testGetDarCollectionSummariesByDatasetId() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset(user.getUserId());
+    Date now = new Date();
+
+    // Collection 1: an approved DAR, a second approved DAR, and a closeout supplement
+    Integer approvedCollectionId = createDarCollection(user.getUserId());
+
+    DataAccessRequest approvedDAR = createDataAccessRequest(approvedCollectionId, user.getUserId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        approvedDAR.getReferenceId(), dataset.getDatasetId());
+    Election approvedElection =
+        createElection(
+            ElectionStatus.OPEN.getValue(), approvedDAR.getReferenceId(), dataset.getDatasetId());
+    Vote approvedVote =
+        createVote(user.getUserId(), approvedElection.getElectionId(), VoteType.FINAL.getValue());
+    updateVote(
+        true,
+        "",
+        now,
+        approvedVote.getVoteId(),
+        false,
+        approvedElection.getElectionId(),
+        now,
+        false);
+
+    DataAccessRequest prDAR = createDataAccessRequest(approvedCollectionId, user.getUserId());
+    dataAccessRequestDAO.insertDARDatasetRelation(prDAR.getReferenceId(), dataset.getDatasetId());
+    Election prElection =
+        createElection(
+            ElectionStatus.OPEN.getValue(), prDAR.getReferenceId(), dataset.getDatasetId());
+    Vote prVote =
+        createVote(user.getUserId(), prElection.getElectionId(), VoteType.FINAL.getValue());
+    updateVote(true, "", now, prVote.getVoteId(), false, prElection.getElectionId(), now, false);
+
+    DataAccessRequest closeoutDAR =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), approvedCollectionId, prDAR.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        closeoutDAR.getReferenceId(), dataset.getDatasetId());
+    CloseoutSupplement closeout =
+        new CloseoutSupplement(List.of("Reason"), "Other Reason", user.getUserId());
+    closeoutDAR.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDAR.getReferenceId(),
+        user.getUserId(),
+        now,
+        now,
+        closeoutDAR.getData(),
+        randomAlphabetic(10));
+
+    // Unsubmitted draft DAR linked to the dataset — should be excluded
+    String draftRefId = UUID.randomUUID().toString();
+    DataAccessRequestData draftData = new DataAccessRequestData();
+    draftData.setProjectTitle("Draft: " + randomAlphabetic(10));
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        draftRefId, user.getUserId(), now, now, draftData);
+    dataAccessRequestDAO.insertDARDatasetRelation(draftRefId, dataset.getDatasetId());
+
+    // Collection 2: an approved but expired DAR (submission date two years ago)
+    Integer expiredCollectionId = createDarCollection(user.getUserId());
+    String expiredRefId = UUID.randomUUID().toString();
+    Timestamp expiredSubmissionDate =
+        Timestamp.from(
+            LocalDateTime.now().minusYears(2).atZone(ZoneId.systemDefault()).toInstant());
+    DataAccessRequestData expiredData = new DataAccessRequestData();
+    expiredData.setProjectTitle("Expired: " + randomAlphabetic(10));
+    dataAccessRequestDAO.insertDataAccessRequest(
+        expiredCollectionId,
+        expiredRefId,
+        user.getUserId(),
+        expiredSubmissionDate,
+        expiredSubmissionDate,
+        expiredSubmissionDate,
+        expiredData,
+        randomAlphabetic(10));
+    dataAccessRequestDAO.insertDARDatasetRelation(expiredRefId, dataset.getDatasetId());
+    Integer expiredElectionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            expiredSubmissionDate,
+            expiredRefId,
+            dataset.getDatasetId());
+    Vote expiredVote = createVote(user.getUserId(), expiredElectionId, VoteType.FINAL.getValue());
+    updateVote(
+        true,
+        "",
+        now,
+        expiredVote.getVoteId(),
+        false,
+        expiredElectionId,
+        expiredSubmissionDate,
+        false);
+
+    List<DarCollectionSummary> summaries =
+        darCollectionSummaryDAO.getDarCollectionSummariesByDatasetId(dataset.getDatasetId());
+
+    assertFalse(summaries.isEmpty());
+    assertEquals(2, summaries.size());
+
+    List<Integer> collectionIds =
+        summaries.stream().map(DarCollectionSummary::getDarCollectionId).toList();
+    assertTrue(collectionIds.contains(approvedCollectionId));
+    assertTrue(collectionIds.contains(expiredCollectionId));
+
+    // Draft DAR is excluded from every summary
+    assertTrue(
+        summaries.stream()
+            .flatMap(s -> s.getReferenceIds().stream())
+            .noneMatch(draftRefId::equals));
+
+    // Approved collection summary contains all three DAR reference IDs
+    DarCollectionSummary approvedSummary =
+        summaries.stream()
+            .filter(s -> s.getDarCollectionId().equals(approvedCollectionId))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(approvedSummary.getReferenceIds().contains(approvedDAR.getReferenceId()));
+    assertTrue(approvedSummary.getReferenceIds().contains(prDAR.getReferenceId()));
+    assertTrue(approvedSummary.getReferenceIds().contains(closeoutDAR.getReferenceId()));
+
+    // Expired collection summary is present and marked expired
+    DarCollectionSummary expiredSummary =
+        summaries.stream()
+            .filter(s -> s.getDarCollectionId().equals(expiredCollectionId))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(expiredSummary.getReferenceIds().contains(expiredRefId));
+    assertTrue(expiredSummary.isExpired());
+  }
+
+  @Test
+  void testGetDarCollectionSummariesByDatasetId_empty() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset(user.getUserId());
+
+    List<DarCollectionSummary> summaries =
+        darCollectionSummaryDAO.getDarCollectionSummariesByDatasetId(dataset.getDatasetId());
+
+    assertTrue(summaries.isEmpty());
+  }
+
+  @Test
+  void testGetDarCollectionSummariesByDatasetId_deniedDARExcluded() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset(user.getUserId());
+    Date now = new Date();
+
+    Integer collectionId = createDarCollection(user.getUserId());
+    DataAccessRequest dar = createDataAccessRequest(collectionId, user.getUserId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    Election election =
+        createElection(
+            ElectionStatus.OPEN.getValue(), dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createVote(user.getUserId(), election.getElectionId(), VoteType.FINAL.getValue());
+    // Deny the DAR — last final vote is false
+    updateVote(false, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+
+    List<DarCollectionSummary> summaries =
+        darCollectionSummaryDAO.getDarCollectionSummariesByDatasetId(dataset.getDatasetId());
+
+    assertTrue(summaries.isEmpty());
+  }
+
+  @Test
+  void testGetDarCollectionSummariesByDatasetId_closeoutOnly() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset(user.getUserId());
+    Date now = new Date();
+
+    // Submitted DAR with a closeout supplement but no election
+    Integer collectionId = createDarCollection(user.getUserId());
+    DataAccessRequest dar = createDataAccessRequest(collectionId, user.getUserId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    CloseoutSupplement closeout =
+        new CloseoutSupplement(List.of("Reason"), "Other Reason", user.getUserId());
+    dar.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        dar.getReferenceId(), user.getUserId(), now, now, dar.getData(), randomAlphabetic(10));
+
+    List<DarCollectionSummary> summaries =
+        darCollectionSummaryDAO.getDarCollectionSummariesByDatasetId(dataset.getDatasetId());
+
+    assertEquals(1, summaries.size());
+    assertTrue(summaries.getFirst().getReferenceIds().contains(dar.getReferenceId()));
+  }
+
+  private DataAccessRequest createProgressReport(
+      String eraCommonsId, Integer userId, Integer collectionId, Integer parentId) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Progress Report: " + randomAlphabetic(20));
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        parentId, collectionId, referenceId, userId, data, eraCommonsId);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
   private Setup createDarCollectionSummaryForUser(VoteType voteType) {
     Dac dac = createDac();
     User user = createUserWithInstitution();
@@ -1449,7 +1652,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     List<DarCollectionSummary> summariesForResearcher =
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
-    assertTrue(summariesForResearcher.get(0).getProgressReport());
+    assertTrue(summariesForResearcher.getFirst().getProgressReport());
     assertTrue(dar.getProgressReport());
   }
 

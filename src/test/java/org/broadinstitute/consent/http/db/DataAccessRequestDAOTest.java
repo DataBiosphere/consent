@@ -12,9 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -864,109 +861,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> noApprovedDARs =
         dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId());
     assertTrue(noApprovedDARs.isEmpty());
-  }
-
-  @Test
-  void testFindSummaryMetricApprovedDARsByDatasetIdIncludesExpired() {
-    // Create a dataset to request access to
-    Dataset dataset = createDataset();
-
-    // Create a dar collection
-    User user = createUserWithInstitution();
-    Integer approvedCollectionId =
-        darCollectionDAO.insertDarCollection(
-            "DAR-" + randomInt(1, 10), user.getUserId(), new Date());
-
-    // Create an approved DAR on a dataset
-    DataAccessRequest approvedDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
-    dataAccessRequestDAO.insertDARDatasetRelation(
-        approvedDAR.getReferenceId(), dataset.getDatasetId());
-    Election election =
-        createDataAccessElection(approvedDAR.getReferenceId(), dataset.getDatasetId());
-    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
-    Date now = new Date();
-    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
-
-    // Create an unsubmitted DAR on a dataset
-    DataAccessRequest unsubmittedDAR = createDraftDataAccessRequest();
-    dataAccessRequestDAO.insertDARDatasetRelation(
-        unsubmittedDAR.getReferenceId(), dataset.getDatasetId());
-
-    // Create a Progress Report on the approved DAR
-    DataAccessRequest prDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
-    dataAccessRequestDAO.insertDARDatasetRelation(prDAR.getReferenceId(), dataset.getDatasetId());
-    Election prElection = createDataAccessElection(prDAR.getReferenceId(), dataset.getDatasetId());
-    Vote prVote = createFinalVote(dataset.getCreateUserId(), prElection.getElectionId());
-    updateVote(true, "", now, prVote.getVoteId(), false, prElection.getElectionId(), now, false);
-
-    // Create a closeout DAR from the PR DAR
-    DataAccessRequest closeoutDAR =
-        createProgressReport(
-            user.getEraCommonsId(), user.getUserId(), approvedCollectionId, prDAR.getId());
-    dataAccessRequestDAO.insertDARDatasetRelation(
-        closeoutDAR.getReferenceId(), dataset.getDatasetId());
-    CloseoutSupplement closeout =
-        new CloseoutSupplement(List.of("Reason"), "Other Reason", user.getUserId());
-    closeoutDAR.getData().setCloseoutSupplement(closeout);
-    dataAccessRequestDAO.updateDataByReferenceId(
-        closeoutDAR.getReferenceId(),
-        user.getUserId(),
-        now,
-        now,
-        closeoutDAR.getData(),
-        randomAlphabetic(10));
-
-    // Create a very old approved DAR that SHOULD be included in the summary metrics
-    Integer expiredCollectionId =
-        darCollectionDAO.insertDarCollection(
-            "DAR-" + randomInt(11, 20), user.getUserId(), new Date());
-    String expiredReferenceId = UUID.randomUUID().toString();
-    LocalDateTime twoYearsAgo = LocalDateTime.now().minusYears(2);
-    ZonedDateTime zonedDateTime = twoYearsAgo.atZone(ZoneId.systemDefault());
-    Timestamp submissionDate = Timestamp.from(zonedDateTime.toInstant());
-    dataAccessRequestDAO.insertDataAccessRequest(
-        expiredCollectionId,
-        expiredReferenceId,
-        user.getUserId(),
-        submissionDate,
-        submissionDate,
-        submissionDate,
-        createDataAccessRequestData(),
-        randomAlphabetic(10));
-    dataAccessRequestDAO.insertDARDatasetRelation(expiredReferenceId, dataset.getDatasetId());
-    Integer expiredElectionId =
-        electionDAO.insertElection(
-            ElectionType.DATA_ACCESS.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            submissionDate,
-            expiredReferenceId,
-            dataset.getDatasetId());
-
-    createDataAccessElection(expiredReferenceId, dataset.getDatasetId());
-    Vote expiredVote = createFinalVote(dataset.getCreateUserId(), expiredElectionId);
-    updateVote(
-        true, "", now, expiredVote.getVoteId(), false, expiredElectionId, submissionDate, false);
-
-    List<DataAccessRequest> summaryDARs =
-        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
-            dataset.getDatasetId());
-    assertFalse(summaryDARs.isEmpty());
-    // Only DAR that should not be returned
-    assertTrue(
-        summaryDARs.stream()
-            .noneMatch(dar -> dar.getReferenceId().equals(unsubmittedDAR.getReferenceId())));
-    // All other DARs should be returned
-    assertTrue(
-        summaryDARs.stream()
-            .anyMatch(dar -> dar.getReferenceId().equals(approvedDAR.getReferenceId())));
-    assertTrue(
-        summaryDARs.stream().anyMatch(dar -> dar.getReferenceId().equals(prDAR.getReferenceId())));
-    assertTrue(
-        summaryDARs.stream()
-            .anyMatch(dar -> dar.getReferenceId().equals(closeoutDAR.getReferenceId())));
-    assertTrue(
-        summaryDARs.stream().anyMatch(dar -> dar.getReferenceId().equals(expiredReferenceId)));
-    assertEquals(4, summaryDARs.size());
   }
 
   // findAllDraftDataAccessRequests should exclude archived DARs

@@ -10,13 +10,13 @@ public record DarMetricsSummary(
     String referenceId,
     Boolean expired) {
 
-  public DarMetricsSummary(DataAccessRequest dar) {
+  public DarMetricsSummary(DarCollectionSummary summary) {
     this(
-        dar != null ? dar.getUpdateDate() : null,
-        dar != null && dar.getData() != null ? dar.getData().getProjectTitle() : null,
-        dar != null ? dar.getDarCode() : null,
-        dar != null && dar.getData() != null ? dar.getData().getNonTechRus() : null,
-        dar != null ? dar.getReferenceId() : null,
-        dar == null || dar.getSubmissionDate() == null || dar.getExpired());
+        summary != null ? summary.getUpdateDate() : null,
+        summary != null ? summary.getName() : null,
+        summary != null ? summary.getDarCode() : null,
+        summary != null ? summary.getNonTechRus() : null,
+        summary != null ? summary.getLatestReferenceId() : null,
+        summary == null || summary.isExpired());
   }
 }
