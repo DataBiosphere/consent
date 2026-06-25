@@ -1309,7 +1309,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForResearcher =
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertEquals(1, summariesForResearcher.size());
-    Optional<String> firstId = summariesForResearcher.getFirst().getReferenceIds().stream().findFirst();
+    Optional<String> firstId =
+        summariesForResearcher.getFirst().getReferenceIds().stream().findFirst();
     assertTrue(firstId.isPresent());
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(firstId.get());
 
