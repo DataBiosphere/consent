@@ -8,15 +8,4 @@ public record DarMetricsSummary(
     String darCode,
     String nonTechRus,
     String referenceId,
-    Boolean expired) {
-
-  public DarMetricsSummary(DarCollectionSummary summary) {
-    this(
-        summary != null ? summary.getUpdateDate() : null,
-        summary != null ? summary.getName() : null,
-        summary != null ? summary.getDarCode() : null,
-        summary != null ? summary.getNonTechRus() : null,
-        summary != null ? summary.getLatestReferenceId() : null,
-        summary == null || summary.isExpired());
-  }
-}
+    Boolean expired) {}

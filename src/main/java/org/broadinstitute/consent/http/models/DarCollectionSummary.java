@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 
 public class DarCollectionSummary {
@@ -40,8 +39,6 @@ public class DarCollectionSummary {
   @Expose private Integer soApproverId;
   @Expose private Timestamp soApproverTimestamp;
   private String signingOfficialEmail;
-  private Timestamp updateDate;
-  private String nonTechRus;
 
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
   // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
@@ -78,7 +75,7 @@ public class DarCollectionSummary {
   }
 
   public void addParentChildRelationship(Integer parentId, String childReferenceId) {
-    parentToReferenceIds.computeIfAbsent(parentId, _ -> new HashSet<>()).add(childReferenceId);
+    parentToReferenceIds.computeIfAbsent(parentId, k -> new HashSet<>()).add(childReferenceId);
     updateProgressReportStatus();
   }
 
@@ -305,22 +302,6 @@ public class DarCollectionSummary {
     return this.signingOfficialEmail;
   }
 
-  public Timestamp getUpdateDate() {
-    return updateDate;
-  }
-
-  public void setUpdateDate(Timestamp updateDate) {
-    this.updateDate = updateDate;
-  }
-
-  public String getNonTechRus() {
-    return nonTechRus;
-  }
-
-  public void setNonTechRus(String nonTechRus) {
-    this.nonTechRus = nonTechRus;
-  }
-
   private void updateProgressReportStatus() {
     progressReport = !getParentToReferenceIds().isEmpty() && Objects.nonNull(getSubmissionDate());
   }
@@ -342,14 +323,6 @@ public class DarCollectionSummary {
         .append(this.getDarCollectionId(), other.getDarCollectionId())
         .append(this.getDarCode(), other.getDarCode())
         .isEquals();
-  }
-
-  @Override
-  public int hashCode() {
-    return new HashCodeBuilder()
-        .append(this.getDarCollectionId())
-        .append(this.getDarCode())
-        .toHashCode();
   }
 
   @Override

@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -861,6 +862,120 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> noApprovedDARs =
         dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId());
     assertTrue(noApprovedDARs.isEmpty());
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsByDatasetIdIncludesExpired() {
+    Dataset dataset = createDataset();
+    User user = createUserWithInstitution();
+    Date now = new Date();
+
+    // Approved collection: an approved DAR, a progress report on it, and a closeout supplement
+    Integer approvedCollectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 10), user.getUserId(), new Date());
+
+    DataAccessRequest approvedDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        approvedDAR.getReferenceId(), dataset.getDatasetId());
+    Election election =
+        createDataAccessElection(approvedDAR.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+
+    DataAccessRequest prDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(prDAR.getReferenceId(), dataset.getDatasetId());
+    Election prElection = createDataAccessElection(prDAR.getReferenceId(), dataset.getDatasetId());
+    Vote prVote = createFinalVote(dataset.getCreateUserId(), prElection.getElectionId());
+    updateVote(true, "", now, prVote.getVoteId(), false, prElection.getElectionId(), now, false);
+
+    DataAccessRequest closeoutDAR =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), approvedCollectionId, prDAR.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        closeoutDAR.getReferenceId(), dataset.getDatasetId());
+    CloseoutSupplement closeout =
+        new CloseoutSupplement(List.of("Reason"), "Other Reason", user.getUserId());
+    closeoutDAR.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDAR.getReferenceId(),
+        user.getUserId(),
+        now,
+        now,
+        closeoutDAR.getData(),
+        randomAlphabetic(10));
+
+    // Unsubmitted draft DAR linked to the dataset — should never source a summary
+    DataAccessRequest unsubmittedDAR = createDraftDataAccessRequest();
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        unsubmittedDAR.getReferenceId(), dataset.getDatasetId());
+
+    // Expired collection: an approved DAR submitted two years ago, still included in metrics
+    Integer expiredCollectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(11, 20), user.getUserId(), new Date());
+    String expiredReferenceId = UUID.randomUUID().toString();
+    Timestamp expiredSubmissionDate = Timestamp.from(Instant.now().minus(730, ChronoUnit.DAYS));
+    dataAccessRequestDAO.insertDataAccessRequest(
+        expiredCollectionId,
+        expiredReferenceId,
+        user.getUserId(),
+        expiredSubmissionDate,
+        expiredSubmissionDate,
+        expiredSubmissionDate,
+        createDataAccessRequestData(),
+        randomAlphabetic(10));
+    dataAccessRequestDAO.insertDARDatasetRelation(expiredReferenceId, dataset.getDatasetId());
+    Integer expiredElectionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            expiredSubmissionDate,
+            expiredReferenceId,
+            dataset.getDatasetId());
+    Vote expiredVote = createFinalVote(dataset.getCreateUserId(), expiredElectionId);
+    updateVote(
+        true,
+        "",
+        now,
+        expiredVote.getVoteId(),
+        false,
+        expiredElectionId,
+        expiredSubmissionDate,
+        false);
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
+
+    // One summary per qualifying collection
+    assertFalse(summaries.isEmpty());
+    assertEquals(2, summaries.size());
+
+    // The unsubmitted draft never sources a summary
+    assertTrue(
+        summaries.stream()
+            .map(DarMetricsSummary::referenceId)
+            .noneMatch(unsubmittedDAR.getReferenceId()::equals));
+
+    // Expired collection summary is present, sourced from its only DAR, and marked expired
+    DarMetricsSummary expiredSummary =
+        summaries.stream()
+            .filter(s -> expiredReferenceId.equals(s.referenceId()))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(expiredSummary.expired());
+
+    // Approved collection summary is present, sourced from one of its submitted DARs, not expired
+    DarMetricsSummary approvedSummary =
+        summaries.stream()
+            .filter(s -> !expiredReferenceId.equals(s.referenceId()))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(
+        List.of(approvedDAR.getReferenceId(), prDAR.getReferenceId(), closeoutDAR.getReferenceId())
+            .contains(approvedSummary.referenceId()));
+    assertFalse(approvedSummary.expired());
   }
 
   // findAllDraftDataAccessRequests should exclude archived DARs

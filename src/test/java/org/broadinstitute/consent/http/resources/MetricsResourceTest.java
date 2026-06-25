@@ -10,7 +10,6 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.MetricsService;
@@ -35,9 +34,7 @@ class MetricsResourceTest extends AbstractTestHelper {
 
   @Test
   void testGenerateDarSummaries() {
-    DarCollectionSummary collectionSummary = generateDarCollectionSummary();
-    when(service.generateDarSummaries(any()))
-        .thenReturn(List.of(new DarMetricsSummary(collectionSummary)));
+    when(service.generateDarSummaries(any())).thenReturn(List.of(generateDarMetricsSummary()));
 
     Response response = resource.getDarSummaryData(duosUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -51,11 +48,13 @@ class MetricsResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
-  private DarCollectionSummary generateDarCollectionSummary() {
-    DarCollectionSummary summary = new DarCollectionSummary();
-    summary.setLatestReferenceId(UUID.randomUUID().toString());
-    summary.setName(UUID.randomUUID().toString());
-    summary.setDarCode("DAR-" + randomInt(1, 100));
-    return summary;
+  private DarMetricsSummary generateDarMetricsSummary() {
+    return new DarMetricsSummary(
+        null,
+        UUID.randomUUID().toString(),
+        "DAR-" + randomInt(1, 100),
+        null,
+        UUID.randomUUID().toString(),
+        false);
   }
 }

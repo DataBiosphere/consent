@@ -4,9 +4,11 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.DarMetricsSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
 import org.broadinstitute.consent.http.models.DarDataset;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.jdbi.v3.json.Json;
@@ -99,6 +101,86 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         WHERE data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
+
+  /**
+   * Returns one {@link DarMetricsSummary} per DAR collection that contains at least one approved
+   * DAR or closeout supplement for the given dataset, ordered by DAR code ascending. Unlike {@link
+   * #findApprovedDARsByDatasetId(Integer) findApprovedDARsByDatasetId}, expired DARs are included
+   * so they appear in dataset usage metrics.
+   *
+   * <p>A collection is included when either of the following is true for the given dataset:
+   *
+   * <ul>
+   *   <li>At least one submitted, non-archived DAR in the collection has a terminal {@code final}
+   *       or {@code radar_approve} vote whose last value is {@code TRUE}.
+   *   <li>At least one submitted DAR in the collection carries a {@code closeoutSupplement} (no
+   *       election required).
+   * </ul>
+   *
+   * <p>Each summary is sourced from the most recently submitted DAR in the collection. Only the
+   * fields needed for dataset usage metrics are selected.
+   *
+   * @param datasetId the dataset to filter by
+   * @return list of {@link DarMetricsSummary}, one per qualifying collection, ordered by {@code
+   *     dar_code}
+   */
+  @RegisterRowMapper(DarMetricsSummaryMapper.class)
+  @SqlQuery(
+      """
+          WITH approved_collections AS (
+              SELECT DISTINCT dar.collection_id
+              FROM data_access_request dar
+              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+              INNER JOIN (
+                  SELECT DISTINCT e.reference_id, e.dataset_id,
+                      LAST_VALUE(v.vote) OVER(
+                          PARTITION BY e.reference_id, e.dataset_id
+                          ORDER BY v.create_date
+                          RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                      ) last_vote
+                  FROM election e
+                  INNER JOIN vote v ON e.election_id = v.election_id
+                      AND v.vote IS NOT NULL
+                      AND LOWER(e.election_type) = 'dataaccess'
+                      AND LOWER(v.type) IN ('final', 'radar_approve')
+              ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
+                  AND final_access_vote.dataset_id = dd.dataset_id
+              WHERE dd.dataset_id = :datasetId
+                  AND dar.submission_date IS NOT NULL
+                  AND final_access_vote.last_vote = TRUE
+                  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              -- Pull in all closeouts for this dataset. Closeouts do not have elections,
+              -- but we want to include them in the dataset usage metrics.
+              UNION
+              SELECT DISTINCT dar.collection_id
+              FROM data_access_request dar
+              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+              WHERE dd.dataset_id = :datasetId
+                  AND dar.submission_date IS NOT NULL
+                  AND dar.data ->> 'closeoutSupplement' IS NOT NULL
+          )
+          SELECT
+              c.dar_code,
+              latest_dar.submission_date,
+              latest_dar.reference_id,
+              latest_dar.update_date,
+              latest_dar.data ->> 'projectTitle' AS project_title,
+              latest_dar.data ->> 'nonTechRus' AS non_tech_rus
+          FROM dar_collection c
+          INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
+          INNER JOIN (
+              SELECT DISTINCT ON (collection_id) *
+              FROM data_access_request
+              WHERE submission_date IS NOT NULL
+              AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+              ORDER BY collection_id, submission_date DESC
+          ) latest_dar ON latest_dar.collection_id = c.collection_id
+          INNER JOIN dar_dataset dd ON latest_dar.reference_id = dd.reference_id
+          WHERE dd.dataset_id = :datasetId
+          ORDER BY c.dar_code
+      """)
+  List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+      @Bind("datasetId") Integer datasetId);
 
   /**
    * This query finds dataset ids on dar-dataset combinations where the most recent vote is true.

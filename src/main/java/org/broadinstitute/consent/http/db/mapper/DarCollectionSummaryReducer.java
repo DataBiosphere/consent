@@ -18,75 +18,85 @@ public class DarCollectionSummaryReducer
 
   @Override
   public void accumulate(Map<Integer, DarCollectionSummary> map, RowView rowView) {
+
     DarCollectionSummary summary =
         map.computeIfAbsent(
             rowView.getColumn("dar_collection_id", Integer.class),
-            _ -> rowView.getRow(DarCollectionSummary.class));
+            id -> rowView.getRow(DarCollectionSummary.class));
+    Election election;
+    Vote vote;
+    Integer datasetId;
+    String darStatus;
+    String darReferenceId;
+    String signingOfficialEmail;
 
-    accumulateCloseout(summary, rowView);
-    hasOptionalColumn(rowView, "dd_datasetid", Integer.class).ifPresent(summary::addDatasetId);
-    hasOptionalColumn(rowView, "dac_name", String.class).ifPresent(summary::addDacName);
-    accumulateLatestDarFields(summary, rowView);
-    accumulateElection(summary, rowView);
-    accumulateVote(summary, rowView);
-  }
-
-  private void accumulateCloseout(DarCollectionSummary summary, RowView rowView) {
-    if (hasColumn(rowView, "closeout", String.class)) {
-      String string = rowView.getColumn("closeout", String.class);
-      CloseoutSupplement closeout =
-          GsonUtil.getInstance().fromJson(string, CloseoutSupplement.class);
-      summary.setCloseoutSupplement(closeout);
-    }
-  }
-
-  private void accumulateLatestDarFields(DarCollectionSummary summary, RowView rowView) {
     try {
-      String darReferenceId = rowView.getColumn("latest_dar_reference_id", String.class);
-      if (Objects.nonNull(darReferenceId)) {
-        summary.setLatestReferenceId(darReferenceId);
+      if (hasColumn(rowView, "closeout", String.class)) {
+        String string = rowView.getColumn("closeout", String.class);
+        CloseoutSupplement closeout =
+            GsonUtil.getInstance().fromJson(string, CloseoutSupplement.class);
+        summary.setCloseoutSupplement(closeout);
       }
-      hasOptionalColumn(rowView, "latest_dar_parent_id", Integer.class)
-          .ifPresent(
-              darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
-      hasOptionalColumn(rowView, "latest_dar_requires_so_approval", Boolean.class)
-          .ifPresent(summary::setRequiresSOApproval);
-      hasOptionalColumn(rowView, "latest_dar_so_approver_id", Integer.class)
-          .ifPresent(summary::setSoApproverId);
-      hasOptionalColumn(rowView, "latest_dar_so_approver_timestamp", Timestamp.class)
-          .ifPresent(summary::setSoApproverTimestamp);
-      hasOptionalColumn(rowView, "latest_dar_update_date", Timestamp.class)
-          .ifPresent(summary::setUpdateDate);
-      hasOptionalColumn(rowView, "non_tech_rus", String.class).ifPresent(summary::setNonTechRus);
-      hasOptionalColumn(rowView, "dar_status", String.class)
-          .ifPresent(s -> summary.addStatus(s, darReferenceId));
-      hasOptionalColumn(rowView, "signingOfficialEmail", String.class)
-          .ifPresent(summary::setSigningOfficialEmail);
-    } catch (MappingException _) {
-      // ignore exception, it means dar_status and dar_reference_id wasn't included for this query
-    }
-  }
 
-  private void accumulateElection(DarCollectionSummary summary, RowView rowView) {
-    try {
-      Election election = rowView.getRow(Election.class);
-      if (Objects.nonNull(election.getElectionId())) {
-        summary.addElection(election);
-        summary.addDatasetId(election.getDatasetId());
+      datasetId = rowView.getColumn("dd_datasetid", Integer.class);
+      if (Objects.nonNull(datasetId)) {
+        summary.addDatasetId(datasetId);
       }
-    } catch (MappingException | NoSuchMapperException _) {
-      // Indicates that we do not have an election for this summary
-    }
-  }
 
-  private void accumulateVote(DarCollectionSummary summary, RowView rowView) {
-    try {
-      Vote vote = rowView.getRow(Vote.class);
-      if (Objects.nonNull(vote.getVoteId())) {
-        summary.addVote(vote);
+      if (hasColumn(rowView, "dac_name", String.class)) {
+        if (Objects.nonNull(rowView.getColumn("dac_name", String.class))) {
+          summary.addDacName(rowView.getColumn("dac_name", String.class));
+        }
       }
-    } catch (MappingException | NoSuchMapperException _) {
-      // Indicates that we do not have a vote for this summary
+
+      try {
+        darReferenceId = rowView.getColumn("latest_dar_reference_id", String.class);
+        if (Objects.nonNull(darReferenceId)) {
+          summary.setLatestReferenceId(darReferenceId);
+        }
+        hasOptionalColumn(rowView, "latest_dar_parent_id", Integer.class)
+            .ifPresent(
+                darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
+        hasOptionalColumn(rowView, "latest_dar_requires_so_approval", Boolean.class)
+            .ifPresent(summary::setRequiresSOApproval);
+        hasOptionalColumn(rowView, "latest_dar_so_approver_id", Integer.class)
+            .ifPresent(summary::setSoApproverId);
+        hasOptionalColumn(rowView, "latest_dar_so_approver_timestamp", Timestamp.class)
+            .ifPresent(summary::setSoApproverTimestamp);
+        darStatus = rowView.getColumn("dar_status", String.class);
+        if (Objects.nonNull(darStatus)) {
+          summary.addStatus(darStatus, darReferenceId);
+        }
+        signingOfficialEmail = rowView.getColumn("signingOfficialEmail", String.class);
+        if (Objects.nonNull(signingOfficialEmail)) {
+          summary.setSigningOfficialEmail(signingOfficialEmail);
+        }
+      } catch (MappingException e) {
+        // ignore exception, it means dar_status and dar_reference_id wasn't included for this query
+      }
+
+      try {
+        election = rowView.getRow(Election.class);
+        if (Objects.nonNull(election.getElectionId())) {
+          summary.addElection(election);
+          summary.addDatasetId(election.getDatasetId());
+        }
+      } catch (MappingException e) {
+        // Indicates that we do not have an election for this summary
+      }
+
+      try {
+        vote = rowView.getRow(Vote.class);
+        if (Objects.nonNull(vote.getVoteId())) {
+          summary.addVote(vote);
+        }
+      } catch (MappingException e) {
+        // Indicates that we do not have an election for this summary
+      }
+
+    } catch (NoSuchMapperException e) {
+      // ignore these exceptions, just means there's no elections and votes on the collection for
+      // this query
     }
   }
 }
