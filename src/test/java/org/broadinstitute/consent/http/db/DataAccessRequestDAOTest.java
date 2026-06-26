@@ -984,6 +984,45 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(approvedSummary.expired());
   }
 
+  // A collection's most recently submitted DAR may target a different dataset than the one that
+  // qualified the collection. The summary must still be returned for the queried dataset, sourced
+  // from the latest DAR linked to THAT dataset, not the collection-wide latest.
+  @Test
+  void testFindSummaryMetricApprovedDARsByDatasetId_latestDarOnDifferentDataset() {
+    Dataset queriedDataset = createDataset();
+    Dataset otherDataset = createDataset();
+    User user = createUserWithInstitution();
+    Date now = new Date();
+
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 10), user.getUserId(), new Date());
+
+    // Earlier DAR linked to the queried dataset and approved — this qualifies the collection
+    DataAccessRequest approvedDAR =
+        createDataAccessRequest(
+            collectionId, user.getUserId(), Date.from(Instant.now().minus(10, ChronoUnit.DAYS)));
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        approvedDAR.getReferenceId(), queriedDataset.getDatasetId());
+    Election election =
+        createDataAccessElection(approvedDAR.getReferenceId(), queriedDataset.getDatasetId());
+    Vote vote = createFinalVote(queriedDataset.getCreateUserId(), election.getElectionId());
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+
+    // Later DAR in the same collection, linked only to a different dataset
+    DataAccessRequest laterDar = createDataAccessRequest(collectionId, user.getUserId(), now);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        laterDar.getReferenceId(), otherDataset.getDatasetId());
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            queriedDataset.getDatasetId());
+
+    // The collection is still returned, sourced from the dataset-linked DAR, not the later one
+    assertEquals(1, summaries.size());
+    assertEquals(approvedDAR.getReferenceId(), summaries.getFirst().referenceId());
+  }
+
   // findAllDraftDataAccessRequests should exclude archived DARs
   @Test
   void testFindAllDraftsArchived() {

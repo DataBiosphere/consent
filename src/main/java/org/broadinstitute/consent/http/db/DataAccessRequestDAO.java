@@ -117,8 +117,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *       election required).
    * </ul>
    *
-   * <p>Each summary is sourced from the most recently submitted DAR in the collection. Only the
-   * fields needed for dataset usage metrics are selected.
+   * <p>Each summary is sourced from the most recently submitted DAR in the collection that is
+   * linked to the given dataset. Only the fields needed for dataset usage metrics are selected.
    *
    * @param datasetId the dataset to filter by
    * @return list of {@link DarMetricsSummary}, one per qualifying collection, ordered by {@code
@@ -168,15 +168,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
+          -- Source the summary from the most recently submitted DAR in the collection that is
+          -- linked to :datasetId. Constraining to the dataset here (rather than filtering after
+          -- picking the collection-wide latest) keeps a collection whose newest DAR targets a
+          -- different dataset from being dropped.
           INNER JOIN (
-              SELECT DISTINCT ON (collection_id) *
-              FROM data_access_request
-              WHERE submission_date IS NOT NULL
-              AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-              ORDER BY collection_id, submission_date DESC
+              SELECT DISTINCT ON (dar.collection_id) dar.*
+              FROM data_access_request dar
+              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+              WHERE dar.submission_date IS NOT NULL
+              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              AND dd.dataset_id = :datasetId
+              ORDER BY dar.collection_id, dar.submission_date DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
-          INNER JOIN dar_dataset dd ON latest_dar.reference_id = dd.reference_id
-          WHERE dd.dataset_id = :datasetId
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
