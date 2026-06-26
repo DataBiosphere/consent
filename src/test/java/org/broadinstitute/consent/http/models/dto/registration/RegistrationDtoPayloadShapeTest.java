@@ -33,83 +33,20 @@ class RegistrationDtoPayloadShapeTest {
 
     ConsentGroupRequest result = mapper.readValue(json, ConsentGroupRequest.class);
 
-    assertEquals(source.getDatasetId(), result.getDatasetId());
-    assertEquals(source.getConsentGroupName(), result.getConsentGroupName());
-    assertEquals(source.getDataAccessCommitteeId(), result.getDataAccessCommitteeId());
-    assertEquals(source.getAccessManagement(), result.getAccessManagement());
-    assertEquals(source.getGeneralResearchUse(), result.getGeneralResearchUse());
-    assertEquals(source.getHmb(), result.getHmb());
-    assertEquals(source.getDiseaseSpecificUse(), result.getDiseaseSpecificUse());
-    assertEquals(source.getPoa(), result.getPoa());
-    assertEquals(source.getOtherPrimary(), result.getOtherPrimary());
-    assertEquals(source.getNmds(), result.getNmds());
-    assertEquals(source.getGso(), result.getGso());
-    assertEquals(source.getPub(), result.getPub());
-    assertEquals(source.getCol(), result.getCol());
-    assertEquals(source.getIrb(), result.getIrb());
-    assertEquals(source.getGs(), result.getGs());
-    assertEquals(source.getMor(), result.getMor());
-    assertEquals(source.getMorDate(), result.getMorDate());
-    assertEquals(source.getNpu(), result.getNpu());
-    assertEquals(source.getOtherSecondary(), result.getOtherSecondary());
-    assertEquals(source.getDataLocation(), result.getDataLocation());
-    assertEquals(source.getUrl(), result.getUrl());
-    assertEquals(source.getRequestLocation(), result.getRequestLocation());
-    assertEquals(source.getNumberOfParticipants(), result.getNumberOfParticipants());
-    assertNotNull(result.getFileTypes());
-    assertEquals(1, result.getFileTypes().size());
-    assertEquals(
-        source.getFileTypes().get(0).getFileType(), result.getFileTypes().get(0).getFileType());
-    assertEquals(
-        source.getFileTypes().get(0).getFunctionalEquivalence(),
-        result.getFileTypes().get(0).getFunctionalEquivalence());
-    assertEquals(source.getData(), result.getData());
-    // datasetIdentifier is server-assigned and intentionally absent from ConsentGroupRequest
+    assertConsentGroupRequestFieldsMatch(source, result);
   }
 
   @Test
   void consentGroupRequest_serializesBackToConsentGroupJson() throws Exception {
     ConsentGroup source = buildConsentGroup();
 
-    // ConsentGroup → JSON → ConsentGroupRequest → JSON → ConsentGroup
+    // ConsentGroup → JSON → ConsentGroupRequest → JSON → ConsentGroupRequest
     String dtoJson =
         mapper.writeValueAsString(
             mapper.readValue(mapper.writeValueAsString(source), ConsentGroupRequest.class));
-    ConsentGroup roundTripped = mapper.readValue(dtoJson, ConsentGroup.class);
+    ConsentGroupRequest roundTripped = mapper.readValue(dtoJson, ConsentGroupRequest.class);
 
-    assertEquals(source.getDatasetId(), roundTripped.getDatasetId());
-    assertEquals(source.getConsentGroupName(), roundTripped.getConsentGroupName());
-    assertEquals(source.getDataAccessCommitteeId(), roundTripped.getDataAccessCommitteeId());
-    assertEquals(source.getAccessManagement(), roundTripped.getAccessManagement());
-    assertEquals(source.getGeneralResearchUse(), roundTripped.getGeneralResearchUse());
-    assertEquals(source.getHmb(), roundTripped.getHmb());
-    assertEquals(source.getDiseaseSpecificUse(), roundTripped.getDiseaseSpecificUse());
-    assertEquals(source.getPoa(), roundTripped.getPoa());
-    assertEquals(source.getOtherPrimary(), roundTripped.getOtherPrimary());
-    assertEquals(source.getNmds(), roundTripped.getNmds());
-    assertEquals(source.getGso(), roundTripped.getGso());
-    assertEquals(source.getPub(), roundTripped.getPub());
-    assertEquals(source.getCol(), roundTripped.getCol());
-    assertEquals(source.getIrb(), roundTripped.getIrb());
-    assertEquals(source.getGs(), roundTripped.getGs());
-    assertEquals(source.getMor(), roundTripped.getMor());
-    assertEquals(source.getMorDate(), roundTripped.getMorDate());
-    assertEquals(source.getNpu(), roundTripped.getNpu());
-    assertEquals(source.getOtherSecondary(), roundTripped.getOtherSecondary());
-    assertEquals(source.getDataLocation(), roundTripped.getDataLocation());
-    assertEquals(source.getUrl(), roundTripped.getUrl());
-    assertEquals(source.getRequestLocation(), roundTripped.getRequestLocation());
-    assertEquals(source.getNumberOfParticipants(), roundTripped.getNumberOfParticipants());
-    assertNotNull(roundTripped.getFileTypes());
-    assertEquals(1, roundTripped.getFileTypes().size());
-    assertEquals(
-        source.getFileTypes().get(0).getFileType(),
-        roundTripped.getFileTypes().get(0).getFileType());
-    assertEquals(
-        source.getFileTypes().get(0).getFunctionalEquivalence(),
-        roundTripped.getFileTypes().get(0).getFunctionalEquivalence());
-    assertEquals(source.getData(), roundTripped.getData());
-    // datasetIdentifier is server-assigned and intentionally absent from ConsentGroupRequest
+    assertConsentGroupRequestFieldsMatch(source, roundTripped);
   }
 
   // ── StudyRegistrationRequest ───────────────────────────────────────────────
@@ -271,6 +208,42 @@ class RegistrationDtoPayloadShapeTest {
     schema.setConsentGroups(List.of(cg));
 
     return schema;
+  }
+
+  private void assertConsentGroupRequestFieldsMatch(
+      ConsentGroup source, ConsentGroupRequest result) {
+    // datasetIdentifier is server-assigned and intentionally absent from ConsentGroupRequest
+    assertEquals(source.getDatasetId(), result.getDatasetId());
+    assertEquals(source.getConsentGroupName(), result.getConsentGroupName());
+    assertEquals(source.getDataAccessCommitteeId(), result.getDataAccessCommitteeId());
+    assertEquals(source.getAccessManagement(), result.getAccessManagement());
+    assertEquals(source.getGeneralResearchUse(), result.getGeneralResearchUse());
+    assertEquals(source.getHmb(), result.getHmb());
+    assertEquals(source.getDiseaseSpecificUse(), result.getDiseaseSpecificUse());
+    assertEquals(source.getPoa(), result.getPoa());
+    assertEquals(source.getOtherPrimary(), result.getOtherPrimary());
+    assertEquals(source.getNmds(), result.getNmds());
+    assertEquals(source.getGso(), result.getGso());
+    assertEquals(source.getPub(), result.getPub());
+    assertEquals(source.getCol(), result.getCol());
+    assertEquals(source.getIrb(), result.getIrb());
+    assertEquals(source.getGs(), result.getGs());
+    assertEquals(source.getMor(), result.getMor());
+    assertEquals(source.getMorDate(), result.getMorDate());
+    assertEquals(source.getNpu(), result.getNpu());
+    assertEquals(source.getOtherSecondary(), result.getOtherSecondary());
+    assertEquals(source.getDataLocation(), result.getDataLocation());
+    assertEquals(source.getUrl(), result.getUrl());
+    assertEquals(source.getRequestLocation(), result.getRequestLocation());
+    assertEquals(source.getNumberOfParticipants(), result.getNumberOfParticipants());
+    assertNotNull(result.getFileTypes());
+    assertEquals(1, result.getFileTypes().size());
+    assertEquals(
+        source.getFileTypes().get(0).getFileType(), result.getFileTypes().get(0).getFileType());
+    assertEquals(
+        source.getFileTypes().get(0).getFunctionalEquivalence(),
+        result.getFileTypes().get(0).getFunctionalEquivalence());
+    assertEquals(source.getData(), result.getData());
   }
 
   private void assertStudyFieldsMatch(
