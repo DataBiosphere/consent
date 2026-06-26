@@ -866,7 +866,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
   @Test
   void testFindSummaryMetricApprovedDARsByDatasetIdIncludesExpired() {
+    // Create a dataset to request access to
     Dataset dataset = createDataset();
+
+    // Create a dar collection
     User user = createUserWithInstitution();
     Date now = new Date();
 
@@ -875,6 +878,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection(
             "DAR-" + randomInt(1, 10), user.getUserId(), new Date());
 
+    // Create an approved DAR on a dataset
     DataAccessRequest approvedDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(
         approvedDAR.getReferenceId(), dataset.getDatasetId());
@@ -883,12 +887,14 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
     updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
 
+    // Create a Progress Report on the approved DAR
     DataAccessRequest prDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(prDAR.getReferenceId(), dataset.getDatasetId());
     Election prElection = createDataAccessElection(prDAR.getReferenceId(), dataset.getDatasetId());
     Vote prVote = createFinalVote(dataset.getCreateUserId(), prElection.getElectionId());
     updateVote(true, "", now, prVote.getVoteId(), false, prElection.getElectionId(), now, false);
 
+    // Create a closeout DAR from the PR DAR
     DataAccessRequest closeoutDAR =
         createProgressReport(
             user.getEraCommonsId(), user.getUserId(), approvedCollectionId, prDAR.getId());
