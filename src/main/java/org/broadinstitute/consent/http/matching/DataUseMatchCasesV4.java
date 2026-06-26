@@ -24,7 +24,7 @@ public class DataUseMatchCasesV4 {
       "The HMB Research Purpose does not match the POA data use limitations.";
   static final String DS_F2 =
       "The Disease-Specific: %s Research Purpose is not a valid subclass of the Disease-Specific data use limitations.";
-  private static final String MDS_F1 =
+  static final String MDS_F1 =
       "The Methods development Research Purpose does not match the Disease-Specific data use limitations.";
   private static final String POA_F1 =
       "The Populations, Origins, Ancestry Research Purpose does not match the HMB or Disease-Specific data use limitation.";
@@ -44,7 +44,7 @@ public class DataUseMatchCasesV4 {
       "The proposed population, origins, and/or ancestry research is within the bounds of the general research use permissions of the dataset(s)";
   private static final String POA_APPROVE_POA =
       "The proposed population, origins, and/or ancestry research is within the bounds of the population, origins, and/or ancestry use permissions of the dataset(s)";
-  private static final String MDS_APPROVE =
+  static final String MDS_APPROVE =
       "Methods research is permitted on controlled-access data so long as it is not expressly prohibited";
 
   // rationale for abstain cases
