@@ -66,33 +66,18 @@ class RegistrationDtoPayloadShapeTest {
   void studyRegistrationRequest_serializesBackToDatasetRegistrationSchemaV1() throws Exception {
     DatasetRegistrationSchemaV1 source = buildFullyPopulatedSchema();
 
-    // Schema → DTO → JSON → Schema
+    // Schema → JSON → DTO → JSON → Schema
     String dtoJson =
         mapper.writeValueAsString(
             mapper.readValue(mapper.writeValueAsString(source), StudyRegistrationRequest.class));
     DatasetRegistrationSchemaV1 roundTripped =
         mapper.readValue(dtoJson, DatasetRegistrationSchemaV1.class);
 
-    assertEquals(source.getStudyName(), roundTripped.getStudyName());
-    assertEquals(source.getStudyType(), roundTripped.getStudyType());
-    assertEquals(source.getStudyDescription(), roundTripped.getStudyDescription());
-    assertEquals(source.getDataTypes(), roundTripped.getDataTypes());
-    assertEquals(source.getPiName(), roundTripped.getPiName());
-    assertEquals(source.getNihAnvilUse(), roundTripped.getNihAnvilUse());
-    assertEquals(source.getNihICsSupportingStudy(), roundTripped.getNihICsSupportingStudy());
-    assertEquals(
-        source.getAlternativeDataSharingPlanReasons(),
-        roundTripped.getAlternativeDataSharingPlanReasons());
-    assertEquals(source.getExternalIdentifier(), roundTripped.getExternalIdentifier());
-    assertEquals(source.getExternalIdentifierType(), roundTripped.getExternalIdentifierType());
-    assertNotNull(roundTripped.getConsentGroups());
-    assertEquals(1, roundTripped.getConsentGroups().size());
-    assertEquals(
-        source.getConsentGroups().get(0).getConsentGroupName(),
-        roundTripped.getConsentGroups().get(0).getConsentGroupName());
-    assertEquals(
-        source.getConsentGroups().get(0).getAccessManagement(),
-        roundTripped.getConsentGroups().get(0).getAccessManagement());
+    // Full-tree comparison catches any field that fails to survive the round-trip.
+    // buildFullyPopulatedSchema() omits studyId, dataSubmitterUserId, and consentGroup
+    // datasetIdentifier — the only fields intentionally absent from the DTO — so the
+    // source and round-tripped trees are structurally identical.
+    assertEquals(mapper.valueToTree(source), mapper.valueToTree(roundTripped));
   }
 
   // ── StudyUpdateRequest ─────────────────────────────────────────────────────
