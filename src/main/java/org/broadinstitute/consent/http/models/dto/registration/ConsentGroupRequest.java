@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -62,7 +60,7 @@ public class ConsentGroupRequest {
   private Boolean hmb;
 
   @JsonProperty("diseaseSpecificUse")
-  private List<String> diseaseSpecificUse = new ArrayList<>();
+  private List<String> diseaseSpecificUse;
 
   @JsonProperty("poa")
   private Boolean poa;
@@ -113,257 +111,207 @@ public class ConsentGroupRequest {
   private Integer numberOfParticipants;
 
   @JsonProperty("fileTypes")
-  private List<FileTypeObject> fileTypes = new ArrayList<>();
+  private List<FileTypeObject> fileTypes;
 
   @JsonProperty("data")
-  private Map<String, Object> data = new HashMap<>();
+  private Map<String, Object> data;
 
-  @JsonProperty("datasetId")
   public Integer getDatasetId() {
     return datasetId;
   }
 
-  @JsonProperty("datasetId")
   public void setDatasetId(Integer datasetId) {
     this.datasetId = datasetId;
   }
 
-  @JsonProperty("consentGroupName")
   public String getConsentGroupName() {
     return consentGroupName;
   }
 
-  @JsonProperty("consentGroupName")
   public void setConsentGroupName(String consentGroupName) {
     this.consentGroupName = consentGroupName;
   }
 
-  @JsonProperty("dataAccessCommitteeId")
   public Integer getDataAccessCommitteeId() {
     return dataAccessCommitteeId;
   }
 
-  @JsonProperty("dataAccessCommitteeId")
   public void setDataAccessCommitteeId(Integer dataAccessCommitteeId) {
     this.dataAccessCommitteeId = dataAccessCommitteeId;
   }
 
-  @JsonProperty("accessManagement")
   public ConsentGroup.AccessManagement getAccessManagement() {
     return accessManagement;
   }
 
-  @JsonProperty("accessManagement")
   public void setAccessManagement(ConsentGroup.AccessManagement accessManagement) {
     this.accessManagement = accessManagement;
   }
 
-  @JsonProperty("generalResearchUse")
   public Boolean getGeneralResearchUse() {
     return generalResearchUse;
   }
 
-  @JsonProperty("generalResearchUse")
   public void setGeneralResearchUse(Boolean generalResearchUse) {
     this.generalResearchUse = generalResearchUse;
   }
 
-  @JsonProperty("hmb")
   public Boolean getHmb() {
     return hmb;
   }
 
-  @JsonProperty("hmb")
   public void setHmb(Boolean hmb) {
     this.hmb = hmb;
   }
 
-  @JsonProperty("diseaseSpecificUse")
   public List<String> getDiseaseSpecificUse() {
     return diseaseSpecificUse;
   }
 
-  @JsonProperty("diseaseSpecificUse")
   public void setDiseaseSpecificUse(List<String> diseaseSpecificUse) {
     this.diseaseSpecificUse = diseaseSpecificUse;
   }
 
-  @JsonProperty("poa")
   public Boolean getPoa() {
     return poa;
   }
 
-  @JsonProperty("poa")
   public void setPoa(Boolean poa) {
     this.poa = poa;
   }
 
-  @JsonProperty("otherPrimary")
   public String getOtherPrimary() {
     return otherPrimary;
   }
 
-  @JsonProperty("otherPrimary")
   public void setOtherPrimary(String otherPrimary) {
     this.otherPrimary = otherPrimary;
   }
 
-  @JsonProperty("nmds")
   public Boolean getNmds() {
     return nmds;
   }
 
-  @JsonProperty("nmds")
   public void setNmds(Boolean nmds) {
     this.nmds = nmds;
   }
 
-  @JsonProperty("gso")
   public Boolean getGso() {
     return gso;
   }
 
-  @JsonProperty("gso")
   public void setGso(Boolean gso) {
     this.gso = gso;
   }
 
-  @JsonProperty("pub")
   public Boolean getPub() {
     return pub;
   }
 
-  @JsonProperty("pub")
   public void setPub(Boolean pub) {
     this.pub = pub;
   }
 
-  @JsonProperty("col")
   public Boolean getCol() {
     return col;
   }
 
-  @JsonProperty("col")
   public void setCol(Boolean col) {
     this.col = col;
   }
 
-  @JsonProperty("irb")
   public Boolean getIrb() {
     return irb;
   }
 
-  @JsonProperty("irb")
   public void setIrb(Boolean irb) {
     this.irb = irb;
   }
 
-  @JsonProperty("gs")
   public String getGs() {
     return gs;
   }
 
-  @JsonProperty("gs")
   public void setGs(String gs) {
     this.gs = gs;
   }
 
-  @JsonProperty("mor")
   public Boolean getMor() {
     return mor;
   }
 
-  @JsonProperty("mor")
   public void setMor(Boolean mor) {
     this.mor = mor;
   }
 
-  @JsonProperty("morDate")
   public String getMorDate() {
     return morDate;
   }
 
-  @JsonProperty("morDate")
   public void setMorDate(String morDate) {
     this.morDate = morDate;
   }
 
-  @JsonProperty("npu")
   public Boolean getNpu() {
     return npu;
   }
 
-  @JsonProperty("npu")
   public void setNpu(Boolean npu) {
     this.npu = npu;
   }
 
-  @JsonProperty("otherSecondary")
   public String getOtherSecondary() {
     return otherSecondary;
   }
 
-  @JsonProperty("otherSecondary")
   public void setOtherSecondary(String otherSecondary) {
     this.otherSecondary = otherSecondary;
   }
 
-  @JsonProperty("dataLocation")
   public ConsentGroup.DataLocation getDataLocation() {
     return dataLocation;
   }
 
-  @JsonProperty("dataLocation")
   public void setDataLocation(ConsentGroup.DataLocation dataLocation) {
     this.dataLocation = dataLocation;
   }
 
-  @JsonProperty("url")
   public URI getUrl() {
     return url;
   }
 
-  @JsonProperty("url")
   public void setUrl(URI url) {
     this.url = url;
   }
 
-  @JsonProperty("requestLocation")
   public URI getRequestLocation() {
     return requestLocation;
   }
 
-  @JsonProperty("requestLocation")
   public void setRequestLocation(URI requestLocation) {
     this.requestLocation = requestLocation;
   }
 
-  @JsonProperty("numberOfParticipants")
   public Integer getNumberOfParticipants() {
     return numberOfParticipants;
   }
 
-  @JsonProperty("numberOfParticipants")
   public void setNumberOfParticipants(Integer numberOfParticipants) {
     this.numberOfParticipants = numberOfParticipants;
   }
 
-  @JsonProperty("fileTypes")
   public List<FileTypeObject> getFileTypes() {
     return fileTypes;
   }
 
-  @JsonProperty("fileTypes")
   public void setFileTypes(List<FileTypeObject> fileTypes) {
     this.fileTypes = fileTypes;
   }
 
-  @JsonProperty("data")
   public Map<String, Object> getData() {
     return data;
   }
 
-  @JsonProperty("data")
   public void setData(Map<String, Object> data) {
     this.data = data;
   }
