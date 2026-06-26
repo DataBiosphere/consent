@@ -267,9 +267,11 @@ class DataUseMatcherV4Test {
     assertApprove(purpose, dataset);
   }
 
-  // Direct unit tests of matchMDS, covering each branch in isolation. A disease restriction is
-  // present on the purpose and/or dataset so the "no disease focused research" short-circuit does
-  // not pre-empt the branch under test. The diseaseMatch argument is set explicitly per case.
+  // Direct unit tests of matchMDS, covering each branch in isolation. The diseaseMatch argument is
+  // set explicitly per case. Except for Branch A below, which deliberately exercises the "no
+  // disease
+  // focused research" short-circuit, a disease restriction is present on the purpose and/or dataset
+  // so that short-circuit does not pre-empt the branch under test.
 
   // Branch A: neither purpose nor dataset has disease restrictions -> APPROVE with no rationale.
   @Test
@@ -369,14 +371,18 @@ class DataUseMatcherV4Test {
   }
 
   // Branch F deny: no GRU/HMB/POA match and the disease match did not approve -> DENY with MDS_F1.
+  // The disease restrictions intentionally differ (brain cancer is not a subclass of intestinal
+  // cancer) so the data reflects a non-approving disease match, though the injected diseaseMatch
+  // argument is what actually drives matchMDS here.
   @Test
   void testMatchMDS_diseaseMatchDeny_deny() {
     DataUse purpose =
         new DataUseBuilder()
             .setMethodsResearch(true)
-            .setDiseaseRestrictions(List.of(CANCER_NODE))
+            .setDiseaseRestrictions(List.of(BRAIN_CANCER_NODE))
             .build();
-    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse dataset =
+        new DataUseBuilder().setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE)).build();
     MatchResult result =
         DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
     assertTrue(Deny(result.getMatchResultType()));
