@@ -6,7 +6,6 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.jdbi.v3.core.Jdbi;
 
@@ -26,8 +25,6 @@ public class MetricsService {
     if (dataset == null) {
       throw new NotFoundException("Dataset with specified ID does not exist.");
     }
-    List<DataAccessRequest> dars =
-        darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
-    return dars.stream().map(DarMetricsSummary::new).toList();
+    return darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
   }
 }
