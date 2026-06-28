@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationResult;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
@@ -82,6 +84,18 @@ public class OntologyService implements ConsentLogger {
 
   public StreamingOutput findByTermIds(String[] termIds) {
     return ontologyDAO.findByTermIds(termIds);
+  }
+
+  /**
+   * Reconciles the ontology terms referenced by Datasets and DARs against the indexed terms in the
+   * ontology_index table. Returns referenced term ids that are either missing from the index or
+   * present but flagged unusable, so administrators can identify drift after re-indexing an
+   * ontology.
+   *
+   * @return The list of referenced terms that are missing or unusable in the ontology index.
+   */
+  public List<OntologyReconciliationResult> reconcileIndexedTerms() {
+    return ontologyDAO.findReferencedTermsMissingFromIndex();
   }
 
   /**

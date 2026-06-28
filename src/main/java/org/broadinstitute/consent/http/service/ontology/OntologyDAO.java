@@ -5,12 +5,14 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.StreamingOutputIterator;
 import org.broadinstitute.consent.http.db.mapper.JsonMapper;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.json.Json;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.BatchChunkSize;
@@ -36,6 +38,53 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
 
   @SqlUpdate("DELETE FROM ontology_index where ontology = :ontology")
   void deleteByOntology(@Bind("ontology") String ontology);
+
+  /**
+   * Reconciles the ontology terms referenced by Datasets and DARs against the terms in the
+   * ontology_index table. Returns one row per referenced term id that is either missing from the
+   * index or present but flagged unusable. Dataset disease restrictions are read from the
+   * dataset.data_use (text) column and DAR ontology entries from the data_access_request.data
+   * (jsonb) column. Comparison is case-insensitive and whitespace-trimmed to mirror the lookup
+   * behavior of {@link #findByTermIds(String[])}.
+   */
+  @RegisterConstructorMapper(OntologyReconciliationResult.class)
+  @SqlQuery(
+      """
+          WITH referenced_terms AS (
+              SELECT 'DATASET' AS source,
+                     d.dataset_id::text AS source_id,
+                     jsonb_array_elements_text(d.data_use::jsonb -> 'diseaseRestrictions') AS term_id
+              FROM dataset d
+              WHERE d.data_use IS NOT NULL
+                AND jsonb_typeof(d.data_use::jsonb -> 'diseaseRestrictions') = 'array'
+              UNION ALL
+              SELECT 'DAR' AS source,
+                     dar.reference_id AS source_id,
+                     jsonb_array_elements(dar.data -> 'ontologies') ->> 'id' AS term_id
+              FROM data_access_request dar
+              WHERE jsonb_typeof(dar.data -> 'ontologies') = 'array'
+          ),
+          clean AS (
+              SELECT source, source_id, term_id, LOWER(TRIM(term_id)) AS norm_id
+              FROM referenced_terms
+              WHERE term_id IS NOT NULL AND TRIM(term_id) <> ''
+          )
+          SELECT
+              c.term_id AS term_id,
+              CASE WHEN oi.id IS NULL THEN 'MISSING_FROM_INDEX'
+                   WHEN oi.usable IS NOT TRUE THEN 'PRESENT_BUT_UNUSABLE' END AS issue,
+              oi.ontology AS ontology,
+              COUNT(*) AS reference_count,
+              COUNT(*) FILTER (WHERE c.source = 'DATASET') AS dataset_refs,
+              COUNT(*) FILTER (WHERE c.source = 'DAR') AS dar_refs,
+              STRING_AGG(DISTINCT c.source || ':' || c.source_id, ', ') AS referenced_by
+          FROM clean c
+          LEFT JOIN ontology_index oi ON LOWER(TRIM(oi.id)) = c.norm_id
+          WHERE oi.id IS NULL OR oi.usable IS NOT TRUE
+          GROUP BY c.term_id, oi.id, oi.usable, oi.ontology
+          ORDER BY issue, reference_count DESC
+          """)
+  List<OntologyReconciliationResult> findReferencedTermsMissingFromIndex();
 
   @Json
   default StreamingOutput findByTermIds(@Bind("ids") String[] ids) {

@@ -64,6 +64,18 @@ public class OntologyResource extends Resource {
   }
 
   @GET
+  @Path("reconcile")
+  @Produces({MediaType.APPLICATION_JSON})
+  @RolesAllowed({ADMIN})
+  public Response reconcileIndexedTerms(@Auth DuosUser duosUser) {
+    try {
+      return Response.ok(ontologyService.reconcileIndexedTerms()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
   @Path("search")
   @Produces({MediaType.APPLICATION_JSON})
   public Response searchByTermIds(@QueryParam("ids") String ids) {
