@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.models.dto.registration;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
@@ -58,6 +60,7 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     // name unchanged — service must not be called, so no stub needed
     assertDoesNotThrow(() -> validator.validate(study, registration));
+    verify(datasetService, never()).findAllStudyNames();
   }
 
   @Test
@@ -71,7 +74,7 @@ class StudyUpdateRequestValidatorTest {
 
   @Test
   void testValidate_studyName_changedToExistingName() {
-    String takenName = RandomStringUtils.randomAlphabetic(12);
+    String takenName = RandomStringUtils.secureStrong().nextAlphabetic(12);
     Study study = createMockStudy();
     when(datasetService.findAllStudyNames()).thenReturn(Set.of(study.getName(), takenName));
     StudyUpdateRequest registration = createValidRegistration(study);
@@ -145,7 +148,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
-    registration.setDbGaPPhsID(RandomStringUtils.randomAlphabetic(8));
+    registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(null);
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
@@ -155,8 +158,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
-    registration.setDbGaPPhsID(RandomStringUtils.randomAlphabetic(8));
-    registration.setPiInstitution(RandomUtils.nextInt(1, 100));
+    registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
@@ -177,7 +180,7 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
-    registration.setPiInstitution(RandomUtils.nextInt(1, 100));
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
@@ -228,8 +231,8 @@ class StudyUpdateRequestValidatorTest {
     // datasetId is in getDatasetIds() (membership passes) but getDatasets() is empty,
     // so dataset lookup returns empty — the return false; branch is exercised
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
-    int datasetId = RandomUtils.nextInt(10, 99);
+    study.setName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    int datasetId = RandomUtils.secureStrong().randomInt(10, 99);
     study.addDatasetIds(Set.of(datasetId));
     // intentionally no datasets added via addDatasets()
 
@@ -239,7 +242,7 @@ class StudyUpdateRequestValidatorTest {
             ? new ConsentGroupRequest()
             : registration.getConsentGroups().get(0);
     cg.setDatasetId(datasetId);
-    cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
+    cg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
     if (registration.getConsentGroups().isEmpty()) {
       registration.setConsentGroups(new ArrayList<>(List.of(cg)));
     }
@@ -273,9 +276,9 @@ class StudyUpdateRequestValidatorTest {
     Dataset extraDataset = new Dataset();
     extraDataset.setName("");
     extraDataset.setDatasetId(10000);
-    extraDataset.setDacId(RandomUtils.nextInt(1, 100));
+    extraDataset.setDacId(RandomUtils.secureStrong().randomInt(1, 100));
     study.getDatasets().add(extraDataset);
-    ArrayList<Integer> ids = new ArrayList<>(study.getDatasetIds());
+    List<Integer> ids = new ArrayList<>(study.getDatasetIds());
     ids.add(extraDataset.getDatasetId());
     study.addDatasetIds(new HashSet<>(ids));
 
@@ -297,8 +300,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     newCg.setAccessManagement(AccessManagement.OPEN);
     // No datasetId — this is a new consent group
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
@@ -313,7 +316,7 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
     newCg.setConsentGroupName(null);
-    newCg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     newCg.setAccessManagement(AccessManagement.OPEN);
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
@@ -326,7 +329,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
     newCg.setNumberOfParticipants(null);
     newCg.setAccessManagement(AccessManagement.OPEN);
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
@@ -340,8 +343,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     // no accessManagement, no data-use flags
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
@@ -354,8 +357,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     newCg.setAccessManagement(AccessManagement.CONTROLLED);
     newCg.setGeneralResearchUse(true);
     // dataAccessCommitteeId intentionally absent
@@ -402,7 +405,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setAlternativeDataSharingPlan(true);
-    registration.setAlternativeDataSharingPlanExplanation(RandomStringUtils.randomAlphabetic(10));
+    registration.setAlternativeDataSharingPlanExplanation(
+        RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setAlternativeDataSharingPlanReasons(List.of());
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
@@ -474,8 +478,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     newCg.setAccessManagement(AccessManagement.OPEN);
     newCg.setMorDate("January 15, 2025");
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
@@ -489,8 +493,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     newCg.setAccessManagement(AccessManagement.OPEN);
     newCg.setMorDate("2025-06-01");
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
@@ -514,11 +518,11 @@ class StudyUpdateRequestValidatorTest {
 
   private Study createMockStudy() {
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setName(RandomStringUtils.secureStrong().nextAlphabetic(10));
     Dataset dataset = new Dataset();
     dataset.setName("");
-    dataset.setDatasetId(RandomUtils.nextInt(10, 99));
-    dataset.setDacId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(RandomUtils.secureStrong().randomInt(10, 99));
+    dataset.setDacId(RandomUtils.secureStrong().randomInt(1, 100));
     study.addDatasets(List.of(dataset));
     study.addDatasetIds(Set.of(dataset.getDatasetId()));
     return study;
@@ -527,20 +531,20 @@ class StudyUpdateRequestValidatorTest {
   private StudyUpdateRequest createValidRegistration(Study study) {
     StudyUpdateRequest registration = new StudyUpdateRequest();
     registration.setStudyName(study.getName());
-    registration.setStudyDescription(RandomStringUtils.randomAlphabetic(20));
-    registration.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(8)));
+    registration.setStudyDescription(RandomStringUtils.secureStrong().nextAlphabetic(20));
+    registration.setDataTypes(List.of(RandomStringUtils.secureStrong().nextAlphabetic(8)));
     registration.setPublicVisibility(true);
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL);
-    registration.setPiName(RandomStringUtils.randomAlphabetic(10));
+    registration.setPiName(RandomStringUtils.secureStrong().nextAlphabetic(10));
 
     List<ConsentGroupRequest> consentGroups =
         study.getDatasets().stream()
             .map(
                 d -> {
                   ConsentGroupRequest cg = new ConsentGroupRequest();
-                  cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-                  cg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+                  cg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+                  cg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
                   cg.setDatasetId(d.getDatasetId());
                   // existing consent groups omit data-use fields — they were already validated
                   return cg;

@@ -42,37 +42,46 @@ public class StudyRegistrationRequestValidator {
   }
 
   private void validateConditionalStudyFields(StudyRegistrationRequest registration) {
-    NihAnvilUse anvilUse = registration.getNihAnvilUse();
+    validateNihAnvilUseConditionals(registration.getNihAnvilUse(), registration);
+    validateGsrConditionals(registration);
+    validateAlternativeDataSharingConditionals(registration);
+  }
+
+  private void validateNihAnvilUseConditionals(
+      NihAnvilUse anvilUse, StudyRegistrationRequest registration) {
     if (anvilUse.equals(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY)) {
       if (Objects.isNull(registration.getDbGaPPhsID())) {
         throw new BadRequestException("DbGap phs ID is required");
       }
-      if (Objects.isNull(registration.getPiInstitution())) {
-        throw new BadRequestException("PI Institution is required");
-      }
-      if (Objects.isNull(registration.getNihGrantContractNumber())) {
-        throw new BadRequestException("NIH Grant of Contract Number is required");
-      }
+      validatePiInstitutionAndGrantNumber(registration);
     }
     if (anvilUse.equals(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_DO_NOT_HAVE_A_DB_GA_P_PHS_ID)
         || anvilUse.equals(
             NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL)) {
-      if (Objects.isNull(registration.getPiInstitution())) {
-        throw new BadRequestException("PI Institution is required");
-      }
-      if (Objects.isNull(registration.getNihGrantContractNumber())) {
-        throw new BadRequestException("NIH Grant of Contract Number is required");
-      }
+      validatePiInstitutionAndGrantNumber(registration);
     }
-    if (Boolean.TRUE.equals(
-        registration.getControlledAccessRequiredForGenomicSummaryResultsGSR())) {
-      if (Objects.isNull(
-          registration
-              .getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation())) {
-        throw new BadRequestException(
-            "Controlled access GSR explanation is required when GSR access is required");
-      }
+  }
+
+  private void validatePiInstitutionAndGrantNumber(StudyRegistrationRequest registration) {
+    if (Objects.isNull(registration.getPiInstitution())) {
+      throw new BadRequestException("PI Institution is required");
     }
+    if (Objects.isNull(registration.getNihGrantContractNumber())) {
+      throw new BadRequestException("NIH Grant of Contract Number is required");
+    }
+  }
+
+  private void validateGsrConditionals(StudyRegistrationRequest registration) {
+    if (Boolean.TRUE.equals(registration.getControlledAccessRequiredForGenomicSummaryResultsGSR())
+        && Objects.isNull(
+            registration
+                .getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation())) {
+      throw new BadRequestException(
+          "Controlled access GSR explanation is required when GSR access is required");
+    }
+  }
+
+  private void validateAlternativeDataSharingConditionals(StudyRegistrationRequest registration) {
     if (Boolean.TRUE.equals(registration.getAlternativeDataSharingPlan())) {
       if (Objects.isNull(registration.getAlternativeDataSharingPlanExplanation())) {
         throw new BadRequestException("Alternative Data Sharing Plan Explanation is required");
@@ -86,10 +95,10 @@ public class StudyRegistrationRequestValidator {
 
   private void validateEmailFields(StudyRegistrationRequest registration) {
     EmailValidator emailValidator = EmailValidator.getInstance();
-    if (registration.getPiEmail() != null && !registration.getPiEmail().isBlank()) {
-      if (!emailValidator.isValid(registration.getPiEmail())) {
-        throw new BadRequestException("PI Email is not a valid email address");
-      }
+    if (registration.getPiEmail() != null
+        && !registration.getPiEmail().isBlank()
+        && !emailValidator.isValid(registration.getPiEmail())) {
+      throw new BadRequestException("PI Email is not a valid email address");
     }
     if (registration.getDataCustodianEmail() != null) {
       registration.getDataCustodianEmail().stream()
@@ -165,7 +174,7 @@ public class StudyRegistrationRequestValidator {
     try {
       LocalDate.parse(dateStr);
     } catch (DateTimeParseException e) {
-      throw new BadRequestException(fieldName + " is not a valid date");
+      throw new BadRequestException(fieldName + " is not a valid date", e);
     }
   }
 }

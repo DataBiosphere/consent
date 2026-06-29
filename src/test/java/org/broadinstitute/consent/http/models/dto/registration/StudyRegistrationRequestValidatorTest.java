@@ -215,7 +215,7 @@ class StudyRegistrationRequestValidatorTest {
     ConsentGroupRequest cg = registration.getConsentGroups().get(0);
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
-    cg.setDataAccessCommitteeId(RandomUtils.nextInt(1, 100));
+    cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
     assertDoesNotThrow(() -> validator.validate(registration));
   }
 
@@ -233,7 +233,7 @@ class StudyRegistrationRequestValidatorTest {
   void testValidate_piInstitution_required_for_dbgap() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
-    registration.setDbGaPPhsID(RandomStringUtils.randomAlphabetic(8));
+    registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(null);
     assertThrows(BadRequestException.class, () -> validator.validate(registration));
   }
@@ -242,8 +242,8 @@ class StudyRegistrationRequestValidatorTest {
   void testValidate_nihGrantContractNumber_required_for_dbgap() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
-    registration.setDbGaPPhsID(RandomStringUtils.randomAlphabetic(8));
-    registration.setPiInstitution(RandomUtils.nextInt(1, 100));
+    registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
     assertThrows(BadRequestException.class, () -> validator.validate(registration));
   }
@@ -262,7 +262,7 @@ class StudyRegistrationRequestValidatorTest {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
-    registration.setPiInstitution(RandomUtils.nextInt(1, 100));
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
     assertThrows(BadRequestException.class, () -> validator.validate(registration));
   }
@@ -303,7 +303,8 @@ class StudyRegistrationRequestValidatorTest {
   void testValidate_altSharingPlanReasons_required() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setAlternativeDataSharingPlan(true);
-    registration.setAlternativeDataSharingPlanExplanation(RandomStringUtils.randomAlphabetic(10));
+    registration.setAlternativeDataSharingPlanExplanation(
+        RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setAlternativeDataSharingPlanReasons(List.of());
     assertThrows(BadRequestException.class, () -> validator.validate(registration));
   }
@@ -400,21 +401,21 @@ class StudyRegistrationRequestValidatorTest {
 
   private ConsentGroupRequest createValidConsentGroup() {
     ConsentGroupRequest cg = new ConsentGroupRequest();
-    cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-    cg.setNumberOfParticipants(RandomUtils.nextInt(1, 100));
+    cg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    cg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     cg.setAccessManagement(AccessManagement.OPEN);
     return cg;
   }
 
   private StudyRegistrationRequest createValidRegistration() {
     StudyRegistrationRequest registration = new StudyRegistrationRequest();
-    registration.setStudyName(RandomStringUtils.randomAlphabetic(10));
-    registration.setStudyDescription(RandomStringUtils.randomAlphabetic(20));
-    registration.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(8)));
+    registration.setStudyName(RandomStringUtils.secureStrong().nextAlphabetic(10));
+    registration.setStudyDescription(RandomStringUtils.secureStrong().nextAlphabetic(20));
+    registration.setDataTypes(List.of(RandomStringUtils.secureStrong().nextAlphabetic(8)));
     registration.setPublicVisibility(true);
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL);
-    registration.setPiName(RandomStringUtils.randomAlphabetic(10));
+    registration.setPiName(RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setConsentGroups(List.of(createValidConsentGroup()));
     return registration;
   }
