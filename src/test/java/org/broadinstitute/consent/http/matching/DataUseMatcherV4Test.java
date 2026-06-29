@@ -234,6 +234,11 @@ class DataUseMatcherV4Test {
     assertDeny(purpose, dataset);
   }
 
+  // The following testMDS_positive_case_* tests drive the full matcher. Because neither the purpose
+  // nor the dataset has disease restrictions, matchMDS short-circuits to APPROVE on its first
+  // branch and never reaches the GRU/HMB/POA approval logic. They are retained as integration
+  // coverage of that short-circuit; the testMatchMDS_* tests below exercise matchMDS directly so
+  // that each of its branches is covered in isolation.
   @Test
   void testMDS_positive_case_1() {
     DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
@@ -260,6 +265,128 @@ class DataUseMatcherV4Test {
     DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     DataUse purpose = new DataUseBuilder().setMethodsResearch(true).build();
     assertApprove(purpose, dataset);
+  }
+
+  // Direct unit tests of matchMDS, covering each branch in isolation. The diseaseMatch argument is
+  // set explicitly per case. Except for Branch A below, which deliberately exercises the "no
+  // disease
+  // focused research" short-circuit, a disease restriction is present on the purpose and/or dataset
+  // so that short-circuit does not pre-empt the branch under test.
+
+  // Branch A: neither purpose nor dataset has disease restrictions -> APPROVE with no rationale.
+  @Test
+  void testMatchMDS_noDiseaseRestrictions_approve() {
+    DataUse purpose = new DataUseBuilder().setMethodsResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().isEmpty());
+  }
+
+  // Branch B: methodsResearch is false -> APPROVE with no rationale.
+  @Test
+  void testMatchMDS_methodsResearchFalse_approve() {
+    DataUse purpose =
+        new DataUseBuilder()
+            .setMethodsResearch(false)
+            .setDiseaseRestrictions(List.of(CANCER_NODE))
+            .build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().isEmpty());
+  }
+
+  // Branch B: methodsResearch is null -> APPROVE with no rationale.
+  @Test
+  void testMatchMDS_methodsResearchNull_approve() {
+    DataUse purpose = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().isEmpty());
+  }
+
+  // Branch C: dataset GRU -> APPROVE with MDS rationale (purpose disease restriction bypasses A).
+  @Test
+  void testMatchMDS_datasetGRU_approve() {
+    DataUse purpose =
+        new DataUseBuilder()
+            .setMethodsResearch(true)
+            .setDiseaseRestrictions(List.of(CANCER_NODE))
+            .build();
+    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().contains(DataUseMatchCasesV4.MDS_APPROVE));
+  }
+
+  // Branch D: dataset HMB -> APPROVE with MDS rationale.
+  @Test
+  void testMatchMDS_datasetHMB_approve() {
+    DataUse purpose =
+        new DataUseBuilder()
+            .setMethodsResearch(true)
+            .setDiseaseRestrictions(List.of(CANCER_NODE))
+            .build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().contains(DataUseMatchCasesV4.MDS_APPROVE));
+  }
+
+  // Branch E: dataset POA -> APPROVE with MDS rationale.
+  @Test
+  void testMatchMDS_datasetPOA_approve() {
+    DataUse purpose =
+        new DataUseBuilder()
+            .setMethodsResearch(true)
+            .setDiseaseRestrictions(List.of(CANCER_NODE))
+            .build();
+    DataUse dataset = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().contains(DataUseMatchCasesV4.MDS_APPROVE));
+  }
+
+  // Branch F approve: no GRU/HMB/POA match, but the disease match approved -> APPROVE.
+  @Test
+  void testMatchMDS_diseaseMatchApprove_approve() {
+    DataUse purpose =
+        new DataUseBuilder()
+            .setMethodsResearch(true)
+            .setDiseaseRestrictions(List.of(CANCER_NODE))
+            .build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.APPROVE);
+    assertTrue(Approve(result.getMatchResultType()));
+    assertTrue(result.getMessage().contains(DataUseMatchCasesV4.MDS_APPROVE));
+  }
+
+  // Branch F deny: no GRU/HMB/POA match and the disease match did not approve -> DENY with MDS_F1.
+  // The disease restrictions intentionally differ (brain cancer is not a subclass of intestinal
+  // cancer) so the data reflects a non-approving disease match, though the injected diseaseMatch
+  // argument is what actually drives matchMDS here.
+  @Test
+  void testMatchMDS_diseaseMatchDeny_deny() {
+    DataUse purpose =
+        new DataUseBuilder()
+            .setMethodsResearch(true)
+            .setDiseaseRestrictions(List.of(BRAIN_CANCER_NODE))
+            .build();
+    DataUse dataset =
+        new DataUseBuilder().setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE)).build();
+    MatchResult result =
+        DataUseMatchCasesV4.matchMDS(purpose, dataset, DataUseMatchResultType.DENY);
+    assertTrue(Deny(result.getMatchResultType()));
+    assertTrue(result.getMessage().contains(DataUseMatchCasesV4.MDS_F1));
   }
 
   @Test
