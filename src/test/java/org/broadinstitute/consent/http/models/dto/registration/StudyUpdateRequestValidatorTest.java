@@ -22,6 +22,9 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -52,6 +55,15 @@ class StudyUpdateRequestValidatorTest {
     registration.setStudyName(null);
     // null name — uniqueness check is skipped entirely, no service call needed
     assertDoesNotThrow(() -> validator.validate(study, registration));
+  }
+
+  @Test
+  void testValidate_studyName_blank_rejected() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setStudyName("   ");
+    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    verify(datasetService, never()).findAllStudyNames();
   }
 
   @Test
@@ -286,7 +298,8 @@ class StudyUpdateRequestValidatorTest {
   }
 
   @Test
-  void testValidate_consentGroupRemoval_allowsEmptyList() {
+  void testValidate_consentGroupRemoval_emptyListIsNoOp() {
+    // empty list is treated the same as null — "no consent group changes"
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setConsentGroups(List.of());
@@ -421,11 +434,13 @@ class StudyUpdateRequestValidatorTest {
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
 
-  @Test
-  void testValidate_piEmail_valid() {
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"   ", "pi@example.com"})
+  void testValidate_piEmail_allowed(String email) {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setPiEmail("pi@example.com");
+    registration.setPiEmail(email);
     assertDoesNotThrow(() -> validator.validate(study, registration));
   }
 

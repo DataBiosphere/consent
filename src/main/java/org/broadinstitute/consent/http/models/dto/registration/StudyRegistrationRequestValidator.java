@@ -51,7 +51,7 @@ public class StudyRegistrationRequestValidator {
       NihAnvilUse anvilUse, StudyRegistrationRequest registration) {
     if (anvilUse.equals(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY)) {
       if (Objects.isNull(registration.getDbGaPPhsID())) {
-        throw new BadRequestException("DbGap phs ID is required");
+        throw new BadRequestException("dbGaPPhsID is required");
       }
       validatePiInstitutionAndGrantNumber(registration);
     }
@@ -67,7 +67,7 @@ public class StudyRegistrationRequestValidator {
       throw new BadRequestException("PI Institution is required");
     }
     if (Objects.isNull(registration.getNihGrantContractNumber())) {
-      throw new BadRequestException("NIH Grant of Contract Number is required");
+      throw new BadRequestException("NIH Grant or Contract Number is required");
     }
   }
 

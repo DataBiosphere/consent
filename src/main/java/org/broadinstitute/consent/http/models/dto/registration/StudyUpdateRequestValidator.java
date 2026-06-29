@@ -42,6 +42,9 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
     if (registration.getStudyName() == null) {
       return;
     }
+    if (registration.getStudyName().isBlank()) {
+      throw new BadRequestException("Study Name is required");
+    }
     if (registration.getStudyName().equals(existingStudy.getName())) {
       return;
     }
@@ -118,6 +121,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
   }
 
   private void validateConsentGroupRemoval(Study existingStudy, StudyUpdateRequest registration) {
+    // null or empty list means "no consent group changes" — removal validation is skipped
     if (registration.getConsentGroups() == null || registration.getConsentGroups().isEmpty()) {
       return;
     }
