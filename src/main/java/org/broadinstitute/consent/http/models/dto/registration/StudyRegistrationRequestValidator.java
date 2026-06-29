@@ -13,7 +13,7 @@ public class StudyRegistrationRequestValidator {
 
   public boolean validate(StudyRegistrationRequest registration) {
     validateRequiredStudyFields(registration);
-    validateConditionalStudyFields(registration);
+    validateConditionalFields(registration);
     validateEmailFields(registration);
     validateDateFields(registration);
     validateConsentGroups(registration.getConsentGroups());
@@ -41,13 +41,13 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateConditionalStudyFields(StudyRegistrationRequest registration) {
+  protected void validateConditionalFields(StudyRegistrationRequest registration) {
     validateNihAnvilUseConditionals(registration.getNihAnvilUse(), registration);
     validateGsrConditionals(registration);
     validateAlternativeDataSharingConditionals(registration);
   }
 
-  private void validateNihAnvilUseConditionals(
+  protected void validateNihAnvilUseConditionals(
       NihAnvilUse anvilUse, StudyRegistrationRequest registration) {
     if (anvilUse.equals(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY)) {
       if (Objects.isNull(registration.getDbGaPPhsID())) {
@@ -62,7 +62,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validatePiInstitutionAndGrantNumber(StudyRegistrationRequest registration) {
+  protected void validatePiInstitutionAndGrantNumber(StudyRegistrationRequest registration) {
     if (Objects.isNull(registration.getPiInstitution())) {
       throw new BadRequestException("PI Institution is required");
     }
@@ -71,7 +71,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateGsrConditionals(StudyRegistrationRequest registration) {
+  protected void validateGsrConditionals(StudyRegistrationRequest registration) {
     if (Boolean.TRUE.equals(registration.getControlledAccessRequiredForGenomicSummaryResultsGSR())
         && Objects.isNull(
             registration
@@ -81,7 +81,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateAlternativeDataSharingConditionals(StudyRegistrationRequest registration) {
+  protected void validateAlternativeDataSharingConditionals(StudyRegistrationRequest registration) {
     if (Boolean.TRUE.equals(registration.getAlternativeDataSharingPlan())) {
       if (Objects.isNull(registration.getAlternativeDataSharingPlanExplanation())) {
         throw new BadRequestException("Alternative Data Sharing Plan Explanation is required");
@@ -93,7 +93,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateEmailFields(StudyRegistrationRequest registration) {
+  protected void validateEmailFields(StudyRegistrationRequest registration) {
     EmailValidator emailValidator = EmailValidator.getInstance();
     if (registration.getPiEmail() != null
         && !registration.getPiEmail().isBlank()
@@ -114,7 +114,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateDateFields(StudyRegistrationRequest registration) {
+  protected void validateDateFields(StudyRegistrationRequest registration) {
     validateDateString(registration.getEmbargoReleaseDate(), "Embargo Release Date");
     validateDateString(
         registration.getAlternativeDataSharingPlanTargetDeliveryDate(),
@@ -128,10 +128,10 @@ public class StudyRegistrationRequestValidator {
     if (Objects.isNull(consentGroups) || consentGroups.isEmpty()) {
       throw new BadRequestException("At least one Consent Group is required");
     }
-    consentGroups.forEach(this::validateConsentGroup);
+    consentGroups.forEach(this::validateNewConsentGroup);
   }
 
-  private void validateConsentGroup(ConsentGroupRequest cg) {
+  protected void validateNewConsentGroup(ConsentGroupRequest cg) {
     if (Objects.isNull(cg.getConsentGroupName()) || cg.getConsentGroupName().isBlank()) {
       throw new BadRequestException("Consent Group Name is required");
     }
@@ -143,7 +143,7 @@ public class StudyRegistrationRequestValidator {
     validateDateString(cg.getMorDate(), "Moratorium Date");
   }
 
-  private void validateDataUseConsistency(ConsentGroupRequest cg) {
+  protected void validateDataUseConsistency(ConsentGroupRequest cg) {
     int count = 0;
     if (AccessManagement.OPEN.equals(cg.getAccessManagement())) count++;
     if (Boolean.TRUE.equals(cg.getGeneralResearchUse())) count++;
@@ -159,7 +159,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateDacRequirement(ConsentGroupRequest cg) {
+  protected void validateDacRequirement(ConsentGroupRequest cg) {
     if (AccessManagement.CONTROLLED.equals(cg.getAccessManagement())
         && Objects.isNull(cg.getDataAccessCommitteeId())) {
       throw new BadRequestException(
@@ -167,7 +167,7 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void validateDateString(String dateStr, String fieldName) {
+  protected void validateDateString(String dateStr, String fieldName) {
     if (dateStr == null || dateStr.isBlank()) {
       return;
     }

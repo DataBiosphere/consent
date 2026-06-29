@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.ws.rs.BadRequestException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.junit.jupiter.api.BeforeEach;
@@ -394,6 +396,106 @@ class StudyRegistrationRequestValidatorTest {
   void testValidate_morDate_absent_is_allowed() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.getConsentGroups().get(0).setMorDate(null);
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── NIH happy paths ──────────────────────────────────────────────────────
+
+  @Test
+  void testValidate_nihAnvilUse_dbgapPhsId_allFieldsValid() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
+    registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
+    registration.setNihGrantContractNumber(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  @Test
+  void testValidate_nihAnvilUse_nhgriFundedNoPhs_allFieldsValid() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_DO_NOT_HAVE_A_DB_GA_P_PHS_ID);
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
+    registration.setNihGrantContractNumber(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── GSR conditional ──────────────────────────────────────────────────────
+
+  @Test
+  void testValidate_gsrExplanation_present_when_gsr_true() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setControlledAccessRequiredForGenomicSummaryResultsGSR(true);
+    registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(
+        RandomStringUtils.secureStrong().nextAlphabetic(10));
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── Alt sharing plan ─────────────────────────────────────────────────────
+
+  @Test
+  void testValidate_altSharingPlanReasons_null() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAlternativeDataSharingPlan(true);
+    registration.setAlternativeDataSharingPlanExplanation(
+        RandomStringUtils.secureStrong().nextAlphabetic(10));
+    registration.setAlternativeDataSharingPlanReasons(null);
+    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+  }
+
+  @Test
+  void testValidate_altSharingPlan_valid() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAlternativeDataSharingPlan(true);
+    registration.setAlternativeDataSharingPlanExplanation(
+        RandomStringUtils.secureStrong().nextAlphabetic(10));
+    registration.setAlternativeDataSharingPlanReasons(
+        List.of(AlternativeDataSharingPlanReason.OTHER));
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── Email blank / filtered ───────────────────────────────────────────────
+
+  @Test
+  void testValidate_piEmail_blank_is_allowed() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiEmail("   ");
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  @Test
+  void testValidate_dataCustodianEmail_blank_is_filtered() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDataCustodianEmail(List.of("  ", "valid@example.com"));
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── Data-use edge cases ───────────────────────────────────────────────────
+
+  @Test
+  void testValidate_diseaseSpecificUse_emptyList_notCounted() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    // OPEN access is already set; empty diseaseSpecificUse adds nothing → count=1, valid
+    cg.setDiseaseSpecificUse(new ArrayList<>());
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  @Test
+  void testValidate_otherPrimary_blank_not_counted() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    // OPEN access is already set; blank otherPrimary adds nothing → count=1, valid
+    cg.setOtherPrimary("   ");
+    assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── Date blank ───────────────────────────────────────────────────────────
+
+  @Test
+  void testValidate_embargoReleaseDate_blank_is_allowed() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setEmbargoReleaseDate("  ");
     assertDoesNotThrow(() -> validator.validate(registration));
   }
 
