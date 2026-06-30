@@ -463,7 +463,10 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- CVE fix: jackson-databind 3.1.1 has a deserialization vulnerability; pin to 3.1.4 -->
+      <!--
+       See https://broadworkbench.atlassian.net/browse/DT-3748
+       Pin tools.jackson.core:jackson-databind to 3.1.4 to address a reported security issue in 3.1.1
+      -->
       <dependency>
         <groupId>tools.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
