@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
@@ -96,52 +99,23 @@ class StudyUpdateRequestValidatorTest {
 
   // ── Required fields ──────────────────────────────────────────────────────
 
-  @Test
-  void testValidate_studyDescription_null() {
+  @ParameterizedTest
+  @MethodSource({"invalidRegistrationMutations", "invalidDateMutations"})
+  void testValidate_requiredField_invalid(Consumer<StudyUpdateRequest> mutate) {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setStudyDescription(null);
+    mutate.accept(registration);
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
 
-  @Test
-  void testValidate_dataTypes_null() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setDataTypes(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_dataTypes_empty() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setDataTypes(List.of());
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_publicVisibility_null() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setPublicVisibility(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_nihAnvilUse_null() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setNihAnvilUse(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_piName_null() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setPiName(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+  static Stream<Consumer<StudyUpdateRequest>> invalidRegistrationMutations() {
+    return Stream.<Consumer<StudyUpdateRequest>>of(
+        r -> r.setStudyDescription(null),
+        r -> r.setDataTypes(null),
+        r -> r.setDataTypes(List.of()),
+        r -> r.setPublicVisibility(null),
+        r -> r.setNihAnvilUse(null),
+        r -> r.setPiName(null));
   }
 
   // ── NIH conditional fields ───────────────────────────────────────────────
@@ -261,18 +235,12 @@ class StudyUpdateRequestValidatorTest {
     assertDoesNotThrow(() -> validator.validate(study, registration));
   }
 
-  @Test
-  void testValidate_consentGroupNameChange_allowed_whenStoredNameIsNull() {
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {""})
+  void testValidate_consentGroupNameChange_allowed_whenStoredNameIsNullOrBlank(String storedName) {
     Study study = createMockStudy();
-    study.getDatasets().forEach(d -> d.setName(null));
-    StudyUpdateRequest registration = createValidRegistration(study);
-    assertDoesNotThrow(() -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_consentGroupNameChange_allowed_whenNameIsBlank() {
-    Study study = createMockStudy();
-    study.getDatasets().forEach(d -> d.setName(""));
+    study.getDatasets().forEach(d -> d.setName(storedName));
     StudyUpdateRequest registration = createValidRegistration(study);
     assertDoesNotThrow(() -> validator.validate(study, registration));
   }
@@ -323,62 +291,32 @@ class StudyUpdateRequestValidatorTest {
     assertDoesNotThrow(() -> validator.validate(study, registration));
   }
 
-  @Test
-  void testValidate_newConsentGroup_missingName() {
+  @ParameterizedTest
+  @MethodSource("invalidNewConsentGroupMutations")
+  void testValidate_newConsentGroup_invalid(Consumer<ConsentGroupRequest> mutate) {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(null);
+    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
     newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
     newCg.setAccessManagement(AccessManagement.OPEN);
+    mutate.accept(newCg);
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
     registration.setConsentGroups(groups);
     assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
 
-  @Test
-  void testValidate_newConsentGroup_missingParticipants() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
-    newCg.setNumberOfParticipants(null);
-    newCg.setAccessManagement(AccessManagement.OPEN);
-    List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
-    groups.add(newCg);
-    registration.setConsentGroups(groups);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_newConsentGroup_noPrimaryDataUse() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
-    // no accessManagement, no data-use flags
-    List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
-    groups.add(newCg);
-    registration.setConsentGroups(groups);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_newConsentGroup_controlled_dacRequired() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    ConsentGroupRequest newCg = new ConsentGroupRequest();
-    newCg.setConsentGroupName(RandomStringUtils.secureStrong().nextAlphabetic(10));
-    newCg.setNumberOfParticipants(RandomUtils.secureStrong().randomInt(1, 100));
-    newCg.setAccessManagement(AccessManagement.CONTROLLED);
-    newCg.setGeneralResearchUse(true);
-    // dataAccessCommitteeId intentionally absent
-    List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
-    groups.add(newCg);
-    registration.setConsentGroups(groups);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+  static Stream<Consumer<ConsentGroupRequest>> invalidNewConsentGroupMutations() {
+    return Stream.<Consumer<ConsentGroupRequest>>of(
+        cg -> cg.setConsentGroupName(null),
+        cg -> cg.setNumberOfParticipants(null),
+        cg -> cg.setAccessManagement(null),
+        cg -> {
+          cg.setAccessManagement(AccessManagement.CONTROLLED);
+          cg.setGeneralResearchUse(true);
+          // dataAccessCommitteeId intentionally absent
+        });
   }
 
   @Test
@@ -462,12 +400,10 @@ class StudyUpdateRequestValidatorTest {
 
   // ── Date validation (update path) ───────────────────────────────────────
 
-  @Test
-  void testValidate_embargoReleaseDate_invalid() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setEmbargoReleaseDate("01/15/2025");
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+  static Stream<Consumer<StudyUpdateRequest>> invalidDateMutations() {
+    return Stream.<Consumer<StudyUpdateRequest>>of(
+        r -> r.setEmbargoReleaseDate("01/15/2025"),
+        r -> r.setAlternativeDataSharingPlanTargetDeliveryDate("not-a-date"));
   }
 
   @Test
@@ -476,14 +412,6 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setEmbargoReleaseDate("2025-01-15");
     assertDoesNotThrow(() -> validator.validate(study, registration));
-  }
-
-  @Test
-  void testValidate_altSharingDeliveryDate_invalid() {
-    Study study = createMockStudy();
-    StudyUpdateRequest registration = createValidRegistration(study);
-    registration.setAlternativeDataSharingPlanTargetDeliveryDate("not-a-date");
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
   }
 
   // ── morDate in new consent groups (update path) ──────────────────────────
