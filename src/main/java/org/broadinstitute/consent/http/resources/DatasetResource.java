@@ -55,6 +55,8 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.RegistrationShadowValidator;
+import org.broadinstitute.consent.http.service.RegistrationShadowValidator.ValidationOutcome;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
@@ -74,6 +76,7 @@ public class DatasetResource extends Resource {
 
   private final JsonSchemaUtil jsonSchemaUtil;
   private final GCSService gcsService;
+  private final RegistrationShadowValidator registrationShadowValidator;
 
   @Inject
   public DatasetResource(
@@ -83,7 +86,8 @@ public class DatasetResource extends Resource {
       ElasticSearchService elasticSearchService,
       TDRService tdrService,
       GCSService gcsService,
-      JsonSchemaUtil jsonSchemaUtil) {
+      JsonSchemaUtil jsonSchemaUtil,
+      RegistrationShadowValidator registrationShadowValidator) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
@@ -91,6 +95,7 @@ public class DatasetResource extends Resource {
     this.elasticSearchService = elasticSearchService;
     this.tdrService = tdrService;
     this.jsonSchemaUtil = jsonSchemaUtil;
+    this.registrationShadowValidator = registrationShadowValidator;
   }
 
   @POST
@@ -106,11 +111,17 @@ public class DatasetResource extends Resource {
   public Response createDatasetRegistration(
       @Auth AuthUser authUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
     try {
+      long schemaValidationStart = System.nanoTime();
       Set<String> errors = jsonSchemaUtil.validateSchemaMessagesV1(json);
-      if (!errors.isEmpty()) {
-        throw new BadRequestException(
-            "Please correct the following fields:\n"
-                + errors.stream().map(error -> " - " + error + "\n").collect(Collectors.joining()));
+      if (errors.isEmpty()) {
+        registrationShadowValidator.compareCreate(
+            json, ValidationOutcome.acceptedSince(schemaValidationStart));
+      } else {
+        String errorMessage =
+            errors.stream().map(error -> " - " + error + "\n").collect(Collectors.joining());
+        registrationShadowValidator.compareCreate(
+            json, ValidationOutcome.rejectedSince(errorMessage, schemaValidationStart));
+        throw new BadRequestException("Please correct the following fields:\n" + errorMessage);
       }
 
       DatasetRegistrationSchemaV1 registration =

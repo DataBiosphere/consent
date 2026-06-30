@@ -41,6 +41,8 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.RegistrationShadowValidator;
+import org.broadinstitute.consent.http.service.RegistrationShadowValidator.ValidationOutcome;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -54,17 +56,20 @@ public class StudyResource extends Resource {
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
+  private final RegistrationShadowValidator registrationShadowValidator;
 
   @Inject
   public StudyResource(
       DatasetService datasetService,
       UserService userService,
       DatasetRegistrationService datasetRegistrationService,
-      ElasticSearchService elasticSearchService) {
+      ElasticSearchService elasticSearchService,
+      RegistrationShadowValidator registrationShadowValidator) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
+    this.registrationShadowValidator = registrationShadowValidator;
   }
 
   /**
@@ -244,9 +249,29 @@ public class StudyResource extends Resource {
       // enforces it in a creation context but doesn't work for editing purposes.
       DatasetRegistrationSchemaV1UpdateValidator updateValidator =
           new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
-      DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
 
-      if (updateValidator.validate(existingStudy, registration)) {
+      long updateValidationStart = System.nanoTime();
+      DatasetRegistrationSchemaV1 registration = null;
+      boolean updateValid = false;
+      RuntimeException validationError = null;
+      try {
+        registration = updateValidator.deserializeRegistration(json);
+        updateValid = updateValidator.validate(existingStudy, registration);
+      } catch (RuntimeException e) {
+        validationError = e;
+      }
+      registrationShadowValidator.compareUpdate(
+          json,
+          existingStudy,
+          validationError == null
+              ? ValidationOutcome.acceptedSince(updateValidationStart)
+              : ValidationOutcome.rejectedSince(
+                  validationError.getMessage(), updateValidationStart));
+      if (validationError != null) {
+        throw validationError;
+      }
+
+      if (updateValid) {
         // Update study from registration
         Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
         Study updatedStudy =

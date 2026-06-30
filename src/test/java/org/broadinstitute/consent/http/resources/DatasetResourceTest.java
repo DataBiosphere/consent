@@ -66,6 +66,7 @@ import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.RegistrationShadowValidator;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
@@ -93,6 +94,8 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Mock private GCSService gcsService;
 
+  @Mock private RegistrationShadowValidator registrationShadowValidator;
+
   @Mock private Response mockResponse;
 
   private final AuthUser authUser = new AuthUser().setEmail("test@test.com");
@@ -110,7 +113,8 @@ class DatasetResourceTest extends AbstractTestHelper {
             elasticSearchService,
             tdrService,
             gcsService,
-            new JsonSchemaUtil());
+            new JsonSchemaUtil(),
+            registrationShadowValidator);
   }
 
   @Test
