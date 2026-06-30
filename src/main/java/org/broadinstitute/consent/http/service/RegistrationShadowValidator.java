@@ -124,6 +124,13 @@ public class RegistrationShadowValidator implements ConsentLogger {
     } catch (JsonProcessingException e) {
       return ValidationOutcome.rejectedSince(
           "Unable to deserialize/validate: " + e.getMessage(), start);
+    } catch (Exception e) {
+      logWarn(
+          "[VALIDATOR_PARITY] shadow validator threw unexpected exception: "
+              + e.getClass().getSimpleName(),
+          e);
+      return ValidationOutcome.rejectedSince(
+          "Shadow validator error: " + e.getClass().getSimpleName(), start);
     }
   }
 
