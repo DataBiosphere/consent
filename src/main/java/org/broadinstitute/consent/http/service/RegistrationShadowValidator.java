@@ -145,14 +145,22 @@ public class RegistrationShadowValidator implements ConsentLogger {
           "[VALIDATOR_PARITY:%s] AGREE accepted=%s %s"
               .formatted(flow, oldOutcome.accepted(), timing));
     } else {
+      String oldMessage =
+          oldOutcome.message() == null
+              ? null
+              : oldOutcome.message().replaceAll("[^\\s]+@[^\\s]+", "<redacted>");
+      String newMessage =
+          newOutcome.message() == null
+              ? null
+              : newOutcome.message().replaceAll("[^\\s]+@[^\\s]+", "<redacted>");
       logWarn(
           "[VALIDATOR_PARITY:%s] DISAGREE old=%s new=%s oldMessage=%s newMessage=%s %s"
               .formatted(
                   flow,
                   oldOutcome.accepted() ? "ACCEPT" : "REJECT",
                   newOutcome.accepted() ? "ACCEPT" : "REJECT",
-                  oldOutcome.message(),
-                  newOutcome.message(),
+                  oldMessage,
+                  newMessage,
                   timing));
     }
     return new ComparisonResult(oldOutcome, newOutcome, agree);
