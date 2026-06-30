@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -110,7 +111,7 @@ public class RegistrationShadowValidator implements ConsentLogger {
   @FunctionalInterface
   private interface ThrowingRunnable {
 
-    void run() throws Exception;
+    void run() throws JsonProcessingException;
   }
 
   private ValidationOutcome runTimed(ThrowingRunnable validation) {
@@ -120,7 +121,7 @@ public class RegistrationShadowValidator implements ConsentLogger {
       return ValidationOutcome.acceptedSince(start);
     } catch (BadRequestException e) {
       return ValidationOutcome.rejectedSince(e.getMessage(), start);
-    } catch (Exception e) {
+    } catch (JsonProcessingException e) {
       return ValidationOutcome.rejectedSince(
           "Unable to deserialize/validate: " + e.getMessage(), start);
     }

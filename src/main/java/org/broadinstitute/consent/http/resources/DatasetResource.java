@@ -79,6 +79,8 @@ public class DatasetResource extends Resource {
   private final RegistrationShadowValidator registrationShadowValidator;
 
   @Inject
+  @SuppressWarnings(
+      "java:S107") // shadow-validator dependency is temporary, see RegistrationShadowValidator
   public DatasetResource(
       DatasetService datasetService,
       UserService userService,

@@ -247,31 +247,11 @@ public class StudyResource extends Resource {
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
-      DatasetRegistrationSchemaV1UpdateValidator updateValidator =
-          new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
+      StudyUpdateValidationResult validationResult =
+          validateRegistrationUpdate(json, existingStudy);
+      DatasetRegistrationSchemaV1 registration = validationResult.registration();
 
-      long updateValidationStart = System.nanoTime();
-      DatasetRegistrationSchemaV1 registration = null;
-      boolean updateValid = false;
-      RuntimeException validationError = null;
-      try {
-        registration = updateValidator.deserializeRegistration(json);
-        updateValid = updateValidator.validate(existingStudy, registration);
-      } catch (RuntimeException e) {
-        validationError = e;
-      }
-      registrationShadowValidator.compareUpdate(
-          json,
-          existingStudy,
-          validationError == null
-              ? ValidationOutcome.acceptedSince(updateValidationStart)
-              : ValidationOutcome.rejectedSince(
-                  validationError.getMessage(), updateValidationStart));
-      if (validationError != null) {
-        throw validationError;
-      }
-
-      if (updateValid) {
+      if (validationResult.valid()) {
         // Update study from registration
         Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
         Study updatedStudy =
@@ -289,6 +269,40 @@ public class StudyResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private record StudyUpdateValidationResult(
+      DatasetRegistrationSchemaV1 registration, boolean valid) {}
+
+  /**
+   * Runs the manual update-validator and the {@link RegistrationShadowValidator} comparison, then
+   * re-throws any validation error so the caller's outer catch can translate it into a response,
+   * exactly as it did before this logic was extracted.
+   */
+  private StudyUpdateValidationResult validateRegistrationUpdate(String json, Study existingStudy) {
+    DatasetRegistrationSchemaV1UpdateValidator updateValidator =
+        new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
+
+    long updateValidationStart = System.nanoTime();
+    DatasetRegistrationSchemaV1 registration = null;
+    boolean updateValid = false;
+    RuntimeException validationError = null;
+    try {
+      registration = updateValidator.deserializeRegistration(json);
+      updateValid = updateValidator.validate(existingStudy, registration);
+    } catch (RuntimeException e) {
+      validationError = e;
+    }
+    registrationShadowValidator.compareUpdate(
+        json,
+        existingStudy,
+        validationError == null
+            ? ValidationOutcome.acceptedSince(updateValidationStart)
+            : ValidationOutcome.rejectedSince(validationError.getMessage(), updateValidationStart));
+    if (validationError != null) {
+      throw validationError;
+    }
+    return new StudyUpdateValidationResult(registration, updateValid);
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {
