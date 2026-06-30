@@ -8,12 +8,14 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
+import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -109,6 +111,43 @@ class OntologyResourceTest extends AbstractTestHelper {
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.deleteOntologyTerms(duosUser, OntologyType.DOID.name())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testReconcileIndexedTermsSuccess() {
+    User admin = new User();
+    admin.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, admin);
+
+    OntologyReconciliationResult result =
+        new OntologyReconciliationResult(
+            "http://purl.obolibrary.org/obo/DOID_162",
+            "MISSING_FROM_INDEX",
+            null,
+            1L,
+            1L,
+            0L,
+            "DATASET:1");
+    when(ontologyService.reconcileIndexedTerms()).thenReturn(List.of(result));
+
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.reconcileIndexedTerms(duosUser)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testReconcileIndexedTermsException() {
+    User admin = new User();
+    admin.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, admin);
+
+    when(ontologyService.reconcileIndexedTerms()).thenThrow(new RuntimeException());
+
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.reconcileIndexedTerms(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }

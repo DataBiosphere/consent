@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationResult;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -185,6 +186,30 @@ class OntologyServiceTest extends AbstractTestHelper {
     assertNotNull(results);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
     assertEquals(2, jsonArray.size());
+  }
+
+  @Test
+  void testReconcileIndexedTerms() {
+    OntologyReconciliationResult result =
+        new OntologyReconciliationResult(
+            "http://purl.obolibrary.org/obo/DOID_162",
+            "MISSING_FROM_INDEX",
+            null,
+            2L,
+            1L,
+            1L,
+            "DATASET:1, DAR:abc");
+    when(ontologyDAO.findReferencedTermsMissingFromIndex()).thenReturn(List.of(result));
+
+    List<OntologyReconciliationResult> results = service.reconcileIndexedTerms();
+    assertEquals(1, results.size());
+    assertEquals(result, results.getFirst());
+  }
+
+  @Test
+  void testReconcileIndexedTermsEmpty() {
+    when(ontologyDAO.findReferencedTermsMissingFromIndex()).thenReturn(List.of());
+    assertTrue(service.reconcileIndexedTerms().isEmpty());
   }
 
   @Test

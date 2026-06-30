@@ -948,6 +948,8 @@ paths:
     $ref: './paths/votesRationale.yaml'
   /api/ontology:
     $ref: './paths/ontology.yaml'
+  /api/ontology/reconcile:
+    $ref: './paths/ontologyReconcile.yaml'
   /liveness:
     $ref: './paths/liveness.yaml'
   /ontology/search:

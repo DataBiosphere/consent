@@ -1,0 +1,20 @@
+get:
+  summary: Reconcile indexed ontology terms
+  description: |
+    Reconcile the ontology terms referenced by Datasets and DARs against the indexed terms in the
+    ontology index. Returns referenced term ids that are either missing from the index or present
+    but flagged unusable, so administrators can identify drift after re-indexing an ontology.
+  operationId: apiOntologyReconcileGet
+  tags:
+    - Admin
+  responses:
+    200:
+      description: Ontology Reconciliation Results
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/OntologyReconciliationResult.yaml'
+    500:
+      description: Internal Server Error

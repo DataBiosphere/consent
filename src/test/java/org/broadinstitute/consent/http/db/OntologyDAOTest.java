@@ -11,14 +11,24 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.FileInputStream;
+import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationResult;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
@@ -159,5 +169,163 @@ class OntologyDAOTest extends DAOTestHelper {
     StreamingOutput output = ontologyDAO.findByQuery(partial, null, null);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
     assertTrue(jsonArray.isEmpty());
+  }
+
+  private static final String DOID_CANCER = "http://purl.obolibrary.org/obo/DOID_162";
+  private static final String DOID_MISSING = "http://purl.obolibrary.org/obo/DOID_9999999";
+
+  private void insertIndexedTerm(String id, String ontology, boolean usable, Integer userId) {
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                        INSERT INTO ontology_index (id, version, ontology, label, usable, create_user_id)
+                        VALUES (:id, 'v1', :ontology, 'label', :usable, :userId)
+                        """)
+                .bind("id", id)
+                .bind("ontology", ontology)
+                .bind("usable", usable)
+                .bind("userId", userId)
+                .execute());
+  }
+
+  private Dataset insertDatasetWithDiseaseRestrictions(List<String> restrictions) {
+    User user = createUser();
+    Timestamp now = new Timestamp(new Date().getTime());
+    DataUse dataUse =
+        new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(restrictions).build();
+    Integer id =
+        datasetDAO.insertDataset(
+            "Name_" + randomAlphabetic(20),
+            now,
+            user.getUserId(),
+            "Object ID_" + randomAlphabetic(20),
+            dataUse.toString(),
+            null);
+    return datasetDAO.findDatasetById(id);
+  }
+
+  private DataAccessRequest insertDarWithOntologies(List<String> termIds) {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1, 999999999);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setOntologies(
+        termIds.stream()
+            .map(
+                termId -> {
+                  OntologyEntry entry = new OntologyEntry();
+                  entry.setId(termId);
+                  entry.setLabel("label");
+                  return entry;
+                })
+            .toList());
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private OntologyReconciliationResult findResult(
+      List<OntologyReconciliationResult> results, String termId) {
+    return results.stream().filter(r -> r.termId().equals(termId)).findFirst().orElse(null);
+  }
+
+  @Test
+  void testReconcileMissingDatasetTerm() {
+    User user = createUser();
+    insertIndexedTerm(DOID_CANCER, OntologyType.DOID.name(), true, user.getUserId());
+    Dataset dataset = insertDatasetWithDiseaseRestrictions(List.of(DOID_CANCER, DOID_MISSING));
+
+    List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
+
+    // Only the un-indexed term is flagged; the indexed/usable term is not.
+    assertEquals(1, results.size());
+    OntologyReconciliationResult result = results.getFirst();
+    assertEquals(DOID_MISSING, result.termId());
+    assertEquals("MISSING_FROM_INDEX", result.issue());
+    assertEquals(1L, result.referenceCount());
+    assertEquals(1L, result.datasetRefs());
+    assertEquals(0L, result.darRefs());
+    assertTrue(result.referencedBy().contains("DATASET:" + dataset.getDatasetId()));
+  }
+
+  @Test
+  void testReconcileMissingDarTerm() {
+    DataAccessRequest dar = insertDarWithOntologies(List.of(DOID_MISSING));
+
+    List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
+
+    assertEquals(1, results.size());
+    OntologyReconciliationResult result = results.getFirst();
+    assertEquals(DOID_MISSING, result.termId());
+    assertEquals("MISSING_FROM_INDEX", result.issue());
+    assertEquals(0L, result.datasetRefs());
+    assertEquals(1L, result.darRefs());
+    assertTrue(result.referencedBy().contains("DAR:" + dar.getReferenceId()));
+  }
+
+  @Test
+  void testReconcilePresentButUnusableTerm() {
+    User user = createUser();
+    insertIndexedTerm(DOID_CANCER, OntologyType.DOID.name(), false, user.getUserId());
+    insertDatasetWithDiseaseRestrictions(List.of(DOID_CANCER));
+
+    List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
+
+    assertEquals(1, results.size());
+    OntologyReconciliationResult result = results.getFirst();
+    assertEquals(DOID_CANCER, result.termId());
+    assertEquals("PRESENT_BUT_UNUSABLE", result.issue());
+    assertEquals(OntologyType.DOID.name(), result.ontology());
+  }
+
+  @Test
+  void testReconcileIndexedUsableTermNotFlagged() {
+    User user = createUser();
+    insertIndexedTerm(DOID_CANCER, OntologyType.DOID.name(), true, user.getUserId());
+    insertDatasetWithDiseaseRestrictions(List.of(DOID_CANCER));
+    insertDarWithOntologies(List.of(DOID_CANCER));
+
+    List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
+
+    assertTrue(results.isEmpty());
+  }
+
+  @Test
+  void testReconcileMatchingIsCaseInsensitive() {
+    User user = createUser();
+    // Indexed term is upper-cased; the referenced term is lower-cased. They should still match,
+    // mirroring the normalization in findByTermIds, so the term is not flagged.
+    insertIndexedTerm(DOID_CANCER.toUpperCase(), OntologyType.DOID.name(), true, user.getUserId());
+    insertDatasetWithDiseaseRestrictions(List.of(DOID_CANCER.toLowerCase()));
+
+    List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
+
+    assertTrue(results.isEmpty());
+  }
+
+  @Test
+  void testReconcileAggregatesReferencesAcrossSources() {
+    Dataset dataset = insertDatasetWithDiseaseRestrictions(List.of(DOID_MISSING));
+    DataAccessRequest dar = insertDarWithOntologies(List.of(DOID_MISSING));
+
+    List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
+
+    assertEquals(1, results.size());
+    OntologyReconciliationResult result = findResult(results, DOID_MISSING);
+    assertEquals(2L, result.referenceCount());
+    assertEquals(1L, result.datasetRefs());
+    assertEquals(1L, result.darRefs());
+    assertTrue(result.referencedBy().contains("DATASET:" + dataset.getDatasetId()));
+    assertTrue(result.referencedBy().contains("DAR:" + dar.getReferenceId()));
+  }
+
+  @Test
+  void testReconcileNoReferences() {
+    assertTrue(ontologyDAO.findReferencedTermsMissingFromIndex().isEmpty());
   }
 }
