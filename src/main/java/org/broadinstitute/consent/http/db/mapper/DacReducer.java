@@ -72,6 +72,9 @@ public class DacReducer
           dataset.setDataUse(dataUseParser.parseDataUse(duStr));
         }
 
+        Boolean dacApproval = rowView.getColumn("dataset_dac_approval", Boolean.class);
+        dataset.setDacApproval(dacApproval);
+
         if (dataset != null) {
           dac.addDataset(dataset);
         }

@@ -61,6 +61,7 @@ public interface DacDAO extends Transactional<DacDAO> {
         d.update_date AS dataset_update_date,
         d.update_user_id,
         d.data_use AS dataset_data_use,
+        d.dac_approval AS dataset_dac_approval,
         d.sharing_plan_document,
         d.sharing_plan_document_name,
         daa.daa_id AS daa_daa_id,

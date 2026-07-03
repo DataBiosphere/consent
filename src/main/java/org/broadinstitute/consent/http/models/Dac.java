@@ -128,6 +128,10 @@ public class Dac {
     this.associatedDaa = associatedDaa;
   }
 
+  public List<Dataset> getDatasets() {
+    return datasets;
+  }
+
   public void addDataset(Dataset dataset) {
     if (Objects.isNull(datasets)) {
       datasets = new ArrayList<>();
