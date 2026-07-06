@@ -171,6 +171,47 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllWithDatasetApproval() {
+    Integer dacId = createRandomDAC();
+    User user = createUser();
+    Integer approvedDatasetId =
+        datasetDAO.insertDataset(
+            randomAlphabetic(20),
+            new Timestamp(new Date().getTime()),
+            user.getUserId(),
+            randomAlphabetic(20),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    Integer pendingDatasetId =
+        datasetDAO.insertDataset(
+            randomAlphabetic(20),
+            new Timestamp(new Date().getTime()),
+            user.getUserId(),
+            randomAlphabetic(20),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), approvedDatasetId);
+
+    List<Dac> dacs = dacDAO.findAll();
+    Dac dac = dacs.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElseThrow();
+    List<Dataset> datasets = dac.getDatasets();
+
+    Dataset approvedDataset =
+        datasets.stream()
+            .filter(d -> d.getDatasetId().equals(approvedDatasetId))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(approvedDataset.getDacApproval());
+
+    Dataset pendingDataset =
+        datasets.stream()
+            .filter(d -> d.getDatasetId().equals(pendingDatasetId))
+            .findFirst()
+            .orElseThrow();
+    assertNull(pendingDataset.getDacApproval());
+  }
+
+  @Test
   void testFindAllWithDAAs() {
     User user = createUser();
 
