@@ -17,16 +17,16 @@
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>5.0.2</dropwizard.version>
     <logback.version>1.5.33</logback.version>
-    <postgres.version>42.7.11</postgres.version>
+    <postgres.version>42.7.12</postgres.version>
     <surefire.version>3.5.6</surefire.version>
     <swagger.ui.version>5.32.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
-    <junit.version>6.1.0</junit.version>
+    <junit.version>6.1.1</junit.version>
     <mockito.version>5.23.0</mockito.version>
     <sonar.plugin.version>5.7.0.6970</sonar.plugin.version>
     <netty.override.version>4.2.15.Final</netty.override.version>
-    <spotless.version>3.7.0</spotless.version>
+    <spotless.version>3.8.0</spotless.version>
     <jetty.version>12.1.10</jetty.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -459,7 +459,7 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.46.0</version>
+        <version>8.47.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -470,17 +470,17 @@
       <dependency>
         <groupId>tools.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>3.1.4</version>
+        <version>3.2.0</version>
       </dependency>
       <dependency>
         <groupId>tools.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>3.1.4</version>
+        <version>3.2.0</version>
       </dependency>
       <dependency>
         <groupId>tools.jackson.dataformat</groupId>
         <artifactId>jackson-dataformat-yaml</artifactId>
-        <version>3.1.4</version>
+        <version>3.2.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -865,7 +865,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.4.2</version>
+      <version>9.4.3</version>
     </dependency>
 
     <dependency>
