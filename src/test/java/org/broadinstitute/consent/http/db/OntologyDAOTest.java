@@ -236,9 +236,10 @@ class OntologyDAOTest extends DAOTestHelper {
 
   private OntologyReconciliationResult findResult(List<OntologyReconciliationResult> results) {
     return results.stream()
-        .filter(r -> r.termId().equals(OntologyDAOTest.DOID_MISSING))
+        .filter(r -> r.termId().equals(DOID_MISSING))
         .findFirst()
-        .orElse(null);
+        .orElseThrow(
+            () -> new AssertionError("Expected result for term " + DOID_MISSING + " not found"));
   }
 
   @Test
