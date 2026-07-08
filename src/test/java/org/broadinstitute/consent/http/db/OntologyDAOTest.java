@@ -163,18 +163,8 @@ class OntologyDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"@#$%", "!!", ":*", "&|!"})
-  void testSanitizeForTsQueryOnlySpecialChars(String partial) throws Exception {
-    batchInsertTerms();
-    // Inputs with no alphanumeric content must not reach the DB (caused PSQLException: ":*")
-    StreamingOutput output = ontologyDAO.findByQuery(partial, null, null);
-    JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
-    assertTrue(jsonArray.isEmpty());
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {" ", "", "\t", "\n"})
-  void testSanitizeForTsQueryEmpty(String partial) throws Exception {
+  @ValueSource(strings = {" ", "", "\t", "\n", "@#$%", "!!", ":*", "&|!"})
+  void testSanitizeForTsQueryNoAlphanumericContent(String partial) throws Exception {
     batchInsertTerms();
     StreamingOutput output = ontologyDAO.findByQuery(partial, null, null);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
