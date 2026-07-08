@@ -233,8 +233,8 @@ class OntologyDAOTest extends DAOTestHelper {
   }
 
   private OntologyReconciliationResult findResult(
-      List<OntologyReconciliationResult> results, String termId) {
-    return results.stream().filter(r -> r.termId().equals(termId)).findFirst().orElse(null);
+      List<OntologyReconciliationResult> results) {
+    return results.stream().filter(r -> r.termId().equals(OntologyDAOTest.DOID_MISSING)).findFirst().orElse(null);
   }
 
   @Test
@@ -319,7 +319,7 @@ class OntologyDAOTest extends DAOTestHelper {
     List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
 
     assertEquals(1, results.size());
-    OntologyReconciliationResult result = findResult(results, DOID_MISSING);
+    OntologyReconciliationResult result = findResult(results);
     assertEquals(2L, result.referenceCount());
     assertEquals(1L, result.datasetRefs());
     assertEquals(1L, result.darRefs());
