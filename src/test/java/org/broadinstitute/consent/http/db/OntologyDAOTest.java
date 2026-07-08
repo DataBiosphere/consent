@@ -12,6 +12,7 @@ import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.FileInputStream;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -40,6 +41,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class OntologyDAOTest extends DAOTestHelper {
+
+  private static final Instant FIXED_INSTANT = Instant.parse("2024-01-01T00:00:00Z");
 
   @Mock private GCSService gcsService;
   @Mock private StoreConfiguration storeConfiguration;
@@ -78,7 +81,7 @@ class OntologyDAOTest extends DAOTestHelper {
       strings = {
         "DUO_0000006", // normalized obo id
         " DUO_0000007 ", // normalized obo id with spaces
-        "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
+        "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id NOSONAR: java:S5332
       })
   void testFindByIds(String id) throws Exception {
     batchInsertTerms();
@@ -163,16 +166,18 @@ class OntologyDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {" ", "", "\t", "\n"})
-  void testSanitizeForTsQueryEmpty(String partial) throws Exception {
+  @ValueSource(strings = {" ", "", "\t", "\n", "@#$%", "!!", ":*", "&|!"})
+  void testSanitizeForTsQueryNoAlphanumericContent(String partial) throws Exception {
     batchInsertTerms();
     StreamingOutput output = ontologyDAO.findByQuery(partial, null, null);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
     assertTrue(jsonArray.isEmpty());
   }
 
-  private static final String DOID_CANCER = "http://purl.obolibrary.org/obo/DOID_162";
-  private static final String DOID_MISSING = "http://purl.obolibrary.org/obo/DOID_9999999";
+  private static final String DOID_CANCER =
+      "http://purl.obolibrary.org/obo/DOID_162"; // NOSONAR: java:S5332
+  private static final String DOID_MISSING =
+      "http://purl.obolibrary.org/obo/DOID_9999999"; // NOSONAR: java:S5332
 
   private void insertIndexedTerm(String id, String ontology, boolean usable, Integer userId) {
     jdbi.useHandle(
@@ -192,7 +197,7 @@ class OntologyDAOTest extends DAOTestHelper {
 
   private Dataset insertDatasetWithDiseaseRestrictions(List<String> restrictions) {
     User user = createUser();
-    Timestamp now = new Timestamp(new Date().getTime());
+    Timestamp now = Timestamp.from(FIXED_INSTANT);
     DataUse dataUse =
         new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(restrictions).build();
     Integer id =
@@ -210,7 +215,7 @@ class OntologyDAOTest extends DAOTestHelper {
     User user = createUser();
     String darCode = "DAR-" + randomInt(1, 999999999);
     Integer collectionId =
-        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), Date.from(FIXED_INSTANT));
     DataAccessRequestData data = new DataAccessRequestData();
     data.setOntologies(
         termIds.stream()
@@ -223,15 +228,18 @@ class OntologyDAOTest extends DAOTestHelper {
                 })
             .toList());
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
+    Date now = Date.from(FIXED_INSTANT);
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private OntologyReconciliationResult findResult(
-      List<OntologyReconciliationResult> results, String termId) {
-    return results.stream().filter(r -> r.termId().equals(termId)).findFirst().orElse(null);
+  private OntologyReconciliationResult findResult(List<OntologyReconciliationResult> results) {
+    return results.stream()
+        .filter(r -> r.termId().equals(DOID_MISSING))
+        .findFirst()
+        .orElseThrow(
+            () -> new AssertionError("Expected result for term " + DOID_MISSING + " not found"));
   }
 
   @Test
@@ -316,7 +324,7 @@ class OntologyDAOTest extends DAOTestHelper {
     List<OntologyReconciliationResult> results = ontologyDAO.findReferencedTermsMissingFromIndex();
 
     assertEquals(1, results.size());
-    OntologyReconciliationResult result = findResult(results, DOID_MISSING);
+    OntologyReconciliationResult result = findResult(results);
     assertEquals(2L, result.referenceCount());
     assertEquals(1L, result.datasetRefs());
     assertEquals(1L, result.darRefs());
