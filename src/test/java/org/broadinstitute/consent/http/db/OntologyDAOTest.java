@@ -81,7 +81,7 @@ class OntologyDAOTest extends DAOTestHelper {
       strings = {
         "DUO_0000006", // normalized obo id
         " DUO_0000007 ", // normalized obo id with spaces
-        "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
+        "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id NOSONAR: java:S5332
       })
   void testFindByIds(String id) throws Exception {
     batchInsertTerms();
@@ -174,8 +174,8 @@ class OntologyDAOTest extends DAOTestHelper {
     assertTrue(jsonArray.isEmpty());
   }
 
-  private static final String DOID_CANCER = "http://purl.obolibrary.org/obo/DOID_162";
-  private static final String DOID_MISSING = "http://purl.obolibrary.org/obo/DOID_9999999";
+  private static final String DOID_CANCER = "http://purl.obolibrary.org/obo/DOID_162"; // NOSONAR: java:S5332
+  private static final String DOID_MISSING = "http://purl.obolibrary.org/obo/DOID_9999999"; // NOSONAR: java:S5332
 
   private void insertIndexedTerm(String id, String ontology, boolean usable, Integer userId) {
     jdbi.useHandle(
