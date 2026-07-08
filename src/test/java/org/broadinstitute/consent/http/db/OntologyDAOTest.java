@@ -174,8 +174,10 @@ class OntologyDAOTest extends DAOTestHelper {
     assertTrue(jsonArray.isEmpty());
   }
 
-  private static final String DOID_CANCER = "http://purl.obolibrary.org/obo/DOID_162"; // NOSONAR: java:S5332
-  private static final String DOID_MISSING = "http://purl.obolibrary.org/obo/DOID_9999999"; // NOSONAR: java:S5332
+  private static final String DOID_CANCER =
+      "http://purl.obolibrary.org/obo/DOID_162"; // NOSONAR: java:S5332
+  private static final String DOID_MISSING =
+      "http://purl.obolibrary.org/obo/DOID_9999999"; // NOSONAR: java:S5332
 
   private void insertIndexedTerm(String id, String ontology, boolean usable, Integer userId) {
     jdbi.useHandle(
@@ -232,9 +234,11 @@ class OntologyDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private OntologyReconciliationResult findResult(
-      List<OntologyReconciliationResult> results) {
-    return results.stream().filter(r -> r.termId().equals(OntologyDAOTest.DOID_MISSING)).findFirst().orElse(null);
+  private OntologyReconciliationResult findResult(List<OntologyReconciliationResult> results) {
+    return results.stream()
+        .filter(r -> r.termId().equals(OntologyDAOTest.DOID_MISSING))
+        .findFirst()
+        .orElse(null);
   }
 
   @Test
