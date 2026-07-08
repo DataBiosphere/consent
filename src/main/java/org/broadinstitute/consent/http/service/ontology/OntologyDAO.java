@@ -160,6 +160,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
     String cleanTerm = term.replaceAll("[^a-zA-Z0-9\\s]", "");
 
     return Arrays.stream(cleanTerm.trim().split("\\s+"))
+        .filter(s -> !s.isEmpty())
         .map(s -> s + ":*")
         .collect(Collectors.joining(" | "));
   }
