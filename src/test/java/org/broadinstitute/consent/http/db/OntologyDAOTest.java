@@ -12,6 +12,7 @@ import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.FileInputStream;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -40,6 +41,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class OntologyDAOTest extends DAOTestHelper {
+
+  private static final Instant FIXED_INSTANT = Instant.parse("2024-01-01T00:00:00Z");
 
   @Mock private GCSService gcsService;
   @Mock private StoreConfiguration storeConfiguration;
@@ -192,7 +195,7 @@ class OntologyDAOTest extends DAOTestHelper {
 
   private Dataset insertDatasetWithDiseaseRestrictions(List<String> restrictions) {
     User user = createUser();
-    Timestamp now = new Timestamp(new Date().getTime());
+    Timestamp now = Timestamp.from(FIXED_INSTANT);
     DataUse dataUse =
         new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(restrictions).build();
     Integer id =
@@ -210,7 +213,7 @@ class OntologyDAOTest extends DAOTestHelper {
     User user = createUser();
     String darCode = "DAR-" + randomInt(1, 999999999);
     Integer collectionId =
-        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), Date.from(FIXED_INSTANT));
     DataAccessRequestData data = new DataAccessRequestData();
     data.setOntologies(
         termIds.stream()
@@ -223,7 +226,7 @@ class OntologyDAOTest extends DAOTestHelper {
                 })
             .toList());
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
+    Date now = Date.from(FIXED_INSTANT);
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
