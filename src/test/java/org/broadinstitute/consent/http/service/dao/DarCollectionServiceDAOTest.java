@@ -85,6 +85,13 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
+    // Ensure that no votes were created for the RP election
+    List<Integer> rpElectionIds =
+        createdElections.stream()
+            .filter(e -> e.getElectionType().equals(ElectionType.RP.getValue()))
+            .map(Election::getElectionId)
+            .toList();
+    assertTrue(voteDAO.findVotesByElectionIds(rpElectionIds).isEmpty());
   }
 
   /**
@@ -143,9 +150,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
 
-    assertEquals(
-        8,
-        createdVotes.size()); // 1 dataset X 2 elections/dataset X 4 votes/election each = 8 votes.
+    // 1 dataset X 5 votes for the access election (member DAC + chair DAC/CHAIRPERSON/FINAL/
+    // AGREEMENT); no votes are created for the RP election.
+    assertEquals(5, createdVotes.size());
 
     // Find the dac chairperson for the second Dataset in the DAR.
 
@@ -175,10 +182,8 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     createdVotes =
         voteDAO.findVotesByElectionIds(
             createdElections.stream().map(Election::getElectionId).toList());
-    assertEquals(
-        16,
-        createdVotes
-            .size()); // 2 datasets X 2 elections/dataset X 4 votes/election each = 16 votes.
+    // 2 datasets X 5 votes for each access election; no votes are created for the RP elections.
+    assertEquals(10, createdVotes.size());
   }
 
   @Test

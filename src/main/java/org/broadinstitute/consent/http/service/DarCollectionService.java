@@ -1030,12 +1030,11 @@ public class DarCollectionService implements ConsentLogger {
           _ -> {
             int dataAccessElectionId =
                 dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
-            int rpElectionId =
-                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
+            dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
 
             Integer dacId = dataset.getDacId();
             Set<User> dacUsers = filterUsersForDac(classification.autoOpenUsers, dacId);
-            createVotesForAllUsers(dacUsers, dataAccessElectionId, rpElectionId, latestDar, dacId);
+            createVotesForAllUsers(dacUsers, dataAccessElectionId, latestDar, dacId);
 
             return null;
           });
@@ -1068,40 +1067,31 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
-  /** Creates standard votes for all users for the given elections. */
+  /** Creates standard votes for all users for the data access election. */
   @VisibleForTesting
   protected void createVotesForAllUsers(
-      Set<User> users,
-      int dataAccessElectionId,
-      int rpElectionId,
-      DataAccessRequest dar,
-      Integer dacId) {
+      Set<User> users, int dataAccessElectionId, DataAccessRequest dar, Integer dacId) {
 
     for (User user : users) {
-      createStandardVotes(dataAccessElectionId, rpElectionId, user);
+      createStandardVotes(dataAccessElectionId, user);
 
       if (user.verifyDACRole(CHAIRPERSON, dacId)) {
-        createChairpersonVotes(dataAccessElectionId, rpElectionId, user, dar);
+        createChairpersonVotes(dataAccessElectionId, user, dar);
       }
     }
   }
 
-  /** Creates standard votes for the given elections. */
-  private void createStandardVotes(int dataAccessElectionId, int rpElectionId, User user) {
+  /** Creates standard votes for the given election. */
+  private void createStandardVotes(int dataAccessElectionId, User user) {
     dacAutomationRuleService.createVoteForElection(
         dataAccessElectionId, user.getUserId(), VoteType.DAC);
-
-    dacAutomationRuleService.createVoteForElection(rpElectionId, user.getUserId(), VoteType.DAC);
   }
 
-  /** Creates chairperson votes for the given elections. */
-  private void createChairpersonVotes(
-      int dataAccessElectionId, int rpElectionId, User user, DataAccessRequest dar) {
+  /** Creates chairperson votes for the given election. */
+  private void createChairpersonVotes(int dataAccessElectionId, User user, DataAccessRequest dar) {
 
     dacAutomationRuleService.createVoteForElection(
         dataAccessElectionId, user.getUserId(), VoteType.CHAIRPERSON);
-    dacAutomationRuleService.createVoteForElection(
-        rpElectionId, user.getUserId(), VoteType.CHAIRPERSON);
 
     dacAutomationRuleService.createVoteForElection(
         dataAccessElectionId, user.getUserId(), VoteType.FINAL);

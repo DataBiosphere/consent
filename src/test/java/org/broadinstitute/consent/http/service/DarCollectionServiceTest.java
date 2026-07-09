@@ -2974,7 +2974,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
     verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset, ElectionType.RP);
     verify(dacAutomationRuleService).createVoteForElection(100, member.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService).createVoteForElection(200, member.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
   }
 
   @Test
@@ -3032,7 +3032,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(), 1, 2, dar, 1);
+    service.createVotesForAllUsers(Set.of(), 1, dar, 1);
 
     verifyNoInteractions(dacAutomationRuleService);
   }
@@ -3043,10 +3043,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(member), 10, 20, dar, 1);
+    service.createVotesForAllUsers(Set.of(member), 10, dar, 1);
 
     verify(dacAutomationRuleService).createVoteForElection(10, member.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService).createVoteForElection(20, member.getUserId(), VoteType.DAC);
     verifyNoMoreInteractions(dacAutomationRuleService);
   }
 
@@ -3057,14 +3056,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData()); // all flags null → requiresManualReview() == false
 
-    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar, dacId);
+    service.createVotesForAllUsers(Set.of(chair), 10, dar, dacId);
 
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
         .createVoteForElection(10, chair.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(20, chair.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(10, chair.getUserId(), VoteType.AGREEMENT);
@@ -3080,17 +3076,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     data.setPoa(true); // triggers requiresManualReview() == true
     dar.setData(data);
 
-    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar, dacId);
+    service.createVotesForAllUsers(Set.of(chair), 10, dar, dacId);
 
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
         .createVoteForElection(10, chair.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(20, chair.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.FINAL);
-    // Exactly 5 vote-creation calls: AGREEMENT is not created when requiresManualReview is true.
-    verify(dacAutomationRuleService, times(5)).createVoteForElection(anyInt(), anyInt(), any());
+    // Exactly 3 vote-creation calls: AGREEMENT is not created when requiresManualReview is true.
+    verify(dacAutomationRuleService, times(3)).createVoteForElection(anyInt(), anyInt(), any());
   }
 
   @Test
@@ -3101,21 +3094,17 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(chair, member), 10, 20, dar, dacId);
+    service.createVotesForAllUsers(Set.of(chair, member), 10, dar, dacId);
 
     // chair gets DAC + CHAIRPERSON + FINAL + AGREEMENT votes
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
         .createVoteForElection(10, chair.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(20, chair.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(10, chair.getUserId(), VoteType.AGREEMENT);
-    // member gets only DAC votes
+    // member gets only a DAC vote
     verify(dacAutomationRuleService).createVoteForElection(10, member.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService).createVoteForElection(20, member.getUserId(), VoteType.DAC);
     verifyNoMoreInteractions(dacAutomationRuleService);
   }
 
@@ -3128,12 +3117,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(chairOfOtherDac), 10, 20, dar, electionDacId);
+    service.createVotesForAllUsers(Set.of(chairOfOtherDac), 10, dar, electionDacId);
 
     verify(dacAutomationRuleService)
         .createVoteForElection(10, chairOfOtherDac.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(20, chairOfOtherDac.getUserId(), VoteType.DAC);
     verifyNoMoreInteractions(dacAutomationRuleService);
   }
 
@@ -3250,8 +3237,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(200, chairDac10.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.FINAL);
@@ -3259,13 +3244,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.AGREEMENT);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, memberDac10.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(200, memberDac10.getUserId(), VoteType.DAC);
     // DAC 20 election — only chairDac20 and memberDac20
     verify(dacAutomationRuleService)
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, chairDac20.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
@@ -3274,11 +3255,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.AGREEMENT);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, memberDac20.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, memberDac20.getUserId(), VoteType.DAC);
+    // No votes are created for the RP elections (200, 400)
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
 
-    // Exactly 16 vote-creation calls: cross-DAC users received no votes in the wrong elections.
-    verify(dacAutomationRuleService, times(16)).createVoteForElection(anyInt(), anyInt(), any());
+    // Exactly 10 vote-creation calls: cross-DAC users received no votes in the wrong elections.
+    verify(dacAutomationRuleService, times(10)).createVoteForElection(anyInt(), anyInt(), any());
   }
 
   /**
@@ -3512,41 +3494,33 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(200, chairDac10.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(200, chairDac10.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.AGREEMENT);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, memberDac10.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(200, memberDac10.getUserId(), VoteType.DAC);
 
     // ── dataset2 (DAC 20): chairDac20 gets full chair votes; memberDac20 gets DAC votes only ──
     verify(dacAutomationRuleService)
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(400, chairDac20.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, chairDac20.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.AGREEMENT);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, memberDac20.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, memberDac20.getUserId(), VoteType.DAC);
 
-    // Exactly 16 vote-creation calls: cross-DAC users and member CHAIRPERSON votes are excluded.
-    // Any cross-DAC contamination or spurious role promotion would push this count above 16.
-    verify(dacAutomationRuleService, times(16)).createVoteForElection(anyInt(), anyInt(), any());
+    // No votes are created for the RP elections (200, 400)
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
+
+    // Exactly 10 vote-creation calls: cross-DAC users and member CHAIRPERSON votes are excluded.
+    // Any cross-DAC contamination or spurious role promotion would push this count above 10.
+    verify(dacAutomationRuleService, times(10)).createVoteForElection(anyInt(), anyInt(), any());
   }
 
   /**
@@ -3609,11 +3583,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService)
         .createVoteForElection(100, sharedChair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(200, sharedChair.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(100, sharedChair.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(200, sharedChair.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, sharedChair.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
@@ -3622,15 +3592,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService)
         .createVoteForElection(300, sharedChair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(400, sharedChair.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(300, sharedChair.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, sharedChair.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, sharedChair.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, sharedChair.getUserId(), VoteType.AGREEMENT);
+    // No votes are created for the RP elections (200, 400)
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
   }
 
   /**
@@ -3702,11 +3671,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService)
         .createVoteForElection(100, sharedUser.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(200, sharedUser.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(100, sharedUser.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(200, sharedUser.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, sharedUser.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
@@ -3715,26 +3680,23 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     // sharedUser is member of DAC 20, not chair → only DAC votes
     verify(dacAutomationRuleService)
         .createVoteForElection(300, sharedUser.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, sharedUser.getUserId(), VoteType.DAC);
     // separateChairDac20 is chair of DAC 20 → full chair votes
     verify(dacAutomationRuleService)
         .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
-        .createVoteForElection(400, separateChairDac20.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService)
         .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.CHAIRPERSON);
-    verify(dacAutomationRuleService)
-        .createVoteForElection(400, separateChairDac20.getUserId(), VoteType.CHAIRPERSON);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.AGREEMENT);
+    // No votes are created for the RP elections (200, 400)
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
+    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
 
-    // Exactly 14 vote-creation calls: cross-DAC isolation and the sharedUser's member (not chair)
+    // Exactly 9 vote-creation calls: cross-DAC isolation and the sharedUser's member (not chair)
     // role in DAC 20 are both enforced — any leakage or spurious promotion pushes the count above
-    // 14.
-    verify(dacAutomationRuleService, times(14)).createVoteForElection(anyInt(), anyInt(), any());
+    // 9.
+    verify(dacAutomationRuleService, times(9)).createVoteForElection(anyInt(), anyInt(), any());
   }
 
   /**

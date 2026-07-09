@@ -61,9 +61,7 @@ public class DarCollectionServiceDAO {
           //        3a. Chair Vote for chair
           //        3b. Final Vote for chair
           //        3c. Agreement Vote for chair if not manual review
-          //    4. Create an RP Election
-          //    5. Create member votes for rp election
-          //        5a. Chair Vote for chair
+          //    4. Create an RP Election (no votes are created for RP elections)
 
           // Only take actions on the most recent DAR/Progress report in the collection
           // This means a chair cannot reopen an election in any other DAR in the collection besides
@@ -108,21 +106,12 @@ public class DarCollectionServiceDAO {
                           createVoteInsertsForUsers(
                               handle,
                               voteUsers,
-                              ElectionType.DATA_ACCESS.getValue(),
                               dar.getReferenceId(),
                               datasetId,
                               dar.requiresManualReview()));
                       inserts.add(
                           createElectionInsert(
                               handle, ElectionType.RP.getValue(), dar.getReferenceId(), datasetId));
-                      inserts.addAll(
-                          createVoteInsertsForUsers(
-                              handle,
-                              voteUsers,
-                              ElectionType.RP.getValue(),
-                              dar.getReferenceId(),
-                              datasetId,
-                              dar.requiresManualReview()));
                       createdElectionReferenceIds.add(dar.getReferenceId());
                     }
                   });
@@ -132,55 +121,52 @@ public class DarCollectionServiceDAO {
     return createdElectionReferenceIds;
   }
 
+  /** Creates vote inserts for the DataAccess election. Votes are never created for RP elections. */
   private List<Update> createVoteInsertsForUsers(
       Handle handle,
       List<User> voteUsers,
-      String electionType,
       String referenceId,
       Integer datasetId,
       Boolean isManualReview) {
     List<Update> userVotes = new ArrayList<>();
     voteUsers.forEach(
         u -> {
-          // All users get a minimum of one DAC vote type for both RP and DataAccess election types
+          // All users get a minimum of one DAC vote type
           userVotes.add(
               createVoteInsert(
                   handle,
                   VoteType.DAC.getValue(),
-                  electionType,
+                  ElectionType.DATA_ACCESS.getValue(),
                   referenceId,
                   datasetId,
                   u.getUserId()));
-          // Chairpersons get a Chairperson vote for both RP and DataAccess election types
+          // Chairpersons get Chairperson, Final, and Agreement (if not manual review) votes
           if (u.hasUserRole(UserRoles.CHAIRPERSON)) {
             userVotes.add(
                 createVoteInsert(
                     handle,
                     VoteType.CHAIRPERSON.getValue(),
-                    electionType,
+                    ElectionType.DATA_ACCESS.getValue(),
                     referenceId,
                     datasetId,
                     u.getUserId()));
-            // Chairpersons get Final and Agreement votes for DataAccess elections
-            if (ElectionType.DATA_ACCESS.getValue().equals(electionType)) {
+            userVotes.add(
+                createVoteInsert(
+                    handle,
+                    VoteType.FINAL.getValue(),
+                    ElectionType.DATA_ACCESS.getValue(),
+                    referenceId,
+                    datasetId,
+                    u.getUserId()));
+            if (!isManualReview) {
               userVotes.add(
                   createVoteInsert(
                       handle,
-                      VoteType.FINAL.getValue(),
+                      VoteType.AGREEMENT.getValue(),
                       ElectionType.DATA_ACCESS.getValue(),
                       referenceId,
                       datasetId,
                       u.getUserId()));
-              if (!isManualReview) {
-                userVotes.add(
-                    createVoteInsert(
-                        handle,
-                        VoteType.AGREEMENT.getValue(),
-                        ElectionType.DATA_ACCESS.getValue(),
-                        referenceId,
-                        datasetId,
-                        u.getUserId()));
-              }
             }
           }
         });
