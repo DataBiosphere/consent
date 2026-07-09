@@ -16,7 +16,7 @@
     <maven.version>3.9.11</maven.version>
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>5.0.2</dropwizard.version>
-    <logback.version>1.5.33</logback.version>
+    <logback.version>1.5.35</logback.version>
     <postgres.version>42.7.12</postgres.version>
     <surefire.version>3.5.6</surefire.version>
     <swagger.ui.version>5.32.8</swagger.ui.version>
