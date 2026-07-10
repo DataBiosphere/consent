@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.enumeration.ElectionType.DATA_ACCESS;
-import static org.broadinstitute.consent.http.enumeration.ElectionType.RP;
 import static org.broadinstitute.consent.http.enumeration.UserRoles.ADMIN;
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 import static org.broadinstitute.consent.http.resources.Resource.MEMBER;
@@ -1030,7 +1029,6 @@ public class DarCollectionService implements ConsentLogger {
           _ -> {
             int dataAccessElectionId =
                 dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
-            dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
 
             Integer dacId = dataset.getDacId();
             Set<User> dacUsers = filterUsersForDac(classification.autoOpenUsers, dacId);

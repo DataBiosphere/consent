@@ -69,14 +69,14 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
             createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
-    // Ensure that we have an access and rp election
+    // Ensure that we have an access election and no rp election
     assertFalse(createdElections.isEmpty());
     assertTrue(
         createdElections.stream()
             .anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
     assertTrue(
         createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+            .noneMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
     // Ensure that we have primary vote types
     assertFalse(createdVotes.isEmpty());
     assertTrue(
@@ -85,13 +85,6 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
-    // Ensure that no votes were created for the RP election
-    List<Integer> rpElectionIds =
-        createdElections.stream()
-            .filter(e -> e.getElectionType().equals(ElectionType.RP.getValue()))
-            .map(Election::getElectionId)
-            .toList();
-    assertTrue(voteDAO.findVotesByElectionIds(rpElectionIds).isEmpty());
   }
 
   /**
@@ -132,15 +125,14 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
             createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
-    assertEquals(2, createdElections.size()); //
-    // Ensure that we have an access and rp election
-    assertFalse(createdElections.isEmpty());
+    // Ensure that we have an access election and no rp election
+    assertEquals(1, createdElections.size());
     assertTrue(
         createdElections.stream()
             .anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
     assertTrue(
         createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+            .noneMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
     // Ensure that we have primary vote types
     assertFalse(createdVotes.isEmpty());
     assertTrue(
@@ -168,7 +160,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(referenceIds2.contains(dar.getReferenceId()));
 
     createdElections = electionDAO.findElectionsByReferenceId(dar.getReferenceId());
-    assertEquals(4, createdElections.size());
+    assertEquals(2, createdElections.size());
 
     // Verify we have elections for both DACs
     assertTrue(
@@ -270,16 +262,16 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
 
-    // Ensure that we have the right number of access and rp elections, i.e. 1 each
+    // Ensure that we have exactly one access election and no rp election
     assertFalse(createdElections.isEmpty());
-    assertEquals(2, createdElections.size());
+    assertEquals(1, createdElections.size());
     assertEquals(
         1,
         createdElections.stream()
             .filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
             .count());
     assertEquals(
-        1,
+        0,
         createdElections.stream()
             .filter(e -> e.getElectionType().equals(ElectionType.RP.getValue()))
             .count());

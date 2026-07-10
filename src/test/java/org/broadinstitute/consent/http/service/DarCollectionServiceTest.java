@@ -2857,15 +2857,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), any(), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), eq(ElectionType.RP)))
-        .thenReturn(200);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
     verify(dacAutomationRuleService)
         .createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
-    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset, ElectionType.RP);
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
   }
 
   @Test
@@ -2933,8 +2932,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), any(), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), eq(ElectionType.RP)))
-        .thenReturn(200);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -2964,17 +2961,15 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), any(), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), eq(ElectionType.RP)))
-        .thenReturn(200);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
     verify(dacAutomationRuleService)
         .createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
-    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset, ElectionType.RP);
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
     verify(dacAutomationRuleService).createVoteForElection(100, member.getUserId(), VoteType.DAC);
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
   }
 
   @Test
@@ -3012,19 +3007,17 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(closedDataset), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(closedDataset), eq(ElectionType.RP)))
-        .thenReturn(200);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    // Only the closed dataset should have elections created
+    // Only the closed dataset should have an election created
     verify(dacAutomationRuleService, never())
         .createOpenElectionForDAR(any(), eq(openDataset), any());
     verify(dacAutomationRuleService)
         .createOpenElectionForDAR(dar, closedDataset, ElectionType.DATA_ACCESS);
-    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, closedDataset, ElectionType.RP);
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
   }
 
   @Test
@@ -3149,18 +3142,16 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), any(), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), eq(ElectionType.RP)))
-        .thenReturn(200);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
     verify(dacAutomationRuleService)
         .createOpenElectionForDAR(dar, dataset1, ElectionType.DATA_ACCESS);
-    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset1, ElectionType.RP);
     verify(dacAutomationRuleService)
         .createOpenElectionForDAR(dar, dataset2, ElectionType.DATA_ACCESS);
-    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset2, ElectionType.RP);
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
   }
 
   // ─── Full-flow integration: userDAO → classifyDacsAndUsers → vote creation ──
@@ -3221,14 +3212,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
             any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
     when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1), eq(ElectionType.RP)))
-        .thenReturn(200);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(300);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2), eq(ElectionType.RP)))
-        .thenReturn(400);
     stubInTransactionToExecute();
 
     service.createElectionsForNewDarCollection(1);
@@ -3255,9 +3240,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .createVoteForElection(300, chairDac20.getUserId(), VoteType.AGREEMENT);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, memberDac20.getUserId(), VoteType.DAC);
-    // No votes are created for the RP elections (200, 400)
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
+    // No RP elections (and therefore no RP votes) are created
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
 
     // Exactly 10 vote-creation calls: cross-DAC users received no votes in the wrong elections.
     verify(dacAutomationRuleService, times(10)).createVoteForElection(anyInt(), anyInt(), any());
@@ -3317,9 +3302,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1), eq(ElectionType.RP)))
-        .thenReturn(200);
     stubInTransactionToExecute();
 
     service.createElectionsForNewDarCollection(1);
@@ -3402,14 +3384,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
             any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
     when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1), eq(ElectionType.RP)))
-        .thenReturn(200);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(300);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2), eq(ElectionType.RP)))
-        .thenReturn(400);
     stubInTransactionToExecute();
 
     service.createElectionsForNewDarCollection(1);
@@ -3473,19 +3449,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    // dataset1: DATA_ACCESS=100, RP=200; dataset2: DATA_ACCESS=300, RP=400
+    // dataset1: DATA_ACCESS=100; dataset2: DATA_ACCESS=300
     when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
     when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1), eq(ElectionType.RP)))
-        .thenReturn(200);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(300);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2), eq(ElectionType.RP)))
-        .thenReturn(400);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -3514,9 +3484,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService)
         .createVoteForElection(300, memberDac20.getUserId(), VoteType.DAC);
 
-    // No votes are created for the RP elections (200, 400)
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
+    // No RP elections (and therefore no RP votes) are created
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
 
     // Exactly 10 vote-creation calls: cross-DAC users and member CHAIRPERSON votes are excluded.
     // Any cross-DAC contamination or spurious role promotion would push this count above 10.
@@ -3567,14 +3537,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
             any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
     when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1), eq(ElectionType.RP)))
-        .thenReturn(200);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(300);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2), eq(ElectionType.RP)))
-        .thenReturn(400);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -3597,9 +3561,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .createVoteForElection(300, sharedChair.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, sharedChair.getUserId(), VoteType.AGREEMENT);
-    // No votes are created for the RP elections (200, 400)
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
+    // No RP elections (and therefore no RP votes) are created
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
   }
 
   /**
@@ -3654,14 +3618,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
             any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(100);
     when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1), eq(ElectionType.RP)))
-        .thenReturn(200);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
             any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
         .thenReturn(300);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2), eq(ElectionType.RP)))
-        .thenReturn(400);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -3689,9 +3647,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.FINAL);
     verify(dacAutomationRuleService)
         .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.AGREEMENT);
-    // No votes are created for the RP elections (200, 400)
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(200), anyInt(), any());
-    verify(dacAutomationRuleService, never()).createVoteForElection(eq(400), anyInt(), any());
+    // No RP elections (and therefore no RP votes) are created
+    verify(dacAutomationRuleService, never())
+        .createOpenElectionForDAR(any(), any(), eq(ElectionType.RP));
 
     // Exactly 9 vote-creation calls: cross-DAC isolation and the sharedUser's member (not chair)
     // role in DAC 20 are both enforced — any leakage or spurious promotion pushes the count above

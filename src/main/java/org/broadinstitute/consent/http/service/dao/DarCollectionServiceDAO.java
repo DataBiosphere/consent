@@ -109,9 +109,6 @@ public class DarCollectionServiceDAO {
                               dar.getReferenceId(),
                               datasetId,
                               dar.requiresManualReview()));
-                      inserts.add(
-                          createElectionInsert(
-                              handle, ElectionType.RP.getValue(), dar.getReferenceId(), datasetId));
                       createdElectionReferenceIds.add(dar.getReferenceId());
                     }
                   });
