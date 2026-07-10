@@ -61,7 +61,6 @@ public class DarCollectionServiceDAO {
           //        3a. Chair Vote for chair
           //        3b. Final Vote for chair
           //        3c. Agreement Vote for chair if not manual review
-          //    4. Create an RP Election (no votes are created for RP elections)
 
           // Only take actions on the most recent DAR/Progress report in the collection
           // This means a chair cannot reopen an election in any other DAR in the collection besides
