@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -320,7 +319,7 @@ public class DataAccessRequestService implements ConsentLogger {
       if (!progressReport.getIsCloseoutProgressReport()) {
         daaDAO.insertDarDAARelationship(id, progressReport.getData().getDaaIds());
       }
-    } catch (JdbiException e) {
+    } catch (JdbiException _) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
@@ -424,7 +423,7 @@ public class DataAccessRequestService implements ConsentLogger {
             "Signing Officials must be in the same institution as the creator of the closeout request.");
       }
 
-    } catch (NotFoundException e) {
+    } catch (NotFoundException _) {
       // log the state.  we'll allow the SO to process a closeout even if the  user can't be found.
       logWarn(
           String.format(
@@ -467,7 +466,7 @@ public class DataAccessRequestService implements ConsentLogger {
         if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
           throw new BadRequestException("The selected signing official is not a signing official");
         }
-      } catch (NotFoundException nfe) {
+      } catch (NotFoundException _) {
         throw new BadRequestException(
             "The selected signing official in the closeout was not found.");
       }
@@ -508,9 +507,9 @@ public class DataAccessRequestService implements ConsentLogger {
 
   private boolean isUserPreAuthorizedForAllDaas(User user, List<Integer> datasetIds) {
     Set<Integer> datasetDaas =
-        daaDAO.findDaaIdsByDatasetIds(datasetIds).stream().collect(Collectors.toSet());
+        new HashSet<>(daaDAO.findDaaIdsByDatasetIds(datasetIds));
 
-    Set<Integer> userDaas = user.getLibraryCard().getDaaIds().stream().collect(Collectors.toSet());
+    Set<Integer> userDaas = new HashSet<>(user.getLibraryCard().getDaaIds());
 
     return userDaas.containsAll(datasetDaas);
   }
