@@ -87,8 +87,8 @@ class MatchDAOTest extends DAOTestHelper {
     Election ignoredAccessElection =
         createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
-    // Generate RP election to test that the query only references DataAccess elections
-    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDatasetId());
+    // Generate an unknown election to test that the query only references DataAccess elections
+    Election unknownElection = createUnknownElection(UUID.randomUUID().toString(), dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the target election
@@ -115,7 +115,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(
         datasetIdentifier,
-        rpElection.getReferenceId(),
+        unknownElection.getReferenceId(),
         false,
         false,
         new Date(),
@@ -138,8 +138,8 @@ class MatchDAOTest extends DAOTestHelper {
     Election accessElection =
         createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
-    // Generate RP election for test
-    Election rpElection = createRPElection(darReferenceId, dataset.getDatasetId());
+    // Generate an unknown election for test
+    Election unknownElection = createUnknownElection(darReferenceId, dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
@@ -156,7 +156,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(
         datasetIdentifier,
-        rpElection.getReferenceId(),
+        unknownElection.getReferenceId(),
         false,
         false,
         new Date(),
@@ -281,10 +281,10 @@ class MatchDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private Election createRPElection(String referenceId, Integer datasetId) {
+  private Election createUnknownElection(String referenceId, Integer datasetId) {
     Integer electionId =
         electionDAO.insertElection(
-            ElectionType.RP.getValue(),
+            "UnknownElection",
             ElectionStatus.OPEN.getValue(),
             new Date(),
             referenceId,
