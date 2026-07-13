@@ -5,10 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -28,10 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MatchDAOTest extends DAOTestHelper {
-
-  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
-  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
-  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   @Test
   void testFindMatchesByPurposeId() {

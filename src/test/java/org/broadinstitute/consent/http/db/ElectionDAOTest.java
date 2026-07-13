@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,11 +40,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ElectionDAOTest extends DAOTestHelper {
 
-  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
-  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
-  private static final Date FIXED_DATE_PLUS_DAY = Date.from(FIXED_INSTANT.plus(Duration.ofDays(1)));
-  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
-  // Must be after FIXED_INSTANT so elections created with FIXED_DATE are included in reminder queries
+  // Must be after FIXED_INSTANT so elections created with FIXED_DATE are included in reminder
+  // queries
   private static final String REMINDER_QUERY_CUTOFF = "2030-01-01T00:00:00Z";
 
   @Test
@@ -159,8 +155,10 @@ class ElectionDAOTest extends DAOTestHelper {
                 electionDAO.updateElectionById(
                     e.getElectionId(), ElectionStatus.CANCELED.getValue(), FIXED_DATE, true));
     // Create a new set of elections
-    Election latestD1Election = createLaterDataAccessElection(dar.getReferenceId(), d1.getDatasetId());
-    Election latestD2Election = createLaterDataAccessElection(dar.getReferenceId(), d2.getDatasetId());
+    Election latestD1Election =
+        createLaterDataAccessElection(dar.getReferenceId(), d1.getDatasetId());
+    Election latestD2Election =
+        createLaterDataAccessElection(dar.getReferenceId(), d2.getDatasetId());
 
     Election latestAccessForD1 =
         electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
@@ -647,7 +645,14 @@ class ElectionDAOTest extends DAOTestHelper {
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, FIXED_DATE, FIXED_DATE, FIXED_DATE, data, randomAlphabetic(10));
+        collectionId,
+        referenceId,
+        userId,
+        FIXED_DATE,
+        FIXED_DATE,
+        FIXED_DATE,
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -666,7 +671,8 @@ class ElectionDAOTest extends DAOTestHelper {
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(
+            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -700,7 +706,8 @@ class ElectionDAOTest extends DAOTestHelper {
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), dacId);
+        datasetDAO.insertDataset(
+            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -721,7 +728,7 @@ class ElectionDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            FIXED_DATE_PLUS_DAY,
+            Date.from(FIXED_INSTANT.plus(Duration.ofDays(1))),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);

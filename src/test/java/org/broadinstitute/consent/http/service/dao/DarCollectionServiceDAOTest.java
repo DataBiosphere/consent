@@ -6,10 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +33,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DarCollectionServiceDAOTest extends DAOTestHelper {
-
-  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
-  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
-  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   private static DarCollectionServiceDAO serviceDAO;
 
@@ -312,7 +305,12 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(
         dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), dar.getUserId(), FIXED_DATE, FIXED_DATE, dar.getData(), user.getEraCommonsId());
+        dar.getReferenceId(),
+        dar.getUserId(),
+        FIXED_DATE,
+        FIXED_DATE,
+        dar.getData(),
+        user.getEraCommonsId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -367,7 +365,8 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), dacId);
+        datasetDAO.insertDataset(
+            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }

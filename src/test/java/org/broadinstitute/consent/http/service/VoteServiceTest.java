@@ -17,10 +17,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonArray;
 import freemarker.template.TemplateException;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -71,10 +68,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class VoteServiceTest extends AbstractTestHelper {
-
-  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
-  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
-  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   private VoteService service;
 

@@ -7,10 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -32,10 +29,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class VoteServiceDAOTest extends DAOTestHelper {
-
-  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
-  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
-  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   private VoteServiceDAO serviceDAO;
 
@@ -159,7 +152,8 @@ class VoteServiceDAOTest extends DAOTestHelper {
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(
+            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
