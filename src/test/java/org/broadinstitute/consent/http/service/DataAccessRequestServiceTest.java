@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -1477,11 +1476,7 @@ institution or library cards issued: Internal Collaborator member:  \
     data.setPiEmail(PI_EMAIL);
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
-    try {
-      service.validateNoKeyPersonnelDuplicates(data);
-    } catch (IllegalArgumentException e) {
-      fail("Should not have thrown exception");
-    }
+    assertDoesNotThrow(() -> service.validateNoKeyPersonnelDuplicates(data));
   }
 
   @Test
