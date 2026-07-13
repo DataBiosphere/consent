@@ -72,6 +72,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class VoteServiceTest extends AbstractTestHelper {
 
+  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
+  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
+  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
+
   private VoteService service;
 
   @Mock private Jdbi jdbi;
@@ -360,7 +364,7 @@ class VoteServiceTest extends AbstractTestHelper {
     dar1.addDatasetId(d1.getDatasetId());
     dar1.setCollectionId(1);
     dar1.setData(data1);
-    dar1.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar1.setSubmissionDate(FIXED_TIMESTAMP);
     dar1.setParentId(5);
     dar1.setReferenceId(referenceId1);
     d1.setProperties(Set.of(depositorProp));
@@ -708,7 +712,6 @@ class VoteServiceTest extends AbstractTestHelper {
     DatasetProperty depositorProp = new DatasetProperty();
     depositorProp.setPropertyName("Data Depositor");
     depositorProp.setPropertyValue("depositor@test.com");
-    depositorProp.setSchemaProperty("dataDepositorEmail");
     depositorProp.setPropertyType(PropertyType.String);
 
     Dataset d1 = new Dataset();
@@ -1055,7 +1058,7 @@ class VoteServiceTest extends AbstractTestHelper {
                 DatasetRegistrationSchemaV1Builder.url,
                 dataLocationUrl,
                 PropertyType.String,
-                new Date())));
+                FIXED_DATE)));
 
     Dataset dataset2 = new Dataset();
     dataset1.setDatasetId(2);
@@ -1084,12 +1087,12 @@ class VoteServiceTest extends AbstractTestHelper {
     parent.setId(1);
     parent.setReferenceId(UUID.randomUUID().toString());
     parent.setDatasetIds(List.of(dataset.getDatasetId()));
-    parent.setSubmissionDate(Timestamp.from(Instant.now()));
+    parent.setSubmissionDate(FIXED_TIMESTAMP);
 
     DataAccessRequest child = new DataAccessRequest();
     child.setReferenceId(UUID.randomUUID().toString());
     child.setParentId(parent.getId());
-    child.setSubmissionDate(Timestamp.from(Instant.now()));
+    child.setSubmissionDate(FIXED_TIMESTAMP);
     child.setDatasetIds(List.of(dataset.getDatasetId()));
 
     User researcher = createUserWithRole(UserRoles.RESEARCHER);
