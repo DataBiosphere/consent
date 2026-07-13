@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,6 +36,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DarCollectionServiceDAOTest extends DAOTestHelper {
+
+  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
+  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
+  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   private static DarCollectionServiceDAO serviceDAO;
 
@@ -248,7 +253,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
                             electionDAO.updateElectionById(
                                 e.getElectionId(),
                                 ElectionStatus.CANCELED.getValue(),
-                                new Date())));
+                                FIXED_DATE)));
 
     // re-create elections & new votes:
     referenceIds.addAll(serviceDAO.createElectionsForDarByUser(chair.get(), dar));
@@ -297,7 +302,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DacAndDataset dacAndDataset = createDacAndDataset();
     DacAndDataset dacAndDataset2 = createDacAndDataset();
     Integer collectionId =
-        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), FIXED_DATE);
     createDarForCollection(user, collectionId, dacAndDataset.dataset);
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
@@ -306,9 +311,8 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         dar.getReferenceId(), dacAndDataset.dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(
         dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());
-    Date now = new Date();
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), dar.getUserId(), now, now, dar.getData(), user.getEraCommonsId());
+        dar.getReferenceId(), dar.getUserId(), FIXED_DATE, FIXED_DATE, dar.getData(), user.getEraCommonsId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -339,33 +343,31 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
-    dsp.setCreateDate(new Date());
+    dsp.setCreateDate(FIXED_DATE);
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
   }
 
   private void createDarForCollection(User user, Integer collectionId, Dataset dataset) {
-    Date now = new Date();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
     dataAccessRequestDAO.insertDraftDataAccessRequest(
-        dar.getReferenceId(), user.getUserId(), now, now, data);
+        dar.getReferenceId(), user.getUserId(), FIXED_DATE, FIXED_DATE, data);
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, new Date(), new Date(), data, user.getEraCommonsId());
+        dar.referenceId, dar.userId, FIXED_DATE, FIXED_DATE, data, user.getEraCommonsId());
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
   }
 
   private Dataset createDatasetWithDac(Integer dacId) {
     User user = createUser();
     String name = "Name_" + randomAlphabetic(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), dacId);
+        datasetDAO.insertDataset(name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
