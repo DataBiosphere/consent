@@ -6,30 +6,23 @@ import org.broadinstitute.consent.http.models.User;
 
 public class NewCaseMessage extends MailMessage {
 
-  private static final String NEWCASE_DUL = "Log vote on Data Use Limitations case id: %s.";
-  private static final String NEWCASE_DAR = "Log votes on Data Access Request case id: %s.";
-  private final String type;
+  private static final String NEW_CASE_DAR = "Log votes on Data Access Request case id: %s.";
   private final String referenceId;
 
-  public NewCaseMessage(User toUser, String referenceId, String type) {
+  public NewCaseMessage(User toUser, String referenceId) {
     super(toUser, EmailType.NEW_CASE);
     this.referenceId = referenceId;
-    this.type = type;
   }
 
   @Override
   public String createSubject() {
-    if (type.equals("Data Use Limitations")) {
-      return String.format(NEWCASE_DUL, referenceId);
-    } else {
-      return String.format(NEWCASE_DAR, referenceId);
-    }
+    return String.format(NEW_CASE_DAR, referenceId);
   }
 
   @Override
   public Map<String, Object> createModel() {
     return Map.of(
-        "userName", toUser.getDisplayName(), "electionType", type, "entityName", referenceId);
+        "userName", toUser.getDisplayName(), "electionType", "Data Access Request", "entityName", referenceId);
   }
 
   @Override

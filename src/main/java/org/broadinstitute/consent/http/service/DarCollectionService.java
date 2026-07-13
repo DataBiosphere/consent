@@ -1178,9 +1178,8 @@ public class DarCollectionService implements ConsentLogger {
   @VisibleForTesting
   protected void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
       throws IOException, TemplateException {
-    String electionType = "Data Access Request";
     for (User user : users) {
-      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+      emailService.sendMessage(new NewCaseMessage(user, darCode), user.getUserId());
     }
   }
 
