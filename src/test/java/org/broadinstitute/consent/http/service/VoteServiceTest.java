@@ -64,7 +64,6 @@ import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -229,8 +228,6 @@ class VoteServiceTest extends AbstractTestHelper {
     assertEquals(1, votes.size());
   }
 
-  // TODO: Rewrite the test intention here
-  @Ignore
   @Test
   void testUpdateVotesWithValue_NoRationale() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
@@ -239,15 +236,13 @@ class VoteServiceTest extends AbstractTestHelper {
     Election accessElection = new Election();
     accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
     accessElection.setStatus(ElectionStatus.OPEN.getValue());
-    Election unknownElection = new Election();
-    unknownElection.setElectionType("Unknown");
-    unknownElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any()))
-        .thenReturn(List.of(accessElection, unknownElection));
+    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection));
 
-    assertThrows(
-        ConsentConflictException.class,
-        () -> service.updateVotesWithValue(List.of(v), true, null, user));
+    try {
+      service.updateVotesWithValue(List.of(v), true, null, user);
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   @Test
