@@ -88,7 +88,8 @@ class MatchDAOTest extends DAOTestHelper {
         createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
     // Generate an unknown election to test that the query only references DataAccess elections
-    Election unknownElection = createUnknownElection(UUID.randomUUID().toString(), dataset.getDatasetId());
+    Election unknownElection =
+        createUnknownElection(UUID.randomUUID().toString(), dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the target election
@@ -284,11 +285,7 @@ class MatchDAOTest extends DAOTestHelper {
   private Election createUnknownElection(String referenceId, Integer datasetId) {
     Integer electionId =
         electionDAO.insertElection(
-            "UnknownElection",
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            referenceId,
-            datasetId);
+            "UnknownElection", ElectionStatus.OPEN.getValue(), new Date(), referenceId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
 

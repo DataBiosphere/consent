@@ -242,7 +242,8 @@ class VoteServiceTest extends AbstractTestHelper {
     Election unknownElection = new Election();
     unknownElection.setElectionType("Unknown");
     unknownElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, unknownElection));
+    when(electionDAO.findElectionsByIds(any()))
+        .thenReturn(List.of(accessElection, unknownElection));
 
     assertThrows(
         ConsentConflictException.class,
@@ -333,7 +334,8 @@ class VoteServiceTest extends AbstractTestHelper {
     Election unknownElection = new Election();
     unknownElection.setElectionType("Unknown");
     unknownElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, unknownElection));
+    when(electionDAO.findElectionsByIds(any()))
+        .thenReturn(List.of(accessElection, unknownElection));
 
     assertThrows(
         ConsentConflictException.class,
@@ -376,7 +378,8 @@ class VoteServiceTest extends AbstractTestHelper {
     Election unknownElection = new Election();
     unknownElection.setElectionType("Unknown");
     unknownElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, unknownElection));
+    when(electionDAO.findElectionsByIds(any()))
+        .thenReturn(List.of(accessElection, unknownElection));
 
     assertThrows(
         ConsentConflictException.class,
@@ -1395,7 +1398,8 @@ class VoteServiceTest extends AbstractTestHelper {
     closedElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
     closedElection.setStatus(ElectionStatus.CLOSED.getValue());
 
-    when(electionDAO.findElectionsByIds(List.of(10, 11))).thenReturn(List.of(openElection, closedElection));
+    when(electionDAO.findElectionsByIds(List.of(10, 11)))
+        .thenReturn(List.of(openElection, closedElection));
 
     List<Vote> votes = List.of(v1, v2);
     assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
@@ -1420,7 +1424,8 @@ class VoteServiceTest extends AbstractTestHelper {
     rpElection.setElectionType("RP");
     rpElection.setStatus(ElectionStatus.OPEN.getValue());
 
-    when(electionDAO.findElectionsByIds(List.of(10, 11))).thenReturn(List.of(dataAccessElection, rpElection));
+    when(electionDAO.findElectionsByIds(List.of(10, 11)))
+        .thenReturn(List.of(dataAccessElection, rpElection));
 
     List<Vote> votes = List.of(v1, v2);
     assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));

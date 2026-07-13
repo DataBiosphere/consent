@@ -592,8 +592,8 @@ public class VoteService implements ConsentLogger {
   }
 
   /**
-   * The Rationale for DataAccess Votes can only be updated for OPEN elections.
-   * Votes for elections of other types are not updatable through this method.
+   * The Rationale for DataAccess Votes can only be updated for OPEN elections. Votes for elections
+   * of other types are not updatable through this method.
    *
    * @param voteIds List of vote ids for DataAccess and RP elections
    * @param rationale The rationale to update

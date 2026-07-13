@@ -220,8 +220,7 @@ public class DACAutomationRuleService implements ConsentLogger {
     return vote;
   }
 
-  protected int createOpenElectionForDAR(
-      DataAccessRequest dar, Dataset dataset) {
+  protected int createOpenElectionForDAR(DataAccessRequest dar, Dataset dataset) {
     return electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(),
@@ -234,10 +233,4 @@ public class DACAutomationRuleService implements ConsentLogger {
     return voteDAO.insertVote(userId, electionId, voteType.getValue());
   }
 
-  protected Optional<DACAutomationRule> getEnabledRuleOfInterest(
-      List<DACAutomationRule> dacRules, DACAutomationRuleType ruleType) {
-    return dacRules.stream()
-        .filter(r -> Objects.equals(r.ruleType(), ruleType) && !isNull(r.enabledByUserId()))
-        .findFirst();
-  }
 }

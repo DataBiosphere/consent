@@ -2854,15 +2854,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), any()))
-        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any())).thenReturn(100);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(dacAutomationRuleService)
-        .createOpenElectionForDAR(dar, dataset);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset);
   }
 
   @Test
@@ -2927,9 +2924,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(
             dar.getReferenceId(), dataset.getDatasetId()))
         .thenReturn(List.of(oldElection));
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), any()))
-        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any())).thenReturn(100);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -2956,15 +2951,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), any()))
-        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any())).thenReturn(100);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(dacAutomationRuleService)
-        .createOpenElectionForDAR(dar, dataset);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset);
     verify(dacAutomationRuleService).createVoteForElection(100, member.getUserId(), VoteType.DAC);
   }
 
@@ -3000,18 +2992,15 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(
             dar.getReferenceId(), closedDataset.getDatasetId()))
         .thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(closedDataset)))
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(closedDataset)))
         .thenReturn(100);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
     // Only the closed dataset should have an election created
-    verify(dacAutomationRuleService, never())
-        .createOpenElectionForDAR(any(), eq(openDataset));
-    verify(dacAutomationRuleService)
-        .createOpenElectionForDAR(dar, closedDataset);
+    verify(dacAutomationRuleService, never()).createOpenElectionForDAR(any(), eq(openDataset));
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, closedDataset);
   }
 
   @Test
@@ -3133,17 +3122,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), any()))
-        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any())).thenReturn(100);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(dacAutomationRuleService)
-        .createOpenElectionForDAR(dar, dataset1);
-    verify(dacAutomationRuleService)
-        .createOpenElectionForDAR(dar, dataset2);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset1);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset2);
   }
 
   // ─── Full-flow integration: userDAO → classifyDacsAndUsers → vote creation ──
@@ -3200,12 +3185,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1)))
-        .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2)))
-        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset1))).thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset2))).thenReturn(300);
     stubInTransactionToExecute();
 
     service.createElectionsForNewDarCollection(1);
@@ -3288,16 +3269,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1)))
-        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset1))).thenReturn(100);
     stubInTransactionToExecute();
 
     service.createElectionsForNewDarCollection(1);
 
     // DAC 10 auto-open → elections and votes created
-    verify(dacAutomationRuleService)
-        .createOpenElectionForDAR(dar, dataset1);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset1);
     verify(dacAutomationRuleService)
         .createVoteForElection(100, chairDac10.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService)
@@ -3369,12 +3347,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1)))
-        .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2)))
-        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset1))).thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset2))).thenReturn(300);
     stubInTransactionToExecute();
 
     service.createElectionsForNewDarCollection(1);
@@ -3439,12 +3413,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
     // dataset1: DATA_ACCESS=100; dataset2: DATA_ACCESS=300
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1)))
-        .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2)))
-        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset1))).thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset2))).thenReturn(300);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -3518,12 +3488,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1)))
-        .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2)))
-        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset1))).thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset2))).thenReturn(300);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
@@ -3596,12 +3562,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
         .thenReturn(null);
     when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset1)))
-        .thenReturn(100);
-    when(dacAutomationRuleService.createOpenElectionForDAR(
-            any(), eq(dataset2)))
-        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset1))).thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), eq(dataset2))).thenReturn(300);
     stubInTransactionToExecute();
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
