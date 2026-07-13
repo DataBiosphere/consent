@@ -6,15 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -29,6 +28,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MatchDAOTest extends DAOTestHelper {
+
+  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
+  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
+  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   @Test
   void testFindMatchesByPurposeId() {
@@ -49,7 +52,7 @@ class MatchDAOTest extends DAOTestHelper {
     match.setConsent(consentId);
     match.setPurpose(UUID.randomUUID().toString());
     match.setFailed(false);
-    match.setCreateDate(new Date());
+    match.setCreateDate(FIXED_DATE);
     match.setMatch(randomBoolean());
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     match.setAbstain(false);
@@ -97,7 +100,7 @@ class MatchDAOTest extends DAOTestHelper {
         darReferenceId,
         true,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -107,7 +110,7 @@ class MatchDAOTest extends DAOTestHelper {
         ignoredAccessElection.getReferenceId(),
         false,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -118,7 +121,7 @@ class MatchDAOTest extends DAOTestHelper {
         unknownElection.getReferenceId(),
         false,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         true);
 
@@ -148,7 +151,7 @@ class MatchDAOTest extends DAOTestHelper {
         accessElection.getReferenceId(),
         true,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -159,7 +162,7 @@ class MatchDAOTest extends DAOTestHelper {
         unknownElection.getReferenceId(),
         false,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -215,8 +218,8 @@ class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
@@ -243,29 +246,27 @@ class MatchDAOTest extends DAOTestHelper {
             dar.getReferenceId(),
             randomBoolean(),
             false,
-            new Date(),
+            FIXED_DATE,
             MatchAlgorithm.V4.getVersion(),
             false);
     return matchDAO.findMatchById(matchId);
   }
 
-  private Dac createDac() {
-    Integer id =
-        dacDAO.createDac(
-            "Test_" + randomAlphanumeric(20),
-            "Test_" + randomAlphanumeric(20),
-            createUser().getUserId());
-    return dacDAO.findById(id);
+  private void createDac() {
+    dacDAO.createDac(
+        "Test_" + randomAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
+        createUser().getUserId());
   }
 
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(
+            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -276,7 +277,7 @@ class MatchDAOTest extends DAOTestHelper {
     dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
-    dsp.setCreateDate(new Date());
+    dsp.setCreateDate(FIXED_DATE);
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
   }
@@ -284,7 +285,7 @@ class MatchDAOTest extends DAOTestHelper {
   private Election createUnknownElection(String referenceId, Integer datasetId) {
     Integer electionId =
         electionDAO.insertElection(
-            "UnknownElection", ElectionStatus.OPEN.getValue(), new Date(), referenceId, datasetId);
+            "UnknownElection", ElectionStatus.OPEN.getValue(), FIXED_DATE, referenceId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
 
@@ -293,7 +294,7 @@ class MatchDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
+            FIXED_DATE,
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);
