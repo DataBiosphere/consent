@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +32,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class VoteServiceDAOTest extends DAOTestHelper {
+
+  private static final Instant FIXED_INSTANT = Instant.parse("2025-01-01T00:00:00Z");
+  private static final Date FIXED_DATE = Date.from(FIXED_INSTANT);
+  private static final Timestamp FIXED_TIMESTAMP = Timestamp.from(FIXED_INSTANT);
 
   private VoteServiceDAO serviceDAO;
 
@@ -127,7 +132,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Election election2 = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Election election3 = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     electionDAO.updateElectionById(
-        election1.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date());
+        election1.getElectionId(), ElectionStatus.CLOSED.getValue(), FIXED_DATE);
 
     Vote vote1 = createDacVote(user.getUserId(), election1.getElectionId());
     Vote vote2 = createDacVote(user.getUserId(), election2.getElectionId());
@@ -151,11 +156,10 @@ class VoteServiceDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -166,7 +170,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
     dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
-    dsp.setCreateDate(new Date());
+    dsp.setCreateDate(FIXED_DATE);
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
   }
@@ -210,7 +214,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
+            FIXED_DATE,
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);
