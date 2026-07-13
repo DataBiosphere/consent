@@ -826,8 +826,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void sendReminderMessage(
-      User user, Vote vote, String darCode, String url)
+  protected void sendReminderMessage(User user, Vote vote, String darCode, String url)
       throws TemplateException, IOException {
     emailService.sendMessage(new ReminderMessage(user, vote, darCode, url), user.getUserId());
   }
@@ -842,11 +841,7 @@ public class DataAccessRequestService implements ConsentLogger {
         darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    sendReminderMessage(
-        user,
-        vote,
-        collection.getDarCode(),
-        voteUrl);
+    sendReminderMessage(user, vote, collection.getDarCode(), voteUrl);
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 

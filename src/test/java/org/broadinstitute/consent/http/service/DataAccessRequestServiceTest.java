@@ -25,13 +25,11 @@ import static org.mockito.Mockito.when;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import freemarker.template.TemplateException;
-import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -369,7 +367,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
     dar.setReferenceId("id");
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setSubmissionDate(FIXED_TIMESTAMP);
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
@@ -393,9 +391,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testUpdateByReferenceIdThrowsOnDraft() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setCollectionId(randomInt(0, 100));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setSubmissionDate(FIXED_TIMESTAMP);
     assertThrows(
         SubmittedDARCannotBeEditedException.class, () -> service.updateByReferenceId(user, dar));
   }
@@ -406,7 +404,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
     dar.setReferenceId("id");
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     assertThrows(
         NIHComplianceRuleException.class,
         () -> service.createDataAccessRequest(user, dar, request));
@@ -418,7 +416,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
@@ -451,7 +449,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.setDatasetIds(List.of(1, 2));
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(1);
     parentDar.setDatasetIds(List.of(1, 2));
     User user = createUserWithPrerequisites();
@@ -494,7 +492,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.getData().setDmi(new DataManagementIncident(List.of("incident 1"), "A bad day"));
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
@@ -528,7 +526,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.getData().setDaaIds(Set.of(1));
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     User user = createUserWithPrerequisites();
     user.getLibraryCard().setDaaIds(List.of(2));
     mockApprovedDatasets(progressReport.getDatasetIds());
@@ -564,11 +562,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     signingOfficial.setSigningOfficialRole();
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     progressReport.setDatasetIds(List.of(3, 4, 5));
     parentDar.setDatasetIds(List.of(3, 4, 5));
-    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
@@ -603,7 +601,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Test
   void findDatasetDaaSnapshotsByReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
-    Timestamp capturedAt = Timestamp.from(Instant.now());
+    Timestamp capturedAt = FIXED_TIMESTAMP;
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
     when(daaDAO.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId()))
         .thenReturn(
@@ -636,7 +634,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
@@ -653,7 +651,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
@@ -674,7 +672,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   private User createRequestingUser() {
-    User requestingUser = new User(1, "requestor@test.com", "Requestor", new Date(), roles);
+    User requestingUser = new User(1, "requestor@test.com", "Requestor", FIXED_DATE, roles);
     requestingUser.setInstitutionId(1);
     Institution institution = new Institution();
     institution.setName("Test Institution");
@@ -704,7 +702,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setDatasetIds(Collections.emptyList());
     mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     BadRequestException exception =
         assertThrows(
@@ -720,7 +718,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.getData().setProgressReportSummary(null);
     mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     BadRequestException exception =
         assertThrows(
@@ -736,7 +734,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
     mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
     BadRequestException exception =
@@ -753,11 +751,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     progressReport.setDatasetIds(List.of(3, 4, 5));
     parentDar.setDatasetIds(List.of(3, 4, 5));
-    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
     mockApprovedDatasets(progressReport.getDatasetIds());
@@ -780,11 +778,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     signingOfficial.setInstitutionId(user.getInstitutionId() + 1);
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     progressReport.setDatasetIds(List.of(3, 4, 5));
     parentDar.setDatasetIds(List.of(3, 4, 5));
-    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
     mockApprovedDatasets(progressReport.getDatasetIds());
@@ -808,11 +806,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     signingOfficial.setInstitutionId(user.getInstitutionId());
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     progressReport.setDatasetIds(List.of(3, 4, 5));
     parentDar.setDatasetIds(List.of(3, 4, 5));
-    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
     mockApprovedDatasets(progressReport.getDatasetIds());
@@ -836,11 +834,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     signingOfficial.setSigningOfficialRole();
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setUserId(user.getUserId());
     progressReport.setDatasetIds(List.of(3, 4, 5));
     parentDar.setDatasetIds(List.of(3, 4, 5));
-    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
     mockApprovedDatasets(progressReport.getDatasetIds());
@@ -857,7 +855,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setDatasetIds(List.of(1, 2));
     mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
@@ -884,7 +882,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     collaborator2User.setInstitutionId(user.getInstitutionId());
     collaborator2User.setLibraryCard(new LibraryCard());
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
     when(userDAO.findUserByEmail(collaborator1.email())).thenReturn(collaborator1User);
@@ -905,7 +903,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Collaborator collaborator2 = createCollaborator("eve@yetanotherdomain.org");
     progressReportData.setLabCollaborators(Collections.singletonList(collaborator2));
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
     when(userDAO.findUserByEmail(collaborator1.email())).thenReturn(user);
@@ -1035,7 +1033,7 @@ library card) eve@yetanotherdomain.org\
 
   @Test
   void validateDarNullDar() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(user, null));
   }
 
@@ -1043,7 +1041,7 @@ library card) eve@yetanotherdomain.org\
   void validateDarNullReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setReferenceId(null);
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(user, dar));
   }
 
@@ -1051,14 +1049,14 @@ library card) eve@yetanotherdomain.org\
   void validateDarNullData() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setData(null);
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(user, dar));
   }
 
   @Test
   void validateDarNoLibraryCards() {
     DataAccessRequest dar = generateDataAccessRequest();
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
   }
 
@@ -1099,7 +1097,7 @@ library card) eve@yetanotherdomain.org\
     User requestingUser = createRequestingUser();
     Collaborator validCollaborator = createCollaborator();
     User collaboratorUser =
-        new User(2, validCollaborator.email(), "Collaborator", new Date(), roles);
+        new User(2, validCollaborator.email(), "Collaborator", FIXED_DATE, roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
     collaboratorUser.setLibraryCard(libraryCard);
@@ -1116,7 +1114,7 @@ library card) eve@yetanotherdomain.org\
     User requestingUser = createRequestingUser();
     Collaborator validCollaborator = createCollaborator();
     User collaboratorUser =
-        new User(2, validCollaborator.email(), "Collaborator", new Date(), roles);
+        new User(2, validCollaborator.email(), "Collaborator", FIXED_DATE, roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
     collaboratorUser.setLibraryCard(libraryCard);
@@ -1164,7 +1162,7 @@ library card) eve@yetanotherdomain.org\
     User requestingUser = createRequestingUser();
     Collaborator invalidCollaborator = createCollaborator();
     User collaboratorUser =
-        new User(2, invalidCollaborator.email(), "Collaborator", new Date(), roles);
+        new User(2, invalidCollaborator.email(), "Collaborator", FIXED_DATE, roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.email())).thenReturn(collaboratorUser);
@@ -1190,7 +1188,7 @@ institution or library cards issued: Internal Collaborator member:  \
   void testUpdateByReferenceIdVersion2() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setCollectionId(randomInt(0, 100));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
     when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
@@ -1200,7 +1198,7 @@ institution or library cards issued: Internal Collaborator member:  \
   @Test
   void testUpdateByReferenceIdVersion2_WithCollection() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
     when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
@@ -1467,7 +1465,7 @@ institution or library cards issued: Internal Collaborator member:  \
     String referenceId = UUID.randomUUID().toString();
     DataAccessRequest dataAccessRequest = new DataAccessRequest();
     dataAccessRequest.setReferenceId(referenceId);
-    dataAccessRequest.setSubmissionDate(Timestamp.from(Instant.now()));
+    dataAccessRequest.setSubmissionDate(FIXED_TIMESTAMP);
 
     assertThrows(
         BadRequestException.class, () -> service.deleteDataAccessRequest(dataAccessRequest));
@@ -1539,7 +1537,7 @@ institution or library cards issued: Internal Collaborator member:  \
   @Test
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsThrowsException() {
     String badEmailAddress = "j@example.com";
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     Institution usersInstitution = new Institution();
     usersInstitution.setId(1);
     user.setInstitution(usersInstitution);
@@ -1567,7 +1565,7 @@ institution or library cards issued: Internal Collaborator member:  \
   @Test
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsDoesNotThrowException() {
     String goodEmailAddress = "j@example.com";
-    User user = new User(1, "j@example.com", "Display Name", new Date());
+    User user = new User(1, "j@example.com", "Display Name", FIXED_DATE);
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
@@ -1584,7 +1582,7 @@ institution or library cards issued: Internal Collaborator member:  \
   @Test
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsThrowsForBadPI() {
     String badEmailAddress = "bad@evil.com";
-    User user = new User(1, "j@example.com", "Display Name", new Date());
+    User user = new User(1, "j@example.com", "Display Name", FIXED_DATE);
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
@@ -1602,7 +1600,7 @@ institution or library cards issued: Internal Collaborator member:  \
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsThrowsForBadSO() {
     String goodEmailAddress = "j@example.com";
     String badEmailAddress = "bad@evil.com";
-    User user = new User(1, "j@example.com", "Display Name", new Date());
+    User user = new User(1, "j@example.com", "Display Name", FIXED_DATE);
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
@@ -1632,7 +1630,7 @@ institution or library cards issued: Internal Collaborator member:  \
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsThrowsForBadIT() {
     String goodEmailAddress = "j@example.com";
     String badEmailAddress = "bad@evil.com";
-    User user = new User(1, "j@example.com", "Display Name", new Date());
+    User user = new User(1, "j@example.com", "Display Name", FIXED_DATE);
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
@@ -1654,7 +1652,7 @@ institution or library cards issued: Internal Collaborator member:  \
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsThrowsForBadCollaborator() {
     String goodEmailAddress = "j@example.com";
     String badEmailAddress = "bad@evil.com";
-    User user = new User(1, "j@example.com", "Display Name", new Date());
+    User user = new User(1, "j@example.com", "Display Name", FIXED_DATE);
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
@@ -1738,7 +1736,7 @@ institution or library cards issued: Internal Collaborator member:  \
   void testValidatePersonnelInstitutionAndLibraryCardRequirementsThrowsForBadLabStaffMember() {
     String goodEmailAddress = "j@example.com";
     String badEmailAddress = "bad@evil.com";
-    User user = new User(1, "j@example.com", "Display Name", new Date());
+    User user = new User(1, "j@example.com", "Display Name", FIXED_DATE);
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
@@ -1756,7 +1754,7 @@ institution or library cards issued: Internal Collaborator member:  \
   @Test
   void testValidatePersonnelInstitution_AndLibraryCardRequirements_NoCollaborators() {
     String badEmailAddress = "j@example.com";
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     Institution usersInstitution = new Institution();
     usersInstitution.setId(1);
     user.setInstitution(usersInstitution);
@@ -1780,7 +1778,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   private User createUserWithPrerequisites() {
-    User user = new User(1, USER_EMAIL, USER_NAME, new Date());
+    User user = new User(1, USER_EMAIL, USER_NAME, FIXED_DATE);
     user.setInstitutionId(1);
     Institution institution = new Institution();
     institution.setId(1);
@@ -1857,13 +1855,9 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {
-      "RP",
-      "TranslateDUL",
-      "DataSet",
-      "Unknown"
-  })
-  void testSendReminderMessage_NonDataAccessElectionType(String electionType) throws TemplateException, IOException {
+  @ValueSource(strings = {"RP", "TranslateDUL", "DataSet", "Unknown"})
+  void testSendReminderMessage_NonDataAccessElectionType(String electionType)
+      throws TemplateException, IOException {
     Election election = new Election();
     election.setElectionId(randomInt(0, 100));
     election.setReferenceId(UUID.randomUUID().toString());
@@ -2019,9 +2013,9 @@ institution or library cards issued: Internal Collaborator member:  \
     User user = new User();
     user.setUserId(123);
     DataAccessRequest dar = new DataAccessRequest();
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setSubmissionDate(FIXED_TIMESTAMP);
     dar.setParentId(1);
-    dar.setApprovingSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
+    dar.setApprovingSigningOfficialApprovedDate(FIXED_TIMESTAMP);
     dar.setApprovingSigningOfficialUserId(1);
     DataAccessRequestData data = new DataAccessRequestData();
     data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", 1));
@@ -2040,7 +2034,7 @@ institution or library cards issued: Internal Collaborator member:  \
     User user = new User();
     user.setUserId(123);
     DataAccessRequest dar = new DataAccessRequest();
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setSubmissionDate(FIXED_TIMESTAMP);
     dar.setParentId(1);
 
     DataAccessRequestData data = new DataAccessRequestData();
@@ -2065,7 +2059,7 @@ institution or library cards issued: Internal Collaborator member:  \
     darSubmitter.setInstitutionId(2);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUserId(darSubmitter.getUserId());
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setSubmissionDate(FIXED_TIMESTAMP);
     dar.setParentId(1);
 
     DataAccessRequestData data = new DataAccessRequestData();
@@ -2095,7 +2089,7 @@ institution or library cards issued: Internal Collaborator member:  \
     CloseoutWithUserAndSigningOfficialApproval closeout =
         new CloseoutWithUserAndSigningOfficialApproval();
     Dac dac = new Dac();
-    User chair = new User(1, "chair@duos.org", "A Chair", new Date());
+    User chair = new User(1, "chair@duos.org", "A Chair", FIXED_DATE);
     dac.setChairpersons(List.of(chair));
     when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
     when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
@@ -2125,7 +2119,7 @@ institution or library cards issued: Internal Collaborator member:  \
       submitter.setUserId(124);
       submitter.setInstitutionId(1);
       dar.setUserId(submitter.getUserId());
-      dar.setSubmissionDate(Timestamp.from(Instant.now()));
+      dar.setSubmissionDate(FIXED_TIMESTAMP);
       dar.setParentId(1);
       dar.setDatasetIds(List.of(1));
       dar.setDarCode("DAR-0001");
