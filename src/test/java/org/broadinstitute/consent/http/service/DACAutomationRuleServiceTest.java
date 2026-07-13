@@ -21,11 +21,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -62,7 +61,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DACAutomationRuleServiceTest {
+class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Mock private Jdbi jdbi;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
@@ -88,7 +87,7 @@ class DACAutomationRuleServiceTest {
         DACAutomationRuleType.GRU_V1,
         "Test Rule",
         RuleState.AVAILABLE,
-        Timestamp.from(Instant.now()),
+        FIXED_TIMESTAMP,
         1,
         "admin",
         "admin@example.com");
@@ -210,7 +209,7 @@ class DACAutomationRuleServiceTest {
                     DACAutomationRuleType.GRU_V1,
                     "Test Rule",
                     RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
+                    FIXED_TIMESTAMP,
                     1,
                     "alice",
                     "alice@fake.org")));
@@ -231,7 +230,7 @@ class DACAutomationRuleServiceTest {
                     DACAutomationRuleType.GRU_V1,
                     "Test Rule",
                     RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
+                    FIXED_TIMESTAMP,
                     1,
                     "alice",
                     "alice@fake.org")));
@@ -248,7 +247,7 @@ class DACAutomationRuleServiceTest {
                     DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
                     "Test Rule",
                     RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
+                    FIXED_TIMESTAMP,
                     1,
                     "alice",
                     "alice@fake.org"),
@@ -349,13 +348,13 @@ class DACAutomationRuleServiceTest {
         List.of(
             new DACAutomationRuleAudit(
                 RuleAuditAction.ADD,
-                Timestamp.from(Instant.now()),
+                FIXED_TIMESTAMP,
                 DACAutomationRuleType.GRU_V1,
                 "user1@example.com",
                 "User One"),
             new DACAutomationRuleAudit(
                 RuleAuditAction.REMOVE,
-                Timestamp.from(Instant.now()),
+                FIXED_TIMESTAMP,
                 DACAutomationRuleType.HMB_DSV1,
                 "user2@example.com",
                 "User Two"));
@@ -398,7 +397,7 @@ class DACAutomationRuleServiceTest {
             DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
             "SO Required Rule",
             RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()),
+            FIXED_TIMESTAMP,
             null,
             "SO Rule",
             activeRule.userEmail());
@@ -462,7 +461,7 @@ class DACAutomationRuleServiceTest {
     DataAccessRequest dar = makeDAR();
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setSigningOfficialEmail(signingOfficial.getEmail());
-    dar.setApprovingSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
+    dar.setApprovingSigningOfficialApprovedDate(FIXED_TIMESTAMP);
     dar.setApprovingSigningOfficialUserId(signingOfficial.getUserId());
 
     String referenceId = dar.getReferenceId();
@@ -475,7 +474,7 @@ class DACAutomationRuleServiceTest {
             DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
             "SO Required Rule",
             RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()),
+            FIXED_TIMESTAMP,
             1,
             "SO Rule",
             activeRule.userEmail());
