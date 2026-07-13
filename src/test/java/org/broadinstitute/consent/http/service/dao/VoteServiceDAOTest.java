@@ -110,8 +110,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
 
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    List<Integer> requestVoteIds =
-        Stream.of(vote1, vote2, vote3).map(Vote::getVoteId).toList();
+    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3).map(Vote::getVoteId).toList();
     votes.forEach(
         v -> {
           assertTrue(v.getVote());
@@ -141,8 +140,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
 
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    List<Integer> requestVoteIds =
-        Stream.of(vote1, vote2, vote3).map(Vote::getVoteId).toList();
+    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3).map(Vote::getVoteId).toList();
     votes.forEach(
         v -> {
           assertTrue(v.getVote());
