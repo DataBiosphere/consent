@@ -506,8 +506,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   private boolean isUserPreAuthorizedForAllDaas(User user, List<Integer> datasetIds) {
-    Set<Integer> datasetDaas =
-        new HashSet<>(daaDAO.findDaaIdsByDatasetIds(datasetIds));
+    Set<Integer> datasetDaas = new HashSet<>(daaDAO.findDaaIdsByDatasetIds(datasetIds));
 
     Set<Integer> userDaas = new HashSet<>(user.getLibraryCard().getDaaIds());
 

@@ -22,7 +22,12 @@ public class NewCaseMessage extends MailMessage {
   @Override
   public Map<String, Object> createModel() {
     return Map.of(
-        "userName", toUser.getDisplayName(), "electionType", "Data Access Request", "entityName", referenceId);
+        "userName",
+        toUser.getDisplayName(),
+        "electionType",
+        "Data Access Request",
+        "entityName",
+        referenceId);
   }
 
   @Override
