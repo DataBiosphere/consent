@@ -191,7 +191,7 @@ public class DACAutomationRuleService implements ConsentLogger {
     Vote vote =
         electionDAO.inTransaction(
             _ -> {
-              int electionId = createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
+              int electionId = createOpenElectionForDAR(dar, dataset);
               int voteId =
                   createVoteForElection(electionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
               return voteDAO.findVoteById(voteId);
@@ -220,10 +220,9 @@ public class DACAutomationRuleService implements ConsentLogger {
     return vote;
   }
 
-  protected int createOpenElectionForDAR(
-      DataAccessRequest dar, Dataset dataset, ElectionType electionType) {
+  protected int createOpenElectionForDAR(DataAccessRequest dar, Dataset dataset) {
     return electionDAO.insertElection(
-        electionType.getValue(),
+        ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(),
         new Date(),
         dar.getReferenceId(),
@@ -232,12 +231,5 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   protected int createVoteForElection(int electionId, int userId, VoteType voteType) {
     return voteDAO.insertVote(userId, electionId, voteType.getValue());
-  }
-
-  protected Optional<DACAutomationRule> getEnabledRuleOfInterest(
-      List<DACAutomationRule> dacRules, DACAutomationRuleType ruleType) {
-    return dacRules.stream()
-        .filter(r -> Objects.equals(r.ruleType(), ruleType) && !isNull(r.enabledByUserId()))
-        .findFirst();
   }
 }

@@ -1,15 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -20,10 +17,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonArray;
 import freemarker.template.TemplateException;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -170,105 +164,17 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testChairCreateVotesDataAccess() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-    assertFalse(votes.isEmpty());
-    // Should create 4 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    // Final vote
-    // Manual review Agreement vote
-    assertEquals(4, votes.size());
-  }
-
-  @Test
-  void testMemberCreateVotesDataAccess() {
-    setUpUserAndElectionVotes(UserRoles.MEMBER);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-    assertFalse(votes.isEmpty());
-    // Should create 1 member vote
-    assertEquals(1, votes.size());
-  }
-
-  @Test
-  void testChairCreateVotesDataAccessManualReview() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, true);
-    assertFalse(votes.isEmpty());
-    // Should create 3 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    // Final vote
-    assertEquals(3, votes.size());
-  }
-
-  @Test
-  void testChairCreateVotesTranslateDUL() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-    assertFalse(votes.isEmpty());
-    // Should create 2 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    assertEquals(2, votes.size());
-  }
-
-  @Test
-  void testMemberCreateVotesTranslateDUL() {
-    setUpUserAndElectionVotes(UserRoles.MEMBER);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.TRANSLATE_DUL, false);
-    assertFalse(votes.isEmpty());
-    // Should create 1 member vote
-    assertEquals(1, votes.size());
-  }
-
-  @Test
-  void testChairCreateVotesRP() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-    assertFalse(votes.isEmpty());
-    // Should create 2 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    assertEquals(2, votes.size());
-  }
-
-  @Test
-  void testMemberCreateVotesRP() {
-    setUpUserAndElectionVotes(UserRoles.MEMBER);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-    assertFalse(votes.isEmpty());
-    // Should create 1 member vote
-    assertEquals(1, votes.size());
-  }
-
-  @Test
   void testUpdateVotesWithValue_NoRationale() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote();
-    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
 
     Election accessElection = new Election();
     accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
     accessElection.setStatus(ElectionStatus.OPEN.getValue());
-    Election rpElection = new Election();
-    rpElection.setElectionType(ElectionType.RP.getValue());
-    rpElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, rpElection));
+    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection));
 
-    try {
-      service.updateVotesWithValue(List.of(v), true, null, user);
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    List<Vote> voteList = List.of(v);
+    assertDoesNotThrow(() -> service.updateVotesWithValue(voteList, true, null, user));
   }
 
   @Test
@@ -320,66 +226,61 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateVotesWithValue_OpenRPElection() {
-    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.OPEN);
+  void testUpdateVotesWithValue_OpenNonDataAccessElection() {
+    testUpdateVotesWithValue_NonDataAccessElectionWithStatus(ElectionStatus.OPEN);
   }
 
   @Test
-  void testUpdateVotesWithValue_ClosedRPElection() {
-    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CLOSED);
+  void testUpdateVotesWithValue_ClosedNonDataAccessElection() {
+    testUpdateVotesWithValue_NonDataAccessElectionWithStatus(ElectionStatus.CLOSED);
   }
 
   @Test
-  void testUpdateVotesWithValue_CanceledRPElection() {
-    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CANCELED);
+  void testUpdateVotesWithValue_CanceledNonDataAccessElection() {
+    testUpdateVotesWithValue_NonDataAccessElectionWithStatus(ElectionStatus.CANCELED);
   }
 
   @Test
-  void testUpdateVotesWithValue_FinalRPElection() {
-    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.FINAL);
+  void testUpdateVotesWithValue_FinalNonDataAccessElection() {
+    testUpdateVotesWithValue_NonDataAccessElectionWithStatus(ElectionStatus.FINAL);
   }
 
   @Test
-  void testUpdateVotesWithValue_PendingApprovalRPElection() {
-    testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.PENDING_APPROVAL);
+  void testUpdateVotesWithValue_PendingApprovalNonDataAccessElection() {
+    testUpdateVotesWithValue_NonDataAccessElectionWithStatus(ElectionStatus.PENDING_APPROVAL);
   }
 
   @Test
   void testUpdateVotesWithValue_MultipleElectionTypes() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote();
-    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
 
     Election accessElection = new Election();
     accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
     accessElection.setStatus(ElectionStatus.OPEN.getValue());
-    Election rpElection = new Election();
-    rpElection.setElectionType(ElectionType.RP.getValue());
-    rpElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, rpElection));
+    Election unknownElection = new Election();
+    unknownElection.setElectionType("Unknown");
+    unknownElection.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(any()))
+        .thenReturn(List.of(accessElection, unknownElection));
 
-    try {
-      service.updateVotesWithValue(List.of(v), true, "rationale", user);
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateVotesWithValue(List.of(v), true, "rationale", user));
   }
 
-  private void testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus status) {
+  private void testUpdateVotesWithValue_NonDataAccessElectionWithStatus(ElectionStatus status) {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote();
-    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
 
     Election rpElection = new Election();
-    rpElection.setElectionType(ElectionType.RP.getValue());
+    rpElection.setElectionType("Unknown Status");
     rpElection.setStatus(status.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(rpElection));
 
-    try {
-      service.updateVotesWithValue(List.of(v), true, "rationale", user);
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateVotesWithValue(List.of(v), true, "rationale", user));
   }
 
   @Test
@@ -387,31 +288,25 @@ class VoteServiceTest extends AbstractTestHelper {
     doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
 
-    try {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(() -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
-  void testUpdateRationaleByVoteIds_DataAccessAndRPElections() {
-    doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
+  void testUpdateRationaleByVoteIds_DataAccessAndNonDataAccessElections() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
 
     Election accessElection = new Election();
     accessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
     accessElection.setStatus(ElectionStatus.OPEN.getValue());
-    Election rpElection = new Election();
-    rpElection.setElectionType(ElectionType.RP.getValue());
-    rpElection.setStatus(ElectionStatus.OPEN.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection, rpElection));
+    Election unknownElection = new Election();
+    unknownElection.setElectionType("Unknown");
+    unknownElection.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(any()))
+        .thenReturn(List.of(accessElection, unknownElection));
 
-    try {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -419,17 +314,6 @@ class VoteServiceTest extends AbstractTestHelper {
     Election election = new Election();
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
     election.setStatus(ElectionStatus.CLOSED.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
-    List<Integer> votes = List.of(1);
-    assertThrows(
-        ConsentConflictException.class, () -> service.updateRationaleByVoteIds(votes, "rationale"));
-  }
-
-  @Test
-  void testUpdateRationaleByVoteIds_NonDataAccessElection() {
-    Election election = new Election();
-    election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
-    election.setStatus(ElectionStatus.OPEN.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     List<Integer> votes = List.of(1);
     assertThrows(
@@ -473,7 +357,7 @@ class VoteServiceTest extends AbstractTestHelper {
     dar1.addDatasetId(d1.getDatasetId());
     dar1.setCollectionId(1);
     dar1.setData(data1);
-    dar1.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar1.setSubmissionDate(FIXED_TIMESTAMP);
     dar1.setParentId(5);
     dar1.setReferenceId(referenceId1);
     d1.setProperties(Set.of(depositorProp));
@@ -812,7 +696,7 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifyCustodiansOfApprovedDatasets() {
+  void testNotifyCustodiansOfApprovedDatasets() throws Exception {
     User submitter = new User();
     submitter.setEmail("submitter@test.com");
     submitter.setDisplayName("submitter");
@@ -821,7 +705,6 @@ class VoteServiceTest extends AbstractTestHelper {
     DatasetProperty depositorProp = new DatasetProperty();
     depositorProp.setPropertyName("Data Depositor");
     depositorProp.setPropertyValue("depositor@test.com");
-    depositorProp.setSchemaProperty("dataDepositorEmail");
     depositorProp.setPropertyType(PropertyType.String);
 
     Dataset d1 = new Dataset();
@@ -847,12 +730,11 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(any())).thenReturn(submitter);
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code", false);
-      verify(emailService, times(1)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(
+                List.of(d1, d2), researcher, "Dar Code", false));
+    verify(emailService, times(1)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
@@ -900,7 +782,7 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() {
+  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() throws Exception {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -947,16 +829,14 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
         .thenReturn(List.of(custodian));
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false));
+    verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
-  void testNotifyStudyCustodiansAndSubmittersOfRADARApprovedDatasets() {
+  void testNotifyStudyCustodiansAndSubmittersOfRADARApprovedDatasets() throws Exception {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -1003,12 +883,10 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
         .thenReturn(List.of(custodian));
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true);
-      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true));
+    verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   /**
@@ -1016,7 +894,8 @@ class VoteServiceTest extends AbstractTestHelper {
    * com.google.gson.JsonArray cannot be cast to class java.lang.String
    */
   @Test
-  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians() {
+  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians()
+      throws Exception {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -1064,12 +943,10 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
         .thenReturn(List.of(custodian));
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false));
+    verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @ParameterizedTest
@@ -1174,7 +1051,7 @@ class VoteServiceTest extends AbstractTestHelper {
                 DatasetRegistrationSchemaV1Builder.url,
                 dataLocationUrl,
                 PropertyType.String,
-                new Date())));
+                FIXED_DATE)));
 
     Dataset dataset2 = new Dataset();
     dataset1.setDatasetId(2);
@@ -1203,12 +1080,12 @@ class VoteServiceTest extends AbstractTestHelper {
     parent.setId(1);
     parent.setReferenceId(UUID.randomUUID().toString());
     parent.setDatasetIds(List.of(dataset.getDatasetId()));
-    parent.setSubmissionDate(Timestamp.from(Instant.now()));
+    parent.setSubmissionDate(FIXED_TIMESTAMP);
 
     DataAccessRequest child = new DataAccessRequest();
     child.setReferenceId(UUID.randomUUID().toString());
     child.setParentId(parent.getId());
-    child.setSubmissionDate(Timestamp.from(Instant.now()));
+    child.setSubmissionDate(FIXED_TIMESTAMP);
     child.setDatasetIds(List.of(dataset.getDatasetId()));
 
     User researcher = createUserWithRole(UserRoles.RESEARCHER);
@@ -1293,20 +1170,6 @@ class VoteServiceTest extends AbstractTestHelper {
     return newUser;
   }
 
-  private void setUpUserAndElectionVotes(UserRoles userRoles) {
-    User localUser = new User();
-    localUser.setUserId(randomInt(1, 10));
-    UserRole chairRole = new UserRole();
-    chairRole.setUserId(localUser.getUserId());
-    chairRole.setRoleId(userRoles.getRoleId());
-    chairRole.setName(userRoles.getRoleName());
-    localUser.setRoles(Collections.singletonList(chairRole));
-    when(userDAO.findNonDacUsersEnabledToVote()).thenReturn(Collections.singleton(localUser));
-    Vote v = new Vote();
-    v.setVoteId(1);
-    when(voteDAO.findVoteById(anyInt())).thenReturn(v);
-  }
-
   private Vote setUpTestVote() {
     Vote v = new Vote();
     v.setVoteId(randomInt(1, 10));
@@ -1315,5 +1178,158 @@ class VoteServiceTest extends AbstractTestHelper {
     v.setIsReminderSent(true);
     v.setVote(true);
     return v;
+  }
+
+  // validateVotesCanUpdate tests
+
+  @Test
+  void testValidateVotesCanUpdate_openDataAccessElections_noException() {
+    Vote v1 = new Vote();
+    v1.setVoteId(1);
+    v1.setElectionId(10);
+    Vote v2 = new Vote();
+    v2.setVoteId(2);
+    v2.setElectionId(11);
+
+    Election e1 = new Election();
+    e1.setElectionId(10);
+    e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    e1.setStatus(ElectionStatus.OPEN.getValue());
+
+    Election e2 = new Election();
+    e2.setElectionId(11);
+    e2.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    e2.setStatus(ElectionStatus.OPEN.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10, 11))).thenReturn(List.of(e1, e2));
+
+    assertDoesNotThrow(() -> service.validateVotesCanUpdate(List.of(v1, v2)));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_emptyVotesList_noException() {
+    when(electionDAO.findElectionsByIds(List.of())).thenReturn(List.of());
+
+    assertDoesNotThrow(() -> service.validateVotesCanUpdate(List.of()));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_closedDataAccessElection_throwsConflict() {
+    Vote v = new Vote();
+    v.setVoteId(1);
+    v.setElectionId(10);
+
+    Election e = new Election();
+    e.setElectionId(10);
+    e.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    e.setStatus(ElectionStatus.CLOSED.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(e));
+
+    List<Vote> votes = List.of(v);
+    assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_canceledDataAccessElection_throwsConflict() {
+    Vote v = new Vote();
+    v.setVoteId(1);
+    v.setElectionId(10);
+
+    Election e = new Election();
+    e.setElectionId(10);
+    e.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    e.setStatus(ElectionStatus.CANCELED.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(e));
+
+    List<Vote> votes = List.of(v);
+    assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_finalDataAccessElection_throwsConflict() {
+    Vote v = new Vote();
+    v.setVoteId(1);
+    v.setElectionId(10);
+
+    Election e = new Election();
+    e.setElectionId(10);
+    e.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    e.setStatus(ElectionStatus.FINAL.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(e));
+
+    List<Vote> votes = List.of(v);
+    assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_nonDataAccessElectionType_throwsConflict() {
+    Vote v = new Vote();
+    v.setVoteId(1);
+    v.setElectionId(10);
+
+    Election e = new Election();
+    e.setElectionId(10);
+    e.setElectionType("RP");
+    e.setStatus(ElectionStatus.OPEN.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(e));
+
+    List<Vote> votes = List.of(v);
+    assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_mixedDataAccessOpenAndClosed_throwsConflict() {
+    Vote v1 = new Vote();
+    v1.setVoteId(1);
+    v1.setElectionId(10);
+    Vote v2 = new Vote();
+    v2.setVoteId(2);
+    v2.setElectionId(11);
+
+    Election openElection = new Election();
+    openElection.setElectionId(10);
+    openElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    openElection.setStatus(ElectionStatus.OPEN.getValue());
+
+    Election closedElection = new Election();
+    closedElection.setElectionId(11);
+    closedElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    closedElection.setStatus(ElectionStatus.CLOSED.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10, 11)))
+        .thenReturn(List.of(openElection, closedElection));
+
+    List<Vote> votes = List.of(v1, v2);
+    assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
+  }
+
+  @Test
+  void testValidateVotesCanUpdate_dataAccessOpenAndNonDataAccessType_throwsConflict() {
+    Vote v1 = new Vote();
+    v1.setVoteId(1);
+    v1.setElectionId(10);
+    Vote v2 = new Vote();
+    v2.setVoteId(2);
+    v2.setElectionId(11);
+
+    Election dataAccessElection = new Election();
+    dataAccessElection.setElectionId(10);
+    dataAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    dataAccessElection.setStatus(ElectionStatus.OPEN.getValue());
+
+    Election rpElection = new Election();
+    rpElection.setElectionId(11);
+    rpElection.setElectionType("RP");
+    rpElection.setStatus(ElectionStatus.OPEN.getValue());
+
+    when(electionDAO.findElectionsByIds(List.of(10, 11)))
+        .thenReturn(List.of(dataAccessElection, rpElection));
+
+    List<Vote> votes = List.of(v1, v2);
+    assertThrows(ConsentConflictException.class, () -> service.validateVotesCanUpdate(votes));
   }
 }

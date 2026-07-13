@@ -86,33 +86,6 @@ public class VoteService implements ConsentLogger {
   }
 
   /**
-   * Create votes for an election
-   *
-   * @param election The Election
-   * @param electionType The Election type
-   * @param isManualReview Is this a manual review election
-   * @return List of votes
-   */
-  @SuppressWarnings("DuplicatedCode")
-  public List<Vote> createVotes(
-      Election election, ElectionType electionType, Boolean isManualReview) {
-    Dac dac = electionDAO.findDacForElection(election.getElectionId());
-    Set<User> users;
-    if (dac != null) {
-      users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
-    } else {
-      users = userDAO.findNonDacUsersEnabledToVote();
-    }
-    List<Vote> votes = new ArrayList<>();
-    if (users != null) {
-      for (User user : users) {
-        votes.addAll(createVotesForUser(user, election, electionType, isManualReview));
-      }
-    }
-    return votes;
-  }
-
-  /**
    * Create election votes for a user
    *
    * @param user DACUser
@@ -592,9 +565,8 @@ public class VoteService implements ConsentLogger {
   }
 
   /**
-   * The Rationale for RP Votes can be updated for any election status. The Rationale for DataAccess
-   * Votes can only be updated for OPEN elections. Votes for elections of other types are not
-   * updatable through this method.
+   * The Rationale for DataAccess Votes can only be updated for OPEN elections. Votes for elections
+   * of other types are not updatable through this method.
    *
    * @param voteIds List of vote ids for DataAccess and RP elections
    * @param rationale The rationale to update
@@ -609,7 +581,8 @@ public class VoteService implements ConsentLogger {
     return findVotesByIds(voteIds);
   }
 
-  private void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
+  @VisibleForTesting
+  protected void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
     List<Election> elections =
         electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList());
 
@@ -625,12 +598,11 @@ public class VoteService implements ConsentLogger {
           "One or more of these votes are associated with elections not open for voting.");
     }
 
-    // If there are non-DataAccess or non-RP elections, throw an error
+    // If there are non-DataAccess throw an error
     List<Election> disallowedElections =
         elections.stream()
             .filter(
                 election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-            .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
             .toList();
     if (!disallowedElections.isEmpty()) {
       throw new ConsentConflictException(

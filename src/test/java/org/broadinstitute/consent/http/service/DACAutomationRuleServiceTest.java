@@ -21,17 +21,19 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.sql.Timestamp;
-import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
@@ -54,15 +56,17 @@ import org.broadinstitute.consent.http.rules.RuleState;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlobject.transaction.TransactionalCallback;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DACAutomationRuleServiceTest {
+class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Mock private Jdbi jdbi;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
@@ -88,7 +92,7 @@ class DACAutomationRuleServiceTest {
         DACAutomationRuleType.GRU_V1,
         "Test Rule",
         RuleState.AVAILABLE,
-        Timestamp.from(Instant.now()),
+        FIXED_TIMESTAMP,
         1,
         "admin",
         "admin@example.com");
@@ -210,7 +214,7 @@ class DACAutomationRuleServiceTest {
                     DACAutomationRuleType.GRU_V1,
                     "Test Rule",
                     RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
+                    FIXED_TIMESTAMP,
                     1,
                     "alice",
                     "alice@fake.org")));
@@ -231,7 +235,7 @@ class DACAutomationRuleServiceTest {
                     DACAutomationRuleType.GRU_V1,
                     "Test Rule",
                     RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
+                    FIXED_TIMESTAMP,
                     1,
                     "alice",
                     "alice@fake.org")));
@@ -248,7 +252,7 @@ class DACAutomationRuleServiceTest {
                     DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
                     "Test Rule",
                     RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
+                    FIXED_TIMESTAMP,
                     1,
                     "alice",
                     "alice@fake.org"),
@@ -349,13 +353,13 @@ class DACAutomationRuleServiceTest {
         List.of(
             new DACAutomationRuleAudit(
                 RuleAuditAction.ADD,
-                Timestamp.from(Instant.now()),
+                FIXED_TIMESTAMP,
                 DACAutomationRuleType.GRU_V1,
                 "user1@example.com",
                 "User One"),
             new DACAutomationRuleAudit(
                 RuleAuditAction.REMOVE,
-                Timestamp.from(Instant.now()),
+                FIXED_TIMESTAMP,
                 DACAutomationRuleType.HMB_DSV1,
                 "user2@example.com",
                 "User Two"));
@@ -398,7 +402,7 @@ class DACAutomationRuleServiceTest {
             DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
             "SO Required Rule",
             RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()),
+            FIXED_TIMESTAMP,
             null,
             "SO Rule",
             activeRule.userEmail());
@@ -460,10 +464,6 @@ class DACAutomationRuleServiceTest {
     signingOfficial.setEmail("1" + researcher.getEmail());
     signingOfficial.setUserId(9);
     DataAccessRequest dar = makeDAR();
-    DataAccessRequestData darData = new DataAccessRequestData();
-    darData.setSigningOfficialEmail(signingOfficial.getEmail());
-    dar.setApprovingSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
-    dar.setApprovingSigningOfficialUserId(signingOfficial.getUserId());
 
     String referenceId = dar.getReferenceId();
     List<Integer> datasetIds = List.of(1, 2);
@@ -475,7 +475,7 @@ class DACAutomationRuleServiceTest {
             DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
             "SO Required Rule",
             RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()),
+            FIXED_TIMESTAMP,
             1,
             "SO Rule",
             activeRule.userEmail());
@@ -652,6 +652,49 @@ class DACAutomationRuleServiceTest {
   }
 
   @Test
+  void testOpenElectionAndApprove_transactionLambdaCreatesElectionAndVote() {
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
+    DataAccessRequest dar = makeDAR();
+    Dataset dataset = makeDataset();
+
+    int expectedElectionId = 10;
+    int expectedVoteId = 20;
+    Vote expectedVote = new Vote();
+    expectedVote.setVoteId(expectedVoteId);
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    doReturn(expectedElectionId).when(serviceSpy).createOpenElectionForDAR(dar, dataset);
+    doReturn(expectedVoteId)
+        .when(serviceSpy)
+        .createVoteForElection(expectedElectionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
+    when(voteDAO.findVoteById(expectedVoteId)).thenReturn(expectedVote);
+
+    // Make inTransaction actually execute its lambda body
+    doAnswer(
+            invocation -> {
+              TransactionalCallback<Vote, ElectionDAO, Exception> cb = invocation.getArgument(0);
+              return cb.inTransaction(electionDAO);
+            })
+        .when(electionDAO)
+        .inTransaction(any());
+
+    // Stub the rest of the method so it completes successfully
+    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any()))
+        .thenReturn(List.of(expectedVote));
+    when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
+
+    Vote result =
+        serviceSpy.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
+
+    assertEquals(expectedVote, result);
+    verify(serviceSpy).createOpenElectionForDAR(dar, dataset);
+    verify(serviceSpy)
+        .createVoteForElection(expectedElectionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
+    verify(voteDAO).findVoteById(expectedVoteId);
+  }
+
+  @Test
   void testGetRuleImplementation() {
     DACAutomationRule gruRule = makeDacAutomationRuleGRU();
 
@@ -676,5 +719,120 @@ class DACAutomationRuleServiceTest {
             IllegalArgumentException.class,
             () -> DACAutomationRuleService.getRuleImplementation(mockRule));
     assertEquals("No rule implementation found for type: MOCK_TYPE", exception.getMessage());
+  }
+
+  // createOpenElectionForDAR tests
+
+  @Test
+  void testCreateOpenElectionForDAR_returnsElectionId() {
+    DataAccessRequest dar = makeDAR();
+    Dataset dataset = makeDataset();
+    when(electionDAO.insertElection(
+            eq(ElectionType.DATA_ACCESS.getValue()),
+            eq(ElectionStatus.OPEN.getValue()),
+            any(Date.class),
+            eq(dar.getReferenceId()),
+            eq(dataset.getDatasetId())))
+        .thenReturn(42);
+
+    int result = service.createOpenElectionForDAR(dar, dataset);
+
+    assertEquals(42, result);
+  }
+
+  @Test
+  void testCreateOpenElectionForDAR_usesDataAccessTypeAndOpenStatus() {
+    DataAccessRequest dar = makeDAR();
+    Dataset dataset = makeDataset();
+    ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> statusCaptor = ArgumentCaptor.forClass(String.class);
+    when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
+
+    service.createOpenElectionForDAR(dar, dataset);
+
+    verify(electionDAO)
+        .insertElection(typeCaptor.capture(), statusCaptor.capture(), any(), any(), any());
+    assertEquals(ElectionType.DATA_ACCESS.getValue(), typeCaptor.getValue());
+    assertEquals(ElectionStatus.OPEN.getValue(), statusCaptor.getValue());
+  }
+
+  @Test
+  void testCreateOpenElectionForDAR_passesDarReferenceIdAndDatasetId() {
+    DataAccessRequest dar = makeDAR();
+    Dataset dataset = makeDataset(7, "Custom Dataset", 3);
+    ArgumentCaptor<String> referenceIdCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<Integer> datasetIdCaptor = ArgumentCaptor.forClass(Integer.class);
+    when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
+
+    service.createOpenElectionForDAR(dar, dataset);
+
+    verify(electionDAO)
+        .insertElection(
+            any(), any(), any(), referenceIdCaptor.capture(), datasetIdCaptor.capture());
+    assertEquals(dar.getReferenceId(), referenceIdCaptor.getValue());
+    assertEquals(dataset.getDatasetId(), datasetIdCaptor.getValue());
+  }
+
+  @Test
+  void testCreateOpenElectionForDAR_passesNonNullDate() {
+    DataAccessRequest dar = makeDAR();
+    Dataset dataset = makeDataset();
+    ArgumentCaptor<Date> dateCaptor = ArgumentCaptor.forClass(Date.class);
+    when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
+
+    service.createOpenElectionForDAR(dar, dataset);
+
+    verify(electionDAO).insertElection(any(), any(), dateCaptor.capture(), any(), any());
+    assertNotNull(dateCaptor.getValue());
+  }
+
+  // createVoteForElection tests
+
+  @Test
+  void testCreateVoteForElection_returnsVoteId() {
+    when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(55);
+
+    int result = service.createVoteForElection(10, 20, VoteType.RADAR_APPROVE);
+
+    assertEquals(55, result);
+  }
+
+  @Test
+  void testCreateVoteForElection_passesArgumentsInCorrectOrder() {
+    int electionId = 100;
+    int userId = 200;
+    ArgumentCaptor<Integer> userIdCaptor = ArgumentCaptor.forClass(Integer.class);
+    ArgumentCaptor<Integer> electionIdCaptor = ArgumentCaptor.forClass(Integer.class);
+    when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(1);
+
+    service.createVoteForElection(electionId, userId, VoteType.RADAR_APPROVE);
+
+    // insertVote signature is (userId, electionId, type) — note the swap from
+    // createVoteForElection's (electionId, userId, voteType)
+    verify(voteDAO).insertVote(userIdCaptor.capture(), electionIdCaptor.capture(), any());
+    assertEquals(userId, userIdCaptor.getValue());
+    assertEquals(electionId, electionIdCaptor.getValue());
+  }
+
+  @Test
+  void testCreateVoteForElection_passesVoteTypeValue() {
+    ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+    when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(1);
+
+    service.createVoteForElection(1, 1, VoteType.RADAR_APPROVE);
+
+    verify(voteDAO).insertVote(anyInt(), anyInt(), typeCaptor.capture());
+    assertEquals(VoteType.RADAR_APPROVE.getValue(), typeCaptor.getValue());
+  }
+
+  @Test
+  void testCreateVoteForElection_withFinalVoteType() {
+    ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+    when(voteDAO.insertVote(anyInt(), anyInt(), any())).thenReturn(1);
+
+    service.createVoteForElection(1, 1, VoteType.FINAL);
+
+    verify(voteDAO).insertVote(anyInt(), anyInt(), typeCaptor.capture());
+    assertEquals(VoteType.FINAL.getValue(), typeCaptor.getValue());
   }
 }
