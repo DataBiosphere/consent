@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -1173,20 +1172,6 @@ class VoteServiceTest extends AbstractTestHelper {
     role.setName(userRoles.getRoleName());
     newUser.setRoles(Collections.singletonList(role));
     return newUser;
-  }
-
-  private void setUpUserAndElectionVotes(UserRoles userRoles) {
-    User localUser = new User();
-    localUser.setUserId(randomInt(1, 10));
-    UserRole chairRole = new UserRole();
-    chairRole.setUserId(localUser.getUserId());
-    chairRole.setRoleId(userRoles.getRoleId());
-    chairRole.setName(userRoles.getRoleName());
-    localUser.setRoles(Collections.singletonList(chairRole));
-    when(userDAO.findNonDacUsersEnabledToVote()).thenReturn(Collections.singleton(localUser));
-    Vote v = new Vote();
-    v.setVoteId(1);
-    when(voteDAO.findVoteById(anyInt())).thenReturn(v);
   }
 
   private Vote setUpTestVote() {

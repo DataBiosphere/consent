@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
@@ -37,7 +36,7 @@ class MatchDAOTest extends DAOTestHelper {
 
     List<Match> matches = matchDAO.findMatchesByPurposeId(m.getPurpose());
     assertFalse(matches.isEmpty());
-    Match found = matches.get(0);
+    Match found = matches.getFirst();
     assertEquals(found.getId(), m.getId());
     assertEquals(found.getPurpose(), m.getPurpose());
     assertEquals(found.getConsent(), m.getConsent());
@@ -51,7 +50,7 @@ class MatchDAOTest extends DAOTestHelper {
     match.setPurpose(UUID.randomUUID().toString());
     match.setFailed(false);
     match.setCreateDate(new Date());
-    match.setMatch(RandomUtils.nextBoolean());
+    match.setMatch(randomBoolean());
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     match.setAbstain(false);
     return match;
@@ -126,7 +125,7 @@ class MatchDAOTest extends DAOTestHelper {
     List<Match> matchResults =
         matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
-    Match result = matchResults.get(0);
+    Match result = matchResults.getFirst();
     assertEquals(targetElection.getReferenceId(), result.getPurpose());
   }
 
@@ -194,8 +193,8 @@ class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
@@ -242,7 +241,7 @@ class MatchDAOTest extends DAOTestHelper {
         matchDAO.insertMatch(
             dataset.getDatasetIdentifier(),
             dar.getReferenceId(),
-            RandomUtils.nextBoolean(),
+            randomBoolean(),
             false,
             new Date(),
             MatchAlgorithm.V4.getVersion(),
@@ -253,17 +252,17 @@ class MatchDAOTest extends DAOTestHelper {
   private Dac createDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + RandomStringUtils.random(20, true, true),
-            "Test_" + RandomStringUtils.random(20, true, true),
+            "Test_" + randomAlphanumeric(20),
+            "Test_" + randomAlphanumeric(20),
             createUser().getUserId());
     return dacDAO.findById(id);
   }
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
         datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);

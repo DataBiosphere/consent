@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -52,11 +51,11 @@ class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals(rationale, votes.get(0).getRationale());
+    assertTrue(votes.getFirst().getVote());
+    assertEquals(rationale, votes.getFirst().getRationale());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
-    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+    assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
   }
 
   @Test
@@ -70,9 +69,9 @@ class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, null);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertNull(votes.get(0).getRationale());
-    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+    assertTrue(votes.getFirst().getVote());
+    assertNull(votes.getFirst().getRationale());
+    assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
   }
 
   @Test
@@ -87,11 +86,11 @@ class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals(rationale, votes.get(0).getRationale());
+    assertTrue(votes.getFirst().getVote());
+    assertEquals(rationale, votes.getFirst().getRationale());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertNotEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
-    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+    assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
   }
 
   @Test
@@ -151,9 +150,9 @@ class VoteServiceDAOTest extends DAOTestHelper {
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
         datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
@@ -184,11 +183,11 @@ class VoteServiceDAOTest extends DAOTestHelper {
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    assertTrue(votes.get(0).getVote());
-    assertEquals(rationale, votes.get(0).getRationale());
+    assertTrue(votes.getFirst().getVote());
+    assertEquals(rationale, votes.getFirst().getRationale());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
-    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+    assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
   }
 
   private Vote createDacVote(Integer userId, Integer electionId) {
