@@ -232,5 +232,4 @@ public class DACAutomationRuleService implements ConsentLogger {
   protected int createVoteForElection(int electionId, int userId, VoteType voteType) {
     return voteDAO.insertVote(userId, electionId, voteType.getValue());
   }
-
 }
