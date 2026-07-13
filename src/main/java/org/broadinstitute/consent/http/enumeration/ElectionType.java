@@ -3,11 +3,16 @@ package org.broadinstitute.consent.http.enumeration;
 import java.util.EnumSet;
 import java.util.Optional;
 
+/**
+ * The only election type supported for current use is `DATA_ACCESS`.
+ * `TRANSLATE_DUL`, `RP`, and `DATA_SET` are deprecated and should not be used for new elections.
+ * We are maintaining the deprecated enums to support legacy elections.
+ */
 public enum ElectionType {
   DATA_ACCESS("DataAccess"),
-  TRANSLATE_DUL("TranslateDUL"),
-  RP("RP"),
-  DATA_SET("DataSet");
+  @Deprecated TRANSLATE_DUL("TranslateDUL"),
+  @Deprecated RP("RP"),
+  @Deprecated DATA_SET("DataSet");
 
   private final String value;
 
