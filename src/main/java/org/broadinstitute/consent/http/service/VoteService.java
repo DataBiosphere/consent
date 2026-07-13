@@ -86,33 +86,6 @@ public class VoteService implements ConsentLogger {
   }
 
   /**
-   * Create votes for an election
-   *
-   * @param election The Election
-   * @param electionType The Election type
-   * @param isManualReview Is this a manual review election
-   * @return List of votes
-   */
-  @SuppressWarnings("DuplicatedCode")
-  public List<Vote> createVotes(
-      Election election, ElectionType electionType, Boolean isManualReview) {
-    Dac dac = electionDAO.findDacForElection(election.getElectionId());
-    Set<User> users;
-    if (dac != null) {
-      users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
-    } else {
-      users = userDAO.findNonDacUsersEnabledToVote();
-    }
-    List<Vote> votes = new ArrayList<>();
-    if (users != null) {
-      for (User user : users) {
-        votes.addAll(createVotesForUser(user, election, electionType, isManualReview));
-      }
-    }
-    return votes;
-  }
-
-  /**
    * Create election votes for a user
    *
    * @param user DACUser

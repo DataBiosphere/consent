@@ -1,12 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -170,65 +168,6 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testChairCreateVotesDataAccess() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-    assertFalse(votes.isEmpty());
-    // Should create 4 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    // Final vote
-    // Manual review Agreement vote
-    assertEquals(4, votes.size());
-  }
-
-  @Test
-  void testMemberCreateVotesDataAccess() {
-    setUpUserAndElectionVotes(UserRoles.MEMBER);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-    assertFalse(votes.isEmpty());
-    // Should create 1 member vote
-    assertEquals(1, votes.size());
-  }
-
-  @Test
-  void testChairCreateVotesDataAccessManualReview() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, true);
-    assertFalse(votes.isEmpty());
-    // Should create 3 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    // Final vote
-    assertEquals(3, votes.size());
-  }
-
-  @Test
-  void testChairCreateVotesRP() {
-    setUpUserAndElectionVotes(UserRoles.CHAIRPERSON);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-    assertFalse(votes.isEmpty());
-    // Should create 2 votes:
-    // Chairperson as a chair
-    // Chairperson as a dac member
-    assertEquals(2, votes.size());
-  }
-
-  @Test
-  void testMemberCreateVotesRP() {
-    setUpUserAndElectionVotes(UserRoles.MEMBER);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.RP, false);
-    assertFalse(votes.isEmpty());
-    // Should create 1 member vote
-    assertEquals(1, votes.size());
-  }
-
-  @Test
   void testUpdateVotesWithValue_NoRationale() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
     Vote v = setUpTestVote();
@@ -238,11 +177,8 @@ class VoteServiceTest extends AbstractTestHelper {
     accessElection.setStatus(ElectionStatus.OPEN.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(accessElection));
 
-    try {
-      service.updateVotesWithValue(List.of(v), true, null, user);
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    List<Vote> voteList = List.of(v);
+    assertDoesNotThrow(() -> service.updateVotesWithValue(voteList, true, null, user));
   }
 
   @Test
@@ -356,11 +292,7 @@ class VoteServiceTest extends AbstractTestHelper {
     doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
 
-    try {
-      service.updateRationaleByVoteIds(List.of(1), "rationale");
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(() -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
   }
 
   @Test
@@ -768,7 +700,7 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifyCustodiansOfApprovedDatasets() {
+  void testNotifyCustodiansOfApprovedDatasets() throws Exception {
     User submitter = new User();
     submitter.setEmail("submitter@test.com");
     submitter.setDisplayName("submitter");
@@ -803,12 +735,11 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(any())).thenReturn(submitter);
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code", false);
-      verify(emailService, times(1)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(
+                List.of(d1, d2), researcher, "Dar Code", false));
+    verify(emailService, times(1)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
@@ -856,7 +787,7 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() {
+  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasets() throws Exception {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -903,16 +834,14 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
         .thenReturn(List.of(custodian));
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false));
+    verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
-  void testNotifyStudyCustodiansAndSubmittersOfRADARApprovedDatasets() {
+  void testNotifyStudyCustodiansAndSubmittersOfRADARApprovedDatasets() throws Exception {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -959,12 +888,10 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
         .thenReturn(List.of(custodian));
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true);
-      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true));
+    verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   /**
@@ -972,7 +899,8 @@ class VoteServiceTest extends AbstractTestHelper {
    * com.google.gson.JsonArray cannot be cast to class java.lang.String
    */
   @Test
-  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians() {
+  void testNotifyStudyCustodiansAndSubmittersOfApprovedDatasetsWithJsonArrayCustodians()
+      throws Exception {
     User studySubmitter = new User();
     studySubmitter.setEmail("submitter@example.com");
     studySubmitter.setDisplayName("submitter");
@@ -1020,12 +948,10 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
         .thenReturn(List.of(custodian));
 
-    try {
-      service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertDoesNotThrow(
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false));
+    verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @ParameterizedTest
