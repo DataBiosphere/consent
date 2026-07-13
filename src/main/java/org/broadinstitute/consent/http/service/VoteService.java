@@ -592,9 +592,8 @@ public class VoteService implements ConsentLogger {
   }
 
   /**
-   * The Rationale for RP Votes can be updated for any election status. The Rationale for DataAccess
-   * Votes can only be updated for OPEN elections. Votes for elections of other types are not
-   * updatable through this method.
+   * The Rationale for DataAccess Votes can only be updated for OPEN elections.
+   * Votes for elections of other types are not updatable through this method.
    *
    * @param voteIds List of vote ids for DataAccess and RP elections
    * @param rationale The rationale to update
@@ -609,7 +608,8 @@ public class VoteService implements ConsentLogger {
     return findVotesByIds(voteIds);
   }
 
-  private void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
+  @VisibleForTesting
+  protected void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
     List<Election> elections =
         electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList());
 
@@ -625,12 +625,11 @@ public class VoteService implements ConsentLogger {
           "One or more of these votes are associated with elections not open for voting.");
     }
 
-    // If there are non-DataAccess or non-RP elections, throw an error
+    // If there are non-DataAccess throw an error
     List<Election> disallowedElections =
         elections.stream()
             .filter(
                 election -> !election.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-            .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
             .toList();
     if (!disallowedElections.isEmpty()) {
       throw new ConsentConflictException(
