@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.when;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import freemarker.template.TemplateException;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
@@ -84,6 +86,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -1845,12 +1849,37 @@ institution or library cards issued: Internal Collaborator member:  \
     vote.setVoteId(randomInt(0, 100));
 
     String darCode = "DAR-12345";
-    String electionType = "DataAccess";
     String url = "http://localhost/dar_collection/1";
 
     initService();
-    service.sendReminderMessage(user, vote, darCode, electionType, url);
+    service.sendReminderMessage(user, vote, darCode, url);
     verify(emailService).sendMessage(any(ReminderMessage.class), eq(user.getUserId()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "RP",
+      "TranslateDUL",
+      "DataSet",
+      "Unknown"
+  })
+  void testSendReminderMessage_NonDataAccessElectionType(String electionType) throws TemplateException, IOException {
+    Election election = new Election();
+    election.setElectionId(randomInt(0, 100));
+    election.setReferenceId(UUID.randomUUID().toString());
+    election.setElectionType(electionType);
+    when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);
+
+    Vote vote = new Vote();
+    vote.setVoteId(randomInt(0, 100));
+    vote.setElectionId(election.getElectionId());
+    when(voteDAO.findVoteById(any())).thenReturn(vote);
+
+    initService();
+    assertThrows(
+        IllegalArgumentException.class, () -> service.sendReminderMessage(vote.getVoteId()));
+    verify(emailService, never()).sendMessage(any(ReminderMessage.class), any());
+    verify(voteDAO, never()).updateVoteReminderFlag(any(), anyBoolean());
   }
 
   @Test

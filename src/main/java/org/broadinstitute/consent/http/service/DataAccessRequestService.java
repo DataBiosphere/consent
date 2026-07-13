@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
@@ -826,20 +827,26 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @VisibleForTesting
   protected void sendReminderMessage(
-      User user, Vote vote, String darCode, String electionType, String url)
+      User user, Vote vote, String darCode, String url)
       throws TemplateException, IOException {
-    emailService.sendMessage(
-        new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
+    emailService.sendMessage(new ReminderMessage(user, vote, darCode, url), user.getUserId());
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
     Vote vote = voteDAO.findVoteById(voteId);
     Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
+    if (!ElectionType.DATA_ACCESS.getValue().equals(election.getElectionType())) {
+      throw new IllegalArgumentException("ElectionType must be DATA_ACCESS");
+    }
     DarCollection collection =
         darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    sendReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl);
+    sendReminderMessage(
+        user,
+        vote,
+        collection.getDarCode(),
+        voteUrl);
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 
