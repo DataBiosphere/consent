@@ -459,10 +459,6 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("1" + researcher.getEmail());
     signingOfficial.setUserId(9);
     DataAccessRequest dar = makeDAR();
-    DataAccessRequestData darData = new DataAccessRequestData();
-    darData.setSigningOfficialEmail(signingOfficial.getEmail());
-    dar.setApprovingSigningOfficialApprovedDate(FIXED_TIMESTAMP);
-    dar.setApprovingSigningOfficialUserId(signingOfficial.getUserId());
 
     String referenceId = dar.getReferenceId();
     List<Integer> datasetIds = List.of(1, 2);
