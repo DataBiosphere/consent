@@ -73,10 +73,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertFalse(createdElections.isEmpty());
     assertTrue(
         createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-    assertTrue(
-        createdElections.stream()
-            .noneMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+            .allMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
     // Ensure that we have primary vote types
     assertFalse(createdVotes.isEmpty());
     assertTrue(
@@ -129,10 +126,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertEquals(1, createdElections.size());
     assertTrue(
         createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-    assertTrue(
-        createdElections.stream()
-            .noneMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
+            .allMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
     // Ensure that we have primary vote types
     assertFalse(createdVotes.isEmpty());
     assertTrue(
@@ -269,11 +263,6 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         1,
         createdElections.stream()
             .filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-            .count());
-    assertEquals(
-        0,
-        createdElections.stream()
-            .filter(e -> e.getElectionType().equals(ElectionType.RP.getValue()))
             .count());
 
     // create progress report
