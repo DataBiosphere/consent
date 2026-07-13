@@ -1028,7 +1028,7 @@ public class DarCollectionService implements ConsentLogger {
       electionDAO.inTransaction(
           _ -> {
             int dataAccessElectionId =
-                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
+                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset);
 
             Integer dacId = dataset.getDacId();
             Set<User> dacUsers = filterUsersForDac(classification.autoOpenUsers, dacId);
