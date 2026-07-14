@@ -833,7 +833,9 @@ public class DataAccessRequestService implements ConsentLogger {
     Vote vote = voteDAO.findVoteById(voteId);
     Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
     if (!ElectionType.DATA_ACCESS.getValue().equals(election.getElectionType())) {
-      throw new IllegalArgumentException("ElectionType must be DATA_ACCESS");
+      throw new IllegalArgumentException(
+          "ElectionType must be '%s', but found '%s'"
+              .formatted(ElectionType.DATA_ACCESS.getValue(), election.getElectionType()));
     }
     DarCollection collection =
         darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
