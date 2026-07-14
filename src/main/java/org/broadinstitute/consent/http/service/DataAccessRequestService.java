@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -35,6 +34,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
@@ -319,7 +319,7 @@ public class DataAccessRequestService implements ConsentLogger {
       if (!progressReport.getIsCloseoutProgressReport()) {
         daaDAO.insertDarDAARelationship(id, progressReport.getData().getDaaIds());
       }
-    } catch (JdbiException e) {
+    } catch (JdbiException _) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
@@ -423,7 +423,7 @@ public class DataAccessRequestService implements ConsentLogger {
             "Signing Officials must be in the same institution as the creator of the closeout request.");
       }
 
-    } catch (NotFoundException e) {
+    } catch (NotFoundException _) {
       // log the state.  we'll allow the SO to process a closeout even if the  user can't be found.
       logWarn(
           String.format(
@@ -466,7 +466,7 @@ public class DataAccessRequestService implements ConsentLogger {
         if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
           throw new BadRequestException("The selected signing official is not a signing official");
         }
-      } catch (NotFoundException nfe) {
+      } catch (NotFoundException _) {
         throw new BadRequestException(
             "The selected signing official in the closeout was not found.");
       }
@@ -506,10 +506,9 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   private boolean isUserPreAuthorizedForAllDaas(User user, List<Integer> datasetIds) {
-    Set<Integer> datasetDaas =
-        daaDAO.findDaaIdsByDatasetIds(datasetIds).stream().collect(Collectors.toSet());
+    Set<Integer> datasetDaas = new HashSet<>(daaDAO.findDaaIdsByDatasetIds(datasetIds));
 
-    Set<Integer> userDaas = user.getLibraryCard().getDaaIds().stream().collect(Collectors.toSet());
+    Set<Integer> userDaas = new HashSet<>(user.getLibraryCard().getDaaIds());
 
     return userDaas.containsAll(datasetDaas);
   }
@@ -825,21 +824,24 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void sendReminderMessage(
-      User user, Vote vote, String darCode, String electionType, String url)
+  protected void sendReminderMessage(User user, Vote vote, String darCode, String url)
       throws TemplateException, IOException {
-    emailService.sendMessage(
-        new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
+    emailService.sendMessage(new ReminderMessage(user, vote, darCode, url), user.getUserId());
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
     Vote vote = voteDAO.findVoteById(voteId);
     Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
+    if (!ElectionType.DATA_ACCESS.getValue().equals(election.getElectionType())) {
+      throw new IllegalArgumentException(
+          "ElectionType must be '%s', but found '%s'"
+              .formatted(ElectionType.DATA_ACCESS.getValue(), election.getElectionType()));
+    }
     DarCollection collection =
         darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    sendReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl);
+    sendReminderMessage(user, vote, collection.getDarCode(), voteUrl);
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 
