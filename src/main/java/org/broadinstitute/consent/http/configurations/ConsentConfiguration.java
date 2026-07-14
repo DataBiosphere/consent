@@ -39,6 +39,9 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull @JsonProperty
   private final OidcConfiguration oidcConfiguration = new OidcConfiguration();
 
+  @Valid @NotNull @JsonProperty
+  private final RateLimitConfiguration rateLimit = new RateLimitConfiguration();
+
   public DataSourceFactory getDataSourceFactory() {
     return database;
   }
@@ -65,5 +68,9 @@ public class ConsentConfiguration extends Configuration {
 
   public OidcConfiguration getOidcConfiguration() {
     return oidcConfiguration;
+  }
+
+  public RateLimitConfiguration getRateLimitConfiguration() {
+    return rateLimit;
   }
 }

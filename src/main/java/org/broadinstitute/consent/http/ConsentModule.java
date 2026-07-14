@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
+import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
@@ -427,6 +428,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private ClaimsCache providesClaimsCache() {
     return new ClaimsCache();
+  }
+
+  @Provides
+  @Singleton
+  private RateLimitFilter providesRateLimitFilter() {
+    return new RateLimitFilter(config.getRateLimitConfiguration());
   }
 
   @Provides

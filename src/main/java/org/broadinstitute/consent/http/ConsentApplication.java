@@ -41,6 +41,7 @@ import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
@@ -218,6 +219,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // registration (e.g. RolesAllowedDynamicFeature.class below) is only safe for classes
     // with a public no-arg constructor and no @Inject dependencies.
     env.jersey().register(injector.getInstance(RequestHeaderCacheFilter.class));
+    env.jersey().register(injector.getInstance(RateLimitFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
   }
 
