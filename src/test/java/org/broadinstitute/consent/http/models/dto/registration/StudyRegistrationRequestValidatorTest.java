@@ -47,7 +47,7 @@ class StudyRegistrationRequestValidatorTest {
   }
 
   static Stream<Consumer<StudyRegistrationRequest>> invalidRegistrationMutations() {
-    return Stream.<Consumer<StudyRegistrationRequest>>of(
+    return Stream.of(
         r -> r.setStudyName(null),
         r -> r.setStudyName("  "),
         r -> r.setStudyDescription(null),
@@ -58,9 +58,9 @@ class StudyRegistrationRequestValidatorTest {
         r -> r.setPiName(null),
         r -> r.setConsentGroups(null),
         r -> r.setConsentGroups(List.of()),
-        r -> r.getConsentGroups().get(0).setConsentGroupName(null),
-        r -> r.getConsentGroups().get(0).setConsentGroupName("   "),
-        r -> r.getConsentGroups().get(0).setNumberOfParticipants(null));
+        r -> r.getConsentGroups().getFirst().setConsentGroupName(null),
+        r -> r.getConsentGroups().getFirst().setConsentGroupName("   "),
+        r -> r.getConsentGroups().getFirst().setNumberOfParticipants(null));
   }
 
   // ── Data-use consistency ─────────────────────────────────────────────────
@@ -68,7 +68,7 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_dataUse_noPrimaryUse() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(null);
     cg.setGeneralResearchUse(null);
     assertThrows(BadRequestException.class, () -> validator.validate(registration));
@@ -77,7 +77,7 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_dataUse_multiplePrimaryUses() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // valid is OPEN; adding a second primary use makes it invalid
     cg.setGeneralResearchUse(true);
     assertThrows(BadRequestException.class, () -> validator.validate(registration));
@@ -87,14 +87,14 @@ class StudyRegistrationRequestValidatorTest {
   @MethodSource("validPrimaryDataUseMutations")
   void testValidate_dataUse_validPrimaryUse(Consumer<ConsentGroupRequest> mutate) {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(null);
     mutate.accept(cg);
     assertDoesNotThrow(() -> validator.validate(registration));
   }
 
   static Stream<Consumer<ConsentGroupRequest>> validPrimaryDataUseMutations() {
-    return Stream.<Consumer<ConsentGroupRequest>>of(
+    return Stream.of(
         cg -> cg.setGeneralResearchUse(true),
         cg -> cg.setHmb(true),
         cg -> cg.setPoa(true),
@@ -107,7 +107,7 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_dac_required_for_controlled() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
     cg.setDataAccessCommitteeId(null);
@@ -117,7 +117,7 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_dac_not_required_for_open() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // OPEN with no DAC is valid
     cg.setDataAccessCommitteeId(null);
     assertDoesNotThrow(() -> validator.validate(registration));
@@ -126,7 +126,7 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_dac_provided_for_controlled() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
     cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
@@ -320,11 +320,11 @@ class StudyRegistrationRequestValidatorTest {
   // ── Date validation ──────────────────────────────────────────────────────
 
   static Stream<Consumer<StudyRegistrationRequest>> invalidDateMutations() {
-    return Stream.<Consumer<StudyRegistrationRequest>>of(
+    return Stream.of(
         r -> r.setEmbargoReleaseDate("01/15/2025"),
         r -> r.setAlternativeDataSharingPlanTargetDeliveryDate("not-a-date"),
         r -> r.setAlternativeDataSharingPlanTargetPublicReleaseDate("15-01-2025"),
-        r -> r.getConsentGroups().get(0).setMorDate("January 15, 2025"));
+        r -> r.getConsentGroups().getFirst().setMorDate("January 15, 2025"));
   }
 
   @Test
@@ -346,7 +346,7 @@ class StudyRegistrationRequestValidatorTest {
   @ValueSource(strings = {"2025-06-01"})
   void testValidate_morDate_allowed(String date) {
     StudyRegistrationRequest registration = createValidRegistration();
-    registration.getConsentGroups().get(0).setMorDate(date);
+    registration.getConsentGroups().getFirst().setMorDate(date);
     assertDoesNotThrow(() -> validator.validate(registration));
   }
 
@@ -355,7 +355,7 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_diseaseSpecificUse_emptyList_notCounted() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // OPEN access is already set; empty diseaseSpecificUse adds nothing → count=1, valid
     cg.setDiseaseSpecificUse(new ArrayList<>());
     assertDoesNotThrow(() -> validator.validate(registration));
@@ -364,10 +364,89 @@ class StudyRegistrationRequestValidatorTest {
   @Test
   void testValidate_otherPrimary_blank_not_counted() {
     StudyRegistrationRequest registration = createValidRegistration();
-    ConsentGroupRequest cg = registration.getConsentGroups().get(0);
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // OPEN access is already set; blank otherPrimary adds nothing → count=1, valid
     cg.setOtherPrimary("   ");
     assertDoesNotThrow(() -> validator.validate(registration));
+  }
+
+  // ── collectViolations (aggregating, used by the create endpoint) ─────────
+
+  @Test
+  void testCollectViolations_valid_returnsEmpty() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertTrue(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_multipleTopLevelViolations_allReported() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setStudyName(null);
+    registration.setDataTypes(List.of());
+    registration.setPiName(null);
+
+    List<String> violations = validator.collectViolations(registration);
+
+    assertTrue(violations.contains("Study Name is required"));
+    assertTrue(violations.contains("Data Types is required"));
+    assertTrue(violations.contains("Principal Investigator Name is required"));
+    assertTrue(violations.size() >= 3);
+  }
+
+  @Test
+  void testCollectViolations_multipleConsentGroups_bothReported() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest missingName = createValidConsentGroup();
+    missingName.setConsentGroupName(null);
+    ConsentGroupRequest missingParticipants = createValidConsentGroup();
+    missingParticipants.setNumberOfParticipants(null);
+    registration.setConsentGroups(List.of(missingName, missingParticipants));
+
+    List<String> violations = validator.collectViolations(registration);
+
+    assertTrue(violations.contains("Dataset Name is required"));
+    assertTrue(violations.contains("Number of Participants is required"));
+  }
+
+  @Test
+  void testCollectViolations_nihAnvilConditionalFields_allReported() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
+    registration.setDbGaPPhsID(null);
+    registration.setPiInstitution(null);
+    registration.setNihGrantContractNumber(null);
+
+    List<String> violations = validator.collectViolations(registration);
+
+    assertTrue(violations.contains("dbGaP phs ID is required"));
+    assertTrue(violations.contains("Principal Investigator Institution is required"));
+    assertTrue(violations.contains("NIH Grant or Contract Number is required"));
+  }
+
+  @Test
+  void testCollectViolations_missingNihAnvilUse_doesNotThrow() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setStudyName(null);
+    registration.setNihAnvilUse(null);
+
+    List<String> violations = assertDoesNotThrow(() -> validator.collectViolations(registration));
+
+    assertTrue(violations.contains("Study Name is required"));
+    assertTrue(violations.contains("NIH Anvil Use is required"));
+  }
+
+  @Test
+  void testCollectViolations_invalidEmails_bothReported() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiEmail("not-an-email");
+    registration.setDataCustodianEmail(List.of("also-not-an-email"));
+
+    List<String> violations = validator.collectViolations(registration);
+
+    assertTrue(violations.contains("PI Email is not a valid email address"));
+    assertTrue(
+        violations.contains(
+            "Data Custodian Email is not a valid email address: also-not-an-email"));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
