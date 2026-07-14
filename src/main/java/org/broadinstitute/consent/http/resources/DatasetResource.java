@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -52,14 +54,13 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
+import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequestValidator;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
-import org.broadinstitute.consent.http.service.RegistrationShadowValidator;
-import org.broadinstitute.consent.http.service.RegistrationShadowValidator.ValidationOutcome;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -74,30 +75,25 @@ public class DatasetResource extends Resource {
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
 
-  private final JsonSchemaUtil jsonSchemaUtil;
   private final GCSService gcsService;
-  private final RegistrationShadowValidator registrationShadowValidator;
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final StudyRegistrationRequestValidator createValidator =
+      new StudyRegistrationRequestValidator();
 
   @Inject
-  @SuppressWarnings(
-      "java:S107") // shadow-validator dependency is temporary, see RegistrationShadowValidator
   public DatasetResource(
       DatasetService datasetService,
       UserService userService,
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService,
       TDRService tdrService,
-      GCSService gcsService,
-      JsonSchemaUtil jsonSchemaUtil,
-      RegistrationShadowValidator registrationShadowValidator) {
+      GCSService gcsService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.tdrService = tdrService;
-    this.jsonSchemaUtil = jsonSchemaUtil;
-    this.registrationShadowValidator = registrationShadowValidator;
   }
 
   @POST
@@ -113,21 +109,24 @@ public class DatasetResource extends Resource {
   public Response createDatasetRegistration(
       @Auth AuthUser authUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
     try {
-      long schemaValidationStart = System.nanoTime();
-      Set<String> errors = jsonSchemaUtil.validateSchemaMessagesV1(json);
-      if (errors.isEmpty()) {
-        registrationShadowValidator.compareCreate(
-            json, ValidationOutcome.acceptedSince(schemaValidationStart));
-      } else {
+      if (json == null || json.isEmpty()) {
+        throw new BadRequestException("Dataset is required");
+      }
+      StudyRegistrationRequest request;
+      try {
+        request = objectMapper.readValue(json, StudyRegistrationRequest.class);
+      } catch (JsonProcessingException _) {
+        throw new BadRequestException("Invalid schema");
+      }
+      List<String> violations = createValidator.collectViolations(request);
+      if (!violations.isEmpty()) {
         String errorMessage =
-            errors.stream().map(error -> " - " + error + "\n").collect(Collectors.joining());
-        registrationShadowValidator.compareCreate(
-            json, ValidationOutcome.rejectedSince(errorMessage, schemaValidationStart));
+            violations.stream().map(error -> " - " + error + "\n").collect(Collectors.joining());
         throw new BadRequestException("Please correct the following fields:\n" + errorMessage);
       }
 
       DatasetRegistrationSchemaV1 registration =
-          jsonSchemaUtil.deserializeDatasetRegistration(json);
+          GsonUtil.getInstance().fromJson(json, DatasetRegistrationSchemaV1.class);
       User user = userService.findUserByEmail(authUser.getEmail());
 
       // key: field name (not file name), value: file body part
@@ -204,10 +203,10 @@ public class DatasetResource extends Resource {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);
       }
       // Check permissions for non-admin roles.
-      if (!user.hasUserRole(UserRoles.ADMIN)) {
-        if (!existingDataset.isCreator(user) && !existingDataset.isCustodian(user)) {
-          throw new ForbiddenException("User does not have permission to update this dataset");
-        }
+      if (!user.hasUserRole(UserRoles.ADMIN)
+          && !existingDataset.isCreator(user)
+          && !existingDataset.isCustodian(user)) {
+        throw new ForbiddenException("User does not have permission to update this dataset");
       }
       if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset Patch is required");
@@ -216,7 +215,7 @@ public class DatasetResource extends Resource {
       DatasetPatch patch;
       try {
         patch = gson.fromJson(json, DatasetPatch.class);
-      } catch (Exception e) {
+      } catch (Exception _) {
         throw new BadRequestException("Unable to parse dataset patch: " + json);
       }
       if (!patch.isPatchable(existingDataset)) {
@@ -335,7 +334,7 @@ public class DatasetResource extends Resource {
     try {
       Dataset datasetWithName = datasetService.getDatasetByName(name);
       return Response.ok().entity(datasetWithName.getDatasetId()).build();
-    } catch (Exception e) {
+    } catch (Exception _) {
       throw new NotFoundException("Could not find the dataset with name: " + name);
     }
   }
@@ -486,7 +485,7 @@ public class DatasetResource extends Resource {
       }
       Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
       return Response.ok().entity(dataset).build();
-    } catch (JsonSyntaxException jse) {
+    } catch (JsonSyntaxException _) {
       return createExceptionResponse(
           new BadRequestException("Invalid JSON Syntax: " + dataUseJson));
     } catch (Exception e) {
