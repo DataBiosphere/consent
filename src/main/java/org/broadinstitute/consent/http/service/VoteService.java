@@ -572,11 +572,11 @@ public class VoteService implements ConsentLogger {
    * @param voteIds List of vote ids
    * @param rationale The rationale to update
    * @return List of updated votes
-   * @throws IllegalArgumentException when there are non-open data access elections on any of the
-   *     votes
+   * @throws ConsentConflictException if any vote is associated with a non-OPEN DataAccess election
+   *     or a non-DataAccess election type
    */
   public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
-      throws IllegalArgumentException {
+      throws ConsentConflictException {
     List<Vote> votes = voteDAO.findVotesByIds(voteIds);
     validateVotesCanUpdate(votes);
     voteDAO.updateRationaleByVoteIds(voteIds, rationale);

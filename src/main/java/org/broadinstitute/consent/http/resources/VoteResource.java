@@ -121,7 +121,7 @@ public class VoteResource extends Resource {
   }
 
   /**
-   * This API will update the rationale for a list of vote ids.The Rationale for DataAccess Votes
+   * This API will update the rationale for a list of vote ids. The Rationale for DataAccess Votes
    * can only be updated for OPEN elections. In all cases, one can only update their own votes.
    *
    * @param authUser The AuthUser
