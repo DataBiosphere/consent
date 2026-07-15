@@ -74,3 +74,8 @@ oidcConfiguration:
   extraAuthParams: ""
   authorityEndpoint: "http://localhost:9999/"
 
+rateLimit:
+  enabled: true
+  requestsPerMinute: 100
+  podCount: 1
+
