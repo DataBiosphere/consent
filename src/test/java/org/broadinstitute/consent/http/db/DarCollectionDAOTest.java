@@ -124,6 +124,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   @Test
   void testFindDARCollectionByCollectionIdExcludesNonDataAccessElections() {
+    String otherType = "Other";
     DarCollection collection = createDarCollectionMultipleUserProperties();
     DataAccessRequest dar =
         collection.getDars().values().stream()
@@ -132,7 +133,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
             .orElseThrow();
     Election dataAccessElection = dar.getElections().values().stream().findFirst().orElseThrow();
     electionDAO.insertElection(
-        "Other",
+        otherType,
         ElectionStatus.OPEN.getValue(),
         FIXED_DATE,
         dar.getReferenceId(),
@@ -143,12 +144,13 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
     List<Election> elections = getElectionsFromCollection(returned);
     assertEquals(1, elections.size());
-    assertTrue(elections.stream().noneMatch(e -> e.getElectionType().equalsIgnoreCase("rp")));
+    assertTrue(elections.stream().noneMatch(e -> e.getElectionType().equalsIgnoreCase(otherType)));
     assertEquals(ElectionType.DATA_ACCESS.getValue(), elections.getFirst().getElectionType());
   }
 
   @Test
   void testFindDARCollectionByCollectionIdsExcludesNonDataAccessElections() {
+    String otherType = "Other";
     DarCollection collection = createDarCollectionMultipleUserProperties();
     DataAccessRequest dar =
         collection.getDars().values().stream()
@@ -157,7 +159,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
             .orElseThrow();
     Election dataAccessElection = dar.getElections().values().stream().findFirst().orElseThrow();
     electionDAO.insertElection(
-        "Other",
+        otherType,
         ElectionStatus.OPEN.getValue(),
         FIXED_DATE,
         dar.getReferenceId(),
@@ -169,7 +171,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     assertEquals(1, returned.size());
     List<Election> elections = getElectionsFromCollection(returned.getFirst());
     assertEquals(1, elections.size());
-    assertTrue(elections.stream().noneMatch(e -> e.getElectionType().equalsIgnoreCase("rp")));
+    assertTrue(elections.stream().noneMatch(e -> e.getElectionType().equalsIgnoreCase(otherType)));
     assertEquals(ElectionType.DATA_ACCESS.getValue(), elections.getFirst().getElectionType());
   }
 
@@ -219,7 +221,11 @@ class DarCollectionDAOTest extends DAOTestHelper {
     DataAccessRequest testDar1 = (DataAccessRequest) collectionWithDataset.get(4);
     Dataset dataset = (Dataset) collectionWithDataset.get(2);
     DataAccessRequest testDar2 =
-        createDAR(user, dataset, testDar1.getCollectionId(), FIXED_TIMESTAMP);
+        createDAR(
+            user,
+            dataset,
+            testDar1.getCollectionId(),
+            Timestamp.from(FIXED_INSTANT.plus(Duration.ofSeconds(1))));
     dataAccessRequestDAO.updateDarApprovalSO(user.getUserId(), testDar2.getReferenceId());
 
     DataAccessRequest testDar2Stored =
