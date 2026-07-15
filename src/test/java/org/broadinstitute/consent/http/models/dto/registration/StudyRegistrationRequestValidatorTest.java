@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http.models.dto.registration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -441,6 +443,224 @@ class StudyRegistrationRequestValidatorTest {
     assertTrue(
         violations.contains(
             "Data Custodian Email is not a valid email address: also-not-an-email"));
+  }
+
+  // ── Individual check* methods (@VisibleForTesting) ────────────────────────
+
+  @Test
+  void testCheckStudyNameRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setStudyName(null);
+    assertThrows(BadRequestException.class, () -> validator.checkStudyNameRequired(registration));
+  }
+
+  @Test
+  void testCheckStudyNameRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertDoesNotThrow(() -> validator.checkStudyNameRequired(registration));
+  }
+
+  @Test
+  void testCheckStudyDescriptionRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setStudyDescription(null);
+    assertThrows(
+        BadRequestException.class, () -> validator.checkStudyDescriptionRequired(registration));
+  }
+
+  @Test
+  void testCheckStudyDescriptionRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertDoesNotThrow(() -> validator.checkStudyDescriptionRequired(registration));
+  }
+
+  @Test
+  void testCheckDataTypesRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDataTypes(List.of());
+    assertThrows(BadRequestException.class, () -> validator.checkDataTypesRequired(registration));
+  }
+
+  @Test
+  void testCheckDataTypesRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertDoesNotThrow(() -> validator.checkDataTypesRequired(registration));
+  }
+
+  @Test
+  void testCheckPublicVisibilityRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPublicVisibility(null);
+    assertThrows(
+        BadRequestException.class, () -> validator.checkPublicVisibilityRequired(registration));
+  }
+
+  @Test
+  void testCheckPublicVisibilityRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertDoesNotThrow(() -> validator.checkPublicVisibilityRequired(registration));
+  }
+
+  @Test
+  void testCheckNihAnvilUseRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihAnvilUse(null);
+    assertThrows(BadRequestException.class, () -> validator.checkNihAnvilUseRequired(registration));
+  }
+
+  @Test
+  void testCheckNihAnvilUseRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertDoesNotThrow(() -> validator.checkNihAnvilUseRequired(registration));
+  }
+
+  @Test
+  void testCheckPiNameRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiName(null);
+    assertThrows(BadRequestException.class, () -> validator.checkPiNameRequired(registration));
+  }
+
+  @Test
+  void testCheckPiNameRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    assertDoesNotThrow(() -> validator.checkPiNameRequired(registration));
+  }
+
+  @Test
+  void testCheckDbGaPPhsIdRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDbGaPPhsID(null);
+    assertThrows(BadRequestException.class, () -> validator.checkDbGaPPhsIdRequired(registration));
+  }
+
+  @Test
+  void testCheckDbGaPPhsIdRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    assertDoesNotThrow(() -> validator.checkDbGaPPhsIdRequired(registration));
+  }
+
+  @Test
+  void testCheckPiInstitutionRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiInstitution(null);
+    assertThrows(
+        BadRequestException.class, () -> validator.checkPiInstitutionRequired(registration));
+  }
+
+  @Test
+  void testCheckPiInstitutionRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
+    assertDoesNotThrow(() -> validator.checkPiInstitutionRequired(registration));
+  }
+
+  @Test
+  void testCheckNihGrantContractNumberRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihGrantContractNumber(null);
+    assertThrows(
+        BadRequestException.class,
+        () -> validator.checkNihGrantContractNumberRequired(registration));
+  }
+
+  @Test
+  void testCheckNihGrantContractNumberRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihGrantContractNumber(RandomStringUtils.secureStrong().nextAlphabetic(8));
+    assertDoesNotThrow(() -> validator.checkNihGrantContractNumberRequired(registration));
+  }
+
+  @Test
+  void testCheckAltDataSharingExplanationRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAlternativeDataSharingPlanExplanation(null);
+    assertThrows(
+        BadRequestException.class,
+        () -> validator.checkAltDataSharingExplanationRequired(registration));
+  }
+
+  @Test
+  void testCheckAltDataSharingExplanationRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAlternativeDataSharingPlanExplanation(
+        RandomStringUtils.secureStrong().nextAlphabetic(10));
+    assertDoesNotThrow(() -> validator.checkAltDataSharingExplanationRequired(registration));
+  }
+
+  @Test
+  void testCheckAltDataSharingReasonsRequired_missing() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAlternativeDataSharingPlanReasons(List.of());
+    assertThrows(
+        BadRequestException.class,
+        () -> validator.checkAltDataSharingReasonsRequired(registration));
+  }
+
+  @Test
+  void testCheckAltDataSharingReasonsRequired_present() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAlternativeDataSharingPlanReasons(
+        List.of(AlternativeDataSharingPlanReason.OTHER));
+    assertDoesNotThrow(() -> validator.checkAltDataSharingReasonsRequired(registration));
+  }
+
+  @Test
+  void testCheckPiEmailValid_invalid() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiEmail("not-an-email");
+    assertThrows(BadRequestException.class, () -> validator.checkPiEmailValid(registration));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"   ", "pi@example.com"})
+  void testCheckPiEmailValid_allowed(String email) {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiEmail(email);
+    assertDoesNotThrow(() -> validator.checkPiEmailValid(registration));
+  }
+
+  @Test
+  void testCheckDataCustodianEmailsValid_invalid() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDataCustodianEmail(List.of("valid@example.com", "not-an-email"));
+    assertThrows(
+        BadRequestException.class, () -> validator.checkDataCustodianEmailsValid(registration));
+  }
+
+  @Test
+  void testCheckDataCustodianEmailsValid_valid() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDataCustodianEmail(List.of("a@example.com", "b@example.org"));
+    assertDoesNotThrow(() -> validator.checkDataCustodianEmailsValid(registration));
+  }
+
+  @Test
+  void testCheckConsentGroupNameRequired_missing() {
+    ConsentGroupRequest cg = createValidConsentGroup();
+    cg.setConsentGroupName(null);
+    assertThrows(BadRequestException.class, () -> validator.checkConsentGroupNameRequired(cg));
+  }
+
+  @Test
+  void testCheckConsentGroupNameRequired_present() {
+    ConsentGroupRequest cg = createValidConsentGroup();
+    assertDoesNotThrow(() -> validator.checkConsentGroupNameRequired(cg));
+  }
+
+  @Test
+  void testCheckNumberOfParticipantsRequired_missing() {
+    ConsentGroupRequest cg = createValidConsentGroup();
+    cg.setNumberOfParticipants(null);
+    assertThrows(BadRequestException.class, () -> validator.checkNumberOfParticipantsRequired(cg));
+  }
+
+  @Test
+  void testCheckNumberOfParticipantsRequired_present() {
+    ConsentGroupRequest cg = createValidConsentGroup();
+    assertDoesNotThrow(() -> validator.checkNumberOfParticipantsRequired(cg));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

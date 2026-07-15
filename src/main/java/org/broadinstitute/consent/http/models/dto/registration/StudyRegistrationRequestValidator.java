@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.dto.registration;
 
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.ws.rs.BadRequestException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -45,37 +46,43 @@ public class StudyRegistrationRequestValidator {
     collectTry(errors, () -> checkPiNameRequired(r));
   }
 
-  private void checkStudyNameRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkStudyNameRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getStudyName()) || r.getStudyName().isBlank()) {
       throw new BadRequestException("Study Name is required");
     }
   }
 
-  private void checkStudyDescriptionRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkStudyDescriptionRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getStudyDescription())) {
       throw new BadRequestException("Study Description is required");
     }
   }
 
-  private void checkDataTypesRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkDataTypesRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getDataTypes()) || r.getDataTypes().isEmpty()) {
       throw new BadRequestException("Data Types is required");
     }
   }
 
-  private void checkPublicVisibilityRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkPublicVisibilityRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getPublicVisibility())) {
       throw new BadRequestException("Public Visibility is required");
     }
   }
 
-  private void checkNihAnvilUseRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkNihAnvilUseRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getNihAnvilUse())) {
       throw new BadRequestException("NIH Anvil Use is required");
     }
   }
 
-  private void checkPiNameRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkPiNameRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getPiName())) {
       throw new BadRequestException("Principal Investigator Name is required");
     }
@@ -127,19 +134,22 @@ public class StudyRegistrationRequestValidator {
     checkNihGrantContractNumberRequired(registration);
   }
 
-  private void checkDbGaPPhsIdRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkDbGaPPhsIdRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getDbGaPPhsID())) {
       throw new BadRequestException("dbGaP phs ID is required");
     }
   }
 
-  private void checkPiInstitutionRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkPiInstitutionRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getPiInstitution())) {
       throw new BadRequestException("Principal Investigator Institution is required");
     }
   }
 
-  private void checkNihGrantContractNumberRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkNihGrantContractNumberRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getNihGrantContractNumber())) {
       throw new BadRequestException("NIH Grant or Contract Number is required");
     }
@@ -162,13 +172,15 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void checkAltDataSharingExplanationRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkAltDataSharingExplanationRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getAlternativeDataSharingPlanExplanation())) {
       throw new BadRequestException("Alternative Data Sharing Plan Explanation is required");
     }
   }
 
-  private void checkAltDataSharingReasonsRequired(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkAltDataSharingReasonsRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getAlternativeDataSharingPlanReasons())
         || r.getAlternativeDataSharingPlanReasons().isEmpty()) {
       throw new BadRequestException("Alternative Data Sharing Plan Reasons is required");
@@ -187,7 +199,8 @@ public class StudyRegistrationRequestValidator {
             email -> errors.add("Data Custodian Email is not a valid email address: " + email));
   }
 
-  private void checkPiEmailValid(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkPiEmailValid(StudyRegistrationRequest r) {
     EmailValidator emailValidator = EmailValidator.getInstance();
     if (r.getPiEmail() != null
         && !r.getPiEmail().isBlank()
@@ -196,7 +209,8 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  private void checkDataCustodianEmailsValid(StudyRegistrationRequest r) {
+  @VisibleForTesting
+  protected void checkDataCustodianEmailsValid(StudyRegistrationRequest r) {
     List<String> invalid = invalidCustodianEmails(r);
     if (!invalid.isEmpty()) {
       throw new BadRequestException(
@@ -266,13 +280,15 @@ public class StudyRegistrationRequestValidator {
     validateDateString(cg.getMorDate(), "Moratorium Date");
   }
 
-  private void checkConsentGroupNameRequired(ConsentGroupRequest cg) {
+  @VisibleForTesting
+  protected void checkConsentGroupNameRequired(ConsentGroupRequest cg) {
     if (Objects.isNull(cg.getConsentGroupName()) || cg.getConsentGroupName().isBlank()) {
       throw new BadRequestException("Dataset Name is required");
     }
   }
 
-  private void checkNumberOfParticipantsRequired(ConsentGroupRequest cg) {
+  @VisibleForTesting
+  protected void checkNumberOfParticipantsRequired(ConsentGroupRequest cg) {
     if (Objects.isNull(cg.getNumberOfParticipants())) {
       throw new BadRequestException("Number of Participants is required");
     }
