@@ -253,4 +253,5 @@
   <include file="changesets/changelog-consent-2026-06-16-bff-01-user-sessions.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-06-16-bff-02-user-session-audit.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-06-18-consolidate-so-approval-fields.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-07-14-election-type.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

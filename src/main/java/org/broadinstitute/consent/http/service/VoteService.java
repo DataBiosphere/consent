@@ -162,7 +162,8 @@ public class VoteService implements ConsentLogger {
    * @param rationale Value to update the rationales to. Only update if non-null.
    * @param user The user making the update
    * @return The updated Vote
-   * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
+   * @throws IllegalArgumentException when there are non-open, data access elections on any of the
+   *     votes
    */
   public List<Vote> updateVotesWithValue(
       List<Vote> votes, boolean voteValue, String rationale, User user)
@@ -568,13 +569,14 @@ public class VoteService implements ConsentLogger {
    * The Rationale for DataAccess Votes can only be updated for OPEN elections. Votes for elections
    * of other types are not updatable through this method.
    *
-   * @param voteIds List of vote ids for DataAccess and RP elections
+   * @param voteIds List of vote ids
    * @param rationale The rationale to update
    * @return List of updated votes
-   * @throws IllegalArgumentException when there are non-open, non-rp elections on any of the votes
+   * @throws ConsentConflictException if any vote is associated with a non-OPEN DataAccess election
+   *     or a non-DataAccess election type
    */
   public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
-      throws IllegalArgumentException {
+      throws ConsentConflictException {
     List<Vote> votes = voteDAO.findVotesByIds(voteIds);
     validateVotesCanUpdate(votes);
     voteDAO.updateRationaleByVoteIds(voteIds, rationale);
