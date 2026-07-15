@@ -47,7 +47,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + " LEFT JOIN ("
           + "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
           + "   FROM election "
-          + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
+          + "   WHERE LOWER(election.election_type) = 'dataaccess'"
           + " ) AS e "
           + "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
           + " LEFT JOIN vote v ON v.election_id = e.election_id ";
@@ -154,7 +154,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "LEFT JOIN ("
           + "SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
           + "FROM election "
-          + "WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
+          + "WHERE LOWER(election.election_type) = 'dataaccess'"
           + ") AS e "
           + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
           + "LEFT JOIN vote v "

@@ -1,0 +1,13 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-07-14-election-type" author="grushton">
+    <comment>
+      Document that DataAccess is the only actively-used election type; TranslateDUL, RP,
+      and DataSet are deprecated and retained only for historical elections.
+    </comment>
+    <setColumnRemarks tableName="election" columnName="election_type"
+                      remarks="Only 'DataAccess' is created for new elections. 'TranslateDUL', 'RP', and 'DataSet' are deprecated legacy values kept for historical records only."/>
+  </changeSet>
+</databaseChangeLog>
