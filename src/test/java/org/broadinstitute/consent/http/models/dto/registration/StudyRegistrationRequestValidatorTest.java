@@ -1,10 +1,9 @@
 package org.broadinstitute.consent.http.models.dto.registration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -31,19 +30,20 @@ class StudyRegistrationRequestValidatorTest {
   }
 
   @Test
-  void testValidate_valid() {
+  void testCollectViolations_valid() {
     StudyRegistrationRequest registration = createValidRegistration();
-    assertTrue(validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Required fields & invalid values ─────────────────────────────────────
 
   @ParameterizedTest
   @MethodSource({"invalidRegistrationMutations", "invalidDateMutations"})
-  void testValidate_invalidField_throws(Consumer<StudyRegistrationRequest> mutate) {
+  void testCollectViolations_invalidField_reportsViolation(
+      Consumer<StudyRegistrationRequest> mutate) {
     StudyRegistrationRequest registration = createValidRegistration();
     mutate.accept(registration);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   static Stream<Consumer<StudyRegistrationRequest>> invalidRegistrationMutations() {
@@ -66,31 +66,31 @@ class StudyRegistrationRequestValidatorTest {
   // ── Data-use consistency ─────────────────────────────────────────────────
 
   @Test
-  void testValidate_dataUse_noPrimaryUse() {
+  void testCollectViolations_dataUse_noPrimaryUse() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(null);
     cg.setGeneralResearchUse(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_dataUse_multiplePrimaryUses() {
+  void testCollectViolations_dataUse_multiplePrimaryUses() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // valid is OPEN; adding a second primary use makes it invalid
     cg.setGeneralResearchUse(true);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @ParameterizedTest
   @MethodSource("validPrimaryDataUseMutations")
-  void testValidate_dataUse_validPrimaryUse(Consumer<ConsentGroupRequest> mutate) {
+  void testCollectViolations_dataUse_validPrimaryUse(Consumer<ConsentGroupRequest> mutate) {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(null);
     mutate.accept(cg);
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   static Stream<Consumer<ConsentGroupRequest>> validPrimaryDataUseMutations() {
@@ -105,216 +105,216 @@ class StudyRegistrationRequestValidatorTest {
   // ── DAC requirement ──────────────────────────────────────────────────────
 
   @Test
-  void testValidate_dac_required_for_controlled() {
+  void testCollectViolations_dac_required_for_controlled() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
     cg.setDataAccessCommitteeId(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_dac_not_required_for_open() {
+  void testCollectViolations_dac_not_required_for_open() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // OPEN with no DAC is valid
     cg.setDataAccessCommitteeId(null);
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_dac_provided_for_controlled() {
+  void testCollectViolations_dac_provided_for_controlled() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
     cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── NIH conditional fields ───────────────────────────────────────────────
 
   @Test
-  void testValidate_dbGaPPhsID_required() {
+  void testCollectViolations_dbGaPPhsID_required() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_piInstitution_required_for_dbgap() {
+  void testCollectViolations_piInstitution_required_for_dbgap() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_nihGrantContractNumber_required_for_dbgap() {
+  void testCollectViolations_nihGrantContractNumber_required_for_dbgap() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_piInstitution_required_for_seeking_anvil() {
+  void testCollectViolations_piInstitution_required_for_seeking_anvil() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_nihGrantContractNumber_required_for_seeking_anvil() {
+  void testCollectViolations_nihGrantContractNumber_required_for_seeking_anvil() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_piInstitution_required_for_nhgri_no_phs() {
+  void testCollectViolations_piInstitution_required_for_nhgri_no_phs() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_DO_NOT_HAVE_A_DB_GA_P_PHS_ID);
     registration.setPiInstitution(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   // ── NIH happy paths ──────────────────────────────────────────────────────
 
   @Test
-  void testValidate_nihAnvilUse_dbgapPhsId_allFieldsValid() {
+  void testCollectViolations_nihAnvilUse_dbgapPhsId_allFieldsValid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(RandomStringUtils.secureStrong().nextAlphabetic(8));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_nihAnvilUse_nhgriFundedNoPhs_allFieldsValid() {
+  void testCollectViolations_nihAnvilUse_nhgriFundedNoPhs_allFieldsValid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_DO_NOT_HAVE_A_DB_GA_P_PHS_ID);
     registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(RandomStringUtils.secureStrong().nextAlphabetic(8));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── GSR conditional ──────────────────────────────────────────────────────
 
   @Test
-  void testValidate_gsrExplanation_required_when_gsr_true() {
+  void testCollectViolations_gsrExplanation_required_when_gsr_true() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSR(true);
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_gsrExplanation_not_required_when_gsr_false() {
+  void testCollectViolations_gsrExplanation_not_required_when_gsr_false() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSR(false);
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(null);
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_gsrExplanation_present_when_gsr_true() {
+  void testCollectViolations_gsrExplanation_present_when_gsr_true() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSR(true);
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(
         RandomStringUtils.secureStrong().nextAlphabetic(10));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Alt sharing plan ─────────────────────────────────────────────────────
 
   @Test
-  void testValidate_altSharingPlanExplanation_required() {
+  void testCollectViolations_altSharingPlanExplanation_required() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setAlternativeDataSharingPlan(true);
     registration.setAlternativeDataSharingPlanExplanation(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_altSharingPlanReasons_required() {
+  void testCollectViolations_altSharingPlanReasons_required() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setAlternativeDataSharingPlan(true);
     registration.setAlternativeDataSharingPlanExplanation(
         RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setAlternativeDataSharingPlanReasons(List.of());
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_altSharingPlanReasons_null() {
+  void testCollectViolations_altSharingPlanReasons_null() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setAlternativeDataSharingPlan(true);
     registration.setAlternativeDataSharingPlanExplanation(
         RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setAlternativeDataSharingPlanReasons(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_altSharingPlan_valid() {
+  void testCollectViolations_altSharingPlan_valid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setAlternativeDataSharingPlan(true);
     registration.setAlternativeDataSharingPlanExplanation(
         RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setAlternativeDataSharingPlanReasons(
         List.of(AlternativeDataSharingPlanReason.OTHER));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Email validation ─────────────────────────────────────────────────────
 
   @Test
-  void testValidate_piEmail_invalid() {
+  void testCollectViolations_piEmail_invalid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setPiEmail("not-an-email");
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @ParameterizedTest
   @NullSource
   @ValueSource(strings = {"   ", "pi@example.com"})
-  void testValidate_piEmail_allowed(String email) {
+  void testCollectViolations_piEmail_allowed(String email) {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setPiEmail(email);
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_dataCustodianEmail_invalid() {
+  void testCollectViolations_dataCustodianEmail_invalid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setDataCustodianEmail(List.of("valid@example.com", "not-an-email"));
-    assertThrows(BadRequestException.class, () -> validator.validate(registration));
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_dataCustodianEmail_valid() {
+  void testCollectViolations_dataCustodianEmail_valid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setDataCustodianEmail(List.of("a@example.com", "b@example.org"));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_dataCustodianEmail_blank_is_filtered() {
+  void testCollectViolations_dataCustodianEmail_blank_is_filtered() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setDataCustodianEmail(List.of("  ", "valid@example.com"));
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Date validation ──────────────────────────────────────────────────────
@@ -328,55 +328,49 @@ class StudyRegistrationRequestValidatorTest {
   }
 
   @Test
-  void testValidate_embargoReleaseDate_valid() {
+  void testCollectViolations_embargoReleaseDate_valid() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setEmbargoReleaseDate("2025-01-15");
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_embargoReleaseDate_blank_is_allowed() {
+  void testCollectViolations_embargoReleaseDate_blank_is_allowed() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setEmbargoReleaseDate("  ");
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @ParameterizedTest
   @NullSource
   @ValueSource(strings = {"2025-06-01"})
-  void testValidate_morDate_allowed(String date) {
+  void testCollectViolations_morDate_allowed(String date) {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.getConsentGroups().getFirst().setMorDate(date);
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Data-use edge cases ───────────────────────────────────────────────────
 
   @Test
-  void testValidate_diseaseSpecificUse_emptyList_notCounted() {
+  void testCollectViolations_diseaseSpecificUse_emptyList_notCounted() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // OPEN access is already set; empty diseaseSpecificUse adds nothing → count=1, valid
     cg.setDiseaseSpecificUse(new ArrayList<>());
-    assertDoesNotThrow(() -> validator.validate(registration));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   @Test
-  void testValidate_otherPrimary_blank_not_counted() {
+  void testCollectViolations_otherPrimary_blank_not_counted() {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     // OPEN access is already set; blank otherPrimary adds nothing → count=1, valid
     cg.setOtherPrimary("   ");
-    assertDoesNotThrow(() -> validator.validate(registration));
-  }
-
-  // ── collectViolations (aggregating, used by the create endpoint) ─────────
-
-  @Test
-  void testCollectViolations_valid_returnsEmpty() {
-    StudyRegistrationRequest registration = createValidRegistration();
     assertTrue(validator.collectViolations(registration).isEmpty());
   }
+
+  // ── collectViolations (aggregating multiple violations at once) ──────────
 
   @Test
   void testCollectViolations_multipleTopLevelViolations_allReported() {

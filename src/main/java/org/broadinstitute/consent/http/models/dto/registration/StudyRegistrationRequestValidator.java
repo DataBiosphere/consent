@@ -14,19 +14,9 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 
 public class StudyRegistrationRequestValidator {
 
-  public boolean validate(StudyRegistrationRequest registration) {
-    validateRequiredStudyFields(registration);
-    validateConditionalFields(registration);
-    validateEmailFields(registration);
-    validateDateFields(registration);
-    validateConsentGroups(registration.getConsentGroups());
-    return true;
-  }
-
   /**
-   * Runs the same checks as {@link #validate(StudyRegistrationRequest)}, but collects every
-   * violation instead of throwing on the first one. Used by the create endpoint, which must report
-   * all problems in a single response.
+   * Collects every violation instead of throwing on the first one. Used by the create endpoint,
+   * which must report all problems in a single response.
    */
   public List<String> collectViolations(StudyRegistrationRequest registration) {
     Set<String> errors = new LinkedHashSet<>();
@@ -44,15 +34,6 @@ public class StudyRegistrationRequestValidator {
     } catch (BadRequestException e) {
       errors.add(e.getMessage());
     }
-  }
-
-  private void validateRequiredStudyFields(StudyRegistrationRequest registration) {
-    checkStudyNameRequired(registration);
-    checkStudyDescriptionRequired(registration);
-    checkDataTypesRequired(registration);
-    checkPublicVisibilityRequired(registration);
-    checkNihAnvilUseRequired(registration);
-    checkPiNameRequired(registration);
   }
 
   private void collectRequiredStudyFieldViolations(StudyRegistrationRequest r, Set<String> errors) {
@@ -259,13 +240,6 @@ public class StudyRegistrationRequestValidator {
             validateDateString(
                 r.getAlternativeDataSharingPlanTargetPublicReleaseDate(),
                 "Alternative Data Sharing Plan Target Public Release Date"));
-  }
-
-  private void validateConsentGroups(List<ConsentGroupRequest> consentGroups) {
-    if (Objects.isNull(consentGroups) || consentGroups.isEmpty()) {
-      throw new BadRequestException("At least one Dataset is required");
-    }
-    consentGroups.forEach(this::validateNewConsentGroup);
   }
 
   private void collectConsentGroupViolations(
