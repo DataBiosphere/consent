@@ -277,22 +277,27 @@ public class StudyResource extends Resource {
       DatasetRegistrationSchemaV1 registration, boolean valid) {}
 
   /**
-   * Deserializes the registration payload for persistence (via {@link
+   * Validates that the payload deserializes to a non-null {@link StudyUpdateRequest} before doing
+   * anything else, then deserializes the registration payload for persistence (via {@link
    * DatasetRegistrationSchemaV1UpdateValidator#deserializeRegistration}, which strips non-updatable
    * fields from existing consent groups), then runs the {@link StudyUpdateRequestValidator} as the
    * authoritative validator against a separate, unfiltered deserialization of the same payload.
    */
   private StudyUpdateValidationResult validateRegistrationUpdate(String json, Study existingStudy) {
-    DatasetRegistrationSchemaV1UpdateValidator updateValidator =
-        new DatasetRegistrationSchemaV1UpdateValidator();
-    DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
-
     StudyUpdateRequest request;
     try {
       request = objectMapper.readValue(json, StudyUpdateRequest.class);
     } catch (JsonProcessingException _) {
       throw new BadRequestException("Invalid schema");
     }
+    if (request == null) {
+      throw new BadRequestException("Invalid schema");
+    }
+
+    DatasetRegistrationSchemaV1UpdateValidator updateValidator =
+        new DatasetRegistrationSchemaV1UpdateValidator();
+    DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
+
     boolean valid = studyUpdateRequestValidator.validate(existingStudy, request);
     return new StudyUpdateValidationResult(registration, valid);
   }

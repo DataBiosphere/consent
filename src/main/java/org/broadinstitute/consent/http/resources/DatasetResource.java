@@ -112,12 +112,7 @@ public class DatasetResource extends Resource {
       if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset is required");
       }
-      StudyRegistrationRequest request;
-      try {
-        request = objectMapper.readValue(json, StudyRegistrationRequest.class);
-      } catch (JsonProcessingException _) {
-        throw new BadRequestException("Invalid schema");
-      }
+      StudyRegistrationRequest request = deserializeStudyRegistrationRequest(json);
       List<String> violations = createValidator.collectViolations(request);
       if (!violations.isEmpty()) {
         String errorMessage =
@@ -152,6 +147,19 @@ public class DatasetResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private StudyRegistrationRequest deserializeStudyRegistrationRequest(String json) {
+    StudyRegistrationRequest request;
+    try {
+      request = objectMapper.readValue(json, StudyRegistrationRequest.class);
+    } catch (JsonProcessingException _) {
+      throw new BadRequestException("Invalid schema");
+    }
+    if (request == null) {
+      throw new BadRequestException("Invalid schema");
+    }
+    return request;
   }
 
   /** This endpoint updates the dataset. */
