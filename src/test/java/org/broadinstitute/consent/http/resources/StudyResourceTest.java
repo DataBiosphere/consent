@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -34,7 +33,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
-import org.broadinstitute.consent.http.service.RegistrationShadowValidator;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +54,6 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Mock private ElasticSearchService elasticSearchService;
 
-  @Mock private RegistrationShadowValidator registrationShadowValidator;
-
   @Mock private AuthUser authUser;
 
   @Mock private User user;
@@ -70,11 +66,7 @@ class StudyResourceTest extends AbstractTestHelper {
   void setUp() {
     resource =
         new StudyResource(
-            datasetService,
-            userService,
-            datasetRegistrationService,
-            elasticSearchService,
-            registrationShadowValidator);
+            datasetService, userService, datasetRegistrationService, elasticSearchService);
   }
 
   @Test
@@ -275,7 +267,7 @@ class StudyResourceTest extends AbstractTestHelper {
           gson.fromJson(input, DatasetRegistrationSchemaV1.class);
       List<Integer> datasetIds =
           schemaV1.getConsentGroups().stream().map(ConsentGroup::getDatasetId).toList();
-      study.addDatasetIds(Set.of(datasetIds.get(0) + 1));
+      study.addDatasetIds(Set.of(datasetIds.getFirst() + 1));
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
     User createUser = new User();
@@ -290,26 +282,6 @@ class StudyResourceTest extends AbstractTestHelper {
         resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-  }
-
-  @Test
-  void testUpdateStudyByRegistrationMalformedJson_stillRunsShadowComparison() {
-    String input = DataResourceTestData.registrationWithMalformedJson;
-    Study study = createMockStudy();
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    User createUser = new User();
-    createUser.setUserId(study.getCreateUserId());
-    createUser.setEmail("creator@test.com");
-    when(authUser.getEmail()).thenReturn(createUser.getEmail());
-    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
-
-    try (var response =
-        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-    verify(registrationShadowValidator).compareUpdate(eq(input), eq(study), any());
   }
 
   @Test

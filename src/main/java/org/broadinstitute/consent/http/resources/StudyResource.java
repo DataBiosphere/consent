@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -38,11 +40,11 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequest;
+import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequestValidator;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
-import org.broadinstitute.consent.http.service.RegistrationShadowValidator;
-import org.broadinstitute.consent.http.service.RegistrationShadowValidator.ValidationOutcome;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -56,20 +58,20 @@ public class StudyResource extends Resource {
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
-  private final RegistrationShadowValidator registrationShadowValidator;
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final StudyUpdateRequestValidator studyUpdateRequestValidator;
 
   @Inject
   public StudyResource(
       DatasetService datasetService,
       UserService userService,
       DatasetRegistrationService datasetRegistrationService,
-      ElasticSearchService elasticSearchService,
-      RegistrationShadowValidator registrationShadowValidator) {
+      ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
-    this.registrationShadowValidator = registrationShadowValidator;
+    this.studyUpdateRequestValidator = new StudyUpdateRequestValidator(datasetService);
   }
 
   /**
@@ -275,34 +277,29 @@ public class StudyResource extends Resource {
       DatasetRegistrationSchemaV1 registration, boolean valid) {}
 
   /**
-   * Runs the manual update-validator and the {@link RegistrationShadowValidator} comparison, then
-   * re-throws any validation error so the caller's outer catch can translate it into a response,
-   * exactly as it did before this logic was extracted.
+   * Validates that the payload deserializes to a non-null {@link StudyUpdateRequest} before doing
+   * anything else, then deserializes the registration payload for persistence (via {@link
+   * DatasetRegistrationSchemaV1UpdateValidator#deserializeRegistration}, which strips non-updatable
+   * fields from existing consent groups), then runs the {@link StudyUpdateRequestValidator} as the
+   * authoritative validator against a separate, unfiltered deserialization of the same payload.
    */
   private StudyUpdateValidationResult validateRegistrationUpdate(String json, Study existingStudy) {
-    DatasetRegistrationSchemaV1UpdateValidator updateValidator =
-        new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
-
-    long updateValidationStart = System.nanoTime();
-    DatasetRegistrationSchemaV1 registration = null;
-    boolean updateValid = false;
-    RuntimeException validationError = null;
+    StudyUpdateRequest request;
     try {
-      registration = updateValidator.deserializeRegistration(json);
-      updateValid = updateValidator.validate(existingStudy, registration);
-    } catch (RuntimeException e) {
-      validationError = e;
+      request = objectMapper.readValue(json, StudyUpdateRequest.class);
+    } catch (JsonProcessingException _) {
+      throw new BadRequestException("Invalid schema");
     }
-    registrationShadowValidator.compareUpdate(
-        json,
-        existingStudy,
-        validationError == null
-            ? ValidationOutcome.acceptedSince(updateValidationStart)
-            : ValidationOutcome.rejectedSince(validationError.getMessage(), updateValidationStart));
-    if (validationError != null) {
-      throw validationError;
+    if (request == null) {
+      throw new BadRequestException("Invalid schema");
     }
-    return new StudyUpdateValidationResult(registration, updateValid);
+
+    DatasetRegistrationSchemaV1UpdateValidator updateValidator =
+        new DatasetRegistrationSchemaV1UpdateValidator();
+    DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
+
+    boolean valid = studyUpdateRequestValidator.validate(existingStudy, request);
+    return new StudyUpdateValidationResult(registration, valid);
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {

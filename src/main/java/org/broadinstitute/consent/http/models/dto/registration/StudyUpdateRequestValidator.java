@@ -68,7 +68,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
       throw new BadRequestException("NIH Anvil Use is required");
     }
     if (Objects.isNull(registration.getPiName())) {
-      throw new BadRequestException("Principal Investigator is required");
+      throw new BadRequestException("Principal Investigator Name is required");
     }
   }
 
@@ -86,7 +86,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
                         .noneMatch(id -> id.equals(cg.getDatasetId())))
             .toList();
     if (!nonStudyGroups.isEmpty()) {
-      throw new BadRequestException("Invalid Consent Group changes to study");
+      throw new BadRequestException("Invalid Dataset changes to study");
     }
   }
 
@@ -116,7 +116,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
                 })
             .toList();
     if (!invalidNameChanges.isEmpty()) {
-      throw new BadRequestException("Invalid Name changes to existing Consent Groups");
+      throw new BadRequestException("Invalid Name changes to existing Datasets");
     }
   }
 
@@ -133,7 +133,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
                 .filter(Objects::nonNull)
                 .toList());
     if (!submittedDatasetIds.containsAll(existingDatasetIds)) {
-      throw new BadRequestException("Invalid removal of Consent Groups");
+      throw new BadRequestException("Invalid removal of Datasets");
     }
   }
 
