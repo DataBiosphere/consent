@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.filters;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -62,7 +63,8 @@ class RateLimitFilterTest {
     ArgumentCaptor<Response> captor = ArgumentCaptor.forClass(Response.class);
     verify(requestContext).abortWith(captor.capture());
     assertEquals(429, captor.getValue().getStatus());
-    assertEquals("60", captor.getValue().getHeaderString("Retry-After"));
+    long retryAfterSeconds = Long.parseLong(captor.getValue().getHeaderString("Retry-After"));
+    assertTrue(retryAfterSeconds > 0 && retryAfterSeconds <= 60);
   }
 
   @Test
@@ -120,6 +122,62 @@ class RateLimitFilterTest {
     when(requestContext.getSecurityContext()).thenReturn(securityContext);
     when(securityContext.getUserPrincipal()).thenReturn(new AuthUser());
     when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("5.6.7.8");
+
+    filter.filter(requestContext);
+    filter.filter(requestContext);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testAuthUserWithBlankEmailFallsBackToForwardedFor() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    when(requestContext.getSecurityContext()).thenReturn(securityContext);
+    when(securityContext.getUserPrincipal()).thenReturn(new AuthUser("   "));
+    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("5.6.7.8");
+
+    filter.filter(requestContext);
+    filter.filter(requestContext);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testKeysOnFirstIpInForwardedForHeaderRegardlessOfProxyChain() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    when(requestContext.getSecurityContext()).thenReturn(securityContext);
+    when(securityContext.getUserPrincipal()).thenReturn(null);
+    // Same client IP, but a different downstream proxy hop appended each request.
+    when(requestContext.getHeaderString("X-Forwarded-For"))
+        .thenReturn("1.2.3.4, 10.0.0.1")
+        .thenReturn("1.2.3.4, 10.0.0.2");
+
+    filter.filter(requestContext);
+    filter.filter(requestContext);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testDistinctClientIpsInForwardedForHaveIndependentBuckets() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    when(requestContext.getSecurityContext()).thenReturn(securityContext);
+    when(securityContext.getUserPrincipal()).thenReturn(null);
+    when(requestContext.getHeaderString("X-Forwarded-For"))
+        .thenReturn("1.2.3.4, 10.0.0.1")
+        .thenReturn("9.9.9.9, 10.0.0.1");
+
+    filter.filter(requestContext);
+    filter.filter(requestContext);
+
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testBlankForwardedForHeaderFallsBackToUnknownKey() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    when(requestContext.getSecurityContext()).thenReturn(null);
+    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("   ");
 
     filter.filter(requestContext);
     filter.filter(requestContext);

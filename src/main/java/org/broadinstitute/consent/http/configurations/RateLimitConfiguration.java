@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 /**
  * Rate limit buckets are in-memory per pod, not shared across the deployment. {@code
@@ -13,9 +14,9 @@ public class RateLimitConfiguration {
 
   @NotNull private Boolean enabled;
 
-  @NotNull private Integer requestsPerMinute;
+  @NotNull @Positive private Integer requestsPerMinute;
 
-  @NotNull private Integer podCount;
+  @NotNull @Positive private Integer podCount;
 
   public boolean isEnabled() {
     return enabled;

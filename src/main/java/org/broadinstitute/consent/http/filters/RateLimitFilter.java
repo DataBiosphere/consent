@@ -1,8 +1,12 @@
 package org.broadinstitute.consent.http.filters;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import io.github.bucket4j.ConsumptionProbe;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -12,7 +16,7 @@ import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.ext.Provider;
 import java.security.Principal;
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 
@@ -27,20 +31,27 @@ import org.broadinstitute.consent.http.models.AuthUser;
 @Priority(Priorities.USER)
 public class RateLimitFilter implements ContainerRequestFilter {
 
+  private static final int MAX_TRACKED_KEYS = 10_000;
+  private static final int IDLE_EVICTION_MINUTES = 10;
+
   private final RateLimitConfiguration config;
-  private final Bandwidth limitPerPod;
-  private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
+  private final LoadingCache<String, Bucket> buckets;
 
   @Inject
   public RateLimitFilter(RateLimitConfiguration config) {
     this.config = config;
     int capacityPerPod =
         Math.max(1, (int) Math.ceil(config.getRequestsPerMinute() / (double) config.getPodCount()));
-    this.limitPerPod =
+    Bandwidth limitPerPod =
         Bandwidth.builder()
             .capacity(capacityPerPod)
             .refillGreedy(capacityPerPod, Duration.ofMinutes(1))
             .build();
+    this.buckets =
+        CacheBuilder.newBuilder()
+            .expireAfterAccess(IDLE_EVICTION_MINUTES, TimeUnit.MINUTES)
+            .maximumSize(MAX_TRACKED_KEYS)
+            .build(CacheLoader.from(key -> Bucket.builder().addLimit(limitPerPod).build()));
   }
 
   @Override
@@ -49,20 +60,30 @@ public class RateLimitFilter implements ContainerRequestFilter {
       return;
     }
     String key = extractKey(requestContext);
-    Bucket bucket =
-        buckets.computeIfAbsent(key, k -> Bucket.builder().addLimit(limitPerPod).build());
-    if (!bucket.tryConsume(1)) {
-      requestContext.abortWith(Response.status(429).header("Retry-After", "60").build());
+    ConsumptionProbe probe = buckets.getUnchecked(key).tryConsumeAndReturnRemaining(1);
+    if (!probe.isConsumed()) {
+      long retryAfterSeconds =
+          Math.max(1, Math.ceilDiv(probe.getNanosToWaitForRefill(), 1_000_000_000L));
+      requestContext.abortWith(
+          Response.status(429).header("Retry-After", String.valueOf(retryAfterSeconds)).build());
     }
   }
 
   private String extractKey(ContainerRequestContext requestContext) {
     SecurityContext securityContext = requestContext.getSecurityContext();
     Principal principal = securityContext == null ? null : securityContext.getUserPrincipal();
-    if (principal instanceof AuthUser authUser && authUser.getEmail() != null) {
+    if (principal instanceof AuthUser authUser
+        && authUser.getEmail() != null
+        && !authUser.getEmail().isBlank()) {
       return authUser.getEmail();
     }
     String forwardedFor = requestContext.getHeaderString("X-Forwarded-For");
-    return forwardedFor != null ? forwardedFor : "unknown";
+    if (forwardedFor != null) {
+      String clientIp = forwardedFor.split(",")[0].trim();
+      if (!clientIp.isEmpty()) {
+        return clientIp;
+      }
+    }
+    return "unknown";
   }
 }
