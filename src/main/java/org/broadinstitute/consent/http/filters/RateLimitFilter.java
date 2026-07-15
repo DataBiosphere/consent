@@ -16,7 +16,6 @@ import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.ext.Provider;
 import java.security.Principal;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 
@@ -49,7 +48,7 @@ public class RateLimitFilter implements ContainerRequestFilter {
             .build();
     this.buckets =
         CacheBuilder.newBuilder()
-            .expireAfterAccess(IDLE_EVICTION_MINUTES, TimeUnit.MINUTES)
+            .expireAfterAccess(Duration.ofMinutes(IDLE_EVICTION_MINUTES))
             .maximumSize(MAX_TRACKED_KEYS)
             .build(CacheLoader.from(key -> Bucket.builder().addLimit(limitPerPod).build()));
   }
