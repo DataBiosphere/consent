@@ -20,16 +20,23 @@ import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 
 /**
- * Token-bucket rate limiter keyed by authenticated user (or by X-Forwarded-For for unauthenticated
- * requests). Buckets live in-process, so they are not shared across pods; {@code requestsPerMinute}
- * in {@link RateLimitConfiguration} is the intended limit for the whole deployment, and each pod
- * enforces its share of it, so the deployment-wide aggregate stays close to the configured value
- * instead of being multiplied by the pod count.
+ * Token-bucket rate limiter keyed by authenticated user. Buckets live in-process, so they are not
+ * shared across pods; {@code requestsPerMinute} in {@link RateLimitConfiguration} is the intended
+ * limit for the whole deployment, and each pod enforces its share of it, so the deployment-wide
+ * aggregate stays close to the configured value instead of being multiplied by the pod count.
  *
  * <p>Only applies to requests under {@code api/} — the actual API surface this is meant to protect.
  * Infrastructure endpoints like {@code /status} and {@code /liveness} are hit continuously by
  * Kubernetes probes and must never be throttled, and {@code swagger/} docs traffic isn't the abuse
  * surface this filter targets either.
+ *
+ * <p>Requests with no authenticated principal are never rate limited. Every {@code api/} resource
+ * method requires {@code @Auth}, so {@code OAuthCustomAuthFilter} (priority {@code AUTHENTICATION},
+ * which runs before this filter's priority {@code USER}) already rejects unauthenticated callers
+ * with 401 before they ever reach here — this filter should never actually see a null principal in
+ * practice. Skipping rather than falling back to a shared anonymous bucket also means that if that
+ * assumption is ever broken by an unrelated infrastructure change, this filter fails open instead
+ * of turning an auth outage into a total API lockout.
  */
 @Provider
 @Priority(Priorities.USER)
@@ -56,7 +63,7 @@ public class RateLimitFilter implements ContainerRequestFilter {
         CacheBuilder.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(IDLE_EVICTION_MINUTES))
             .maximumSize(MAX_TRACKED_KEYS)
-            .build(CacheLoader.from(key -> Bucket.builder().addLimit(limitPerPod).build()));
+            .build(CacheLoader.from(_ -> Bucket.builder().addLimit(limitPerPod).build()));
   }
 
   @Override
@@ -68,6 +75,9 @@ public class RateLimitFilter implements ContainerRequestFilter {
       return;
     }
     String key = extractKey(requestContext);
+    if (key == null) {
+      return;
+    }
     ConsumptionProbe probe = buckets.getUnchecked(key).tryConsumeAndReturnRemaining(1);
     if (!probe.isConsumed()) {
       long retryAfterSeconds =
@@ -85,15 +95,6 @@ public class RateLimitFilter implements ContainerRequestFilter {
         && !authUser.getEmail().isBlank()) {
       return authUser.getEmail();
     }
-    String forwardedFor = requestContext.getHeaderString("X-Forwarded-For");
-    if (forwardedFor != null) {
-      int commaIndex = forwardedFor.indexOf(',');
-      String clientIp =
-          (commaIndex >= 0 ? forwardedFor.substring(0, commaIndex) : forwardedFor).trim();
-      if (!clientIp.isEmpty()) {
-        return clientIp;
-      }
-    }
-    return "unknown";
+    return null;
   }
 }

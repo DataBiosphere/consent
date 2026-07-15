@@ -107,97 +107,56 @@ class RateLimitFilterTest {
   }
 
   @Test
-  void testFallsBackToForwardedForHeaderWhenUnauthenticated() {
-    RateLimitFilter filter = buildFilter(1, 1, true);
-    when(requestContext.getSecurityContext()).thenReturn(securityContext);
-    when(securityContext.getUserPrincipal()).thenReturn(null);
-    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("1.2.3.4");
-
-    filter.filter(requestContext);
-    filter.filter(requestContext);
-
-    verify(requestContext).abortWith(any());
-  }
-
-  @Test
-  void testFallsBackToUnknownKeyWhenNoPrincipalAndNoForwardedForHeader() {
+  void testNoSecurityContextIsNeverRateLimited() {
+    // e.g. an api/ endpoint the auth filter didn't run for, or the auth filter rejecting the
+    // request itself (401) before this filter would ever see it in practice.
     RateLimitFilter filter = buildFilter(1, 1, true);
     when(requestContext.getSecurityContext()).thenReturn(null);
-    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn(null);
 
-    filter.filter(requestContext);
-    filter.filter(requestContext);
-
-    verify(requestContext).abortWith(any());
-  }
-
-  @Test
-  void testAuthUserWithNullEmailFallsBackToForwardedFor() {
-    RateLimitFilter filter = buildFilter(1, 1, true);
-    when(requestContext.getSecurityContext()).thenReturn(securityContext);
-    when(securityContext.getUserPrincipal()).thenReturn(new AuthUser());
-    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("5.6.7.8");
-
-    filter.filter(requestContext);
-    filter.filter(requestContext);
-
-    verify(requestContext).abortWith(any());
-  }
-
-  @Test
-  void testAuthUserWithBlankEmailFallsBackToForwardedFor() {
-    RateLimitFilter filter = buildFilter(1, 1, true);
-    when(requestContext.getSecurityContext()).thenReturn(securityContext);
-    when(securityContext.getUserPrincipal()).thenReturn(new AuthUser("   "));
-    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("5.6.7.8");
-
-    filter.filter(requestContext);
-    filter.filter(requestContext);
-
-    verify(requestContext).abortWith(any());
-  }
-
-  @Test
-  void testKeysOnFirstIpInForwardedForHeaderRegardlessOfProxyChain() {
-    RateLimitFilter filter = buildFilter(1, 1, true);
-    when(requestContext.getSecurityContext()).thenReturn(securityContext);
-    when(securityContext.getUserPrincipal()).thenReturn(null);
-    // Same client IP, but a different downstream proxy hop appended each request.
-    when(requestContext.getHeaderString("X-Forwarded-For"))
-        .thenReturn("1.2.3.4, 10.0.0.1")
-        .thenReturn("1.2.3.4, 10.0.0.2");
-
-    filter.filter(requestContext);
-    filter.filter(requestContext);
-
-    verify(requestContext).abortWith(any());
-  }
-
-  @Test
-  void testDistinctClientIpsInForwardedForHaveIndependentBuckets() {
-    RateLimitFilter filter = buildFilter(1, 1, true);
-    when(requestContext.getSecurityContext()).thenReturn(securityContext);
-    when(securityContext.getUserPrincipal()).thenReturn(null);
-    when(requestContext.getHeaderString("X-Forwarded-For"))
-        .thenReturn("1.2.3.4, 10.0.0.1")
-        .thenReturn("9.9.9.9, 10.0.0.1");
-
-    filter.filter(requestContext);
-    filter.filter(requestContext);
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
 
     verify(requestContext, never()).abortWith(any());
   }
 
   @Test
-  void testBlankForwardedForHeaderFallsBackToUnknownKey() {
+  void testNullPrincipalIsNeverRateLimited() {
     RateLimitFilter filter = buildFilter(1, 1, true);
-    when(requestContext.getSecurityContext()).thenReturn(null);
-    when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("   ");
+    when(requestContext.getSecurityContext()).thenReturn(securityContext);
+    when(securityContext.getUserPrincipal()).thenReturn(null);
 
-    filter.filter(requestContext);
-    filter.filter(requestContext);
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
 
-    verify(requestContext).abortWith(any());
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testAuthUserWithNullEmailIsNeverRateLimited() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    when(requestContext.getSecurityContext()).thenReturn(securityContext);
+    when(securityContext.getUserPrincipal()).thenReturn(new AuthUser());
+
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
+
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testAuthUserWithBlankEmailIsNeverRateLimited() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    when(requestContext.getSecurityContext()).thenReturn(securityContext);
+    when(securityContext.getUserPrincipal()).thenReturn(new AuthUser("   "));
+
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
+
+    verify(requestContext, never()).abortWith(any());
   }
 
   @Test
