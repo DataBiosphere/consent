@@ -162,7 +162,8 @@ public class VoteService implements ConsentLogger {
    * @param rationale Value to update the rationales to. Only update if non-null.
    * @param user The user making the update
    * @return The updated Vote
-   * @throws IllegalArgumentException when there are non-open, data access elections on any of the votes
+   * @throws IllegalArgumentException when there are non-open, data access elections on any of the
+   *     votes
    */
   public List<Vote> updateVotesWithValue(
       List<Vote> votes, boolean voteValue, String rationale, User user)
@@ -571,7 +572,8 @@ public class VoteService implements ConsentLogger {
    * @param voteIds List of vote ids
    * @param rationale The rationale to update
    * @return List of updated votes
-   * @throws IllegalArgumentException when there are non-open data access elections on any of the votes
+   * @throws IllegalArgumentException when there are non-open data access elections on any of the
+   *     votes
    */
   public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
       throws IllegalArgumentException {
