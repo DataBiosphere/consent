@@ -25,11 +25,17 @@ import org.broadinstitute.consent.http.models.AuthUser;
  * in {@link RateLimitConfiguration} is the intended limit for the whole deployment, and each pod
  * enforces its share of it, so the deployment-wide aggregate stays close to the configured value
  * instead of being multiplied by the pod count.
+ *
+ * <p>Only applies to requests under {@code api/} — the actual API surface this is meant to protect.
+ * Infrastructure endpoints like {@code /status} and {@code /liveness} are hit continuously by
+ * Kubernetes probes and must never be throttled, and {@code swagger/} docs traffic isn't the abuse
+ * surface this filter targets either.
  */
 @Provider
 @Priority(Priorities.USER)
 public class RateLimitFilter implements ContainerRequestFilter {
 
+  private static final String LIMITED_PATH_PREFIX = "api/";
   private static final int MAX_TRACKED_KEYS = 10_000;
   private static final int IDLE_EVICTION_MINUTES = 10;
 
@@ -56,6 +62,9 @@ public class RateLimitFilter implements ContainerRequestFilter {
   @Override
   public void filter(ContainerRequestContext requestContext) {
     if (!config.isEnabled()) {
+      return;
+    }
+    if (!requestContext.getUriInfo().getPath().startsWith(LIMITED_PATH_PREFIX)) {
       return;
     }
     String key = extractKey(requestContext);

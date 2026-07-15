@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.filters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,8 +11,10 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriInfo;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +26,18 @@ class RateLimitFilterTest {
 
   @Mock private ContainerRequestContext requestContext;
   @Mock private SecurityContext securityContext;
+  @Mock private UriInfo uriInfo;
+
+  @BeforeEach
+  void setUp() {
+    // Default to a rate-limited path; tests exercising path exclusion override this.
+    lenient().when(requestContext.getUriInfo()).thenReturn(uriInfo);
+    lenient().when(uriInfo.getPath()).thenReturn("api/user/me");
+  }
+
+  private void mockPath(String path) {
+    when(uriInfo.getPath()).thenReturn(path);
+  }
 
   private RateLimitFilter buildFilter(int requestsPerMinute, int podCount, boolean enabled) {
     RateLimitConfiguration config = new RateLimitConfiguration();
@@ -178,6 +193,54 @@ class RateLimitFilterTest {
     RateLimitFilter filter = buildFilter(1, 1, true);
     when(requestContext.getSecurityContext()).thenReturn(null);
     when(requestContext.getHeaderString("X-Forwarded-For")).thenReturn("   ");
+
+    filter.filter(requestContext);
+    filter.filter(requestContext);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testStatusPathIsNeverRateLimited() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    mockPath("status");
+
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
+
+    verify(requestContext, never()).abortWith(any());
+    verify(requestContext, never()).getSecurityContext();
+  }
+
+  @Test
+  void testLivenessPathIsNeverRateLimited() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    mockPath("liveness");
+
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
+
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testSwaggerPathIsNeverRateLimited() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    mockPath("swagger/index.html");
+
+    for (int i = 0; i < 20; i++) {
+      filter.filter(requestContext);
+    }
+
+    verify(requestContext, never()).abortWith(any());
+  }
+
+  @Test
+  void testApiPathIsStillRateLimitedAlongsideExcludedPaths() {
+    RateLimitFilter filter = buildFilter(1, 1, true);
+    mockAuthenticatedUser("user@example.com");
 
     filter.filter(requestContext);
     filter.filter(requestContext);
