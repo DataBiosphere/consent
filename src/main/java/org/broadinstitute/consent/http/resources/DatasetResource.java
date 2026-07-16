@@ -103,7 +103,7 @@ public class DatasetResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   @Timed
   /*
-   * This endpoint accepts a JSON instance of a dataset-registration-schema_v1.json schema.
+   * This endpoint accepts a registration payload, validated by DTO/domain validators.
    * With that object, we can fully create datasets from the provided values.
    */
   public Response createDatasetRegistration(

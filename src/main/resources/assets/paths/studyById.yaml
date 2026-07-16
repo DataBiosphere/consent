@@ -27,10 +27,9 @@ put:
   operationId: apiDatasetStudyStudyIdPut
   description: |
     Updates the Study and its Datasets from a registration payload. Request
-    validation is performed by backend DTO/domain validators, not by the
-    legacy dataset-registration-schema_v1.json file; this OpenAPI document is
-    the authoritative, forward-looking description of the request/response
-    contract.
+    validation is performed by backend DTO/domain validators. This OpenAPI
+    document is the authoritative, forward-looking description of the
+    request/response contract.
   tags:
     - Study
   parameters:

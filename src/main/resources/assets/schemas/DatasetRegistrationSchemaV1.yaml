@@ -1,10 +1,7 @@
 description: |
   Study/dataset registration payload accepted by POST /api/dataset/v3 and
   PUT /api/dataset/study/{studyId}. Validation of this payload is performed by
-  backend DTO/domain validators, not by the legacy
-  dataset-registration-schema_v1.json file, which is retained only as a
-  compatibility artifact for older clients and is not the backend validation
-  source of truth. This OpenAPI document is the authoritative,
+  backend DTO/domain validators. This OpenAPI document is the authoritative,
   forward-looking description of the request/response contract.
 
   Conditionally required fields:

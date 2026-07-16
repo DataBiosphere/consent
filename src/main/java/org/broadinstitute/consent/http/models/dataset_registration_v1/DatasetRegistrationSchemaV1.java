@@ -12,15 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dataset Registration Schema
- *
- * <p>Dynamically generated java class from jsonschema2pojo
- *
- * <p>See: https://github.com/joelittlejohn/jsonschema2pojo <code>
- * jsonschema2pojo --source src/main/resources/dataset-registration-schema_v1.json --target
- * java-gen</code>
- *
- * <p>Also see https://jsonschemalint.com/#/version/draft-04/markup/json for validating json.
+ * Registration-shaped response model for Study/Dataset registration data, used by GET
+ * /api/dataset/study/registration/{studyId} and similar endpoints. Backend create/update validation
+ * is owned by DTO/domain validators (see {@code
+ * org.broadinstitute.consent.http.models.dto.registration}), not by this class.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
