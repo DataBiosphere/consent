@@ -39,7 +39,8 @@ properties:
     type: string
     description: Principal Investigator Name
   dataSubmitterUserId:
-    type: number
+    type: integer
+    format: int32
     description: |
       The user who created the study. Server-assigned from the authenticated
       user on create; present in responses only. Not part of the accepted

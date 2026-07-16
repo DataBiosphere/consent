@@ -286,10 +286,10 @@ public class StudyResource extends Resource {
     try {
       request = objectMapper.readValue(json, StudyUpdateRequest.class);
     } catch (JsonProcessingException _) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
     if (request == null) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
 
     boolean valid = studyUpdateRequestValidator.validate(existingStudy, request);
