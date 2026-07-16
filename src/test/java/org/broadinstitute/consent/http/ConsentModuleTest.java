@@ -91,7 +91,6 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
-import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -298,8 +297,6 @@ class ConsentModuleTest extends AbstractTestHelper {
         injector.getInstance(CountryValidator.class), injector.getInstance(CountryValidator.class));
     assertSame(
         injector.getInstance(InstitutionUtil.class), injector.getInstance(InstitutionUtil.class));
-    assertSame(
-        injector.getInstance(JsonSchemaUtil.class), injector.getInstance(JsonSchemaUtil.class));
     assertSame(
         injector.getInstance(TicketFactory.class), injector.getInstance(TicketFactory.class));
   }

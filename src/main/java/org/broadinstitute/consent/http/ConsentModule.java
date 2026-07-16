@@ -89,7 +89,6 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
-import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -740,12 +739,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private InstitutionUtil providesInstitutionUtil() {
     return new InstitutionUtil();
-  }
-
-  @Provides
-  @Singleton
-  private JsonSchemaUtil providesJsonSchemaUtil() {
-    return new JsonSchemaUtil();
   }
 
   @Provides

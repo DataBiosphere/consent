@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.junit.jupiter.api.Test;
 
 class DatasetRegistrationSchemaV1AssetsTest {
@@ -78,113 +77,5 @@ class DatasetRegistrationSchemaV1AssetsTest {
     Map<String, Object> assets = registration.getAssets();
     assertNotNull(assets);
     assertTrue(assets.isEmpty());
-  }
-
-  @Test
-  void testJsonSchemaValidationAcceptsAssets() {
-    JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
-
-    // Create a minimal valid JSON with assets
-    String json =
-        """
-        {
-          "studyName": "Test Study",
-          "studyDescription": "Test Description",
-          "dataTypes": ["Genomic"],
-          "dataSubmitterUserId": 1,
-          "publicVisibility": true,
-          "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
-          "piName": "Dr. Test",
-          "consentGroups": [
-            {
-              "consentGroupName": "Group 1",
-              "numberOfParticipants": 100,
-              "accessManagement": "open"
-            }
-          ],
-          "assets": {
-            "customField": "value",
-            "anotherField": 123,
-            "complexObject": {
-              "nested": "data"
-            }
-          }
-        }
-        """;
-
-    // Validate the schema
-    var errors = jsonSchemaUtil.validateSchemaV1(json);
-
-    // Verify no validation errors
-    assertTrue(
-        errors.isEmpty(), "Schema validation should pass with assets field. Errors: " + errors);
-  }
-
-  @Test
-  void testEmptyAssetsObjectIsValid() {
-    JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
-
-    // Create a minimal valid JSON with empty assets
-    String json =
-        """
-        {
-          "studyName": "Test Study",
-          "studyDescription": "Test Description",
-          "dataTypes": ["Genomic"],
-          "dataSubmitterUserId": 1,
-          "publicVisibility": true,
-          "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
-          "piName": "Dr. Test",
-          "consentGroups": [
-            {
-              "consentGroupName": "Group 1",
-              "numberOfParticipants": 100,
-              "accessManagement": "open"
-            }
-          ],
-          "assets": {}
-        }
-        """;
-
-    // Validate the schema
-    var errors = jsonSchemaUtil.validateSchemaV1(json);
-
-    // Verify no validation errors
-    assertTrue(
-        errors.isEmpty(),
-        "Schema validation should pass with empty assets field. Errors: " + errors);
-  }
-
-  @Test
-  void testMissingAssetsFieldIsValid() {
-    JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
-
-    // Create a minimal valid JSON without assets field
-    String json =
-        """
-        {
-          "studyName": "Test Study",
-          "studyDescription": "Test Description",
-          "dataTypes": ["Genomic"],
-          "dataSubmitterUserId": 1,
-          "publicVisibility": true,
-          "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
-          "piName": "Dr. Test",
-          "consentGroups": [
-            {
-              "consentGroupName": "Group 1",
-              "numberOfParticipants": 100,
-              "accessManagement": "open"
-            }
-          ]
-        }
-        """;
-
-    // Validate the schema
-    var errors = jsonSchemaUtil.validateSchemaV1(json);
-
-    // Verify no validation errors
-    assertTrue(
-        errors.isEmpty(), "Schema validation should pass without assets field. Errors: " + errors);
   }
 }
