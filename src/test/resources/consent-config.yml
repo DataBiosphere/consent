@@ -59,3 +59,7 @@ oidcConfiguration:
   addClientIdToScope: true
   extraAuthParams: prompt=login
   authorityEndpoint: http://localhost:8000
+rateLimit:
+  enabled: true
+  requestsPerMinute: 100
+  podCount: 1
