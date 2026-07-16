@@ -55,7 +55,7 @@ public class StudyRegistrationRequestValidator {
 
   @VisibleForTesting
   protected void checkStudyDescriptionRequired(StudyRegistrationRequest r) {
-    if (Objects.isNull(r.getStudyDescription())) {
+    if (Objects.isNull(r.getStudyDescription()) || r.getStudyDescription().isBlank()) {
       throw new BadRequestException("Study Description is required");
     }
   }
@@ -83,7 +83,7 @@ public class StudyRegistrationRequestValidator {
 
   @VisibleForTesting
   protected void checkPiNameRequired(StudyRegistrationRequest r) {
-    if (Objects.isNull(r.getPiName())) {
+    if (Objects.isNull(r.getPiName()) || r.getPiName().isBlank()) {
       throw new BadRequestException("Principal Investigator Name is required");
     }
   }
@@ -136,7 +136,7 @@ public class StudyRegistrationRequestValidator {
 
   @VisibleForTesting
   protected void checkDbGaPPhsIdRequired(StudyRegistrationRequest r) {
-    if (Objects.isNull(r.getDbGaPPhsID())) {
+    if (Objects.isNull(r.getDbGaPPhsID()) || r.getDbGaPPhsID().isBlank()) {
       throw new BadRequestException("dbGaP phs ID is required");
     }
   }
@@ -150,16 +150,16 @@ public class StudyRegistrationRequestValidator {
 
   @VisibleForTesting
   protected void checkNihGrantContractNumberRequired(StudyRegistrationRequest r) {
-    if (Objects.isNull(r.getNihGrantContractNumber())) {
+    if (Objects.isNull(r.getNihGrantContractNumber()) || r.getNihGrantContractNumber().isBlank()) {
       throw new BadRequestException("NIH Grant or Contract Number is required");
     }
   }
 
   protected void validateGsrConditionals(StudyRegistrationRequest registration) {
+    String explanation =
+        registration.getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation();
     if (Boolean.TRUE.equals(registration.getControlledAccessRequiredForGenomicSummaryResultsGSR())
-        && Objects.isNull(
-            registration
-                .getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation())) {
+        && (Objects.isNull(explanation) || explanation.isBlank())) {
       throw new BadRequestException(
           "Controlled access GSR explanation is required when GSR access is required");
     }
