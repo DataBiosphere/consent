@@ -15,15 +15,20 @@ get:
             items:
               $ref: '../schemas/DatasetStudySummary.yaml'
 post:
-  summary: Creates a set of Datasets from a valid dataset registration JsonSchema object
+  summary: Creates a Study and its Datasets from a registration payload
   operationId: apiDatasetV3Post
-  description: Creates a set of Datasets from a valid dataset registration JsonSchema object
+  description: |
+    Creates a Study and one Dataset per consent group from a registration
+    payload. Request validation is performed by backend DTO/domain validators,
+    not by the legacy dataset-registration-schema_v1.json file; this OpenAPI
+    document is the authoritative, forward-looking description of the
+    request/response contract.
   requestBody:
-    description: | 
-      Dataset registration schema instance and optional file for
-      an alternative data sharing plan. The registration schema is 
-      always required. If a file is also provided, then alternative 
-      data sharing information is required in the registration schema.
+    description: |
+      Registration payload and optional file for an alternative data sharing
+      plan. The registration payload is always required. If a file is also
+      provided, then alternative data sharing information is required in the
+      payload.
     content:
       multipart/form-data:
         schema:

@@ -1,8 +1,11 @@
 type: object
 description: |
-  Each Consent Group will be translated into a separate dataset
-  Required fields include the `consentGroupName` and any one of 
-  `generalResearchUse`, `hmb`, or `diseaseSpecificUse`.
+  Each Consent Group is translated into a separate Dataset. `consentGroupName`
+  and `numberOfParticipants` are always required. Exactly one primary data use
+  must be set: `accessManagement: open`, or exactly one of
+  `generalResearchUse`, `hmb`, `poa`, `diseaseSpecificUse` (non-empty), or
+  `otherPrimary`. `dataAccessCommitteeId` is required when `accessManagement`
+  is `controlled`.
 properties:
   consentGroupName:
     type: string
@@ -93,7 +96,12 @@ properties:
     items:
       "$ref": "./FileType.yaml"
     description: List of File Types
+  data:
+    type: object
+    description: |
+      Optional client-managed consent-group metadata. Preserved and
+      round-tripped by the backend as-is; not backend-validated. Do not
+      duplicate first-class fields here.
 required:
   - consentGroupName
-  - fileTypes
   - numberOfParticipants

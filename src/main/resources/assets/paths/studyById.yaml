@@ -23,9 +23,14 @@ get:
     500:
       description: Server error
 put:
-  summary: Update Dataset Registration By Study Id
+  summary: Update Study/Dataset Registration By Study Id
   operationId: apiDatasetStudyStudyIdPut
-  description: Updates Dataset Registration specified by Study Id.
+  description: |
+    Updates the Study and its Datasets from a registration payload. Request
+    validation is performed by backend DTO/domain validators, not by the
+    legacy dataset-registration-schema_v1.json file; this OpenAPI document is
+    the authoritative, forward-looking description of the request/response
+    contract.
   tags:
     - Study
   parameters:
@@ -37,22 +42,22 @@ put:
         type: integer
   requestBody:
     description: |
-      Dataset registration schema instance and optional files for an alternative data sharing plan 
-      and institutional certification files. The registration schema is always required. If a file 
-      is also provided, then alternative data sharing information is required in the registration 
-      schema. Study Names can be updated, but they must be unique in the system. 
+      Registration payload and optional files for an alternative data sharing
+      plan and institutional certification files. The registration payload is
+      always required. If a file is also provided, then alternative data
+      sharing information is required in the payload. Study Names can be
+      updated, but they must be unique in the system.
       See [/api/dataset/studyNames](#/Study/findAllStudyNames) for a list of existing study names.
-      Data Use fields can only be modified using Admin permissions. See 
+      Data Use fields can only be modified using Admin permissions. See
       [/api/dataset/{id}/datause](#/Admin/updateDatasetDataUse) to update a dataset's Data Use.
-      Studies are updatable by Admins, Creators, and Datat Custodians
-      
-      The following fields are not modifiable:
-      * Data Submitter Name/Email
-      * All Data Use fields (if any are provided, they will be ignored)
-      * Access Management (if provided, it will be ignored)
-      * Consent Group Name
-      * Data Access Committee Id
-      
+      Studies are updatable by Admins, Creators, and Data Custodians.
+
+      The following fields cannot be changed on an existing Consent Group by this endpoint:
+      * Data Submitter Name/Email (not part of the update payload)
+      * All Data Use fields and Access Management (submitted values are silently ignored)
+      * Consent Group Name (submitted renames are rejected with a 400)
+      * Data Access Committee Id (submitted values are silently ignored)
+
       Additionally, existing Consent Groups cannot be removed from the study, but new ones can be
       added.
     content:
