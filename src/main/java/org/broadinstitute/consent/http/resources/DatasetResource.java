@@ -152,10 +152,10 @@ public class DatasetResource extends Resource {
     try {
       request = objectMapper.readValue(json, StudyRegistrationRequest.class);
     } catch (JsonProcessingException _) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
     if (request == null) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
     return request;
   }

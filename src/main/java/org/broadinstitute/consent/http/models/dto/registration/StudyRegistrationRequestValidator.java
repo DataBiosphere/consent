@@ -310,9 +310,15 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
+  /**
+   * A DAC is required unless access management is explicitly {@code open} or {@code external}. A
+   * missing accessManagement was treated the same as {@code controlled}.
+   */
   protected void validateDacRequirement(ConsentGroupRequest cg) {
-    if (AccessManagement.CONTROLLED.equals(cg.getAccessManagement())
-        && Objects.isNull(cg.getDataAccessCommitteeId())) {
+    boolean dacNotRequired =
+        AccessManagement.OPEN.equals(cg.getAccessManagement())
+            || AccessManagement.EXTERNAL.equals(cg.getAccessManagement());
+    if (!dacNotRequired && Objects.isNull(cg.getDataAccessCommitteeId())) {
       throw new BadRequestException(
           "Data Access Committee is required for controlled access datasets");
     }

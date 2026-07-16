@@ -91,6 +91,9 @@ class StudyRegistrationRequestValidatorTest {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(null);
+    // A DAC is required whenever accessManagement isn't explicitly open/external (including
+    // omitted); supply one here so this test isolates the primary-data-use dimension only.
+    cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
     mutate.accept(cg);
     assertTrue(validator.collectViolations(registration).isEmpty());
   }
@@ -132,6 +135,27 @@ class StudyRegistrationRequestValidatorTest {
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
     cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
+    assertTrue(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_dac_required_when_accessManagement_omitted() {
+    // A missing accessManagement is treated the same as controlled for DAC-requirement purposes.
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
+    cg.setAccessManagement(null);
+    cg.setGeneralResearchUse(true);
+    cg.setDataAccessCommitteeId(null);
+    assertFalse(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_dac_not_required_for_external() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
+    cg.setAccessManagement(AccessManagement.EXTERNAL);
+    cg.setGeneralResearchUse(true);
+    cg.setDataAccessCommitteeId(null);
     assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
