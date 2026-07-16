@@ -120,8 +120,6 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Please correct the following fields:\n" + errorMessage);
       }
 
-      DatasetRegistrationSchemaV1 registration =
-          GsonUtil.getInstance().fromJson(json, DatasetRegistrationSchemaV1.class);
       User user = userService.findUserByEmail(authUser.getEmail());
 
       // key: field name (not file name), value: file body part
@@ -129,7 +127,7 @@ public class DatasetResource extends Resource {
 
       // Generate datasets from registration
       List<Dataset> datasets =
-          datasetRegistrationService.createDatasetsFromRegistration(registration, user, files);
+          datasetRegistrationService.createDatasetsFromRegistration(request, user, files);
       Integer studyId = datasets.getFirst().getStudyId();
       Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();

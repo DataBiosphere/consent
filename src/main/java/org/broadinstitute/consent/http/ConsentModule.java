@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
 import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
+import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
@@ -689,9 +690,16 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       GCSService gcsService,
       ElasticSearchService elasticSearchService,
       EmailService emailService,
-      ExecutorService executorService) {
+      ExecutorService executorService,
+      RegistrationRequestMapper registrationRequestMapper) {
     return new DatasetRegistrationService(
-        jdbi, datasetServiceDAO, gcsService, elasticSearchService, emailService, executorService);
+        jdbi,
+        datasetServiceDAO,
+        gcsService,
+        elasticSearchService,
+        emailService,
+        executorService,
+        registrationRequestMapper);
   }
 
   @Provides
