@@ -15,6 +15,12 @@ post:
       description: Unable to validate the user's google identity.
     409:
       description: User should be unique
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.
 put:
@@ -61,5 +67,11 @@ put:
       description: Bad request if invalid input is provided
     404:
       description: User not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.

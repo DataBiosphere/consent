@@ -117,6 +117,12 @@ paths:
           description: No DAC or User found with the provided ID
         409:
           description: User is already a member of the DAC
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
     delete:
@@ -142,6 +148,12 @@ paths:
           description: Dac member successfully removed
         404:
           description: No DAC or User found with the provided ID
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
   /api/dac/{dacId}/chair/{userId}:
@@ -175,6 +187,12 @@ paths:
           description: No DAC or User found with the provided ID
         409:
           description: User is already a member of the DAC
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
     delete:
@@ -202,6 +220,12 @@ paths:
           description: Dacs require at least one chair.
         404:
           description: No DAC or User found with the provided ID
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
   /api/dac/{dacId}/datasets:
@@ -231,6 +255,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
   /api/dar/v2:
@@ -265,6 +295,12 @@ paths:
       responses:
         201:
           description: Returns the created draft Data Access Request.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
     get:
@@ -282,6 +318,12 @@ paths:
                 type: array
                 items:
                   $ref: './schemas/DataAccessRequest.yaml'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
 
@@ -314,6 +356,12 @@ paths:
           description: Returns the updated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
     get:
@@ -336,6 +384,12 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
 
@@ -360,6 +414,12 @@ paths:
           content:
             application/octet-stream:
               schema: {}
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
@@ -394,6 +454,12 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/dar/v2/{referenceId}/collaborationDocument:
     get:
       summary: Retrieve DAR Collaboration Document
@@ -414,6 +480,12 @@ paths:
           content:
             application/octet-stream:
               schema: {}
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
@@ -449,6 +521,12 @@ paths:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
 
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/dar/v2/progress_report/{parentReferenceId}:
     $ref: './paths/progressReport.yaml'
   /api/dar/{referenceId}/approveCloseout:
@@ -480,6 +558,12 @@ paths:
                 type: integer
         404:
           description: Dataset not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/dataset/registration/{datasetIdentifier}:
     $ref: './paths/datasetRegistrationByDatasetIdentifier.yaml'
   /api/dataset/studyNames:
@@ -555,6 +639,12 @@ paths:
       responses:
         200:
           description: Email successfully sent
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
           content:
@@ -594,6 +684,12 @@ paths:
                   $ref: '#/components/schemas/LibraryCard'
         401:
           description: User not authorized
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
     post:
@@ -623,6 +719,12 @@ paths:
           description: User not authorized
         409:
           description: Library Card payload conflicts with an existing record
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
   /api/libraryCards/{id}:
@@ -651,6 +753,12 @@ paths:
           description: User not authorized
         404:
           description: Library Card not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
     delete:
@@ -674,6 +782,12 @@ paths:
           description: User not authorized
         404:
           description: Library Card not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
   /api/libraryCards/institution/{id}:
@@ -702,6 +816,12 @@ paths:
           description: User not authorized
         404:
           description: Institution not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
   /api/libraryCards/history/{userId}:
@@ -730,6 +850,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MatchResult'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/match/purpose/batch/:
@@ -756,6 +882,12 @@ paths:
                 $ref: '#/components/schemas/User'
         404:
           description: User not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/user/me/dac/datasets:
@@ -786,6 +918,12 @@ paths:
                   $ref: '#/components/schemas/SimplifiedUser'
         404:
           description: User not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/user/{userId}:
@@ -818,6 +956,12 @@ paths:
           description: Unsupported or Invalid role name
         404:
           description: The user does not have the given role, or role is SO and the user does not have an Institution
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/user/{userId}/{roleId}:
@@ -847,6 +991,12 @@ paths:
           description: Unauthorized, log in and try the operation again.
         404:
           description: No acknowledgement found for the given key.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
     delete:
@@ -873,6 +1023,12 @@ paths:
           description: Unauthorized, log in and try the operation again.
         404:
           description: No acknowledgement found for the given key.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
   /api/user/acknowledgements:
@@ -905,6 +1061,12 @@ paths:
           description: |
             Unauthorized, log in and try the operation again.
             Closeout Acknowledgements can only be submitted by Chairpersons
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
     get:
@@ -922,6 +1084,12 @@ paths:
                 $ref: '#/components/schemas/AcknowledgementMap'
         401:
           description: Unauthorized, log in and try the operation again.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
   /api/user/create:

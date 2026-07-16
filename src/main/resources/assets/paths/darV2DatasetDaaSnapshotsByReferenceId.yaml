@@ -23,6 +23,12 @@ get:
               $ref: '../schemas/DatasetDaaSnapshot.yaml'
     404:
       description: No DAR or Progress Report can be found with the provided identifier, or no dataset to DAA snapshot map exists for it
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server Error
 

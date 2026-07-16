@@ -26,6 +26,12 @@ put:
             $ref: '../schemas/DatasetAuthorizedReader.yaml'
     409:
       description: The user is missing the RESEARCHER role required to check access.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 delete:
   summary: Remove authorized access reader
   operationId: apiDatasetIdAuthorizedAccessReadersUserIdDelete
@@ -48,3 +54,9 @@ delete:
   responses:
     200:
       description: The removal of the user was successful
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

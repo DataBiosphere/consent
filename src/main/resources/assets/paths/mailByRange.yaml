@@ -46,5 +46,11 @@ get:
       description: Bad Request - Check to make sure dates are provided in the MM/dd/yyyy format and that limit and offset are not negative.
     401:
       description: Unauthorized.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

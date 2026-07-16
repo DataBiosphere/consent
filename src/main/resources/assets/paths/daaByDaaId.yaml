@@ -20,5 +20,11 @@ get:
             $ref: '../schemas/DataAccessAgreement.yaml'
     404:
       description: No DAA found with the given ID
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

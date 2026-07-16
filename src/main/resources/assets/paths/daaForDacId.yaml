@@ -24,6 +24,12 @@ put:
       description: User not authorized to create a relationship between a DAA and a DAC.
     404:
       description: Data Access Agreement or Data Access Committee Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
@@ -54,5 +60,11 @@ delete:
       description: User not authorized to create a relationship between a DAA and a DAC.
     404:
       description: Data Access Agreement or Data Access Committee Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

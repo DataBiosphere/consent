@@ -17,6 +17,12 @@ post:
       description: The dataset has been indexed
     404:
       description: Dataset not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 delete:
   summary: Delete dataset index by id
   operationId: apiDatasetIndexDatasetIdDelete
@@ -34,3 +40,9 @@ delete:
   responses:
     200:
       description: The dataset index has been deleted
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

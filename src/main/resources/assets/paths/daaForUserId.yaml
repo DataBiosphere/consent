@@ -24,6 +24,12 @@ delete:
       description: User is forbidden.
     404:
       description: DAA Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 put:
@@ -58,5 +64,11 @@ put:
       description: User not authorized to create a relationship between a DAA and a User.
     404:
       description: User, Data Access Agreement, or Library Card Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

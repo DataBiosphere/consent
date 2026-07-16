@@ -15,6 +15,12 @@ get:
               $ref: '../schemas/DraftSummary.yaml'
     401:
       description: User not authorized to get draft summaries.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal server error.  Something went wrong with the valid input provided.
 post:
@@ -41,5 +47,11 @@ post:
       description: Bad Request (invalid input)
     401:
       description: User not authorized to create draft
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Error (something went wrong processing valid input)

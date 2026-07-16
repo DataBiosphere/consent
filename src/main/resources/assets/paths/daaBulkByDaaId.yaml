@@ -38,6 +38,12 @@ post:
       description: User not authorized to add users to DAA
     404:
       description: Daa Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
@@ -80,5 +86,11 @@ delete:
       description: User not authorized to remove users from DAA
     404:
       description: Daa Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

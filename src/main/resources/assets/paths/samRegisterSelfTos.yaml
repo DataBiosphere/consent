@@ -11,6 +11,12 @@ post:
         application/json:
           schema:
             $ref: '../schemas/SamTosResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
@@ -26,5 +32,11 @@ delete:
         application/json:
           schema:
             $ref: '../schemas/SamTosResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
