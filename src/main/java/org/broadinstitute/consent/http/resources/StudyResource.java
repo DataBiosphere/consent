@@ -240,7 +240,10 @@ public class StudyResource extends Resource {
       @FormDataParam("dataset") String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+      // Fetch datasets with the study so update-time consent-group-rename validation can
+      // compare submitted names against the stored dataset names (see
+      // StudyUpdateRequestValidator#validateConsentGroupNameChanges).
+      Study existingStudy = datasetService.getStudyWithDatasetsById(user, studyId);
       boolean canUpdateStudy = datasetService.isCreatorCustodianOrAdmin(user, existingStudy);
       if (!canUpdateStudy) {
         throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
