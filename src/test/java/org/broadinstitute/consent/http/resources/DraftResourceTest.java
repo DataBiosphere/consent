@@ -53,8 +53,7 @@ class DraftResourceTest {
 
   private void initResource() {
     resource = new DraftResource(draftService);
-    // Default to a non-null user so tests are representative of production DuosUser principals;
-    // individual tests override this stub when they need a different User.
+    // Individual tests override this stub when they need a different User.
     when(duosUser.getUser()).thenReturn(user);
   }
 
