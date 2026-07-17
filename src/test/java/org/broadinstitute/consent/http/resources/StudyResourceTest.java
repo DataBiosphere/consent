@@ -271,7 +271,7 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.setUserId(study.getCreateUserId());
     createUser.setEmail("creator@test.com");
     when(duosUser.getUser()).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response =
@@ -297,7 +297,7 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.setUserId(study.getCreateUserId());
     createUser.setEmail("creator@test.com");
     when(duosUser.getUser()).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response =
@@ -324,6 +324,7 @@ class StudyResourceTest extends AbstractTestHelper {
     User createUser = new User();
     createUser.setUserId(study.getCreateUserId());
     createUser.setEmail("creator@test.com");
+    when(duosUser.getUser()).thenReturn(createUser);
     when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
