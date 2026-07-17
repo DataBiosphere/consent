@@ -85,6 +85,8 @@ put:
             $ref: '../schemas/Study.yaml'
     400:
       description: Bad Request when schema is invalid or the required consent groups are not provided.
+    401:
+      description: Unauthorized.
     403:
       description: Forbidden
     404:
@@ -118,6 +120,8 @@ delete:
       description: The Study was successfully deleted
     400:
       description: Study is in use and cannot be deleted
+    401:
+      description: Unauthorized.
     404:
       description: Not Found
     429:

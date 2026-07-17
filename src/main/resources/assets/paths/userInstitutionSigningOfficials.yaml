@@ -35,6 +35,8 @@ get:
             type: array
             items:
               $ref: '../schemas/SigningOfficialUser.yaml'
+    401:
+      description: Unauthorized.
     403:
       description: >
         Forbidden — the authenticated user is a Researcher who requested an institution

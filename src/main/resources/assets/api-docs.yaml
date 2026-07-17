@@ -255,6 +255,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -295,6 +297,8 @@ paths:
       responses:
         201:
           description: Returns the created draft Data Access Request.
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -318,6 +322,8 @@ paths:
                 type: array
                 items:
                   $ref: './schemas/DataAccessRequest.yaml'
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -354,6 +360,8 @@ paths:
       responses:
         201:
           description: Returns the updated draft Data Access Request.
+        401:
+          description: Unauthorized.
         403:
           description: Updates are restricted to the create user.
         429:
@@ -384,6 +392,8 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -454,6 +464,8 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -520,7 +532,8 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
-
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -639,6 +652,8 @@ paths:
       responses:
         200:
           description: Email successfully sent
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -850,6 +865,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MatchResult'
+        401:
+          description: Unauthorized.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -916,6 +933,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SimplifiedUser'
+        401:
+          description: Unauthorized.
         404:
           description: User not found
         429:
@@ -954,6 +973,8 @@ paths:
                   $ref: '#/components/schemas/User'
         400:
           description: Unsupported or Invalid role name
+        401:
+          description: Unauthorized.
         404:
           description: The user does not have the given role, or role is SO and the user does not have an Institution
         429:
