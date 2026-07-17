@@ -53,35 +53,32 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  @VisibleForTesting
+  // Not @VisibleForTesting: also called directly by StudyUpdateRequestValidator's
+  // validateRequiredFields, so this is genuine production reuse, not test-only access.
   protected void checkStudyDescriptionRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getStudyDescription()) || r.getStudyDescription().isBlank()) {
       throw new BadRequestException("Study Description is required");
     }
   }
 
-  @VisibleForTesting
   protected void checkDataTypesRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getDataTypes()) || r.getDataTypes().isEmpty()) {
       throw new BadRequestException("Data Types is required");
     }
   }
 
-  @VisibleForTesting
   protected void checkPublicVisibilityRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getPublicVisibility())) {
       throw new BadRequestException("Public Visibility is required");
     }
   }
 
-  @VisibleForTesting
   protected void checkNihAnvilUseRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getNihAnvilUse())) {
       throw new BadRequestException("NIH Anvil Use is required");
     }
   }
 
-  @VisibleForTesting
   protected void checkPiNameRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getPiName()) || r.getPiName().isBlank()) {
       throw new BadRequestException("Principal Investigator Name is required");
