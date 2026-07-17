@@ -125,11 +125,17 @@ public class DatasetRegistrationService implements ConsentLogger {
     List<FileStorageObject> uploadFiles = uploadFilesForStudy(files, uploadedFileCache, user);
     List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
     List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
+    // A null or empty consentGroups means "no consent group changes" (see
+    // StudyUpdateRequestValidator#validateConsentGroupRemoval) — a study-level-only update.
+    List<ConsentGroupRequest> consentGroups =
+        Objects.isNull(registration.getConsentGroups())
+            ? List.of()
+            : registration.getConsentGroups();
     // Dataset updates and inserts:
-    IntStream.range(0, registration.getConsentGroups().size())
+    IntStream.range(0, consentGroups.size())
         .forEach(
             idx -> {
-              ConsentGroupRequest cg = registration.getConsentGroups().get(idx);
+              ConsentGroupRequest cg = consentGroups.get(idx);
               if (Objects.nonNull(cg.getDatasetId())) {
                 Dataset existingDataset =
                     datasetDAO.findDatasetsByIdList(List.of(cg.getDatasetId())).getFirst();

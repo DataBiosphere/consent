@@ -1132,6 +1132,28 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateStudyFromRegistrationHandlesNullConsentGroups() throws Exception {
+    // A null consentGroups list means "no consent group changes" — a study-level-only update
+    // (see StudyUpdateRequestValidator#validateConsentGroupRemoval, which allows this).
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+    schema.setConsentGroups(null);
+
+    when(datasetServiceDAO.updateStudy(any(), any(), any())).thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of()));
+  }
+
+  @Test
   void testSendDatasetSubmittedEmailsMembersButNoChairs() throws Exception {
     Dac dac = mock();
     Dataset dataset = new Dataset();
