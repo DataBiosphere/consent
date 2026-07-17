@@ -313,7 +313,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateStudyByRegistrationRejectsConsentGroupRename() {
-    String input = DataResourceTestData.registrationRenameExistingConsentGroup;
+    String input = DataResourceTestData.REGISTRATION_RENAME_EXISTING_CONSENT_GROUP;
     Study study = createMockStudy();
 
     // Give the study a real, hydrated existing dataset (as datasetService.getStudyWithDatasetsById

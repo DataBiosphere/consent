@@ -164,7 +164,7 @@ public class DataResourceTestData {
 
   // Otherwise identical to validRegistration, but the existing consent group (datasetId: 1)
   // submits a consentGroupName that differs from its stored dataset name.
-  public static final String registrationRenameExistingConsentGroup =
+  public static final String REGISTRATION_RENAME_EXISTING_CONSENT_GROUP =
       """
       {
         "studyType": "Observational",
