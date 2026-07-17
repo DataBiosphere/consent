@@ -66,6 +66,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateCustodiansSuccess() {
+    when(duosUser.getUser()).thenReturn(user);
     try (var response =
         resource.updateCustodians(duosUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -74,6 +75,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateCustodiansInvalidEmails() {
+    when(duosUser.getUser()).thenReturn(user);
     try (var response = resource.updateCustodians(duosUser, 1, "[\"user_1\", \"@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -81,6 +83,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateCustodiansNotFound() {
+    when(duosUser.getUser()).thenReturn(user);
     when(datasetService.updateStudyCustodians(any(), any(), any()))
         .thenThrow(new NotFoundException("Study not found"));
 

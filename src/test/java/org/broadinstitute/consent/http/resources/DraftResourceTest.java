@@ -53,11 +53,13 @@ class DraftResourceTest {
 
   private void initResource() {
     resource = new DraftResource(draftService);
+    // Default to a non-null user so tests are representative of production DuosUser principals;
+    // individual tests override this stub when they need a different User.
+    when(duosUser.getUser()).thenReturn(user);
   }
 
   @Test
   void testGetDraftWhenNoneExistForUser() {
-    when(duosUser.getUser()).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(Collections.emptySet());
     initResource();
     Response response = resource.getDrafts(duosUser);
@@ -75,7 +77,6 @@ class DraftResourceTest {
             new Date(),
             new Date(),
             DraftType.STUDY_DATASET_SUBMISSION_V1));
-    when(duosUser.getUser()).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(draftSummaries);
     initResource();
     Response response = resource.getDrafts(duosUser);
