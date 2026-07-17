@@ -275,7 +275,7 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.setEmail("creator@test.com");
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response =
@@ -302,12 +302,41 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.setEmail("creator@test.com");
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response =
         resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateStudyByRegistrationRejectsConsentGroupRename() {
+    String input = DataResourceTestData.REGISTRATION_RENAME_EXISTING_CONSENT_GROUP;
+    Study study = createMockStudy();
+
+    // Give the study a real, hydrated existing dataset (as datasetService.getStudyWithDatasetsById
+    // would return) whose stored name differs from the name submitted in the update payload for
+    // the same datasetId.
+    Dataset existingDataset = new Dataset();
+    existingDataset.setDatasetId(1);
+    existingDataset.setName("Original Consent Group Name");
+    study.getDatasetIds().clear();
+    study.addDatasetIds(Set.of(1));
+    study.addDatasets(List.of(existingDataset));
+
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId());
+    createUser.setEmail("creator@test.com");
+    when(authUser.getEmail()).thenReturn(createUser.getEmail());
+    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
+
+    try (var response =
+        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
@@ -330,7 +359,7 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.addRole(UserRoles.Admin());
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response =
@@ -358,7 +387,7 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.addRole(UserRoles.Chairperson());
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(false);
 
     try (var response =

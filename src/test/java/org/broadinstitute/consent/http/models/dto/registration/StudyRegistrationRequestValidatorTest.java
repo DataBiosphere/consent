@@ -91,6 +91,9 @@ class StudyRegistrationRequestValidatorTest {
     StudyRegistrationRequest registration = createValidRegistration();
     ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
     cg.setAccessManagement(null);
+    // A DAC is required whenever accessManagement isn't explicitly open/external (including
+    // omitted); supply one here so this test isolates the primary-data-use dimension only.
+    cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
     mutate.accept(cg);
     assertTrue(validator.collectViolations(registration).isEmpty());
   }
@@ -132,6 +135,27 @@ class StudyRegistrationRequestValidatorTest {
     cg.setAccessManagement(AccessManagement.CONTROLLED);
     cg.setGeneralResearchUse(true);
     cg.setDataAccessCommitteeId(RandomUtils.secureStrong().randomInt(1, 100));
+    assertTrue(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_dac_required_when_accessManagement_omitted() {
+    // A missing accessManagement is treated the same as controlled for DAC-requirement purposes.
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
+    cg.setAccessManagement(null);
+    cg.setGeneralResearchUse(true);
+    cg.setDataAccessCommitteeId(null);
+    assertFalse(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_dac_not_required_for_external() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    ConsentGroupRequest cg = registration.getConsentGroups().getFirst();
+    cg.setAccessManagement(AccessManagement.EXTERNAL);
+    cg.setGeneralResearchUse(true);
+    cg.setDataAccessCommitteeId(null);
     assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
@@ -237,6 +261,14 @@ class StudyRegistrationRequestValidatorTest {
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(
         RandomStringUtils.secureStrong().nextAlphabetic(10));
     assertTrue(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_gsrExplanation_blank_when_gsr_true() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setControlledAccessRequiredForGenomicSummaryResultsGSR(true);
+    registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation("   ");
+    assertFalse(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Alt sharing plan ─────────────────────────────────────────────────────
@@ -475,6 +507,14 @@ class StudyRegistrationRequestValidatorTest {
   }
 
   @Test
+  void testCheckStudyDescriptionRequired_blank() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setStudyDescription("   ");
+    assertThrows(
+        BadRequestException.class, () -> validator.checkStudyDescriptionRequired(registration));
+  }
+
+  @Test
   void testCheckDataTypesRequired_missing() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setDataTypes(List.of());
@@ -528,6 +568,13 @@ class StudyRegistrationRequestValidatorTest {
   }
 
   @Test
+  void testCheckPiNameRequired_blank() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setPiName("   ");
+    assertThrows(BadRequestException.class, () -> validator.checkPiNameRequired(registration));
+  }
+
+  @Test
   void testCheckDbGaPPhsIdRequired_missing() {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setDbGaPPhsID(null);
@@ -539,6 +586,13 @@ class StudyRegistrationRequestValidatorTest {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     assertDoesNotThrow(() -> validator.checkDbGaPPhsIdRequired(registration));
+  }
+
+  @Test
+  void testCheckDbGaPPhsIdRequired_blank() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setDbGaPPhsID("   ");
+    assertThrows(BadRequestException.class, () -> validator.checkDbGaPPhsIdRequired(registration));
   }
 
   @Test
@@ -570,6 +624,15 @@ class StudyRegistrationRequestValidatorTest {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setNihGrantContractNumber(RandomStringUtils.secureStrong().nextAlphabetic(8));
     assertDoesNotThrow(() -> validator.checkNihGrantContractNumberRequired(registration));
+  }
+
+  @Test
+  void testCheckNihGrantContractNumberRequired_blank() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setNihGrantContractNumber("   ");
+    assertThrows(
+        BadRequestException.class,
+        () -> validator.checkNihGrantContractNumberRequired(registration));
   }
 
   @Test

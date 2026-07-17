@@ -103,7 +103,7 @@ public class DatasetResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   @Timed
   /*
-   * This endpoint accepts a JSON instance of a dataset-registration-schema_v1.json schema.
+   * This endpoint accepts a registration payload, validated by DTO/domain validators.
    * With that object, we can fully create datasets from the provided values.
    */
   public Response createDatasetRegistration(
@@ -120,8 +120,6 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Please correct the following fields:\n" + errorMessage);
       }
 
-      DatasetRegistrationSchemaV1 registration =
-          GsonUtil.getInstance().fromJson(json, DatasetRegistrationSchemaV1.class);
       User user = userService.findUserByEmail(authUser.getEmail());
 
       // key: field name (not file name), value: file body part
@@ -129,7 +127,7 @@ public class DatasetResource extends Resource {
 
       // Generate datasets from registration
       List<Dataset> datasets =
-          datasetRegistrationService.createDatasetsFromRegistration(registration, user, files);
+          datasetRegistrationService.createDatasetsFromRegistration(request, user, files);
       Integer studyId = datasets.getFirst().getStudyId();
       Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
@@ -154,10 +152,10 @@ public class DatasetResource extends Resource {
     try {
       request = objectMapper.readValue(json, StudyRegistrationRequest.class);
     } catch (JsonProcessingException _) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
     if (request == null) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
     return request;
   }
