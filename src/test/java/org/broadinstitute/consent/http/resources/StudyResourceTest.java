@@ -324,13 +324,11 @@ class StudyResourceTest extends AbstractTestHelper {
     User createUser = new User();
     createUser.setUserId(study.getCreateUserId());
     createUser.setEmail("creator@test.com");
-    when(authUser.getEmail()).thenReturn(createUser.getEmail());
-    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
     when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response =
-        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+        resource.updateStudyByRegistration(duosUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -353,7 +351,6 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.setEmail("creator@test.com");
     createUser.addRole(UserRoles.Admin());
     when(duosUser.getUser()).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
     when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
@@ -382,7 +379,6 @@ class StudyResourceTest extends AbstractTestHelper {
     createUser.setEmail("chair@test.com");
     createUser.addRole(UserRoles.Chairperson());
     when(duosUser.getUser()).thenReturn(createUser);
-    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
     when(datasetService.getStudyWithDatasetsById(createUser, study.getStudyId())).thenReturn(study);
     when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(false);
 
