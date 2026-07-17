@@ -219,20 +219,20 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUsers_SO() {
     User user = createUserWithRole();
     user.setSigningOfficialRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
     when(userService.getUsersAsRole(user, "SigningOfficial"))
         .thenReturn(Arrays.asList(new User(), new User()));
 
-    Response response = userResource.getUsers(authUser, "SigningOfficial");
+    Response response = userResource.getUsers(du, "SigningOfficial");
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
   void testGetUsers_SO_NoRole() {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getUsers(authUser, "SigningOfficial");
+    Response response = userResource.getUsers(du, "SigningOfficial");
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -240,47 +240,39 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUsers_Admin() {
     User user = createUserWithRole();
     user.setAdminRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
     when(userService.getUsersAsRole(user, "Admin"))
         .thenReturn(Arrays.asList(new User(), new User()));
 
-    Response response = userResource.getUsers(authUser, "Admin");
+    Response response = userResource.getUsers(du, "Admin");
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
   void testGetUsers_Admin_NoRole() {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getUsers(authUser, "Admin");
+    Response response = userResource.getUsers(du, "Admin");
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
   void testGetUsers_UnsupportedRole() {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getUsers(authUser, "Researcher");
+    Response response = userResource.getUsers(du, "Researcher");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
   }
 
   @Test
   void testGetUsers_InvalidRole() {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getUsers(authUser, "BadRequest");
+    Response response = userResource.getUsers(du, "BadRequest");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-  }
-
-  @Test
-  void testGetUsers_UserNotFound() {
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-
-    Response response = userResource.getUsers(authUser, "Admin");
-    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   @Test
@@ -477,12 +469,12 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetSOsForInstitution() {
     User user = createUserWithInstitution();
     User so = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(
             Arrays.asList(new UserService.SimplifiedUser(so), new UserService.SimplifiedUser(so)));
 
-    Response response = userResource.getSOsForInstitution(authUser);
+    Response response = userResource.getSOsForInstitution(du);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     var body = (List<UserService.SimplifiedUser>) response.getEntity();
     assertFalse(body.isEmpty());
@@ -493,20 +485,12 @@ class UserResourceTest extends AbstractTestHelper {
   @Test
   void testGetSOsForInstitution_NoInstitution() {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getSOsForInstitution(authUser);
+    Response response = userResource.getSOsForInstitution(du);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     var body = (List) response.getEntity();
     assertTrue(body.isEmpty());
-  }
-
-  @Test
-  void testGetSOsForInstitution_UserNotFound() {
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-
-    Response response = userResource.getSOsForInstitution(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
@@ -522,11 +506,10 @@ class UserResourceTest extends AbstractTestHelper {
     so.setEmail("so@test.com");
     so.setInstitutionId(queriedInstitutionId);
     so.setUserData(Map.of("department", "biology"));
-    when(userService.findUserByEmail(any())).thenReturn(admin);
+    DuosUser du = new DuosUser(authUser, admin);
     when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
 
-    Response response =
-        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    Response response = userResource.getSigningOfficialsByInstitution(du, queriedInstitutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     List<UserService.SigningOfficialUser> body =
         (List<UserService.SigningOfficialUser>) response.getEntity();
@@ -551,11 +534,10 @@ class UserResourceTest extends AbstractTestHelper {
     so.setDisplayName("SO User");
     so.setEmail("so@test.com");
     so.setInstitutionId(queriedInstitutionId);
-    when(userService.findUserByEmail(any())).thenReturn(chair);
+    DuosUser du = new DuosUser(authUser, chair);
     when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
 
-    Response response =
-        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    Response response = userResource.getSigningOfficialsByInstitution(du, queriedInstitutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     List<UserService.SigningOfficialUser> body =
         (List<UserService.SigningOfficialUser>) response.getEntity();
@@ -578,11 +560,10 @@ class UserResourceTest extends AbstractTestHelper {
     so.setDisplayName("SO User");
     so.setEmail("so@test.com");
     so.setInstitutionId(queriedInstitutionId);
-    when(userService.findUserByEmail(any())).thenReturn(member);
+    DuosUser du = new DuosUser(authUser, member);
     when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
 
-    Response response =
-        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    Response response = userResource.getSigningOfficialsByInstitution(du, queriedInstitutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     List<UserService.SigningOfficialUser> body =
         (List<UserService.SigningOfficialUser>) response.getEntity();
@@ -601,10 +582,10 @@ class UserResourceTest extends AbstractTestHelper {
     so.setDisplayName("SO User");
     so.setEmail("so@test.com");
     so.setInstitutionId(institutionId);
-    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    DuosUser du = new DuosUser(authUser, researcher);
     when(userService.findSOsWithDataByInstitutionId(institutionId)).thenReturn(List.of(so));
 
-    Response response = userResource.getSigningOfficialsByInstitution(authUser, institutionId);
+    Response response = userResource.getSigningOfficialsByInstitution(du, institutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     List<UserService.SigningOfficialUser> body =
         (List<UserService.SigningOfficialUser>) response.getEntity();
@@ -615,9 +596,9 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetSigningOfficialsByInstitution_AsResearcher_DifferentInstitution() {
     User researcher = createUserWithRole();
     researcher.setInstitutionId(1);
-    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    DuosUser du = new DuosUser(authUser, researcher);
 
-    Response response = userResource.getSigningOfficialsByInstitution(authUser, 99);
+    Response response = userResource.getSigningOfficialsByInstitution(du, 99);
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
 
@@ -625,9 +606,9 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetSigningOfficialsByInstitution_AsResearcher_NullInstitution() {
     // Researcher with no institution set — Objects.equals(null, anyId) is false → 403
     User researcher = createUserWithRole(); // institutionId is null
-    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    DuosUser du = new DuosUser(authUser, researcher);
 
-    Response response = userResource.getSigningOfficialsByInstitution(authUser, 5);
+    Response response = userResource.getSigningOfficialsByInstitution(du, 5);
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
 
@@ -635,20 +616,12 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetSigningOfficialsByInstitution_ServiceThrows() {
     User admin = createUserWithRole();
     admin.addRole(UserRoles.Admin());
-    when(userService.findUserByEmail(any())).thenReturn(admin);
+    DuosUser du = new DuosUser(authUser, admin);
     when(userService.findSOsWithDataByInstitutionId(any()))
         .thenThrow(new RuntimeException("DB error"));
 
-    Response response = userResource.getSigningOfficialsByInstitution(authUser, 1);
+    Response response = userResource.getSigningOfficialsByInstitution(du, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
-  void testGetSigningOfficialsByInstitution_UserNotFound() {
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-
-    Response response = userResource.getSigningOfficialsByInstitution(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
@@ -656,7 +629,7 @@ class UserResourceTest extends AbstractTestHelper {
     Integer institutionId = 1;
     doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
 
-    Response response = userResource.getUsersByInstitution(authUser, institutionId);
+    Response response = userResource.getUsersByInstitution(duosUser, institutionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -664,7 +637,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUsersByInstitutionNullInstitution() {
     doThrow(new IllegalArgumentException()).when(userService).findUsersByInstitutionId(null);
 
-    Response response = userResource.getUsersByInstitution(authUser, null);
+    Response response = userResource.getUsersByInstitution(duosUser, null);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -672,7 +645,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUsersByInstitutionSuccess() {
     when(userService.findUsersByInstitutionId(any())).thenReturn(Collections.emptyList());
 
-    Response response = userResource.getUsersByInstitution(authUser, 1);
+    Response response = userResource.getUsersByInstitution(duosUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -987,10 +960,10 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetDatasetsFromUserDacsV2() {
     User user = createUserWithRole();
     user.setChairpersonRoleWithDAC(1);
+    DuosUser du = new DuosUser(authUser, user);
     when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of(new Dataset()));
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
 
-    Response response = userResource.getDatasetsFromUserDacsV2(authUser);
+    Response response = userResource.getDatasetsFromUserDacsV2(du);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -998,19 +971,10 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetDatasetsFromUserDacsV2DatasetsNotFound() {
     User user = createUserWithRole();
     user.setChairpersonRoleWithDAC(1);
+    DuosUser du = new DuosUser(authUser, user);
     when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of());
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
 
-    Response response = userResource.getDatasetsFromUserDacsV2(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void testGetDatasetsFromUserDacsV2UserNotFound() {
-    when(userService.findUserByEmail(anyString()))
-        .thenThrow(new NotFoundException("User not found"));
-
-    Response response = userResource.getDatasetsFromUserDacsV2(authUser);
+    Response response = userResource.getDatasetsFromUserDacsV2(du);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -1162,7 +1126,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any()))
         .thenReturn(acknowledgementMap.get(acknowledgementKey));
 
-    try (Response response = userResource.deleteUserAcknowledgement(authUser, acknowledgementKey)) {
+    try (Response response = userResource.deleteUserAcknowledgement(duosUser, acknowledgementKey)) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
   }
@@ -1172,7 +1136,7 @@ class UserResourceTest extends AbstractTestHelper {
     createUserWithRole();
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
 
-    try (Response response = userResource.deleteUserAcknowledgement(authUser, "key")) {
+    try (Response response = userResource.deleteUserAcknowledgement(duosUser, "key")) {
       assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
   }

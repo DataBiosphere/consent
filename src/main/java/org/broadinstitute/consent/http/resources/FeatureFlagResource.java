@@ -15,29 +15,26 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.Map;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FeatureFlag;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FeatureFlagService;
-import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/feature")
 public class FeatureFlagResource extends Resource {
 
   private final FeatureFlagService featureFlagService;
-  private final UserService userService;
 
   @Inject
-  public FeatureFlagResource(FeatureFlagService featureFlagService, UserService userService) {
+  public FeatureFlagResource(FeatureFlagService featureFlagService) {
     this.featureFlagService = featureFlagService;
-    this.userService = userService;
   }
 
   /**
    * Create or update a feature flag (admin only)
    *
    * @param info URI information
-   * @param authUser The authenticated user
+   * @param duosUser The authenticated user
    * @param id The feature flag id
    * @param body Request body containing the value
    * @return The created or updated feature flag
@@ -49,7 +46,7 @@ public class FeatureFlagResource extends Resource {
   @RolesAllowed({ADMIN})
   public Response createOrUpdateFeatureFlag(
       @Context UriInfo info,
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("id") String id,
       Map<String, String> body) {
     try {
@@ -60,7 +57,7 @@ public class FeatureFlagResource extends Resource {
             .build();
       }
 
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       boolean existed = featureFlagService.exists(id);
       FeatureFlag flag = featureFlagService.createOrUpdateFeatureFlag(id, value, user.getUserId());
 
@@ -78,16 +75,16 @@ public class FeatureFlagResource extends Resource {
   /**
    * Delete a feature flag (admin only)
    *
-   * @param authUser The authenticated user
+   * @param duosUser The authenticated user
    * @param id The feature flag id
    * @return No content response
    */
   @DELETE
   @Path("/{id}")
   @RolesAllowed({ADMIN})
-  public Response deleteFeatureFlag(@Auth AuthUser authUser, @PathParam("id") String id) {
+  public Response deleteFeatureFlag(@Auth DuosUser duosUser, @PathParam("id") String id) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       featureFlagService.deleteFeatureFlag(id, user.getUserId());
       return Response.noContent().build();
     } catch (Exception e) {

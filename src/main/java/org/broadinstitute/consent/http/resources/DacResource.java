@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
 import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
@@ -51,7 +50,7 @@ public class DacResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
   public Response findAll(
-      @Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
+      @Auth DuosUser duosUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
     try {
       final Boolean includeUsers = withUsers.orElse(true);
       List<Dac> dacs = dacService.findDacsWithMembersOption(includeUsers);
@@ -143,7 +142,7 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response findDacById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
+  public Response findDacById(@Auth DuosUser duosUser, @PathParam("dacId") Integer dacId) {
     try {
       Dac dac = findDacOrThrow(dacId);
       return Response.ok().entity(unmarshal(dac)).build();
@@ -264,7 +263,7 @@ public class DacResource extends Resource {
   @Path("users/{term}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response filterUsers(@Auth AuthUser authUser, @PathParam("term") String term) {
+  public Response filterUsers(@Auth DuosUser duosUser, @PathParam("term") String term) {
     try {
       List<User> users = dacService.findAllDACUsersBySearchString(term);
       return Response.ok().entity(users).build();

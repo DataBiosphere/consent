@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.service.MatchService;
@@ -62,7 +61,7 @@ public class MatchResource extends Resource {
   @Path("/reprocess/purpose/{purposeId}")
   @RolesAllowed({Resource.ADMIN})
   public Response reprocessPurposeMatches(
-      @Auth AuthUser authUser, @PathParam("purposeId") String purposeId) {
+      @Auth DuosUser duosUser, @PathParam("purposeId") String purposeId) {
     try {
       service.reprocessMatchesForPurpose(purposeId);
       List<Match> matches = service.findMatchesByPurposeId(purposeId);

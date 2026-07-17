@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.AfterEach;
@@ -26,7 +26,7 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
 
   @Mock private DataAccessRequestService dataAccessRequestService;
   @Mock private EmailService emailService;
-  @Mock private AuthUser authUser;
+  @Mock private DuosUser duosUser;
 
   private EmailNotifierResource resource;
   private ExecutorService executorService;
@@ -46,21 +46,21 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
   void testResourceSuccess() throws Exception {
     doNothing().when(dataAccessRequestService).sendReminderMessage(any());
     try (Response response =
-        resource.sendReminderMessage(authUser, String.valueOf(randomInt(100, 1000)))) {
+        resource.sendReminderMessage(duosUser, String.valueOf(randomInt(100, 1000)))) {
       assertEquals(200, response.getStatus());
     }
   }
 
   @Test
   void testResourceFailure() {
-    try (Response response = resource.sendReminderMessage(authUser, "invalidVoteId")) {
+    try (Response response = resource.sendReminderMessage(duosUser, "invalidVoteId")) {
       assertEquals(500, response.getStatus());
     }
   }
 
   @Test
   void testSendDailyMessages() {
-    try (Response response = resource.sendDailyMessages(authUser)) {
+    try (Response response = resource.sendDailyMessages(duosUser)) {
       assertEquals(200, response.getStatus());
     }
   }
@@ -70,7 +70,7 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
     doNothing().when(emailService).sendNewDatasetInDUOSNotifications();
     doNothing().when(dataAccessRequestService).sendExpirationNotices();
     doThrow(new RuntimeException("Exception")).when(emailService).sendVoteDigestMessages();
-    try (Response response = resource.sendDailyMessages(authUser)) {
+    try (Response response = resource.sendDailyMessages(duosUser)) {
       resource.executor.shutdown();
       assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
       assertEquals(200, response.getStatus());
@@ -84,7 +84,7 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
         .sendNewDatasetInDUOSNotifications();
     doNothing().when(dataAccessRequestService).sendExpirationNotices();
     doNothing().when(emailService).sendVoteDigestMessages();
-    try (Response response = resource.sendDailyMessages(authUser)) {
+    try (Response response = resource.sendDailyMessages(duosUser)) {
       resource.executor.shutdown();
       assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
       assertEquals(200, response.getStatus());
@@ -97,7 +97,7 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
     doThrow(new RuntimeException("Exception"))
         .when(dataAccessRequestService)
         .sendExpirationNotices();
-    try (Response response = resource.sendDailyMessages(authUser)) {
+    try (Response response = resource.sendDailyMessages(duosUser)) {
       resource.executor.shutdown();
       assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
       assertEquals(200, response.getStatus());

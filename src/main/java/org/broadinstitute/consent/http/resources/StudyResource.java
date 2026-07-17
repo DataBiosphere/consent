@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
@@ -45,7 +44,6 @@ import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateReques
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -56,7 +54,6 @@ public class StudyResource extends Resource {
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
-  private final UserService userService;
   private final ElasticSearchService elasticSearchService;
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final StudyUpdateRequestValidator studyUpdateRequestValidator;
@@ -64,11 +61,9 @@ public class StudyResource extends Resource {
   @Inject
   public StudyResource(
       DatasetService datasetService,
-      UserService userService,
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
-    this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
     this.studyUpdateRequestValidator = new StudyUpdateRequestValidator(datasetService);
@@ -111,9 +106,9 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
   public Response updateCustodians(
-      @Auth AuthUser authUser, @PathParam("studyId") Integer studyId, String json) {
+      @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
       // investigation
       Gson gson = new Gson();
@@ -175,9 +170,9 @@ public class StudyResource extends Resource {
   @Path("/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response deleteStudyById(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
+  public Response deleteStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
-      final User user = userService.findUserByEmail(authUser.getEmail());
+      final User user = duosUser.getUser();
       Study study = datasetService.getStudyWithDatasetsById(user, studyId);
 
       if (Objects.isNull(study)) {
@@ -235,12 +230,12 @@ public class StudyResource extends Resource {
    * With that object, we can fully update the study/datasets from the provided values.
    */
   public Response updateStudyByRegistration(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       FormDataMultiPart multipart,
       @PathParam("studyId") Integer studyId,
       @FormDataParam("dataset") String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Study existingStudy = datasetRegistrationService.findStudyById(studyId);
       boolean canUpdateStudy = datasetService.isCreatorCustodianOrAdmin(user, existingStudy);
       if (!canUpdateStudy) {

@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetPatch;
@@ -107,7 +106,7 @@ public class DatasetResource extends Resource {
    * With that object, we can fully create datasets from the provided values.
    */
   public Response createDatasetRegistration(
-      @Auth AuthUser authUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
+      @Auth DuosUser duosUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
     try {
       if (json == null || json.isEmpty()) {
         throw new BadRequestException("Dataset is required");
@@ -122,7 +121,7 @@ public class DatasetResource extends Resource {
 
       DatasetRegistrationSchemaV1 registration =
           GsonUtil.getInstance().fromJson(json, DatasetRegistrationSchemaV1.class);
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
 
       // key: field name (not file name), value: file body part
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
@@ -408,7 +407,7 @@ public class DatasetResource extends Resource {
   @POST
   @Path("/index")
   @RolesAllowed(ADMIN)
-  public Response indexDatasets(@Auth AuthUser authUser) {
+  public Response indexDatasets(@Auth DuosUser duosUser) {
     try {
       var datasetIds = datasetService.findAllDatasetIds();
       StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds);
@@ -421,7 +420,7 @@ public class DatasetResource extends Resource {
   @POST
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
+  public Response indexDataset(@Auth DuosUser duosUser, @PathParam("datasetId") Integer datasetId) {
     try {
       return elasticSearchService.indexDataset(datasetId);
     } catch (Exception e) {
@@ -433,9 +432,9 @@ public class DatasetResource extends Resource {
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
   public Response deleteDatasetIndex(
-      @Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
+      @Auth DuosUser duosUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       return elasticSearchService.deleteIndex(datasetId, user.getUserId());
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -477,9 +476,9 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   @Path("/{id}/datause")
   public Response updateDatasetDataUse(
-      @Auth AuthUser authUser, @PathParam("id") Integer id, String dataUseJson) {
+      @Auth DuosUser duosUser, @PathParam("id") Integer id, String dataUseJson) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
       // investigation
       Gson gson = new Gson();

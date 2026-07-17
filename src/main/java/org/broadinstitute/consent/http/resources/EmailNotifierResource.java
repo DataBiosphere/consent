@@ -10,7 +10,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import java.util.concurrent.ExecutorService;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
 
@@ -34,7 +34,7 @@ public class EmailNotifierResource extends Resource {
   @POST
   @Path("/reminderMessage/{voteId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response sendReminderMessage(@Auth AuthUser authUser, @PathParam("voteId") String voteId) {
+  public Response sendReminderMessage(@Auth DuosUser duosUser, @PathParam("voteId") String voteId) {
     try {
       dataAccessRequestService.sendReminderMessage(Integer.valueOf(voteId));
       return Response.ok().build();
@@ -46,7 +46,7 @@ public class EmailNotifierResource extends Resource {
   @GET
   @Path("/dailyMessages")
   @RolesAllowed({SERVICE_ACCOUNT})
-  public Response sendDailyMessages(@Auth AuthUser authUser) {
+  public Response sendDailyMessages(@Auth DuosUser duosUser) {
     executor.submit(this::processExpirationNotices);
     executor.submit(this::processVoteDigestMessages);
     executor.submit(this::processNewDatasetInDUOSNotifications);
