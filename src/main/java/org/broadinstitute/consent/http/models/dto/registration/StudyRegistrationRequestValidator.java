@@ -320,7 +320,7 @@ public class StudyRegistrationRequestValidator {
             || AccessManagement.EXTERNAL.equals(cg.getAccessManagement());
     if (!dacNotRequired && Objects.isNull(cg.getDataAccessCommitteeId())) {
       throw new BadRequestException(
-          "Data Access Committee is required for controlled access datasets");
+          "Data Access Committee is required unless Access Management is open or external");
     }
   }
 

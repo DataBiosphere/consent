@@ -4,8 +4,9 @@ description: |
   and `numberOfParticipants` are always required. Exactly one primary data use
   must be set: `accessManagement: open`, or exactly one of
   `generalResearchUse`, `hmb`, `poa`, `diseaseSpecificUse` (non-empty), or
-  `otherPrimary`. `dataAccessCommitteeId` is required when `accessManagement`
-  is `controlled`.
+  `otherPrimary`. `dataAccessCommitteeId` is required unless `accessManagement`
+  is `open` or `external` — a missing `accessManagement` is treated the same
+  as `controlled` and still requires a DAC.
 properties:
   consentGroupName:
     type: string
