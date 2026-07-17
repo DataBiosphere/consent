@@ -134,9 +134,12 @@ public class DatasetRegistrationService implements ConsentLogger {
                 Dataset existingDataset =
                     datasetDAO.findDatasetsByIdList(List.of(cg.getDatasetId())).getFirst();
                 try {
+                  // Consent group renames aren't allowed on update: use the stored dataset
+                  // name rather than the submitted value, which may be omitted (null) or an
+                  // attempted rename.
                   DatasetUpdate datasetUpdate =
                       new DatasetUpdate(
-                          cg.getConsentGroupName(),
+                          existingDataset.getName(),
                           existingDataset.getDacId(),
                           registrationRequestMapper.toDatasetProperties(
                               cg, ConsentGroupContext.EXISTING_UPDATE));

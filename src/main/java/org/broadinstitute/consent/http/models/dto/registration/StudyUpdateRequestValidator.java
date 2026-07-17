@@ -55,21 +55,13 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
   }
 
   private void validateRequiredFields(StudyUpdateRequest registration) {
-    if (Objects.isNull(registration.getStudyDescription())) {
-      throw new BadRequestException("Study Description is required");
-    }
-    if (Objects.isNull(registration.getDataTypes()) || registration.getDataTypes().isEmpty()) {
-      throw new BadRequestException("Data Types is required");
-    }
-    if (Objects.isNull(registration.getPublicVisibility())) {
-      throw new BadRequestException("Public Visibility is required");
-    }
-    if (Objects.isNull(registration.getNihAnvilUse())) {
-      throw new BadRequestException("NIH Anvil Use is required");
-    }
-    if (Objects.isNull(registration.getPiName())) {
-      throw new BadRequestException("Principal Investigator Name is required");
-    }
+    // Delegates to the shared checks (which also reject blank strings) rather than
+    // duplicating them, so this stays in sync with the create-path validation.
+    checkStudyDescriptionRequired(registration);
+    checkDataTypesRequired(registration);
+    checkPublicVisibilityRequired(registration);
+    checkNihAnvilUseRequired(registration);
+    checkPiNameRequired(registration);
   }
 
   private void validateConsentGroupMembership(

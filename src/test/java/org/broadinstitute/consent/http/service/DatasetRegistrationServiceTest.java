@@ -1059,6 +1059,79 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateStudyFromRegistrationIgnoresSubmittedNameForExistingConsentGroup()
+      throws Exception {
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+
+    ConsentGroupRequest existingConsentGroup = new ConsentGroupRequest();
+    existingConsentGroup.setDatasetId(7);
+    // Attempted rename (or, in the second scenario below, omitted entirely) — neither should
+    // reach the persisted dataset name.
+    existingConsentGroup.setConsentGroupName("Attempted Rename");
+    existingConsentGroup.setAccessManagement(AccessManagement.OPEN);
+    schema.setConsentGroups(List.of(existingConsentGroup));
+
+    Dataset existingDataset = new Dataset();
+    existingDataset.setDatasetId(7);
+    existingDataset.setDacId(1);
+    existingDataset.setName("Original Stored Name");
+    when(datasetDAO.findDatasetsByIdList(List.of(7))).thenReturn(List.of(existingDataset));
+
+    ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
+        ArgumentCaptor.forClass(List.class);
+    when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals("Original Stored Name", datasetUpdateCaptor.getValue().getFirst().name());
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationPreservesNameWhenConsentGroupNameOmitted() throws Exception {
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+
+    ConsentGroupRequest existingConsentGroup = new ConsentGroupRequest();
+    existingConsentGroup.setDatasetId(7);
+    // consentGroupName intentionally omitted (null) — must not null out the stored name.
+    existingConsentGroup.setAccessManagement(AccessManagement.OPEN);
+    schema.setConsentGroups(List.of(existingConsentGroup));
+
+    Dataset existingDataset = new Dataset();
+    existingDataset.setDatasetId(7);
+    existingDataset.setDacId(1);
+    existingDataset.setName("Original Stored Name");
+    when(datasetDAO.findDatasetsByIdList(List.of(7))).thenReturn(List.of(existingDataset));
+
+    ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
+        ArgumentCaptor.forClass(List.class);
+    when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals("Original Stored Name", datasetUpdateCaptor.getValue().getFirst().name());
+  }
+
+  @Test
   void testSendDatasetSubmittedEmailsMembersButNoChairs() throws Exception {
     Dac dac = mock();
     Dataset dataset = new Dataset();

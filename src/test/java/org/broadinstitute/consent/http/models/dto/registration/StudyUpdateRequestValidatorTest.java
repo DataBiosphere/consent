@@ -111,11 +111,13 @@ class StudyUpdateRequestValidatorTest {
   static Stream<Consumer<StudyUpdateRequest>> invalidRegistrationMutations() {
     return Stream.<Consumer<StudyUpdateRequest>>of(
         r -> r.setStudyDescription(null),
+        r -> r.setStudyDescription("   "),
         r -> r.setDataTypes(null),
         r -> r.setDataTypes(List.of()),
         r -> r.setPublicVisibility(null),
         r -> r.setNihAnvilUse(null),
-        r -> r.setPiName(null));
+        r -> r.setPiName(null),
+        r -> r.setPiName("   "));
   }
 
   // ── NIH conditional fields ───────────────────────────────────────────────
