@@ -21,6 +21,12 @@ post:
   responses:
     200:
       description: Ontology Index Results
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 
@@ -41,5 +47,11 @@ delete:
   responses:
     200:
       description: Ontology Deletion Results
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

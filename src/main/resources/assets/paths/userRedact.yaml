@@ -25,6 +25,12 @@ post:
       description: Administrator required to redact a user.
     404:
       description: No user found with the supplied email address.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Error processing the request.
 

@@ -23,6 +23,12 @@ post:
             type: array
             items:
               $ref: '../schemas/DataAccessRequest.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error.
 get:
@@ -42,5 +48,11 @@ get:
               $ref: '../schemas/DataAccessRequest.yaml'
     403:
       description: The user is not authorized to see all DARs
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server Error

@@ -44,3 +44,9 @@ post:
     403:
         description: |
           Forbidden. The user does not have permission to create a user with the specified roles
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

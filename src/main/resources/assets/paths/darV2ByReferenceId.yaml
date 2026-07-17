@@ -22,6 +22,12 @@ get:
       description: The provided Reference Id is not a valid DAR identifier
     404:
       description: No DAR can be found with the provided identifier
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server Error
 put:
@@ -53,6 +59,12 @@ put:
             $ref: '../schemas/DataAccessRequest.yaml'
     403:
       description: Updates are restricted to the create user.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error.
 delete:
@@ -84,5 +96,11 @@ delete:
       description: Only drafts can be deleted.
     406:
       description: There are existing resources that reference this Data Access Request
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal server error.

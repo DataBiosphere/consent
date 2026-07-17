@@ -23,6 +23,12 @@ get:
       description: User not authorized to get draft
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 put:
   summary: Updates a draft
   operationId: apiDraftV1DraftUUIDPut
@@ -56,6 +62,12 @@ put:
       404:
         description: The draft cannot be found.
 
+      429:
+        description: Too Many Requests - rate limit exceeded
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/ErrorResponse.yaml'
 delete:
   summary: Deletes a draft
   operationId: apiDraftV1DraftUUIDDelete
@@ -77,6 +89,12 @@ delete:
       description: User not authorized to delete draft
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 patch:
   summary: Renames a draft
   operationId: apiDraftV1DraftUUIDPatch
@@ -105,3 +123,9 @@ patch:
       description: User not authorized to rename draft
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

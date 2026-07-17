@@ -41,5 +41,11 @@ get:
         other than their own.
     404:
       description: Authenticated user not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal server error

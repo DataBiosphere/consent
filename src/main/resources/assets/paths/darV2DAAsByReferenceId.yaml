@@ -25,5 +25,11 @@ get:
       description: The provided Reference Id is not a valid DAR identifier
     404:
       description: No DAR can be found with the provided identifier
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server Error

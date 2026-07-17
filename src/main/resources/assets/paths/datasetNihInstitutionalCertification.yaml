@@ -21,5 +21,11 @@ get:
       description: User not authorized to get file
     404:
       description: The dataset and/or the file cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: An unrecoverable error occurred when attempting to return this attachment.

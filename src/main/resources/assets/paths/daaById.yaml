@@ -32,5 +32,11 @@ post:
       description: User not authorized to create DAA for a DAC.
     404:
       description: Dac Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

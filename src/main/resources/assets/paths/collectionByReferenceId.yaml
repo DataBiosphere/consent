@@ -20,3 +20,9 @@ get:
             $ref: '../schemas/DarCollection.yaml'
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

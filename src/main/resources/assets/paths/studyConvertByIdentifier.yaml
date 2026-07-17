@@ -29,5 +29,11 @@ put:
       description: Bad Request
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error

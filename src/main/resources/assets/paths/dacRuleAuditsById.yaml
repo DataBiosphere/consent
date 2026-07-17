@@ -34,5 +34,11 @@ get:
       description: The user is not authorized to retrieve these settings
     401:
       description: No DAC found with the given ID
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

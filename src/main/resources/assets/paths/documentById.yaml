@@ -38,6 +38,12 @@ get:
     404:
       description: Not Found
 
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 put:
   summary: Update document category by entity and file id
   operationId: apiDocumentEntityEntityIdIdPut
@@ -86,6 +92,12 @@ put:
     404:
       description: Not Found
 
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 delete:
   summary: Soft delete document metadata by entity and file id
   operationId: apiDocumentEntityEntityIdIdDelete
@@ -126,3 +138,9 @@ delete:
     404:
       description: Not Found
 
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

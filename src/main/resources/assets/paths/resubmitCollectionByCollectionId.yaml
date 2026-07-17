@@ -22,5 +22,11 @@ put:
       description: Bad Request (dar collection is not canceled)
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

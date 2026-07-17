@@ -25,6 +25,12 @@ get:
       description: User not authorized to get list of file attachments
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 post:
   summary: Upload attachments to the draft.
   operationId: apiDraftV1DraftUUIDAttachmentsPost
@@ -66,3 +72,9 @@ post:
       description: User not authorized to upload file attachments
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

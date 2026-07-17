@@ -20,6 +20,12 @@ get:
             $ref: '../schemas/Study.yaml'
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error
 put:
@@ -83,6 +89,12 @@ put:
       description: Forbidden
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error
 delete:
@@ -108,6 +120,12 @@ delete:
       description: Study is in use and cannot be deleted
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error
 patch:
@@ -153,5 +171,11 @@ patch:
       description: Not Modified
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.

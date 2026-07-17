@@ -31,5 +31,11 @@ put:
       description: Rules are conflicting.  See exception message for how to deconflict.
     422:
       description: No Rule exists with this ID number.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

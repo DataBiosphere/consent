@@ -22,6 +22,12 @@ post:
       description: Bad Request. DAC Name and Description are required.
     403:
       description: User not authorized to request all dacs.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 put:
@@ -48,6 +54,12 @@ put:
             $ref: '../schemas/Dac.yaml'
     400:
       description: Bad Request. DAC ID, Name, and Description are required.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 get:
@@ -71,5 +83,11 @@ get:
             type: array
             items:
               $ref: '../schemas/Dac.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

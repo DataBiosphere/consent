@@ -32,5 +32,11 @@ post:
       description: Bad Request (malformed list of dataset ids)
     401:
       description: Unauthenticated
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal server error
