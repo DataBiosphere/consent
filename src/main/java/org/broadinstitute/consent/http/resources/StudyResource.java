@@ -37,7 +37,6 @@ import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequestValidator;
@@ -226,7 +225,7 @@ public class StudyResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   @Timed
   /*
-   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * This endpoint accepts a registration payload, validated by DTO/domain validators.
    * With that object, we can fully update the study/datasets from the provided values.
    */
   public Response updateStudyByRegistration(
@@ -236,17 +235,20 @@ public class StudyResource extends Resource {
       @FormDataParam("dataset") String json) {
     try {
       User user = duosUser.getUser();
-      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+      // Fetch datasets with the study so update-time consent-group-rename validation can
+      // compare submitted names against the stored dataset names (see
+      // StudyUpdateRequestValidator#validateConsentGroupNameChanges).
+      Study existingStudy = datasetService.getStudyWithDatasetsById(user, studyId);
       boolean canUpdateStudy = datasetService.isCreatorCustodianOrAdmin(user, existingStudy);
       if (!canUpdateStudy) {
         throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
       }
 
-      // Manually validate the schema from an editing context. Validation with the schema tools
-      // enforces it in a creation context but doesn't work for editing purposes.
+      // Manually validate the request from an editing context. Validation enforces
+      // create-context rules that don't apply for editing purposes.
       StudyUpdateValidationResult validationResult =
           validateRegistrationUpdate(json, existingStudy);
-      DatasetRegistrationSchemaV1 registration = validationResult.registration();
+      StudyUpdateRequest registration = validationResult.registration();
 
       if (validationResult.valid()) {
         // Update study from registration
@@ -268,33 +270,25 @@ public class StudyResource extends Resource {
     }
   }
 
-  private record StudyUpdateValidationResult(
-      DatasetRegistrationSchemaV1 registration, boolean valid) {}
+  private record StudyUpdateValidationResult(StudyUpdateRequest registration, boolean valid) {}
 
   /**
-   * Validates that the payload deserializes to a non-null {@link StudyUpdateRequest} before doing
-   * anything else, then deserializes the registration payload for persistence (via {@link
-   * DatasetRegistrationSchemaV1UpdateValidator#deserializeRegistration}, which strips non-updatable
-   * fields from existing consent groups), then runs the {@link StudyUpdateRequestValidator} as the
-   * authoritative validator against a separate, unfiltered deserialization of the same payload.
+   * Validates that the payload deserializes to a non-null {@link StudyUpdateRequest}, then runs the
+   * {@link StudyUpdateRequestValidator} as the authoritative validator against it.
    */
   private StudyUpdateValidationResult validateRegistrationUpdate(String json, Study existingStudy) {
     StudyUpdateRequest request;
     try {
       request = objectMapper.readValue(json, StudyUpdateRequest.class);
     } catch (JsonProcessingException _) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
     if (request == null) {
-      throw new BadRequestException("Invalid schema");
+      throw new BadRequestException("Invalid registration payload");
     }
 
-    DatasetRegistrationSchemaV1UpdateValidator updateValidator =
-        new DatasetRegistrationSchemaV1UpdateValidator();
-    DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
-
     boolean valid = studyUpdateRequestValidator.validate(existingStudy, request);
-    return new StudyUpdateValidationResult(registration, valid);
+    return new StudyUpdateValidationResult(request, valid);
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {

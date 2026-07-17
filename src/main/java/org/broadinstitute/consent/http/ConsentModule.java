@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
 import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
+import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
@@ -88,7 +89,6 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
-import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -689,9 +689,16 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       GCSService gcsService,
       ElasticSearchService elasticSearchService,
       EmailService emailService,
-      ExecutorService executorService) {
+      ExecutorService executorService,
+      RegistrationRequestMapper registrationRequestMapper) {
     return new DatasetRegistrationService(
-        jdbi, datasetServiceDAO, gcsService, elasticSearchService, emailService, executorService);
+        jdbi,
+        datasetServiceDAO,
+        gcsService,
+        elasticSearchService,
+        emailService,
+        executorService,
+        registrationRequestMapper);
   }
 
   @Provides
@@ -732,12 +739,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private InstitutionUtil providesInstitutionUtil() {
     return new InstitutionUtil();
-  }
-
-  @Provides
-  @Singleton
-  private JsonSchemaUtil providesJsonSchemaUtil() {
-    return new JsonSchemaUtil();
   }
 
   @Provides
