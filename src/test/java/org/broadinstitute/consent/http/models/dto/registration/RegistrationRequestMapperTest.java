@@ -183,9 +183,9 @@ class RegistrationRequestMapperTest extends AbstractTestHelper {
 
   @Test
   void testStudyAssetsAndDataRoundTripNormalizeNumericValues() {
-    // The incoming request DTO is Jackson-deserialized (a JSON integer becomes a
-    // java.lang.Integer), unlike the legacy Gson-deserialized DatasetRegistrationSchemaV1 path.
-    // Confirm the mapper's Gson re-serialization of a Jackson-sourced map still round-trips
+    // Map.of("count", 5) holds a plain java.lang.Integer, matching what Jackson produces
+    // for a JSON integer field (unlike the legacy Gson-deserialized DatasetRegistrationSchemaV1
+    // path). Confirm the mapper's Gson re-serialization of that value still round-trips
     // through GsonUtil's configured LONG_OR_DOUBLE number strategy without value loss.
     StudyRegistrationRequest request = new StudyRegistrationRequest();
     request.setAssets(Map.of("count", 5));

@@ -53,8 +53,6 @@ public class StudyRegistrationRequestValidator {
     }
   }
 
-  // Not @VisibleForTesting: also called directly by StudyUpdateRequestValidator's
-  // validateRequiredFields, so this is genuine production reuse, not test-only access.
   protected void checkStudyDescriptionRequired(StudyRegistrationRequest r) {
     if (Objects.isNull(r.getStudyDescription()) || r.getStudyDescription().isBlank()) {
       throw new BadRequestException("Study Description is required");
