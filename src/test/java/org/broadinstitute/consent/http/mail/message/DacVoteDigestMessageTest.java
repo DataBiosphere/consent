@@ -6,32 +6,44 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.stream.Stream;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class DacVoteDigestMessageTest {
-  private FreeMarkerTemplateHelper helper;
+class DacVoteDigestMessageTest extends AbstractMailMessageTest {
 
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User toUser = new User();
+    toUser.setUserId(1);
+    toUser.setDisplayName("Reminder User");
+    Instant timeBasis = Instant.now();
+    Reminder olderReminder =
+        new Reminder(toUser.getUserId(), "DAR-1", 2, timeBasis.minus(21, ChronoUnit.DAYS));
+    Reminder lastWeekReminder =
+        new Reminder(toUser.getUserId(), "DAR-2", 3, timeBasis.minus(7, ChronoUnit.DAYS));
+    Reminder currentWeekReminder =
+        new Reminder(toUser.getUserId(), "DAR-3", 4, timeBasis.minus(1, ChronoUnit.DAYS));
+    List<Reminder> reminderList = List.of(lastWeekReminder, currentWeekReminder, olderReminder);
+
+    var message = new DacVoteDigestMessage(toUser, reminderList, "ref-id", timeBasis);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "userName",
+            "Reminder User",
+            "openedThisWeek",
+            List.of(currentWeekReminder),
+            "openedLastWeek",
+            List.of(lastWeekReminder),
+            "olderRequests",
+            List.of(olderReminder)));
   }
 
   @Test
@@ -81,8 +93,7 @@ class DacVoteDigestMessageTest {
   }
 
   @Test
-  void testMessageTemplate_Reminders_template_all_groupings()
-      throws IOException, TemplateException {
+  void testMessageTemplate_Reminders_template_all_groupings() throws Exception {
     User toUser = new User();
     toUser.setUserId(1);
     toUser.setDisplayName("Reminder User");
@@ -101,22 +112,17 @@ class DacVoteDigestMessageTest {
             .toList();
     var message = new DacVoteDigestMessage(toUser, reminderList, refId, timeBasis);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "localhost:8080");
     assertEquals(
         "Dear %s,".formatted(toUser.getDisplayName()),
-        getElementTextById(parsedTemplate, "userName"));
-    assertTrue(hasElementWithId(parsedTemplate, "submittedThisWeek"));
-    assertTrue(hasElementWithId(parsedTemplate, "submittedLastWeek"));
-    assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+        getElementTextById(rendered.document(), "userName"));
+    assertTrue(hasElementWithId(rendered.document(), "submittedThisWeek"));
+    assertTrue(hasElementWithId(rendered.document(), "submittedLastWeek"));
+    assertTrue(hasElementWithId(rendered.document(), "olderRequests"));
   }
 
   @Test
-  void testMessageTemplate_Reminders_template_only_older_reminders()
-      throws IOException, TemplateException {
+  void testMessageTemplate_Reminders_template_only_older_reminders() throws Exception {
     User toUser = new User();
     toUser.setUserId(1);
     toUser.setDisplayName("Reminder User");
@@ -129,22 +135,17 @@ class DacVoteDigestMessageTest {
 
     var message = new DacVoteDigestMessage(toUser, olderReminders, refId, timeBasis);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "localhost:8080");
     assertEquals(
         "Dear %s,".formatted(toUser.getDisplayName()),
-        getElementTextById(parsedTemplate, "userName"));
-    assertFalse(hasElementWithId(parsedTemplate, "submittedThisWeek"));
-    assertFalse(hasElementWithId(parsedTemplate, "submittedLastWeek"));
-    assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+        getElementTextById(rendered.document(), "userName"));
+    assertFalse(hasElementWithId(rendered.document(), "submittedThisWeek"));
+    assertFalse(hasElementWithId(rendered.document(), "submittedLastWeek"));
+    assertTrue(hasElementWithId(rendered.document(), "olderRequests"));
   }
 
   @Test
-  void testMessageTemplate_Reminders_template_missing_dar_code()
-      throws IOException, TemplateException {
+  void testMessageTemplate_Reminders_template_missing_dar_code() throws Exception {
     User toUser = new User();
     toUser.setUserId(1);
     toUser.setDisplayName("Reminder User");
@@ -157,22 +158,17 @@ class DacVoteDigestMessageTest {
 
     var message = new DacVoteDigestMessage(toUser, olderReminders, refId, timeBasis);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "localhost:8080");
     assertEquals(
         "Dear %s,".formatted(toUser.getDisplayName()),
-        getElementTextById(parsedTemplate, "userName"));
-    assertFalse(hasElementWithId(parsedTemplate, "submittedThisWeek"));
-    assertFalse(hasElementWithId(parsedTemplate, "submittedLastWeek"));
-    assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+        getElementTextById(rendered.document(), "userName"));
+    assertFalse(hasElementWithId(rendered.document(), "submittedThisWeek"));
+    assertFalse(hasElementWithId(rendered.document(), "submittedLastWeek"));
+    assertTrue(hasElementWithId(rendered.document(), "olderRequests"));
   }
 
   @Test
-  void testMessageTemplate_Reminders_template_missing_create_date()
-      throws IOException, TemplateException {
+  void testMessageTemplate_Reminders_template_missing_create_date() throws Exception {
     User toUser = new User();
     toUser.setUserId(1);
     toUser.setDisplayName("Reminder User");
@@ -185,21 +181,17 @@ class DacVoteDigestMessageTest {
 
     var message = new DacVoteDigestMessage(toUser, olderReminders, refId, timeBasis);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "localhost:8080");
     assertEquals(
         "Dear %s,".formatted(toUser.getDisplayName()),
-        getElementTextById(parsedTemplate, "userName"));
-    assertFalse(hasElementWithId(parsedTemplate, "submittedThisWeek"));
-    assertFalse(hasElementWithId(parsedTemplate, "submittedLastWeek"));
-    assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+        getElementTextById(rendered.document(), "userName"));
+    assertFalse(hasElementWithId(rendered.document(), "submittedThisWeek"));
+    assertFalse(hasElementWithId(rendered.document(), "submittedLastWeek"));
+    assertTrue(hasElementWithId(rendered.document(), "olderRequests"));
   }
 
   @Test
-  void testReminderInTemplate() throws IOException, TemplateException {
+  void testReminderInTemplate() throws Exception {
     User toUser = new User();
     toUser.setUserId(1);
     toUser.setDisplayName("Reminder User");
@@ -209,23 +201,12 @@ class DacVoteDigestMessageTest {
 
     var message = new DacVoteDigestMessage(toUser, List.of(reminder), refId, timeBasis);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
+    var rendered = renderTemplate(message, "localhost:8080");
 
     assertEquals(1, reminder.userId());
     assertEquals("DAR-1", reminder.darCode());
     assertEquals(2, reminder.collectionId());
     assertEquals(timeBasis, reminder.createDate());
-    assertThat(templateString, containsString("DAR-1"));
-  }
-
-  String getElementTextById(Document document, String id) {
-    return Objects.requireNonNull(document.getElementById(id)).text();
-  }
-
-  boolean hasElementWithId(Document document, String id) {
-    return document.getElementById(id) != null;
+    assertThat(rendered.content(), containsString("DAR-1"));
   }
 }

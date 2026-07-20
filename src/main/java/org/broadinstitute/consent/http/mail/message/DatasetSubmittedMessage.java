@@ -27,7 +27,7 @@ public class DatasetSubmittedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
         "dacChairName",
         toUser.getDisplayName(),

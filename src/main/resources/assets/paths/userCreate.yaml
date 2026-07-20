@@ -1,5 +1,6 @@
 post:
   summary: Create User
+  operationId: apiUserCreatePost
   requestBody:
     description: |
       Creates a User. Admins are allowed to create users with the following roles:
@@ -17,6 +18,7 @@ post:
       application/json:
         schema:
           type: object
+          title: CreateUserRequest
           properties:
             displayName:
               type: string
@@ -42,3 +44,9 @@ post:
     403:
         description: |
           Forbidden. The user does not have permission to create a user with the specified roles
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

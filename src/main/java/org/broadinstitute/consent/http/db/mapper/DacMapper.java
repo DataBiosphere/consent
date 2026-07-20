@@ -34,6 +34,15 @@ public class DacMapper implements RowMapper<Dac>, RowMapperHelper {
     if (hasColumn(resultSet, "email")) {
       dac.setEmail(resultSet.getString("email"));
     }
+    if (hasColumn(resultSet, "deleted")) {
+      dac.setDeleted(resultSet.getBoolean("deleted"));
+    }
+    if (hasNonZeroColumn(resultSet, "delete_user_id")) {
+      dac.setDeleteUserId(resultSet.getInt("delete_user_id"));
+    }
+    if (hasColumn(resultSet, "delete_date")) {
+      dac.setDeleteDate(resultSet.getTimestamp("delete_date"));
+    }
     dacMap.put(dac.getDacId(), dac);
     return dac;
   }

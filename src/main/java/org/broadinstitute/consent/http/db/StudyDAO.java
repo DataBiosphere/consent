@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.db.mapper.StudyReducer;
-import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -36,30 +35,38 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           sp.value AS sp_value,
           sp.type AS sp_type,
           d.dataset_id AS s_dataset_id,
-      """
-          + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX
-          + " "
-          + """
-              FROM
-                  study s
-              LEFT JOIN study_property sp ON sp.study_id = s.study_id
-              LEFT JOIN file_storage_object fso ON fso.entity_id = s.uuid::text AND fso.deleted = false
-              LEFT JOIN dataset d ON d.study_id = s.study_id
-              WHERE s.study_id = :studyId
-          """)
+          fso.file_storage_object_id AS fso_file_storage_object_id,
+          fso.entity_id AS fso_entity_id,
+          fso.file_name AS fso_file_name,
+          fso.category AS fso_category,
+          fso.gcs_file_uri AS fso_gcs_file_uri,
+          fso.media_type AS fso_media_type,
+          fso.create_date AS fso_create_date,
+          fso.create_user_id AS fso_create_user_id,
+          fso.update_date AS fso_update_date,
+          fso.update_user_id AS fso_update_user_id,
+          fso.deleted AS fso_deleted,
+          fso.delete_user_id AS fso_delete_user_id
+      FROM
+          study s
+      LEFT JOIN study_property sp ON sp.study_id = s.study_id
+      LEFT JOIN file_storage_object fso ON fso.entity_id = s.uuid::text AND fso.deleted = false
+      LEFT JOIN dataset d ON d.study_id = s.study_id
+      WHERE s.study_id = :studyId
+      """)
   Study findStudyById(@Bind("studyId") Integer studyId);
 
   @SqlUpdate(
       """
           INSERT INTO study (
               name, description,
-              pi_name, data_types,
+              pi_name, pi_email, data_types,
               public_visibility,
               create_user_id, create_date,
               uuid
           ) VALUES (
               :name, :description,
-              :piName, :dataTypes,
+              :piName, :piEmail, :dataTypes,
               :publicVisibility,
               :createUserId, :createDate,
               :uuid
@@ -70,6 +77,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("piName") String piName,
+      @Bind("piEmail") String piEmail,
       @Bind("dataTypes") List<String> dataTypes,
       @Bind("publicVisibility") Boolean publicVisibility,
       @Bind("createUserId") Integer createUserId,
@@ -82,6 +90,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           SET name = :name,
               description = :description,
               pi_name = :piName,
+              pi_email = :piEmail,
               data_types = :dataTypes,
               public_visibility = :publicVisibility,
               update_user_id = :updateUserId,
@@ -93,6 +102,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("piName") String piName,
+      @Bind("piEmail") String piEmail,
       @Bind("dataTypes") List<String> dataTypes,
       @Bind("publicVisibility") Boolean publicVisibility,
       @Bind("updateUserId") Integer updateUserId,
@@ -144,6 +154,12 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       """)
   void deleteStudyPropertiesByStudyId(@Bind("studyId") Integer studyId);
 
+  @SqlUpdate(
+      """
+      DELETE FROM study_property WHERE study_id = :studyId AND key = :key
+      """)
+  void deleteStudyPropertyByKey(@Bind("studyId") Integer studyId, @Bind("key") String key);
+
   @UseRowReducer(StudyReducer.class)
   @SqlQuery(
       """
@@ -154,11 +170,20 @@ public interface StudyDAO extends Transactional<StudyDAO> {
   @RegisterConstructorMapper(StudyDatasetCountRecord.class)
   @SqlQuery(
       """
-    SELECT study.study_id AS id, study.name, count(dataset.dataset_id) AS dataset_count from study
-        INNER JOIN dataset on study.study_id = dataset.study_id
-    WHERE study.study_id IN (<studyIds>)
-    GROUP BY study.study_id, study.name
-    """)
-  List<StudyDatasetCountRecord> findNameAndDatasetCount(
+      SELECT
+          study.study_id AS id,
+          study.name,
+          string_agg(DISTINCT prop.property_value, ',' ORDER BY prop.property_value) AS access_types,
+          count(DISTINCT dataset.dataset_id) AS dataset_count
+      FROM study
+          INNER JOIN dataset
+              ON study.study_id = dataset.study_id
+          INNER JOIN dataset_property prop
+              ON prop.dataset_id = dataset.dataset_id
+             AND prop.schema_property = 'accessManagement'
+      WHERE study.study_id IN (<studyIds>)
+      GROUP BY study.study_id, study.name
+      """)
+  List<StudyDatasetCountRecord> findStudyDatasetCounts(
       @BindList(value = "studyIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> studyIds);
 }

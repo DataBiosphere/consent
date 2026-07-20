@@ -1,6 +1,6 @@
 get:
   summary: Get DAR Collection with the election history for each DAR in the Collection By Collection ID
-  operationId: getCollectionWithAllElectionsByCollectionId
+  operationId: apiCollectionsCollectionIdElectionHistoryGet
   description: Returns a single DAR Collection with the complete election history for each DAR in the Collection
   tags:
     - DAR Collection
@@ -20,5 +20,11 @@ get:
             $ref: '../schemas/DarCollection.yaml'
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

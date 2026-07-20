@@ -1,6 +1,6 @@
 post:
   summary: Search the dataset index
-  operationId: searchDatasetIndex
+  operationId: apiDatasetSearchIndexPost
   description: Returns all results matching a search query.
   requestBody:
     description: Search query
@@ -80,3 +80,9 @@ post:
                     publicVisibility: true
                     dataTypes:
                       - genome
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

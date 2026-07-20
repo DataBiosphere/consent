@@ -28,5 +28,13 @@ get:
       description: Forbidden - The requester does not have permission to access this resource.
     404:
       description: Not Found - User not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error - An error occurred while processing the request.
+
+  operationId: apiLibraryCardsHistoryUserIdGet

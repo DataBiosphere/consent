@@ -1,7 +1,8 @@
 get:
   summary: Get feature flag by ID
-  operationId: getFeatureFlagById
+  operationId: featureIdGet
   description: Retrieve a specific feature flag by its ID
+  security: []
   tags:
     - Feature Flags
   parameters:

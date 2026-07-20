@@ -14,7 +14,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.core.MediaType;
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
@@ -48,7 +47,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     testLogger.addAppender(testAppender);
     testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     testAppender.start();
-    serviceDAO = new DaaServiceDAO(jdbi, daaDAO, fileStorageObjectDAO);
+    serviceDAO = new DaaServiceDAO(jdbi);
   }
 
   @AfterEach
@@ -61,7 +60,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), new Date());
+            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), user.getUserId());
     FileStorageObject fso = createFileStorageObject();
     assertDoesNotThrow(
         () -> {
@@ -86,7 +85,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), new Date());
+            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), user.getUserId());
     Integer daaId = serviceDAO.createDaaWithFso(user.getUserId(), dacId, null);
 
     List<FileStorageObject> fsos = fileStorageObjectDAO.findFilesByEntityId(daaId.toString());
@@ -104,7 +103,10 @@ class DaaServiceDAOTest extends DAOTestHelper {
     user.setUserId(1); // Non-existent user ID to trigger daaDAO.createDaa error
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), new Date());
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            createUser().getUserId());
     FileStorageObject fso = createFileStorageObject();
     assertThrows(
         UnableToExecuteStatementException.class,
@@ -119,7 +121,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), new Date());
+            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), user.getUserId());
     FileStorageObject fso = createFileStorageObject();
     fso.setFileName(null);
     assertThrows(
@@ -132,7 +134,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), new Date());
+            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), user.getUserId());
     FileStorageObject fso = createFileStorageObject();
     fso.setCategory(null);
     assertThrows(
@@ -145,7 +147,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), new Date());
+            randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), user.getUserId());
     FileStorageObject fso = createFileStorageObject();
     fso.setBlobId(null);
     assertThrows(

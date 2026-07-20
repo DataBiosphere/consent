@@ -2,9 +2,8 @@ package org.broadinstitute.consent.http.filters;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.inject.Inject;
 import jakarta.ws.rs.core.MultivaluedMap;
-import java.util.AbstractMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -16,40 +15,28 @@ import java.util.stream.Collectors;
  */
 public class ClaimsCache {
 
-  private static ClaimsCache INSTANCE;
   public final Cache<String, Map<String, String>> cache;
   public static final String OAUTH2_CLAIM_email = "OAUTH2_CLAIM_email";
   public static final String OAUTH2_CLAIM_name = "OAUTH2_CLAIM_name";
   public static final String OAUTH2_CLAIM_access_token = "OAUTH2_CLAIM_access_token";
   public static final String OAUTH2_CLAIM_aud = "OAUTH2_CLAIM_aud";
 
-  private ClaimsCache() {
+  @Inject
+  public ClaimsCache() {
     cache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
   }
 
-  public static ClaimsCache getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new ClaimsCache();
-    }
-    return INSTANCE;
-  }
-
-  private String getFirst(List<String> headerValues) {
-    if (headerValues == null) {
-      return null;
-    }
-    return headerValues.stream().findFirst().orElse(null);
-  }
-
   public void loadCache(String token, MultivaluedMap<String, String> headers) {
-    if (this.cache.getIfPresent(token) == null) {
-      Map<String, String> claimsMap =
-          headers.entrySet().stream()
-              .filter(e -> e.getKey().startsWith("OAUTH2_CLAIM"))
-              .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), getFirst(e.getValue())))
-              .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-      this.cache.put(token, claimsMap);
-      this.cache.cleanUp();
+    try {
+      this.cache.get(
+          token,
+          () ->
+              headers.entrySet().stream()
+                  .filter(e -> e.getKey().startsWith("OAUTH2_CLAIM"))
+                  .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+                  .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().get(0))));
+    } catch (Exception _) {
+      // header map is caller-supplied; a failure here means no cache entry is stored
     }
   }
 }

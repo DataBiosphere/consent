@@ -1,5 +1,6 @@
 get:
   summary: Find approved users by dataset identifier
+  operationId: apiTdrIdentifierApprovedUsersGet
   description: Finds all users who have been approved access to this dataset with an accepted DAR.
   parameters:
     - name: identifier
@@ -21,5 +22,11 @@ get:
       description: Invalid dataset identifier.
     404:
       description: Could not find dataset with given identifier.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.

@@ -1,5 +1,6 @@
 post:
   summary: Institution DOMAIN Update resource
+  operationId: apiInstitutionsDomainsPost
   description: Updates existing domains for all institutions provided in the JSON payload.
   tags:
     - Institutions
@@ -10,6 +11,7 @@ post:
       application/json:
         schema:
           type: object
+          title: InstitutionDomainsRequest
           properties:
             institutionDomainMap:
               type: object
@@ -17,13 +19,10 @@ post:
                 type: array
                 items:
                   type: string
-          example:
-            {
-              "institutionDomainMap": {
-                "Institution A": ["domain1.com", "domain2.com"],
-                "Institution B": ["domain3.com"]
-              }
-            }
+          examples:
+            - institutionDomainMap:
+                Institution A: ["domain1.com", "domain2.com"]
+                Institution B: ["domain3.com"]
   responses:
     200:
       description: Updates all institutions' domains and returns the updated records.
@@ -31,5 +30,11 @@ post:
       description: Bad Request
     409:
       description: Conflict Error
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

@@ -1,6 +1,8 @@
 get:
   summary: Gets the Terms of Service Text from Sam
+  operationId: tosTextGet
   description: Gets the Terms of Service Text from Sam
+  security: []
   tags:
     - Sam
     - ToS

@@ -8,6 +8,7 @@ import jakarta.ws.rs.BadRequestException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class DataAccessRequestTest {
@@ -102,20 +103,6 @@ class DataAccessRequestTest {
     dar.setData(darData);
     dar.setParentId(1);
     assertTrue(dar.getIsCloseoutProgressReport());
-  }
-
-  @Test
-  void testGetHasCloseoutApproval_False() {
-    DataAccessRequest dar = new DataAccessRequest();
-    assertFalse(dar.getHasSOCloseoutApproval());
-  }
-
-  @Test
-  void testGetHasCloseoutApproval_True() {
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setCloseoutSigningOfficialApprovedUserId(1);
-    dar.setCloseoutSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
-    assertTrue(dar.getHasSOCloseoutApproval());
   }
 
   @Test
@@ -228,10 +215,10 @@ class DataAccessRequestTest {
     dar.setCreateDate(now);
     dar.setApprovingSigningOfficialUserId(1);
     dar.setApprovingSigningOfficialApprovedDate(now);
-    dar.setCloseoutSigningOfficialApprovedDate(now);
-    dar.setCloseoutSigningOfficialApprovedUserId(1);
     dar.setRequiresSOApproval(true);
-    assertDoesNotThrow(dar::convertToSimplifiedDar);
+    dar.setAdminDarNotes("admin notes");
+    Map<String, Object> simplifiedDar = assertDoesNotThrow(dar::convertToSimplifiedDar);
+    assertEquals("admin notes", simplifiedDar.get("adminDarNotes"));
   }
 
   @Test

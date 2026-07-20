@@ -24,9 +24,8 @@ public class NewStudyDigestMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of(
-        "userName", toUser.getDisplayName(), "newStudies", newStudiesList, "serverUrl", serverUrl);
+  public Map<String, Object> createModel() {
+    return Map.of("userName", toUser.getDisplayName(), "newStudies", newStudiesList);
   }
 
   @Override

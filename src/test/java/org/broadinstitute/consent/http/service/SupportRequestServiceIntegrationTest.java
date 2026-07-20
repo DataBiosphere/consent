@@ -9,10 +9,10 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.zendesk.client.v2.model.Request;
 
 /** This test class should be used for manual integration testing only. */
 class SupportRequestServiceIntegrationTest {
@@ -23,7 +23,7 @@ class SupportRequestServiceIntegrationTest {
   void setUp() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setActivateSupportNotifications(true);
-    service = new SupportRequestService(config);
+    service = new SupportRequestService(new HttpClientUtil(config), new TicketFactory(), config);
   }
 
   @Disabled
@@ -41,7 +41,7 @@ class SupportRequestServiceIntegrationTest {
                 "Test Description",
                 "Test URL",
                 List.of(token)));
-    Request request = service.postTicketToSupport(ticket);
+    JsonObject request = service.postTicketToSupport(ticket);
     assertNotNull(request);
   }
 }

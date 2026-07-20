@@ -1,6 +1,6 @@
 put:
   summary: Add DAA to DAC
-  operationId: modifyDacDaaRelationship
+  operationId: apiDaaDaaIdDacDacIdPut
   description: Create a link between a Data Access Agreement and a DAC
   parameters:
     - name: daaId
@@ -24,11 +24,17 @@ put:
       description: User not authorized to create a relationship between a DAA and a DAC.
     404:
       description: Data Access Agreement or Data Access Committee Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
   summary: Remove DAC from DAA
-  operationId: removeDacDaaRelationship
+  operationId: apiDaaDaaIdDacDacIdDelete
   description: Remove a link between a Data Access Agreement and a DAC
   parameters:
     - name: daaId
@@ -54,5 +60,11 @@ delete:
       description: User not authorized to create a relationship between a DAA and a DAC.
     404:
       description: Data Access Agreement or Data Access Committee Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

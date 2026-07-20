@@ -36,24 +36,26 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
-import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SamDAO implements ConsentLogger {
 
-  private final ExecutorService executorService =
-      new ThreadUtils().getExecutorService(SamDAO.class);
+  private final ExecutorService executorService;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
   private final Integer connectTimeoutMilliseconds;
   public final Integer readTimeoutMilliseconds;
   private final Gson gson = GsonUtil.getInstance();
 
-  public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
+  public SamDAO(
+      HttpClientUtil clientUtil,
+      ServicesConfiguration configuration,
+      ExecutorService executorService) {
     this.clientUtil = clientUtil;
     this.configuration = configuration;
+    this.executorService = executorService;
     // Defaults to 10 seconds
     this.connectTimeoutMilliseconds = configuration.getTimeoutSeconds() * 1000;
     // Defaults to 60 seconds

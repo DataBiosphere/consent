@@ -1,5 +1,6 @@
 get:
   summary: Get Synchronized User NIH Account
+  operationId: apiNihSyncGet
   description: Get a synchronized user account fetches known linked accounts
   tags:
     - User
@@ -11,5 +12,11 @@ get:
         application/json:
           schema:
             $ref: '../schemas/User.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.

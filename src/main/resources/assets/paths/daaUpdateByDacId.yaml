@@ -1,6 +1,6 @@
 post:
   summary: Alert appropriate Signing Officials & Researchers of a new DAA Upload for the provided DAC
-  operationId: sendNewDaaMessage
+  operationId: apiDaaDacIdUpdatedOldDaaIdNewDaaNamePost
   description: Email Signing Officials & Researchers that a new DAA was uploaded
   parameters:
     - name: dacId
@@ -29,5 +29,11 @@ post:
       description: Successfully sent emails to Signing Officials and Researchers about the newly uploaded DAA
     404:
       description: DAC, DAA, or User Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

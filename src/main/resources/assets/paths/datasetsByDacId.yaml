@@ -1,6 +1,6 @@
     get:
       summary: Get All Datasets for DAC
-      operationId: findAllDacDatasets
+      operationId: apiDacDacIdDatasetsGet
       description: |
         List all Datasets of a DAC. The datasets returned from this endpoint are limited in the 
         volume of data returned. To get the full dataset, use the `/datasets/{datasetId}` endpoint.
@@ -26,5 +26,11 @@
                   $ref: '../schemas/Dataset.yaml'
         404:
           description: No DAC found with the provided ID
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ErrorResponse.yaml'
         500:
           description: Internal Server Error

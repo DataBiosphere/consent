@@ -1,6 +1,6 @@
 get:
   summary: Get DAC by ID
-  operationId: findDacById
+  operationId: apiDacDacIdGet
   description: Get Data Access Committee by Id
   parameters:
     - name: dacId
@@ -20,11 +20,17 @@ get:
             $ref: '../schemas/Dac.yaml'
     404:
       description: No DAC found with the given ID
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
   summary: Delete DAC by ID
-  operationId: deleteDac
+  operationId: apiDacDacIdDelete
   description: Delete Data Access Committee by Id
   parameters:
     - name: dacId
@@ -44,5 +50,11 @@ delete:
             $ref: '../schemas/Dac.yaml'
     404:
       description: No DAC found with the given ID
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

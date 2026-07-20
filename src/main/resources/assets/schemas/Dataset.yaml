@@ -34,21 +34,21 @@ properties:
     type: array
     items:
       $ref: './DatasetProperty.yaml'
-    example:
-      - propertyName: Data Type
-        propertyValue: Whole Genome
-      - propertyName: Species
-        propertyValue: Human
-      - propertyName: Phenotype/Indication
-        propertyValue: Cardiovascular System Disease
-      - propertyName: "# of participants"
-        propertyValue: 20
-      - propertyName: Description
-        propertyValue: Description of Dataset
-      - propertyName: url
-        propertyValue: http://...
-      - propertyName: Sample Collection ID
-        propertyValue: SC-000
+    examples:
+      - - propertyName: Data Type
+          propertyValue: Whole Genome
+        - propertyName: Species
+          propertyValue: Human
+        - propertyName: Phenotype/Indication
+          propertyValue: Cardiovascular System Disease
+        - propertyName: "# of participants"
+          propertyValue: 20
+        - propertyName: Description
+          propertyValue: Description of Dataset
+        - propertyName: url
+          propertyValue: http://...
+        - propertyName: Sample Collection ID
+          propertyValue: SC-000
   studyId:
     type: integer
     format: int32
@@ -67,6 +67,7 @@ properties:
     description: The sample collection ID, if defined
   dataUse:
     type: object
+    title: DatasetDataUse
     description: The Data Use question/answer set for this dataset (used for the associated consent).
   dacApproval:
     type: boolean

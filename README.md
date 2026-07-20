@@ -15,3 +15,5 @@ There are restrictions on researching human genomics data. For example: “Data 
 The Data Use Oversight system ensures that researchers using genomics data honor these restrictions.
 
 See [consent/DEVNOTES.md](DEVNOTES.md) to run locally.
+For implementation plans and design notes, see [docs/plans/README.md](docs/plans/README.md).
+For contribution and review guidance, see [CONTRIBUTING.md](CONTRIBUTING.md), [.github/copilot-instructions.md](.github/copilot-instructions.md), and [AGENTS.md](AGENTS.md).

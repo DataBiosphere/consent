@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class TDRService implements ConsentLogger {
 
@@ -32,17 +33,12 @@ public class TDRService implements ConsentLogger {
   private final UserDAO userDAO;
 
   @Inject
-  public TDRService(
-      DataAccessRequestService dataAccessRequestService,
-      DatasetDAO datasetDAO,
-      LibraryCardDAO libraryCardDAO,
-      SamDAO samDAO,
-      UserDAO userDAO) {
+  public TDRService(Jdbi jdbi, DataAccessRequestService dataAccessRequestService, SamDAO samDAO) {
     this.dataAccessRequestService = dataAccessRequestService;
-    this.datasetDAO = datasetDAO;
-    this.libraryCardDAO = libraryCardDAO;
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     this.samDAO = samDAO;
-    this.userDAO = userDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
   }
 
   public ApprovedUsers getApprovedUsersForDataset(AuthUser authUser, Dataset dataset) {

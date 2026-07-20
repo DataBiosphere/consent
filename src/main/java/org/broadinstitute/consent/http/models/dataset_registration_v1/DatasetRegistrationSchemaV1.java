@@ -12,15 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Dataset Registration Schema
- *
- * <p>Dynamically generated java class from jsonschema2pojo
- *
- * <p>See: https://github.com/joelittlejohn/jsonschema2pojo <code>
- * jsonschema2pojo --source src/main/resources/dataset-registration-schema_v1.json --target
- * java-gen</code>
- *
- * <p>Also see https://jsonschemalint.com/#/version/draft-04/markup/json for validating json.
+ * Registration-shaped response model for Study/Dataset registration data, used by GET
+ * /api/dataset/study/registration/{studyId} and similar endpoints. Backend create/update validation
+ * is owned by DTO/domain validators (see {@code
+ * org.broadinstitute.consent.http.models.dto.registration}), not by this class.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -32,6 +27,7 @@ import java.util.Map;
   "phenotypeIndication",
   "species",
   "piName",
+  "piEmail",
   "dataSubmitterUserId",
   "dataCustodianEmail",
   "publicVisibility",
@@ -63,7 +59,9 @@ import java.util.Map;
   "alternativeDataSharingPlanAccessManagement",
   "consentGroups",
   "assets",
-  "data"
+  "data",
+  "externalIdentifier",
+  "externalIdentifierType"
 })
 public class DatasetRegistrationSchemaV1 {
 
@@ -106,6 +104,21 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("piName")
   @JsonPropertyDescription("Principal Investigator Name")
   private String piName;
+
+  /** Principal Investigator Email */
+  @JsonProperty("piEmail")
+  @JsonPropertyDescription("Principal Investigator Email")
+  private String piEmail;
+
+  /** External Identifier */
+  @JsonProperty("externalIdentifier")
+  @JsonPropertyDescription("External Identifier")
+  private String externalIdentifier;
+
+  /** External Identifier Type */
+  @JsonProperty("externalIdentifierType")
+  @JsonPropertyDescription("External Identifier Type")
+  private String externalIdentifierType;
 
   /** The user creating the dataset submission (Required) */
   @JsonProperty("dataSubmitterUserId")
@@ -377,6 +390,42 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("piName")
   public void setPiName(String piName) {
     this.piName = piName;
+  }
+
+  /** Principal Investigator Email */
+  @JsonProperty("piEmail")
+  public String getPiEmail() {
+    return piEmail;
+  }
+
+  /** Principal Investigator Email */
+  @JsonProperty("piEmail")
+  public void setPiEmail(String piEmail) {
+    this.piEmail = piEmail;
+  }
+
+  /** External Identifier */
+  @JsonProperty("externalIdentifier")
+  public String getExternalIdentifier() {
+    return externalIdentifier;
+  }
+
+  /** External Identifier */
+  @JsonProperty("externalIdentifier")
+  public void setExternalIdentifier(String externalIdentifier) {
+    this.externalIdentifier = externalIdentifier;
+  }
+
+  /** External Identifier Type */
+  @JsonProperty("externalIdentifierType")
+  public String getExternalIdentifierType() {
+    return externalIdentifierType;
+  }
+
+  /** External Identifier Type */
+  @JsonProperty("externalIdentifierType")
+  public void setExternalIdentifierType(String externalIdentifierType) {
+    this.externalIdentifierType = externalIdentifierType;
   }
 
   /** The user creating the dataset submission (Required) */
@@ -839,6 +888,18 @@ public class DatasetRegistrationSchemaV1 {
     sb.append('=');
     sb.append(((this.piName == null) ? "<null>" : this.piName));
     sb.append(',');
+    sb.append("piEmail");
+    sb.append('=');
+    sb.append(((this.piEmail == null) ? "<null>" : this.piEmail));
+    sb.append(',');
+    sb.append("externalIdentifier");
+    sb.append('=');
+    sb.append(((this.externalIdentifier == null) ? "<null>" : this.externalIdentifier));
+    sb.append(',');
+    sb.append("externalIdentifierType");
+    sb.append('=');
+    sb.append(((this.externalIdentifierType == null) ? "<null>" : this.externalIdentifierType));
+    sb.append(',');
     sb.append("dataSubmitterUserId");
     sb.append('=');
     sb.append(((this.dataSubmitterUserId == null) ? "<null>" : this.dataSubmitterUserId));
@@ -1102,6 +1163,7 @@ public class DatasetRegistrationSchemaV1 {
         ((result * 31)
             + ((this.nihICsSupportingStudy == null) ? 0 : this.nihICsSupportingStudy.hashCode()));
     result = ((result * 31) + ((this.piName == null) ? 0 : this.piName.hashCode()));
+    result = ((result * 31) + ((this.piEmail == null) ? 0 : this.piEmail.hashCode()));
     result = ((result * 31) + ((this.dbGaPPhsID == null) ? 0 : this.dbGaPPhsID.hashCode()));
     result =
         ((result * 31)
@@ -1409,6 +1471,9 @@ public class DatasetRegistrationSchemaV1 {
                                                 && ((this.piName == rhs.piName)
                                                     || ((this.piName != null)
                                                         && this.piName.equals(rhs.piName))))
+                                            && ((this.piEmail == rhs.piEmail)
+                                                || ((this.piEmail != null)
+                                                    && this.piEmail.equals(rhs.piEmail)))
                                             && ((this.dbGaPPhsID == rhs.dbGaPPhsID)
                                                 || ((this.dbGaPPhsID != null)
                                                     && this.dbGaPPhsID.equals(rhs.dbGaPPhsID))))

@@ -21,8 +21,8 @@ public class ResearcherCloseoutCompletedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of("userName", toUser.getDisplayName(), "darCode", darCode, "serverUrl", serverUrl);
+  public Map<String, Object> createModel() {
+    return Map.of("userName", toUser.getDisplayName(), "darCode", darCode);
   }
 
   @Override

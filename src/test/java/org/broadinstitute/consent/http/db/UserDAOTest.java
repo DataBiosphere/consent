@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -79,12 +80,14 @@ class UserDAOTest extends DAOTestHelper {
     int lcId =
         libraryCardDAO.insertLibraryCard(
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
-    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
     int daaId =
         daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), lcId, daaId);
-    int dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int dacId2 =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
     int daaId2 =
         daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), lcId, daaId2);
@@ -186,7 +189,8 @@ class UserDAOTest extends DAOTestHelper {
   void testFindDACUsersEnabledToVoteByDacNotEmpty() {
     Dac dac = createDac();
     User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-    dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(
+        UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId(), chair.getUserId());
     Collection<User> users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
     assertFalse(users.isEmpty());
   }
@@ -259,7 +263,8 @@ class UserDAOTest extends DAOTestHelper {
     // Creates a researcher
     User user =
         createUserWithRole(UserRoles.RESEARCHER.getRoleId(), signingOfficial.getInstitutionId());
-    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    User admin = createUserWithRole(UserRoles.ADMIN.getRoleId());
+    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), admin.getUserId());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
     int lcId1 =
@@ -440,7 +445,8 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testGetUsersFromInstitutionWithCards() {
     User signingOfficial = createUser();
-    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -468,7 +474,8 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testGetUsersWithCardsByDaaId() {
     User signingOfficial = createUser();
-    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
     Instant now = Instant.now();
     LibraryCard card1 = createLibraryCard();
     int daaId1 = daaDAO.createDaa(card1.getUserId(), now, card1.getUserId(), now, dacId);
@@ -549,8 +556,10 @@ class UserDAOTest extends DAOTestHelper {
     assertTrue(u.getRoles().contains(chairperson1));
     assertTrue(u.getRoles().contains(chairperson2));
 
-    dacDAO.addDacMember(chairperson1.getRoleId(), u.getUserId(), chairperson1.getDacId());
-    dacDAO.addDacMember(chairperson2.getRoleId(), u.getUserId(), chairperson2.getDacId());
+    dacDAO.addDacMember(
+        chairperson1.getRoleId(), u.getUserId(), chairperson1.getDacId(), u.getUserId());
+    dacDAO.addDacMember(
+        chairperson2.getRoleId(), u.getUserId(), chairperson2.getDacId(), u.getUserId());
 
     User found = userDAO.findUserById(u.getUserId());
     assertEquals(3, found.getRoles().size());
@@ -586,16 +595,10 @@ class UserDAOTest extends DAOTestHelper {
                   user3Found.set(true);
                 } else {
                   // simulate having sent a message so we won't send one again.
+                  Date now = Date.from(Instant.now());
                   mailMessageDAO.insert(
-                      referenceId,
-                      null,
-                      user.getUserId(),
-                      emailType,
-                      Instant.now(),
-                      "",
-                      null,
-                      null,
-                      Instant.now());
+                      new MailMessageInsert(
+                          referenceId, null, user.getUserId(), emailType, now, "", null, null));
                 }
               }
             });
@@ -624,7 +627,9 @@ class UserDAOTest extends DAOTestHelper {
   private Dac createDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphanumeric(20), "Test_" + randomAlphanumeric(20), new Date());
+            "Test_" + randomAlphanumeric(20),
+            "Test_" + randomAlphanumeric(20),
+            createUser().getUserId());
     return dacDAO.findById(id);
   }
 
@@ -657,5 +662,18 @@ class UserDAOTest extends DAOTestHelper {
         libraryCardDAO.insertLibraryCard(
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
+  }
+
+  @Test
+  void testInsertUser() {
+    String email = "test.user." + randomAlphanumeric(10) + "@test.com";
+    String displayName = "Test User " + randomAlphanumeric(10);
+    Date createDate = new Date();
+    Integer userId = userDAO.insertUser(email, displayName, null, createDate);
+    assertNotNull(userId);
+    User user = userDAO.findUserById(userId);
+    assertNotNull(user);
+    assertEquals(email, user.getEmail());
+    assertEquals(displayName, user.getDisplayName());
   }
 }

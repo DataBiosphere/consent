@@ -1,6 +1,6 @@
 get:
   summary: Get DAA File by id
-  operationId: findFileById
+  operationId: apiDaaDaaIdFileGet
   description: Fetches Data Access Agreement File by Id
   parameters:
     - name: daaId
@@ -16,10 +16,22 @@ get:
       description: The Data Access Agreement File matching the provided ID
       content:
         application/octet-stream:
-          schema:
-            type: string
-            format: binary
+          schema: {}
     404:
       description: No DAA File found with the given ID
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

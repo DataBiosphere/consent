@@ -18,6 +18,10 @@ properties:
   piName:
     type: string
     description: The name of the PI of the study.
+  piEmail:
+    type: string
+    format: email
+    description: Principal Investigator Email
   publicVisibility:
     type: boolean
     description: Whether this study is publicly visible or not.

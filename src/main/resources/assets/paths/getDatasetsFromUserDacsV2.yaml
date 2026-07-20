@@ -1,5 +1,6 @@
 get:
   summary: Get datasets from currently authenticated user's DACs
+  operationId: apiUserMeDacDatasetsV2Get
   description: |
     Get datasets from currently authenticated user's DACs.
     Note that study information is not included in dataset list endpoints but is provided in
@@ -17,5 +18,11 @@ get:
               $ref: '../schemas/Dataset.yaml'
     404:
       description: User not found or no datasets found for user
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error

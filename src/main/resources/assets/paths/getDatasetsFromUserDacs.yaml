@@ -1,5 +1,6 @@
 get:
   summary: Get datasets from currently authenticated user's DACs
+  operationId: apiUserMeDacDatasetsGet
   description: Get datasets from currently authenticated user's DACs
   deprecated: true
   tags:
@@ -15,5 +16,11 @@ get:
               $ref: '../schemas/Dataset.yaml'
     404:
       description: User not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error

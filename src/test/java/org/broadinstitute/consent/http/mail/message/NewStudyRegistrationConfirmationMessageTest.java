@@ -1,34 +1,40 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewStudyRegistrationConfirmationMessageTest {
+class NewStudyRegistrationConfirmationMessageTest extends AbstractMailMessageTest {
 
-  private FreeMarkerTemplateHelper helper;
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User submitter = new User();
+    submitter.setDisplayName("Test User");
+    Map<String, Object> assets = Map.of("assetType", List.of("asset1"));
 
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
+    var message =
+        new NewStudyRegistrationConfirmationMessage(submitter, "Cancer Research", 123, assets);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "studySubmitterName",
+            "Test User",
+            "studyName",
+            "Cancer Research",
+            "studyId",
+            123,
+            "studyAssets",
+            assets));
+    assertEquals("Cancer Research", message.getEntityReferenceId());
   }
 
   @Test
-  void testMessageTemplate_singleAsset() throws IOException, TemplateException {
+  void testMessageTemplate_singleAsset() throws Exception {
     User submitter = new User();
     submitter.setDisplayName("Test User");
     String studyName = "Cancer Research";
@@ -38,21 +44,17 @@ class NewStudyRegistrationConfirmationMessageTest {
     var message =
         new NewStudyRegistrationConfirmationMessage(submitter, studyName, studyId, assets);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "localhost:8080");
 
-    assertTrue(parsedTemplate.text().contains("Test User"));
-    assertTrue(parsedTemplate.text().contains(studyName));
-    assertTrue(parsedTemplate.text().contains(String.valueOf(studyId)));
-    assertTrue(parsedTemplate.text().contains("assetType"));
-    assertTrue(parsedTemplate.text().contains("1 item"));
+    assertTrue(rendered.document().text().contains("Test User"));
+    assertTrue(rendered.document().text().contains(studyName));
+    assertTrue(rendered.document().text().contains(String.valueOf(studyId)));
+    assertTrue(rendered.document().text().contains("assetType"));
+    assertTrue(rendered.document().text().contains("1 item"));
   }
 
   @Test
-  void testMessageTemplate_multipleAssets() throws IOException, TemplateException {
+  void testMessageTemplate_multipleAssets() throws Exception {
     User submitter = new User();
     submitter.setDisplayName("Test User");
     String studyName = "Cancer Research";
@@ -62,16 +64,12 @@ class NewStudyRegistrationConfirmationMessageTest {
     var message =
         new NewStudyRegistrationConfirmationMessage(submitter, studyName, studyId, assets);
 
-    var template = helper.getTemplate(message.getTemplateName());
-    var out = new StringWriter();
-    template.process(message.createModel("localhost:8080"), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "localhost:8080");
 
-    assertTrue(parsedTemplate.text().contains("Test User"));
-    assertTrue(parsedTemplate.text().contains(studyName));
-    assertTrue(parsedTemplate.text().contains(String.valueOf(studyId)));
-    assertTrue(parsedTemplate.text().contains("assetType"));
-    assertTrue(parsedTemplate.text().contains("2 items"));
+    assertTrue(rendered.document().text().contains("Test User"));
+    assertTrue(rendered.document().text().contains(studyName));
+    assertTrue(rendered.document().text().contains(String.valueOf(studyId)));
+    assertTrue(rendered.document().text().contains("assetType"));
+    assertTrue(rendered.document().text().contains("2 items"));
   }
 }

@@ -11,8 +11,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,7 +35,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
@@ -49,17 +51,20 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -100,6 +105,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       new User(4, memberUser.getEmail(), "Member user", new Date(), memberRoles);
   private final User bob = new User(5, anotherUser.getEmail(), "Bob", new Date(), roles);
   @Mock private DaaService daaService;
+  @Mock private DacService dacService;
   @Mock private DataAccessRequestService dataAccessRequestService;
   @Mock private MatchService matchService;
   @Mock private GCSService gcsService;
@@ -110,7 +116,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Mock private UriInfo info;
   @Mock private UriBuilder builder;
   @Mock private User mockUser;
-  @Mock private ContainerRequest containerRequest;
   private DataAccessRequestResource resource;
 
   @BeforeEach
@@ -120,6 +125,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       resource =
           new DataAccessRequestResource(
               daaService,
+              dacService,
               dataAccessRequestService,
               gcsService,
               userService,
@@ -208,9 +214,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetByReferenceIdForbidden() {
     DuosUser mockedDuosUser = new DuosUser(authUser, mockUser);
     when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
-    when(dataAccessRequestService.findByReferenceId("id")).thenReturn(generateDataAccessRequest());
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
 
-    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(mockedDuosUser, "id"));
+    try (Response response = resource.getByReferenceId(mockedDuosUser, "id")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
   }
 
   @ParameterizedTest
@@ -220,10 +229,23 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetByReferenceIdAllowedRoles(UserRoles role) {
     UserRole userRole = new UserRole(role.getRoleId(), role.getRoleName());
     User roleUser = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(userRole));
+    roleUser.setInstitutionId(7);
     // Set the DAR create user to be a different user from the roleUser
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(roleUser.getUserId() + 1);
+    dar.setDatasetIds(List.of(10));
     when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
+
+    // CHAIRPERSON / MEMBER: user must be in a DAC governing a DAR dataset
+    Dac relevantDac = new Dac();
+    relevantDac.setChairpersons(List.of(roleUser));
+    relevantDac.setMembers(List.of(roleUser));
+    lenient().when(dacService.findByDatasetId(any())).thenReturn(Set.of(relevantDac));
+
+    // SIGNINGOFFICIAL: creator must share the same institution
+    User creator = new User(dar.getUserId(), "creator@test.com", "Creator", new Date(), roles);
+    creator.setInstitutionId(7);
+    lenient().when(userService.findUserById(dar.getUserId())).thenReturn(creator);
 
     Response response = resource.getByReferenceId(new DuosUser(authUser, roleUser), "id");
     assertEquals(200, response.getStatus());
@@ -241,7 +263,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(roleUser.getUserId() + 1);
     when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
-    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(duosRoleUser, "id"));
+
+    try (Response response = resource.getByReferenceId(duosRoleUser, "id")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -326,6 +351,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.getData().setIrbDocumentLocation(randomAlphabetic(10));
     dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+
+    // For non-creator chair/member: stub DAC membership so validation passes
+    Dac dacWithAll = new Dac();
+    dacWithAll.setChairpersons(List.of(chairperson));
+    dacWithAll.setMembers(List.of(member));
+    when(dacService.findByDatasetId(any())).thenReturn(Set.of(dacWithAll));
 
     assertEquals(
         200, resource.getIrbDocument(new DuosUser(chairpersonUser, chairperson), "").getStatus());
@@ -412,10 +443,21 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     return Pair.of(inputStream, formData);
   }
 
+  private void mockProgressReportUserAndParentDar(DataAccessRequest parentDar) {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+  }
+
+  private void mockNoOpenProgressReportElections(DataAccessRequest parentDar) {
+    when(dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId()))
+        .thenReturn(List.of());
+  }
+
   @Test
   void testPostProgressReportCollabAndEthicsFiles() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
         .thenReturn(childDar);
@@ -425,7 +467,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -442,12 +484,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testPostProgressReportDifferentUser() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setUserId(2);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     Response response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -461,12 +503,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportMissingParentDar() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -483,12 +526,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testPostProgressReportInvalidJson() {
     String invalidDar = "{\"projectTitle\": \"test\", \"datasetIds\": \"invalid\"}";
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -504,11 +548,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportThrowsWhenNoERACommonsID() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
-            duosUser, request, "", "", null, null, null, null)) {
+        resource.postProgressReport(duosUser, request, "", "", null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -516,7 +560,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testPostProgressReportWithOpenElections() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
     Election election = new Election();
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -527,7 +571,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -542,27 +586,25 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
               .getEntity()
               .toString()
               .contains(
-                  "Cannot create a progress report for a DAR: "
-                      + parentDar.getDarCode()
-                      + " with an open election"));
+                  "Cannot create a progress report for a DAR with an open election: "
+                      + parentDar.getReferenceId()));
     }
   }
 
   @Test
   void testPostProgressReportFailsWhenDAARestricted() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-
-    // Mock enforcement to fail
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
     doThrow(new ForbiddenException("DAA restriction violated"))
-        .when(datasetService)
-        .enforceDAARestrictions(eq(user), any());
+        .when(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
 
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -575,15 +617,15 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
-    // Ensure persistence never happens
-    verify(dataAccessRequestService, never())
+    verify(dataAccessRequestService, times(1))
         .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
   }
 
   @Test
-  void testPostProgressReportInvokesDAAEnforcement() {
+  void testPostProgressReportDelegatesToCreateProgressReport() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
 
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
@@ -595,7 +637,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -608,7 +650,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
-    verify(datasetService).enforceDAARestrictions(eq(user), any());
+    verify(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
   }
 
   @Test
@@ -844,6 +887,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.getData().setCollaborationLetterName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
 
+    // For non-creator chair/member: stub DAC membership so validation passes
+    Dac dacWithAll = new Dac();
+    dacWithAll.setChairpersons(List.of(chairperson));
+    dacWithAll.setMembers(List.of(member));
+    when(dacService.findByDatasetId(any())).thenReturn(Set.of(dacWithAll));
+
     assertEquals(
         200,
         resource
@@ -1032,18 +1081,15 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(dar);
-      doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(darCollectionService).createElectionsForNewDarCollection(any());
-      doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
+      when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
+      when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response =
-        resource.createDataAccessRequestWithDAARestrictions(authUser, containerRequest, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequest(authUser, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
@@ -1060,13 +1106,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
+      doThrow(BadRequestException.class)
+          .when(dataAccessRequestService)
+          .insertDraftDataAccessRequest(any(), any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response =
-        resource.createDataAccessRequestWithDAARestrictions(authUser, containerRequest, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequest(authUser, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -1091,6 +1138,336 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.getDAAsByReferenceId(new DuosUser(authUser, user), dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetDatasetDaaSnapshotsByReferenceId() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    Timestamp capturedAt = Timestamp.from(Instant.now());
+    Map<Integer, DatasetDaaSnapshot> snapshots =
+        Map.of(
+            1, new DatasetDaaSnapshot(10, capturedAt), 2, new DatasetDaaSnapshot(20, capturedAt));
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.findDatasetDaaSnapshotsByReferenceId(any()))
+        .thenReturn(snapshots);
+
+    try (Response response =
+        resource.getDatasetDaaSnapshotsByReferenceId(
+            new DuosUser(authUser, user), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(snapshots, response.getEntity());
+    }
+  }
+
+  @Test
+  void testGetDatasetDaaSnapshotsByReferenceIdDarNotFound() {
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
+
+    try (Response response =
+        resource.getDatasetDaaSnapshotsByReferenceId(new DuosUser(authUser, user), "missing")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetDatasetDaaSnapshotsByReferenceIdSnapshotNotFound() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.findDatasetDaaSnapshotsByReferenceId(any()))
+        .thenThrow(new NotFoundException("No snapshot"));
+
+    try (Response response =
+        resource.getDatasetDaaSnapshotsByReferenceId(
+            new DuosUser(authUser, user), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  // ── validateAuthedRoleUser – DAC membership enforcement ─────────────────────────────────────
+
+  /** Builds a DAR owned by a *different* user (userId = 99) with one dataset. */
+  private DataAccessRequest buildDarOwnedByOther() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(99); // not the chairperson/member/SO under test
+    dar.setDatasetIds(List.of(101));
+    return dar;
+  }
+
+  /** Builds a Dac whose chairpersons list contains the given user. */
+  private Dac dacWithChair(User chair) {
+    Dac dac = new Dac();
+    dac.setChairpersons(List.of(chair));
+    dac.setMembers(List.of());
+    return dac;
+  }
+
+  /** Builds a Dac whose members list contains the given user. */
+  private Dac dacWithMember(User member) {
+    Dac dac = new Dac();
+    dac.setChairpersons(List.of());
+    dac.setMembers(List.of(member));
+    return dac;
+  }
+
+  @Test
+  void testGetByReferenceId_Chairperson_InDac_Allowed() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(dacService.findByDatasetId(dar.getDatasetIds()))
+        .thenReturn(Set.of(dacWithChair(chairperson)));
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(chairpersonUser, chairperson), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Chairperson_NotInDac_Forbidden() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    // The DAC for the dataset has no members/chairs that match the chairperson
+    Dac emptyDac = new Dac();
+    emptyDac.setChairpersons(List.of());
+    emptyDac.setMembers(List.of());
+    when(dacService.findByDatasetId(dar.getDatasetIds())).thenReturn(Set.of(emptyDac));
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(chairpersonUser, chairperson), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Chairperson_DarHasNoDatasets_Forbidden() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    dar.setDatasetIds(List.of());
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(chairpersonUser, chairperson), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Member_InDac_Allowed() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(dacService.findByDatasetId(dar.getDatasetIds())).thenReturn(Set.of(dacWithMember(member)));
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(memberUser, member), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Member_NotInDac_Forbidden() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    Dac emptyDac = new Dac();
+    emptyDac.setChairpersons(List.of());
+    emptyDac.setMembers(List.of());
+    when(dacService.findByDatasetId(dar.getDatasetIds())).thenReturn(Set.of(emptyDac));
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(memberUser, member), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Member_InDac_WithNullChairList_Allowed() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    Dac dac = new Dac();
+    dac.setChairpersons(null);
+    dac.setMembers(List.of(member));
+    when(dacService.findByDatasetId(dar.getDatasetIds())).thenReturn(Set.of(dac));
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(memberUser, member), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Chairperson_InDac_WithNullMemberList_Allowed() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    Dac dac = new Dac();
+    dac.setChairpersons(List.of(chairperson));
+    dac.setMembers(null);
+    when(dacService.findByDatasetId(dar.getDatasetIds())).thenReturn(Set.of(dac));
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(chairpersonUser, chairperson), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Chairperson_DarHasNullDatasets_Forbidden() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    dar.setDatasetIds(null);
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(chairpersonUser, chairperson), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Member_DacHasNullMembers_Forbidden() {
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    Dac dac = new Dac();
+    dac.setChairpersons(List.of());
+    dac.setMembers(null);
+    when(dacService.findByDatasetId(dar.getDatasetIds())).thenReturn(Set.of(dac));
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(memberUser, member), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Admin_BypassesDacCheck() {
+    // Admin should never be subject to the DAC-membership check
+    DataAccessRequest dar = buildDarOwnedByOther();
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(adminUser, admin), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_Creator_BypassesDacCheck() {
+    // The DAR creator (userId == user.getUserId()) bypasses all additional checks
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(user.getUserId());
+    dar.setDatasetIds(List.of(101));
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(authUser, user), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_InvalidDarUserId_AdminAllowed() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(null);
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(adminUser, admin), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_NonPositiveDarUserId_AdminAllowed() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(0);
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    try (Response response =
+        resource.getByReferenceId(new DuosUser(adminUser, admin), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  // ── validateAuthedRoleUser – Signing Official institution enforcement ─────────────────────────
+
+  private User buildSigningOfficial(int userId, Integer institutionId) {
+    AuthUser soAuthUser = new AuthUser("so_" + userId + "@test.com");
+    List<UserRole> soRoles = List.of(UserRoles.SigningOfficial());
+    User so = new User(userId, soAuthUser.getEmail(), "SO User", new Date(), soRoles);
+    so.setInstitutionId(institutionId);
+    return so;
+  }
+
+  @Test
+  void testGetByReferenceId_SigningOfficial_SameInstitution_Allowed() {
+    User so = buildSigningOfficial(20, 5);
+    User darCreator = new User(99, "creator@test.com", "Creator", new Date(), roles);
+    darCreator.setInstitutionId(5); // same institution
+
+    DataAccessRequest dar = buildDarOwnedByOther();
+    dar.setUserId(darCreator.getUserId());
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserById(darCreator.getUserId())).thenReturn(darCreator);
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(new AuthUser(so.getEmail()), so), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_SigningOfficial_DifferentInstitution_Forbidden() {
+    User so = buildSigningOfficial(20, 5);
+    User darCreator = new User(99, "creator@test.com", "Creator", new Date(), roles);
+    darCreator.setInstitutionId(99); // different institution
+
+    DataAccessRequest dar = buildDarOwnedByOther();
+    dar.setUserId(darCreator.getUserId());
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserById(darCreator.getUserId())).thenReturn(darCreator);
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(new AuthUser(so.getEmail()), so), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_SigningOfficial_NoInstitution_Forbidden() {
+    // SO has no institution set
+    User so = buildSigningOfficial(20, null);
+    User darCreator = new User(99, "creator@test.com", "Creator", new Date(), roles);
+    darCreator.setInstitutionId(5);
+
+    DataAccessRequest dar = buildDarOwnedByOther();
+    dar.setUserId(darCreator.getUserId());
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserById(darCreator.getUserId())).thenReturn(darCreator);
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(new AuthUser(so.getEmail()), so), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetByReferenceId_SigningOfficial_CreatorNotFound_Forbidden() {
+    User so = buildSigningOfficial(20, 5);
+
+    DataAccessRequest dar = buildDarOwnedByOther();
+    dar.setUserId(99);
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserById(99)).thenReturn(null); // creator not resolvable
+
+    try (Response response =
+        resource.getByReferenceId(
+            new DuosUser(new AuthUser(so.getEmail()), so), dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 

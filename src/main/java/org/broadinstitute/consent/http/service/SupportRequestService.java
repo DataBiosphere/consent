@@ -19,17 +19,19 @@ import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.zendesk.client.v2.model.Request;
 
 public class SupportRequestService implements ConsentLogger {
 
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
+  private final TicketFactory ticketFactory;
 
   @Inject
-  public SupportRequestService(ServicesConfiguration configuration) {
-    this.clientUtil = new HttpClientUtil(configuration);
+  public SupportRequestService(
+      HttpClientUtil clientUtil, TicketFactory ticketFactory, ServicesConfiguration configuration) {
+    this.clientUtil = clientUtil;
     this.configuration = configuration;
+    this.ticketFactory = ticketFactory;
   }
 
   /**
@@ -79,7 +81,7 @@ public class SupportRequestService implements ConsentLogger {
    * @return The response
    * @throws Exception The exception
    */
-  public Request postTicketToSupport(DuosTicket ticket) throws Exception {
+  public JsonObject postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
       ByteArrayContent content =
@@ -97,7 +99,7 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
-      return TicketFactory.parseRequestResponse(
+      return ticketFactory.parseZendeskResponse(
           IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     }
     throw new BadRequestException("Not configured to send support requests");

@@ -5,6 +5,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.fileTypes;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.numberOfParticipants;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.requestLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
 
 import com.google.gson.JsonArray;
@@ -67,8 +68,13 @@ public class ConsentGroupFromDataset {
       }
       String urlVal = findStringDSPropValue(dataset.getProperties(), url);
       if (Objects.nonNull(urlVal)) {
-        URI uri = URI.create(urlVal);
+        URI uri = createURIWithFallback(urlVal);
         consentGroup.setUrl(uri);
+      }
+      String requestLocationVal = findStringDSPropValue(dataset.getProperties(), requestLocation);
+      if (Objects.nonNull(requestLocationVal)) {
+        URI uri = createURIWithFallback(requestLocationVal);
+        consentGroup.setRequestLocation(uri);
       }
       consentGroup.setNumberOfParticipants(
           findIntegerDSPropValue(dataset.getProperties(), numberOfParticipants));
@@ -80,6 +86,19 @@ public class ConsentGroupFromDataset {
       return consentGroup;
     }
     return null;
+  }
+
+  /**
+   * Safely creates a URI from the given string value. Returns null if URI creation fails, ensuring
+   * that invalid URIs don't break the build process.
+   */
+  private URI createURIWithFallback(String uriString) {
+    try {
+      return URI.create(uriString);
+    } catch (Exception e) {
+      // Return null on failure to avoid breaking the build process
+      return null;
+    }
   }
 
   @Nullable

@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER_TYPE;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
+import com.google.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -52,6 +55,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
+import org.jdbi.v3.core.Jdbi;
 
 public class ElasticSearchService implements ConsentLogger {
 
@@ -67,25 +71,22 @@ public class ElasticSearchService implements ConsentLogger {
 
   private String indexKey;
 
+  @Inject
   public ElasticSearchService(
+      Jdbi jdbi,
+      DatasetServiceDAO datasetServiceDAO,
       RestClient esClient,
       ElasticSearchConfiguration esConfig,
-      DacDAO dacDAO,
-      UserDAO userDao,
-      OntologyService ontologyService,
-      InstitutionDAO institutionDAO,
-      DatasetDAO datasetDAO,
-      DatasetServiceDAO datasetServiceDAO,
-      StudyDAO studyDAO) {
+      OntologyService ontologyService) {
     this.esClient = esClient;
     this.esConfig = esConfig;
-    this.dacDAO = dacDAO;
-    this.userDAO = userDao;
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
     this.ontologyService = ontologyService;
-    this.institutionDAO = institutionDAO;
-    this.datasetDAO = datasetDAO;
+    this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.datasetServiceDAO = datasetServiceDAO;
-    this.studyDAO = studyDAO;
+    this.studyDAO = jdbi.onDemand(StudyDAO.class);
   }
 
   private static final int MAX_RESULT_WINDOW = 10000;
@@ -166,6 +167,7 @@ public class ElasticSearchService implements ConsentLogger {
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
     Request deleteRequest =
         new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
+    deleteRequest.addParameter("conflicts", "proceed");
     deleteRequest.setEntity(
         new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
@@ -293,6 +295,10 @@ public class ElasticSearchService implements ConsentLogger {
         .ifPresent(prop -> term.setAssets(buildMapFromPropertyValue(prop.getValue())));
     findStudyProperty(study.getProperties(), data)
         .ifPresent(prop -> term.setData(buildMapFromPropertyValue(prop.getValue())));
+    findStudyProperty(study.getProperties(), EXTERNAL_IDENTIFIER)
+        .ifPresent(prop -> term.setExternalIdentifier(prop.getValue().toString()));
+    findStudyProperty(study.getProperties(), EXTERNAL_IDENTIFIER_TYPE)
+        .ifPresent(prop -> term.setExternalIdentifierType(prop.getValue().toString()));
     return term;
   }
 
@@ -499,6 +505,10 @@ public class ElasticSearchService implements ConsentLogger {
 
     findDatasetProperty(dataset.getProperties(), "url")
         .ifPresent(datasetProperty -> term.setUrl(datasetProperty.getPropertyValueAsString()));
+
+    findDatasetProperty(dataset.getProperties(), "requestLocation")
+        .ifPresent(
+            datasetProperty -> term.setRequestLocation(datasetProperty.getPropertyValueAsString()));
 
     findDatasetProperty(dataset.getProperties(), "dataLocation")
         .ifPresent(

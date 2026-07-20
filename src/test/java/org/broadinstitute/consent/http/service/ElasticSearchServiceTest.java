@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,19 +105,17 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Mock private StudyDAO studyDAO;
 
+  @Mock private Jdbi jdbi;
+
   @BeforeEach
   void initService() {
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDao);
+    when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
     service =
-        new ElasticSearchService(
-            esClient,
-            esConfig,
-            dacDAO,
-            userDao,
-            ontologyService,
-            institutionDAO,
-            datasetDAO,
-            datasetServiceDAO,
-            studyDAO);
+        new ElasticSearchService(jdbi, datasetServiceDAO, esClient, esConfig, ontologyService);
     service.setIndexKey("_index");
   }
 
@@ -239,7 +238,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json),
-        createStudyProperty("throughBioId", PropertyType.String));
+        createStudyProperty("throughBioId", PropertyType.String),
+        createStudyProperty("externalIdentifier", PropertyType.String),
+        createStudyProperty("externalIdentifierType", PropertyType.String));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(
         Set.of(
@@ -359,6 +360,22 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             .filter(p -> p.getKey().equals("throughBioId"))
             .findFirst();
     assertTrue(throughBioIdProp.isPresent());
+    Optional<StudyProperty> externalIdentifierProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("externalIdentifier"))
+            .findFirst();
+    assertTrue(externalIdentifierProp.isPresent());
+    assertEquals(
+        externalIdentifierProp.get().getValue().toString(),
+        term.getStudy().getExternalIdentifier());
+    Optional<StudyProperty> externalIdentifierTypeProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("externalIdentifierType"))
+            .findFirst();
+    assertTrue(externalIdentifierTypeProp.isPresent());
+    assertEquals(
+        externalIdentifierTypeProp.get().getValue().toString(),
+        term.getStudy().getExternalIdentifierType());
   }
 
   @ParameterizedTest
@@ -554,6 +571,44 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testToDatasetTerm_RequestLocation() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Study study = createStudy(user);
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    dataset.setProperties(
+        Set.of(createDatasetProperty("requestLocation", PropertyType.String, "Request Location")));
+    dataset.setStudy(study);
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    Optional<DatasetProperty> requestLocationProp =
+        dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals("requestLocation"))
+            .findFirst();
+    assertTrue(requestLocationProp.isPresent());
+    assertEquals(
+        requestLocationProp.get().getPropertyValue().toString(), term.getRequestLocation());
+  }
+
+  @Test
+  void testToDatasetTerm_RequestLocation_Missing() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    // No requestLocation property
+    dataset.setProperties(Set.of(createDatasetProperty("url", PropertyType.String, "url")));
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertNull(term.getRequestLocation());
+  }
+
+  @Test
   void testToDatasetTermNullDatasetProps() {
     Dataset dataset = new Dataset();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
@@ -595,6 +650,31 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
               {"datasetId":2}
 
               """,
+          new String(
+              capturedRequest.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8));
+    }
+  }
+
+  @Test
+  void testDeleteIndexProceedsOnVersionConflicts() throws IOException {
+    String datasetIndexName = randomAlphabetic(10);
+    int datasetId = randomInt(1, 100);
+    int userId = randomInt(1, 100);
+
+    when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
+    mockElasticSearchResponse("{\"deleted\":1}");
+
+    try (var _ = service.deleteIndex(datasetId, userId)) {
+      verify(esClient).performRequest(request.capture());
+      Request capturedRequest = request.getValue();
+      assertEquals("POST", capturedRequest.getMethod());
+      assertEquals("/" + datasetIndexName + "/_delete_by_query", capturedRequest.getEndpoint());
+      assertEquals("proceed", capturedRequest.getParameters().get("conflicts"));
+      assertEquals(
+          """
+              { "query": { "bool": { "must": [ { "match": { "_index": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
+              """
+              .formatted(datasetId),
           new String(
               capturedRequest.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8));
     }

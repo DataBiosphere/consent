@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -18,17 +20,20 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,16 +43,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AcknowledgementServiceTest extends AbstractTestHelper {
 
-  @Mock private static AcknowledgementDAO acknowledgementDAO;
-  @Mock private static DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock private static EmailService emailService;
+  @Mock private Jdbi jdbi;
+  @Mock private AcknowledgementDAO acknowledgementDAO;
+  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private EmailService emailService;
 
   private AcknowledgementService acknowledgementService;
 
   @BeforeEach
   void setUp() {
-    acknowledgementService =
-        new AcknowledgementService(acknowledgementDAO, dataAccessRequestDAO, emailService);
+    when(jdbi.onDemand(AcknowledgementDAO.class)).thenReturn(acknowledgementDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    acknowledgementService = new AcknowledgementService(jdbi, emailService);
   }
 
   @Test
@@ -152,9 +159,13 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
         List.of(ack1.getAckKey(), ack2.getAckKey(), ack3.getAckKey()), user);
     // Only two acknowledgements are closeouts, so only two emails should be sent
     verify(emailService)
-        .sendResearcherCloseoutCompletedMessage(user, dar1.getDarCode(), dar1.getReferenceId());
+        .sendMessage(
+            argThat(m -> Objects.equals(m.getEntityReferenceId(), dar1.getReferenceId())),
+            eq(user.getUserId()));
     verify(emailService)
-        .sendResearcherCloseoutCompletedMessage(user, dar2.getDarCode(), dar2.getReferenceId());
+        .sendMessage(
+            argThat(m -> Objects.equals(m.getEntityReferenceId(), dar2.getReferenceId())),
+            eq(user.getUserId()));
   }
 
   @Test
@@ -179,8 +190,7 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     List<String> keys = List.of(ack1.getAckKey());
     assertThrows(
         BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
-    verify(emailService, never())
-        .sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
+    verify(emailService, never()).sendMessage(any(), anyInt());
   }
 
   @Test
@@ -213,7 +223,9 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
 
     acknowledgementService.makeAcknowledgements(List.of(ackKey), chair2);
     verify(emailService)
-        .sendResearcherCloseoutCompletedMessage(chair2, dar1.getDarCode(), dar1.getReferenceId());
+        .sendMessage(
+            argThat(m -> Objects.equals(m.getEntityReferenceId(), dar1.getReferenceId())),
+            eq(chair2.getUserId()));
   }
 
   @Test
@@ -234,7 +246,26 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     List<String> keys = List.of(key);
     assertThrows(
         BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
-    verify(emailService, never())
-        .sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
+    verify(emailService, never()).sendMessage(any(), anyInt());
+  }
+
+  @Test
+  void testSendResearcherCloseoutCompletedMessage() throws Exception {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    String referenceId = UUID.randomUUID().toString();
+
+    acknowledgementService.sendResearcherCloseoutCompletedMessage(user, darCode, referenceId);
+
+    verify(emailService)
+        .sendMessage(
+            argThat(
+                m ->
+                    m instanceof ResearcherCloseoutCompletedMessage
+                        && Objects.equals(m.getEntityReferenceId(), referenceId)),
+            eq(user.getUserId()));
   }
 }

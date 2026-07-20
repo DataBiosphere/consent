@@ -1,20 +1,29 @@
 package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
+import org.broadinstitute.consent.http.db.mapper.DaaDatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarDatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DatasetDaaMapping;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshotDetail;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
+import org.jdbi.v3.sqlobject.customizer.BindMethods;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -58,9 +67,9 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
-          LEFT JOIN dac ON dd.dac_id = dac.dac_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
       """)
   List<DataAccessAgreement> findAll();
 
@@ -99,9 +108,9 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
-          LEFT JOIN dac ON dd.dac_id = dac.dac_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
           WHERE daa.daa_id = :daaId
       """)
   DataAccessAgreement findById(@Bind("daaId") Integer daaId);
@@ -141,12 +150,43 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
           LEFT JOIN dac ON dd.dac_id = dac.dac_id
           WHERE daa.initial_dac_id = :dacId
       """)
   DataAccessAgreement findByDacId(@Bind("dacId") Integer dacId);
+
+  @SqlQuery(
+      """
+          SELECT daa_id FROM dac_daa WHERE dac_id = :dacId
+          UNION
+          SELECT daa_id FROM data_access_agreement WHERE initial_dac_id = :dacId
+          ORDER BY daa_id DESC
+          """)
+  List<Integer> findDaaIdsByDacId(@Bind("dacId") Integer dacId);
+
+  @SqlQuery(
+      """
+          SELECT EXISTS (
+              SELECT 1
+              FROM dac_daa
+              WHERE dac_id = :dacId
+                    AND daa_id = :daaId
+          )
+          """)
+  boolean isDaaLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+
+  @SqlQuery(
+      """
+          SELECT EXISTS (
+              SELECT 1
+              FROM data_access_agreement
+              WHERE initial_dac_id = :dacId
+                    AND daa_id = :daaId
+          )
+          """)
+  boolean isDaaInitiallyLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
   /**
    * Create a Daa given name, description, and create date
@@ -181,10 +221,23 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate(
       """
-      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, 'ADD', NOW()))
+      WITH previous_dac_daa AS (
+          SELECT daa_id
+          FROM dac_daa
+          WHERE dac_id = :dacId
+      ),
+      delete_audit AS (
+          INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+          SELECT daa_id, :dacId, :userId, 'REMOVE', NOW()
+          FROM previous_dac_daa
+      ),
+      add_audit AS (
+          INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+          VALUES (:daaId, :dacId, :userId, 'ADD', NOW())
+      )
       INSERT INTO dac_daa (dac_id, daa_id)
       VALUES (:dacId, :daaId)
-      ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
+      ON CONFLICT (dac_id) DO UPDATE SET daa_id = EXCLUDED.daa_id
       """)
   void createDacDaaRelation(
       @Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId, @Bind("userId") Integer userId);
@@ -250,7 +303,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
           INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
           INNER JOIN dataset ON dataset.dac_id = dac.dac_id
@@ -284,7 +337,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * are also NOT considering the initial DAC that created the DAA.
    *
    * @param datasetIds List of dataset IDs
-   * @return List of Data Access Agreement IDs
+   * @return Set of Data Access Agreement IDs
    */
   @SqlQuery(
       """
@@ -299,4 +352,81 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   Set<Integer> findDaaIdsByDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
           List<Integer> datasetIds);
+
+  @SqlQuery(
+      """
+          SELECT daa.daa_id, dataset.dataset_id
+          FROM data_access_agreement daa
+          INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN dataset ON dataset.dac_id = dac.dac_id
+          WHERE dataset.dataset_id IN (<datasetIds>)
+          GROUP BY daa.daa_id, dataset.dataset_id
+          ORDER BY daa.daa_id
+      """)
+  @UseRowReducer(DaaDatasetReducer.class)
+  Map<Integer, Set<Integer>> mapDaaIdsToDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> datasetIds);
+
+  @SqlBatch(
+      """
+        INSERT INTO dar_daa (dar_id, daa_id) VALUES (:darId, :daaId)
+        ON CONFLICT DO NOTHING
+    """)
+  void insertDarDAARelationship(@Bind("darId") Integer darId, @Bind("daaId") Set<Integer> daaIds);
+
+  @RegisterConstructorMapper(DatasetDaaMapping.class)
+  @SqlQuery(
+      """
+          SELECT dataset.dataset_id AS datasetId, daa.daa_id AS daaId
+          FROM dataset
+          INNER JOIN dac ON dataset.dac_id = dac.dac_id
+          INNER JOIN dac_daa ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN data_access_agreement daa ON dac_daa.daa_id = daa.daa_id
+          WHERE dataset.dataset_id IN (<datasetIds>)
+          ORDER BY dataset.dataset_id
+          """)
+  List<DatasetDaaMapping> findCurrentDaaMappingsByDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> datasetIds);
+
+  @SqlBatch(
+      """
+          INSERT INTO dar_dataset_daa_snapshot (dar_id, dataset_id, daa_id, captured_at)
+          VALUES (:darId, :datasetId, :daaId, :capturedAt)
+          ON CONFLICT (dar_id, dataset_id)
+          DO UPDATE SET daa_id = EXCLUDED.daa_id, captured_at = EXCLUDED.captured_at
+          """)
+  void insertDarDatasetDaaSnapshots(@BindMethods Collection<DarDatasetDaaSnapshot> snapshots);
+
+  @RegisterConstructorMapper(DatasetDaaSnapshotDetail.class)
+  @SqlQuery(
+      """
+          SELECT ddds.dataset_id AS datasetId,
+                 ddds.daa_id AS daaId,
+                 ddds.captured_at AS capturedAt
+          FROM dar_dataset_daa_snapshot ddds
+          INNER JOIN data_access_request dar ON ddds.dar_id = dar.id
+          WHERE dar.reference_id = :referenceId
+          ORDER BY ddds.dataset_id
+          """)
+  List<DatasetDaaSnapshotDetail> findDatasetDaaSnapshotsByReferenceId(
+      @Bind("referenceId") String referenceId);
+
+  @SqlUpdate(
+      """
+          DELETE FROM dar_dataset_daa_snapshot
+          WHERE dar_id = (
+              SELECT id
+              FROM data_access_request
+              WHERE reference_id = :referenceId
+          )
+          """)
+  void deleteDarDatasetDaaSnapshotsByReferenceId(@Bind("referenceId") String referenceId);
+
+  @SqlUpdate(
+      """
+      DELETE FROM dar_daa WHERE dar_id = :darId
+    """)
+  void deleteDarDAARelationship(@Bind("darId") Integer darId);
 }

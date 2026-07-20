@@ -15,19 +15,19 @@
     <maven.compiler.target>25</maven.compiler.target>
     <maven.version>3.9.11</maven.version>
     <liquibase.version>4.33.0</liquibase.version>
-    <dropwizard.version>5.0.1</dropwizard.version>
-    <logback.version>1.5.25</logback.version>
-    <postgres.version>42.7.10</postgres.version>
-    <surefire.version>3.5.5</surefire.version>
-    <swagger.ui.version>5.32.4</swagger.ui.version>
+    <dropwizard.version>5.0.2</dropwizard.version>
+    <logback.version>1.5.37</logback.version>
+    <postgres.version>42.7.13</postgres.version>
+    <surefire.version>3.5.6</surefire.version>
+    <swagger.ui.version>5.32.8</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
-    <junit.version>6.0.3</junit.version>
+    <junit.version>6.1.1</junit.version>
     <mockito.version>5.23.0</mockito.version>
-    <sonar.plugin.version>5.6.0.6792</sonar.plugin.version>
-    <netty.override.version>4.2.12.Final</netty.override.version>
-    <spotless.version>3.4.0</spotless.version>
-    <jetty.version>12.1.8</jetty.version>
+    <sonar.plugin.version>5.7.0.6970</sonar.plugin.version>
+    <netty.override.version>4.2.16.Final</netty.override.version>
+    <spotless.version>3.8.0</spotless.version>
+    <jetty.version>12.1.11</jetty.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -35,52 +35,6 @@
     <sonar.projectKey>DataBiosphere_consent</sonar.projectKey>
     <sonar.projectName>consent</sonar.projectName>
   </properties>
-
-  <profiles>
-    <profile>
-      <id>all-tests</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <!-- Updated configuration for mockito-->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
-                -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
-                -Xshare:off
-              </argLine>
-              <includes>**/*.java</includes>
-              <excludes>**/integration/**/*.java</excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>integration-tests</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <includes>**/integration/**/*.java</includes>
-              <systemProperties>
-                <enableTestContainers>false</enableTestContainers>
-              </systemProperties>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <build>
     <testResources>
@@ -99,6 +53,20 @@
     </testResources>
 
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire.version}</version>
+        <configuration>
+          <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
+          <!-- Updated configuration for mockito-->
+          <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
+            -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+            -Xshare:off
+          </argLine>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
@@ -155,7 +123,7 @@
           </suppressionFiles>
           <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.2.1</version>
+        <version>12.2.2</version>
         <executions>
           <execution>
             <goals>
@@ -168,7 +136,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.6.2</version>
+        <version>3.6.3</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -183,6 +151,10 @@
                 <requireJavaVersion>
                   <version>${java.version}</version>
                 </requireJavaVersion>
+                <requirePluginVersions/>
+                <requireReleaseDeps>
+                  <onlyWhenRelease>false</onlyWhenRelease>
+                </requireReleaseDeps>
               </rules>
             </configuration>
           </execution>
@@ -258,7 +230,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.14</version>
+        <version>0.8.15</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -294,7 +266,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.10.0</version>
+        <version>3.11.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -383,7 +355,7 @@
       <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>7.21.0</version>
+        <version>7.23.0</version>
         <executions>
           <execution>
             <id>validate-openapi-spec</id>
@@ -397,6 +369,9 @@
               <output>${project.build.directory}/openapi-validation</output>
               <skipValidateSpec>false</skipValidateSpec>
               <strictSpec>true</strictSpec>
+              <configOptions>
+                <generateAliasAsModel>true</generateAliasAsModel>
+              </configOptions>
             </configuration>
           </execution>
         </executions>
@@ -405,6 +380,36 @@
     </plugins>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.22.0</version>
+        </plugin>
         <plugin>
           <groupId>org.sonarsource.scanner.maven</groupId>
           <artifactId>sonar-maven-plugin</artifactId>
@@ -420,13 +425,13 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.51.0</version>
+        <version>3.52.1</version>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty.ee10</groupId>
         <artifactId>jetty-ee10-bom</artifactId>
-        <version>12.1.8</version>
+        <version>12.1.11</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -451,6 +456,32 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>io.sentry</groupId>
+        <artifactId>sentry-bom</artifactId>
+        <version>8.48.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!--
+       See https://broadworkbench.atlassian.net/browse/DT-3748
+       Pin tools.jackson.core:jackson-databind to 3.1.4 to address a reported security issue in 3.1.1
+      -->
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
+        <version>3.2.1</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -460,19 +491,13 @@
     <dependency>
       <groupId>io.swagger.parser.v3</groupId>
       <artifactId>swagger-parser</artifactId>
-      <version>2.1.40</version>
+      <version>2.1.45</version>
     </dependency>
 
-    <!-- json-schema-validator 1.0.83 -> 1.0.84 introduced a breaking dependency change, it now requires jackson core -->
-    <dependency>
-      <groupId>com.networknt</groupId>
-      <artifactId>json-schema-validator</artifactId>
-      <version>1.5.9</version>
-    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.21.2</version>
+      <version>2.22.1</version>
     </dependency>
 
     <dependency>
@@ -516,7 +541,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.21</version>
+      <version>2.22</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
@@ -557,7 +582,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.6.1</version>
+      <version>5.6.2</version>
     </dependency>
 
     <dependency>
@@ -569,13 +594,12 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.39.1</version>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.17</version>
+      <version>2.0.18</version>
     </dependency>
 
     <!-- Support for JSON logging -->
@@ -646,7 +670,7 @@
     <dependency>
       <groupId>ch.qos.logback.access</groupId>
       <artifactId>logback-access-common</artifactId>
-      <version>2.0.12</version>
+      <version>2.0.13</version>
     </dependency>
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
@@ -669,6 +693,11 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http</artifactId>
+      <version>${netty.override.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-http2</artifactId>
       <version>${netty.override.version}</version>
     </dependency>
     <dependency>
@@ -752,6 +781,12 @@
     </dependency>
 
     <dependency>
+      <groupId>com.bucket4j</groupId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
+      <version>8.19.0</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>${postgres.version}</version>
@@ -788,13 +823,13 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.67.0</version>
+      <version>2.70.0</version>
     </dependency>
 
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.21.0</version>
+      <version>2.22.0</version>
     </dependency>
 
     <dependency>
@@ -812,7 +847,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.13.2</version>
+      <version>2.14.0</version>
     </dependency>
 
     <dependency>
@@ -830,7 +865,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.3.3</version>
+      <version>9.4.3</version>
     </dependency>
 
     <dependency>
@@ -863,7 +898,13 @@
     <dependency>
       <groupId>com.cloudbees.thirdparty</groupId>
       <artifactId>zendesk-java-client</artifactId>
-      <version>1.5.0</version>
+      <version>1.5.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-codec-http2</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

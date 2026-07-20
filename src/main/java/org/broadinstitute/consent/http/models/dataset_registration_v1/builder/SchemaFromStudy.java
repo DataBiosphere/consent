@@ -17,6 +17,8 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPPhsID;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPStudyRegistrationName;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.embargoReleaseDate;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.externalIdentifier;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.externalIdentifierType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.multiCenterStudy;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihAnvilUse;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.nihGenomicProgramAdministratorName;
@@ -67,6 +69,7 @@ public class SchemaFromStudy {
           findStringPropValue(study.getProperties(), phenotypeIndication));
       schemaV1.setSpecies(findStringPropValue(study.getProperties(), species));
       schemaV1.setPiName(study.getPiName());
+      schemaV1.setPiEmail(study.getPiEmail());
       schemaV1.setDataSubmitterUserId(study.getCreateUserId());
       schemaV1.setDataCustodianEmail(
           findListStringPropValue(study.getProperties(), dataCustodianEmail));
@@ -138,6 +141,10 @@ public class SchemaFromStudy {
       }
       schemaV1.setAssets(findMapPropValue(study.getProperties(), assets));
       schemaV1.setData(findMapPropValue(study.getProperties(), data));
+      schemaV1.setExternalIdentifier(
+          findStringPropValue(study.getProperties(), externalIdentifier));
+      schemaV1.setExternalIdentifierType(
+          findStringPropValue(study.getProperties(), externalIdentifierType));
     }
 
     return schemaV1;

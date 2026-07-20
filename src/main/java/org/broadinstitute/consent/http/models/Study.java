@@ -13,6 +13,7 @@ public class Study {
   private String description;
   private Boolean publicVisibility;
   private String piName;
+  private String piEmail;
   private List<String> dataTypes;
   private final Set<Integer> datasetIds = new HashSet<>();
   private Set<Dataset> datasets;
@@ -63,6 +64,14 @@ public class Study {
 
   public void setPiName(String piName) {
     this.piName = piName;
+  }
+
+  public String getPiEmail() {
+    return piEmail;
+  }
+
+  public void setPiEmail(String piEmail) {
+    this.piEmail = piEmail;
   }
 
   public List<String> getDataTypes() {

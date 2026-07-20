@@ -29,13 +29,16 @@ public class NewDARRequestMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
-        "serverUrl", serverUrl,
-        "userName", toUser.getDisplayName(),
-        "dacDatasetGroups", dacDatasetMap,
-        "researcherUserName", researcherName,
-        "darID", darCode);
+        "userName",
+        toUser.getDisplayName(),
+        "dacDatasetGroups",
+        dacDatasetMap,
+        "researcherUserName",
+        researcherName,
+        "darID",
+        darCode);
   }
 
   @Override

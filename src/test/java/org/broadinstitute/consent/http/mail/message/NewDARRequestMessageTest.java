@@ -3,32 +3,35 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewDARRequestMessageTest {
+class NewDARRequestMessageTest extends AbstractMailMessageTest {
 
-  private FreeMarkerTemplateHelper helper;
+  @Test
+  void testCreateModel_AddsNewDarRequestFields() {
+    User toUser = new User();
+    toUser.setDisplayName("Admin");
 
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
+    var dacDatasetGroups = Map.of("DAC-01", List.of("DUOS-000001"));
+    var message = new NewDARRequestMessage(toUser, "DAR-01", dacDatasetGroups, "ResearcherName");
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "userName",
+            "Admin",
+            "dacDatasetGroups",
+            dacDatasetGroups,
+            "researcherUserName",
+            "ResearcherName",
+            "darID",
+            "DAR-01"));
   }
 
   @Test
@@ -53,20 +56,18 @@ class NewDARRequestMessageTest {
     assertEquals(darCode, message.getEntityReferenceId());
     assertEquals("Create an election for Data Access Request id: DAR-01.", message.createSubject());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
     String serverUrl = "http://testServerUrl";
-    template.process(message.createModel(serverUrl), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, serverUrl);
 
     assertEquals(
-        "Broad Data Use Oversight System - New DAR submitted to your DAC", parsedTemplate.title());
+        "Broad Data Use Oversight System - New DAR submitted to your DAC",
+        rendered.document().title());
     assertEquals(
-        "Hello Admin,", Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
-    assertTrue(templateString.contains(darCode));
-    assertTrue(templateString.contains(serverUrl));
-    assertTrue(templateString.contains(dac.getName()));
-    assertTrue(templateString.contains(d1.getDatasetIdentifier()));
+        "Hello Admin,",
+        Objects.requireNonNull(rendered.document().getElementById("userName")).text());
+    assertTrue(rendered.content().contains(darCode));
+    assertTrue(rendered.content().contains(serverUrl));
+    assertTrue(rendered.content().contains(dac.getName()));
+    assertTrue(rendered.content().contains(d1.getDatasetIdentifier()));
   }
 }

@@ -21,19 +21,17 @@ properties:
     description: ID of user who created the Library Card record
   updateDate:
     type: string
-    format: Date
+    format: date
     description: Last update date of Library card
   updateUserId:
     type: integer
     description: User who last updated the LibraryCard
-example:
-  id: 1
-  userId: 2
-  institutionId: 3
-  eraCommonsId: CommonsId
-  userName: User Smith
-  userEmail: email@somewhere.com
-  createDate: date
-  createUserId: 3
-  updateDate: date
-  updateUserId: 4
+examples:
+  - id: 1
+    userId: 2
+    userName: User Smith
+    userEmail: email@somewhere.com
+    createDate: "2024-01-15"
+    createUserId: 3
+    updateDate: "2024-06-01"
+    updateUserId: 4

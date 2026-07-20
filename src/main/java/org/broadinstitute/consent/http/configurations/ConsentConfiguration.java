@@ -28,8 +28,6 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull
   private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
-  @Valid @NotNull private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
-
   @JsonProperty("httpClient")
   public JerseyClientConfiguration getJerseyClientConfiguration() {
     return httpClient;
@@ -40,6 +38,9 @@ public class ConsentConfiguration extends Configuration {
 
   @Valid @NotNull @JsonProperty
   private final OidcConfiguration oidcConfiguration = new OidcConfiguration();
+
+  @Valid @NotNull @JsonProperty
+  private final RateLimitConfiguration rateLimit = new RateLimitConfiguration();
 
   public DataSourceFactory getDataSourceFactory() {
     return database;
@@ -61,19 +62,15 @@ public class ConsentConfiguration extends Configuration {
     return freeMarkerConfiguration;
   }
 
-  public GoogleOAuth2Config getGoogleAuthentication() {
-    return googleAuthentication;
-  }
-
-  public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
-    this.googleAuthentication = googleAuthentication;
-  }
-
   public ElasticSearchConfiguration getElasticSearchConfiguration() {
     return elasticSearch;
   }
 
   public OidcConfiguration getOidcConfiguration() {
     return oidcConfiguration;
+  }
+
+  public RateLimitConfiguration getRateLimitConfiguration() {
+    return rateLimit;
   }
 }

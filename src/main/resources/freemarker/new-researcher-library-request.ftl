@@ -1,0 +1,23 @@
+<#assign pageTitle="Broad Data Use Oversight System - Request from your researcher for Library Card permissions">
+<#assign greetingHtml="Hello,">
+<#include "/freemarker/header.ftl">
+        <tr>
+            <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
+                <p id="content" style="margin: 0;">
+                    A researcher from your institution, ${researcherName}, has registered in DUOS and listed you as
+                    their Signing Official. In order to request access to data, they will need to be issued a Library
+                    Card. Click on the following link to review the terms of the Library Card Agreement(s) for this
+                    researcher in your Signing Official Console:
+                </p>
+                <p style="text-align: center">
+                    <a id="serverUrl" href="${serverUrl}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F; font-size: 20px; font-weight: bold;">
+                        Login to review Library Card Agreement(s)
+                    </a>
+                </p>
+                <p>
+                    Please reach out to <a href="mailto:duos-support@broadinstitute.zendesk.com" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">duos-support@broadinstitute.zendesk.com</a> if you have any questions or concerns.
+                </p>
+                <p>Kind regards,<br>the DUOS team</p>
+            </td>
+        </tr>
+<#include "/freemarker/footer.ftl">

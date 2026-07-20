@@ -32,6 +32,12 @@ public class Dac {
 
   private DataAccessAgreement associatedDaa;
 
+  private Boolean deleted;
+
+  private Integer deleteUserId;
+
+  private Date deleteDate;
+
   public Dac() {}
 
   public Integer getDacId() {
@@ -122,6 +128,10 @@ public class Dac {
     this.associatedDaa = associatedDaa;
   }
 
+  public List<Dataset> getDatasets() {
+    return datasets;
+  }
+
   public void addDataset(Dataset dataset) {
     if (Objects.isNull(datasets)) {
       datasets = new ArrayList<>();
@@ -130,5 +140,29 @@ public class Dac {
     if (!datasetIds.contains(dataset.getDatasetId())) {
       addDatasetId(dataset.getDatasetId());
     }
+  }
+
+  public Boolean getDeleted() {
+    return deleted;
+  }
+
+  public void setDeleted(Boolean deleted) {
+    this.deleted = deleted;
+  }
+
+  public Integer getDeleteUserId() {
+    return deleteUserId;
+  }
+
+  public void setDeleteUserId(Integer deleteUserId) {
+    this.deleteUserId = deleteUserId;
+  }
+
+  public Date getDeleteDate() {
+    return deleteDate;
+  }
+
+  public void setDeleteDate(Date deleteDate) {
+    this.deleteDate = deleteDate;
   }
 }

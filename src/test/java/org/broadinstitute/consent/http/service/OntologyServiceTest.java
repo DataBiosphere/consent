@@ -18,11 +18,13 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
@@ -33,9 +35,12 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationResult;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,14 +48,18 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class OntologyServiceTest extends AbstractTestHelper {
 
   private OntologyService service;
+  private ExecutorService executorService;
   private TestAppender testAppender;
+  private TranslationUtil translationUtil;
   private final Gson gson = GsonUtil.getInstance();
+  @Mock private Jdbi jdbi;
   @Mock private OntologyDAO ontologyDAO;
   @Mock private OntologyIndexService indexService;
 
@@ -63,7 +72,17 @@ class OntologyServiceTest extends AbstractTestHelper {
     testLogger.addAppender(testAppender);
     testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     testAppender.start();
-    service = new OntologyService(ontologyDAO, indexService);
+    // A same-thread executor makes indexOntology's async task and callback run synchronously,
+    // so tests can assert on their effects without sleeps or teardown races.
+    executorService = MoreExecutors.newDirectExecutorService();
+    when(jdbi.onDemand(OntologyDAO.class)).thenReturn(ontologyDAO);
+    translationUtil = new TranslationUtil(jdbi);
+    service = new OntologyService(jdbi, indexService, executorService, translationUtil);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdown();
   }
 
   @Test
@@ -141,16 +160,13 @@ class OntologyServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  @SuppressWarnings("java:S2925") // Thread.sleep needed to wait for async callback
-  void testIndexOntologyFailure() throws Exception {
+  void testIndexOntologyFailure() throws OWLOntologyCreationException {
     User user = new User();
     user.setUserId(1);
     String message = "Failed to generate terms";
     when(indexService.generateTerms(OntologyType.DUO)).thenThrow(new RuntimeException(message));
 
     service.indexOntology(user, OntologyType.DUO);
-    // Wait a bit for the async callback to execute
-    Thread.sleep(100);
     // Verify that the failure was logged
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
@@ -170,6 +186,30 @@ class OntologyServiceTest extends AbstractTestHelper {
     assertNotNull(results);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
     assertEquals(2, jsonArray.size());
+  }
+
+  @Test
+  void testReconcileIndexedTerms() {
+    OntologyReconciliationResult result =
+        new OntologyReconciliationResult(
+            "http://purl.obolibrary.org/obo/DOID_162",
+            "MISSING_FROM_INDEX",
+            null,
+            2L,
+            1L,
+            1L,
+            "DATASET:1, DAR:abc");
+    when(ontologyDAO.findReferencedTermsMissingFromIndex()).thenReturn(List.of(result));
+
+    List<OntologyReconciliationResult> results = service.reconcileIndexedTerms();
+    assertEquals(1, results.size());
+    assertEquals(result, results.getFirst());
+  }
+
+  @Test
+  void testReconcileIndexedTermsEmpty() {
+    when(ontologyDAO.findReferencedTermsMissingFromIndex()).thenReturn(List.of());
+    assertTrue(service.reconcileIndexedTerms().isEmpty());
   }
 
   @Test

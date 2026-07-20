@@ -7,7 +7,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +24,8 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -34,6 +35,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class DacService implements ConsentLogger {
 
@@ -43,39 +45,39 @@ public class DacService implements ConsentLogger {
   private final ElectionDAO electionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final VoteService voteService;
+  private final ElasticSearchService elasticSearchService;
   private final DaaService daaService;
   private final DacServiceDAO dacServiceDAO;
   private final DACAutomationRuleDAO ruleDAO;
 
   @Inject
   public DacService(
-      DacDAO dacDAO,
-      UserDAO userDAO,
-      DatasetDAO dataSetDAO,
-      ElectionDAO electionDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
-      VoteService voteService,
-      DaaService daaService,
+      Jdbi jdbi,
       DacServiceDAO dacServiceDAO,
-      DACAutomationRuleDAO ruleDAO) {
-    this.dacDAO = dacDAO;
-    this.userDAO = userDAO;
-    this.dataSetDAO = dataSetDAO;
-    this.electionDAO = electionDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+      VoteService voteService,
+      ElasticSearchService elasticSearchService,
+      DaaService daaService) {
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.dataSetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.voteService = voteService;
+    this.elasticSearchService = elasticSearchService;
     this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;
-    this.ruleDAO = ruleDAO;
+    this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
   }
 
   public List<Dac> findAll() {
     List<Dac> dacs = dacDAO.findAll();
     for (Dac dac : dacs) {
-      DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
-      associatedDaa.setBroadDaa(
-          daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
-      dac.setAssociatedDaa(associatedDaa);
+      if (dac.getAssociatedDaa() != null) {
+        DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+        associatedDaa.setBroadDaa(
+            daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
+        dac.setAssociatedDaa(associatedDaa);
+      }
     }
     return dacs;
   }
@@ -177,24 +179,21 @@ public class DacService implements ConsentLogger {
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
   }
 
-  public Integer createDac(String name, String description) {
-    Date createDate = new Date();
-    return dacDAO.createDac(name, description, createDate);
+  public Integer createDac(String name, String description, Integer userId) {
+    return dacDAO.createDac(name, description, userId);
   }
 
-  public Integer createDac(String name, String description, String email) {
-    Date createDate = new Date();
-    return dacDAO.createDac(name, description, email, createDate);
+  public Integer createDac(String name, String description, String email, Integer userId) {
+    return dacDAO.createDac(name, description, email, userId);
   }
 
-  public void updateDac(String name, String description, Integer dacId) {
-    Date updateDate = new Date();
-    dacDAO.updateDac(name, description, updateDate, dacId);
+  public void updateDac(String name, String description, Integer dacId, Integer userId) {
+    dacDAO.updateDac(name, description, dacId, userId);
   }
 
-  public void updateDac(String name, String description, String email, Integer dacId) {
-    Date updateDate = new Date();
-    dacDAO.updateDac(name, description, email, updateDate, dacId);
+  public void updateDac(
+      String name, String description, String email, Integer dacId, Integer userId) {
+    dacDAO.updateDac(name, description, email, dacId, userId);
   }
 
   public void deleteDac(User user, Integer dacId) throws IllegalArgumentException {
@@ -239,8 +238,9 @@ public class DacService implements ConsentLogger {
     return users;
   }
 
-  public User addDacMember(Role role, User user, Dac dac) throws IllegalArgumentException {
-    dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId());
+  public User addDacMember(Role role, User user, Dac dac, Integer auditUserId)
+      throws IllegalArgumentException {
+    dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId(), auditUserId);
     User updatedUser = userDAO.findUserById(user.getUserId());
     List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
     for (Election e : elections) {
@@ -264,13 +264,13 @@ public class DacService implements ConsentLogger {
     return userDAO.findUserById(updatedUser.getUserId());
   }
 
-  public void removeDacMember(Role role, User user, Dac dac, Integer auditUser)
+  public void removeDacMember(Role role, User user, Dac dac, Integer auditUserId)
       throws BadRequestException {
     if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
       if (dac.getChairpersons().size() <= 1) {
         throw new BadRequestException("Dac requires at least one chairperson.");
       }
-      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUser);
+      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUserId);
     }
     List<UserRole> dacRoles =
         user.getRoles().stream()
@@ -278,7 +278,7 @@ public class DacService implements ConsentLogger {
             .filter(r -> r.getDacId().equals(dac.getDacId()))
             .filter(r -> r.getRoleId().equals(role.getRoleId()))
             .toList();
-    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), auditUserId));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
 
@@ -323,5 +323,30 @@ public class DacService implements ConsentLogger {
     return dacDAO.findDacsForDatasetIds(datasetIds).stream()
         .map(dac -> findById(dac.getDacId()))
         .collect(Collectors.toUnmodifiableSet());
+  }
+
+  public DacDatasetExternalizationResponse convertDacDatasetsToExternal(
+      Integer dacId, Integer userId, DacDatasetExternalizationRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("Request payload is required");
+    }
+    if (request.reason() == null || request.reason().isBlank()) {
+      throw new IllegalArgumentException("A reason is required");
+    }
+    if (!request.shouldRevokeApprovedAccess()) {
+      throw new IllegalArgumentException("revokeApprovedAccess must be true");
+    }
+    findById(dacId);
+    List<Integer> modifiedDatasetIds = dacServiceDAO.findConvertibleDatasetIds(dacId, request);
+    DacDatasetExternalizationResponse response =
+        dacServiceDAO.convertDacDatasetsToExternal(dacId, userId, request);
+    if (!request.isDryRun() && modifiedDatasetIds != null && !modifiedDatasetIds.isEmpty()) {
+      try {
+        elasticSearchService.indexDatasets(modifiedDatasetIds);
+      } catch (Exception e) {
+        logException("Unable to reindex datasets after DAC externalization", e);
+      }
+    }
+    return response;
   }
 }

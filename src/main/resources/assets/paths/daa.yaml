@@ -1,6 +1,6 @@
 get:
   summary: Find all DAAs
-  operationId: findAll
+  operationId: apiDaaGet
   description: Fetches all DAAs
   tags:
     - DAA
@@ -11,5 +11,11 @@ get:
         application/json:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

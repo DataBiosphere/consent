@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -20,10 +21,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -704,6 +707,44 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testAssignDaaToAllEligibleUsers() {
+    Integer daaId = 4;
+    User authedUser = new User();
+    authedUser.setUserId(1);
+    authedUser.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
+    DaaBulkAssignmentResult expectedResult =
+        new DaaBulkAssignmentResult(daaId, 3, 2, 1, List.of("test error"));
+    when(daaService.assignDaaToAllEligibleUsers(daaId, authedUser)).thenReturn(expectedResult);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    try (Response response = resource.assignDaaToAllEligibleUsers(duosUser, daaId)) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(expectedResult, response.getEntity());
+    }
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsersDaaNotFound() {
+    Integer daaId = 4;
+    User authedUser = new User();
+    authedUser.setUserId(1);
+    authedUser.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
+    when(daaService.assignDaaToAllEligibleUsers(daaId, authedUser))
+        .thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    try (Response response = resource.assignDaaToAllEligibleUsers(duosUser, daaId)) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
   void testBulkRemoveUsersFromDaa() {
     int daaId = 4;
     int institutionId = 2;
@@ -1180,6 +1221,32 @@ class DaaResourceTest extends AbstractTestHelper {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testFindDaaForDatasets() {
+    User authedUser = new User();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+    String testData = "[1, 2, 3]";
+    when(daaService.findDaaIdsByDatasetIds(anySet())).thenReturn(Map.of());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    try (Response response = resource.findDaaForDatasets(duosUser, testData)) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testFindDaaForDatasets_BadRequest() {
+    User authedUser = new User();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+    String testData = "1";
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    try (Response response = resource.findDaaForDatasets(duosUser, testData)) {
       assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
     }
   }

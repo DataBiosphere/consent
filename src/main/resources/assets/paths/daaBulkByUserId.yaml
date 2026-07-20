@@ -1,6 +1,6 @@
 post:
   summary: Bulk add DAAs to a user
-  operationId: bulkAddDAAsToUser
+  operationId: apiDaaBulkUserUserIdPost
   description: Bulk add Data Access Agreements to a user
   parameters:
     - name: userId
@@ -15,6 +15,7 @@ post:
       application/json:
         schema:
           type: object
+          title: BulkDaaUserRequest
           properties:
             daaList:
               type: array
@@ -37,11 +38,17 @@ post:
       description: User not authorized to add DAAs to a user
     404:
       description: User Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
   summary: Bulk remove DAAs from a user
-  operationId: bulkRemoveDAAsFromUser
+  operationId: apiDaaBulkUserUserIdDelete
   description: Bulk remove Data Access Agreements from a user
   parameters:
     - name: userId
@@ -56,6 +63,7 @@ delete:
       application/json:
         schema:
           type: object
+          title: BulkDaaUserRequest
           properties:
             daaList:
               type: array
@@ -78,5 +86,11 @@ delete:
       description: User not authorized to remove DAAs from a user
     404:
       description: User Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

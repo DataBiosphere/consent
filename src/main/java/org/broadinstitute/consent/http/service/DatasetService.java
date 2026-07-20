@@ -3,9 +3,11 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -31,6 +33,8 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -47,6 +51,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class DatasetService implements ConsentLogger {
 
@@ -63,26 +68,21 @@ public class DatasetService implements ConsentLogger {
 
   @Inject
   public DatasetService(
-      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO,
-      DatasetDAO dataSetDAO,
-      DaaDAO daaDAO,
-      DacDAO dacDAO,
+      Jdbi jdbi,
+      DatasetServiceDAO datasetServiceDAO,
       ElasticSearchService elasticSearchService,
       EmailService emailService,
-      OntologyService ontologyService,
-      StudyDAO studyDAO,
-      DatasetServiceDAO datasetServiceDAO,
-      UserDAO userDAO) {
-    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
-    this.datasetDAO = dataSetDAO;
-    this.daaDAO = daaDAO;
-    this.dacDAO = dacDAO;
+      OntologyService ontologyService) {
+    this.datasetAuthorizationReaderDAO = jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.elasticSearchService = elasticSearchService;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
-    this.studyDAO = studyDAO;
+    this.studyDAO = jdbi.onDemand(StudyDAO.class);
     this.datasetServiceDAO = datasetServiceDAO;
-    this.userDAO = userDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
   }
 
   public List<Dataset> findDatasetListByDacIds(List<Integer> dacIds) {
@@ -300,19 +300,6 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetById(datasetId);
   }
 
-  public Dataset syncDatasetDataUseTranslation(Integer datasetId, User user) {
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (dataset == null) {
-      throw new NotFoundException("Dataset not found");
-    }
-
-    String translation =
-        ontologyService.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
-    datasetServiceDAO.updateDatasetDataUse(user, dataset, dataset.getDataUse(), translation);
-    elasticSearchService.synchronizeDatasetInESIndex(dataset, false);
-    return datasetDAO.findDatasetById(datasetId);
-  }
-
   public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
@@ -405,17 +392,33 @@ public class DatasetService implements ConsentLogger {
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
     if (approval) {
-      emailService.sendDatasetApprovedMessage(
+      sendDatasetApprovedMessage(
           user, dac.getName(), dataset.getDatasetIdentifier(), dataset.getName());
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();
-        emailService.sendDatasetDeniedMessage(
-            user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
+        sendDatasetDeniedMessage(user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
       } else {
         logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
       }
     }
+  }
+
+  @VisibleForTesting
+  protected void sendDatasetDeniedMessage(
+      User user, String dacName, String datasetName, String dacEmail)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendDatasetApprovedMessage(
+      User user, String dacName, String datasetIdentifier, String datasetName)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DatasetApprovedMessage(user, dacName, datasetIdentifier, datasetName),
+        user.getUserId());
   }
 
   public List<Dataset> findDatasetsByIds(User user, List<Integer> datasetIds) {
@@ -694,6 +697,7 @@ public class DatasetService implements ConsentLogger {
               study.getName(),
               study.getDescription(),
               study.getPiName(),
+              study.getPiEmail(),
               study.getDataTypes(),
               study.getPublicVisibility(),
               userId,
@@ -707,6 +711,7 @@ public class DatasetService implements ConsentLogger {
           studyConversion.getName(),
           studyConversion.getDescription(),
           studyConversion.getPiName(),
+          studyConversion.getPiEmail(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
           userId,

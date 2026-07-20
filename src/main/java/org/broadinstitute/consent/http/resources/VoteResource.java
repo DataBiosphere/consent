@@ -33,6 +33,8 @@ public class VoteResource extends Resource {
   private final UserService userService;
   private final VoteService voteService;
   private final ElectionService electionService;
+  // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+  // investigation
   private final Gson gson = new Gson();
 
   @Inject
@@ -119,9 +121,8 @@ public class VoteResource extends Resource {
   }
 
   /**
-   * This API will update the rationale for a list of vote ids. The Rationale for RP Votes can be
-   * updated for any election status. The Rationale for DataAccess Votes can only be updated for
-   * OPEN elections. In all cases, one can only update their own votes.
+   * This API will update the rationale for a list of vote ids. The Rationale for DataAccess Votes
+   * can only be updated for OPEN elections. In all cases, one can only update their own votes.
    *
    * @param authUser The AuthUser
    * @param json The rationale and vote ids to update
@@ -136,6 +137,8 @@ public class VoteResource extends Resource {
     User user = userService.findUserByEmail(authUser.getEmail());
     Vote.RationaleUpdate update;
     try {
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       update = new Gson().fromJson(json, Vote.RationaleUpdate.class);
     } catch (Exception e) {
       return createExceptionResponse(

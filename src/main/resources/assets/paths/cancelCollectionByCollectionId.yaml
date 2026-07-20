@@ -1,6 +1,6 @@
 put:
   summary: Cancel DAR Collection By ID
-  operationId: cancelDarCollectionById
+  operationId: apiCollectionsCollectionIdCancelPut
   description: Returns DAR Collection after canceling associated dars
   tags:
     - DAR Collection
@@ -32,5 +32,11 @@ put:
       description: Bad Request (result of elections present on DARs or the user not having the provided role name)
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

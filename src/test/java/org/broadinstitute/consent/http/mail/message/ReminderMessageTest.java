@@ -3,44 +3,19 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.util.Map;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ReminderMessageTest {
-
-  private FreeMarkerTemplateHelper helper;
-
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
-  }
+class ReminderMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testMessageSubject() {
-    var message =
-        new ReminderMessage(new User(), new Vote(), "DUL-123", "Data Use Limitations", "");
+    var message = new ReminderMessage(new User(), new Vote(), "DAR-123", "");
     assertEquals(
-        "Urgent: Log vote on Data Use Limitations case id: DUL-123.", message.createSubject());
-    var message2 =
-        new ReminderMessage(new User(), new Vote(), "DAR-123", "Data Access Request", "");
-    assertEquals(
-        "Urgent: Log votes on Data Access Request case id: DAR-123.", message2.createSubject());
-    var message3 = new ReminderMessage(new User(), new Vote(), "RP-123", "Research Purpose", "");
-    assertEquals(
-        "Urgent: Log votes on Research Purpose Review case id: RP-123.", message3.createSubject());
+        "Urgent: Log votes on Data Access Request case id: DAR-123.", message.createSubject());
   }
 
   @Test
@@ -52,23 +27,37 @@ class ReminderMessageTest {
     vote.setElectionId(123);
     String darCode = "DUL-123";
     String voteUrl = "http://testVoteUrl";
-    var message = new ReminderMessage(toUser, vote, darCode, "Data Use Limitations", voteUrl);
+    var message = new ReminderMessage(toUser, vote, darCode, voteUrl);
     assertEquals(vote.getVoteId(), message.getVoteId());
     assertEquals(vote.getElectionId().toString(), message.getEntityReferenceId());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel("http://testServerUrl"), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "http://testServerUrl");
 
     assertEquals(
         "Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
-        parsedTemplate.title());
+        rendered.document().title());
     assertEquals(
         "Hello Reminder User,",
-        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
-    assertTrue(templateString.contains(darCode));
-    assertTrue(templateString.contains(voteUrl));
+        Objects.requireNonNull(rendered.document().getElementById("userName")).text());
+    assertTrue(rendered.content().contains(darCode));
+    assertTrue(rendered.content().contains(voteUrl));
+  }
+
+  @Test
+  void testCreateModel_PreservesVoteUrlServerUrlOverride() {
+    User toUser = new User();
+    toUser.setDisplayName("Reminder User");
+    Vote vote = new Vote();
+    vote.setVoteId(1);
+    vote.setElectionId(123);
+    String voteUrl = "http://testVoteUrl";
+
+    var message = new ReminderMessage(toUser, vote, "DUL-123", voteUrl);
+
+    Map<String, Object> model = message.createModel("http://defaultServerUrl");
+
+    assertEquals(voteUrl, model.get("serverUrl"));
+    assertEquals("Reminder User", model.get("userName"));
+    assertEquals("DUL-123", model.get("entityName"));
   }
 }

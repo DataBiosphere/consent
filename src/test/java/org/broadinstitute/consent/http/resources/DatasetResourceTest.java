@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -72,6 +71,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -352,6 +352,26 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testPatchByDatasetUpdate_nullProperties() {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
+    dataset.setCreateUserId(user.getUserId());
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+
+    // Gson omits null fields, so this serializes to {"name":"..."} with no properties key,
+    // which deserializes back to a DatasetPatch with null properties.
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), null);
+
+    try (Response response =
+        resource.patchByDatasetUpdate(duosUser, dataset.getDatasetId(), gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
   void testValidateDatasetNameSuccess() {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
@@ -363,13 +383,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testValidateDatasetNameNotFound() {
-    assertThrows(
-        NotFoundException.class,
-        () -> {
-          try (var response = resource.validateDatasetName(duosUser, "test")) {
-            fail("Should not get to this point");
-          }
-        });
+    assertThrows(NotFoundException.class, () -> resource.validateDatasetName(duosUser, "test"));
   }
 
   @Test
@@ -472,6 +486,27 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(randomInt(10, 100));
     Gson gson = GsonUtil.buildGson();
+    StreamingOutput output = getStreamingOutput(dataset);
+    when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDatasetId()));
+    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()))).thenReturn(output);
+
+    try (Response response = resource.indexDatasets(duosUser)) {
+      var entity = (StreamingOutput) response.getEntity();
+      var baos = new ByteArrayOutputStream();
+      entity.write(baos);
+      var entityString = baos.toString();
+      List<JsonObject> responseList = gson.fromJson(entityString, new TypeToken<>() {});
+      assertEquals(1, responseList.size());
+      JsonArray items = responseList.getFirst().getAsJsonArray("items");
+      assertEquals(1, items.size());
+      assertEquals(
+          dataset.getDatasetId(),
+          items.get(0).getAsJsonObject().getAsJsonObject("index").get("_id").getAsInt());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  private static @NonNull StreamingOutput getStreamingOutput(Dataset dataset) {
     String esResponseArray =
         """
         [
@@ -499,25 +534,7 @@ class DatasetResourceTest extends AbstractTestHelper {
           }
         ]
         """;
-    StreamingOutput output =
-        out -> out.write(esResponseArray.formatted(dataset.getDatasetId()).getBytes());
-    when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDatasetId()));
-    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()))).thenReturn(output);
-
-    try (Response response = resource.indexDatasets(duosUser)) {
-      var entity = (StreamingOutput) response.getEntity();
-      var baos = new ByteArrayOutputStream();
-      entity.write(baos);
-      var entityString = baos.toString();
-      List<JsonObject> responseList = gson.fromJson(entityString, new TypeToken<>() {});
-      assertEquals(1, responseList.size());
-      JsonArray items = responseList.get(0).getAsJsonArray("items");
-      assertEquals(1, items.size());
-      assertEquals(
-          dataset.getDatasetId(),
-          items.get(0).getAsJsonObject().getAsJsonObject("index").get("_id").getAsInt());
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
+    return out -> out.write(esResponseArray.formatted(dataset.getDatasetId()).getBytes());
   }
 
   @Test
@@ -778,12 +795,12 @@ class DatasetResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
       String entity = response.getEntity().toString();
 
-      // Check for specific user-facing error messages
+      // Check for specific user-facing error messages, all reported together in one response
       assertTrue(entity.contains("Please correct the following fields:"));
       assertTrue(entity.contains("Study Name is required"));
       assertTrue(entity.contains("Study Description is required"));
-      assertTrue(entity.contains("Data Types must have at least one item"));
-      assertTrue(entity.contains("Datasets must have at least one item"));
+      assertTrue(entity.contains("Data Types is required"));
+      assertTrue(entity.contains("At least one Dataset is required"));
       assertTrue(entity.contains("NIH Anvil Use is required"));
       assertTrue(entity.contains("Principal Investigator Name is required"));
       assertTrue(entity.contains("Public Visibility is required"));
@@ -901,7 +918,17 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testCreateDatasetRegistration_invalidFileName() {
+    FormDataContentDisposition content =
+        FormDataContentDisposition.name("file")
+            .fileName("\"file/with&$invalid*^chars\\\\.txt\"")
+            .build();
+    FormDataBodyPart formDataBodyPart = mock(FormDataBodyPart.class);
+    when(formDataBodyPart.getContentDisposition()).thenReturn(content);
+
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
+
+    when(userService.findUserByEmail(any())).thenReturn(user);
     String schemaV1 = createDatasetRegistrationMock(user);
 
     Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
@@ -1038,25 +1065,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
-  void testSyncDataUseTranslation() {
-    when(datasetService.syncDatasetDataUseTranslation(any(), any())).thenReturn(new Dataset());
-
-    try (var response = resource.syncDataUseTranslation(authUser, 1)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-  }
-
-  @Test
-  void testSyncDataUseTranslationNotFound() {
-    when(datasetService.syncDatasetDataUseTranslation(any(), any()))
-        .thenThrow(new NotFoundException());
-
-    try (var response = resource.syncDataUseTranslation(authUser, 1)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 
@@ -1387,8 +1395,8 @@ class DatasetResourceTest extends AbstractTestHelper {
           "datasetIdentifier": "DUOS-000003",
           "dataUse": {
             "diseaseRestrictions": [
-              "http://purl.obolibrary.org/obo/DOID_602",
-              "http://purl.obolibrary.org/obo/DOID_9351"
+              "https://purl.obolibrary.org/obo/DOID_602",
+              "https://purl.obolibrary.org/obo/DOID_9351"
             ],
             "populationOriginsAncestry": true,
             "commercialUse": false,

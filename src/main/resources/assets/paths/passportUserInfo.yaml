@@ -1,5 +1,6 @@
 get:
   summary: Get Passport
+  operationId: apiPassportUserinfoGet
   description: |
     DUOS Passport that adheres to the [GA4GH Passport spec](https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md)
     This endpoint implements a "UserInfo" endpoint as described in the [AAI OpenID spec](https://ga4gh.github.io/data-security/aai-openid-connect-profile#visas-provided-by-a-broker-via-userinfo-endpoint),
@@ -18,5 +19,11 @@ get:
       description: Bad Request
     404:
       description: User not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

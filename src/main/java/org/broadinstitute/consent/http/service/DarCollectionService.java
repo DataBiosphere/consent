@@ -1,13 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.enumeration.ElectionType.DATA_ACCESS;
-import static org.broadinstitute.consent.http.enumeration.ElectionType.RP;
 import static org.broadinstitute.consent.http.enumeration.UserRoles.ADMIN;
 import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
 import static org.broadinstitute.consent.http.resources.Resource.MEMBER;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Streams;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
@@ -19,17 +17,18 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
@@ -45,6 +44,13 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
+import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -66,6 +72,7 @@ public class DarCollectionService implements ConsentLogger {
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DacDAO dacDAO;
+  private final DaaDAO daaDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -84,6 +91,7 @@ public class DarCollectionService implements ConsentLogger {
       EmailService emailService,
       DACAutomationRuleService dacAutomationRuleService) {
     this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
     this.darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
@@ -101,23 +109,30 @@ public class DarCollectionService implements ConsentLogger {
     statusCount.merge(Objects.requireNonNullElse(status, "Undefined"), 1, Integer::sum);
   }
 
+  private boolean hasElectionForEachDataset(DarCollectionSummary summary) {
+    Set<Integer> datasetIdsWithElections =
+        summary.getElections().values().stream()
+            .map(Election::getDatasetId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+    if (!datasetIdsWithElections.isEmpty()) {
+      return datasetIdsWithElections.containsAll(summary.getDatasetIds());
+    }
+    return summary.getElections().size() >= summary.getDatasetCount();
+  }
+
   private void determineCollectionStatus(
-      DarCollectionSummary summary,
-      Map<String, Integer> statusCount,
-      Integer datasetCount,
-      Integer electionCount) {
-    // If there are no elections, status is unreviewed
-    // if there are some elections open, status is in process
-    // if all elections are closed or canceled and electionCount == datasetCount, status is complete
-    if (electionCount.equals(0)) {
+      DarCollectionSummary summary, Map<String, Integer> statusCount) {
+    // If there are no elections, status is unreviewed.
+    // If there are any open elections, status is in process.
+    // If all datasets have elections and none are open, status is complete.
+    if (summary.getElections().isEmpty()) {
       summary.setStatus(DarCollectionStatus.SUBMITTED.getValue());
-    } else if (electionCount.equals(datasetCount)) {
-      Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-      if (Objects.isNull(openCount)) {
-        summary.setStatus(DarCollectionStatus.COMPLETE.getValue());
-      } else {
-        summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
-      }
+    } else if (Objects.nonNull(statusCount.get(ElectionStatus.OPEN.getValue()))) {
+      summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
+    } else if (hasElectionForEachDataset(summary)) {
+      summary.setStatus(DarCollectionStatus.COMPLETE.getValue());
     } else {
       summary.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
     }
@@ -143,7 +158,7 @@ public class DarCollectionService implements ConsentLogger {
                         s.addAction(DarCollectionActions.CANCEL);
                       }
                     });
-            determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+            determineCollectionStatus(s, statusCount);
           }
           if (s.getCloseoutSupplement() != null) {
             s.getActions().clear();
@@ -212,7 +227,7 @@ public class DarCollectionService implements ConsentLogger {
               s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
             }
           } else {
-            determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+            determineCollectionStatus(s, statusCount);
           }
         });
   }
@@ -255,10 +270,10 @@ public class DarCollectionService implements ConsentLogger {
               // some datasets do not have elections (in process)
               // all voted on (complete)
               // no elections
-              if (electionCount < s.getDatasetCount()) {
-                s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
-              } else {
+              if (hasElectionForEachDataset(s)) {
                 s.setStatus(DarCollectionStatus.COMPLETE.getValue());
+              } else {
+                s.setStatus(DarCollectionStatus.IN_PROCESS.getValue());
               }
             }
           }
@@ -276,16 +291,12 @@ public class DarCollectionService implements ConsentLogger {
         s -> {
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
-          if ((!s.requiresSOApproval() || s.getSOApprover() != null)
-              && elections.size() < s.getDatasetCount()) {
-            s.addAction(DarCollectionActions.OPEN);
-          }
           elections
               .values()
               .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
           Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
           Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-          determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+          determineCollectionStatus(s, statusCount);
           updateSummaryActionsForChair(s, closedCount, openCount);
         });
   }
@@ -304,19 +315,29 @@ public class DarCollectionService implements ConsentLogger {
     if (summary.getCloseoutSupplement() != null) {
       summary.getActions().clear();
       // If the SO has approved the closeout supplement, allow review of the progress report.
-      if (summary.getCloseoutSigningOfficialApprovalDate() != null) {
+      if (summary.getSoApproverId() != null) {
         summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
       }
       return;
     }
 
-    // If there are no elections, only show open
-    if ((!summary.requiresSOApproval() || summary.getSOApprover() != null)
-        && summary.getElections().isEmpty()) {
+    boolean canOpen = !summary.requiresSOApproval() || summary.getSoApproverId() != null;
+    boolean hasOpenElection = Objects.nonNull(openCount);
+    boolean hasReopenableElection =
+        summary.getElections().values().stream()
+            .map(election -> ElectionStatus.getStatusFromString(election.getStatus()))
+            .anyMatch(
+                status -> status == ElectionStatus.CLOSED || status == ElectionStatus.CANCELED);
+
+    // Only show open/re-open when there are no active elections to vote on.
+    if (canOpen
+        && !hasOpenElection
+        && (summary.getElections().isEmpty()
+            || summary.getElections().size() < summary.getDatasetCount()
+            || hasReopenableElection)) {
       summary.addAction(DarCollectionActions.OPEN);
     }
 
-    // If there are closed or canceled elections, show open
     // If there are any open elections, show vote
     summary
         .getElections()
@@ -324,15 +345,8 @@ public class DarCollectionService implements ConsentLogger {
         .forEach(
             election -> {
               ElectionStatus status = ElectionStatus.getStatusFromString(election.getStatus());
-              switch (Objects.requireNonNull(status)) {
-                case CLOSED, CANCELED:
-                  summary.addAction(DarCollectionActions.OPEN);
-                  break;
-                case OPEN:
-                  summary.addAction(DarCollectionActions.VOTE);
-                  break;
-                default:
-                  break;
+              if (Objects.requireNonNull(status) == ElectionStatus.OPEN) {
+                summary.addAction(DarCollectionActions.VOTE);
               }
             });
 
@@ -349,7 +363,7 @@ public class DarCollectionService implements ConsentLogger {
           s.getElections()
               .values()
               .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
-          determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+          determineCollectionStatus(s, statusCount);
           updateSummaryActionsForSO(user, s);
         });
   }
@@ -357,12 +371,12 @@ public class DarCollectionService implements ConsentLogger {
   private void updateSummaryActionsForSO(User user, DarCollectionSummary summary) {
     // If the SO has not yet approved the closeout supplement, allow review of the progress report.
     if (summary.getCloseoutSupplement() != null
-        && summary.getCloseoutSigningOfficialApprovalDate() == null
+        && summary.getSoApproverId() == null
         && user.getUserId().equals(summary.getCloseoutSupplement().signingOfficialId())) {
       summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
     }
     if (summary.requiresSOApproval()
-        && summary.getSOApprover() == null
+        && summary.getSoApproverId() == null
         && user.getEmail().equalsIgnoreCase(summary.getSigningOfficialEmail())) {
       summary.addAction(DarCollectionActions.APPROVE);
     }
@@ -491,6 +505,7 @@ public class DarCollectionService implements ConsentLogger {
                   new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
               newData.setStatus(null);
               newData.setReferenceId(d.getReferenceId());
+              daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
               dataAccessRequestDAO.updateDataByReferenceId(
                   d.getReferenceId(), d.getUserId(), null, now, newData, null);
             });
@@ -809,10 +824,9 @@ public class DarCollectionService implements ConsentLogger {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
           if (dar.getProgressReport()) {
-            emailService.sendProgressReportNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode());
+            sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           } else {
-            emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+            sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           }
 
         } catch (Exception e) {
@@ -855,7 +869,7 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     // Create elections and votes for auto-open DACs
-    createElectionsAndVotesForAutoOpenDacs(context.classification, context.latestDar);
+    createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
   }
 
   /** Sends notification messages for a new DAR collection. */
@@ -865,34 +879,40 @@ public class DarCollectionService implements ConsentLogger {
     if (context == null) {
       return;
     }
-    if (!context.latestDar.getRequiresSOApproval()
-        || context.latestDar.getApprovingSigningOfficialUserId() != null) {
+
+    DataAccessRequest latestDar = context.latestDar();
+    DacUserClassification classification = context.classification();
+    DarCollection darCollection = context.darCollection();
+    String researcherName = context.researcherName();
+    User researcher = context.researcher();
+
+    if (!latestDar.getRequiresSOApproval()
+        || latestDar.getApprovingSigningOfficialUserId() != null) {
       // Notify users for auto-open DACs
       notifyUsersForDacs(
-          context.classification.autoOpenUsers,
-          context.classification.autoOpenDacs,
-          context.classification.autoOpenDatasets,
-          context.latestDar,
-          context.darCollection,
-          context.researcherName,
+          classification.autoOpenUsers,
+          classification.autoOpenDacs,
+          classification.autoOpenDatasets,
+          latestDar,
+          darCollection,
+          researcherName,
           true);
 
       // Notify users for manual DACs
       notifyUsersForDacs(
-          context.classification.manualOpenUsers,
-          context.classification.manualOpenDacs,
-          context.classification.manualOpenDatasets,
-          context.latestDar,
-          context.darCollection,
-          context.researcherName,
+          classification.manualOpenUsers,
+          classification.manualOpenDacs,
+          classification.manualOpenDatasets,
+          latestDar,
+          darCollection,
+          researcherName,
           false);
     } else {
-      notifySpecificSigningOfficialOfApprovalNeeded(context.latestDar, context.researcher);
+      notifySpecificSigningOfficialOfApprovalNeeded(latestDar, researcher);
     }
 
     // Notify signing officials of DAR submission
-    notifySigningOfficialsOfDARSubmission(
-        context.latestDar, context.researcher, context.darCollection.getDarCode());
+    notifySigningOfficialsOfDARSubmission(latestDar, researcher, darCollection.getDarCode());
   }
 
   /** Helper method to retrieve the DAR collection context for processing. */
@@ -906,7 +926,7 @@ public class DarCollectionService implements ConsentLogger {
 
     // Get the most recent DAR and its associated users
     DataAccessRequest latestDar = darCollection.getMostRecentDar();
-    List<User> adminAndChairUsers = getDistinctAdminAndChairUsersForDAR(latestDar);
+    List<User> dacUsers = getDacUsersForDAR(latestDar);
 
     // Get researcher details
     User researcher = userDAO.findUserById(darCollection.getCreateUserId());
@@ -919,15 +939,16 @@ public class DarCollectionService implements ConsentLogger {
 
     // Classify DACs and users by automation rules
     DacUserClassification classification =
-        classifyDacsAndUsers(dacsForDar, datasetsForDar, adminAndChairUsers);
+        classifyDacsAndUsers(dacsForDar, datasetsForDar, dacUsers);
 
     return new DarCollectionContext(
         darCollection, latestDar, researcher, researcherName, classification);
   }
 
   /** Classifies DACs and users based on automation rules. */
-  private DacUserClassification classifyDacsAndUsers(
-      Collection<Dac> dacsForDar, List<Dataset> datasetsForDar, List<User> adminAndChairUsers) {
+  @VisibleForTesting
+  protected DacUserClassification classifyDacsAndUsers(
+      Collection<Dac> dacsForDar, List<Dataset> datasetsForDar, List<User> dacUsers) {
 
     Set<Integer> dacIds =
         datasetsForDar.stream().map(Dataset::getDacId).collect(Collectors.toSet());
@@ -935,106 +956,63 @@ public class DarCollectionService implements ConsentLogger {
     DacUserClassification result = new DacUserClassification();
 
     for (Integer dacId : dacIds) {
-      List<DACAutomationRule> dacRules = dacAutomationRuleService.findAllByDacId(dacId);
-      boolean autoOpen = hasAutoOpenRule(dacRules);
-      Integer autoOpenUserId = getAutoOpenRuleEnabledByUserId(dacId);
+      Optional<DACAutomationRule> autoOpenRule =
+          dacAutomationRuleService.findAllByDacId(dacId).stream()
+              .filter(
+                  r ->
+                      r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
+                          && r.enabledByUserId() != null)
+              .findFirst();
 
-      Dac dac = findDac(dacsForDar, dacId);
-      Dataset dataset = findDataset(datasetsForDar, dacId);
-      // If the DAC requires SO approval the submission is not a progress report
-      if (autoOpen) {
-        addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
-        addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
+      Optional<Dac> dac = dacsForDar.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
+      List<Dataset> datasetsForDac =
+          datasetsForDar.stream().filter(ds -> ds.getDacId().equals(dacId)).toList();
+
+      if (autoOpenRule.isPresent()) {
+        dac.ifPresent(result.autoOpenDacs::add);
+        result.autoOpenDatasets.addAll(datasetsForDac);
+        result.autoOpenUserIds.put(dacId, autoOpenRule.get().enabledByUserId());
+        addUsers(result.autoOpenUsers, dacId, dacUsers, true);
       } else {
-        addManualOpen(result, dac, dataset);
-        addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
+        dac.ifPresent(result.manualOpenDacs::add);
+        result.manualOpenDatasets.addAll(datasetsForDac);
+        addUsers(result.manualOpenUsers, dacId, dacUsers, false);
       }
     }
 
     return result;
   }
 
-  /** Finds a DAC by its ID from a collection of DACs. */
-  private Dac findDac(Collection<Dac> dacs, Integer dacId) {
-    return dacs.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElse(null);
-  }
-
-  /** Finds a dataset by its DAC ID from a list of datasets. */
-  private Dataset findDataset(List<Dataset> datasets, Integer dacId) {
-    return datasets.stream().filter(ds -> ds.getDacId().equals(dacId)).findFirst().orElse(null);
-  }
-
-  /** Checks if an auto-open rule exists for a given DAC ID. */
-  private boolean hasAutoOpenRule(List<DACAutomationRule> dacRules) {
-    return dacRules.stream()
-        .anyMatch(
-            r ->
-                r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
-                    && r.enabledByUserId() != null);
-  }
-
-  /** Retrieves the user ID associated with the auto-open rule for a given DAC ID. */
-  private Integer getAutoOpenRuleEnabledByUserId(Integer dacId) {
-    return dacAutomationRuleService.findAllByDacId(dacId).stream()
-        .filter(
-            r ->
-                r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
-                    && r.enabledByUserId() != null)
-        .map(DACAutomationRule::enabledByUserId)
-        .findFirst()
-        .orElse(null);
-  }
-
-  /** Adds DACs, datasets, and auto-open user IDs to the auto open classification. */
-  private void addAutoOpen(
-      DacUserClassification result,
-      Integer dacId,
-      Integer autoOpenUserId,
-      Dac dac,
-      Dataset dataset) {
-
-    if (dac != null) {
-      result.autoOpenDacs.add(dac);
-    }
-    if (dataset != null) {
-      result.autoOpenDatasets.add(dataset);
-    }
-    result.autoOpenUserIds.put(dacId, autoOpenUserId);
-  }
-
-  /** Adds DACs and datasets to the manual open classification. */
-  private void addManualOpen(DacUserClassification result, Dac dac, Dataset dataset) {
-
-    if (dac != null) {
-      result.manualOpenDacs.add(dac);
-    }
-    if (dataset != null) {
-      result.manualOpenDatasets.add(dataset);
-    }
-  }
-
   /** Adds users to the target set based on their DAC roles and the autoOpen flag. */
-  private void addUsers(Set<User> targetSet, Integer dacId, List<User> users, boolean autoOpen) {
+  @VisibleForTesting
+  protected void addUsers(Set<User> targetSet, Integer dacId, List<User> users, boolean autoOpen) {
 
     for (User user : users) {
       boolean isChair = user.verifyDACRole(CHAIRPERSON, dacId);
       boolean isMember = user.verifyDACRole(MEMBER, dacId);
-      boolean isAdmin = user.hasUserRole(ADMIN);
-
       if (autoOpen) {
-        if (isChair || isMember || isAdmin) {
+        if (isChair || isMember) {
           targetSet.add(user);
         }
       } else { // manual
-        if (isChair || isAdmin) {
+        if (isChair) {
           targetSet.add(user);
         }
       }
     }
   }
 
+  /** Returns users from the set that hold a CHAIRPERSON or MEMBER role for the given DAC. */
+  @VisibleForTesting
+  protected Set<User> filterUsersForDac(Set<User> allUsers, Integer dacId) {
+    return allUsers.stream()
+        .filter(u -> u.verifyDACRole(CHAIRPERSON, dacId) || u.verifyDACRole(MEMBER, dacId))
+        .collect(Collectors.toSet());
+  }
+
   /** Creates elections and votes for DACs with auto-open rules. */
-  private void createElectionsAndVotesForAutoOpenDacs(
+  @VisibleForTesting
+  protected void createElectionsAndVotesForAutoOpenDacs(
       DacUserClassification classification, DataAccessRequest latestDar) {
     if (latestDar.requiresSOApproval && latestDar.getApprovingSigningOfficialUserId() == null) {
       return;
@@ -1050,12 +1028,11 @@ public class DarCollectionService implements ConsentLogger {
       electionDAO.inTransaction(
           _ -> {
             int dataAccessElectionId =
-                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
-            int rpElectionId =
-                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
+                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset);
 
-            createVotesForAllUsers(
-                classification.autoOpenUsers, dataAccessElectionId, rpElectionId, latestDar);
+            Integer dacId = dataset.getDacId();
+            Set<User> dacUsers = filterUsersForDac(classification.autoOpenUsers, dacId);
+            createVotesForAllUsers(dacUsers, dataAccessElectionId, latestDar, dacId);
 
             return null;
           });
@@ -1088,35 +1065,31 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
-  /** Creates standard votes for all users for the given elections. */
-  private void createVotesForAllUsers(
-      Set<User> users, int dataAccessElectionId, int rpElectionId, DataAccessRequest dar) {
+  /** Creates standard votes for all users for the data access election. */
+  @VisibleForTesting
+  protected void createVotesForAllUsers(
+      Set<User> users, int dataAccessElectionId, DataAccessRequest dar, Integer dacId) {
 
     for (User user : users) {
-      createStandardVotes(dataAccessElectionId, rpElectionId, user);
+      createStandardVotes(dataAccessElectionId, user);
 
-      if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-        createChairpersonVotes(dataAccessElectionId, rpElectionId, user, dar);
+      if (user.verifyDACRole(CHAIRPERSON, dacId)) {
+        createChairpersonVotes(dataAccessElectionId, user, dar);
       }
     }
   }
 
-  /** Creates standard votes for the given elections. */
-  private void createStandardVotes(int dataAccessElectionId, int rpElectionId, User user) {
+  /** Creates standard votes for the given election. */
+  private void createStandardVotes(int dataAccessElectionId, User user) {
     dacAutomationRuleService.createVoteForElection(
         dataAccessElectionId, user.getUserId(), VoteType.DAC);
-
-    dacAutomationRuleService.createVoteForElection(rpElectionId, user.getUserId(), VoteType.DAC);
   }
 
-  /** Creates chairperson votes for the given elections. */
-  private void createChairpersonVotes(
-      int dataAccessElectionId, int rpElectionId, User user, DataAccessRequest dar) {
+  /** Creates chairperson votes for the given election. */
+  private void createChairpersonVotes(int dataAccessElectionId, User user, DataAccessRequest dar) {
 
     dacAutomationRuleService.createVoteForElection(
         dataAccessElectionId, user.getUserId(), VoteType.CHAIRPERSON);
-    dacAutomationRuleService.createVoteForElection(
-        rpElectionId, user.getUserId(), VoteType.CHAIRPERSON);
 
     dacAutomationRuleService.createVoteForElection(
         dataAccessElectionId, user.getUserId(), VoteType.FINAL);
@@ -1146,8 +1119,15 @@ public class DarCollectionService implements ConsentLogger {
                 dar.getReferenceId()));
   }
 
-  /** Notifies users for the given DACs and datasets. */
-  private void notifyUsersForDacs(
+  /**
+   * Notifies users for the given DACs and datasets.
+   *
+   * <p>When {@code isAutoOpen} is {@code true}, each user receives a single auto-open email; {@code
+   * dacs} and {@code datasets} are not consulted. When {@code false}, per-user DAC/dataset
+   * membership is resolved from {@code dacs} and {@code datasets} to build the email body.
+   */
+  @VisibleForTesting
+  protected void notifyUsersForDacs(
       Set<User> users,
       Set<Dac> dacs,
       Set<Dataset> datasets,
@@ -1156,33 +1136,31 @@ public class DarCollectionService implements ConsentLogger {
       String researcherName,
       boolean isAutoOpen)
       throws IOException, TemplateException {
-    Map<String, List<String>> dacToDatasetsMap = new HashMap<>();
     for (User user : users) {
-      List<Dac> userDacs = getMatchingDacs(user, dacs);
-      for (Dac dac : userDacs) {
-        List<String> datasetIdentifiers = getMatchingDatasets(dac, new ArrayList<>(datasets));
-        dacToDatasetsMap.put(dac.getName(), datasetIdentifiers);
-      }
       if (isAutoOpen) {
         // Send election notification for auto-open DACs
         if (latestDar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode());
+          sendProgressReportNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
         } else {
-          emailService.sendDarNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode());
+          sendDarNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
         }
       } else {
         // Send manual notification for manual DACs
+        Map<String, List<String>> dacToDatasetsMap = new HashMap<>();
+        List<Dac> userDacs = getMatchingDacs(user, dacs);
+        for (Dac dac : userDacs) {
+          List<String> datasetIdentifiers = getMatchingDatasets(dac, new ArrayList<>(datasets));
+          dacToDatasetsMap.put(dac.getName(), datasetIdentifiers);
+        }
         if (latestDar.getProgressReport()) {
-          emailService.sendNewProgressReportRequestEmail(
+          sendNewProgressReportRequestEmail(
               user,
               dacToDatasetsMap,
               researcherName,
               darCollection.getDarCode(),
               latestDar.getReferenceId());
         } else {
-          emailService.sendNewDARRequestEmail(
+          sendNewDARRequestEmail(
               user, dacToDatasetsMap, researcherName, darCollection.getDarCode());
         }
       }
@@ -1193,8 +1171,71 @@ public class DarCollectionService implements ConsentLogger {
       DataAccessRequest dataAccessRequest, User researcher) throws TemplateException, IOException {
     String soEmail = dataAccessRequest.getData().getSigningOfficialEmail();
     User soUser = userDAO.findUserByEmail(soEmail);
-    emailService.sendNewDARSigningOfficialRequestEmail(
+    sendNewDARSigningOfficialRequestEmail(
         soUser, researcher.getDisplayName(), dataAccessRequest.getDarCode());
+  }
+
+  @VisibleForTesting
+  protected void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    for (User user : users) {
+      emailService.sendMessage(new NewCaseMessage(user, darCode), user.getUserId());
+    }
+  }
+
+  @VisibleForTesting
+  protected void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    for (User user : users) {
+      emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
+    }
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARRequestEmail(
+      User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDARRequestMessage(user, darCode, dacDatasetMap, researcherName), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARSigningOfficialRequestEmail(
+      User signingOfficial, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, researcherName),
+        signingOfficial.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewProgressReportRequestEmail(
+      User user,
+      Map<String, List<String>> dacDatasetMap,
+      String researcherName,
+      String darCode,
+      String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewProgressReportRequestMessage(
+            user, darCode, referenceId, dacDatasetMap, researcherName),
+        user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewSoProgressReportSubmittedEmail(
+      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoPRSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewSoDARSubmittedEmail(
+      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoDARSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
   }
 
   @VisibleForTesting
@@ -1217,11 +1258,10 @@ public class DarCollectionService implements ConsentLogger {
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
     for (User so : signingOfficials) {
       if (dar.getProgressReport()) {
-        emailService.sendNewSoProgressReportSubmittedEmail(
+        sendNewSoProgressReportSubmittedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets);
       } else {
-        emailService.sendNewSoDARSubmittedEmail(
-            so, darCode, researcher, dar.getReferenceId(), datasets);
+        sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(), datasets);
       }
     }
   }
@@ -1232,8 +1272,10 @@ public class DarCollectionService implements ConsentLogger {
     dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
     User researcher = userDAO.findUserById(dar.getUserId());
     List<Integer> datasetIds = dar.getDatasetIds();
-    dacAutomationRuleService.triggerDACRuleSettings(
-        researcher, datasetIds, dar.getReferenceId(), request);
+    if (!dar.getIsCloseoutProgressReport() && !dar.getHasDMI()) {
+      dacAutomationRuleService.triggerDACRuleSettings(
+          researcher, datasetIds, dar.getReferenceId(), request);
+    }
   }
 
   private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {
@@ -1251,24 +1293,17 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
-  private List<User> getDistinctAdminAndChairUsersForDAR(DataAccessRequest dar) {
-    List<Integer> datasetIds = dar.getDatasetIds();
-    return getDistinctAdminAndChairUsersForDatasetIds(datasetIds);
+  private List<User> getDacUsersForDAR(DataAccessRequest dar) {
+    return getDacUsersForDatasetIds(dar.getDatasetIds());
   }
 
-  private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
-    List<User> admins = userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId());
-    Set<User> chairPersons =
+  private List<User> getDacUsersForDatasetIds(List<Integer> datasetIds) {
+    return new ArrayList<>(
         userDAO.findUsersForDatasetsByRole(
-            datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
-    // Ensure that admins/chairs are not double emailed
-    return Streams.concat(admins.stream(), chairPersons.stream()).distinct().toList();
+            datasetIds, List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId())));
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
-    if (user.hasUserRole(UserRoles.ADMIN)) {
-      return new ArrayList<>(dacsInDAR);
-    }
     List<Integer> dacIDs =
         user.getRoles().stream().map(UserRole::getDacId).filter(Objects::nonNull).toList();
     return dacsInDAR.stream().filter(dac -> dacIDs.contains(dac.getDacId())).toList();
@@ -1281,30 +1316,16 @@ public class DarCollectionService implements ConsentLogger {
         .toList();
   }
 
-  /** Helper class to hold context for processing a DAR collection. */
-  private static class DarCollectionContext {
-    final DarCollection darCollection;
-    final DataAccessRequest latestDar;
-    final User researcher;
-    final String researcherName;
-    final DacUserClassification classification;
-
-    DarCollectionContext(
-        DarCollection darCollection,
-        DataAccessRequest latestDar,
-        User researcher,
-        String researcherName,
-        DacUserClassification classification) {
-      this.darCollection = darCollection;
-      this.latestDar = latestDar;
-      this.researcher = researcher;
-      this.researcherName = researcherName;
-      this.classification = classification;
-    }
-  }
+  private record DarCollectionContext(
+      DarCollection darCollection,
+      DataAccessRequest latestDar,
+      User researcher,
+      String researcherName,
+      DacUserClassification classification) {}
 
   /** Helper class to hold classification results for DACs, users, and datasets. */
-  private static class DacUserClassification {
+  @VisibleForTesting
+  static class DacUserClassification {
     Set<Dac> autoOpenDacs = new HashSet<>();
     Set<Dac> manualOpenDacs = new HashSet<>();
     Set<User> autoOpenUsers = new HashSet<>();

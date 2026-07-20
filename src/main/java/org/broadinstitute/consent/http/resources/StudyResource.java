@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -21,13 +23,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -38,8 +38,9 @@ import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequest;
+import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequestValidator;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -56,6 +57,8 @@ public class StudyResource extends Resource {
   private final DatasetRegistrationService datasetRegistrationService;
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final StudyUpdateRequestValidator studyUpdateRequestValidator;
 
   @Inject
   public StudyResource(
@@ -67,6 +70,7 @@ public class StudyResource extends Resource {
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
+    this.studyUpdateRequestValidator = new StudyUpdateRequestValidator(datasetService);
   }
 
   /**
@@ -86,6 +90,8 @@ public class StudyResource extends Resource {
     try {
       User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
       Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
       return Response.ok(study).build();
@@ -107,6 +113,8 @@ public class StudyResource extends Resource {
       @Auth AuthUser authUser, @PathParam("studyId") Integer studyId, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       Gson gson = new Gson();
       Type listOfStringObject = new TypeToken<ArrayList<String>>() {}.getType();
       List<String> custodians = gson.fromJson(json, listOfStringObject);
@@ -187,19 +195,7 @@ public class StudyResource extends Resource {
       if (!deletable) {
         throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
       }
-      Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
-      // Remove from ES index
-      studyDatasetIds.forEach(
-          id -> {
-            try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
-              if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
-                logWarn("Non-OK response when deleting index for dataset with id: " + id);
-              }
-            } catch (IOException e) {
-              logException(e);
-            }
-          });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -234,7 +230,7 @@ public class StudyResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   @Timed
   /*
-   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * This endpoint accepts a registration payload, validated by DTO/domain validators.
    * With that object, we can fully update the study/datasets from the provided values.
    */
   public Response updateStudyByRegistration(
@@ -244,19 +240,22 @@ public class StudyResource extends Resource {
       @FormDataParam("dataset") String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+      // Fetch datasets with the study so update-time consent-group-rename validation can
+      // compare submitted names against the stored dataset names (see
+      // StudyUpdateRequestValidator#validateConsentGroupNameChanges).
+      Study existingStudy = datasetService.getStudyWithDatasetsById(user, studyId);
       boolean canUpdateStudy = datasetService.isCreatorCustodianOrAdmin(user, existingStudy);
       if (!canUpdateStudy) {
         throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
       }
 
-      // Manually validate the schema from an editing context. Validation with the schema tools
-      // enforces it in a creation context but doesn't work for editing purposes.
-      DatasetRegistrationSchemaV1UpdateValidator updateValidator =
-          new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
-      DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
+      // Manually validate the request from an editing context. Validation enforces
+      // create-context rules that don't apply for editing purposes.
+      StudyUpdateValidationResult validationResult =
+          validateRegistrationUpdate(json, existingStudy);
+      StudyUpdateRequest registration = validationResult.registration();
 
-      if (updateValidator.validate(existingStudy, registration)) {
+      if (validationResult.valid()) {
         // Update study from registration
         Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
         Study updatedStudy =
@@ -274,6 +273,27 @@ public class StudyResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private record StudyUpdateValidationResult(StudyUpdateRequest registration, boolean valid) {}
+
+  /**
+   * Validates that the payload deserializes to a non-null {@link StudyUpdateRequest}, then runs the
+   * {@link StudyUpdateRequestValidator} as the authoritative validator against it.
+   */
+  private StudyUpdateValidationResult validateRegistrationUpdate(String json, Study existingStudy) {
+    StudyUpdateRequest request;
+    try {
+      request = objectMapper.readValue(json, StudyUpdateRequest.class);
+    } catch (JsonProcessingException _) {
+      throw new BadRequestException("Invalid registration payload");
+    }
+    if (request == null) {
+      throw new BadRequestException("Invalid registration payload");
+    }
+
+    boolean valid = studyUpdateRequestValidator.validate(existingStudy, request);
+    return new StudyUpdateValidationResult(request, valid);
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {

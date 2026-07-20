@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -23,18 +25,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,6 +52,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DaaServiceTest extends AbstractTestHelper {
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DaaServiceDAO daaServiceDAO;
 
@@ -55,6 +67,8 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Mock private DacDAO dacDAO;
 
+  @Mock private LibraryCardService libraryCardService;
+
   private final InputStream inputStream = mock(InputStream.class);
 
   private final FormDataContentDisposition contentDisposition =
@@ -62,8 +76,99 @@ class DaaServiceTest extends AbstractTestHelper {
 
   private DaaService service;
 
+  @BeforeEach
+  void setUp() {
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+  }
+
+  // Called per-test rather than @BeforeEach so each test can configure collaborator stubs before
+  // constructing the service.
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, dacDAO);
+    service =
+        new DaaService(
+            jdbi, daaServiceDAO, gcsService, emailService, userService, libraryCardService);
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsers() {
+    Integer daaId = randomInt(10, 100);
+    User authedUser = new User();
+    authedUser.setUserId(randomInt(101, 200));
+
+    User user1 = new User();
+    user1.setUserId(1);
+    user1.setInstitutionId(1);
+    LibraryCard lc1 = new LibraryCard();
+    lc1.setId(11);
+    user1.setLibraryCard(lc1);
+
+    User user2 = new User();
+    user2.setUserId(2);
+    user2.setInstitutionId(2);
+    LibraryCard lc2 = new LibraryCard();
+    lc2.setId(22);
+    user2.setLibraryCard(lc2);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(userService.findAllUsersWithInstitutionAndLibraryCard()).thenReturn(List.of(user1, user2));
+
+    initService();
+    DaaBulkAssignmentResult result = service.assignDaaToAllEligibleUsers(daaId, authedUser);
+
+    assertEquals(daaId, result.getDaaId());
+    assertEquals(2, result.getTotalEligibleUsers());
+    assertEquals(2, result.getAssignedCount());
+    assertEquals(0, result.getSkippedCount());
+    assertTrue(result.getErrors().isEmpty());
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsersPartialFailure() {
+    Integer daaId = randomInt(10, 100);
+    User authedUser = new User();
+    authedUser.setUserId(randomInt(101, 200));
+
+    User user1 = new User();
+    user1.setUserId(1);
+    user1.setInstitutionId(1);
+    LibraryCard lc1 = new LibraryCard();
+    lc1.setId(11);
+    user1.setLibraryCard(lc1);
+
+    User user2 = new User();
+    user2.setUserId(2);
+    user2.setInstitutionId(2);
+    LibraryCard lc2 = new LibraryCard();
+    lc2.setId(22);
+    user2.setLibraryCard(lc2);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(userService.findAllUsersWithInstitutionAndLibraryCard()).thenReturn(List.of(user1, user2));
+    doNothing()
+        .doThrow(new RuntimeException("duplicate relation"))
+        .when(libraryCardService)
+        .addDaaToLibraryCard(any(), any(), any(), any());
+
+    initService();
+    DaaBulkAssignmentResult result = service.assignDaaToAllEligibleUsers(daaId, authedUser);
+
+    assertEquals(2, result.getTotalEligibleUsers());
+    assertEquals(1, result.getAssignedCount());
+    assertEquals(1, result.getSkippedCount());
+    assertEquals(1, result.getErrors().size());
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsersDaaNotFound() {
+    Integer daaId = randomInt(10, 100);
+    User authedUser = new User();
+    authedUser.setUserId(randomInt(101, 200));
+    when(daaDAO.findById(daaId)).thenReturn(null);
+
+    initService();
+    assertThrows(
+        NotFoundException.class, () -> service.assignDaaToAllEligibleUsers(daaId, authedUser));
   }
 
   @Test
@@ -207,9 +312,8 @@ class DaaServiceTest extends AbstractTestHelper {
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(2))
-        .sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
+    verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
   }
 
   @Test
@@ -241,9 +345,8 @@ class DaaServiceTest extends AbstractTestHelper {
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(1))
-        .sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
+    verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
   }
 
   @Test
@@ -462,5 +565,100 @@ class DaaServiceTest extends AbstractTestHelper {
 
     List<DataAccessAgreement> daas = service.findByDarReferenceId(randomAlphabetic(5));
     assertTrue(daas.isEmpty());
+  }
+
+  @Test
+  void testFindDaaIdsByDatasetIds() {
+    initService();
+    when(daaDAO.mapDaaIdsToDatasetIds(anySet())).thenReturn(Map.of());
+
+    Map<Integer, Set<Integer>> daaMap = service.findDaaIdsByDatasetIds(Set.of(1, 2, 3));
+    assertTrue(daaMap.isEmpty());
+  }
+
+  @Test
+  void testFindDaaIdsByDacIdReturnsDirectLinks() {
+    Integer dacId = 12;
+    when(daaDAO.findDaaIdsByDacId(dacId)).thenReturn(List.of(101, 102));
+
+    initService();
+
+    List<Integer> result = service.findDaaIdsByDacId(dacId);
+
+    assertEquals(List.of(101, 102), result);
+    verify(daaDAO).findDaaIdsByDacId(dacId);
+  }
+
+  @Test
+  void testFindDaaIdsByDacIdReturnsEmptyWhenNoMappingExists() {
+    Integer dacId = 33;
+    when(daaDAO.findDaaIdsByDacId(dacId)).thenReturn(List.of());
+
+    initService();
+
+    assertTrue(service.findDaaIdsByDacId(dacId).isEmpty());
+  }
+
+  @Test
+  void testIsDaaLinkedToDacReturnsTrueForDirectRelation() {
+    Integer dacId = 7;
+    Integer daaId = 55;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(true);
+
+    initService();
+
+    assertTrue(service.isDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testIsDaaLinkedToDacReturnsTrueForInitialDacLink() {
+    Integer dacId = 7;
+    Integer daaId = 88;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId)).thenReturn(true);
+
+    initService();
+
+    assertTrue(service.isDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testIsDaaLinkedToDacReturnsFalseWhenNoRelationExists() {
+    Integer dacId = 7;
+    Integer daaId = 89;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId)).thenReturn(false);
+
+    initService();
+
+    assertFalse(service.isDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testCreateAndLinkDaaIdForDacCreatesAndLinksNewDaa() {
+    User user = new User();
+    user.setUserId(999);
+    Integer dacId = 17;
+    when(daaDAO.createDaa(any(), any(), any(), any(), any())).thenReturn(700);
+
+    initService();
+
+    assertEquals(700, service.createAndLinkDaaIdForDac(user, dacId));
+    verify(daaDAO).createDacDaaRelation(dacId, 700, user.getUserId());
+  }
+
+  @Test
+  void testCreateAndLinkDaaIdForDacCreatesNewDaaEvenWhenLinkedDaaExists() {
+    User user = new User();
+    user.setUserId(77);
+    Integer dacId = 18;
+    when(daaDAO.createDaa(any(), any(), any(), any(), any())).thenReturn(801);
+
+    initService();
+
+    assertEquals(801, service.createAndLinkDaaIdForDac(user, dacId));
+    verify(daaDAO).createDacDaaRelation(dacId, 801, user.getUserId());
+    verify(daaDAO, never()).findByDacId(dacId);
+    verify(daaDAO, never()).findDaaIdsByDacId(dacId);
   }
 }

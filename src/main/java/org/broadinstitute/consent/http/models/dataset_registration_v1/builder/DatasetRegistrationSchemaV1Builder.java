@@ -71,9 +71,12 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String datasetIdentifier = "datasetIdentifier";
   public static final String dataLocation = "dataLocation";
   public static final String url = "url";
+  public static final String requestLocation = "requestLocation";
   public static final String numberOfParticipants = "numberOfParticipants";
   public static final String fileTypes = "fileTypes";
   public static final String throughBioId = "throughBioId";
+  public static final String externalIdentifier = "externalIdentifier";
+  public static final String externalIdentifierType = "externalIdentifierType";
 
   public DatasetRegistrationSchemaV1 build(Study study, List<Dataset> datasets) {
     DatasetRegistrationSchemaV1 schema = new SchemaFromStudy().build(study);

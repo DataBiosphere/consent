@@ -1,5 +1,6 @@
 get:
   summary: Institution INDEX resource
+  operationId: apiInstitutionsGet
   description: Fetches all institutions
   tags:
     - Institutions
@@ -8,10 +9,17 @@ get:
       description: Returns all institutions, along with their create user, update user, and signing official users if there are any.
         If no results are found, an empty array is returned.
         Admin will see all details while non-Admins will only see a subset.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 post:
   summary: Institution CREATE resource
+  operationId: apiInstitutionsPost
   description: Creates new institution record based on json payload
   tags:
     - Institutions
@@ -29,5 +37,11 @@ post:
       description: Bad Request
     409:
       description: Conflict Error
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

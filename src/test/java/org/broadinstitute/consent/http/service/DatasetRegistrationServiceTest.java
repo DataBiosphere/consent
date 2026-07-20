@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -20,6 +19,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.storage.BlobId;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
@@ -37,6 +37,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -47,9 +49,12 @@ import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
+import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
@@ -62,11 +67,17 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
+import org.broadinstitute.consent.http.models.dto.registration.ConsentGroupRequest;
+import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
+import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
+import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequest;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,6 +90,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   private DatasetRegistrationService datasetRegistrationService;
+  private ExecutorService executorService;
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DatasetDAO datasetDAO;
 
@@ -96,30 +110,41 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   @Mock private EmailService emailService;
 
+  private final RegistrationRequestMapper registrationRequestMapper =
+      new RegistrationRequestMapper();
+
   @BeforeEach
   void setUp() {
+    executorService = Executors.newVirtualThreadPerTaskExecutor();
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(FileStorageObjectDAO.class)).thenReturn(fileStorageObjectDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
     datasetRegistrationService =
         new DatasetRegistrationService(
-            datasetDAO,
-            dacDAO,
+            jdbi,
             datasetServiceDAO,
-            fileStorageObjectDAO,
             gcsService,
             elasticSearchService,
-            studyDAO,
-            emailService);
+            emailService,
+            executorService,
+            registrationRequestMapper);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdown();
   }
 
   // captor: allows you to inspect the arguments sent to a function.
   @Captor ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
   @Captor ArgumentCaptor<DatasetServiceDAO.StudyInsert> studyInsert;
-  @Captor ArgumentCaptor<Map<String, Object>> assetsCaptor;
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
   void testInsertCompleteDatasetRegistration() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomCompleteDatasetRegistration(user);
 
     FormDataContentDisposition content =
         FormDataContentDisposition.name("file").fileName("sharing_plan.txt").build();
@@ -182,6 +207,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+    assertEquals(schema.getPiEmail(), capturedStudyInsert.piEmail());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
     assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
@@ -289,6 +315,9 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
         studyProps,
         "assets",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getAssets())));
+    assertContainsStudyProperty(studyProps, "externalIdentifier", schema.getExternalIdentifier());
+    assertContainsStudyProperty(
+        studyProps, "externalIdentifierType", schema.getExternalIdentifierType());
 
     List<DatasetProperty> datasetProps = inserts.getFirst().props();
     assertContainsDatasetProperty(
@@ -316,7 +345,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testInsertMinimumDatasetRegistration() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomMinimumDatasetRegistration(user);
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
@@ -341,13 +370,14 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(
         schema.getConsentGroups().getFirst().getConsentGroupName(), inserts.getFirst().name());
 
-    ConsentGroup consentGroup = schema.getConsentGroups().getFirst();
+    ConsentGroupRequest consentGroup = schema.getConsentGroups().getFirst();
     DataUse dataUse = inserts.getFirst().dataUse();
 
     assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+    assertEquals(schema.getPiEmail(), capturedStudyInsert.piEmail());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
     assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
@@ -375,7 +405,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testDatasetCreateRegistrationEmails() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomCompleteDatasetRegistration(user);
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
     Dataset dataset = new Dataset();
@@ -392,7 +422,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testStudyUpdateNewDatasetEmails() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
     Study study = mock();
     Set<Dataset> datasets = Set.of(new Dataset());
 
@@ -410,14 +441,17 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setChairpersonRole();
     Dac dac = mock();
+    User createUser = new User();
+    createUser.setDisplayName("Create User");
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
+    dataset.setCreateUser(createUser);
 
     when(dacDAO.findById(any())).thenReturn(dac);
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(user));
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, times(1)).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, times(1)).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -430,7 +464,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of());
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -439,14 +473,14 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(null);
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
   void testGetAssetsWithDatasets() {
-    DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
+    StudyRegistrationRequest registration = new StudyRegistrationRequest();
     registration.setAssets(Map.of("asset1", List.of("file1", "file2")));
-    ConsentGroup cg = new ConsentGroup();
+    ConsentGroupRequest cg = new ConsentGroupRequest();
     registration.setConsentGroups(List.of(cg));
 
     Map<String, Object> result = datasetRegistrationService.getAssetsWithDatasets(registration);
@@ -458,8 +492,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetAssetsWithDatasetsEmptyAssets() {
-    DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
-    ConsentGroup cg = new ConsentGroup();
+    StudyRegistrationRequest registration = new StudyRegistrationRequest();
+    ConsentGroupRequest cg = new ConsentGroupRequest();
     registration.setConsentGroups(List.of(cg));
 
     Map<String, Object> result = datasetRegistrationService.getAssetsWithDatasets(registration);
@@ -472,8 +506,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDatasetFromRegistrationSendsEmails() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 registration = createRandomCompleteDatasetRegistration(user);
-    assertNull(registration.getStudyId());
+    StudyRegistrationRequest registration = createRandomCompleteDatasetRegistration(user);
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
     Dataset dataset = new Dataset();
@@ -484,16 +517,17 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     datasetRegistrationService.createDatasetsFromRegistration(registration, user, Map.of());
 
-    verify(emailService, times(1)).sendStudySubmissionConfirmation(eq(user), any(), eq(123), any());
+    verify(emailService, times(1))
+        .sendMessage(any(NewStudyRegistrationConfirmationMessage.class), any());
   }
 
   @Test
   void testSendSubmissionConfirmationEmail() throws TemplateException, IOException {
     User submitter = new User();
-    DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
+    StudyRegistrationRequest registration = new StudyRegistrationRequest();
     registration.setStudyName("Study");
     registration.setAssets(Map.of("asset1", List.of("file1")));
-    registration.setConsentGroups(List.of(new ConsentGroup()));
+    registration.setConsentGroups(List.of(new ConsentGroupRequest()));
     Integer studyId = 123;
 
     // study id does not come in with a new registration, it is generated by consent as part of
@@ -501,14 +535,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     datasetRegistrationService.sendSubmissionConfirmationEmail(submitter, registration, studyId);
 
     verify(emailService, times(1))
-        .sendStudySubmissionConfirmation(
-            eq(submitter), eq("Study"), eq(123), assetsCaptor.capture());
-
-    // assert that the assets sent in the email are correct
-    Map<String, Object> sentAssets = assetsCaptor.getValue();
-    assertTrue(sentAssets.containsKey("asset1"));
-    assertEquals(List.of("file1"), sentAssets.get("asset1"));
-    assertTrue(sentAssets.containsKey("datasets"));
+        .sendMessage(any(NewStudyRegistrationConfirmationMessage.class), any());
   }
 
   @Test
@@ -552,7 +579,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testInsertAccessManagement() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createAccessManagementRegistrationNoDacId(user);
+    StudyRegistrationRequest schema = createAccessManagementRegistrationNoDacId(user);
 
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
@@ -575,7 +602,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testInsertMultipleDatasetRegistration() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMultipleDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomMultipleDatasetRegistration(user);
 
     FormDataContentDisposition content =
         FormDataContentDisposition.name("file").fileName("sharing_plan.txt").build();
@@ -622,7 +649,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(
         schema.getConsentGroups().getFirst().getConsentGroupName(), inserts.getFirst().name());
 
-    ConsentGroup consentGroup = schema.getConsentGroups().getFirst();
+    ConsentGroupRequest consentGroup = schema.getConsentGroups().getFirst();
     DataUse dataUse = inserts.getFirst().dataUse();
 
     assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
@@ -631,6 +658,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+    assertEquals(schema.getPiEmail(), capturedStudyInsert.piEmail());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
     assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
@@ -658,7 +686,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(schema.getConsentGroups().get(1).getConsentGroupName(), inserts.get(1).name());
 
-    ConsentGroup consentGroup2 = schema.getConsentGroups().get(1);
+    ConsentGroupRequest consentGroup2 = schema.getConsentGroups().get(1);
     DataUse dataUse2 = inserts.get(1).dataUse();
 
     assertEquals(consentGroup2.getGeneralResearchUse(), dataUse2.getGeneralUse());
@@ -680,32 +708,10 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGenerateDataUseFromConsentGroup() {
-    ConsentGroup consentGroup = new ConsentGroup();
-    consentGroup.setGeneralResearchUse(false);
-    consentGroup.setHmb(true);
-    consentGroup.setDiseaseSpecificUse(List.of("disease1", "disease2"));
-    consentGroup.setPoa(true);
-    consentGroup.setNmds(true);
-    consentGroup.setNpu(true);
-    consentGroup.setOtherPrimary("other primary use");
-    consentGroup.setOtherSecondary("other secondary use");
-    consentGroup.setIrb(true);
-    consentGroup.setCol(true);
-    consentGroup.setGs("USA");
-    consentGroup.setGso(true);
-    consentGroup.setPub(true);
-    consentGroup.setMor(true);
-    consentGroup.setMorDate("2025-12-31");
-    DataUse dataUse = datasetRegistrationService.generateDataUseFromConsentGroup(consentGroup);
-    assertDataUse(consentGroup, dataUse);
-  }
-
-  @Test
   void testRegistrationErrorsOnInvalidDacId() {
 
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomMinimumDatasetRegistration(user);
 
     when(dacDAO.findById(any())).thenReturn(null);
 
@@ -717,7 +723,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testRegistrationSucceedsWithESError() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomMinimumDatasetRegistration(user);
     when(dacDAO.findById(any())).thenReturn(new Dac());
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
@@ -755,99 +761,55 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testExtractStudyProperty() {
-    DatasetRegistrationService.StudyPropertyExtractor extractor =
-        new DatasetRegistrationService.StudyPropertyExtractor(
-            randomAlphabetic(10), PropertyType.String, DatasetRegistrationSchemaV1::getStudyName);
+  void testConvertConsentGroupToDatasetProperties_RequestLocation() throws Exception {
+    User user = mock();
+    StudyRegistrationRequest schema = createRandomMinimumDatasetRegistration(user);
+    ConsentGroupRequest consentGroup = schema.getConsentGroups().getFirst();
+    consentGroup.setRequestLocation(URI.create("https://request.example.org/apply"));
 
-    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
 
-    // null value -> empty extraction
-    assertTrue(extractor.extract(schemaV1).isEmpty());
+    datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
-    schemaV1.setStudyName(randomAlphabetic(10));
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
 
-    Optional<StudyProperty> prop = extractor.extract(schemaV1);
-
-    // non-null value -> turn value into dataset prop
-    assertTrue(prop.isPresent());
-
-    assertEquals(schemaV1.getStudyName(), prop.get().getValue());
-    assertEquals(extractor.key(), prop.get().getKey());
-    assertEquals(extractor.type(), prop.get().getType());
+    List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
+    List<DatasetProperty> props = inserts.getFirst().props();
+    assertTrue(
+        props.stream()
+            .anyMatch(
+                p ->
+                    p.getSchemaProperty().equals("requestLocation")
+                        && p.getPropertyValue()
+                            .toString()
+                            .equals("https://request.example.org/apply")));
   }
 
   @Test
-  void testExtractDatasetProperty() {
-    DatasetRegistrationService.DatasetPropertyExtractor extractor =
-        new DatasetRegistrationService.DatasetPropertyExtractor(
-            randomAlphabetic(10),
-            randomAlphabetic(10),
-            PropertyType.String,
-            ConsentGroup::getConsentGroupName);
+  void testConvertConsentGroupToDatasetProperties_NoRequestLocation() throws Exception {
+    User user = mock();
+    StudyRegistrationRequest schema =
+        createRandomMinimumDatasetRegistration(user); // requestLocation intentionally not set
 
-    ConsentGroup group = new ConsentGroup();
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
 
-    // null value -> empty extraction
-    assertTrue(extractor.extract(group).isEmpty());
+    datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
-    group.setConsentGroupName(randomAlphabetic(10));
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
 
-    Optional<DatasetProperty> prop = extractor.extract(group);
-
-    // non-null value -> turn value into dataset prop
-    assertTrue(prop.isPresent());
-
-    assertEquals(group.getConsentGroupName(), prop.get().getPropertyValue());
-    assertEquals(extractor.name(), prop.get().getPropertyName());
-    assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
-    assertEquals(extractor.type(), prop.get().getPropertyType());
-  }
-
-  @Test
-  void testExtractStudyPropertyTyped() {
-    DatasetRegistrationService.StudyPropertyExtractor extractor =
-        new DatasetRegistrationService.StudyPropertyExtractor(
-            randomAlphabetic(10),
-            PropertyType.Json,
-            registration -> GsonUtil.getInstance().toJson(registration.getDataTypes()));
-
-    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
-
-    schemaV1.setDataTypes(List.of("type1", "type2", "type3"));
-
-    Optional<StudyProperty> prop = extractor.extract(schemaV1);
-
-    assertTrue(prop.isPresent());
-
-    assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()), prop.get().getValue());
-    assertEquals(extractor.key(), prop.get().getKey());
-    assertEquals(extractor.type(), prop.get().getType());
-  }
-
-  @Test
-  void testExtractDatasetPropertyTyped() {
-    DatasetRegistrationService.DatasetPropertyExtractor extractor =
-        new DatasetRegistrationService.DatasetPropertyExtractor(
-            randomAlphabetic(10),
-            randomAlphabetic(10),
-            PropertyType.Json,
-            consentGroup -> GsonUtil.getInstance().toJson(consentGroup.getDiseaseSpecificUse()));
-
-    ConsentGroup group = new ConsentGroup();
-
-    group.setDiseaseSpecificUse(List.of("asdf", "sdfg", "dfgh"));
-
-    Optional<DatasetProperty> prop = extractor.extract(group);
-
-    assertTrue(prop.isPresent());
-
-    assertEquals(
-        GsonUtil.getInstance().toJsonTree(group.getDiseaseSpecificUse()),
-        prop.get().getPropertyValue());
-    assertEquals(extractor.name(), prop.get().getPropertyName());
-    assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
-    assertEquals(extractor.type(), prop.get().getPropertyType());
+    List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
+    List<DatasetProperty> props = inserts.getFirst().props();
+    assertTrue(props.stream().noneMatch(p -> p.getSchemaProperty().equals("requestLocation")));
   }
 
   @Test
@@ -956,7 +918,257 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertDoesNotThrow(() -> datasetRegistrationService.deleteFile(new FileStorageObject(), null));
   }
 
-  private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
+  @Test
+  void testPatchDatasetSuccess() throws Exception {
+    int datasetId = 1;
+    User user = new User();
+    DatasetPatch patch = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
+
+    Dataset result = datasetRegistrationService.patchDataset(datasetId, user, patch);
+
+    assertEquals(dataset, result);
+    verify(datasetServiceDAO, times(1)).patchDataset(datasetId, user, patch);
+  }
+
+  @Test
+  void testPatchDatasetThrowsOnSQLException() throws Exception {
+    int datasetId = 1;
+    User user = new User();
+    DatasetPatch patch = mock();
+    doThrow(new SQLException("boom")).when(datasetServiceDAO).patchDataset(anyInt(), any(), any());
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> datasetRegistrationService.patchDataset(datasetId, user, patch));
+    verify(datasetDAO, never()).findDatasetById(anyInt());
+  }
+
+  @Test
+  void testFindStudyByIdFound() {
+    Study study = new Study();
+    study.setStudyId(1);
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+
+    assertEquals(study, datasetRegistrationService.findStudyById(1));
+  }
+
+  @Test
+  void testFindStudyByIdNotFound() {
+    when(studyDAO.findStudyById(1)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () -> datasetRegistrationService.findStudyById(1));
+  }
+
+  @Test
+  void testUpdateDatasetNullNameThrows() {
+    User user = mock();
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(null, 1, List.of());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testUpdateDatasetNullDacIdThrows() {
+    User user = mock();
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(
+            randomAlphabetic(10), null, List.of());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testUpdateDatasetDacIdMismatchThrows() {
+    User user = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(
+            randomAlphabetic(10), 2, List.of());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationCapturesPiEmail() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    Study study = mock();
+
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
+        ArgumentCaptor.forClass(DatasetServiceDAO.StudyUpdate.class);
+    when(datasetServiceDAO.updateStudy(studyUpdateCaptor.capture(), any(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals(schema.getPiName(), studyUpdateCaptor.getValue().piName());
+    assertEquals(schema.getPiEmail(), studyUpdateCaptor.getValue().piEmail());
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationExcludesAccessManagementForExistingConsentGroup()
+      throws Exception {
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+
+    ConsentGroupRequest existingConsentGroup = new ConsentGroupRequest();
+    existingConsentGroup.setDatasetId(7);
+    existingConsentGroup.setConsentGroupName(randomAlphabetic(10));
+    existingConsentGroup.setAccessManagement(AccessManagement.OPEN);
+    schema.setConsentGroups(List.of(existingConsentGroup));
+
+    Dataset existingDataset = new Dataset();
+    existingDataset.setDatasetId(7);
+    existingDataset.setDacId(1);
+    when(datasetDAO.findDatasetsByIdList(List.of(7))).thenReturn(List.of(existingDataset));
+
+    ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
+        ArgumentCaptor.forClass(List.class);
+    when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    List<DatasetProperty> capturedProps = datasetUpdateCaptor.getValue().getFirst().props();
+    assertTrue(
+        capturedProps.stream().noneMatch(p -> p.getSchemaProperty().equals("accessManagement")));
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationIgnoresSubmittedNameForExistingConsentGroup()
+      throws Exception {
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+
+    ConsentGroupRequest existingConsentGroup = new ConsentGroupRequest();
+    existingConsentGroup.setDatasetId(7);
+    // Attempted rename (or, in the second scenario below, omitted entirely) — neither should
+    // reach the persisted dataset name.
+    existingConsentGroup.setConsentGroupName("Attempted Rename");
+    existingConsentGroup.setAccessManagement(AccessManagement.OPEN);
+    schema.setConsentGroups(List.of(existingConsentGroup));
+
+    Dataset existingDataset = new Dataset();
+    existingDataset.setDatasetId(7);
+    existingDataset.setDacId(1);
+    existingDataset.setName("Original Stored Name");
+    when(datasetDAO.findDatasetsByIdList(List.of(7))).thenReturn(List.of(existingDataset));
+
+    ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
+        ArgumentCaptor.forClass(List.class);
+    when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals("Original Stored Name", datasetUpdateCaptor.getValue().getFirst().name());
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationPreservesNameWhenConsentGroupNameOmitted() throws Exception {
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+
+    ConsentGroupRequest existingConsentGroup = new ConsentGroupRequest();
+    existingConsentGroup.setDatasetId(7);
+    // consentGroupName intentionally omitted (null) — must not null out the stored name.
+    existingConsentGroup.setAccessManagement(AccessManagement.OPEN);
+    schema.setConsentGroups(List.of(existingConsentGroup));
+
+    Dataset existingDataset = new Dataset();
+    existingDataset.setDatasetId(7);
+    existingDataset.setDacId(1);
+    existingDataset.setName("Original Stored Name");
+    when(datasetDAO.findDatasetsByIdList(List.of(7))).thenReturn(List.of(existingDataset));
+
+    ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
+        ArgumentCaptor.forClass(List.class);
+    when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals("Original Stored Name", datasetUpdateCaptor.getValue().getFirst().name());
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationHandlesNullConsentGroups() throws Exception {
+    // A null consentGroups list means "no consent group changes" — a study-level-only update
+    // (see StudyUpdateRequestValidator#validateConsentGroupRemoval, which allows this).
+    User user = mock();
+    Study study = mock();
+    StudyUpdateRequest schema = new StudyUpdateRequest();
+    schema.setStudyName(randomAlphabetic(10));
+    schema.setStudyDescription(randomAlphabetic(10));
+    schema.setDataTypes(List.of(randomAlphabetic(10)));
+    schema.setPiName(randomAlphabetic(10));
+    schema.setPiEmail(randomAlphabetic(10) + "@domain.org");
+    schema.setPublicVisibility(true);
+    schema.setConsentGroups(null);
+
+    when(datasetServiceDAO.updateStudy(any(), any(), any())).thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of()));
+  }
+
+  @Test
+  void testSendDatasetSubmittedEmailsMembersButNoChairs() throws Exception {
+    Dac dac = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    User member = new User();
+    member.setMemberRole();
+
+    when(dacDAO.findById(any())).thenReturn(dac);
+    when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(member));
+
+    datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
+  }
+
+  private void assertDataUse(ConsentGroupRequest consentGroup, DataUse dataUse) {
     assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
     assertEquals(consentGroup.getDiseaseSpecificUse(), dataUse.getDiseaseRestrictions());
     assertEquals(consentGroup.getIrb(), dataUse.getEthicsApprovalRequired());
@@ -995,20 +1207,20 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(value, prop.get().getValue());
   }
 
-  private DatasetRegistrationSchemaV1 createRandomMinimumDatasetRegistration(User user) {
-    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+  private StudyRegistrationRequest createRandomMinimumDatasetRegistration(User user) {
+    StudyRegistrationRequest schemaV1 = new StudyRegistrationRequest();
     schemaV1.setStudyName(randomAlphabetic(10));
     schemaV1.setStudyDescription(randomAlphabetic(10));
     schemaV1.setDataTypes(List.of(randomAlphabetic(10)));
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
-    schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
     schemaV1.setPublicVisibility(true);
 
-    ConsentGroup consentGroup = new ConsentGroup();
+    ConsentGroupRequest consentGroup = new ConsentGroupRequest();
     consentGroup.setConsentGroupName(randomAlphabetic(10));
     consentGroup.setGeneralResearchUse(true);
     FileTypeObject fileType = new FileTypeObject();
@@ -1022,8 +1234,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     return schemaV1;
   }
 
-  private DatasetRegistrationSchemaV1 createAccessManagementRegistrationNoDacId(User user) {
-    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+  private StudyRegistrationRequest createAccessManagementRegistrationNoDacId(User user) {
+    StudyRegistrationRequest schemaV1 = new StudyRegistrationRequest();
     schemaV1.setStudyName(randomAlphabetic(10));
     schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.OBSERVATIONAL);
     schemaV1.setStudyDescription(randomAlphabetic(10));
@@ -1031,12 +1243,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
-    schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
     schemaV1.setPublicVisibility(true);
 
-    ConsentGroup consentGroup = new ConsentGroup();
+    ConsentGroupRequest consentGroup = new ConsentGroupRequest();
     consentGroup.setConsentGroupName(randomAlphabetic(10));
     consentGroup.setAccessManagement(AccessManagement.OPEN);
     FileTypeObject fileType = new FileTypeObject();
@@ -1049,8 +1261,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     return schemaV1;
   }
 
-  private DatasetRegistrationSchemaV1 createRandomMultipleDatasetRegistration(User user) {
-    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+  private StudyRegistrationRequest createRandomMultipleDatasetRegistration(User user) {
+    StudyRegistrationRequest schemaV1 = new StudyRegistrationRequest();
     schemaV1.setStudyName(randomAlphabetic(10));
     schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.OBSERVATIONAL);
     schemaV1.setStudyDescription(randomAlphabetic(10));
@@ -1058,12 +1270,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
-    schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
     schemaV1.setPublicVisibility(true);
 
-    ConsentGroup consentGroup1 = new ConsentGroup();
+    ConsentGroupRequest consentGroup1 = new ConsentGroupRequest();
     consentGroup1.setConsentGroupName(randomAlphabetic(10));
     consentGroup1.setGeneralResearchUse(true);
     FileTypeObject fileType1 = new FileTypeObject();
@@ -1074,7 +1286,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     consentGroup1.setDataAccessCommitteeId(new Random().nextInt());
     consentGroup1.setAccessManagement(AccessManagement.CONTROLLED);
 
-    ConsentGroup consentGroup2 = new ConsentGroup();
+    ConsentGroupRequest consentGroup2 = new ConsentGroupRequest();
     consentGroup2.setConsentGroupName(randomAlphabetic(10));
     consentGroup2.setGeneralResearchUse(true);
     FileTypeObject fileType2 = new FileTypeObject();
@@ -1088,9 +1300,14 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     return schemaV1;
   }
 
-  private DatasetRegistrationSchemaV1 createRandomCompleteDatasetRegistration(User user) {
+  private StudyRegistrationRequest createRandomCompleteDatasetRegistration(User user) {
+    return createRandomCompleteDatasetRegistration(user, StudyRegistrationRequest::new);
+  }
+
+  private <T extends StudyRegistrationRequest> T createRandomCompleteDatasetRegistration(
+      User user, java.util.function.Supplier<T> factory) {
     // TODO: find a better way to initialize this object
-    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+    T schemaV1 = factory.get();
     schemaV1.setStudyName(randomAlphabetic(10));
     schemaV1.setStudyType(DatasetRegistrationSchemaV1.StudyType.OBSERVATIONAL);
     schemaV1.setStudyDescription(randomAlphabetic(10));
@@ -1098,8 +1315,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
-    schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
     schemaV1.setPublicVisibility(true);
     schemaV1.setSubmittingToAnvil(true);
@@ -1138,7 +1355,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
         AlternativeDataSharingPlanAccessManagement.OPEN_ACCESS);
     schemaV1.setPiInstitution(10);
 
-    ConsentGroup consentGroup = new ConsentGroup();
+    ConsentGroupRequest consentGroup = new ConsentGroupRequest();
     consentGroup.setConsentGroupName(randomAlphabetic(10));
     consentGroup.setGeneralResearchUse(true);
     consentGroup.setNumberOfParticipants(new Random().nextInt());
@@ -1157,6 +1374,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     consentGroup.setDataLocation(ConsentGroup.DataLocation.TDR_LOCATION);
     consentGroup.setDataAccessCommitteeId(new Random().nextInt());
     schemaV1.setAssets(Map.of("key", List.of("value1", "value2")));
+    schemaV1.setExternalIdentifier(randomAlphabetic(10));
+    schemaV1.setExternalIdentifierType(randomAlphabetic(10));
     schemaV1.setConsentGroups(List.of(consentGroup));
     return schemaV1;
   }
@@ -1164,7 +1383,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDatasetRegistrationWithBlankConsentGroupName() {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomMinimumDatasetRegistration(user);
 
     // Set consent group name to blank
     schema.getConsentGroups().getFirst().setConsentGroupName("");
@@ -1175,7 +1394,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDatasetRegistrationWithNullConsentGroupName() {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    StudyRegistrationRequest schema = createRandomMinimumDatasetRegistration(user);
 
     // Set consent group name to null
     schema.getConsentGroups().getFirst().setConsentGroupName(null);
@@ -1183,7 +1402,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
   }
 
-  private void invokeCreateRegistration(DatasetRegistrationSchemaV1 schema, User user)
+  private void invokeCreateRegistration(StudyRegistrationRequest schema, User user)
       throws SQLException, IOException {
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
   }

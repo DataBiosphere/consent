@@ -5,17 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -37,7 +32,7 @@ class MatchDAOTest extends DAOTestHelper {
 
     List<Match> matches = matchDAO.findMatchesByPurposeId(m.getPurpose());
     assertFalse(matches.isEmpty());
-    Match found = matches.get(0);
+    Match found = matches.getFirst();
     assertEquals(found.getId(), m.getId());
     assertEquals(found.getPurpose(), m.getPurpose());
     assertEquals(found.getConsent(), m.getConsent());
@@ -50,8 +45,8 @@ class MatchDAOTest extends DAOTestHelper {
     match.setConsent(consentId);
     match.setPurpose(UUID.randomUUID().toString());
     match.setFailed(false);
-    match.setCreateDate(new Date());
-    match.setMatch(RandomUtils.nextBoolean());
+    match.setCreateDate(FIXED_DATE);
+    match.setMatch(randomBoolean());
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     match.setAbstain(false);
     return match;
@@ -87,8 +82,9 @@ class MatchDAOTest extends DAOTestHelper {
     Election ignoredAccessElection =
         createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
-    // Generate RP election to test that the query only references DataAccess elections
-    Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDatasetId());
+    // Generate an unknown election to test that the query only references DataAccess elections
+    Election unknownElection =
+        createUnknownElection(UUID.randomUUID().toString(), dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the target election
@@ -97,7 +93,7 @@ class MatchDAOTest extends DAOTestHelper {
         darReferenceId,
         true,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -107,7 +103,7 @@ class MatchDAOTest extends DAOTestHelper {
         ignoredAccessElection.getReferenceId(),
         false,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -115,17 +111,17 @@ class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(
         datasetIdentifier,
-        rpElection.getReferenceId(),
+        unknownElection.getReferenceId(),
         false,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         true);
 
     List<Match> matchResults =
         matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
-    Match result = matchResults.get(0);
+    Match result = matchResults.getFirst();
     assertEquals(targetElection.getReferenceId(), result.getPurpose());
   }
 
@@ -138,8 +134,8 @@ class MatchDAOTest extends DAOTestHelper {
     Election accessElection =
         createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
-    // Generate RP election for test
-    Election rpElection = createRPElection(darReferenceId, dataset.getDatasetId());
+    // Generate an unknown election for test
+    Election unknownElection = createUnknownElection(darReferenceId, dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
@@ -148,7 +144,7 @@ class MatchDAOTest extends DAOTestHelper {
         accessElection.getReferenceId(),
         true,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -156,10 +152,10 @@ class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(
         datasetIdentifier,
-        rpElection.getReferenceId(),
+        unknownElection.getReferenceId(),
         false,
         false,
-        new Date(),
+        FIXED_DATE,
         MatchAlgorithm.V4.getVersion(),
         false);
 
@@ -193,8 +189,8 @@ class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
@@ -215,8 +211,8 @@ class MatchDAOTest extends DAOTestHelper {
     Match match = makeMockMatch(UUID.randomUUID().toString());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    match.addRationale(RandomStringUtils.randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
+    match.addRationale(randomAlphabetic(100));
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
@@ -241,31 +237,29 @@ class MatchDAOTest extends DAOTestHelper {
         matchDAO.insertMatch(
             dataset.getDatasetIdentifier(),
             dar.getReferenceId(),
-            RandomUtils.nextBoolean(),
+            randomBoolean(),
             false,
-            new Date(),
+            FIXED_DATE,
             MatchAlgorithm.V4.getVersion(),
             false);
     return matchDAO.findMatchById(matchId);
   }
 
-  private Dac createDac() {
-    Integer id =
-        dacDAO.createDac(
-            "Test_" + RandomStringUtils.random(20, true, true),
-            "Test_" + RandomStringUtils.random(20, true, true),
-            new Date());
-    return dacDAO.findById(id);
+  private void createDac() {
+    dacDAO.createDac(
+        "Test_" + randomAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
+        createUser().getUserId());
   }
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(
+            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -276,19 +270,15 @@ class MatchDAOTest extends DAOTestHelper {
     dsp.setDatasetId(datasetId);
     dsp.setPropertyKey(1);
     dsp.setPropertyValue("Test_PropertyValue");
-    dsp.setCreateDate(new Date());
+    dsp.setCreateDate(FIXED_DATE);
     list.add(dsp);
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private Election createRPElection(String referenceId, Integer datasetId) {
+  private Election createUnknownElection(String referenceId, Integer datasetId) {
     Integer electionId =
         electionDAO.insertElection(
-            ElectionType.RP.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            referenceId,
-            datasetId);
+            "UnknownElection", ElectionStatus.OPEN.getValue(), FIXED_DATE, referenceId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
 
@@ -297,7 +287,7 @@ class MatchDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
+            FIXED_DATE,
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);

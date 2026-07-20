@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -20,11 +22,14 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -230,6 +235,21 @@ public class DaaResource extends Resource implements ConsentLogger {
     }
   }
 
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN})
+  @Path("/{daaId}/assign-all-eligible-users")
+  public Response assignDaaToAllEligibleUsers(
+      @Auth DuosUser duosUser, @PathParam("daaId") Integer daaId) {
+    try {
+      User authedUser = duosUser.getUser();
+      DaaBulkAssignmentResult result = daaService.assignDaaToAllEligibleUsers(daaId, authedUser);
+      return Response.ok(result).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @DELETE
   @Consumes(MediaType.APPLICATION_JSON)
   @RolesAllowed({SIGNINGOFFICIAL})
@@ -388,6 +408,22 @@ public class DaaResource extends Resource implements ConsentLogger {
       String dacName = dac.getName();
       daaService.sendNewDaaEmails(user, oldDaaId, dacName, newDaaName);
       return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  @Path("datasets")
+  public Response findDaaForDatasets(@Auth DuosUser duosUser, String json) {
+    try {
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
+      Gson gson = new Gson();
+      Type setType = new TypeToken<Set<Integer>>() {}.getType();
+      Set<Integer> set = gson.fromJson(json, setType);
+      return Response.ok(daaService.findDaaIdsByDatasetIds(set)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

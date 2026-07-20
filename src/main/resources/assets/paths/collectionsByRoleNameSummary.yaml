@@ -1,6 +1,6 @@
 get:
   summary: Get DAR Collection Summaries By Role Name
-  operationId: getCollectionSummariesForUserByRole
+  operationId: apiCollectionsRoleRoleNameSummaryGet
   description: |
     Returns DAR collection summaries by Role Name
       * Admin - all DAR collection summaries
@@ -30,6 +30,12 @@ get:
       description: Bad Request
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 

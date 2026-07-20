@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
@@ -17,24 +18,29 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationResult;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.broadinstitute.consent.http.util.ThreadUtils;
+import org.jdbi.v3.core.Jdbi;
 import org.jspecify.annotations.NonNull;
 
 public class OntologyService implements ConsentLogger {
 
-  private final ExecutorService executorService =
-      new ThreadUtils().getExecutorService(OntologyService.class);
+  private final ExecutorService executorService;
   private final OntologyDAO ontologyDAO;
   private final OntologyIndexService indexService;
   private final TranslationUtil translationUtil;
 
   @Inject
-  public OntologyService(OntologyDAO ontologyDAO, OntologyIndexService indexService) {
-    this.ontologyDAO = ontologyDAO;
+  public OntologyService(
+      Jdbi jdbi,
+      OntologyIndexService indexService,
+      ExecutorService executorService,
+      TranslationUtil translationUtil) {
+    this.ontologyDAO = jdbi.onDemand(OntologyDAO.class);
     this.indexService = indexService;
-    this.translationUtil = new TranslationUtil(ontologyDAO);
+    this.executorService = executorService;
+    this.translationUtil = translationUtil;
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
@@ -78,6 +84,18 @@ public class OntologyService implements ConsentLogger {
 
   public StreamingOutput findByTermIds(String[] termIds) {
     return ontologyDAO.findByTermIds(termIds);
+  }
+
+  /**
+   * Reconciles the ontology terms referenced by Datasets and DARs against the indexed terms in the
+   * ontology_index table. Returns referenced term ids that are either missing from the index or
+   * present but flagged unusable, so administrators can identify drift after re-indexing an
+   * ontology.
+   *
+   * @return The list of referenced terms that are missing or unusable in the ontology index.
+   */
+  public List<OntologyReconciliationResult> reconcileIndexedTerms() {
+    return ontologyDAO.findReferencedTermsMissingFromIndex();
   }
 
   /**

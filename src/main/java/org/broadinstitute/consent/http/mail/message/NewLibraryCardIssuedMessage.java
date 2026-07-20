@@ -17,8 +17,8 @@ public class NewLibraryCardIssuedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of("linkUrl", serverUrl + "datalibrary", "displayName", toUser.getDisplayName());
+  public Map<String, Object> createModel() {
+    return Map.of("displayName", toUser.getDisplayName());
   }
 
   @Override

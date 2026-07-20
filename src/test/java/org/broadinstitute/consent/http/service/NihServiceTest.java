@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.models.ecm.LinkInfo;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class NihServiceTest extends WireMockTestHelper {
+
+  @Mock private Jdbi jdbi;
 
   @Mock private UserDAO userDAO;
 
@@ -48,8 +51,9 @@ class NihServiceTest extends WireMockTestHelper {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setEcmUrl(mockServerBaseUrl() + "/");
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     service =
-        new NihService(userDAO, nihServiceDAO, new HttpClientUtil(servicesConfig), servicesConfig);
+        new NihService(jdbi, nihServiceDAO, new HttpClientUtil(servicesConfig), servicesConfig);
     wireMockServer.resetAll();
   }
 

@@ -1,6 +1,6 @@
 post:
   summary: Allows a SIGNING OFFICIAL to approve a collection by collection ID
-  operationId: approveCollection
+  operationId: apiCollectionsCollectionIdApprovePost
   description: Returns an approved DAR collection
   tags:
     - DAR Collection
@@ -27,5 +27,11 @@ post:
       description: Not Found
     409:
       description: Conflict.  Check error details
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

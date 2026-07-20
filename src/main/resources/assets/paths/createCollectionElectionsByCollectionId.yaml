@@ -1,6 +1,6 @@
 post:
   summary: Create Elections for Collection By ID
-  operationId: createElectionsForCollection
+  operationId: apiCollectionsCollectionIdElectionPost
   description: Returns created Elections for Dars in Collection
   tags:
     - DAR Collection
@@ -27,5 +27,11 @@ post:
       description: Not Found
     409:
       description: Conflict.  Check error details
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

@@ -4,33 +4,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.Objects;
-import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import java.util.Map;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewDAAUploadResearcherMessageTest extends AbstractTestHelper {
+class NewDAAUploadResearcherMessageTest extends AbstractMailMessageTest {
 
-  private FreeMarkerTemplateHelper helper;
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User researcher = new User();
+    researcher.setDisplayName("Researcher User");
 
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
-  }
+    var message =
+        new NewDAAUploadResearcherMessage(researcher, "DAC Name", "Previous DAA", "New DAA");
 
-  String getElementTextById(Document document, String id) {
-    return Objects.requireNonNull(document.getElementById(id)).text();
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "dacName",
+            "DAC Name",
+            "researcherUserName",
+            "Researcher User",
+            "previousDaaName",
+            "Previous DAA",
+            "newDaaName",
+            "New DAA"));
   }
 
   @Test
@@ -47,19 +45,15 @@ class NewDAAUploadResearcherMessageTest extends AbstractTestHelper {
         new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName);
     assertEquals(dacName, message.getEntityReferenceId());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel(serverUrl), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, serverUrl);
 
     assertEquals(
         "Broad Data Use Oversight System - New Data Access Agreement Upload",
-        parsedTemplate.title());
+        rendered.document().title());
     assertTrue(
-        getElementTextById(parsedTemplate, "userName")
+        getElementTextById(rendered.document(), "userName")
             .contains("Dear " + researcherUserName + ","));
-    String content = getElementTextById(parsedTemplate, "content");
+    String content = getElementTextById(rendered.document(), "content");
     assertTrue(
         content.contains(
             "You were previously pre-authorized to request data from the "
@@ -74,8 +68,6 @@ class NewDAAUploadResearcherMessageTest extends AbstractTestHelper {
                 + " has recently transitioned to using the "
                 + newDaaName
                 + " which will apply for all future requests to this DAC."));
-
-    // no unspecified values
-    assertFalse(templateString.contains("${"));
+    assertFalse(rendered.content().contains("${"));
   }
 }

@@ -1,5 +1,6 @@
 get:
   summary: Find users that belong to the institution specified by institution id
+  operationId: apiUserInstitutionInstitutionIdGet
   description: Admin-only endpoint. Find users that belong to the institution specified by institution id
   tags:
     - Admin
@@ -24,5 +25,11 @@ get:
       description: Bad Request
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

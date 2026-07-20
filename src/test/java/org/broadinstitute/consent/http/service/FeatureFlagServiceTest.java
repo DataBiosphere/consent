@@ -18,6 +18,7 @@ import jakarta.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.FeatureFlagDAO;
 import org.broadinstitute.consent.http.models.FeatureFlag;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.transaction.TransactionalConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,13 +29,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FeatureFlagServiceTest extends AbstractTestHelper {
 
+  @Mock private Jdbi jdbi;
   @Mock private FeatureFlagDAO featureFlagDAO;
 
   private FeatureFlagService service;
 
   @BeforeEach
   void setUp() throws Exception {
-    service = new FeatureFlagService(featureFlagDAO);
+    when(jdbi.onDemand(FeatureFlagDAO.class)).thenReturn(featureFlagDAO);
+    service = new FeatureFlagService(jdbi);
     lenient()
         .doAnswer(
             invocation -> {

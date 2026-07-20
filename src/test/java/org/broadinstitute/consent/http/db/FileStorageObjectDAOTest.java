@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -256,17 +257,42 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     List<Integer> foundIds =
         filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
 
-    assertEquals(3, filesFound.size());
-    assertEquals(newestId, filesFound.get(0).getFileStorageObjectId());
-    assertEquals(middleId, filesFound.get(1).getFileStorageObjectId());
-    assertEquals(oldestId, filesFound.get(2).getFileStorageObjectId());
+    assertEquals(4, filesFound.size()); // includes 1 soft-deleted record
+    assertEquals(deletedId, filesFound.get(0).getFileStorageObjectId());
+    assertEquals(newestId, filesFound.get(1).getFileStorageObjectId());
+    assertEquals(middleId, filesFound.get(2).getFileStorageObjectId());
+    assertEquals(oldestId, filesFound.get(3).getFileStorageObjectId());
 
     assertTrue(foundIds.contains(newestId));
     assertTrue(foundIds.contains(middleId));
     assertTrue(foundIds.contains(oldestId));
-    assertFalse(foundIds.contains(deletedId));
+    assertTrue(foundIds.contains(deletedId));
 
     filesFound.forEach(file -> assertEquals(entityId, file.getEntityId()));
+  }
+
+  @Test
+  void testFindFileMetadataByEntityIdAndCategoriesFiltersCategory() {
+    String entityId = randomAlphabetic(10);
+
+    FileStorageObject matching1 =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject matching2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    createFileStorageObject(entityId, FileCategory.DATA_ACCESS_AGREEMENT);
+    createFileStorageObject(randomAlphabetic(8), FileCategory.IRB_COLLABORATION_LETTER);
+
+    List<FileStorageObject> filesFound =
+        fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            entityId,
+            List.of(
+                FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+                FileCategory.DATA_USE_LETTER.getValue()));
+
+    assertEquals(2, filesFound.size());
+    List<Integer> foundIds =
+        filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
+    assertTrue(foundIds.contains(matching1.getFileStorageObjectId()));
+    assertTrue(foundIds.contains(matching2.getFileStorageObjectId()));
   }
 
   @Test
@@ -305,6 +331,93 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
             randomAlphabetic(8), file.getFileStorageObjectId());
 
     assertNull(found);
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityIdAndCategoriesWrongCategoryReturnsNull() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_ACCESS_AGREEMENT);
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId,
+            file.getFileStorageObjectId(),
+            List.of(FileCategory.IRB_COLLABORATION_LETTER.getValue()));
+
+    assertNull(found);
+  }
+
+  @Test
+  void testCreateFile() {
+    String fileName = randomAlphabetic(10);
+    String category = FileCategory.DATA_USE_LETTER.getValue();
+    String gcsFileUri = BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri();
+    String mediaType = randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
+    User createUser = createUser();
+    Instant createDate = Instant.now();
+
+    Integer newFileStorageObjectId =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            category,
+            gcsFileUri,
+            mediaType,
+            entityId,
+            createUser.getUserId(),
+            createDate);
+
+    FileStorageObject newFileStorageObject =
+        fileStorageObjectDAO.findFileById(newFileStorageObjectId);
+
+    assertNotNull(newFileStorageObject);
+    assertEquals(fileName, newFileStorageObject.getFileName());
+    assertEquals(category, newFileStorageObject.getCategory().getValue());
+    assertEquals(entityId, newFileStorageObject.getEntityId());
+    assertEquals(createUser.getUserId(), newFileStorageObject.getCreateUserId());
+  }
+
+  @Test
+  void testSoftDelete() {
+    String entityId = randomAlphabetic(10);
+    String otherEntityId = randomAlphabetic(8);
+    FileStorageObject target = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    FileStorageObject other = createFileStorageObject(otherEntityId, FileCategory.DATA_USE_LETTER);
+    User deleteUser = createUser();
+    fileStorageObjectDAO.softDelete(
+        entityId, target.getFileStorageObjectId(), deleteUser.getUserId());
+
+    FileStorageObject deleted = fileStorageObjectDAO.findFileById(target.getFileStorageObjectId());
+    FileStorageObject untouched = fileStorageObjectDAO.findFileById(other.getFileStorageObjectId());
+
+    assertEquals(Boolean.TRUE, deleted.getDeleted());
+    assertEquals(deleteUser.getUserId(), deleted.getDeleteUserId());
+    assertNotNull(deleted.getDeleteDate());
+    assertNotEquals(Boolean.TRUE, untouched.getDeleted());
+    assertNull(untouched.getDeleteUserId());
+    assertNull(untouched.getDeleteDate());
+  }
+
+  @Test
+  void testUpdateCategory() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject original =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    User updateUser = createUser();
+    fileStorageObjectDAO.updateCategory(
+        original.getFileStorageObjectId(),
+        FileCategory.DATA_USE_LETTER.getValue(),
+        updateUser.getUserId());
+
+    FileStorageObject updated =
+        fileStorageObjectDAO.findFileById(original.getFileStorageObjectId());
+
+    assertEquals(FileCategory.DATA_USE_LETTER.getValue(), updated.getCategory().getValue());
+    assertEquals(updateUser.getUserId(), updated.getUpdateUserId());
+    assertNotNull(updated.getUpdateDate());
+    assertEquals(original.getFileName(), updated.getFileName());
+    assertEquals(original.getEntityId(), updated.getEntityId());
+    assertEquals(original.getBlobId(), updated.getBlobId());
   }
 
   private FileStorageObject createFileStorageObject() {

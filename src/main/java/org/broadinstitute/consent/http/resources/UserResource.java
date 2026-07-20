@@ -20,6 +20,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -49,6 +50,7 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SigningOfficialUser;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -411,6 +413,28 @@ public class UserResource extends Resource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
+  @Path("/institution/{institutionId}/signing-officials")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
+  public Response getSigningOfficialsByInstitution(
+      @Auth AuthUser authUser, @PathParam("institutionId") Integer institutionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (!user.hasUserRole(UserRoles.ADMIN)
+          && !user.hasUserRole(UserRoles.CHAIRPERSON)
+          && !user.hasUserRole(UserRoles.MEMBER)
+          && !Objects.equals(user.getInstitutionId(), institutionId)) {
+        throw new ForbiddenException("Researchers may only query their own institution.");
+      }
+      List<SigningOfficialUser> signingOfficials =
+          userService.findSOsWithDataByInstitutionId(institutionId);
+      return Response.ok().entity(signingOfficials).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements")
   @PermitAll
   public Response getUserAcknowledgements(@Auth DuosUser duosUser) {
@@ -544,6 +568,31 @@ public class UserResource extends Resource {
               : servicesConfiguration.getLocalURL() + "/";
       URI uri = new URI("%sapi/user/%d".formatted(localUrl, user.getUserId()));
       return Response.created(uri).entity(user).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * Redact PII from a user account. The user's email and display name are replaced with anonymized
+   * placeholders and an audit record is created to preserve the original values. Only admins may
+   * call this endpoint.
+   *
+   * @param duosUser the authenticated admin user
+   * @param email the email address of the user to redact (as a query parameter)
+   * @return 200 OK on success
+   */
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/redact")
+  @RolesAllowed({ADMIN})
+  public Response redactUser(@Auth DuosUser duosUser, @QueryParam("email") String email) {
+    try {
+      if (email == null || email.isBlank()) {
+        throw new BadRequestException("email query parameter is required");
+      }
+      userService.redactUser(duosUser.getUser(), email);
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

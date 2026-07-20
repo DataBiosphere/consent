@@ -1,5 +1,6 @@
 get:
   summary: Get a list of automation rules available for DACs in DUOS
+  operationId: apiDacRulesGet
   description: View the rules available.
   tags:
     - DAC
@@ -12,3 +13,9 @@ get:
             type: array
             items:
               $ref: '../schemas/DacAutomationRule.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

@@ -1,0 +1,42 @@
+post:
+  summary: Mapping between DAAs and Datasets
+  description: |
+    Provides insights into the datasets associated with each DAA.  Useful to understand
+    which rules apply to each dataset in a multi-dataset/multi-dac DAR.
+  operationId: findDaaForDatasets
+  tags:
+    - DAA
+  requestBody:
+    description: A set of dataset IDs
+    content:
+      application/json:
+        schema:
+          type: array
+          items:
+            type: integer
+  responses:
+    200:
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                type: integer
+            examples:
+              - 100: [ 1, 2, 3 ]
+              - 101: [ 5 ]
+      description: A Map of DAA to Datasets the DAA applies to.
+    400:
+      description: Bad Request (malformed list of dataset ids)
+    401:
+      description: Unauthenticated
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal server error

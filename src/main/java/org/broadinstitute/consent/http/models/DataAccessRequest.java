@@ -60,13 +60,10 @@ public class DataAccessRequest {
   @JsonProperty public List<Integer> datasetIds;
   @JsonProperty private Map<Integer, Election> elections;
   @JsonProperty private String eraCommonsId;
+  @JsonProperty private String adminDarNotes;
 
   @JsonProperty public Integer approvingSigningOfficialUserId;
   @JsonProperty public Timestamp approvingSigningOfficialApprovedDate;
-
-  @JsonProperty public Timestamp closeoutSigningOfficialApprovedDate;
-
-  @JsonProperty public Integer closeoutSigningOfficialApprovedUserId;
 
   @JsonProperty public boolean requiresSOApproval;
 
@@ -247,22 +244,12 @@ public class DataAccessRequest {
     this.eraCommonsId = eraCommonsId;
   }
 
-  public Integer getCloseoutSigningOfficialApprovedUserId() {
-    return closeoutSigningOfficialApprovedUserId;
+  public String getAdminDarNotes() {
+    return adminDarNotes;
   }
 
-  public void setCloseoutSigningOfficialApprovedUserId(
-      Integer closeoutSigningOfficialApprovedUserId) {
-    this.closeoutSigningOfficialApprovedUserId = closeoutSigningOfficialApprovedUserId;
-  }
-
-  public Timestamp getCloseoutSigningOfficialApprovedDate() {
-    return closeoutSigningOfficialApprovedDate;
-  }
-
-  public void setCloseoutSigningOfficialApprovedDate(
-      Timestamp closeoutSigningOfficialApprovedDate) {
-    this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
+  public void setAdminDarNotes(String adminDarNotes) {
+    this.adminDarNotes = adminDarNotes;
   }
 
   public Integer getApprovingSigningOfficialUserId() {
@@ -405,6 +392,11 @@ public class DataAccessRequest {
     // object and not the original DAR.
     originalDataCopy.setReferenceId(referenceId);
 
+    // We need to set the new DAAs that were in place on the DAR because the DAAs may have been
+    // updated
+    // from the original DAR.
+    originalDataCopy.setDaaIds(newData.getDaaIds());
+
     newDar.setData(originalDataCopy);
     return newDar;
   }
@@ -477,13 +469,8 @@ public class DataAccessRequest {
     if (dar.getEraCommonsId() != null) {
       copy.put("eraCommonsId", dar.getEraCommonsId());
     }
-    if (dar.getCloseoutSigningOfficialApprovedUserId() != null) {
-      copy.put(
-          "closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
-    }
-    if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
-      copy.put(
-          "closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+    if (dar.getAdminDarNotes() != null) {
+      copy.put("adminDarNotes", dar.getAdminDarNotes());
     }
     if (dar.getApprovingSigningOfficialUserId() != null) {
       copy.put("approvingSigningOfficialUserId", dar.getApprovingSigningOfficialUserId());
@@ -509,11 +496,6 @@ public class DataAccessRequest {
         && this.getData() != null
         && this.getData().getCloseoutSupplement() != null
         && !this.getData().getCloseoutSupplement().reasons().isEmpty();
-  }
-
-  public boolean getHasSOCloseoutApproval() {
-    return this.getCloseoutSigningOfficialApprovedDate() != null
-        && this.getCloseoutSigningOfficialApprovedUserId() != null;
   }
 
   public boolean getHasDMI() {

@@ -5,7 +5,7 @@ post:
     ontology file storage location. Note that this starts an async operation
     that may take several minutes to complete depending on the size of the
     ontology file.
-  operationId: indexOntology
+  operationId: apiOntologyPost
   parameters:
     - name: ontologyType
       in: query
@@ -21,13 +21,19 @@ post:
   responses:
     200:
       description: Ontology Index Results
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 
 delete:
   summary: Index Ontology Deletion
   description: Index Ontology Deletion
-  operationId: indexOntologyDeletion
+  operationId: apiOntologyDelete
   parameters:
     - name: ontologyType
       in: query
@@ -41,5 +47,11 @@ delete:
   responses:
     200:
       description: Ontology Deletion Results
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

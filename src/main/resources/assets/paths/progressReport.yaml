@@ -1,5 +1,6 @@
 post:
   deprecated: true
+  operationId: apiDarV2ProgressReportParentReferenceIdPost
   summary: |
     Create a new DAR progress report
     See /api/dar/v3/progress_report/{parentReferenceId} for replacement
@@ -27,10 +28,10 @@ post:
               description: An object that follows the Data Access Request schema
             collaboratorRequiredFile:
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             ethicsApprovalRequiredFile:
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   responses:
     200:
       description: Returns the Data Access Request with progress report
@@ -52,6 +53,12 @@ post:
             $ref: '../schemas/ErrorResponse.yaml'
     404:
       description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
       content:
         application/json:
           schema:

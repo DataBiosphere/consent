@@ -1,6 +1,6 @@
 post:
   summary: Create a DAC
-  operationId: createDac
+  operationId: apiDacPost
   description: Create a Data Access Committee
   requestBody:
     description: Data Access Committee
@@ -22,11 +22,17 @@ post:
       description: Bad Request. DAC Name and Description are required.
     403:
       description: User not authorized to request all dacs.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 put:
   summary: Update a DAC
-  operationId: updateDac
+  operationId: apiDacPut
   description: |
     Update a Data Access Committee. Admins can update any Data Access Committee
     Chairpersons can only update Data Access Committees for which they are a Chairperson for.
@@ -48,10 +54,17 @@ put:
             $ref: '../schemas/Dac.yaml'
     400:
       description: Bad Request. DAC ID, Name, and Description are required.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 get:
   summary: Get all DACs
+  operationId: apiDacGet
   description: All Data Access Committees with a list of chairpersons and members
   parameters:
     - name: withUsers
@@ -70,5 +83,11 @@ get:
             type: array
             items:
               $ref: '../schemas/Dac.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

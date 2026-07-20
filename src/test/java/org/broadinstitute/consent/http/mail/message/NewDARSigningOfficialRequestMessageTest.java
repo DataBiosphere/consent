@@ -3,30 +3,25 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.util.Map;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewDARSigningOfficialRequestMessageTest {
+class NewDARSigningOfficialRequestMessageTest extends AbstractMailMessageTest {
 
-  private FreeMarkerTemplateHelper helper;
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("SO");
+    var message =
+        new NewDARSigningOfficialRequestMessage(signingOfficial, "DAR-01", "ResearcherName");
 
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
+    assertRequiredModelFields(
+        message,
+        Map.of("userName", "SO", "researcherUserName", "ResearcherName", "darID", "DAR-01"));
   }
 
   @Test
@@ -51,20 +46,16 @@ class NewDARSigningOfficialRequestMessageTest {
     assertEquals(darCode, message.getEntityReferenceId());
     assertEquals("A data access request requires your approval: DAR-01.", message.createSubject());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
     String serverUrl = "http://testServerUrl";
-    template.process(message.createModel(serverUrl), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, serverUrl);
 
     assertEquals(
         "Broad Data Use Oversight System - New DAR submitted that requires your approval",
-        parsedTemplate.title());
+        rendered.document().title());
     assertEquals(
-        "Hello SO,", Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
-    assertTrue(templateString.contains(" ResearcherName,"));
-    assertTrue(templateString.contains(darCode));
-    assertTrue(templateString.contains(serverUrl));
+        "Hello SO,", Objects.requireNonNull(rendered.document().getElementById("userName")).text());
+    assertTrue(rendered.content().contains(" ResearcherName,"));
+    assertTrue(rendered.content().contains(darCode));
+    assertTrue(rendered.content().contains(serverUrl));
   }
 }

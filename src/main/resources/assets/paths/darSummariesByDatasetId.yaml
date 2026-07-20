@@ -1,6 +1,6 @@
 get:
   summary: DAR Summary Metrics
-  operationId: darSummariesByDatasetId
+  operationId: apiMetricsDarSummariesDatasetIdGet
   description: get Data Access Request Summaries associated to a datasetId
   parameters:
     - name: datasetId
@@ -21,5 +21,11 @@ get:
               $ref: '../schemas/DarMetric.yaml'
     404:
       description: Dataset with specified ID does not exist
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

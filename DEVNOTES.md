@@ -1,5 +1,7 @@
 # Local Development
 
+Implementation plans and migration design notes live in [docs/plans](docs/plans). Check that directory before starting larger feature, migration, or refactor work.
+
 * Maven 3.9
 * Java 25
 * Dropwizard Docs: http://www.dropwizard.io/
@@ -152,3 +154,53 @@ e.g.
 
 Run the dependency checker:
 ```$ mvn org.owasp:dependency-check-maven:check``` 
+
+## Integration Testing
+
+Integration tests live in `src/test/java/**/integration/` and are run as part
+of the standard `mvn test` lifecycle — no special profile, external server, or
+manual Postgres setup is required.
+
+#### How they work
+
+Each test class extends `ContainerTests`, which uses a JUnit 5
+`DropwizardAppExtension` to boot the full application in-process against the
+config at `src/test/resources/consent-ci.yaml`. A WireMock server on port 9999
+stands in for all external services (Sam, ECM, GCS, etc.).
+
+Database seeding is performed programmatically in `ContainerTests.seedDatabase()`
+via typed DAO calls (`@BeforeAll`). The seed data is fully synthetic and
+idempotent. To add new baseline rows, extend the relevant `seed*` helper method
+inside `ContainerTests`.
+
+#### Database
+
+`ContainerTests` starts its own [Testcontainers](https://www.testcontainers.org/)
+`PostgreSQLContainer` in a static initializer and passes the container's
+coordinates directly to `DropwizardAppExtension` via `ConfigOverride`. The
+hardcoded coordinates in `consent-ci.yaml` are never reached at runtime. No
+local Postgres is needed in any environment.
+
+#### How they run in CI
+
+The GitHub Actions workflow at `.github/workflows/coverage.yaml` runs
+`mvn clean test` on every push/PR to `develop`, which exercises unit and
+integration tests together via Testcontainers — no additional CI configuration
+is needed.
+
+#### Running integration tests locally
+
+**Integration tests only:**
+
+```bash
+mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
+```
+
+**All tests** (unit + integration together, as CI does):
+
+```bash
+mvn clean test
+```
+
+**From the IDE:** run or debug any test class in the `integration` package
+directly — `DAOTestHelper` activates automatically and provides the database.

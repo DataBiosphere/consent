@@ -69,6 +69,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static FeatureFlagDAO featureFlagDAO;
   protected static OntologyDAO ontologyDAO;
   protected static VoteServiceDAO voteServiceDAO;
+  protected static UserRedactionAuditDAO userRedactionAuditDAO;
   private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -125,7 +126,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
             maxConnectionsOverride);
     testApp.before();
 
-    // Initialize DAOs
+    // All DAO proxies are initialized eagerly. onDemand() is cheap (no connection acquired),
+    // so initializing all 23 here is intentional — it keeps test setup uniform across all
+    // subclasses.
     String dbiExtension = "_" + RandomStringUtils.secureStrong().nextAlphabetic(10);
     ConsentConfiguration configuration = testApp.getConfiguration();
     Environment environment = testApp.getEnvironment();
@@ -161,8 +164,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     dacAutomationRuleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
     featureFlagDAO = jdbi.onDemand(FeatureFlagDAO.class);
     ontologyDAO = jdbi.onDemand(OntologyDAO.class);
+    userRedactionAuditDAO = jdbi.onDemand(UserRedactionAuditDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
-    voteServiceDAO = new VoteServiceDAO(jdbi, voteDAO);
+    voteServiceDAO = new VoteServiceDAO(jdbi);
   }
 
   @BeforeEach()
@@ -221,7 +225,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
 
   protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
     User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId, user.getUserId());
     return user;
   }
 

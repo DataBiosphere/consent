@@ -1,5 +1,6 @@
 get:
   summary: Get a Data Access Request by Reference Id
+  operationId: apiDarV2ReferenceIdGet
   description: Returns the created Data Access Request.
   parameters:
     - name: referenceId
@@ -21,10 +22,17 @@ get:
       description: The provided Reference Id is not a valid DAR identifier
     404:
       description: No DAR can be found with the provided identifier
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server Error
 put:
   summary: Update a Data Access Request by Reference Id
+  operationId: apiDarV2ReferenceIdPut
   description: Returns the updated Data Access Request.
   parameters:
     - name: referenceId
@@ -51,10 +59,17 @@ put:
             $ref: '../schemas/DataAccessRequest.yaml'
     403:
       description: Updates are restricted to the create user.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error.
 delete:
   summary: Delete DAR by Reference Id
+  operationId: apiDarV2ReferenceIdDelete
   description: | 
     Deletes a draft DAR by reference id. Admins may delete all drafts, researchers can only delete their own drafts.
   parameters:
@@ -81,5 +96,11 @@ delete:
       description: Only drafts can be deleted.
     406:
       description: There are existing resources that reference this Data Access Request
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal server error.

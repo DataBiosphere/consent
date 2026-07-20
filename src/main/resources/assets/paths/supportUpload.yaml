@@ -1,14 +1,13 @@
 post:
   summary: Create a file upload for a support request
+  operationId: supportUploadPost
   description: Create a file upload for a support request
   tags:
     - Support
   requestBody:
     content:
       application/binary:
-        schema:
-          type: string
-          format: binary
+        schema: {}
   responses:
     201:
       description: A token that represents the uploaded file
@@ -16,6 +15,7 @@ post:
         application/json:
           schema:
             type: object
+            title: SupportUploadToken
             properties:
               token:
                 type: string

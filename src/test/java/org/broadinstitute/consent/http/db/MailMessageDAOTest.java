@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,18 +28,18 @@ class MailMessageDAOTest extends DAOTestHelper {
   void testInsert_AllFields() {
     User user = createUser();
     Instant now = Instant.now();
-    Integer mailId =
+    MailMessage mail =
         mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            now,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            randomInt(200, 399),
-            now);
-    assertNotNull(mailId);
+            new MailMessageInsert(
+                randomAlphanumeric(10),
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(now),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                randomInt(200, 399)));
+    assertNotNull(mail);
   }
 
   @Test
@@ -47,18 +49,18 @@ class MailMessageDAOTest extends DAOTestHelper {
         .forEach(
             t -> {
               Instant now = Instant.now();
-              Integer mailId =
+              MailMessage mail =
                   mailMessageDAO.insert(
-                      randomAlphanumeric(10),
-                      randomInt(1, 1000),
-                      user.getUserId(),
-                      t.getTypeInt(),
-                      now,
-                      randomAlphanumeric(10),
-                      randomAlphanumeric(10),
-                      randomInt(200, 399),
-                      now);
-              assertNotNull(mailId);
+                      new MailMessageInsert(
+                          randomAlphanumeric(10),
+                          randomInt(1, 1000),
+                          user.getUserId(),
+                          t.getTypeInt(),
+                          Date.from(now),
+                          randomAlphanumeric(10),
+                          randomAlphanumeric(10),
+                          randomInt(200, 399)));
+              assertNotNull(mail);
             });
   }
 
@@ -66,90 +68,89 @@ class MailMessageDAOTest extends DAOTestHelper {
   void testInsert_NullEntityReferenceId() {
     User user = createUser();
     Instant now = Instant.now();
-    Integer mailId =
+    MailMessage mail =
         mailMessageDAO.insert(
-            null,
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            now,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            randomInt(200, 399),
-            now);
-    assertNotNull(mailId);
+            new MailMessageInsert(
+                null,
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(now),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                randomInt(200, 399)));
+    assertNotNull(mail);
   }
 
   @Test
   void testInsert_NullVoteId() {
     User user = createUser();
     Instant now = Instant.now();
-    Integer mailId =
+    MailMessage mail =
         mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            null,
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            now,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            randomInt(200, 399),
-            now);
-    assertNotNull(mailId);
+            new MailMessageInsert(
+                randomAlphanumeric(10),
+                null,
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(now),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                randomInt(200, 399)));
+    assertNotNull(mail);
   }
 
   @Test
   void testInsert_NullDateSent() {
     User user = createUser();
-    Instant now = Instant.now();
-    Integer mailId =
+    MailMessage mail =
         mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            null,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            randomInt(200, 399),
-            now);
-    assertNotNull(mailId);
+            new MailMessageInsert(
+                randomAlphanumeric(10),
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                null,
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                randomInt(200, 399)));
+    assertNotNull(mail);
   }
 
   @Test
   void testInsert_NullSendGridResponse() {
     User user = createUser();
     Instant now = Instant.now();
-    Integer mailId =
+    MailMessage mail =
         mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            now,
-            randomAlphanumeric(10),
-            null,
-            randomInt(200, 399),
-            now);
-    assertNotNull(mailId);
+            new MailMessageInsert(
+                randomAlphanumeric(10),
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(now),
+                randomAlphanumeric(10),
+                null,
+                randomInt(200, 399)));
+    assertNotNull(mail);
   }
 
   @Test
   void testInsert_NullSendGridStatus() {
     User user = createUser();
     Instant now = Instant.now();
-    Integer mailId =
+    MailMessage mail =
         mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            now,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            null,
-            now);
-    assertNotNull(mailId);
+            new MailMessageInsert(
+                randomAlphanumeric(10),
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(now),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                null));
+    assertNotNull(mail);
   }
 
   @Test
@@ -159,91 +160,88 @@ class MailMessageDAOTest extends DAOTestHelper {
     Integer voteId = randomInt(1, 1000);
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            null,
+            null,
+            Date.from(now),
+            null,
+            sendGridResponse,
+            sendGridStatus);
     assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
-                entityReferenceId,
-                voteId,
-                null,
-                null,
-                now,
-                null,
-                sendGridResponse,
-                sendGridStatus,
-                null));
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test
   void testInsert_MissingEmailType() {
+    User user = createUser();
     Instant now = Instant.now();
     String entityReferenceId = randomAlphanumeric(10);
     Integer voteId = randomInt(1, 1000);
-    Integer userId = randomInt(1, 1000);
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            user.getUserId(),
+            null,
+            Date.from(now),
+            null,
+            sendGridResponse,
+            sendGridStatus);
     assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
-                entityReferenceId,
-                voteId,
-                userId,
-                null,
-                now,
-                null,
-                sendGridResponse,
-                sendGridStatus,
-                null));
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test
   void testInsert_MissingEmailText() {
+    User user = createUser();
     Instant now = Instant.now();
     String entityReferenceId = randomAlphanumeric(10);
     Integer voteId = randomInt(1, 1000);
-    Integer userId = randomInt(1, 1000);
     Integer emailType = EmailType.COLLECT.getTypeInt();
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            user.getUserId(),
+            emailType,
+            Date.from(now),
+            null,
+            sendGridResponse,
+            sendGridStatus);
     assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
-                entityReferenceId,
-                voteId,
-                userId,
-                emailType,
-                now,
-                null,
-                sendGridResponse,
-                sendGridStatus,
-                null));
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test
-  void testInsert_MissingCreateDate() {
-    Instant now = Instant.now();
+  void testInsert_ProvidesCreateDateFromDatabase() {
+    User user = createUser();
+    Instant historicalInstant = Instant.parse("2000-01-01T00:00:00Z");
     String entityReferenceId = randomAlphanumeric(10);
     Integer voteId = randomInt(1, 1000);
-    Integer userId = randomInt(1, 1000);
     Integer emailType = EmailType.COLLECT.getTypeInt();
     String emailText = randomAlphanumeric(10);
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
-    assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
+    MailMessage savedMessage =
+        mailMessageDAO.insert(
+            new MailMessageInsert(
                 entityReferenceId,
                 voteId,
-                userId,
+                user.getUserId(),
                 emailType,
-                now,
+                Date.from(historicalInstant),
                 emailText,
                 sendGridResponse,
-                sendGridStatus,
-                null));
+                sendGridStatus));
+    assertNotNull(savedMessage.createDate());
+    assertTrue(savedMessage.createDate().toInstant().isAfter(historicalInstant));
   }
 
   @Test
@@ -254,15 +252,15 @@ class MailMessageDAOTest extends DAOTestHelper {
             t -> {
               Instant now = Instant.now();
               mailMessageDAO.insert(
-                  randomAlphanumeric(10),
-                  randomInt(1, 1000),
-                  user.getUserId(),
-                  t.getTypeInt(),
-                  now,
-                  randomAlphanumeric(10),
-                  randomAlphanumeric(10),
-                  randomInt(200, 399),
-                  now);
+                  new MailMessageInsert(
+                      randomAlphanumeric(10),
+                      randomInt(1, 1000),
+                      user.getUserId(),
+                      t.getTypeInt(),
+                      Date.from(now),
+                      randomAlphanumeric(10),
+                      randomAlphanumeric(10),
+                      randomInt(200, 399)));
             });
 
     EnumSet.allOf(EmailType.class)
@@ -274,16 +272,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   void testFetchLimitAndOffset() {
     User user = createUser();
     Instant now = Instant.now();
-    mailMessageDAO.insert(
-        randomAlphanumeric(10),
-        randomInt(1, 1000),
-        user.getUserId(),
-        EmailType.COLLECT.getTypeInt(),
-        now,
-        randomAlphanumeric(10),
-        randomAlphanumeric(10),
-        randomInt(200, 399),
-        now);
+    MailMessage firstMail = generateMessage(user, now.minus(1, ChronoUnit.HOURS));
 
     List<MailMessage> mailMessageList =
         mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 0);
@@ -293,22 +282,12 @@ class MailMessageDAOTest extends DAOTestHelper {
         mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 1);
     assertEquals(0, mailMessageList2.size());
 
-    Integer mailId2 =
-        mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            now,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            null,
-            now);
+    generateMessage(user, now);
 
     List<MailMessage> mailMessageList3 =
         mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 1);
     assertEquals(1, mailMessageList3.size());
-    assertEquals(mailId2, mailMessageList3.getFirst().getEmailId());
+    assertEquals(firstMail.emailId(), mailMessageList3.getFirst().emailId());
 
     List<MailMessage> mailMessageList4 =
         mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 20, 0);
@@ -320,35 +299,35 @@ class MailMessageDAOTest extends DAOTestHelper {
     Instant now = Instant.now();
     User user = createUser();
     mailMessageDAO.insert(
-        randomAlphanumeric(10),
-        randomInt(1, 1000),
-        user.getUserId(),
-        EmailType.COLLECT.getTypeInt(),
-        now,
-        randomAlphanumeric(10),
-        randomAlphanumeric(10),
-        randomInt(200, 399),
-        now);
+        new MailMessageInsert(
+            randomAlphanumeric(10),
+            randomInt(1, 1000),
+            user.getUserId(),
+            EmailType.COLLECT.getTypeInt(),
+            Date.from(now),
+            randomAlphanumeric(10),
+            randomAlphanumeric(10),
+            randomInt(200, 399)));
 
     List<MailMessage> mailMessageList =
         mailMessageDAO.fetchMessagesByUserId(user.getUserId(), 10, 0);
     assertEquals(1, mailMessageList.size());
-    assertEquals(user.getUserId(), mailMessageList.getFirst().getUserId());
+    assertEquals(user.getUserId(), mailMessageList.getFirst().userId());
 
     mailMessageDAO.insert(
-        randomAlphanumeric(10),
-        randomInt(1, 1000),
-        user.getUserId(),
-        EmailType.COLLECT.getTypeInt(),
-        now,
-        randomAlphanumeric(10),
-        randomAlphanumeric(10),
-        randomInt(200, 399),
-        now);
+        new MailMessageInsert(
+            randomAlphanumeric(10),
+            randomInt(1, 1000),
+            user.getUserId(),
+            EmailType.COLLECT.getTypeInt(),
+            Date.from(now),
+            randomAlphanumeric(10),
+            randomAlphanumeric(10),
+            randomInt(200, 399)));
     List<MailMessage> mailMessageList2 =
         mailMessageDAO.fetchMessagesByUserId(user.getUserId(), 10, 0);
     assertEquals(2, mailMessageList2.size());
-    assertEquals(user.getUserId(), mailMessageList2.getFirst().getUserId());
+    assertEquals(user.getUserId(), mailMessageList2.getFirst().userId());
 
     User user2 = createUser();
     List<MailMessage> mailMessageList3 =
@@ -375,7 +354,7 @@ class MailMessageDAOTest extends DAOTestHelper {
         mailMessageDAO.fetchMessagesByCreateDate(
             Date.from(todayStart), Date.from(tomorrowStart), 1, 0);
     assertEquals(1, messages.size());
-    assertEquals(messageToday.getEmailId(), messages.getFirst().getEmailId());
+    assertEquals(messageToday.emailId(), messages.getFirst().emailId());
 
     // Find messages from beginning of yesterday to tomorrow. Should return both messages.
     // Order is create date descending, so today is first, yesterday second.
@@ -383,8 +362,8 @@ class MailMessageDAOTest extends DAOTestHelper {
         mailMessageDAO.fetchMessagesByCreateDate(
             Date.from(yesterdayStart), Date.from(tomorrowStart), 2, 0);
     assertEquals(2, messages2.size());
-    assertEquals(messageToday.getEmailId(), messages2.get(0).getEmailId());
-    assertEquals(messageYesterday.getEmailId(), messages2.get(1).getEmailId());
+    assertEquals(messageToday.emailId(), messages2.get(0).emailId());
+    assertEquals(messageYesterday.emailId(), messages2.get(1).emailId());
 
     // Find messages from beginning of yesterday to tomorrow, offset by 1. Since messages are
     // ordered by create date descending, offset should trim today's message and only return
@@ -393,7 +372,7 @@ class MailMessageDAOTest extends DAOTestHelper {
         mailMessageDAO.fetchMessagesByCreateDate(
             Date.from(yesterdayStart), Date.from(tomorrowStart), 2, 1);
     assertEquals(1, messages3.size());
-    assertEquals(messageYesterday.getEmailId(), messages3.getFirst().getEmailId());
+    assertEquals(messageYesterday.emailId(), messages3.getFirst().emailId());
 
     // Find messages from beginning of yesterday to beginning today. Should return yesterday's
     // message.
@@ -401,22 +380,68 @@ class MailMessageDAOTest extends DAOTestHelper {
         mailMessageDAO.fetchMessagesByCreateDate(
             Date.from(yesterdayStart), Date.from(todayStart), 2, 0);
     assertEquals(1, messages4.size());
-    assertEquals(messageYesterday.getEmailId(), messages4.getFirst().getEmailId());
+    assertEquals(messageYesterday.emailId(), messages4.getFirst().emailId());
+  }
+
+  @Test
+  void testInsert() {
+    User user = createUser();
+    String entityReferenceId = randomAlphanumeric(10);
+    Integer voteId = randomInt(1, 1000);
+    Integer emailType = EmailType.NEW_DAR.getTypeInt();
+    Instant now = Instant.now();
+    Date nowDate = Date.from(now);
+    String emailText = randomAlphanumeric(1000);
+    String sendGridResponse = randomAlphanumeric(1000);
+    Integer sendGridStatus = 200;
+    MailMessageInsert unsavedMessage =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            user.getUserId(),
+            emailType,
+            nowDate,
+            emailText,
+            sendGridResponse,
+            sendGridStatus);
+
+    MailMessage savedMessage = mailMessageDAO.insert(unsavedMessage);
+    assertNotNull(savedMessage);
+    assertNotNull(savedMessage.emailId());
+    assertEquals(entityReferenceId, savedMessage.entityReferenceId());
+    assertEquals(user.getUserId(), savedMessage.userId());
+    assertEquals(emailType, savedMessage.emailType());
+    assertEquals(nowDate, savedMessage.dateSent());
+    assertEquals(emailText, savedMessage.emailText());
+    assertEquals(sendGridStatus, savedMessage.sendgridStatus());
+    assertEquals(sendGridResponse, savedMessage.sendgridResponse());
+    assertNotNull(savedMessage.createDate());
   }
 
   private MailMessage generateMessage(Instant instant) {
-    User user = createUser();
-    Integer messageId =
+    return generateMessage(createUser(), instant);
+  }
+
+  private MailMessage generateMessage(User user, Instant instant) {
+    MailMessage savedMessage =
         mailMessageDAO.insert(
-            randomAlphanumeric(10),
-            randomInt(1, 1000),
-            user.getUserId(),
-            EmailType.COLLECT.getTypeInt(),
-            instant,
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            randomInt(200, 399),
-            instant);
-    return mailMessageDAO.fetchMessageById(messageId);
+            new MailMessageInsert(
+                randomAlphanumeric(10),
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(instant),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                randomInt(200, 399)));
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE email_entity SET create_date = :createDate WHERE email_entity_id = :emailId")
+                .bind("createDate", Date.from(instant))
+                .bind("emailId", savedMessage.emailId())
+                .execute());
+    return mailMessageDAO.fetchMessageById(savedMessage.emailId());
   }
 }

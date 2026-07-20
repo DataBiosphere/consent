@@ -109,7 +109,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   private Dac createDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphanumeric(20), "Test_" + randomAlphanumeric(20), new Date());
+            "Test_" + randomAlphanumeric(20),
+            "Test_" + randomAlphanumeric(20),
+            createUser().getUserId());
     return dacDAO.findById(id);
   }
 
@@ -333,8 +335,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
-    assertNull(summaries.get(0).getCloseoutSigningOfficialApprovalDate());
-    assertNull(summaries.get(0).getCloseoutSigningOfficialApprovalId());
+    assertNull(summaries.get(0).getSoApproverId());
+    assertNull(summaries.get(0).getSoApproverTimestamp());
   }
 
   @Test
@@ -355,9 +357,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
-    dataAccessRequestDAO.updateDarCloseoutSO(userOneId, darOne.getReferenceId());
+    dataAccessRequestDAO.updateDarApprovalSO(userOneId, darOne.getReferenceId());
     DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId);
-    dataAccessRequestDAO.updateDarCloseoutSO(userOneId, darTwo.getReferenceId());
+    dataAccessRequestDAO.updateDarApprovalSO(userOneId, darTwo.getReferenceId());
 
     dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(
@@ -389,8 +391,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
           Integer electionId = collectionOneElection.getElectionId();
           s.getElections().forEach((key, value) -> assertEquals(electionId, key));
           assertEquals(1, s.getDatasetCount());
-          assertEquals(userOneId, s.getCloseoutSigningOfficialApprovalId());
-          assertNotNull(s.getCloseoutSigningOfficialApprovalDate());
+          assertEquals(userOneId, s.getSoApproverId());
+          assertNotNull(s.getSoApproverTimestamp());
         });
   }
 

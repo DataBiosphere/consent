@@ -20,16 +20,17 @@ import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.jdbi.v3.core.Jdbi;
 
 public class DraftService implements ConsentLogger {
 
-  DraftDAO draftDAO;
-  DraftServiceDAO draftServiceDAO;
-  GCSService gcsService;
+  private final DraftDAO draftDAO;
+  private final DraftServiceDAO draftServiceDAO;
+  private final GCSService gcsService;
 
   @Inject
-  public DraftService(DraftDAO draftDAO, DraftServiceDAO draftServiceDAO, GCSService gcsService) {
-    this.draftDAO = draftDAO;
+  public DraftService(Jdbi jdbi, DraftServiceDAO draftServiceDAO, GCSService gcsService) {
+    this.draftDAO = jdbi.onDemand(DraftDAO.class);
     this.draftServiceDAO = draftServiceDAO;
     this.gcsService = gcsService;
   }

@@ -13,12 +13,14 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class LibraryCardService implements ConsentLogger {
 
@@ -31,17 +33,12 @@ public class LibraryCardService implements ConsentLogger {
 
   @Inject
   public LibraryCardService(
-      DaaDAO daaDAO,
-      LibraryCardDAO libraryCardDAO,
-      InstitutionDAO institutionDAO,
-      InstitutionService institutionService,
-      UserDAO userDAO,
-      EmailService emailService) {
-    this.daaDAO = daaDAO;
-    this.libraryCardDAO = libraryCardDAO;
-    this.institutionDAO = institutionDAO;
+      Jdbi jdbi, InstitutionService institutionService, EmailService emailService) {
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
+    this.libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
+    this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.institutionService = institutionService;
-    this.userDAO = userDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
     this.emailService = emailService;
   }
 
@@ -61,7 +58,7 @@ public class LibraryCardService implements ConsentLogger {
     User toUser = userDAO.findUserByEmail(libraryCard.getUserEmail());
     if (toUser != null) {
       try {
-        emailService.sendNewLibraryCardIssuedMessage(toUser);
+        sendNewLibraryCardIssuedMessage(toUser);
       } catch (IOException | TemplateException e) {
         logWarn(
             "Failed to send library card issuance notification for user " + user.getUserId(), e);
@@ -152,6 +149,17 @@ public class LibraryCardService implements ConsentLogger {
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());
     return createLibraryCard(lc, user);
+  }
+
+  /**
+   * Send a message to the user when they are issued a library card
+   *
+   * @param toUser The user to send the message to
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
+    emailService.sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
 
   public List<LibraryCardDaaAudit> findLibraryCardDaaAuditsByUserId(Integer userId) {

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
@@ -9,10 +10,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class AcknowledgementService implements ConsentLogger {
 
@@ -21,12 +24,10 @@ public class AcknowledgementService implements ConsentLogger {
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final EmailService emailService;
 
-  public AcknowledgementService(
-      AcknowledgementDAO acknowledgementDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
-      EmailService emailService) {
-    this.acknowledgementDAO = acknowledgementDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+  @Inject
+  public AcknowledgementService(Jdbi jdbi, EmailService emailService) {
+    this.acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.emailService = emailService;
   }
 
@@ -66,7 +67,7 @@ public class AcknowledgementService implements ConsentLogger {
                 .formatted(dar.getDarCode()));
       }
       try {
-        emailService.sendResearcherCloseoutCompletedMessage(user, dar.getDarCode(), referenceId);
+        sendResearcherCloseoutCompletedMessage(user, dar.getDarCode(), referenceId);
       } catch (IOException | TemplateException e) {
         logException(
             "Unable to send researcher closeout completed message for DAR %s"
@@ -74,6 +75,19 @@ public class AcknowledgementService implements ConsentLogger {
             e);
       }
     }
+  }
+
+  /**
+   * Send a message to a user that their closeout has been completed.
+   *
+   * @param user the user to send the message to
+   * @param darCode the data access request code for which closeout is completed
+   * @param referenceId the data access request reference id for which closeout is completed
+   */
+  public void sendResearcherCloseoutCompletedMessage(User user, String darCode, String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new ResearcherCloseoutCompletedMessage(user, darCode, referenceId), user.getUserId());
   }
 
   private Map<String, Acknowledgement> acknowledgementListToMap(

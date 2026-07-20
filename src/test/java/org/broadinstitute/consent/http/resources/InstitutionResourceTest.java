@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.InstitutionService;
+import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ class InstitutionResourceTest {
 
   @BeforeEach
   void initResource() {
-    resource = new InstitutionResource(institutionService);
+    resource = new InstitutionResource(institutionService, new InstitutionUtil());
   }
 
   @Test

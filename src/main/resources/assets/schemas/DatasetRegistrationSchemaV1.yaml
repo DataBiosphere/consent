@@ -1,3 +1,19 @@
+description: |
+  Study/dataset registration payload accepted by POST /api/dataset/v3 and
+  PUT /api/dataset/study/{studyId}. Validation of this payload is performed by
+  backend DTO/domain validators. This OpenAPI document is the authoritative,
+  forward-looking description of the request/response contract.
+
+  Conditionally required fields:
+  * `piInstitution` and `nihGrantContractNumber` are required unless
+    `nihAnvilUse` is "I am not NHGRI funded and do not plan to store data in AnVIL".
+  * `dbGaPPhsID` is additionally required when `nihAnvilUse` is
+    "I am NHGRI funded and I have a dbGaP PHS ID already".
+  * `controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation`
+    is required when `controlledAccessRequiredForGenomicSummaryResultsGSR` is true.
+  * `alternativeDataSharingPlanExplanation` and
+    `alternativeDataSharingPlanReasons` are required when
+    `alternativeDataSharingPlan` is true.
 type: object
 properties:
   studyName:
@@ -23,8 +39,13 @@ properties:
     type: string
     description: Principal Investigator Name
   dataSubmitterUserId:
-    type: number
-    description: The user creating the dataset submission
+    type: integer
+    format: int32
+    description: |
+      The user who created the study. Server-assigned from the authenticated
+      user on create; present in responses only. Not part of the accepted
+      request payload and ignored if submitted.
+    readOnly: true
   dataCustodianEmail:
     type: array
     description: Data Custodian Email
@@ -209,12 +230,31 @@ properties:
       "$ref": "./ConsentGroup.yaml"
   assets:
     type: object
-    description: Study Assets
+    title: DatasetRegistrationSchemaV1Assets
+    description: |
+      Optional client-managed presentation/submission-context metadata (e.g.
+      UI labels or form choices). Preserved and returned as-is by the backend;
+      not backend-validated.
+  data:
+    type: object
+    title: DatasetRegistrationSchemaV1Data
+    description: |
+      Optional client-managed study metadata, grouped under stable keys (e.g.
+      "duosRegistration"). Preserved and round-tripped by the backend as-is;
+      not backend-validated. Do not duplicate first-class fields here — if
+      backend behavior comes to depend on a value here, it will be promoted
+      to a first-class field.
+  externalIdentifier:
+    type: string
+    description: The identifier for this study in an external system (e.g. SCP1671 in Single Cell Portal)
+  externalIdentifierType:
+    type: string
+    description: The name of the external system the identifier belongs to (e.g. Single Cell Portal)
 required:
   - studyName
   - studyDescription
   - dataTypes
   - piName
-  - dataSubmitterUserId
   - publicVisibility
+  - nihAnvilUse
   - consentGroups

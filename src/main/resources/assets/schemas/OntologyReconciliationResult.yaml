@@ -1,0 +1,35 @@
+type: object
+description: |
+  The result of reconciling ontology terms referenced by Datasets and DARs against the terms
+  indexed in the ontology index. Each result represents a single referenced term id that is either
+  missing from the index entirely or present but flagged unusable (obsolete/deprecated).
+properties:
+  termId:
+    type: string
+    description: The referenced ontology term id. This is typically the full purl Term URI.
+  issue:
+    type: string
+    description: |
+      The reason the term was flagged. MISSING_FROM_INDEX when no indexed term exists, or
+      PRESENT_BUT_UNUSABLE when an indexed term exists but is flagged unusable.
+    enum: [ MISSING_FROM_INDEX, PRESENT_BUT_UNUSABLE ]
+  ontology:
+    type: string
+    description: The ontology that the indexed term belongs to (e.g. DOID, DUO), or null when the term is missing.
+  referenceCount:
+    type: integer
+    format: int64
+    description: The total number of Dataset and DAR references to this term.
+  datasetRefs:
+    type: integer
+    format: int64
+    description: The number of Dataset references to this term.
+  darRefs:
+    type: integer
+    format: int64
+    description: The number of DAR references to this term.
+  referencedBy:
+    type: string
+    description: |
+      A comma-separated list of the sources that reference this term, prefixed by source type
+      (e.g. "DATASET:12, DAR:abc-123").

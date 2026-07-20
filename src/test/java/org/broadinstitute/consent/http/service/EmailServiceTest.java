@@ -2,12 +2,13 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -20,19 +21,17 @@ import static org.mockito.Mockito.when;
 import com.sendgrid.Response;
 import com.sendgrid.helpers.mail.Mail;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Objects;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -41,13 +40,12 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
@@ -79,7 +77,7 @@ class EmailServiceTest extends AbstractTestHelper {
   @Mock private StudyDAO studyDAO;
   @Mock private SendGridAPI sendGridAPI;
   @Mock private FreeMarkerTemplateHelper templateHelper;
-  @Mock private DAOContainer daoContainer;
+  @Mock private Jdbi jdbi;
 
   @BeforeEach
   void initService() {
@@ -89,49 +87,27 @@ class EmailServiceTest extends AbstractTestHelper {
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
-    when(daoContainer.getElectionDAO()).thenReturn(electionDAO);
-    when(daoContainer.getUserDAO()).thenReturn(userDAO);
-    when(daoContainer.getMailMessageDAO()).thenReturn(emailDAO);
-    when(daoContainer.getDatasetDAO()).thenReturn(datasetDAO);
-    when(daoContainer.getStudyDAO()).thenReturn(studyDAO);
-    service = new EmailService(daoContainer, sendGridAPI, templateHelper, config);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(MailMessageDAO.class)).thenReturn(emailDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
+    service = new EmailService(jdbi, sendGridAPI, templateHelper, config);
   }
 
   @Test
-  void sendMessage() throws Exception {
+  void testSendMessage() throws Exception {
     String userEmail = "user@duos";
     User user = new User();
     user.setEmail(userEmail);
     String subject = "subject";
-    var model = Map.of("key", "value");
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     Integer voteId = 4567;
-    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(mock());
     var message =
-        new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.COLLECT) {
-          @Override
-          public String createSubject() {
-            return subject;
-          }
-
-          @Override
-          public Object createModel(String serverUrl) {
-            return model;
-          }
-
-          @Override
-          public String getEntityReferenceId() {
-            return entityReferenceId;
-          }
-
-          @Override
-          public Integer getVoteId() {
-            return voteId;
-          }
-        };
+        createMailMessage(user, EmailType.NEW_CASE, subject, entityReferenceId, voteId, null);
     Template template = mock();
-    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(template);
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
     Response response = new Response();
     response.setStatusCode(200);
     response.setBody("body");
@@ -140,7 +116,7 @@ class EmailServiceTest extends AbstractTestHelper {
     doNothing()
         .when(template)
         .process(
-            eq(model),
+            eq(Map.of("serverUrl", SERVER_URL)),
             argThat(
                 writer -> {
                   try {
@@ -165,256 +141,126 @@ class EmailServiceTest extends AbstractTestHelper {
         user.getEmail(), mail.getPersonalization().getFirst().getTos().getFirst().getEmail());
     assertEquals(subject, mail.getSubject());
 
+    // Verify sendgrid categories are configured for NEW_CASE and applied to the outgoing mail
+    assertTrue(
+        EmailType.NEW_CASE.getSendGridCategories() != null
+            && !EmailType.NEW_CASE.getSendGridCategories().isEmpty(),
+        "Expected NEW_CASE to define SendGrid categories");
+    assertEquals(EmailType.NEW_CASE.getSendGridCategories(), mail.getCategories());
+
     verify(emailDAO)
         .insert(
-            entityReferenceId,
-            voteId,
-            1234,
-            EmailType.COLLECT.getTypeInt(),
-            fixedInstant,
-            emailText,
-            response.getBody(),
-            response.getStatusCode(),
-            fixedInstant);
+            argThat(
+                (MailMessageInsert m) ->
+                    Objects.equals(m.entityReferenceId(), entityReferenceId)
+                        && Objects.equals(m.voteId(), voteId)
+                        && Objects.equals(m.userId(), 1234)
+                        && Objects.equals(m.emailType(), EmailType.NEW_CASE.getTypeInt())
+                        && Objects.equals(m.dateSent(), Date.from(fixedInstant))
+                        && Objects.equals(m.emailText(), emailText)
+                        && Objects.equals(m.sendgridResponse(), response.getBody())
+                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
   }
 
   @Test
-  void testSendNewResearcherEmail() throws Exception {
+  @SuppressWarnings("deprecation")
+  void testSendMessage_SkipsCategoriesAndPersistsNullSendGridValues_WhenResponseIsNull()
+      throws Exception {
+    String userEmail = "user@duos";
     User user = new User();
-    user.setUserId(1234);
-    user.setDisplayName("John Doe");
+    user.setEmail(userEmail);
+    String subject = "subject";
+    String entityReferenceId = "entityReferenceId";
+    Integer userId = 1234;
+    String templateName = "test-template.ftl";
+    var message =
+        createMailMessage(
+            user, EmailType.NEW_DAA_REQUEST, subject, entityReferenceId, null, templateName);
+    Template template = mock();
+    when(templateHelper.getTemplate(templateName)).thenReturn(template);
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(null);
+    String emailText = "emailText";
+    doNothing()
+        .when(template)
+        .process(
+            eq(Map.of("serverUrl", SERVER_URL)),
+            argThat(
+                writer -> {
+                  try {
+                    writer.append(emailText);
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }));
 
-    User so = new User();
-    user.setEmail("fake_email@asdf.com");
+    service.sendMessage(message, userId);
 
-    when(templateHelper.getTemplate(EmailType.NEW_RESEARCHER.templateName)).thenReturn(mock());
+    var captor = ArgumentCaptor.forClass(Mail.class);
+    verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
+    var mail = captor.getValue();
+    assertNull(mail.getCategories());
 
-    service.sendNewResearcherMessage(user, so);
-
-    verify(sendGridAPI).sendMessage(any(), any());
     verify(emailDAO)
         .insert(
-            eq("1234"),
-            eq(null),
-            eq(1234),
-            eq(EmailType.NEW_RESEARCHER.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
+            argThat(
+                (MailMessageInsert m) ->
+                    Objects.equals(m.entityReferenceId(), entityReferenceId)
+                        && m.voteId() == null
+                        && Objects.equals(m.userId(), userId)
+                        && Objects.equals(m.emailType(), EmailType.NEW_DAA_REQUEST.getTypeInt())
+                        && m.dateSent() == null
+                        && Objects.equals(m.emailText(), emailText)
+                        && m.sendgridResponse() == null
+                        && m.sendgridStatus() == null));
   }
 
   @Test
-  void sendDarExpiredMessage() throws Exception {
+  void testSendMessage_DoesNotSetDateSent_WhenSendGridReturnsErrorResponse() throws Exception {
+    String userEmail = "user@duos";
     User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    Integer otherUserId = 456;
-    String referenceId = UUID.randomUUID().toString();
-    when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
+    user.setEmail(userEmail);
+    String subject = "subject";
+    String entityReferenceId = "entityReferenceId";
+    Integer userId = 1234;
+    Integer voteId = 4567;
+    var message =
+        createMailMessage(user, EmailType.NEW_CASE, subject, entityReferenceId, voteId, null);
+    Template template = mock();
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
+    Response response = new Response();
+    response.setStatusCode(500);
+    response.setBody("error");
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    String emailText = "emailText";
+    doNothing()
+        .when(template)
+        .process(
+            eq(Map.of("serverUrl", SERVER_URL)),
+            argThat(
+                writer -> {
+                  try {
+                    writer.append(emailText);
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }));
 
-    service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
-    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
+    service.sendMessage(message, userId);
+
     verify(emailDAO)
         .insert(
-            eq(referenceId),
-            isNull(),
-            eq(otherUserId),
-            eq(EmailType.DAR_EXPIRED.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void sendDarExpirationReminderMessage() throws Exception {
-    User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    String referenceId = UUID.randomUUID().toString();
-    Integer otherUserId = 456;
-    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName))
-        .thenReturn(mock());
-
-    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
-    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO)
-        .insert(
-            eq(referenceId),
-            isNull(),
-            eq(otherUserId),
-            eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendDatasetSubmittedMessage() throws Exception {
-    User dacChair = new User();
-    dacChair.setUserId(456);
-    dacChair.setDisplayName("Jane Evans");
-    dacChair.setEmail("dacchair@example.com");
-
-    User dataSubmitter = new User();
-    dataSubmitter.setUserId(123);
-    dataSubmitter.setDisplayName("John Doe");
-    dataSubmitter.setEmail("submitter@example.com");
-
-    String dacName = "DAC-123";
-    String datasetName = "testDataset";
-    when(templateHelper.getTemplate(EmailType.NEW_DATASET.templateName)).thenReturn(mock());
-
-    service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            eq(datasetName),
-            eq(null),
-            eq(456),
-            eq(EmailType.NEW_DATASET.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendStudySubmissionConfirmation() throws Exception {
-    User dataSubmitter = new User();
-    dataSubmitter.setUserId(1);
-    dataSubmitter.setEmail("submitter@example.com");
-    dataSubmitter.setDisplayName("Submitter Name");
-
-    String studyName = "Test Study";
-    Integer studyId = 42;
-    Map<String, Object> studyAssets = Map.of("assetKey", "assetValue");
-
-    when(templateHelper.getTemplate(EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION.templateName))
-        .thenReturn(mock());
-
-    service.sendStudySubmissionConfirmation(dataSubmitter, studyName, studyId, studyAssets);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            eq(studyName),
-            eq(null),
-            eq(1), // userId
-            eq(EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendNewDAAUploadResearcherMessage() throws Exception {
-    User researcher = new User();
-    researcher.setDisplayName("Jane Evans");
-    researcher.setEmail("signingofficial@example.com");
-
-    Dac dac = new Dac();
-    dac.setDacId(1);
-    dac.setName("DAC-01");
-
-    User user = new User();
-    user.setUserId(123);
-
-    String previousDaaName = "DAA-123";
-
-    String newDaaName = "DAA-456";
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName))
-        .thenReturn(mock());
-
-    service.sendNewDAAUploadResearcherMessage(
-        researcher, dac.getName(), previousDaaName, newDaaName, user.getUserId());
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            eq("DAC-01"),
-            eq(null),
-            eq(user.getUserId()),
-            eq(EmailType.NEW_DAA_UPLOAD_RESEARCHER.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendNewDAAUploadSOMessage() throws Exception {
-    User signingOfficial = new User();
-    signingOfficial.setDisplayName("Jane Evans");
-    signingOfficial.setEmail("signingofficial@example.com");
-
-    Dac dac = new Dac();
-    dac.setDacId(1);
-    dac.setName("DAC-01");
-
-    User user = new User();
-    user.setUserId(123);
-
-    String previousDaaName = "DAA-123";
-
-    String newDaaName = "DAA-456";
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_SO.templateName)).thenReturn(mock());
-
-    service.sendNewDAAUploadSOMessage(
-        signingOfficial, dac.getName(), previousDaaName, newDaaName, user.getUserId());
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            eq("DAC-01"),
-            eq(null),
-            eq(user.getUserId()),
-            eq(EmailType.NEW_DAA_UPLOAD_SO.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendResearcherCloseoutCompletedMessage() throws Exception {
-    User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    String referenceId = UUID.randomUUID().toString();
-    when(templateHelper.getTemplate(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.templateName))
-        .thenReturn(mock());
-
-    service.sendResearcherCloseoutCompletedMessage(user, darCode, referenceId);
-    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO)
-        .insert(
-            eq(referenceId),
-            isNull(),
-            eq(user.getUserId()),
-            eq(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
+            argThat(
+                (MailMessageInsert m) ->
+                    Objects.equals(m.entityReferenceId(), entityReferenceId)
+                        && Objects.equals(m.voteId(), voteId)
+                        && Objects.equals(m.userId(), userId)
+                        && Objects.equals(m.emailType(), EmailType.NEW_CASE.getTypeInt())
+                        && m.dateSent() == null
+                        && Objects.equals(m.emailText(), emailText)
+                        && Objects.equals(m.sendgridResponse(), response.getBody())
+                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
   }
 
   @Test
@@ -425,6 +271,15 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFetchEmailsByUserId() {
+    Integer userId = 123;
+    List<MailMessage> mailMessages = generateMailMessageList();
+    when(emailDAO.fetchMessagesByUserId(eq(userId), anyInt(), anyInt())).thenReturn(mailMessages);
+
+    assertEquals(2, service.fetchEmailMessagesByUserId(userId, 20, 0).size());
+  }
+
+  @Test
   void testFetchEmailsByCreateDate() {
     List<MailMessage> mailMessages = generateMailMessageList();
     Date startDate = new Date();
@@ -432,118 +287,6 @@ class EmailServiceTest extends AbstractTestHelper {
     when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt()))
         .thenReturn(mailMessages);
     assertEquals(2, service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
-  }
-
-  @Test
-  void testSendSubmittedCloseoutMessage() throws Exception {
-    String darId = "DAR-123";
-    String referenceId = "ref-456";
-    String closeoutUrl = SERVER_URL + "dar/" + darId + "/closeout";
-    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
-    User toUser = new User();
-    toUser.setDisplayName("Test User");
-    toUser.setEmail("test.user@test.com");
-    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
-
-    service.sendSubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO)
-        .insert(
-            eq(referenceId),
-            eq(null),
-            eq(toUser.getUserId()),
-            eq(EmailType.SUBMITTED_CLOSEOUT.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendNewLibraryCardIssuedMessage() throws Exception {
-    User toUser = new User();
-    toUser.setDisplayName("Test User");
-    toUser.setEmail("test.user@test.com");
-    when(templateHelper.getTemplate(EmailType.NEW_LIBRARY_CARD_ISSUED.templateName))
-        .thenReturn(mock());
-
-    service.sendNewLibraryCardIssuedMessage(toUser);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO)
-        .insert(
-            eq(toUser.getEmail()),
-            eq(null),
-            eq(toUser.getUserId()),
-            eq(EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendNewDARRADARApprovalToDAC() throws Exception {
-    User toUser = new User();
-    toUser.setUserId(1);
-    toUser.setDisplayName("Test User");
-    toUser.setEmail("test.user@test.com");
-    User researcherUser = new User();
-    researcherUser.setDisplayName("Research User");
-
-    String referenceId = "abc-123";
-
-    when(templateHelper.getTemplate(EmailType.DAC_RADAR_APPROVED.templateName)).thenReturn(mock());
-
-    service.sendNewDARRADARApprovalToDAC(
-        toUser,
-        "DAR-00001",
-        referenceId,
-        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123", null)),
-        researcherUser);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO)
-        .insert(
-            eq(referenceId),
-            eq(null),
-            eq(toUser.getUserId()),
-            eq(EmailType.DAC_RADAR_APPROVED.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendEmailToSOWhenApprovalRqdForNewDAR() throws TemplateException, IOException {
-    User signingOfficial = new User();
-    signingOfficial.setUserId(1);
-    signingOfficial.setDisplayName("Test User");
-    signingOfficial.setEmail("test.user@test.com");
-    User researcherUser = new User();
-    researcherUser.setDisplayName("Research User");
-
-    String referenceId = "abc-123";
-
-    when(templateHelper.getTemplate(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.templateName))
-        .thenReturn(mock());
-
-    service.sendNewDARSigningOfficialRequestEmail(
-        signingOfficial, researcherUser.getDisplayName(), referenceId);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(signingOfficial.getEmail()));
-    verify(emailDAO)
-        .insert(
-            eq(referenceId),
-            eq(null),
-            eq(signingOfficial.getUserId()),
-            eq(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
   }
 
   @Test
@@ -583,22 +326,18 @@ class EmailServiceTest extends AbstractTestHelper {
 
     verify(emailDAO, times(1))
         .insert(
-            any(),
-            any(),
-            eq(user2.getUserId()),
-            eq(EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
+            argThat(
+                m ->
+                    Objects.equals(m.userId(), user2.getUserId())
+                        && Objects.equals(
+                            m.emailType(), EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt())));
   }
 
   @Test
   void testSendNewDatasetInDUOSNotifications_No_New_Datasets() {
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(List.of());
+    when(studyDAO.findStudyDatasetCounts(any())).thenReturn(List.of());
 
     service.sendNewDatasetInDUOSNotifications();
 
@@ -609,7 +348,7 @@ class EmailServiceTest extends AbstractTestHelper {
   void testSendNewDatasetInDUOSNotifications_Null_Datasets() {
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(null);
+    when(studyDAO.findStudyDatasetCounts(any())).thenReturn(null);
 
     service.sendNewDatasetInDUOSNotifications();
 
@@ -625,19 +364,19 @@ class EmailServiceTest extends AbstractTestHelper {
     toUser.setEmailPreference(true);
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any()))
-        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    when(studyDAO.findStudyDatasetCounts(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
-    Jdbi jdbi = mock(Jdbi.class);
+    Jdbi localJdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
-    when(handle.getJdbi()).thenReturn(jdbi);
+    when(handle.getJdbi()).thenReturn(localJdbi);
     doAnswer(
             invocation -> {
               HandleConsumer<Exception> consumer = invocation.getArgument(0);
               consumer.useHandle(handle);
               return null;
             })
-        .when(jdbi)
+        .when(localJdbi)
         .useHandle(any());
     @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
@@ -652,15 +391,10 @@ class EmailServiceTest extends AbstractTestHelper {
     verify(userDAO, times(1)).getHandle();
     verify(emailDAO, times(1))
         .insert(
-            any(),
-            any(),
-            eq(toUser.getUserId()),
-            eq(EmailType.NEW_STUDY_DIGEST.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
+            argThat(
+                m ->
+                    Objects.equals(m.userId(), toUser.getUserId())
+                        && Objects.equals(m.emailType(), EmailType.NEW_STUDY_DIGEST.getTypeInt())));
   }
 
   @Test
@@ -672,20 +406,21 @@ class EmailServiceTest extends AbstractTestHelper {
     toUser.setEmailPreference(true);
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any()))
-        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    when(studyDAO.findStudyDatasetCounts(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
-    Jdbi jdbi = mock(Jdbi.class);
+    Jdbi localJdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
-    when(handle.getJdbi()).thenReturn(jdbi);
+    when(handle.getJdbi()).thenReturn(localJdbi);
     doAnswer(
             invocation -> {
               HandleConsumer<Exception> consumer = invocation.getArgument(0);
               consumer.useHandle(handle);
               return null;
             })
-        .when(jdbi)
+        .when(localJdbi)
         .useHandle(any());
+    @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
     when(mockIterator.hasNext()).thenReturn(true, false);
     when(mockIterator.next()).thenReturn(toUser);
@@ -696,21 +431,122 @@ class EmailServiceTest extends AbstractTestHelper {
         .getTemplate(EmailType.NEW_STUDY_DIGEST.templateName);
     EmailService.sendgridThrottleMessageCount = 1;
     EmailService.sendgridThrottleResetTime = 1;
-    Thread.currentThread().interrupt();
-    service.sendNewDatasetInDUOSNotifications();
+    try {
+      Thread.currentThread().interrupt();
+      service.sendNewDatasetInDUOSNotifications();
+    } finally {
+      boolean interruptStatusCleared = Thread.interrupted();
+      assertTrue(interruptStatusCleared || !Thread.currentThread().isInterrupted());
+      EmailService.sendgridThrottleMessageCount = 500;
+      EmailService.sendgridThrottleResetTime = 60;
+    }
     verify(userDAO, times(1)).getHandle();
+  }
+
+  @Test
+  void testSendNewDatasetInDUOSNotifications_ReinterruptsThreadWhenThrottleSleepIsInterrupted()
+      throws IOException {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setUserId(1);
+    toUser.setEmail("test@example.com");
+    toUser.setEmailPreference(true);
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findStudyDatasetCounts(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
+    Handle handle = mock(Handle.class);
+    Jdbi localJdbi = mock(Jdbi.class);
+    when(userDAO.getHandle()).thenReturn(handle);
+    when(handle.getJdbi()).thenReturn(localJdbi);
+    doAnswer(
+            invocation -> {
+              HandleConsumer<Exception> consumer = invocation.getArgument(0);
+              consumer.useHandle(handle);
+              return null;
+            })
+        .when(localJdbi)
+        .useHandle(any());
+    @SuppressWarnings("unchecked")
+    ResultIterator<User> mockIterator = mock(ResultIterator.class);
+    when(mockIterator.hasNext()).thenReturn(true, false);
+    when(mockIterator.next()).thenReturn(toUser);
+    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
+        .thenReturn(ResultIterable.of(mockIterator));
+    when(templateHelper.getTemplate(EmailType.NEW_STUDY_DIGEST.templateName)).thenReturn(mock());
+    Response response = new Response();
+    response.setStatusCode(202);
+    response.setBody("accepted");
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    EmailService.sendgridThrottleMessageCount = 1;
+    EmailService.sendgridThrottleResetTime = 1;
+
+    try {
+      Thread.currentThread().interrupt();
+      service.sendNewDatasetInDUOSNotifications();
+      assertTrue(Thread.currentThread().isInterrupted());
+    } finally {
+      boolean interruptStatusCleared = Thread.interrupted();
+      assertTrue(interruptStatusCleared || !Thread.currentThread().isInterrupted());
+      EmailService.sendgridThrottleMessageCount = 500;
+      EmailService.sendgridThrottleResetTime = 60;
+    }
+
+    verify(userDAO, times(1)).getHandle();
+    verify(emailDAO, times(1))
+        .insert(
+            argThat(
+                m ->
+                    Objects.equals(m.userId(), toUser.getUserId())
+                        && Objects.equals(m.emailType(), EmailType.NEW_STUDY_DIGEST.getTypeInt())));
   }
 
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
   }
 
+  private org.broadinstitute.consent.http.mail.message.MailMessage createMailMessage(
+      User user,
+      EmailType emailType,
+      String subject,
+      String entityReferenceId,
+      Integer voteId,
+      String templateNameOverride) {
+    return new org.broadinstitute.consent.http.mail.message.MailMessage(user, emailType) {
+      @Override
+      public String getTemplateName() {
+        return templateNameOverride != null ? templateNameOverride : super.getTemplateName();
+      }
+
+      @Override
+      public String createSubject() {
+        return subject;
+      }
+
+      @Override
+      public Map<String, Object> createModel() {
+        return Map.of();
+      }
+
+      @Override
+      public String getEntityReferenceId() {
+        return entityReferenceId;
+      }
+
+      @Override
+      public Integer getVoteId() {
+        return voteId;
+      }
+    };
+  }
+
   private MailMessage generateMailMessage() {
     return new MailMessage(
+        randomAlphanumeric(10),
         randomInt(1, 10),
         randomInt(11, 20),
         randomInt(21, 30),
-        randomAlphanumeric(10),
+        randomInt(1, 10),
         new Date(),
         randomAlphanumeric(10),
         randomAlphanumeric(10),

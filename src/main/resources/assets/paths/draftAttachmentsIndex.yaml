@@ -1,5 +1,6 @@
 get:
   summary: Get the list of all attachments associated with a draft
+  operationId: apiDraftV1DraftUUIDAttachmentsGet
   description: Provides the full list of attachments that are part of a draft.
   tags:
     - Draft
@@ -24,8 +25,15 @@ get:
       description: User not authorized to get list of file attachments
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 post:
   summary: Upload attachments to the draft.
+  operationId: apiDraftV1DraftUUIDAttachmentsPost
   description: Upload attachments associated with this draft.
   tags:
     - Draft
@@ -46,11 +54,11 @@ post:
             file[0]:
               description: Example - Optional alternative data sharing plan
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             file[1]:
               description: Example - Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   responses:
     200:
       description: The attachment(s) were uploaded successfully.  Response payload only includes references to the posted files
@@ -64,3 +72,9 @@ post:
       description: User not authorized to upload file attachments
     404:
       description: The draft cannot be found.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

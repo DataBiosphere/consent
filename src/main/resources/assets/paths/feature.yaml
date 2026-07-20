@@ -1,6 +1,6 @@
 get:
   summary: Get all feature flags
-  operationId: getAllFeatureFlags
+  operationId: featureGet
   description: Retrieve all feature flags in the system
   tags:
     - Feature Flags

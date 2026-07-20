@@ -6,26 +6,30 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.ASM;
 import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class SendGridAPI implements ConsentLogger {
 
   private final SendGrid sendGrid;
   private final boolean activateEmailNotifications;
-
+  @Nullable private final Integer unsubscribeGroupId;
   private final UserDAO userDAO;
 
-  public SendGridAPI(MailConfiguration config, UserDAO userDAO) {
+  public SendGridAPI(MailConfiguration config, Jdbi jdbi) {
     this.sendGrid = new SendGrid(config.getSendGridApiKey());
     this.activateEmailNotifications = config.isActivateEmailNotifications();
-    this.userDAO = userDAO;
+    this.unsubscribeGroupId = config.getSendGridUnsubscribeGroupId();
+    this.userDAO = jdbi.onDemand(UserDAO.class);
   }
 
   /**
@@ -55,6 +59,18 @@ public class SendGridAPI implements ConsentLogger {
               .formatted(toUserEmail));
       return null;
     }
+
+    // Attach ASM block so SendGrid can render the unsubscribe URL
+    if (unsubscribeGroupId != null && unsubscribeGroupId > 0) {
+      ASM asm = new ASM();
+      asm.setGroupId(unsubscribeGroupId);
+      // groupsToDisplay controls which groups appear on the SendGrid
+      // preference center page if you link to it. A single-element array
+      // showing just this group is the right default.
+      asm.setGroupsToDisplay(new int[] {unsubscribeGroupId});
+      message.setASM(asm);
+    }
+
     try {
       // See https://github.com/sendgrid/sendgrid-java/issues/163
       // for what actually works as compared to the documentation - which doesn't.

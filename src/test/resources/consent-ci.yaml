@@ -1,0 +1,81 @@
+server:
+  applicationContextPath: /
+  adminContextPath: /admin
+  applicationConnectors:
+    - type: http
+      port: 8080
+      maxRequestHeaderSize: 32KiB
+  adminConnectors:
+    - type: http
+      port: 8081
+  requestLog:
+    type: classic
+    appenders:
+      - type: console
+
+logging:
+  level: WARN
+  appenders:
+    - type: console
+      threshold: WARN
+      target: stdout
+  loggers:
+    "org.reflections.Reflections": ERROR
+    "org.apache.pdfbox": ERROR
+    "org.jdbi.v3": ERROR
+
+database:
+  driverClass: org.postgresql.Driver
+  user: test
+  password: test
+  url: jdbc:postgresql://localhost:5432/consent
+  initialSize: 5
+  minSize: 5
+  maxSize: 20
+  validationQuery: SELECT 1
+
+googleStore:
+  password: /tmp/ci-gcs-account.json
+  endpoint: http://localhost:9999/
+  bucket: ci-bucket
+
+services:
+  localURL: http://localhost:8080/
+  ontologyURL: http://localhost:9999/
+  samUrl: http://localhost:9999/
+  ecmUrl: http://localhost:9999/
+  activateSupportNotifications: false
+  timeoutSeconds: 10
+  poolSize: 1
+  cacheExpireMinutes: 0
+
+mailConfiguration:
+  activateEmailNotifications: false
+  googleAccount: ci@example.com
+  sendGridApiKey: ci-key
+  sendGridStatusUrl: http://localhost:9999/
+
+freeMarkerConfiguration:
+  templateDirectory: /freemarker
+  defaultEncoding: UTF-8
+
+googleAuthentication:
+  clientId: ci-client-id
+
+elasticSearch:
+  servers:
+    - localhost
+  indexName: ontology-ci
+  datasetIndexName: dataset-ci
+
+oidcConfiguration:
+  clientId: ci-client-id
+  addClientIdToScope: false
+  extraAuthParams: ""
+  authorityEndpoint: "http://localhost:9999/"
+
+rateLimit:
+  enabled: true
+  requestsPerMinute: 100
+  podCount: 1
+

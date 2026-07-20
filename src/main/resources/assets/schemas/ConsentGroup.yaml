@@ -1,8 +1,20 @@
 type: object
 description: |
-  Each Consent Group will be translated into a separate dataset
-  Required fields include the `consentGroupName` and any one of 
-  `generalResearchUse`, `hmb`, or `diseaseSpecificUse`.
+  Each Consent Group is translated into a separate Dataset. `consentGroupName`
+  and `numberOfParticipants` are required when creating a new consent group —
+  either via registration create, or by adding a new consent group (no
+  `datasetId`) during a study update. Exactly one primary data use must be
+  set: `accessManagement: open`, or exactly one of `generalResearchUse`,
+  `hmb`, `poa`, `diseaseSpecificUse` (non-empty), or `otherPrimary`.
+  `dataAccessCommitteeId` is required unless `accessManagement` is `open` or
+  `external` — a missing `accessManagement` is treated the same as
+  `controlled` and still requires a DAC.
+
+  For an existing consent group being edited during a study update
+  (identified by `datasetId`), `consentGroupName` and `numberOfParticipants`
+  are both optional: a submitted `consentGroupName` is never applied — the
+  server always keeps the dataset's existing stored name — and an omitted
+  `numberOfParticipants` leaves the existing stored value unchanged.
 properties:
   consentGroupName:
     type: string
@@ -84,12 +96,21 @@ properties:
     type: string
     format: uri
     description: Free text field for entering URL of data
+  requestLocation:
+    type: string
+    format: uri
+    description: URL of an external location where data access requests should be submitted
   fileTypes:
     type: array
     items:
       "$ref": "./FileType.yaml"
     description: List of File Types
+  data:
+    type: object
+    description: |
+      Optional client-managed consent-group metadata. Preserved and
+      round-tripped by the backend as-is; not backend-validated. Do not
+      duplicate first-class fields here.
 required:
   - consentGroupName
-  - fileTypes
   - numberOfParticipants

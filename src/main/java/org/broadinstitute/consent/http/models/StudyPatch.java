@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
@@ -24,10 +26,13 @@ public record StudyPatch(
     String phenotypeIndication,
     String species,
     String piName,
+    String piEmail,
     List<String> dataCustodianEmail,
     String alternativeDataSharingPlanTargetDeliveryDate,
     String alternativeDataSharingPlanTargetPublicReleaseDate,
-    Boolean publicVisibility) {
+    Boolean publicVisibility,
+    String externalIdentifier,
+    String externalIdentifierType) {
 
   public static final String STUDY_TYPE = "studyType";
   public static final String PHENOTYPE_INDICATION = "phenotypeIndication";
@@ -38,6 +43,8 @@ public record StudyPatch(
       "alternativeDataSharingPlanTargetDeliveryDate";
   public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE =
       "alternativeDataSharingPlanTargetPublicReleaseDate";
+  public static final String EXTERNAL_IDENTIFIER = "externalIdentifier";
+  public static final String EXTERNAL_IDENTIFIER_TYPE = "externalIdentifierType";
 
   public static StudyPatch fromJson(String json) {
     ObjectMapper mapper = new ObjectMapper();
@@ -98,10 +105,13 @@ public record StudyPatch(
     checks.add(checkPhenotypeIndication(study));
     checks.add(checkSpecies(study));
     checks.add(checkPiName(study));
+    checks.add(checkPiEmail(study));
     checks.add(checkDataCustodians(study));
     checks.add(checkTargetDate(study));
     checks.add(checkTargetReleaseDate(study));
     checks.add(checkPublicVisibility(study));
+    checks.add(checkExternalIdentifier(study));
+    checks.add(checkExternalIdentifierType(study));
     return checks.stream().anyMatch(Boolean::booleanValue);
   }
 
@@ -132,31 +142,19 @@ public record StudyPatch(
   }
 
   private boolean checkPhenotypeIndication(Study study) {
-    Optional<StudyProperty> phenoProp =
-        study.getProperties().stream()
-            .filter(p -> p.getKey().equals(PHENOTYPE_INDICATION))
-            .findFirst();
-    if (phenotypeIndication() != null) {
-      return phenoProp
-          .map(studyProperty -> !phenotypeIndication().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(study, PHENOTYPE_INDICATION, phenotypeIndication());
   }
 
   private boolean checkSpecies(Study study) {
-    Optional<StudyProperty> speciesProp =
-        study.getProperties().stream().filter(p -> p.getKey().equals(SPECIES_KEY)).findFirst();
-    if (species() != null) {
-      return speciesProp
-          .map(studyProperty -> !species().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(study, SPECIES_KEY, species());
   }
 
   private boolean checkPiName(Study study) {
     return piName() != null && !piName().equals(study.getPiName()) && !piName().isBlank();
+  }
+
+  private boolean checkPiEmail(Study study) {
+    return piEmail() != null && !piEmail().equals(study.getPiEmail()) && !piEmail().isBlank();
   }
 
   private boolean checkDataCustodians(Study study) {
@@ -179,38 +177,54 @@ public record StudyPatch(
   }
 
   private boolean checkTargetDate(Study study) {
-    Optional<StudyProperty> targetDateProp =
-        study.getProperties().stream()
-            .filter(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE))
-            .findFirst();
-    if (alternativeDataSharingPlanTargetDeliveryDate() != null) {
-      return targetDateProp
-          .map(
-              studyProperty ->
-                  !alternativeDataSharingPlanTargetDeliveryDate().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(
+        study,
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+        alternativeDataSharingPlanTargetDeliveryDate());
   }
 
   private boolean checkTargetReleaseDate(Study study) {
-    Optional<StudyProperty> targetReleaseProp =
-        study.getProperties().stream()
-            .filter(
-                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE))
-            .findFirst();
-    if (alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
-      return targetReleaseProp
-          .map(
-              studyProperty ->
-                  !alternativeDataSharingPlanTargetPublicReleaseDate()
-                      .equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(
+        study,
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+        alternativeDataSharingPlanTargetPublicReleaseDate());
   }
 
   private boolean checkPublicVisibility(Study study) {
     return publicVisibility() != null && !publicVisibility().equals(study.getPublicVisibility());
+  }
+
+  private boolean checkExternalIdentifier(Study study) {
+    return checkStringProperty(study, EXTERNAL_IDENTIFIER, externalIdentifier());
+  }
+
+  private boolean checkExternalIdentifierType(Study study) {
+    return checkStringProperty(study, EXTERNAL_IDENTIFIER_TYPE, externalIdentifierType());
+  }
+
+  // null=no-op, blank=delete (patchable if property exists), non-blank=upsert
+  private boolean checkStringProperty(Study study, String key, String patchValue) {
+    if (patchValue == null) return false;
+    Optional<StudyProperty> prop =
+        study.getProperties().stream().filter(p -> p.getKey().equals(key)).findFirst();
+    if (patchValue.isBlank()) return prop.isPresent();
+    return prop.map(p -> !patchValue.equals(p.getValue())).orElse(true);
+  }
+
+  // Returns all optional string-typed study properties from this patch (null values included).
+  // null=no-op, blank=delete, non-blank=upsert
+  public Map<String, String> stringPatchProps() {
+    Map<String, String> props = new HashMap<>();
+    props.put(PHENOTYPE_INDICATION, phenotypeIndication());
+    props.put(SPECIES_KEY, species());
+    props.put(
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+        alternativeDataSharingPlanTargetDeliveryDate());
+    props.put(
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+        alternativeDataSharingPlanTargetPublicReleaseDate());
+    props.put(EXTERNAL_IDENTIFIER, externalIdentifier());
+    props.put(EXTERNAL_IDENTIFIER_TYPE, externalIdentifierType());
+    return props;
   }
 }

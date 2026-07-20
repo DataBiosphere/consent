@@ -1,5 +1,6 @@
 get:
   summary: Institution GET
+  operationId: apiInstitutionsIdGet
   description: Fetches Institution based on id param
   tags:
     - Institutions
@@ -20,10 +21,17 @@ get:
             $ref: '../schemas/Institution.yaml'
     404:
       description: Institution not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 patch:
     summary: Institution PATCH
+    operationId: apiInstitutionsIdPatch
     description: |
       Updates institution based on id and json payload. 
       Does not update signing officials of an institution
@@ -76,10 +84,17 @@ patch:
           description: Bad Request
         404:
           description: Institution not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/ErrorResponse.yaml'
         500:
           description: Internal Server Error
 put:
   summary: Institution UPDATE
+  operationId: apiInstitutionsIdPut
   description: Updates institution based on id and json payload. Does not update signing officials of an institution
   tags:
     - Institutions
@@ -104,10 +119,17 @@ put:
       description: Bad Request
     404:
       description: Institution not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
 delete:
   summary: Institution DELETE
+  operationId: apiInstitutionsIdDelete
   description: Deletes institution based on id
   tags:
     - Institutions
@@ -123,5 +145,11 @@ delete:
       description: Deletes target institution (no return entity)
     404:
       description: Institution not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error

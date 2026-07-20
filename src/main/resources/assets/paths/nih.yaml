@@ -1,5 +1,6 @@
 delete:
   summary: Delete eRA Commons Account
+  operationId: apiNihDelete
   description: Removes Linked Account information for the authenticated user
   tags:
     - User
@@ -7,3 +8,9 @@ delete:
   responses:
     200:
       description: Returns an empty response if the operation was successful
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

@@ -1,6 +1,6 @@
 post:
   summary: Create User
-  operationId: createResearcher
+  operationId: apiUserPost
   description: Create a user with RESEARCHER role using the user's current authentication status.
   tags:
     - User
@@ -15,11 +15,17 @@ post:
       description: Unable to validate the user's google identity.
     409:
       description: User should be unique
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.
 put:
   summary: Update limited user fields
-  operationId: updateSelf
+  operationId: apiUserPut
   description: |
     Updates a limited number of the current user's fields 
     and sends a support request if institutions or signing official updates are provided
@@ -32,6 +38,7 @@ put:
       application/json:
         schema:
           type: object
+          title: UpdateSelfRequest
           properties:
             displayName:
               description: The display name for the user
@@ -47,6 +54,7 @@ put:
               type: boolean
             userData:
               type: object
+              title: UserDataMap
               description: JSON map of keys and values.  Not validated for any particular purpose.
   responses:
     200:
@@ -59,5 +67,11 @@ put:
       description: Bad request if invalid input is provided
     404:
       description: User not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error.

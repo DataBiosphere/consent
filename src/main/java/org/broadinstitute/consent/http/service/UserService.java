@@ -15,6 +15,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRedactionAuditDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -41,6 +43,7 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class UserService implements ConsentLogger {
 
@@ -56,25 +59,23 @@ public class UserService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final InstitutionService institutionService;
   private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
+  private final UserRedactionAuditDAO userRedactionAuditDAO;
 
   @Inject
   public UserService(
-      UserDAO userDAO,
-      UserPropertyDAO userPropertyDAO,
-      UserRoleDAO userRoleDAO,
-      InstitutionDAO institutionDAO,
+      Jdbi jdbi,
       UserServiceDAO userServiceDAO,
-      DaaDAO daaDAO,
       InstitutionService institutionService,
       InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
-    this.userDAO = userDAO;
-    this.userPropertyDAO = userPropertyDAO;
-    this.userRoleDAO = userRoleDAO;
-    this.institutionDAO = institutionDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
+    this.userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
+    this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.userServiceDAO = userServiceDAO;
-    this.daaDAO = daaDAO;
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.institutionService = institutionService;
     this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
+    this.userRedactionAuditDAO = jdbi.onDemand(UserRedactionAuditDAO.class);
   }
 
   /**
@@ -235,6 +236,14 @@ public class UserService implements ConsentLogger {
     return users.stream().map(SimplifiedUser::new).toList();
   }
 
+  public List<User> findAllUsersWithInstitutionAndLibraryCard() {
+    return userDAO.findUsersWithLCsAndInstitution().stream()
+        .filter(user -> Objects.nonNull(user.getInstitutionId()))
+        .filter(user -> Objects.nonNull(user.getLibraryCard()))
+        .filter(user -> Objects.nonNull(user.getLibraryCard().getId()))
+        .toList();
+  }
+
   public List<UserProperty> findAllUserProperties(Integer userId) {
     return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         userId, UserFields.getValues());
@@ -247,6 +256,14 @@ public class UserService implements ConsentLogger {
 
     List<User> users = userDAO.getSOsByInstitution(institutionId);
     return users.stream().map(SimplifiedUser::new).toList();
+  }
+
+  public List<SigningOfficialUser> findSOsWithDataByInstitutionId(Integer institutionId) {
+    if (Objects.isNull(institutionId)) {
+      return Collections.emptyList();
+    }
+    List<User> users = userDAO.getSOsWithDataByInstitution(institutionId);
+    return users.stream().map(SigningOfficialUser::new).toList();
   }
 
   public List<User> findUsersByInstitutionId(Integer institutionId) {
@@ -411,6 +428,72 @@ public class UserService implements ConsentLogger {
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
     return institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(email);
+  }
+
+  /**
+   * Redact PII from a user account. The database captures the original values atomically — no PII
+   * is passed through the application layer. The user's email and display name are replaced with
+   * anonymised placeholders, institution_id is nulled, and email_preference is disabled. An audit
+   * record is written in the same SQL statement.
+   *
+   * @param adminUser the administrator performing the redaction
+   * @param email the email address of the user to redact
+   * @throws NotFoundException if no user exists with the given email
+   */
+  public void redactUser(User adminUser, String email) {
+    User target = findUserByEmail(email);
+    userRedactionAuditDAO.redactUser(target.getUserId(), adminUser.getUserId());
+  }
+
+  public static class SigningOfficialUser extends SimplifiedUser {
+
+    private Map<String, Object> userData;
+    private String institutionName;
+
+    public SigningOfficialUser(User user) {
+      super(user);
+      this.userData = user.getUserData();
+      this.institutionName = user.getInstitution() != null ? user.getInstitution().getName() : null;
+    }
+
+    public SigningOfficialUser() {}
+
+    public Map<String, Object> getUserData() {
+      return userData;
+    }
+
+    public void setUserData(Map<String, Object> userData) {
+      this.userData = userData;
+    }
+
+    public String getInstitutionName() {
+      return institutionName;
+    }
+
+    public void setInstitutionName(String institutionName) {
+      this.institutionName = institutionName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+      SigningOfficialUser that = (SigningOfficialUser) o;
+      return Objects.equals(userData, that.userData)
+          && Objects.equals(institutionName, that.institutionName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), userData, institutionName);
+    }
   }
 
   public static class SimplifiedUser {

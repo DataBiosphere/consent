@@ -1,0 +1,62 @@
+post:
+  summary: Convert DAC datasets to external and revoke DAR access
+  operationId: apiDacDacIdDatasetsExternalizePost
+  description: |
+    Admin-only operation that converts controlled datasets associated with a DAC to external access,
+    optionally converts open-access datasets,
+    optionally revokes DAR dataset associations, and optionally cancels open data-access elections.
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAC
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/DacDatasetExternalizationRequest.yaml'
+  responses:
+    200:
+      description: Externalization execution summary
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DacDatasetExternalizationResponse.yaml'
+    400:
+      description: Invalid request payload
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    404:
+      description: DAC not found
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+
+
+

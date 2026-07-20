@@ -38,7 +38,6 @@ logging:
     "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
 services:
   localURL: http://localhost:8000/#/
-  ontologyURL: http://localhost:8180/
   samUrl: https://localhost:8181/
   ecmUrl: http://localhost:8182/
 mailConfiguration:
@@ -46,15 +45,21 @@ mailConfiguration:
   googleAccount: test@gmail.com
   sendGridApiKey: test-key
   sendGridStatusUrl: test-sg-status
+  sendGridUnsubscribeGroupId: null
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
-googleAuthentication:
-  clientId: clientId
 elasticSearch:
   servers:
     - localhost
   indexName: iName
   datasetIndexName: dataset
 oidcConfiguration:
+  clientId: clientId
+  addClientIdToScope: true
+  extraAuthParams: prompt=login
   authorityEndpoint: http://localhost:8000
+rateLimit:
+  enabled: true
+  requestsPerMinute: 100
+  podCount: 1

@@ -66,6 +66,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       INNER JOIN vote v ON v.election_id = e.election_id AND
           CASE
               WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'
+              -- Note that `dataset` elections are deprecated but maintained for legacy elections
               WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner'
               ELSE 'chairperson'
           END = LOWER(v.type)
@@ -122,6 +123,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
            LEFT JOIN vote v ON e.election_id = v.election_id AND
                CASE
                WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'
+               -- Note that `dataset` elections are deprecated but maintained for legacy elections
                WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner'
                ELSE 'chairperson'
                END = LOWER(v.type)
@@ -226,6 +228,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       INNER JOIN dataset ds on d.dac_id = ds.dac_id
       INNER JOIN election e on ds.dataset_id = e.dataset_id
       WHERE e.election_id = :electionId
+        AND d.deleted IS NOT TRUE
       """)
   Dac findDacForElection(@Bind("electionId") Integer electionId);
 

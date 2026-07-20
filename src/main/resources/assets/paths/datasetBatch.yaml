@@ -1,5 +1,6 @@
 get:
   summary: Get Dataset by List of Ids
+  operationId: apiDatasetBatchGet
   description: |
     Finds Dataset and DatasetProperties of the Dataset specified by id.
     Note that study information is not included in dataset list endpoints but is provided in
@@ -26,5 +27,11 @@ get:
               $ref: '../schemas/Dataset.yaml'
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Server error

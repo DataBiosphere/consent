@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.2
 
 info:
   title: Consent
@@ -20,9 +20,6 @@ servers:
   - url: /
 
 security:
-  - googleoauth:
-      - email
-      - profile
   - oidc:
       - openid
       - email
@@ -57,6 +54,8 @@ paths:
     $ref: 'paths/daa.yaml'
   /api/daa/{daaId}:
     $ref: 'paths/daaByDaaId.yaml'
+  /api/daa/{daaId}/assign-all-eligible-users:
+    $ref: 'paths/daaAssignAllEligibleUsersByDaaId.yaml'
   /api/daa/{daaId}/file:
     $ref: 'paths/daaFileByDaaId.yaml'
   /api/daa/{daaId}/{userId}:
@@ -71,6 +70,8 @@ paths:
     $ref: 'paths/daaById.yaml'
   /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}:
     $ref: 'paths/daaUpdateByDacId.yaml'
+  /api/daa/datasets:
+    $ref: 'paths/daaDatasets.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/rules:
@@ -88,7 +89,7 @@ paths:
   /api/dac/{dacId}/member/{userId}:
     post:
       summary: Add DAC Member
-      operationId: addDacMember
+      operationId: apiDacDacIdMemberUserIdPost
       description: Adds a User as a Member to a Data Access Committee
       parameters:
         - name: dacId
@@ -116,11 +117,17 @@ paths:
           description: No DAC or User found with the provided ID
         409:
           description: User is already a member of the DAC
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
     delete:
       summary: Remove DAC Member
-      operationId: removeDacMember
+      operationId: apiDacDacIdMemberUserIdDelete
       parameters:
         - name: dacId
           in: path
@@ -141,12 +148,18 @@ paths:
           description: Dac member successfully removed
         404:
           description: No DAC or User found with the provided ID
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
   /api/dac/{dacId}/chair/{userId}:
     post:
       summary: Add DAC Chair
-      operationId: addDacChair
+      operationId: apiDacDacIdChairUserIdPost
       description: Adds a User as a Chairperson to a Data Access Committee
       parameters:
         - name: dacId
@@ -174,11 +187,17 @@ paths:
           description: No DAC or User found with the provided ID
         409:
           description: User is already a member of the DAC
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
     delete:
       summary: Remove DAC Chairperson
-      operationId: removeDacChair
+      operationId: apiDacDacIdChairUserIdDelete
       parameters:
         - name: dacId
           in: path
@@ -201,14 +220,22 @@ paths:
           description: Dacs require at least one chair.
         404:
           description: No DAC or User found with the provided ID
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
   /api/dac/{dacId}/datasets:
     $ref: './paths/datasetsByDacId.yaml'
+  /api/dac/{dacId}/datasets/externalize:
+    $ref: './paths/dacDatasetExternalizeById.yaml'
   /api/dac/users/{term}:
     get:
       summary: Find Users by Search Term
-      operationId: findUsersByTerm
+      operationId: apiDacUsersTermGet
       description: Find all users that match the search term. Matches on name and email address.
       parameters:
         - name: term
@@ -228,13 +255,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
-
-  /api/dar/v3:
-    $ref: './paths/darV3.yaml'
 
   /api/dar/v2/{referenceId}:
     $ref: './paths/darV2ByReferenceId.yaml'
@@ -242,11 +272,15 @@ paths:
   /api/dar/v2/{referenceId}/daas:
     $ref: './paths/darV2DAAsByReferenceId.yaml'
 
+  /api/dar/v2/{referenceId}/dataset-daa-snapshots:
+    $ref: './paths/darV2DatasetDaaSnapshotsByReferenceId.yaml'
+
   /api/dar/v2/draft:
     post:
       deprecated: true
       summary: |
         Create Draft Data Access Request.
+      operationId: apiDarV2DraftPost
       description: |
         Create Draft Data Access Request.
       requestBody:
@@ -261,10 +295,17 @@ paths:
       responses:
         201:
           description: Returns the created draft Data Access Request.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
     get:
       summary: Get all Draft Data Access Requests
+      operationId: apiDarV2DraftGet
       description: Returns a list of all Draft Data Access Request
       tags:
         - Data Access Request
@@ -277,6 +318,12 @@ paths:
                 type: array
                 items:
                   $ref: './schemas/DataAccessRequest.yaml'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
 
@@ -285,6 +332,7 @@ paths:
       deprecated: true
       summary: |
         Update Draft Data Access Request
+      operationId: apiDarV2DraftReferenceIdPut
       description: |
         Update Draft Data Access Request
       parameters:
@@ -308,10 +356,17 @@ paths:
           description: Returns the updated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
     get:
       summary: Get a Draft Data Access Request
+      operationId: apiDarV2DraftReferenceIdGet
       description: Returns the Draft Data Access Request specified by the referenceId
       parameters:
         - name: referenceId
@@ -323,21 +378,26 @@ paths:
       tags:
         - Data Access Request
       responses:
-        201:
+        200:
           description: Returns the draft Data Access Request.
           content:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/progress_report/{parentReferenceId}:
-    $ref: './paths/progressReportV3.yaml'
 
   /api/dar/v2/{referenceId}/irbDocument:
     get:
       summary: Retrieve DAR IRB Document
+      operationId: apiDarV2ReferenceIdIrbDocumentGet
       description: Retrieve the IRB Document for a Data Access Request
       parameters:
         - name: referenceId
@@ -353,14 +413,19 @@ paths:
           description: Returns the document
           content:
             application/octet-stream:
+              schema: {}
+            application/json:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/ErrorResponse'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Store DAR IRB Document
+      operationId: apiDarV2ReferenceIdIrbDocumentPost
       description: |
         Store an IRB Document for a Data Access Request.
         Previous document is deleted.
@@ -379,7 +444,7 @@ paths:
               properties:
                 file:
                   type: string
-                  format: binary
+                  contentMediaType: application/octet-stream
       tags:
         - Data Access Request
       responses:
@@ -389,9 +454,16 @@ paths:
             application/json:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/dar/v2/{referenceId}/collaborationDocument:
     get:
       summary: Retrieve DAR Collaboration Document
+      operationId: apiDarV2ReferenceIdCollaborationDocumentGet
       description: Retrieve the Collaboration Document for a Data Access Request
       parameters:
         - name: referenceId
@@ -407,14 +479,19 @@ paths:
           description: Returns the document
           content:
             application/octet-stream:
+              schema: {}
+            application/json:
               schema:
-                type: string
-                format: binary
+                $ref: '#/components/schemas/ErrorResponse'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Store DAR Collaboration Document
+      operationId: apiDarV2ReferenceIdCollaborationDocumentPost
       description: |
         Store a Collaboration Document for a Data Access Request.
         Previous document is deleted.
@@ -433,7 +510,7 @@ paths:
               properties:
                 file:
                   type: string
-                  format: binary
+                  contentMediaType: application/octet-stream
       tags:
         - Data Access Request
       responses:
@@ -444,6 +521,12 @@ paths:
               schema:
                 $ref: './schemas/DataAccessRequest.yaml'
 
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/dar/v2/progress_report/{parentReferenceId}:
     $ref: './paths/progressReport.yaml'
   /api/dar/{referenceId}/approveCloseout:
@@ -455,6 +538,7 @@ paths:
   /api/dataset/validate:
     get:
       summary: validateDatasetName
+      operationId: apiDatasetValidateGet
       description: Returns the dataset id if one exists for the given name (ignores case).
       parameters:
         - name: name
@@ -474,6 +558,12 @@ paths:
                 type: integer
         404:
           description: Dataset not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/dataset/registration/{datasetIdentifier}:
     $ref: './paths/datasetRegistrationByDatasetIdentifier.yaml'
   /api/dataset/studyNames:
@@ -492,8 +582,6 @@ paths:
     $ref: './paths/datasetById.yaml'
   /api/dataset/{id}/datause:
     $ref: './paths/datasetByIdDataUse.yaml'
-  /api/dataset/{id}/reprocess/datause:
-    $ref: './paths/datasetReprocessDataUse.yaml'
   /api/dataset/v2/{id}:
     $ref: './paths/datasetByIdV2.yaml'
   /api/dataset/{id}/nihInstitutionalCertification:
@@ -516,8 +604,12 @@ paths:
     $ref: './paths/datasetAuthorizedUsers.yaml'
   /api/dataset/cleanupEmptyCertificationAndAlternativeSharingFiles:
     $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
-  /api/{entity}/{entityId}/document/{id}:
-    $ref: './paths/entityDocumentById.yaml'
+  /api/document/{entity}/{entityId}:
+      $ref: './paths/documentsByEntityId.yaml'
+  /api/document/{entity}/{entityId}/{id}:
+    $ref: './paths/documentById.yaml'
+  /api/document/{entity}/{entityId}/{id}/file:
+    $ref: './paths/documentFileById.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
@@ -526,8 +618,6 @@ paths:
     $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
-  /api/{entity}/{entityId}/document:
-    $ref: './paths/entityDocumentsByEntityId.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
@@ -535,6 +625,7 @@ paths:
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
+      operationId: apiEmailNotifierReminderMessageVoteIdPost
       description: Send a reminder email to the owner of a vote
       parameters:
         - name: voteId
@@ -548,8 +639,18 @@ paths:
       responses:
         200:
           description: Email successfully sent
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/emailNotifier/dailyMessages:
     $ref: './paths/dailyMessages.yaml'
   /feature:
@@ -567,6 +668,7 @@ paths:
   /api/libraryCards:
     get:
       summary: Library Card INDEX resource
+      operationId: apiLibraryCardsGet
       description: Returns all saved library cards
       tags:
         - Library Card
@@ -577,13 +679,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LibraryCard'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LibraryCard'
         401:
           description: User not authorized
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
     post:
       summary: Library Card CREATE resource
+      operationId: apiLibraryCardsPost
       description: Creates a new Library Card based on user-provided json
       requestBody:
         description: JSON representation of libraryCard payload
@@ -608,11 +719,18 @@ paths:
           description: User not authorized
         409:
           description: Library Card payload conflicts with an existing record
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
   /api/libraryCards/{id}:
     get:
       summary: Library Card GET Resource
+      operationId: apiLibraryCardsIdGet
       description: Fetch library card bases on id parameter
       tags:
         - Library Card
@@ -635,10 +753,17 @@ paths:
           description: User not authorized
         404:
           description: Library Card not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
     delete:
       summary: Library Card DELETE resource
+      operationId: apiLibraryCardsIdDelete
       description: Delete target Library Card based on id parameter
       tags:
         - Library Card
@@ -657,11 +782,18 @@ paths:
           description: User not authorized
         404:
           description: Library Card not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
   /api/libraryCards/institution/{id}:
     get:
       summary: Library Card GET based on Institution ID
+      operationId: apiLibraryCardsInstitutionIdGet
       description: Returns all Library Cards with institution_id equal to provided id
       tags:
         - Library Card
@@ -684,6 +816,12 @@ paths:
           description: User not authorized
         404:
           description: Institution not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Internal server error
   /api/libraryCards/history/{userId}:
@@ -691,6 +829,7 @@ paths:
   /api/match/reprocess/purpose/{purposeId}:
     post:
       summary: Process all matches for this research purpose (DAR) id
+      operationId: apiMatchReprocessPurposePurposeIdPost
       description: Process all matches for this research purpose (DAR) id
       tags:
         - Data Access Request
@@ -711,6 +850,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MatchResult'
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/match/purpose/batch/:
@@ -726,6 +871,7 @@ paths:
   /api/user/me:
     get:
       summary: Find currently authenticated user
+      operationId: apiUserMeGet
       description: Find currently authenticated user
       tags:
         - User
@@ -738,6 +884,12 @@ paths:
                 $ref: '#/components/schemas/User'
         404:
           description: User not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/user/me/dac/datasets:
@@ -748,9 +900,12 @@ paths:
     $ref: './paths/getApprovedDatasets.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
+  /api/user/institution/{institutionId}/signing-officials:
+    $ref: './paths/userInstitutionSigningOfficials.yaml'
   /api/user/signing-officials:
     get:
       summary: Find SOs for currently authenticated user's institution
+      operationId: apiUserSigningOfficialsGet
       description: Return list of SOs belonging to the same institution as currently authenticated user
       tags:
         - User
@@ -765,6 +920,12 @@ paths:
                   $ref: '#/components/schemas/SimplifiedUser'
         404:
           description: User not found
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/user/{userId}:
@@ -772,6 +933,7 @@ paths:
   /api/user/role/{roleName}:
     get:
       summary: Get a list of users that you have access to based on your role
+      operationId: apiUserRoleRoleNameGet
       description: Finds users based on the user role and permissions
       parameters:
         - name: roleName
@@ -796,6 +958,12 @@ paths:
           description: Unsupported or Invalid role name
         404:
           description: The user does not have the given role, or role is SO and the user does not have an Institution
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
   /api/user/{userId}/{roleId}:
@@ -803,6 +971,7 @@ paths:
   /api/user/acknowledgements/{key}:
     get:
       summary: Get Acknowledgement by key
+      operationId: apiUserAcknowledgementsKeyGet
       description: Obtains a specific acknowledgement by acknowledgement key.
       parameters:
         - name: key
@@ -824,10 +993,17 @@ paths:
           description: Unauthorized, log in and try the operation again.
         404:
           description: No acknowledgement found for the given key.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
     delete:
       summary: ADMIN ONLY - Delete Acknowledgement by key
+      operationId: apiUserAcknowledgementsKeyDelete
       description: Deletes a specific acknowledgement for the current user by acknowledgement key.  Returns the deleted acknowledgement.
       parameters:
         - name: key
@@ -849,10 +1025,17 @@ paths:
           description: Unauthorized, log in and try the operation again.
         404:
           description: No acknowledgement found for the given key.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
   /api/user/acknowledgements:
     post:
+      operationId: apiUserAcknowledgementsPost
       requestBody:
         required: true
         content:
@@ -861,7 +1044,8 @@ paths:
               type: array
               items:
                 type: string
-              example: [ "key1", "key2", "key3" ]
+              examples:
+                - [ "key1", "key2", "key3" ]
       tags:
         - User
       summary: Set acknowledgements for a user
@@ -879,12 +1063,19 @@ paths:
           description: |
             Unauthorized, log in and try the operation again.
             Closeout Acknowledgements can only be submitted by Chairpersons
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
     get:
       tags:
         - User
       summary: Obtains all acknowledgements for a user
+      operationId: apiUserAcknowledgementsGet
       description: Obtains an acknowledgement record for each entry supplied.  Missing entries will not have a key in the response
       responses:
         200:
@@ -895,10 +1086,18 @@ paths:
                 $ref: '#/components/schemas/AcknowledgementMap'
         401:
           description: Unauthorized, log in and try the operation again.
+        429:
+          description: Too Many Requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Error processing the request.
   /api/user/create:
     $ref: './paths/userCreate.yaml'
+  /api/user/redact:
+    $ref: './paths/userRedact.yaml'
   /api/nih:
     $ref: './paths/nih.yaml'
   /api/nih/sync:
@@ -919,17 +1118,18 @@ paths:
     $ref: './paths/votesRationale.yaml'
   /api/ontology:
     $ref: './paths/ontology.yaml'
+  /api/ontology/reconcile:
+    $ref: './paths/ontologyReconcile.yaml'
   /liveness:
     $ref: './paths/liveness.yaml'
   /ontology/search:
     $ref: './paths/ontologySearch.yaml'
   /ontology/autocomplete:
     $ref: './paths/ontologyAutocomplete.yaml'
-  /schemas/dataset-registration/v1:
-    $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:
     get:
       summary: System Health Status
+      operationId: statusGet
       description: |
         A detailed description of the various subsystem statuses that Consent relies upon.
         Current systems include:
@@ -939,6 +1139,7 @@ paths:
           * Postgres DB
           * Sam
           * Sendgrid
+      security: []
       tags:
         - Status
       responses:
@@ -957,7 +1158,9 @@ paths:
   /version:
     get:
       summary: Current application version
+      operationId: versionGet
       description: The current short hash and version of the application.
+      security: []
       tags:
         - Status
       responses:
@@ -971,14 +1174,6 @@ paths:
           description: Internal Server Error
 components:
   securitySchemes:
-    googleoauth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: https://accounts.google.com/o/oauth2/auth
-          scopes:
-            email: email authorization
-            profile: profile authorization
     oidc:
       type: oauth2
       flows:
@@ -1005,11 +1200,11 @@ components:
         lastAcknowledged:
           type: integer
           description: The date last acknowledged, in seconds since January 1, 1970
-      example:
-        userId: 1
-        ackKey: "key1"
-        firstAcknowledged: 1668461426
-        lastAcknowledged: 1668461426
+      examples:
+        - userId: 1
+          ackKey: "key1"
+          firstAcknowledged: 1668461426
+          lastAcknowledged: 1668461426
     AcknowledgementMap:
       type: object
       description: A map of keys to their associated Acknowledgement objects.
@@ -1023,10 +1218,16 @@ components:
       $ref: './schemas/DataAccessAgreement.yaml'
     DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
+    DacDatasetExternalizationRequest:
+      $ref: './schemas/DacDatasetExternalizationRequest.yaml'
+    DacDatasetExternalizationResponse:
+      $ref: './schemas/DacDatasetExternalizationResponse.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:
       $ref: './schemas/Dataset.yaml'
+    DatasetDaaSnapshot:
+      $ref: './schemas/DatasetDaaSnapshot.yaml'
     DatasetApproval:
       $ref: './schemas/DatasetApproval.yaml'
     DatasetProperty:
@@ -1037,6 +1238,8 @@ components:
       $ref: './schemas/Election.yaml'
     FileStorageObject:
       $ref: './schemas/FileStorageObject.yaml'
+    FileStorageObjectCategoryUpdateRequest:
+      $ref: './schemas/FileStorageObjectCategoryUpdateRequest.yaml'
     Institution:
       $ref: './schemas/Institution.yaml'
     LibraryCard:
@@ -1061,6 +1264,8 @@ components:
       $ref: './schemas/MatchResult.yaml'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
+    SigningOfficialUser:
+      $ref: './schemas/SigningOfficialUser.yaml'
     SamSelfDiagnostics:
       $ref: './schemas/SamSelfDiagnostics.yaml'
     SamUserInfo:

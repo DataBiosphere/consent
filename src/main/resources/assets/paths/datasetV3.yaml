@@ -1,5 +1,6 @@
 get:
   summary: List of Dataset Study Summary objects
+  operationId: apiDatasetV3Get
   description: |
     Provides a list of datasets and their associated study information in a very minimal format.
   tags:
@@ -13,15 +14,26 @@ get:
             type: array
             items:
               $ref: '../schemas/DatasetStudySummary.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 post:
-  summary: Creates a set of Datasets from a valid dataset registration JsonSchema object
-  description: Creates a set of Datasets from a valid dataset registration JsonSchema object
+  summary: Creates a Study and its Datasets from a registration payload
+  operationId: apiDatasetV3Post
+  description: |
+    Creates a Study and one Dataset per consent group from a registration
+    payload. Request validation is performed by backend DTO/domain
+    validators. This OpenAPI document is the authoritative, forward-looking
+    description of the request/response contract.
   requestBody:
-    description: | 
-      Dataset registration schema instance and optional file for
-      an alternative data sharing plan. The registration schema is 
-      always required. If a file is also provided, then alternative 
-      data sharing information is required in the registration schema.
+    description: |
+      Registration payload and optional file for an alternative data sharing
+      plan. The registration payload is always required. If a file is also
+      provided, then alternative data sharing information is required in the
+      payload.
     content:
       multipart/form-data:
         schema:
@@ -32,11 +44,11 @@ post:
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
             consentGroups[0].nihInstitutionalCertificationFile:
               description: Certification file for first consent group (others omitted because swagger does not allow variable number of file uploads)
               type: string
-              format: binary
+              contentMediaType: application/octet-stream
   tags:
     - Dataset
   responses:
@@ -52,5 +64,11 @@ post:
       description: Bad Request (invalid input)
     409:
       description: Dataset Name given is already in use by another dataset
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Error (something went wrong processing a valid input)

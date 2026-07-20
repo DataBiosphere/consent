@@ -1,5 +1,6 @@
 get:
   summary: List authorized access readers for a dataset
+  operationId: apiDatasetIdAuthorizedAccessReadersGet
   description: |
     Endpoint allows administrators to list the authorized access readers of a dataset
   tags:
@@ -20,3 +21,9 @@ get:
             type: array
             items:
               $ref: '../schemas/DatasetAuthorizedReader.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

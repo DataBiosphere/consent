@@ -3,29 +3,38 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.List;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import java.util.Map;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class DACMembersDARRADARApprovedMessageTest {
+class DACMembersDARRADARApprovedMessageTest extends AbstractMailMessageTest {
 
-  private FreeMarkerTemplateHelper helper;
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User toUser = new User();
+    toUser.setDisplayName("DAC Member");
+    User researcherUser = new User();
+    researcherUser.setDisplayName("Researcher");
+    List<DatasetMailDTO> datasetMailDTOs =
+        List.of(new DatasetMailDTO("dataset-name", "DUOS-00001", null));
 
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
+    var message =
+        new DACMembersDARRADARApprovedMessage(
+            toUser, "DAR-0001", researcherUser, "abcd-12345", datasetMailDTOs);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "userName",
+            "DAC Member",
+            "darCode",
+            "DAR-0001",
+            "researcherUserName",
+            "Researcher",
+            "datasets",
+            datasetMailDTOs));
   }
 
   @Test
@@ -52,18 +61,12 @@ class DACMembersDARRADARApprovedMessageTest {
         "Broad Data Use Oversight System - Data Access Committee - Data Access Request DAR-0001 is Rule Automated DAR (RADAR) Approved",
         message.createSubject());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel(serverUrl), out);
-    String templateContent = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateContent);
+    var rendered = renderTemplate(message, serverUrl);
 
     assertEquals(
         "Broad Data Use Oversight System - Data Access Committee - Access to a dataset was Rule Automated DAR (RADAR) approved",
-        parsedTemplate.title());
-
-    assertTrue(templateContent.contains(researcherUser.getDisplayName()));
-
-    assertTrue(templateContent.contains(datasetName));
+        rendered.document().title());
+    assertTrue(rendered.content().contains(researcherUser.getDisplayName()));
+    assertTrue(rendered.content().contains(datasetName));
   }
 }

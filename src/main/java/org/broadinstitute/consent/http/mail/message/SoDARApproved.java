@@ -40,7 +40,7 @@ public class SoDARApproved extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
         "userName",
         toUser.getDisplayName(),
@@ -55,9 +55,7 @@ public class SoDARApproved extends MailMessage {
         "datasets",
         datasets,
         "dataUseRestriction",
-        dataUseRestriction,
-        "serverUrl",
-        serverUrl);
+        dataUseRestriction);
   }
 
   @Override

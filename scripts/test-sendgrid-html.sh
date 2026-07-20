@@ -2,9 +2,9 @@
 #
 # Check that a sendgrid template renders correctly in an email.
 #
-# USAGE: ./test-sendgrid-html.sh EMAIL HTML
+# USAGE: ./test-sendgrid-html.sh EMAIL FTL
 #   EMAIL must specify your email address
-#   HTML  must specify the html template to use
+#   FTL  must specify the ftl template to use
 #
 
 set -eu
@@ -26,7 +26,7 @@ check_color_support() {
 
 # print out usage to stdout
 usage() {
-    printf "Usage: %s ${BLD}EMAIL${RST} ${BLD}HTML${RST}\n  ${BLD}EMAIL${RST} your email address\n  ${BLD}HTML${RST}  the html template name to use\n" "$0"
+    printf "Usage: %s ${BLD}EMAIL${RST} ${BLD}FTL${RST}\n  ${BLD}EMAIL${RST} your email address\n  ${BLD}FTL${RST}  the ftl template name to use\n" "$0"
     exit 0
 }
 
@@ -50,8 +50,8 @@ case $1 in
     * ) error "Invalid email address";;
 esac
 case $2 in
-    *.html ) ;;
-    * ) error "Invalid html template";;
+    *.ftl ) ;;
+    * ) error "Invalid ftl template";;
 esac
 
 # go to parent directory

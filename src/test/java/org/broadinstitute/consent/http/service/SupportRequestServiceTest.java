@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class SupportRequestServiceTest extends WireMockTestHelper {
 
   @BeforeEach
   void init() {
-    service = new SupportRequestService(config);
+    service = new SupportRequestService(new HttpClientUtil(config), new TicketFactory(), config);
   }
 
   @Test
@@ -122,7 +123,7 @@ class SupportRequestServiceTest extends WireMockTestHelper {
                     .withHeader("Content-Type", "application/json")
                     .withStatus(HttpStatusCodes.STATUS_CODE_CREATED)
                     .withBody(expectedBody)));
-    service = new SupportRequestService(config);
+    service = new SupportRequestService(new HttpClientUtil(config), new TicketFactory(), config);
     service.postAttachmentToSupport("Test".getBytes());
     URL supportUrl = URI.create(config.postSupportUploadUrl()).toURL();
     wireMockServer.verify(exactly(1), postRequestedFor(urlPathEqualTo(supportUrl.getPath())));

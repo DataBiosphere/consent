@@ -1,0 +1,34 @@
+get:
+  summary: Get dataset to DAA snapshots for a Data Access Request or Progress Report by reference Id
+  operationId: getDatasetDaaSnapshotsByReferenceId
+  description: Returns a map of dataset IDs to the DAA snapshot that was captured when the DAR or non-closeout progress report was submitted.
+  parameters:
+    - name: referenceId
+      in: path
+      description: The referenceId of the Data Access Request or Progress Report
+      required: true
+      schema:
+        type: string
+  tags:
+    - DAA
+    - Data Access Request
+  responses:
+    200:
+      description: Returns the dataset to DAA snapshot map
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties:
+              $ref: '../schemas/DatasetDaaSnapshot.yaml'
+    404:
+      description: No DAR or Progress Report can be found with the provided identifier, or no dataset to DAA snapshot map exists for it
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Server Error
+

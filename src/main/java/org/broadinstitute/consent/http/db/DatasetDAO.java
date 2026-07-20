@@ -67,6 +67,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               s.description AS s_description,
               s.data_types AS s_data_types,
               s.pi_name AS s_pi_name,
+              s.pi_email AS s_pi_email,
               s.create_user_id AS s_create_user_id,
               s.create_date AS s_create_date,
               s.update_user_id AS s_user_id,
@@ -176,6 +177,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               s.description AS s_description,
               s.data_types AS s_data_types,
               s.pi_name AS s_pi_name,
+              s.pi_email AS s_pi_email,
               s.create_user_id AS s_create_user_id,
               s.create_date AS s_create_date,
               s.update_user_id AS s_user_id,
@@ -349,6 +351,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               s.description AS s_description,
               s.data_types AS s_data_types,
               s.pi_name AS s_pi_name,
+              s.pi_email AS s_pi_email,
               s.create_user_id AS s_create_user_id,
               s.create_date AS s_create_date,
               s.update_user_id AS s_user_id,
@@ -632,7 +635,7 @@ FROM data_access_request dar
          INNER JOIN library_card lc on dar.user_id = lc.user_id
          INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
          INNER JOIN dataset d on d.dataset_id = dd.dataset_id
-         INNER JOIN dac on dac.dac_id = d.dac_id
+         INNER JOIN dac on dac.dac_id = d.dac_id AND dac.deleted IS NOT TRUE
          INNER JOIN (
                 SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                     OVER(

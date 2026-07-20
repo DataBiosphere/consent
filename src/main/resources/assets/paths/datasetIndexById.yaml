@@ -1,5 +1,6 @@
 post:
   summary: Index dataset by id
+  operationId: apiDatasetIndexDatasetIdPost
   description: Index a specific dataset in the system
   parameters:
     - name: datasetId
@@ -16,8 +17,15 @@ post:
       description: The dataset has been indexed
     404:
       description: Dataset not found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
 delete:
   summary: Delete dataset index by id
+  operationId: apiDatasetIndexDatasetIdDelete
   description: Delete a specific dataset index in the system
   parameters:
     - name: datasetId
@@ -32,3 +40,9 @@ delete:
   responses:
     200:
       description: The dataset index has been deleted
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

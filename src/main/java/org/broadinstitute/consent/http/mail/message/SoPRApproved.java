@@ -40,16 +40,22 @@ public class SoPRApproved extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
-        "userName", toUser.getDisplayName(),
-        "darCode", darCode,
-        "radarText", radarText,
-        "researcherUserName", researcher.getDisplayName(),
-        "researcherEmail", researcher.getEmail(),
-        "datasets", datasets,
-        "dataUseRestriction", dataUseRestriction,
-        "serverUrl", serverUrl);
+        "userName",
+        toUser.getDisplayName(),
+        "darCode",
+        darCode,
+        "radarText",
+        radarText,
+        "researcherUserName",
+        researcher.getDisplayName(),
+        "researcherEmail",
+        researcher.getEmail(),
+        "datasets",
+        datasets,
+        "dataUseRestriction",
+        dataUseRestriction);
   }
 
   @Override

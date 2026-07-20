@@ -1,6 +1,6 @@
 get:
   summary: Get DAR Collection By Reference ID
-  operationId: getCollectionByReferenceId
+  operationId: apiCollectionsDarReferenceIdGet
   description: Returns a single DAR Collection
   tags:
     - DAR Collection
@@ -20,3 +20,9 @@ get:
             $ref: '../schemas/DarCollection.yaml'
     404:
       description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

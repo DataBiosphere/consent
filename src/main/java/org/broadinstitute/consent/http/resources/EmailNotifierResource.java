@@ -13,7 +13,6 @@ import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
-import org.broadinstitute.consent.http.util.ThreadUtils;
 
 @Path("api/emailNotifier")
 public class EmailNotifierResource extends Resource {
@@ -24,10 +23,12 @@ public class EmailNotifierResource extends Resource {
 
   @Inject
   public EmailNotifierResource(
-      DataAccessRequestService dataAccessRequestService, EmailService emailService) {
+      DataAccessRequestService dataAccessRequestService,
+      EmailService emailService,
+      ExecutorService executor) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.emailService = emailService;
-    this.executor = new ThreadUtils().getExecutorService(EmailNotifierResource.class);
+    this.executor = executor;
   }
 
   @POST

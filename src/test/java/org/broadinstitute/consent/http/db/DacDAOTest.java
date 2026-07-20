@@ -19,10 +19,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacAudit;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -64,11 +66,14 @@ class DacDAOTest extends DAOTestHelper {
     dacs.add(createDac());
     for (Dac dac : dacs) {
       User chair = createUser();
-      dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
+      dacDAO.addDacMember(
+          UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId(), chair.getUserId());
       User member1 = createUser();
-      dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member1.getUserId(), dac.getDacId());
+      dacDAO.addDacMember(
+          UserRoles.MEMBER.getRoleId(), member1.getUserId(), dac.getDacId(), member1.getUserId());
       User member2 = createUser();
-      dacDAO.addDacMember(UserRoles.MEMBER.getRoleId(), member2.getUserId(), dac.getDacId());
+      dacDAO.addDacMember(
+          UserRoles.MEMBER.getRoleId(), member2.getUserId(), dac.getDacId(), member2.getUserId());
     }
     List<User> allUsers = dacDAO.findAllDACUserMemberships();
     assertEquals(6, allUsers.size());
@@ -78,7 +83,8 @@ class DacDAOTest extends DAOTestHelper {
   void testFindAllDACUsersBySearchString_case1() {
     Dac dac = insertDacWithEmail();
     User chair = createUser(); // Creates a user with researcher role
-    dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(
+        UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId(), chair.getUserId());
 
     Set<User> users = dacDAO.findAllDACUsersBySearchString(chair.getEmail());
     assertThat(users, hasSize(1));
@@ -106,13 +112,13 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllAlphabeticized() {
+  void testFindAllAlphabetical() {
     String firstName = "A" + randomAlphabetic(20);
     String secondName = "B" + randomAlphabetic(20);
     String thirdName = "C" + randomAlphabetic(20);
-    Integer dacId1 = createRandomDACWithName(firstName);
-    Integer dacId2 = createRandomDACWithName(thirdName);
-    Integer dacId3 = createRandomDACWithName(secondName);
+    createRandomDACWithName(firstName);
+    createRandomDACWithName(thirdName);
+    createRandomDACWithName(secondName);
     List<Dac> dacs = dacDAO.findAll();
     assertEquals(dacs.get(0).getName(), firstName);
     assertEquals(dacs.get(1).getName(), secondName);
@@ -162,6 +168,47 @@ class DacDAOTest extends DAOTestHelper {
     assertThat(datasetIds2, hasSize(1));
     assertThat(datasetIds2, contains(datasetId2));
     assertNull(dac2.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindAllWithDatasetApproval() {
+    Integer dacId = createRandomDAC();
+    User user = createUser();
+    Integer approvedDatasetId =
+        datasetDAO.insertDataset(
+            randomAlphabetic(20),
+            new Timestamp(new Date().getTime()),
+            user.getUserId(),
+            randomAlphabetic(20),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    Integer pendingDatasetId =
+        datasetDAO.insertDataset(
+            randomAlphabetic(20),
+            new Timestamp(new Date().getTime()),
+            user.getUserId(),
+            randomAlphabetic(20),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), approvedDatasetId);
+
+    List<Dac> dacs = dacDAO.findAll();
+    Dac dac = dacs.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElseThrow();
+    List<Dataset> datasets = dac.getDatasets();
+
+    Dataset approvedDataset =
+        datasets.stream()
+            .filter(d -> d.getDatasetId().equals(approvedDatasetId))
+            .findFirst()
+            .orElseThrow();
+    assertTrue(approvedDataset.getDacApproval());
+
+    Dataset pendingDataset =
+        datasets.stream()
+            .filter(d -> d.getDatasetId().equals(pendingDatasetId))
+            .findFirst()
+            .orElseThrow();
+    assertNull(pendingDataset.getDacApproval());
   }
 
   @Test
@@ -224,10 +271,99 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindByIdAfterSoftDelete_returnsNull() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    assertNotNull(dacDAO.findById(dacId));
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    assertNull(dacDAO.findById(dacId));
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsDeletedDac() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    assertNotNull(dacDAO.findById(dacId));
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    // findById returns null for soft-deleted DACs
+    assertNull(dacDAO.findById(dacId));
+
+    // findDeletedDacById returns the soft-deleted row with delete metadata set
+    Dac deleted = dacDAO.findDeletedDacById(dacId);
+    assertNotNull(deleted);
+    assertEquals(dacId, deleted.getDacId());
+    assertTrue(deleted.getDeleted());
+    assertEquals(user.getUserId(), deleted.getDeleteUserId());
+    assertNotNull(deleted.getDeleteDate());
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsNullForActiveDAC() {
+    Integer dacId = createRandomDAC();
+
+    // An active (non-deleted) DAC should not be returned by findDeletedDacById
+    assertNull(dacDAO.findDeletedDacById(dacId));
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsNullForNonExistentId() {
+    assertNull(dacDAO.findDeletedDacById(Integer.MAX_VALUE));
+  }
+
+  @Test
+  void testDeleteDac_createsDeleteAudit() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dacId);
+    // Should have a CREATE audit (from createRandomDAC) and a DELETE audit
+    assertTrue(audits.stream().anyMatch(a -> AuditActions.DELETE.equals(a.action())));
+    DacAudit deleteAudit =
+        audits.stream()
+            .filter(a -> AuditActions.DELETE.equals(a.action()))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(dacId, deleteAudit.dacId());
+    assertEquals(user.getUserId(), deleteAudit.userId());
+    assertNull(deleteAudit.affectedUserId());
+    assertNull(deleteAudit.roleId());
+    assertNotNull(deleteAudit.actionDate());
+  }
+
+  @Test
+  void testDeleteDac_idempotent_doesNotOverwriteOrAddAudit() {
+    User firstDeleter = createUser();
+    User secondDeleter = createUser();
+    Integer dacId = createRandomDAC();
+
+    dacDAO.deleteDac(dacId, firstDeleter.getUserId());
+    dacDAO.deleteDac(dacId, secondDeleter.getUserId());
+
+    // delete_user_id must still reflect the first caller
+    Dac deleted = dacDAO.findDeletedDacById(dacId);
+    assertNotNull(deleted);
+    assertEquals(firstDeleter.getUserId(), deleted.getDeleteUserId());
+
+    // exactly one DELETE audit entry — the second call was a no-op
+    long deleteAuditCount =
+        dacDAO.findAuditsByDacId(dacId).stream()
+            .filter(a -> AuditActions.DELETE.equals(a.action()))
+            .count();
+    assertEquals(1, deleteAuditCount);
+  }
+
+  @Test
   void testUpdateDacWithoutEmail() {
     String newValue = "New Value";
+    User user = createUser();
     Integer dacId = createRandomDAC();
-    dacDAO.updateDac(newValue, newValue, new Date(), dacId);
+    dacDAO.updateDac(newValue, newValue, dacId, user.getUserId());
     Dac updatedDac = dacDAO.findById(dacId);
 
     assertEquals(newValue, updatedDac.getName());
@@ -238,8 +374,9 @@ class DacDAOTest extends DAOTestHelper {
   void testUpdateDacWithEmail() {
     String newValue = "New Value";
     String newEmail = "new_email@test.com";
+    User user = createUser();
     Dac dac = insertDacWithEmail();
-    dacDAO.updateDac(newValue, newValue, newEmail, new Date(), dac.getDacId());
+    dacDAO.updateDac(newValue, newValue, newEmail, dac.getDacId(), user.getUserId());
     Dac updatedDac = dacDAO.findById(dac.getDacId());
 
     assertEquals(newValue, updatedDac.getName());
@@ -248,42 +385,18 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDacMembers() {
-    Dac dac = insertDacWithEmail();
-    Integer memberRoleId = UserRoles.MEMBER.getRoleId();
-    User user1 = createUser();
-    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
-    User user2 = createUser();
-    dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId());
-
-    dacDAO.deleteDacMembers(dac.getDacId());
-    List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-    assertTrue(dacMembers.isEmpty());
-  }
-
-  @Test
-  void testDeleteDac() {
-    Dac dac = insertDacWithEmail();
-    assertNotNull(dac.getDacId());
-
-    dacDAO.deleteDac(dac.getDacId());
-    Dac deletedDac = dacDAO.findById(dac.getDacId());
-    assertNull(deletedDac);
-  }
-
-  @Test
   void testFindMembersByDacId() {
     Dac dac = insertDacWithEmail();
     Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
     Integer memberRoleId = UserRoles.MEMBER.getRoleId();
     User user1 = createUser();
-    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId(), user1.getUserId());
     User user2 = createUser();
-    dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId(), user2.getUserId());
     User user3 = createUser();
-    dacDAO.addDacMember(memberRoleId, user3.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user3.getUserId(), dac.getDacId(), user3.getUserId());
     User user4 = createUser();
-    dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId(), user4.getUserId());
 
     List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
     assertThat(dacMembers, hasSize(4));
@@ -295,13 +408,13 @@ class DacDAOTest extends DAOTestHelper {
     Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
     Integer memberRoleId = UserRoles.MEMBER.getRoleId();
     User user1 = createUser();
-    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId(), user1.getUserId());
     User user2 = createUser();
-    dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId(), user2.getUserId());
     User user3 = createUser();
-    dacDAO.addDacMember(memberRoleId, user3.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user3.getUserId(), dac.getDacId(), user3.getUserId());
     User user4 = createUser();
-    dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(chairRoleId, user4.getUserId(), dac.getDacId(), user4.getUserId());
 
     List<User> chairs = dacDAO.findMembersByDacIdAndRoleId(dac.getDacId(), chairRoleId);
     assertThat(chairs, hasSize(1));
@@ -315,7 +428,7 @@ class DacDAOTest extends DAOTestHelper {
     Dac dac = insertDacWithEmail();
     Integer roleId = UserRoles.MEMBER.getRoleId();
     User user = createUser();
-    dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId(), user.getUserId());
     List<UserRole> memberRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(memberRoles.isEmpty());
     UserRole userRole =
@@ -328,7 +441,7 @@ class DacDAOTest extends DAOTestHelper {
     Dac dac = insertDacWithEmail();
     Integer roleId = UserRoles.CHAIRPERSON.getRoleId();
     User user = createUser();
-    dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(roleId, user.getUserId(), dac.getDacId(), user.getUserId());
     List<UserRole> chairRoles = userDAO.findUserById(user.getUserId()).getRoles();
     assertFalse(chairRoles.isEmpty());
     UserRole userRole =
@@ -342,11 +455,12 @@ class DacDAOTest extends DAOTestHelper {
     Integer chairRoleId = UserRoles.CHAIRPERSON.getRoleId();
     Integer memberRoleId = UserRoles.MEMBER.getRoleId();
     User user1 = createUser();
-    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId(), user1.getUserId());
     User user2 = createUser();
-    dacDAO.addDacMember(chairRoleId, user2.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(chairRoleId, user2.getUserId(), dac.getDacId(), user2.getUserId());
     List<UserRole> userRoles = userDAO.findUserById(user2.getUserId()).getRoles();
-    userRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+    userRoles.forEach(
+        userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), user2.getUserId()));
     List<UserRole> userRolesRemoved = userDAO.findUserById(user2.getUserId()).getRoles();
     assertNull(userRolesRemoved);
   }
@@ -364,7 +478,10 @@ class DacDAOTest extends DAOTestHelper {
     Dac dac = insertDacWithEmail();
     User chair = createUser(); // Creates a user with researcher role; UserRole #1
     dacDAO.addDacMember(
-        UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId()); // ; UserRole #2
+        UserRoles.CHAIRPERSON.getRoleId(),
+        chair.getUserId(),
+        dac.getDacId(),
+        chair.getUserId()); // ; UserRole #2
     List<UserRole> userRoles = userDAO.findUserById(chair.getUserId()).getRoles();
     assertEquals(2, userRoles.size());
   }
@@ -375,9 +492,15 @@ class DacDAOTest extends DAOTestHelper {
     User chair = createUser(); // Creates a user with researcher role; UserRole #1
     User member = createUser(); // Creates a user with researcher role; UserRole #2
     dacDAO.addDacMember(
-        UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId()); // ; UserRole #3
+        UserRoles.CHAIRPERSON.getRoleId(),
+        chair.getUserId(),
+        dac.getDacId(),
+        chair.getUserId()); // ; UserRole #3
     dacDAO.addDacMember(
-        UserRoles.MEMBER.getRoleId(), member.getUserId(), dac.getDacId()); // ; UserRole #4
+        UserRoles.MEMBER.getRoleId(),
+        member.getUserId(),
+        dac.getDacId(),
+        member.getUserId()); // ; UserRole #4
     List<Integer> userIds = Arrays.asList(chair.getUserId(), member.getUserId());
     List<UserRole> userRoles = dacDAO.findUserRolesForUsers(userIds).stream().distinct().toList();
     assertEquals(4, userRoles.size());
@@ -434,11 +557,133 @@ class DacDAOTest extends DAOTestHelper {
     assertTrue(results.stream().map(Dac::getDacId).toList().contains(dac.getDacId()));
   }
 
+  @Test
+  void testFindAuditsByDacId_empty() {
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(1);
+    assertNotNull(audits);
+    assertTrue(audits.isEmpty());
+  }
+
+  @Test
+  void testFindAuditsByDacId_addMemberCreatesAudit() {
+    Dac dac = insertDacWithEmail();
+    User user = createUser();
+    dacDAO.addDacMember(
+        UserRoles.MEMBER.getRoleId(), user.getUserId(), dac.getDacId(), user.getUserId());
+
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
+    assertThat(audits, hasSize(2));
+
+    DacAudit audit = audits.getFirst();
+    assertEquals(dac.getDacId(), audit.dacId());
+    assertEquals(user.getUserId(), audit.userId());
+    assertEquals(user.getUserId(), audit.affectedUserId());
+    assertEquals(UserRoles.MEMBER.getRoleId(), audit.roleId());
+    assertEquals(AuditActions.ADD, audit.action());
+    assertNotNull(audit.actionDate());
+  }
+
+  @Test
+  void testFindAuditsByDacId_removeMemberCreatesAudit() {
+    Dac dac = insertDacWithEmail();
+    User user = createUser();
+    dacDAO.addDacMember(
+        UserRoles.MEMBER.getRoleId(), user.getUserId(), dac.getDacId(), user.getUserId());
+
+    // Get the user_role_id that was just created
+    List<UserRole> roles =
+        dacDAO.findMembersByDacId(dac.getDacId()).stream()
+            .flatMap(u -> u.getRoles().stream())
+            .toList();
+    assertFalse(roles.isEmpty());
+    Integer userRoleId = roles.getFirst().getUserRoleId();
+
+    User actor = createUser();
+    dacDAO.removeDacMember(userRoleId, actor.getUserId());
+
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
+    // Should have 2 audits: ADD from addDacMember, REMOVE from removeDacMember
+    assertThat(audits, hasSize(3));
+
+    DacAudit removeAudit = audits.getFirst(); // newest first
+    assertEquals(dac.getDacId(), removeAudit.dacId());
+    assertEquals(actor.getUserId(), removeAudit.userId());
+    assertEquals(user.getUserId(), removeAudit.affectedUserId());
+    assertEquals(UserRoles.MEMBER.getRoleId(), removeAudit.roleId());
+    assertEquals(AuditActions.REMOVE, removeAudit.action());
+    assertNotNull(removeAudit.actionDate());
+  }
+
+  @Test
+  void testFindAuditsByDacId_insertDacAuditDirectly() {
+    Dac dac = insertDacWithEmail();
+
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
+    assertThat(audits, hasSize(1));
+
+    DacAudit audit = audits.getFirst();
+    assertEquals(dac.getDacId(), audit.dacId());
+    assertNull(audit.affectedUserId());
+    assertNull(audit.roleId());
+    assertEquals(AuditActions.CREATE, audit.action());
+    assertNotNull(audit.actionDate());
+  }
+
+  @Test
+  void testFindAuditsByDacId_orderedNewestFirst() throws InterruptedException {
+    Dac dac = insertDacWithEmail();
+    User user2 = createUser();
+
+    // Small sleep to ensure distinct action_date timestamps
+    Thread.sleep(10); // NOSONAR
+    jdbi.useHandle(
+        h -> {
+          String insert =
+              """
+              INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+              VALUES (:dacId, :userId, NULL, NULL, :action, NOW())
+              """;
+          h.createUpdate(insert)
+              .bind("dacId", dac.getDacId())
+              .bind("userId", user2.getUserId())
+              .bind("action", AuditActions.UPDATE.name())
+              .execute();
+        });
+
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
+    assertThat(audits, hasSize(2));
+
+    // Newest (UPDATE) should be first
+    assertEquals(AuditActions.UPDATE, audits.get(0).action());
+    assertEquals(AuditActions.CREATE, audits.get(1).action());
+    assertTrue(
+        audits.get(0).actionDate().isAfter(audits.get(1).actionDate())
+            || audits.get(0).actionDate().equals(audits.get(1).actionDate()));
+  }
+
+  @Test
+  void testFindAuditsByDacId_isolatedToDac() {
+    Dac dac1 = insertDacWithEmail();
+    Dac dac2 = insertDacWithEmail();
+
+    List<DacAudit> audits1 = dacDAO.findAuditsByDacId(dac1.getDacId());
+    List<DacAudit> audits2 = dacDAO.findAuditsByDacId(dac2.getDacId());
+
+    assertThat(audits1, hasSize(1));
+    assertThat(audits2, hasSize(1));
+    assertEquals(dac1.getDacId(), audits1.getFirst().dacId());
+    assertEquals(dac2.getDacId(), audits2.getFirst().dacId());
+  }
+
   private Dac insertDacWithEmail() {
     String testEmail = "test@email.com";
+    User user = createUser();
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphabetic(20), "Test_" + randomAlphabetic(20), testEmail, new Date());
+            "Test_" + randomAlphabetic(20),
+            "Test_" + randomAlphabetic(20),
+            testEmail,
+            user.getUserId());
     return dacDAO.findById(id);
   }
 
@@ -522,7 +767,8 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   private Integer createRandomDACWithName(String name) {
-    return dacDAO.createDac(name, "Test_" + randomAlphabetic(20), new Date());
+    User user = createUser();
+    return dacDAO.createDac(name, "Test_" + randomAlphabetic(20), user.getUserId());
   }
 
   private Integer createRandomDAC() {

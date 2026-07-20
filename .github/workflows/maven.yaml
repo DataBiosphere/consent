@@ -6,19 +6,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
         with:
           distribution: 'temurin'
           java-version: 25
           cache: 'maven'
+      - name: Validate Maven wrapper download
+        run: |
+          rm -rf "${HOME}/.m2/wrapper/dists"
+          ./mvnw -v --batch-mode
       - name: Spotless Check
-        run: mvn -q spotless:check --batch-mode
+        run: ./mvnw -q spotless:check --batch-mode
       - name: Package
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
-          mvn -v
-          mvn clean package  --batch-mode
+          ./mvnw -v
+          ./mvnw clean package --batch-mode
