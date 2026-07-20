@@ -100,9 +100,7 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
     assertThrows(NotAuthorizedException.class, () -> authenticator.authenticate(bearerToken));
   }
 
-  /**
-   * When Sam returns user status info, the resulting DuosUser carries that status info.
-   */
+  /** When Sam returns user status info, the resulting DuosUser carries that status info. */
   @Test
   void testAuthenticateSetsUserStatusInfo() throws Exception {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
@@ -125,8 +123,8 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
   }
 
   /**
-   * When only the required email header is cached (no token or name), authenticate still
-   * succeeds and returns a DuosUser.
+   * When only the required email header is cached (no token or name), authenticate still succeeds
+   * and returns a DuosUser.
    */
   @Test
   void testAuthenticateWithMinimalHeaders() {
@@ -142,4 +140,3 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
     assertTrue(result.isPresent());
   }
 }
-
