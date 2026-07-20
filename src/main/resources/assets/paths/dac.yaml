@@ -83,6 +83,8 @@ get:
             type: array
             items:
               $ref: '../schemas/Dac.yaml'
+    401:
+      description: Unauthorized.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

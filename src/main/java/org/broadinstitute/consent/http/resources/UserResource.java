@@ -90,9 +90,9 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @Path("/role/{roleName}")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-  public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
+  public Response getUsers(@Auth DuosUser duosUser, @PathParam("roleName") String roleName) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       boolean valid = UserRoles.isValidRole(roleName);
       if (valid) {
         // if there is a valid roleName but it is not SO or Admin then throw an exception
@@ -157,17 +157,17 @@ public class UserResource extends Resource {
   @Path("/me/dac/datasets")
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
-  public Response getDatasetsFromUserDacs(@Auth AuthUser authUser) {
-    return getDatasetsFromUserDacsV2(authUser);
+  public Response getDatasetsFromUserDacs(@Auth DuosUser duosUser) {
+    return getDatasetsFromUserDacsV2(duosUser);
   }
 
   @GET
   @Path("/me/dac/datasets/v2")
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
-  public Response getDatasetsFromUserDacsV2(@Auth AuthUser authUser) {
+  public Response getDatasetsFromUserDacsV2(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       List<Integer> dacIds =
           user.getRoles().stream().map(UserRole::getDacId).filter(Objects::nonNull).toList();
       List<Dataset> datasets =
@@ -199,7 +199,7 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN})
   public Response getUsersByInstitution(
-      @Auth AuthUser user, @PathParam("institutionId") Integer institutionId) {
+      @Auth DuosUser duosUser, @PathParam("institutionId") Integer institutionId) {
     try {
       List<User> users = userService.findUsersByInstitutionId(institutionId);
       return Response.ok().entity(users).build();
@@ -397,9 +397,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/signing-officials")
   @RolesAllowed(RESEARCHER)
-  public Response getSOsForInstitution(@Auth AuthUser authUser) {
+  public Response getSOsForInstitution(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       if (Objects.nonNull(user.getInstitutionId())) {
         List<SimplifiedUser> signingOfficials =
             userService.findSOsByInstitutionId(user.getInstitutionId());
@@ -416,9 +416,9 @@ public class UserResource extends Resource {
   @Path("/institution/{institutionId}/signing-officials")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getSigningOfficialsByInstitution(
-      @Auth AuthUser authUser, @PathParam("institutionId") Integer institutionId) {
+      @Auth DuosUser duosUser, @PathParam("institutionId") Integer institutionId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       if (!user.hasUserRole(UserRoles.ADMIN)
           && !user.hasUserRole(UserRoles.CHAIRPERSON)
           && !user.hasUserRole(UserRoles.MEMBER)
@@ -469,9 +469,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements/{key}")
   @RolesAllowed(ADMIN)
-  public Response deleteUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+  public Response deleteUserAcknowledgement(@Auth DuosUser duosUser, @PathParam("key") String key) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
       if (Objects.isNull(ack)) {
         return Response.status(Response.Status.NOT_FOUND).build();

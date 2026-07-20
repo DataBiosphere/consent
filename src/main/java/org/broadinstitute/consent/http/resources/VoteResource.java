@@ -18,19 +18,17 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
 
-  private final UserService userService;
   private final VoteService voteService;
   private final ElectionService electionService;
   // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
@@ -38,9 +36,7 @@ public class VoteResource extends Resource {
   private final Gson gson = new Gson();
 
   @Inject
-  public VoteResource(
-      UserService userService, VoteService voteService, ElectionService electionService) {
-    this.userService = userService;
+  public VoteResource(VoteService voteService, ElectionService electionService) {
     this.voteService = voteService;
     this.electionService = electionService;
   }
@@ -52,7 +48,7 @@ public class VoteResource extends Resource {
    * <p>Error cases are: 1. Vote is null 2. Auth user is not the owner of all votes being updated 3.
    * No votes match the list of ids provided
    *
-   * @param authUser The AuthUser
+   * @param duosUser The DuosUser
    * @param request The request
    * @param json The boolean value to update votes to, string value for all rationales, and list of
    *     vote ids, in json format
@@ -62,7 +58,7 @@ public class VoteResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
-  public Response updateVotes(@Auth AuthUser authUser, @Context Request request, String json) {
+  public Response updateVotes(@Auth DuosUser duosUser, @Context Request request, String json) {
     Vote.VoteUpdate voteUpdate;
     try {
       voteUpdate = gson.fromJson(json, Vote.VoteUpdate.class);
@@ -89,7 +85,7 @@ public class VoteResource extends Resource {
       }
 
       // Validate that the user is only updating their own votes:
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       boolean authed =
           votes.stream().map(Vote::getUserId).allMatch(id -> id.equals(user.getUserId()));
       if (!authed) {
@@ -124,7 +120,7 @@ public class VoteResource extends Resource {
    * This API will update the rationale for a list of vote ids. The Rationale for DataAccess Votes
    * can only be updated for OPEN elections. In all cases, one can only update their own votes.
    *
-   * @param authUser The AuthUser
+   * @param duosUser The DuosUser
    * @param json The rationale and vote ids to update
    * @return Response with results of the update.
    */
@@ -133,8 +129,8 @@ public class VoteResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
-  public Response updateVoteRationale(@Auth AuthUser authUser, String json) {
-    User user = userService.findUserByEmail(authUser.getEmail());
+  public Response updateVoteRationale(@Auth DuosUser duosUser, String json) {
+    User user = duosUser.getUser();
     Vote.RationaleUpdate update;
     try {
       // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration

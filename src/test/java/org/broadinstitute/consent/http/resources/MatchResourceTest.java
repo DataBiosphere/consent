@@ -85,7 +85,7 @@ class MatchResourceTest {
     when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
     initResource();
 
-    Response response = resource.reprocessPurposeMatches(authUser, UUID.randomUUID().toString());
+    Response response = resource.reprocessPurposeMatches(duosUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 }

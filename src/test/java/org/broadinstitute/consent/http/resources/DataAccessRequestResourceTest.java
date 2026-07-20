@@ -139,10 +139,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testCreateDataAccessRequest() {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCard(new LibraryCard());
+    DuosUser duosUserWithCards = new DuosUser(authUser, userWithCards);
     try {
-      User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-      userWithCards.setLibraryCard(new LibraryCard());
-      when(userService.findUserByEmail(any())).thenReturn(userWithCards);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());
       dar.setCollectionId(1);
@@ -159,7 +159,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
+    try (var response = resource.createDataAccessRequest(duosUserWithCards, request, info, "")) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
   }
@@ -168,7 +168,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testCreateDataAccessRequestWithSubmittedDAR() {
     User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
     userWithCards.setLibraryCard(new LibraryCard());
-    when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+    DuosUser duosUserWithCards = new DuosUser(authUser, userWithCards);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setCollectionId(1);
@@ -180,7 +180,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         .when(dataAccessRequestService)
         .createDataAccessRequest(any(), any(), any());
 
-    try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
+    try (var response = resource.createDataAccessRequest(duosUserWithCards, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
       org.broadinstitute.consent.http.models.Error error =
           (org.broadinstitute.consent.http.models.Error) response.getEntity();
@@ -192,12 +192,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testCreateDataAccessRequestWithoutValidERACommons() {
     User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
     userWithCards.setLibraryCard(new LibraryCard());
-    when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+    DuosUser duosUserWithCards = new DuosUser(authUser, userWithCards);
     doThrow(new BadRequestException())
         .when(dataAccessRequestService)
         .createDataAccessRequest(eq(user), any(), any());
 
-    try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
+    try (var response = resource.createDataAccessRequest(duosUserWithCards, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -274,7 +274,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     user.setLibraryCard(new LibraryCard());
     try {
-      when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
@@ -282,7 +281,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (var response = resource.updateByReferenceId(authUser, "", "{}")) {
+    try (var response = resource.updateByReferenceId(duosUser, "", "{}")) {
       assertEquals(200, response.getStatus());
     }
   }
@@ -290,15 +289,15 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUpdateByReferenceIdForbidden() {
     User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
+    DuosUser invalidDuosUser = new DuosUser(authUser, invalidUser);
     DataAccessRequest dar = generateDataAccessRequest();
     try {
-      when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (var response = resource.updateByReferenceId(authUser, "", "{}")) {
+    try (var response = resource.updateByReferenceId(invalidDuosUser, "", "{}")) {
       assertEquals(403, response.getStatus());
     }
   }
@@ -307,7 +306,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testCreateDraftDataAccessRequest() {
     DataAccessRequest dar = generateDataAccessRequest();
     try {
-      when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
       when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
@@ -316,7 +314,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (var response = resource.createDraftDataAccessRequest(authUser, info, "")) {
+    try (var response = resource.createDraftDataAccessRequest(duosUser, info, "")) {
       assertEquals(201, response.getStatus());
     }
   }
@@ -324,11 +322,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUpdatePartialDataAccessRequest() {
     DataAccessRequest dar = generateDataAccessRequest();
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
 
-    try (var response = resource.updatePartialDataAccessRequest(authUser, "", "{}")) {
+    try (var response = resource.updatePartialDataAccessRequest(duosUser, "", "{}")) {
       assertEquals(200, response.getStatus());
     }
   }
@@ -336,11 +333,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUpdatePartialDataAccessRequestForbidden() {
     User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
+    DuosUser invalidDuosUser = new DuosUser(authUser, invalidUser);
     DataAccessRequest dar = generateDataAccessRequest();
-    when(userService.findUserByEmail(any())).thenReturn(invalidUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
 
-    try (var response = resource.updatePartialDataAccessRequest(authUser, "", "{}")) {
+    try (var response = resource.updatePartialDataAccessRequest(invalidDuosUser, "", "{}")) {
       assertEquals(403, response.getStatus());
     }
   }
@@ -390,7 +387,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testUploadIrbDocument() throws Exception {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -401,24 +397,22 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
 
-    Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
   }
 
   @Test
   void testUploadIrbDocumentDARNotFound() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
 
-    Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(404, response.getStatus());
   }
 
   @Test
   void testUploadIrbDocumentWithPreviousIrbDocument() throws Exception {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setIrbDocumentLocation(randomAlphabetic(10));
     dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
@@ -432,7 +426,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
-    Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
   }
 
@@ -444,7 +438,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   private void mockProgressReportUserAndParentDar(DataAccessRequest parentDar) {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
   }
 
@@ -503,7 +496,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportMissingParentDar() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
@@ -548,7 +540,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportThrowsWhenNoERACommonsID() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response =
@@ -933,7 +924,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testUploadCollaborationDocument() throws Exception {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -945,25 +935,23 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
 
     Response response =
-        resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
+        resource.uploadCollaborationDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
   }
 
   @Test
   void testUploadCollaborationDocumentDARNotFound() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
 
     Response response =
-        resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
+        resource.uploadCollaborationDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(404, response.getStatus());
   }
 
   @Test
   void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setCollaborationLetterLocation(randomAlphabetic(10));
     dar.getData().setCollaborationLetterName(randomAlphabetic(10) + ".txt");
@@ -978,7 +966,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
     Response response =
-        resource.uploadCollaborationDocument(authUser, "", uploadInputStream, formData);
+        resource.uploadCollaborationDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
   }
 
@@ -1012,48 +1000,33 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     List<DataAccessRequest> list = Collections.emptyList();
     User localUser = new User();
     localUser.setUserId(1);
-    when(userService.findUserByEmail(any())).thenReturn(localUser);
+    DuosUser localDuosUser = new DuosUser(authUser, localUser);
     when(dataAccessRequestService.findAllDraftDataAccessRequestsByUser(any())).thenReturn(list);
-    Response res = resource.getDraftDataAccessRequests(authUser);
+    Response res = resource.getDraftDataAccessRequests(localDuosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
     assertTrue(res.hasEntity());
-  }
-
-  @Test
-  void getDraftDataAccessRequests_UserNotFound() {
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-    resource.getDraftDataAccessRequests(authUser);
-    Response res = resource.getDraftDataAccessRequests(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, res.getStatus());
   }
 
   @Test
   void getDraftDar() {
     User localUser = new User();
     localUser.setUserId(10);
+    DuosUser localDuosUser = new DuosUser(authUser, localUser);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUserId(10);
-    when(userService.findUserByEmail(any())).thenReturn(localUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    Response res = resource.getDraftDar(authUser, "id");
+    Response res = resource.getDraftDar(localDuosUser, "id");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
     assertTrue(res.hasEntity());
-  }
-
-  @Test
-  void getDraftDar_UserNotFound() {
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-    Response res = resource.getDraftDar(authUser, "id");
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, res.getStatus());
   }
 
   @Test
   void getDraftDar_DarNotFound() {
     User localUser = new User();
     localUser.setUserId(10);
-    when(userService.findUserByEmail(any())).thenReturn(localUser);
+    DuosUser localDuosUser = new DuosUser(authUser, localUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(new NotFoundException());
-    Response res = resource.getDraftDar(authUser, "id");
+    Response res = resource.getDraftDar(localDuosUser, "id");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, res.getStatus());
   }
 
@@ -1061,20 +1034,20 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void getDraftDar_UserNotAllowed() {
     User localUser = new User();
     localUser.setUserId(10);
+    DuosUser localDuosUser = new DuosUser(authUser, localUser);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUserId(11);
-    when(userService.findUserByEmail(any())).thenReturn(localUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    Response res = resource.getDraftDar(authUser, "id");
+    Response res = resource.getDraftDar(localDuosUser, "id");
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, res.getStatus());
   }
 
   @Test
   void testCreateDataAccessRequestWithDAARestrictions() {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCard(new LibraryCard());
+    DuosUser duosUserWithCards = new DuosUser(authUser, userWithCards);
     try {
-      User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-      userWithCards.setLibraryCard(new LibraryCard());
-      when(userService.findUserByEmail(any())).thenReturn(userWithCards);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());
       dar.setCollectionId(1);
@@ -1089,17 +1062,17 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDraftDataAccessRequest(authUser, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequest(duosUserWithCards, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
 
   @Test
   void testCreateDataAccessRequestWithDAARestrictionsFailure() {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCard(new LibraryCard());
+    DuosUser duosUserWithCards = new DuosUser(authUser, userWithCards);
     try {
-      User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-      userWithCards.setLibraryCard(new LibraryCard());
-      when(userService.findUserByEmail(any())).thenReturn(userWithCards);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());
       dar.setCollectionId(1);
@@ -1113,7 +1086,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDraftDataAccessRequest(authUser, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequest(duosUserWithCards, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

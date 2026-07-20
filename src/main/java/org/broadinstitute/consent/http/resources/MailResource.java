@@ -21,7 +21,7 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.EmailService;
 
 @Path("api/mail")
@@ -39,7 +39,7 @@ public class MailResource {
   @Path("/type/{type}")
   @RolesAllowed({ADMIN})
   public Response getEmailByType(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("type") EmailType emailType,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
@@ -54,7 +54,7 @@ public class MailResource {
   @Path("/user/{userId}")
   @RolesAllowed({ADMIN})
   public Response getEmailByUser(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("userId") Integer userId,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
@@ -69,7 +69,7 @@ public class MailResource {
   @Path("/range")
   @RolesAllowed({ADMIN})
   public Response getEmailByDateRange(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @QueryParam("start") String start,
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,

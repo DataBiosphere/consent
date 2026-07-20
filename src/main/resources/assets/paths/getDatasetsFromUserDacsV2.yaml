@@ -16,6 +16,8 @@ get:
             type: array
             items:
               $ref: '../schemas/Dataset.yaml'
+    401:
+      description: Unauthorized.
     404:
       description: User not found or no datasets found for user
     429:

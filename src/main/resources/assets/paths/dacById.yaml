@@ -18,6 +18,8 @@ get:
         application/json:
           schema:
             $ref: '../schemas/Dac.yaml'
+    401:
+      description: Unauthorized.
     404:
       description: No DAC found with the given ID
     429:

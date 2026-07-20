@@ -41,7 +41,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -117,9 +116,9 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed(RESEARCHER)
   @Path("/v2")
   public Response createDataAccessRequest(
-      @Auth AuthUser authUser, @Context Request request, @Context UriInfo info, String dar) {
+      @Auth DuosUser duosUser, @Context Request request, @Context UriInfo info, String dar) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       DataAccessRequest newDar =
@@ -205,9 +204,9 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
   public Response updateByReferenceId(
-      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId, String dar) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
@@ -228,9 +227,9 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @Path("/v2/draft")
   @RolesAllowed(RESEARCHER)
-  public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
+  public Response getDraftDataAccessRequests(@Auth DuosUser duosUser) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       List<DataAccessRequest> draftDars =
           dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getUserId());
       return Response.ok().entity(draftDars).build();
@@ -243,9 +242,9 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @Path("/v2/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
-  public Response getDraftDar(@Auth AuthUser authUser, @PathParam("referenceId") String id) {
+  public Response getDraftDar(@Auth DuosUser duosUser, @PathParam("referenceId") String id) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(id);
       if (dar.getUserId().equals(user.getUserId())) {
         return Response.ok().entity(dar).build();
@@ -262,9 +261,9 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/draft")
   @RolesAllowed(RESEARCHER)
   public Response createDraftDataAccessRequest(
-      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
+      @Auth DuosUser duosUser, @Context UriInfo info, String dar) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
       DataAccessRequest result =
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
@@ -281,9 +280,9 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/draft/{referenceId}")
   @RolesAllowed(RESEARCHER)
   public Response updatePartialDataAccessRequest(
-      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId, String dar) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
@@ -333,12 +332,12 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}/irbDocument")
   @RolesAllowed({RESEARCHER})
   public Response uploadIrbDocument(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("referenceId") String referenceId,
       @FormDataParam("file") InputStream uploadInputStream,
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar =
@@ -376,7 +375,7 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/progress_report/{parentReferenceId}")
   @RolesAllowed({RESEARCHER})
   public Response postProgressReport(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @Context Request request,
       @PathParam("parentReferenceId") String parentReferenceId,
       @FormDataParam("dar") String dar,
@@ -385,7 +384,7 @@ public class DataAccessRequestResource extends Resource {
       @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,
       @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       // added here because other dataAccessRequestServices calls are invoked that do not normally
       // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
       // additional LC check needed.
@@ -522,12 +521,12 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}/collaborationDocument")
   @RolesAllowed({RESEARCHER})
   public Response uploadCollaborationDocument(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("referenceId") String referenceId,
       @FormDataParam("file") InputStream uploadInputStream,
       @FormDataParam("file") FormDataContentDisposition fileDetail) {
     try {
-      User user = findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
       DataAccessRequest updatedDar =
@@ -552,14 +551,6 @@ public class DataAccessRequestResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-  }
-
-  private User findUserByEmail(String email) {
-    User user = userService.findUserByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("Unable to find User with the provided email: " + email);
-    }
-    return user;
   }
 
   private DataAccessRequest populateDarFromJsonString(User user, String json) {

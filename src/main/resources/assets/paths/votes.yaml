@@ -46,6 +46,8 @@ put:
       description: Successfully updated votes
     400:
       description: Bad Request (invalid input)
+    401:
+      description: Unauthorized.
     404:
       description: Not Found
     409:

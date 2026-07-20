@@ -15,6 +15,8 @@ post:
   responses:
     200:
       description: The dataset has been indexed
+    401:
+      description: Unauthorized.
     404:
       description: Dataset not found
     429:
@@ -40,6 +42,8 @@ delete:
   responses:
     200:
       description: The dataset index has been deleted
+    401:
+      description: Unauthorized.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

@@ -14,6 +14,8 @@ import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,8 @@ class MailResourceTest extends AbstractTestHelper {
 
   @Mock private EmailService emailService;
   private final AuthUser authUser = new AuthUser("test@test.com");
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date());
+  private final DuosUser duosUser = new DuosUser(authUser, user);
 
   private MailResource mailResource;
 
@@ -38,7 +42,7 @@ class MailResourceTest extends AbstractTestHelper {
     initResource();
     when(emailService.fetchEmailMessagesByType(any(), any(), any()))
         .thenReturn(generateMailMessageList());
-    Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
+    Response response = mailResource.getEmailByType(duosUser, EmailType.COLLECT, null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -46,7 +50,7 @@ class MailResourceTest extends AbstractTestHelper {
   void test_MailResourceEmptyListResponse() {
     initResource();
     when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(new ArrayList<>());
-    Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
+    Response response = mailResource.getEmailByType(duosUser, EmailType.COLLECT, null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -55,7 +59,7 @@ class MailResourceTest extends AbstractTestHelper {
     initResource();
     when(emailService.fetchEmailMessagesByUserId(any(), any(), any()))
         .thenReturn(generateMailMessageList());
-    Response response = mailResource.getEmailByUser(authUser, 1, null, null);
+    Response response = mailResource.getEmailByUser(duosUser, 1, null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -64,7 +68,7 @@ class MailResourceTest extends AbstractTestHelper {
     initResource();
     when(emailService.fetchEmailMessagesByUserId(any(), any(), any()))
         .thenReturn(new ArrayList<>());
-    Response response = mailResource.getEmailByUser(authUser, 1, null, null);
+    Response response = mailResource.getEmailByUser(duosUser, 1, null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -74,7 +78,7 @@ class MailResourceTest extends AbstractTestHelper {
     when(emailService.fetchEmailMessagesByCreateDate(any(), any(), any(), any()))
         .thenReturn(new ArrayList<>());
     Response response =
-        mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, null);
+        mailResource.getEmailByDateRange(duosUser, "05/11/2021", "05/11/2022", null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -84,7 +88,7 @@ class MailResourceTest extends AbstractTestHelper {
     when(emailService.fetchEmailMessagesByCreateDate(any(), any(), any(), any()))
         .thenReturn(generateMailMessageList());
     Response response =
-        mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, null);
+        mailResource.getEmailByDateRange(duosUser, "05/11/2021", "05/11/2022", null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -94,7 +98,7 @@ class MailResourceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> {
-          mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", -5, null);
+          mailResource.getEmailByDateRange(duosUser, "05/11/2021", "05/11/2022", -5, null);
         });
   }
 
@@ -104,7 +108,7 @@ class MailResourceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> {
-          mailResource.getEmailByDateRange(authUser, "05/11/2021", "05/11/2022", null, -1);
+          mailResource.getEmailByDateRange(duosUser, "05/11/2021", "05/11/2022", null, -1);
         });
   }
 
@@ -112,7 +116,7 @@ class MailResourceTest extends AbstractTestHelper {
   void test_MailResource_invalid_start_date() {
     initResource();
     Response response =
-        mailResource.getEmailByDateRange(authUser, "55/11/2021", "05/11/2022", null, null);
+        mailResource.getEmailByDateRange(duosUser, "55/11/2021", "05/11/2022", null, null);
     assertEquals(400, response.getStatus());
   }
 
@@ -120,7 +124,7 @@ class MailResourceTest extends AbstractTestHelper {
   void test_MailResource_invalid_end_date() {
     initResource();
     Response response =
-        mailResource.getEmailByDateRange(authUser, "05/11/2021", "65/98/20229", null, null);
+        mailResource.getEmailByDateRange(duosUser, "05/11/2021", "65/98/20229", null, null);
     assertEquals(400, response.getStatus());
   }
 

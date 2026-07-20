@@ -8,6 +8,8 @@ post:
   responses:
     200:
       description: All datasets have been indexed
+    401:
+      description: Unauthorized.
     404:
       description: No datasets found to index
     429:

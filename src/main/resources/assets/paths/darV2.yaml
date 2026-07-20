@@ -23,6 +23,8 @@ post:
             type: array
             items:
               $ref: '../schemas/DataAccessRequest.yaml'
+    401:
+      description: Unauthorized.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

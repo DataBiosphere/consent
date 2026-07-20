@@ -17,10 +17,10 @@ import java.net.URI;
 import java.util.Map;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FeatureFlag;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FeatureFlagService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,15 +31,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class FeatureFlagResourceTest extends AbstractTestHelper {
 
   @Mock private FeatureFlagService featureFlagService;
-  @Mock private UserService userService;
 
   private FeatureFlagResource resource;
   private final AuthUser authUser = new AuthUser("admin@test.com");
   private final User user = new User(1, "admin@test.com", "Admin", new java.util.Date());
+  private final DuosUser duosUser = new DuosUser(authUser, user);
 
   @BeforeEach
   void setUp() {
-    resource = new FeatureFlagResource(featureFlagService, userService);
+    resource = new FeatureFlagResource(featureFlagService);
   }
 
   @Test
@@ -50,18 +50,16 @@ class FeatureFlagResourceTest extends AbstractTestHelper {
     when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
     when(uriBuilder.build()).thenReturn(URI.create("http://localhost/feature/new-feature"));
 
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     FeatureFlag createdFlag = new FeatureFlag("new-feature", "new-value");
     when(featureFlagService.exists("new-feature")).thenReturn(false);
     when(featureFlagService.createOrUpdateFeatureFlag("new-feature", "new-value", user.getUserId()))
         .thenReturn(createdFlag);
 
     Map<String, String> body = Map.of("value", "new-value");
-    Response response = resource.createOrUpdateFeatureFlag(uriInfo, authUser, "new-feature", body);
+    Response response = resource.createOrUpdateFeatureFlag(uriInfo, duosUser, "new-feature", body);
 
     assertEquals(201, response.getStatus());
     assertNotNull(response.getEntity());
-    verify(userService).findUserByEmail(authUser.getEmail());
     verify(featureFlagService).exists("new-feature");
     verify(featureFlagService)
         .createOrUpdateFeatureFlag("new-feature", "new-value", user.getUserId());
@@ -70,7 +68,6 @@ class FeatureFlagResourceTest extends AbstractTestHelper {
   @Test
   void testCreateOrUpdateFeatureFlag_Update() {
     UriInfo uriInfo = mock(UriInfo.class);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     FeatureFlag updatedFlag = new FeatureFlag("existing-feature", "updated-value");
     when(featureFlagService.exists("existing-feature")).thenReturn(true);
     when(featureFlagService.createOrUpdateFeatureFlag(
@@ -79,11 +76,10 @@ class FeatureFlagResourceTest extends AbstractTestHelper {
 
     Map<String, String> body = Map.of("value", "updated-value");
     Response response =
-        resource.createOrUpdateFeatureFlag(uriInfo, authUser, "existing-feature", body);
+        resource.createOrUpdateFeatureFlag(uriInfo, duosUser, "existing-feature", body);
 
     assertEquals(200, response.getStatus());
     assertNotNull(response.getEntity());
-    verify(userService).findUserByEmail(authUser.getEmail());
     verify(featureFlagService).exists("existing-feature");
     verify(featureFlagService)
         .createOrUpdateFeatureFlag("existing-feature", "updated-value", user.getUserId());
@@ -94,7 +90,7 @@ class FeatureFlagResourceTest extends AbstractTestHelper {
     UriInfo uriInfo = mock(UriInfo.class);
     Map<String, String> body = Map.of();
 
-    Response response = resource.createOrUpdateFeatureFlag(uriInfo, authUser, "test-id", body);
+    Response response = resource.createOrUpdateFeatureFlag(uriInfo, duosUser, "test-id", body);
 
     assertEquals(400, response.getStatus());
     assertNotNull(response.getEntity());
@@ -103,57 +99,49 @@ class FeatureFlagResourceTest extends AbstractTestHelper {
   @Test
   void testCreateOrUpdateFeatureFlag_ServiceError() {
     UriInfo uriInfo = mock(UriInfo.class);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(featureFlagService.exists("test-id")).thenReturn(false);
     when(featureFlagService.createOrUpdateFeatureFlag("test-id", "value", user.getUserId()))
         .thenThrow(new RuntimeException("Database error"));
 
     Map<String, String> body = Map.of("value", "value");
-    Response response = resource.createOrUpdateFeatureFlag(uriInfo, authUser, "test-id", body);
+    Response response = resource.createOrUpdateFeatureFlag(uriInfo, duosUser, "test-id", body);
 
     assertEquals(500, response.getStatus());
-    verify(userService).findUserByEmail(authUser.getEmail());
     verify(featureFlagService).exists("test-id");
     verify(featureFlagService).createOrUpdateFeatureFlag("test-id", "value", user.getUserId());
   }
 
   @Test
   void testDeleteFeatureFlag_Success() {
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     doNothing().when(featureFlagService).deleteFeatureFlag("test-id", user.getUserId());
 
-    Response response = resource.deleteFeatureFlag(authUser, "test-id");
+    Response response = resource.deleteFeatureFlag(duosUser, "test-id");
 
     assertEquals(204, response.getStatus());
-    verify(userService).findUserByEmail(authUser.getEmail());
     verify(featureFlagService).deleteFeatureFlag("test-id", user.getUserId());
   }
 
   @Test
   void testDeleteFeatureFlag_NotFound() {
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     doThrow(new NotFoundException("Feature flag with id 'non-existent' not found"))
         .when(featureFlagService)
         .deleteFeatureFlag("non-existent", user.getUserId());
 
-    Response response = resource.deleteFeatureFlag(authUser, "non-existent");
+    Response response = resource.deleteFeatureFlag(duosUser, "non-existent");
 
     assertEquals(404, response.getStatus());
-    verify(userService).findUserByEmail(authUser.getEmail());
     verify(featureFlagService).deleteFeatureFlag("non-existent", user.getUserId());
   }
 
   @Test
   void testDeleteFeatureFlag_ServiceError() {
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     doThrow(new RuntimeException("Database error"))
         .when(featureFlagService)
         .deleteFeatureFlag("test-id", user.getUserId());
 
-    Response response = resource.deleteFeatureFlag(authUser, "test-id");
+    Response response = resource.deleteFeatureFlag(duosUser, "test-id");
 
     assertEquals(500, response.getStatus());
-    verify(userService).findUserByEmail(authUser.getEmail());
     verify(featureFlagService).deleteFeatureFlag("test-id", user.getUserId());
   }
 }

@@ -59,7 +59,8 @@ class DacResourceTest extends AbstractTestHelper {
   void testFindAll_success_1() {
     when(dacService.findDacsWithMembersOption(true)).thenReturn(Collections.emptyList());
 
-    try (Response response = dacResource.findAll(authUser, Optional.of(true))) {
+    try (Response response =
+        dacResource.findAll(new DuosUser(authUser, new User()), Optional.of(true))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       JsonArray dacs = getListFromEntityString(response.getEntity().toString());
       assertEquals(0, dacs.size());
@@ -71,7 +72,8 @@ class DacResourceTest extends AbstractTestHelper {
     Dac dac = new DacBuilder().setName("name").setDescription("description").build();
     when(dacService.findDacsWithMembersOption(true)).thenReturn(Collections.singletonList(dac));
 
-    try (Response response = dacResource.findAll(authUser, Optional.of(true))) {
+    try (Response response =
+        dacResource.findAll(new DuosUser(authUser, new User()), Optional.of(true))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       JsonArray dacs = getListFromEntityString(response.getEntity().toString());
       assertEquals(1, dacs.size());
@@ -82,7 +84,8 @@ class DacResourceTest extends AbstractTestHelper {
   void testFindAllWithUsers() {
     when(dacService.findDacsWithMembersOption(false)).thenReturn(Collections.emptyList());
 
-    try (Response response = dacResource.findAll(authUser, Optional.of(false))) {
+    try (Response response =
+        dacResource.findAll(new DuosUser(authUser, new User()), Optional.of(false))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       JsonArray dacs = getListFromEntityString(response.getEntity().toString());
       assertEquals(0, dacs.size());
@@ -327,7 +330,8 @@ class DacResourceTest extends AbstractTestHelper {
             .build();
     when(dacService.findById(1)).thenReturn(dac);
 
-    try (Response response = dacResource.findDacById(authUser, dac.getDacId())) {
+    try (Response response =
+        dacResource.findDacById(new DuosUser(authUser, new User()), dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -336,8 +340,19 @@ class DacResourceTest extends AbstractTestHelper {
   void testFindById_failure() {
     when(dacService.findById(1)).thenReturn(null);
 
-    try (Response response = dacResource.findDacById(authUser, 1)) {
+    try (Response response = dacResource.findDacById(new DuosUser(authUser, new User()), 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testFilterUsers_success() {
+    User user = new User();
+    user.setDisplayName("Jane Doe");
+    when(dacService.findAllDACUsersBySearchString("Jane")).thenReturn(List.of(user));
+
+    try (Response response = dacResource.filterUsers(new DuosUser(authUser, new User()), "Jane")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 

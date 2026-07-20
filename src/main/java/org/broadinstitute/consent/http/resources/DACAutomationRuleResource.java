@@ -15,28 +15,23 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DacService;
-import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/dac/")
 public class DACAutomationRuleResource extends Resource {
 
   private final DACAutomationRuleService ruleService;
   private final DacService dacService;
-  private final UserService userService;
 
   @Inject
-  public DACAutomationRuleResource(
-      DACAutomationRuleService ruleService, DacService dacService, UserService userService) {
+  public DACAutomationRuleResource(DACAutomationRuleService ruleService, DacService dacService) {
     this.ruleService = ruleService;
     this.dacService = dacService;
-    this.userService = userService;
   }
 
   @GET
@@ -56,9 +51,9 @@ public class DACAutomationRuleResource extends Resource {
   @Path("{dacId}/rules")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
-  public Response getAvailableRules(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
+  public Response getAvailableRules(@Auth DuosUser duosUser, @PathParam("dacId") Integer dacId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       validateAdminOrChairForDAC(user, dacId);
 
       if (dacService.findById(dacId) == null) {
@@ -78,12 +73,12 @@ public class DACAutomationRuleResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
   public Response getDacRuleAuditRecords(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @QueryParam("page") Integer page,
       @QueryParam("pageSize") Integer pageSize) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       validateAdminOrChairForDAC(user, dacId);
 
       if (dacService.findById(dacId) == null) {
@@ -103,11 +98,11 @@ public class DACAutomationRuleResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.CHAIRPERSON})
   public Response toggleRule(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("ruleId") Integer ruleId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       validateIsChairOfDAC(user, dacId);
 
       if (dacService.findById(dacId) == null) {
