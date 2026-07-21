@@ -8,5 +8,6 @@ Use this directory for documents that describe a proposed path forward, migratio
 
 | Plan | Purpose |
 | --- | --- |
+| `data-use-primary-consistency-plan.md` | Plan for aligning dataset primary Data Use registration rules with automated matching while handling legacy records safely. |
 | `dataset-registration-schema-migration-plan.md` | Plan for migrating dataset/study registration away from `dataset-registration-schema_v1.json` backend validation. |
 | `elasticsearch-service-duos-ui-usage.md` | Plan for adding access control to the information in consent's Elasticsearch infrastructure. |
