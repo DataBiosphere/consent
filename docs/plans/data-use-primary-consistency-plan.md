@@ -169,7 +169,7 @@ output to Jira.
 WITH access_management AS (
   SELECT
     dataset_id,
-    MAX(LOWER(property_value))
+    STRING_AGG(DISTINCT LOWER(property_value), ',' ORDER BY LOWER(property_value))
       FILTER (WHERE schema_property = 'accessManagement') AS access_management
   FROM dataset_property
   GROUP BY dataset_id
