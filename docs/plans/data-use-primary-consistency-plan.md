@@ -71,6 +71,25 @@ The proposed behavior is an explicit ABSTAIN because free-text Other cannot be m
 Match results are persisted with an algorithm version. A matcher or dataset change does not update
 existing match rows automatically.
 
+### duos-ui
+
+Consent will own the canonical dataset classification, but duos-ui independently implements related
+behavior and does not consume the Consent classifier as a shared library:
+
+- `ConsentGroupAddEdit` enforces primary mutual exclusivity through its radio widget and reset
+  handler, while its validation only asserts that at least one primary is present for non-open data.
+- `selectedPrimaryGroup` and `processDefinedLimitations` use first-match precedence rather than
+  detecting noncanonical multiple-primary values.
+- `BucketUtils` reimplements Other/modifier abstention and uses an `algorithmVersion === 'v3'` gate
+  to decide when persisted match results can be trusted by the DAC voting UI.
+- `processOtherInDataUse` classifies both primary and secondary Other as modifiers for display.
+- the Library grid tolerates multiple primary terms by rendering two chips plus an overflow count.
+
+These behaviors are valid compatibility mechanisms in some contexts, but they can drift when
+Consent adds the canonical classifier and a new matcher version. Ticket 6 must reconcile the UI's
+classification, abstention, error handling, and tests with the final Consent semantics. The UI may
+retain defensive display of legacy multi-primary data when that choice is explicit and tested.
+
 ### Legacy data
 
 Historical migrations contain DS+POA and `other`+recognized-primary combinations. The model now
@@ -86,7 +105,7 @@ changed globally.
 | Does EXTERNAL require a primary use? | Yes. External access does not require a DUOS DAC, but it still requires one primary Data Use. |
 | What does `DataUse.other` mean for current registrations? | Other primary. `secondaryOther` remains the separate secondary field. |
 | What should matching do with Other only or no primary? | ABSTAIN with a specific manual-review rationale. |
-| What should matching do with multiple primaries? | Use only an explicitly documented legacy policy; unsupported combinations ABSTAIN. |
+| What should matching do with multiple primaries? | ABSTAIN with a specific manual-review rationale for every combination, including legacy combinations. |
 | Should legacy records be normalized automatically? | Only where the audit produces a deterministic, domain-approved mapping. Never select the first populated field. |
 | How should datasets be referenced internally? | By `dataset.dataset_id` foreign keys. Keep the formatted alias as a public/display identifier only, allocated by a database sequence and protected by a unique constraint. |
 
@@ -114,10 +133,11 @@ purpose with valid modifiers.
 
 ## Jira-Ready Tickets
 
-There are three core tickets, one conditional ticket, and one required architecture follow-up. The
-conditional ticket should be created only when the audit shows that Data Use normalization or
-persisted-match reprocessing is necessary. Ticket 5 addresses alias scalability independently and
-must not be folded into the matcher behavior change.
+There are three core Consent tickets, one conditional ticket, one required architecture follow-up,
+and one required duos-ui alignment ticket. The conditional ticket should be created only when the
+audit shows that Data Use normalization or persisted-match reprocessing is necessary. Ticket 5
+addresses alias scalability independently and must not be folded into the matcher behavior change.
+Ticket 6 closes the cross-repository consistency gap after Tickets 2 and 3 finalize the contract.
 
 ### Ticket 1: Audit persisted dataset primary Data Use shapes
 
@@ -209,8 +229,9 @@ writes stop using the legacy text column.
   than one dataset; mapped plus unresolved rows equals the total persisted-match count.
 - A domain owner classifies sampled historical `other` values as primary, secondary, mixed, or
   indeterminate.
-- Every observed noncanonical shape receives one proposed disposition: explicit compatibility,
-  ABSTAIN/manual review, deterministic normalization, or curator-assisted normalization.
+- Every observed noncanonical shape receives one proposed disposition: ABSTAIN/manual review,
+  deterministic normalization, or curator-assisted normalization. Every MULTIPLE shape ABSTAINS
+  unless it is normalized before matching.
 - The need for Ticket 4 is decided and recorded.
 - No raw Other text, Data Use JSON, or production dataset identifiers are committed or copied into
   Jira/general logs.
@@ -265,7 +286,9 @@ This is a refactor toward one source of truth, not a change to payloads accepted
 - Invalid writes return 400 and cause no database, audit, translation, Elasticsearch, match, or vote
   changes.
 - Valid writes preserve existing audit, translation, and Elasticsearch behavior.
-- Client-facing validation messages remain stable unless an intentional contract change is approved.
+- Client-facing validation message wording and the newline-joined response format consumed by
+  duos-ui remain stable unless an intentional contract change is approved and coordinated with
+  duos-ui.
 - Tests remain strict-stubbing compliant; no Mockito `lenient()` stubbing is introduced.
 
 **Tests**
@@ -274,6 +297,7 @@ This is a refactor toward one source of truth, not a change to payloads accepted
 - Parameterized access-management × primary-shape validator tests.
 - Resource/service tests for registration, admin update, and conversion paths.
 - Regression tests that rejected JSON is not included in errors/logs.
+- Contract tests for the newline-joined validation response format consumed by duos-ui.
 
 **Out of scope**
 
@@ -299,7 +323,8 @@ and legacy multi-primary dataset Data Use.
 **Description**
 
 Classify the dataset before invoking the existing V4 cases. Preserve the existing matcher for
-`SINGLE(GRU/HMB/POA/DS)` and apply the disposition approved by Ticket 1 to legacy combinations.
+`SINGLE(GRU/HMB/POA/DS)`. All MULTIPLE combinations ABSTAIN, including historical combinations;
+Ticket 1 determines whether any records should be normalized before they reach matching.
 
 Do not remove valid hierarchy branches from `matchDiseases`, `matchHMB`, or `matchMDS`; they remain
 necessary for single-primary dataset-to-purpose matching.
@@ -311,8 +336,7 @@ necessary for single-primary dataset-to-purpose matching.
 | `SINGLE(GRU/HMB/POA/DS)` | Delegate to existing V4 behavior. |
 | `SINGLE(OTHER)` | ABSTAIN with an Other/manual-review rationale. |
 | `NONE` or null | ABSTAIN with a missing/unsupported-primary rationale. |
-| Unsupported `MULTIPLE` | ABSTAIN with a multiple-primary/manual-review rationale. |
-| Approved legacy `MULTIPLE` | Use only the explicit compatibility behavior approved in Ticket 1. |
+| Any `MULTIPLE` | ABSTAIN with a multiple-primary/manual-review rationale. |
 
 **Implementation notes**
 
@@ -328,9 +352,7 @@ necessary for single-primary dataset-to-purpose matching.
 **Acceptance criteria**
 
 - Other-only and NONE/null datasets ABSTAIN for GRU, HMB, POA, DS, and MDS purposes.
-- Unsupported MULTIPLE combinations ABSTAIN.
-- Any retained legacy combination has a named code path and characterization tests rather than
-  relying on branch order.
+- Every MULTIPLE combination ABSTAINS, including each observed legacy combination.
 - Existing single-primary results and rationales remain unchanged.
 - `secondaryOther` alone does not classify as Other primary.
 - New abstain cases have specific, user-appropriate rationales.
@@ -342,7 +364,7 @@ necessary for single-primary dataset-to-purpose matching.
 
 - Parameterized dataset-classification × research-purpose matrix.
 - Existing V4 matcher regression suite.
-- Characterization tests for every retained legacy combination.
+- Characterization tests showing that every observed legacy MULTIPLE combination ABSTAINS.
 - DAC automation regression for GRU+HMB and other observed noncanonical shapes.
 
 **Out of scope**
@@ -461,6 +483,68 @@ in external contracts and does not make the internal numeric `dataset_id` public
 - Reusing deleted aliases or requiring gapless alias numbering.
 - Changing Data Use classification or matcher decisions.
 
+---
+
+### Ticket 6: Align duos-ui with the canonical Data Use classification
+
+**Issue type:** Story
+
+**Suggested size:** 5 points
+
+**Dependencies:** Tickets 2 and 3
+
+**Summary**
+
+Update duos-ui's parallel Data Use classification and DAC-voting abstain logic to match the
+canonical Consent definition, and close the UI test gaps around the exactly-one-primary invariant.
+
+**Description**
+
+duos-ui does not consume Consent's classifier as a shared library. Several UI paths reimplement
+primary selection, first-match classification, and abstention behavior. Reconcile those paths with
+the classifier vocabulary, MULTIPLE policy, and algorithm version delivered by Consent so future
+drift is detected in tests rather than production.
+
+**Implementation notes**
+
+- Update `BucketUtils` (`isOther`, `shouldAbstain`, `AbstainDataUseCodes`, and the current
+  `algorithmVersion === 'v3'` gate) and its `CollectionAlgorithmDecision` consumer to recognize the
+  algorithm version from Ticket 3 and reflect its ABSTAIN dispositions for Other-only, NONE/null,
+  and MULTIPLE datasets.
+- Reconcile the hardcoded precedence in `selectedPrimaryGroup` and `processDefinedLimitations` with
+  the canonical classifier. If display ordering intentionally differs from classification, name and
+  test that distinction rather than treating the first category as canonical.
+- Decide whether to correct `processOtherInDataUse` so primary Other is displayed as a permission
+  while secondary Other remains a modifier, or create a separately owned follow-up ticket.
+- Decide whether the Library grid should retain its multi-primary overflow rendering for audited
+  legacy records. Do not remove defensive rendering before Ticket 1 and any Ticket 4 migration are
+  resolved.
+- Confirm whether a curator-assisted Ticket 4 process needs operator UI. Current duos-ui code does
+  not call the admin Data Use replacement or dataset-to-study conversion endpoints, so a backend-only
+  process is acceptable only when explicitly approved.
+- Preserve handling of Consent's newline-joined validation error response on registration create
+  and update unless both repositories coordinate an intentional contract change.
+
+**Acceptance criteria**
+
+- The DAC voting UI correctly reflects ABSTAIN for Other-only, NONE/null, and every MULTIPLE shape
+  under the algorithm version introduced by Ticket 3.
+- A stale or unrecognized `algorithmVersion` is handled explicitly and is neither silently trusted
+  nor silently hidden.
+- A test exercises `ConsentGroupAddEdit` primary mutual exclusivity: selecting a new primary clears
+  the previous selection.
+- Tests simulate a backend 400 Data Use consistency violation on registration create and update and
+  verify that every newline-delimited violation is rendered.
+- Any intentional UI-versus-Consent ordering or legacy-display difference is documented and tested.
+- The primary Other display classification has either been corrected or captured in an accepted,
+  owned follow-up ticket.
+- The need for an operator UI for Ticket 4 is decided and recorded.
+
+**Out of scope**
+
+- Redesigning the duos-ui Data Use forms beyond consistency work.
+- Building an operator UI unless the Ticket 4 decision requires it.
+
 ## Test Matrix
 
 At minimum, cover:
@@ -471,7 +555,7 @@ At minimum, cover:
 - blank Other and empty DS;
 - Other only, NONE/null, and representative MULTIPLE datasets against GRU, HMB, POA, DS, and MDS
   purposes;
-- retained legacy combinations; and
+- every observed legacy MULTIPLE combination; and
 - admin update and conversion paths.
 
 Assert both match result and rationale. Existing single-primary matching expectations remain the
@@ -496,4 +580,7 @@ regression source of truth.
 - Conditional migration/reprocessing is completed or explicitly unnecessary.
 - Matches reference datasets through an enforced `dataset_id` foreign key, and aliases are uniquely,
   concurrency-safely allocated for presentation use.
+- duos-ui's Data Use classification, validation-error rendering, and DAC-voting abstain logic have
+  been reviewed against the canonical Consent definition and either updated to match or explicitly
+  signed off as an intentional, tested difference.
 - Relevant tests pass and API documentation is updated where behavior changes.
