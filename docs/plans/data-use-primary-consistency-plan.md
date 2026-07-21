@@ -56,6 +56,14 @@ Two admin paths can replace `DataUse` without the same invariant:
 resolved by branch order. Some branches also encode the valid permission hierarchy, so they cannot
 simply be removed after introducing single-primary validation.
 
+Persisted matches identify their dataset through `match_entity.consent`, a text value populated from
+the formatted dataset alias (`DUOS-######`). This couples an internal relationship to a presentation
+identifier, prevents a database foreign key to `dataset`, and forces consumers to reproduce alias
+formatting in joins. Alias allocation is also implemented as `MAX(alias) + 1` without a database
+uniqueness constraint, which is unsafe for concurrent creation. These are separate scalability and
+referential-integrity concerns from primary Data Use consistency, but the audit must expose them and
+the follow-up in Ticket 5 must replace this design.
+
 Other-only datasets are an important explicit case. Because `DataUse.other` is not checked by the
 matcher, the result currently depends on the research purpose and may be APPROVE, DENY, or ABSTAIN.
 The proposed behavior is an explicit ABSTAIN because free-text Other cannot be matched safely.
@@ -80,6 +88,7 @@ changed globally.
 | What should matching do with Other only or no primary? | ABSTAIN with a specific manual-review rationale. |
 | What should matching do with multiple primaries? | Use only an explicitly documented legacy policy; unsupported combinations ABSTAIN. |
 | Should legacy records be normalized automatically? | Only where the audit produces a deterministic, domain-approved mapping. Never select the first populated field. |
+| How should datasets be referenced internally? | By `dataset.dataset_id` foreign keys. Keep the formatted alias as a public/display identifier only, allocated by a database sequence and protected by a unique constraint. |
 
 ## Implementation Approach
 
@@ -105,8 +114,10 @@ purpose with valid modifiers.
 
 ## Jira-Ready Tickets
 
-There are three core tickets and one conditional ticket. The conditional ticket should be created
-only when the audit shows that migration or persisted-match reprocessing is necessary.
+There are three core tickets, one conditional ticket, and one required architecture follow-up. The
+conditional ticket should be created only when the audit shows that Data Use normalization or
+persisted-match reprocessing is necessary. Ticket 5 addresses alias scalability independently and
+must not be folded into the matcher behavior change.
 
 ### Ticket 1: Audit persisted dataset primary Data Use shapes
 
@@ -149,9 +160,13 @@ dar_usage AS (
   GROUP BY dataset_id
 ),
 match_usage AS (
-  SELECT consent AS dataset_identifier, COUNT(*) AS match_count
-  FROM match_entity
-  GROUP BY consent
+  -- Transitional reconciliation of the current text reference. Do not copy this
+  -- alias-derived join into application code; Ticket 5 replaces it with dataset_id.
+  SELECT d.dataset_id, COUNT(*) AS match_count
+  FROM match_entity m
+  JOIN dataset d
+    ON m.consent = 'DUOS-' || LPAD(d.alias::text, 6, '0')
+  GROUP BY d.dataset_id
 )
 SELECT
   d.dataset_id,
@@ -163,8 +178,7 @@ SELECT
 FROM dataset d
 LEFT JOIN access_management am ON am.dataset_id = d.dataset_id
 LEFT JOIN dar_usage du ON du.dataset_id = d.dataset_id
-LEFT JOIN match_usage mu
-  ON mu.dataset_identifier = 'DUOS-' || LPAD(d.alias::text, 6, '0')
+LEFT JOIN match_usage mu ON mu.dataset_id = d.dataset_id
 ORDER BY d.dataset_id;
 ```
 
@@ -178,9 +192,11 @@ failure. The audit utility must not log the raw JSON. Classification rules:
 - one category → `SINGLE(category)`
 - more than one → `MULTIPLE(sorted categories)`
 
-The match join mirrors `Dataset.parseAliasToIdentifier`, which formats the alias as `DUOS-######`.
-Verify that stored `match_entity.consent` values use that format in the target environment before
-relying on the reported match counts.
+The `match_usage` CTE deliberately isolates the legacy alias-derived join needed to reconcile the
+current schema. It is not the target design. Before relying on match counts, separately report null,
+noncanonical, duplicate-mapping, and unmatched `match_entity.consent` values; do not silently omit
+them. Ticket 5 backfills and validates a real `dataset_id` relationship before application reads or
+writes stop using the legacy text column.
 
 **Acceptance criteria**
 
@@ -189,6 +205,8 @@ relying on the reported match counts.
 - The audit records how “active dataset” was defined; if all persisted datasets are used, that is
   stated explicitly.
 - Redacted counts identify how many noncanonical datasets have DAR or persisted-match references.
+- A reconciliation count identifies match rows whose current `consent` text maps to zero or more
+  than one dataset; mapped plus unresolved rows equals the total persisted-match count.
 - A domain owner classifies sampled historical `other` values as primary, secondary, mixed, or
   indeterminate.
 - Every observed noncanonical shape receives one proposed disposition: explicit compatibility,
@@ -379,6 +397,70 @@ Normalize approved legacy Data Use records and recompute affected persisted matc
 
 No active record needs normalization and no persisted match needs reprocessing.
 
+---
+
+### Ticket 5: Replace alias-derived internal dataset references
+
+**Issue type:** Technical Story
+
+**Suggested size:** 8 points
+
+**Dependencies:** Ticket 1 supplies reconciliation evidence; implementation may otherwise proceed
+independently of Tickets 2–4
+
+**Summary**
+
+Reference datasets by foreign key in persisted matches and make public alias allocation
+concurrency-safe.
+
+**Description**
+
+Stop using the formatted dataset alias as the internal identity of a dataset. Add
+`match_entity.dataset_id` referencing `dataset.dataset_id`, use that key for match persistence and
+joins, and derive `DUOS-######` only when producing API or user-facing output.
+
+Preserve aliases as public identifiers, but allocate them with a database sequence/identity rather
+than `MAX(alias) + 1` and enforce uniqueness in the database. This ticket does not replace aliases
+in external contracts and does not make the internal numeric `dataset_id` public.
+
+**Implementation notes**
+
+- Audit null, duplicate, noncanonical, and conflicting aliases before adding constraints.
+- Add a nullable `match_entity.dataset_id`, its foreign key, and an index first.
+- Backfill only exact, unambiguous legacy mappings. Quarantine or explicitly resolve unmatched and
+  ambiguous `match_entity.consent` values; never guess from numeric parsing alone.
+- Change match creation to pass the selected dataset's `dataset_id`. Join to `dataset` when the
+  public identifier is needed in a response.
+- During rollout, use an explicitly bounded compatibility phase (for example, dual-write plus
+  comparison metrics), then make `dataset_id` non-null and replace the current
+  `(purpose, consent)` uniqueness rule with `(purpose, dataset_id)`.
+- Rename or remove `match_entity.consent` after all consumers are migrated; do not leave two
+  authoritative dataset identities indefinitely.
+- Initialize the alias sequence above the audited maximum, add a unique constraint, and replace the
+  DAO's `MAX(alias) + 1` allocation. Treat sequence gaps as valid.
+- Inventory other alias-based internal lookups separately. Migrate relational ownership and joins
+  to `dataset_id`; keep lookup by public alias only at API/integration boundaries.
+
+**Acceptance criteria**
+
+- Every active match row has exactly one valid `dataset_id` foreign key, or an approved exception is
+  documented and isolated before the non-null constraint is applied.
+- Match inserts and internal joins do not format, parse, or compare `DUOS-` strings.
+- Existing APIs continue returning the same canonical public dataset identifiers.
+- Concurrent dataset creation cannot allocate duplicate aliases, and the database enforces alias
+  uniqueness.
+- Match uniqueness is enforced by `(purpose, dataset_id)`.
+- Backfill totals reconcile: migrated plus explicitly unresolved rows equals the pre-migration row
+  count.
+- Rollout and rollback tests cover legacy reads, dual-write comparison (if used), constraint
+  validation, and public identifier compatibility.
+
+**Out of scope**
+
+- Replacing the `DUOS-######` public identifier contract.
+- Reusing deleted aliases or requiring gapless alias numbering.
+- Changing Data Use classification or matcher decisions.
+
 ## Test Matrix
 
 At minimum, cover:
@@ -412,4 +494,6 @@ regression source of truth.
 - Valid single-primary matching behavior remains unchanged.
 - Legacy data has an approved compatibility, manual-review, or normalization disposition.
 - Conditional migration/reprocessing is completed or explicitly unnecessary.
+- Matches reference datasets through an enforced `dataset_id` foreign key, and aliases are uniquely,
+  concurrency-safely allocated for presentation use.
 - Relevant tests pass and API documentation is updated where behavior changes.
