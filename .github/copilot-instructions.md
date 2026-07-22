@@ -7,7 +7,7 @@ These instructions apply to code suggestions and PR review in this repository.
 - Keep the existing Dropwizard + Guice + JDBI architecture.
 - Preserve `Resource -> Service -> DAO` separation.
 - Prefer incremental changes to broad rewrites.
-- Reuse existing auth and error handling patterns (`@RolesAllowed`, `ErrorResource` usage patterns).
+- Reuse existing auth and error handling patterns (`@RolesAllowed`, `Resource.createExceptionResponse`, `org.broadinstitute.consent.http.mappers` `ExceptionMapper`s).
 
 ## API and Auth Rules
 

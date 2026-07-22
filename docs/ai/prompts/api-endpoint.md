@@ -14,7 +14,7 @@ Use this when adding or modifying HTTP endpoints.
 
 - Route auth boundary: paths under `/api` are authenticated by the proxy and decorated with OAUTH context; non-`/api` paths are unauthenticated.
 - Preserve Resource -> Service -> DAO separation.
-- Reuse existing auth/error handling patterns (`@RolesAllowed`, `ErrorResource` patterns).
+- Reuse existing auth/error handling patterns (`@RolesAllowed`, `Resource.createExceptionResponse`, `org.broadinstitute.consent.http.mappers` `ExceptionMapper`s).
 - For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work.
 - Update OpenAPI docs and tests for contract changes.
 - Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant.
