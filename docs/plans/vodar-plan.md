@@ -21,8 +21,8 @@ auth-list push) rather than extensions of existing behavior.
 ## Background and Scope
 
 A VODAR is not a new entity. It is a `DataAccessRequest` whose data-use payload declares view-only
-intent and whose approval is automated. The work therefore extends the three existing surfaces the
-research below documents, rather than introducing a parallel request type.
+intent and whose approval is automated. The work therefore extends the three existing surfaces this
+plan documents, rather than introducing a parallel request type.
 
 ### Terminology
 
