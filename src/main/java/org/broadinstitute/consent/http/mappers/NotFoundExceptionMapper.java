@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.mappers;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -32,6 +33,9 @@ public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundExceptio
       message = "Unable to find requested path: " + uriInfo.getRequestUri().getPath();
     }
     Error error = new Error(message, Response.Status.NOT_FOUND.getStatusCode());
-    return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+    return Response.status(Response.Status.NOT_FOUND)
+        .type(MediaType.APPLICATION_JSON)
+        .entity(error)
+        .build();
   }
 }

@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Request;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,17 @@ class JsonErrorHandlerTest {
 
     assertEquals(500, json.get("code").getAsInt());
     assertEquals("Internal Server Error", json.get("message").getAsString());
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {" "})
+  void testWriteErrorJson_500WithoutMeaningfulMessage_fallsBackToReasonPhrase(String message) {
+    JsonErrorHandler handler = new JsonErrorHandler();
+    JsonObject json = invokeWriteErrorJson(handler, 500, message);
+
+    assertEquals(500, json.get("code").getAsInt());
+    assertEquals(HttpStatus.getMessage(500), json.get("message").getAsString());
   }
 
   @Test

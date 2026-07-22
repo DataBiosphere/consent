@@ -47,10 +47,15 @@ public class JsonErrorHandler extends ErrorHandler {
   @Override
   protected void writeErrorJson(
       Request request, PrintWriter writer, int code, String message, Throwable cause) {
-    String finalMessage = message;
-    if (code == 404
-        && (message == null || message.isBlank() || message.equals(HttpStatus.getMessage(code)))) {
+    boolean isGenericMessage =
+        message == null || message.isBlank() || message.equals(HttpStatus.getMessage(code));
+    String finalMessage;
+    if (code == 404 && isGenericMessage) {
       finalMessage = "Unable to find requested path: " + request.getHttpURI().getPath();
+    } else if (isGenericMessage) {
+      finalMessage = HttpStatus.getMessage(code);
+    } else {
+      finalMessage = message;
     }
     writer.write(GsonUtil.getInstance().toJson(new Error(finalMessage, code)));
   }

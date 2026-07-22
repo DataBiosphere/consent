@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -72,6 +73,18 @@ class NotFoundExceptionMapperTest {
     try (Response response = mapper.toResponse(new NotFoundException("Dataset not found"))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
       assertTrue(response.getEntity().toString().contains("Dataset not found"));
+    }
+  }
+
+  // Without an explicit type, content negotiation for a client Accept header incompatible with
+  // JSON (e.g. text/xml) has no resource-method @Produces to fall back on here, since this
+  // response never went through a matched resource - it can degrade to a 500 instead of the
+  // intended 404 JSON body.
+  @Test
+  void testResponseMediaTypeIsExplicitlyJson() {
+    NotFoundExceptionMapper mapper = new NotFoundExceptionMapper();
+    try (Response response = mapper.toResponse(new NotFoundException("nope"))) {
+      assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
     }
   }
 }

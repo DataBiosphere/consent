@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mappers;
 
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import org.broadinstitute.consent.http.models.Error;
@@ -28,6 +29,9 @@ public class ForbiddenExceptionMapper implements ExceptionMapper<ForbiddenExcept
       message = Response.Status.FORBIDDEN.getReasonPhrase();
     }
     Error error = new Error(message, Response.Status.FORBIDDEN.getStatusCode());
-    return Response.status(Response.Status.FORBIDDEN).entity(error).build();
+    return Response.status(Response.Status.FORBIDDEN)
+        .type(MediaType.APPLICATION_JSON)
+        .entity(error)
+        .build();
   }
 }
