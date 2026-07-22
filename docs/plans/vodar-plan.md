@@ -9,9 +9,10 @@ Proposed.
 Add a "View Only Data Access Request" (VODAR) path across `duos-ui` and `consent` so a researcher can
 request access to *view* a dataset — to decide whether to later request full analysis access — without
 committing to analyze or publish. A VODAR is a constrained DAR: the applicant selects one primary
-"view only" data-use option, attests a fixed Research Use Statement (RUS), answers the ethical
-questions, and — when the dataset's DAC has opted in — is auto-approved by a RADAR rule with no manual
-DAC vote.
+"view only" data-use option, attests a fixed Research Use Statement (RUS), and answers the ethical
+questions. When the dataset's DAC has opted in via a RADAR rule, the VODAR is auto-approved with no
+manual DAC vote; otherwise it proceeds through the normal DAC review flow like any other DAR. The VODAR
+rule is an auto-approval accelerator, not a precondition for submitting a VODAR.
 
 This plan covers the minimum viable feature. Several product requirements are explicitly deferred to a
 Future Directions section because they require net-new infrastructure (timed access revocation, active
@@ -113,8 +114,7 @@ There is no mechanism that revokes an approval or flips vote/election state on a
 
 | Requirement | Where it lands |
 | --- | --- |
-| VODAR is the first/primary data-use option: "requesting access for viewing only, will not analyze nor publish". | New `vodar` boolean, rendered first in the Step 2 data-use series — but only when the selected datasets are VODAR-eligible (see below). |
-| Do not enable the VODAR option unless the DAC has enabled the VODAR rule for the selected datasets. | UI gates the option on a per-dataset eligibility lookup; the option is hidden when the current selection is not fully eligible. |
+| VODAR is the first/primary data-use option: "requesting access for viewing only, will not analyze nor publish". | New `vodar` boolean, rendered first in the Step 2 data-use series. The option is always available, for any dataset selection. |
 | If VODAR = Yes, disable other data-use radios (do not display, do not require); same validation in backend. | UI hides/skips the Step 2 primary-purpose cascade; server rejects a VODAR that carries any primary-purpose selection. Section 3 is not disabled — it stays as the approval gate. |
 | When checked, input standard text into the RUS field. | UI writes the VODAR boilerplate into `rus`. |
 | Disable editing of the text. | RUS textarea becomes read-only while VODAR = Yes. |
@@ -123,9 +123,8 @@ There is no mechanism that revokes an approval or flips vote/election state on a
 | Do not allow submission of a VODAR if any ethical (Step 3) question is Yes. | Client validation blocks submit; server `validateDar` rejects. "Ethical questions" = all of Section 3. |
 
 Future Directions from the requirements (deferred — see final section): disable lab staff/collaborators,
-active auth-list push, auto-expire after 12 hours, suppress progress reports, never manually voted by a
-DAC, DAC must have the rule on, discrete application to a subset of datasets, and truly election-less
-approvals.
+active auth-list push, auto-expire after 12 hours, suppress progress reports, discrete application to a
+subset of datasets, and truly election-less approvals.
 
 ## Recommended Decisions
 
@@ -136,17 +135,16 @@ approvals.
 | Exactly which fields count as "ethical (Step 3) questions"? | *All* Section 3 (`ResearchPurposeStatement.tsx`) questions — the study-characteristic radios (`aiLlmUse`, `controls`, `population`, `forProfit`, `oneGender`+`gender`, `pediatric`, `vulnerablePopulation`) and the ethics-concern radios (`illegalBehavior`, `sexualDiseases`, `psychiatricTraits`, `notHealth`, `stigmatizedDiseases`). If any is Yes, the request cannot be submitted or auto-approved as a VODAR. Also include the two model-only concern booleans (`addiction`, `populationMigration`) in the backend guard for defense in depth, even though they are not currently rendered in the UI. |
 | Under VODAR, are the Section 3 questions hidden or auto-defaulted? | No. They remain visible and required, so the applicant must explicitly answer each. Any Yes blocks submission (client and server) and prevents auto-approval. This keeps VODAR a genuine "I am only viewing, none of these apply" attestation rather than a silent default. |
 | Does the dataset's own Data Use restrict VODAR approval? | No. View-only access is granted per-dataset by the DAC enabling the VODAR rule; the dataset's `DataUse` modifiers do not block it. This differs from GRU/HMB rules, which gate on dataset Data Use. The existing banned-country gate still applies. |
-| When is the VODAR option available in the form? | Only when every dataset currently selected on the DAR is VODAR-eligible — i.e. its DAC has activated `VODAR_V1`. Eligibility is resolved by a per-dataset backend lookup; a dataset with no DAC or an unactivated rule is ineligible. |
-| How is a DAR with both VODAR-eligible and ineligible datasets handled? | Narrow to the eligible subset. Because VODAR is a DAR-level shape (one boilerplate RUS, no research purpose), it cannot be partially applied. If the user selects VODAR while ineligible datasets are present, the form prompts to drop the ineligible datasets (naming them) and continue the VODAR with only the eligible subset. The user may instead cancel and file a standard DAR. Dropping is explicit and confirmed, never silent. Per-dataset view-only within one request is a Future Direction (discrete subset application). |
+| When is the VODAR option available in the form? | Always. Any researcher can select VODAR for any dataset selection. Whether it is then auto-approved depends on the DAC having activated `VODAR_V1`; if not, the VODAR is submitted as a normal pending DAR for manual DAC review. The option is not gated on eligibility. |
 | Is the RUS boilerplate a single source of truth? | Yes. Define it once, version it, and have the UI populate it and the backend validate `rus` equals it exactly (after trim/normalization). Drift between the two constants is a defect. |
-| How is a VODAR approved for MVP? | Reuse the existing RADAR path: one OPEN election + one `RADAR_APPROVE` vote. Truly election-less approval is a Future Direction, not MVP. |
+| How is a VODAR approved for MVP? | When the DAC has activated `VODAR_V1`, reuse the existing RADAR path: one OPEN election + one `RADAR_APPROVE` vote. When it has not, the VODAR proceeds through the normal DAC election/vote like any other DAR. Truly election-less approval is a Future Direction, not MVP. |
 | Does a VODAR flow through Signing-Official approval? | Yes, same as any DAR for MVP: RADAR only runs when `!requiresSOApproval`. Disabling lab staff/collaborators (which drives SO need) is deferred. |
 | Do VODAR approvals reach auth lists? | Yes, automatically, via the existing pull-based `approvedUsers` query (the `RADAR_APPROVE` vote is honored today). No push integration is added in MVP. |
 | How is `vodar` represented durably? | As a first-class, indexable column on the DAR (populated from the payload at write time by a single writer), not only a field inside the `data` JSON. Almost every future goal — 12h expiry sweeps, view-only scope, metrics, DAC oversight, election-less approval — must *query* for VODARs; a JSON-only flag forces a later schema migration and JSON backfill. Add the column in Ticket 1. Keep one writer so the column and payload cannot drift. |
 | What identifies a request as a VODAR? | The `vodar` flag/column (the checkbox), not the boilerplate text. Boilerplate equality is a submission-time integrity check only. All downstream identification (expiry, metrics, scope) keys off the flag, so the boilerplate can be versioned without stranding historical approvals. |
-| Can a submitted VODAR ever be left for manual DAC voting? | No. A VODAR must reach a non-manual terminal state. The server rejects a VODAR that is not auto-approvable at submit — any selected dataset whose DAC has not activated `VODAR_V1`, or a banned country — rather than letting it become a pending DAR a DAC could open for a vote. The same re-check runs on the SO-approval path. This makes "never manually voted by a DAC" a server guarantee, not just a UI gate. |
+| Can a submitted VODAR ever be left for manual DAC voting? | Yes. Auto-approval requires the DAC to have activated `VODAR_V1`; when it has not, the VODAR is submitted as a normal pending DAR and the DAC votes on it manually, exactly like any other DAR. The server does not reject a well-formed VODAR for being non-auto-approvable. The banned-country gate still blocks auto-approval as it does today. |
 | When does a VODAR's approval clock start, and how does 12h expiry work? | Anchor expiry to the approval time (for auto-approval, ≈ submission date). The recommended mechanism is a scope-aware query-time filter (mirroring the existing 1-year filter in `findApprovedDARsByDatasetId`, gated on the `vodar` marker) rather than a state-mutating timer, so no new revocation state is needed for pull consumers. Implementation is deferred, but the anchor and mechanism are decided now so MVP does not foreclose them; the queryable marker is the prerequisite. |
-| What happens to a VODAR that requires Signing-Official approval? | It is pending in the SO queue (never the DAC queue) until the SO acts; RADAR then runs at SO approval. This is acceptable for MVP and consistent with "never manually voted by a DAC." The future "disable lab staff/collaborators" work is what reduces how often a VODAR needs SO approval. The auto-approvability re-check (above) must also run at SO-approval time. |
+| What happens to a VODAR that requires Signing-Official approval? | Same as any DAR: it waits in the SO queue until the SO acts, after which RADAR runs (auto-approving if the DAC has `VODAR_V1` on) or the VODAR proceeds to normal DAC review. No special re-check is needed, because a non-auto-approvable VODAR is allowed to fall through to manual review. The future "disable lab staff/collaborators" work is what reduces how often a VODAR needs SO approval. |
 | How do DACs see VODAR auto-approvals? | Auto-approvals are recorded durably (leveraging the queryable `vodar` marker) so a DAC has oversight of what was approved under its rule, alongside the existing rule-toggle audit (`dac_rule_audit`) and the compliance log. |
 
 ## Implementation Approach
@@ -158,19 +156,17 @@ approvals.
    later migration. A request's VODAR identity is the flag, not the boilerplate text.
 2. **UI enforces the constrained shape; backend independently enforces the same shape.** The UI hides
    the other data-use inputs, auto-fills and locks `rus`, and blocks submit on any ethical Yes. The
-   backend does not trust the client: `validateDar` re-checks the invariant and rejects violations with
-   400 before persistence, translation, or matching. It also guarantees a VODAR is auto-approved or
-   rejected and never left pending for a manual DAC vote: a VODAR whose datasets are not all
-   `VODAR_V1`-eligible, or that hits the banned-country gate, is rejected at submit and re-checked on the
-   SO-approval path.
+   backend does not trust the client: `validateDar` re-checks the VODAR shape (flag + boilerplate + no
+   Step 2 primary purpose + no Section 3 Yes) and rejects violations with 400 before persistence,
+   translation, or matching. A well-formed VODAR is always accepted; whether it is then auto-approved or
+   sent to normal DAC review depends only on the RADAR rule.
 3. **RADAR rule keys off the DAR, not the dataset Data Use.** A new `VODAR_V1` rule implementation
    approves when the DAR is a valid VODAR (flag + boilerplate) and carries no ethical Yes, independent
    of the dataset's `DataUse`. It composes with the existing banned-country gate and per-DAC activation.
-4. **Eligibility is per-dataset and gates the option.** A new backend lookup maps the DAR's selected
-   `datasetIds` → each dataset's DAC → whether `VODAR_V1` is activated, returning the eligible subset.
-   The form offers VODAR only when the whole current selection is eligible; a mixed selection triggers
-   the explicit narrow-to-eligible prompt. VODAR is DAR-level and cannot be partially applied within one
-   request.
+4. **The VODAR option is always available; auto-approval is opt-in.** The form offers VODAR for any
+   dataset selection. When a selected dataset's DAC has activated `VODAR_V1`, the RADAR rule
+   auto-approves; otherwise the VODAR is submitted as a normal pending DAR for the DAC to vote on. No
+   eligibility gate, and no narrow-to-eligible prompt, is needed.
 5. **Reuse the existing approval, auth-list, and notification plumbing.** No new approval state, no new
    auth-list push, and no timed revocation in MVP. Those are isolated Future Directions. Auto-approvals
    are recorded durably via the `vodar` marker so DACs retain oversight and the expiry clock has a query
@@ -178,7 +174,7 @@ approvals.
 
 ## Refactoring and Risk
 
-Three small refactors should be done as part of this work; a fourth is a larger strategic change to be
+Two small refactors should be done as part of this work; a third is a larger strategic change to be
 aware of but not to attempt now. The through-line risk is touching shared code paths
 (`RuleImplementationInterface`, the approval-derivation query, the DAR form), so two mitigations apply
 across the board.
@@ -189,16 +185,12 @@ across the board.
    RADAR `compare`). *Benefit:* the VODAR invariant gates data access, so a single definition keeps the
    three enforcement points from drifting and tests target one surface. *Risk:* low — new code, no change
    to existing behavior.
-2. **Extract one "is `VODAR_V1` active for this dataset's DAC" activation helper (do this).** Shared by
-   the eligibility lookup (Ticket 4), the submit guarantee (Ticket 2), and rule application (Ticket 3).
-   *Benefit:* the UI gate, the server guarantee, and the approval decision provably agree, which is what
-   closes the eligibility race. *Risk:* low — wraps the existing `dac_rule_settings` join.
-3. **Clarify `RuleImplementationInterface.secondaryConditionChecks` (do this, carefully).** Extract a
+2. **Clarify `RuleImplementationInterface.secondaryConditionChecks` (do this, carefully).** Extract a
    named `hasNoResearchPurposeConcerns(...)` shared by the matcher, the existing GRU/HMB rules, and
    VODAR, rather than reusing a method that bundles several concerns. *Benefit:* removes ambiguity about
    which fields gate VODAR and gives one place to maintain. *Risk:* medium — this touches code the
    existing RADAR rules depend on; guard it with the characterization tests below before refactoring.
-4. **Strategic, not now: replace derive-approval-from-votes with an explicit approval projection.** The
+3. **Strategic, not now: replace derive-approval-from-votes with an explicit approval projection.** The
    reason several future goals are hard — election-less approval, 12h expiry, downstream scope, metrics —
    is that "approved" is recomputed from the vote/election join in `findApprovedDARsByDatasetId` on every
    read. An explicit approval record (`dar + dataset + scope + approvedAt + source`) would make all four
@@ -215,9 +207,9 @@ across the board.
   query with characterization tests before extracting any shared helper, so an unintended behavior change
   is caught rather than shipped.
 
-The net effect of refactors 1–3 is that the plan's own correctness claims — the client and server VODAR
-definitions agree, and the UI gate agrees with the approval decision — become structural rather than
-maintained by hand, which is the right posture for an invariant that gates data access.
+The net effect of refactors 1–2 is that the plan's own correctness claim — the client and server VODAR
+definitions agree — becomes structural rather than maintained by hand, which is the right posture for an
+invariant that gates data access.
 
 ## Communication and Notification Touchpoints
 
@@ -242,11 +234,12 @@ Touchpoints, by audience:
   lifetime once auto-expiry lands, and how to escalate to a full analysis DAR. The researcher's DAR
   console status and the voting-history view must render the automated approval clearly and labeled
   view-only, not as an empty/confusing election.
-- **DAC (chair + members).** Exclude VODARs from the manual voting queue (a stated requirement) — the
-  server guarantee in Ticket 2 ensures a VODAR never reaches that queue in the first place — but provide
-  oversight visibility that auto-approvals occurred under the rule the DAC enabled, via a durable record
-  keyed off the `vodar` marker (alongside the `dac_rule_audit` trail). Auto-approvals should not be
-  invisible to the DAC.
+- **DAC (chair + members).** A VODAR whose DAC has activated `VODAR_V1` is auto-approved and needs no
+  manual vote; a VODAR whose DAC has not is a normal pending DAR the DAC votes on like any other. Where a
+  VODAR reaches the manual queue, present it clearly as a view-only request (derived from the `vodar`
+  marker) so voters understand the reduced scope. For auto-approvals, provide oversight visibility that
+  they occurred under the rule the DAC enabled, via a durable record keyed off the `vodar` marker
+  (alongside the `dac_rule_audit` trail). Auto-approvals should not be invisible to the DAC.
 - **Signing Official / institution.** SO approval already gates whether RADAR runs; consider whether the
   institution needs a distinct post-approval record for view-only access.
 - **Compliance and metrics.** `ComplianceLogger.logRadarApproval` already fires on the RADAR path;
@@ -268,12 +261,11 @@ classification, and any change to the downstream consumer APIs are fast-follow /
 
 ## Jira-Ready Tickets
 
-Seven core tickets: four in `consent`, two in `duos-ui`, and one cross-repo verification ticket. Ticket
-1 is foundational and unblocks the rest. Tickets 2, 3, and 4 (backend validation, RADAR rule, and the
-eligibility lookup) can proceed largely in parallel after Ticket 1, but share two seams that should be
-built once and reused: the "clean VODAR" predicate and the "is `VODAR_V1` active for this dataset's DAC"
-activation check. Ticket 5 (UI form) depends on Ticket 1 for the field/boilerplate contract and Ticket 4
-for eligibility gating. Ticket 6 (UI rule toggle) depends on Ticket 3. Ticket 7 closes the loop.
+Six core tickets: three in `consent`, two in `duos-ui`, and one cross-repo verification ticket. Ticket
+1 is foundational and unblocks the rest. Tickets 2 and 3 (backend validation and the RADAR rule) can
+proceed in parallel after Ticket 1 and share one seam that should be built once and reused: the "clean
+VODAR" predicate. Ticket 4 (UI form) depends on Ticket 1 for the field/boilerplate contract. Ticket 5
+(UI rule toggle) depends on Ticket 3. Ticket 6 closes the loop.
 
 ### Ticket 1: Add the VODAR data-use flag and canonical boilerplate to the DAR model
 
@@ -335,32 +327,29 @@ RADAR rule arrive in later tickets.
 
 **Suggested size:** 5 points
 
-**Dependencies:** Ticket 1 (shares the `VODAR_V1` activation check with Ticket 4)
+**Dependencies:** Ticket 1
 
 **Summary**
 
 Validate the VODAR shape in `DataAccessRequestService.validateDar` so the backend rejects malformed
-VODARs regardless of client behavior, and guarantee a VODAR is auto-approved or rejected — never left
-pending for a manual DAC vote.
+VODARs regardless of client behavior. A well-formed VODAR is always accepted; whether it auto-approves or
+goes to normal DAC review is left to the RADAR rule.
 
 **Description**
 
 When `data.vodar == true`, enforce: (a) `rus` equals the canonical boilerplate; (b) no other data-use
 input is selected — the Step 2 primary-purpose fields (`diseases`, `hmb`, `poa`, `methods`, `other`,
-`otherText`, `ontologies`) are all empty/false; (c) no Section 3 question is Yes — the full Section 3
+`otherText`, `ontologies`) are all empty/false; and (c) no Section 3 question is Yes — the full Section 3
 set (`aiLlmUse`, `controls`, `population`, `forProfit`, `oneGender`/`gender`, `pediatric`,
 `vulnerablePopulation`, `illegalBehavior`, `sexualDiseases`, `psychiatricTraits`, `notHealth`,
-`stigmatizedDiseases`, plus the model-only `addiction`, `populationMigration`) is empty/false; and
-(d) the VODAR is auto-approvable — every selected dataset's DAC has `VODAR_V1` activated and the request
-does not hit the banned-country gate. Reject violations with 400 before persistence, audit, translation,
-Elasticsearch sync, and match/rule processing.
+`stigmatizedDiseases`, plus the model-only `addiction`, `populationMigration`) is empty/false. Reject
+violations with 400 before persistence, audit, translation, Elasticsearch sync, and match/rule
+processing.
 
-Requirement (d) closes the gap where a submitted VODAR that cannot auto-approve (rule disabled between
-the form's eligibility check and submission, or a banned country) would otherwise land as a pending DAR
-that a DAC could open for a vote — which the "never manually voted by a DAC" requirement forbids.
-Because VODAR hides the research-purpose inputs, there is no coherent standard-DAR to fall back to, so
-rejection (with a message telling the user to adjust datasets or file a standard DAR) is the correct
-outcome.
+This validates only the *shape* of a VODAR, not whether it can auto-approve. A well-formed VODAR whose
+dataset's DAC has not activated `VODAR_V1` is accepted and proceeds through the normal DAC review flow
+like any other pending DAR — DACs may vote on VODARs manually. The RADAR rule (Ticket 3), not this
+validator, decides auto-approval.
 
 **Implementation notes**
 
@@ -373,13 +362,6 @@ outcome.
   draft save (drafts may be incomplete).
 - Prefer normalizing the "no other data-use selected" check into one reusable predicate so Ticket 3's
   rule and this validator share the definition of "clean VODAR."
-- Share the "is `VODAR_V1` active for this dataset's DAC" predicate with Ticket 4's eligibility lookup
-  and Ticket 3's rule application, so the UI gate, the submit guarantee, and the approval decision cannot
-  diverge. Reuse `CountryValidator.containsBannedCountry` for the banned-country check rather than
-  duplicating it.
-- Apply the same auto-approvability re-check on the SO-approval entry point
-  (`approveDataAccessRequestBySigningOfficial`): an SO-approved VODAR that is no longer eligible must be
-  handled explicitly (rejected/flagged), not dropped into the DAC queue.
 
 **Acceptance criteria**
 
@@ -387,10 +369,8 @@ outcome.
 - A VODAR with a mismatched/edited `rus` is rejected.
 - A VODAR carrying any Step 2 primary-purpose selection is rejected.
 - A VODAR with any Section 3 question Yes is rejected (each field, including the model-only ones).
-- A VODAR with any selected dataset whose DAC has not activated `VODAR_V1` is rejected at submit.
-- A banned-country VODAR is rejected at submit (not left pending).
-- No submitted VODAR can enter the manual DAC voting queue: an accepted VODAR is one that will
-  auto-approve (or proceed to SO approval), never one that lands as a pending DAR for DAC voting.
+- A well-formed VODAR whose dataset's DAC has not activated `VODAR_V1` is accepted and proceeds as a
+  normal pending DAR for manual DAC review — it is not rejected for being non-auto-approvable.
 - Non-VODAR submissions are unaffected.
 - Rejected submissions cause no database, audit, translation, Elasticsearch, match, election, or vote
   changes.
@@ -401,8 +381,8 @@ outcome.
 
 - Parameterized validator tests over the boilerplate match, each disabled Step 2 primary-purpose field,
   and each Section 3 field.
-- Auto-approvability tests: VODAR with an ineligible dataset rejected; banned-country VODAR rejected;
-  assert no election/pending state remains that a DAC could vote on.
+- A test that a well-formed VODAR whose DAC has not enabled `VODAR_V1` is accepted and left as a normal
+  pending DAR (not rejected).
 - Resource/service tests for create-from-draft and direct submit.
 - Regression that draft save does not trigger the VODAR invariant.
 - Contract test for the newline-joined error format consumed by duos-ui.
@@ -410,7 +390,7 @@ outcome.
 **Out of scope**
 
 - Auto-approval (Ticket 3).
-- UI behavior (Ticket 5).
+- UI behavior (Ticket 4).
 
 ---
 
@@ -492,84 +472,25 @@ vote plumbing so a VODAR is approved the same way other RADAR rules approve, wit
 
 ---
 
-### Ticket 4: Add a per-dataset VODAR eligibility lookup
+### Ticket 4: Add the VODAR data-use option and RUS lock in the DAR form
 
 **Issue type:** Story
 
 **Suggested size:** 3 points
 
-**Dependencies:** Ticket 3 (needs `VODAR_V1` seeded) — the shape can be built in parallel with a stubbed
-rule type
+**Dependencies:** Ticket 1
 
 **Summary**
 
-Expose an endpoint that, given a set of dataset ids, returns which are VODAR-eligible (their DAC has
-activated `VODAR_V1`), so the form can gate the VODAR option and drive the narrow-to-eligible prompt.
+Render VODAR as the first data-use option in Step 2; when selected, hide/skip the Step 2 primary-purpose
+cascade, auto-fill and lock the RUS, keep all Section 3 questions visible and required, and block
+submission when any Section 3 question is Yes.
 
 **Description**
 
-Add a read endpoint (e.g. `POST api/dar/vodar-eligibility` taking `datasetIds`, returning the eligible
-subset — or a boolean per id). For each dataset, resolve its `dacId` and check whether `VODAR_V1` is
-active for that DAC. A dataset with no DAC, or a DAC without `VODAR_V1` activated, is ineligible. This
-is the same activation state `DACAutomationRuleService.triggerDACRuleSettings` uses at approval time
-(`enabledByUserId != null`), so the UI gate and the eventual auto-approval decision stay consistent.
-
-**Implementation notes**
-
-- Reuse `DACAutomationRuleDAO.findAllDACAutomationRulesByDACId` / the `dac_rule_settings` join rather
-  than re-deriving activation; prefer a single batched query over N per-dataset lookups.
-- Resolve dataset → DAC through the existing dataset/DAC relationship used elsewhere in matching.
-- Keep this a pure read with appropriate authorization (any authenticated researcher building a DAR).
-- The endpoint is advisory for UX only; Tickets 2 and 3 remain the authoritative server-side guards.
-- Update OpenAPI for the new endpoint.
-
-**Acceptance criteria**
-
-- Given a set of dataset ids, the endpoint returns exactly the ids whose DAC has `VODAR_V1` activated.
-- Datasets with no DAC or an unactivated rule are reported ineligible.
-- Activation state matches what the RADAR path would use at approval time.
-- The endpoint performs a bounded number of queries regardless of dataset count.
-
-**Tests**
-
-- Service/DAO tests: all eligible, none eligible, mixed, no-DAC dataset, rule present but not activated.
-- Resource test for request/response shape and authorization.
-
-**Out of scope**
-
-- Any write or approval behavior; per-dataset partial VODAR.
-
----
-
-### Ticket 5: Add the VODAR data-use option and RUS lock in the DAR form
-
-**Issue type:** Story
-
-**Suggested size:** 5 points
-
-**Dependencies:** Tickets 1 and 4
-
-**Summary**
-
-Render VODAR as the first data-use option in Step 2 — gated on dataset eligibility; when selected,
-hide/skip the Step 2 primary-purpose cascade, auto-fill and lock the RUS, keep all Section 3 questions
-visible and required, and block submission when any Section 3 question is Yes.
-
-**Description**
-
-Gate the option on eligibility. Using Ticket 4's lookup, resolve whether the currently selected datasets
-are VODAR-eligible. Show the VODAR option only when every selected dataset is eligible; otherwise hide
-it. Re-run the check whenever the dataset selection changes.
-
-Handle mixed selections by narrowing. If the user selects VODAR while ineligible datasets are present
-(e.g. eligibility changed, or a shared control flips), present an explicit prompt that names the
-ineligible datasets and offers to drop them and continue the VODAR with only the eligible subset, or to
-cancel (and file a standard DAR). Dropping updates `datasetIds`/`formData` only on confirmation — never
-silently.
-
-In `DataAccessRequest.tsx`, add a VODAR yes/no as the first item in the data-use series with the exact
-label: "I am requesting access to the data for viewing only, I will not analyze nor publish results on
-the data." When Yes:
+In `DataAccessRequest.tsx`, add a VODAR yes/no as the first item in the data-use series — always
+available, for any dataset selection — with the exact label: "I am requesting access to the data for
+viewing only, I will not analyze nor publish results on the data." When Yes:
 
 - hide and do not require the Step 2 primary-purpose cascade (`diseases` → `hmb` → `poa` → `methods` →
   `otherText`/`other` and `ontologies`), and clear any previously selected values via
@@ -595,9 +516,8 @@ question is answered Yes.
 - The Section 3 "any Yes" block is a validation gate, not a silent disable; surface a specific message
   and route to the Section 3 tab via the existing `getErrorTabId` mechanism.
 - Persisting a VODAR draft must round-trip the `vodar` flag and boilerplate via the draft endpoints.
-- Debounce/coalesce the eligibility lookup on dataset-selection changes; handle the lookup failing by
-  hiding the VODAR option (fail closed) rather than offering an option that cannot be honored.
-- The narrow-to-eligible prompt must clearly name the datasets being removed and require confirmation.
+- Optionally inform the user that a VODAR whose DAC has not enabled auto-approval will go to normal DAC
+  review; this is advisory copy only and must not block submission.
 - Reflect the view-only scope in the researcher-facing status and the read-only voting-history view
   (`VotingHistoryOverview`) so an auto-approved VODAR reads as "view-only, auto-approved" rather than an
   empty election. Confirm the exact status/collection-summary components before finalizing copy; this is
@@ -605,12 +525,8 @@ question is answered Yes.
 
 **Acceptance criteria**
 
-- The VODAR option is shown only when every selected dataset is VODAR-eligible, and is re-evaluated when
-  the selection changes.
-- Selecting VODAR with ineligible datasets present prompts to drop them (named) and continue with the
-  eligible subset, or to cancel; datasets are removed only on confirmation.
-- If the eligibility lookup fails, the VODAR option is not offered.
-- VODAR appears first in the data-use series with the exact required label.
+- The VODAR option is always available in the data-use series, regardless of the selected datasets'
+  DACs, and appears first with the exact required label.
 - Selecting VODAR hides and clears the Step 2 primary-purpose inputs and they are not required.
 - Selecting VODAR fills `rus` with the boilerplate and makes it read-only.
 - All Section 3 questions remain visible and required under VODAR.
@@ -627,17 +543,15 @@ question is answered Yes.
 - Validation tests in `darFormUtils` for the VODAR branch, including the Section 3 "any Yes" block and
   the relaxed Step 2 primary-purpose requirements.
 - A submit test asserting the payload shape sent to `DAR.postDar`.
-- Eligibility-gating tests: option hidden for an ineligible/mixed selection; shown for a fully eligible
-  selection; the narrow-to-eligible prompt drops only on confirmation; lookup failure hides the option.
 
 **Out of scope**
 
-- The DAC rule-management UI (Ticket 6).
+- The DAC rule-management UI (Ticket 5).
 - Per-dataset partial VODAR within one request (Future Direction).
 
 ---
 
-### Ticket 6: Expose the VODAR RADAR rule in the DAC rule-management UI
+### Ticket 5: Expose the VODAR RADAR rule in the DAC rule-management UI
 
 **Issue type:** Story
 
@@ -675,13 +589,13 @@ description explaining that enabling it auto-approves view-only requests for tha
 
 ---
 
-### Ticket 7: Cross-repo VODAR verification and end-to-end test
+### Ticket 6: Cross-repo VODAR verification and end-to-end test
 
 **Issue type:** Story
 
 **Suggested size:** 3 points
 
-**Dependencies:** Tickets 2, 3, 4, 5, 6
+**Dependencies:** Tickets 2, 3, 4, 5
 
 **Summary**
 
@@ -693,21 +607,16 @@ dataset and is auto-approved with no manual vote and appears in the approved-use
 Add an end-to-end test (Cypress/Playwright per duos-ui conventions) plus a backend integration test
 covering: VODAR selection auto-fills and locks the RUS; the Step 2 primary-purpose inputs are hidden;
 any Section 3 question Yes blocks submission on both client and server; a clean VODAR is auto-approved
-via RADAR when the DAC has
-the rule enabled; and the approved user surfaces through `approvedUsers`. Cover eligibility gating (the
-VODAR option is absent when a selected dataset's DAC has not enabled the rule) and the mixed-selection
-narrow-to-eligible flow. Include the negative case where the DAC has not enabled the rule (no
-auto-approval).
+via RADAR when the DAC has the rule enabled; and the approved user surfaces through `approvedUsers`.
+Include the case where the DAC has not enabled the rule: the VODAR is still submitted and lands as a
+normal pending DAR for manual DAC review (no auto-approval, not rejected).
 
 **Acceptance criteria**
 
 - E2E happy path passes: submit → RADAR approve → appears in approved users.
-- E2E eligibility: option hidden for an ineligible/mixed selection; narrow-to-eligible prompt drops the
-  ineligible datasets on confirmation and the VODAR proceeds with the eligible subset.
-- E2E negative paths pass: Section 3 Yes blocked; rule-disabled DAC not auto-approved; edited RUS
-  rejected.
-- E2E never-pending guarantee: a VODAR whose dataset's DAC disabled the rule after the form loaded is
-  rejected at submit and never appears in the manual DAC voting queue.
+- E2E rule-disabled path: a VODAR whose dataset's DAC has not enabled `VODAR_V1` is submitted, is not
+  auto-approved, and lands as a normal pending DAR available for manual DAC voting.
+- E2E negative paths pass: Section 3 Yes blocked on client and server; edited RUS rejected.
 - The boilerplate contract test (Ticket 1) is part of CI in both repos.
 
 **Out of scope**
@@ -735,13 +644,14 @@ intentionally out of the MVP scope above. Each should become its own ticket once
   exist and would be net-new; only needed if a consumer cannot pull.
 - **Disable lab staff and collaborators for VODAR.** Removes/greys the personnel sections for VODARs;
   interacts with the SO-approval gate (`requiresSOApproval`) that determines whether RADAR runs.
-- **Never manually voted by a DAC.** MVP already avoids a manual vote via RADAR, but VODARs should be
-  affirmatively excluded from any manual DAC voting queue/UI.
+- **Pre-submission auto-approval hint.** An optional per-dataset lookup (does the DAC have `VODAR_V1`
+  active?) could tell the researcher, before submitting, whether their VODAR will auto-approve or go to
+  DAC review. Purely a UX affordance — not required, since a VODAR is valid either way.
 - **Discrete application of VODAR to a subset of datasets.** Two related capabilities: per-dataset rule
   activation finer than the current per-DAC `dac_rule_settings` model, and true per-dataset view-only
-  within a single request. The latter would let a mixed DAR be view-only for the eligible datasets and
-  analysis for the rest in one request — removing the need for the MVP narrow-to-eligible prompt — but
-  it requires dataset-level (not DAR-level) data use, which the current model does not support.
+  within a single request. The latter would let a mixed DAR be view-only for some datasets and analysis
+  for the rest in one request, but it requires dataset-level (not DAR-level) data use, which the current
+  model does not support.
 - **Election-less approvals.** MVP reuses the one-vote election; a truly election-less approval is an
   architectural change to how approval state is represented and derived.
 - **Progress reports not possible/necessary for VODARs.** Suppress the progress-report path for VODARs.
@@ -759,23 +669,21 @@ intentionally out of the MVP scope above. Each should become its own ticket once
   contract test.
 - `vodar` is a queryable, indexed column populated by a single writer (not only a JSON field), and a
   request's VODAR identity keys off the flag, not the boilerplate text.
-- The server guarantees a submitted VODAR is auto-approved or rejected and never enters the manual DAC
-  voting queue, enforced at both the submit and SO-approval paths.
+- A well-formed VODAR is always accepted; when its dataset's DAC has not enabled `VODAR_V1` it proceeds
+  to normal DAC review (DACs may vote on VODARs manually), and when the DAC has, it is auto-approved.
 - The 12h-expiry anchor (approval time) and mechanism (scope-aware query-time filter on the `vodar`
   marker) are recorded so the deferred implementation is unblocked.
-- The DAR form renders VODAR as the first data-use option only when every selected dataset is
-  VODAR-eligible, hides/clears the Step 2 primary-purpose inputs when selected, auto-fills and locks the
-  RUS, keeps all Section 3 questions required, and blocks submission on any Section 3 Yes.
-- A per-dataset eligibility lookup backs the gating, and a mixed selection is handled by the explicit
-  narrow-to-eligible prompt.
-- The backend independently enforces the same VODAR invariant on submit and rejects violations with 400
-  and no side effects.
+- The DAR form renders VODAR as the first data-use option (always available), hides/clears the Step 2
+  primary-purpose inputs when selected, auto-fills and locks the RUS, keeps all Section 3 questions
+  required, and blocks submission on any Section 3 Yes.
+- The backend independently enforces the same VODAR shape invariant on submit and rejects malformed
+  VODARs with 400 and no side effects.
 - A `VODAR_V1` RADAR rule auto-approves valid VODARs for DACs that enable it, independent of dataset
   Data Use, gated by the banned-country check, with no manual DAC vote.
 - DAC chairs can enable/disable VODAR_V1 from duos-ui with audit.
 - VODAR approvals surface through the existing pull-based approved-users query.
-- End-to-end and unit/integration tests cover the happy path and the ethical-Yes, edited-RUS, and
-  rule-disabled negative paths, and pass in CI.
+- End-to-end and unit/integration tests cover the happy path, the ethical-Yes and edited-RUS negative
+  paths, and the rule-disabled fall-through to manual DAC review, and pass in CI.
 - Deferred requirements are captured as Future Directions tickets.
 
 ## Appendix: SWOT Analysis
@@ -788,12 +696,12 @@ intentionally out of the MVP scope above. Each should become its own ticket once
   the server does not trust the client — the right posture for something that gates data access.
 - **Code-grounded and actionable.** Tickets reference real classes, fields, files, and endpoints, so
   implementation discovery risk is low and sizing is mostly credible.
-- **Disciplined MVP/Future boundary.** Deferred items each carry a rationale; the "never manually voted"
-  server guarantee and eligibility gating close real gaps rather than papering over them.
-- **Cheap forward-compatibility.** The queryable `vodar` column, decided expiry anchor/mechanism,
-  per-dataset eligibility response shape, and shared predicates de-risk future goals without premature
-  build.
-- **Correctness made structural.** Refactors 1–3 turn "client and server agree" from a hand-maintained
+- **Disciplined MVP/Future boundary.** Deferred items each carry a rationale; letting non-auto-approvable
+  VODARs fall through to normal DAC review keeps the MVP simple rather than building eligibility gating
+  that isn't required.
+- **Cheap forward-compatibility.** The queryable `vodar` column, decided expiry anchor/mechanism, and
+  shared predicates de-risk future goals without premature build.
+- **Correctness made structural.** Refactors 1–2 turn "client and server agree" from a hand-maintained
   hope into a single shared definition.
 
 ### Weaknesses (internal, negative)
@@ -804,7 +712,7 @@ intentionally out of the MVP scope above. Each should become its own ticket once
   where the data actually lives.
 - **Strict "all of Section 3 = No"** may push legitimate view-only requesters (e.g. population studies)
   off the fast path; this product rule has not been validated against real requester patterns.
-- **Unverified UI surfaces.** Tickets 5/6 rest on assumptions (the DAC rule-management UI exists; the
+- **Unverified UI surfaces.** Tickets 4/5 rest on assumptions (the DAC rule-management UI exists; the
   status/voting-history components) that were not traced — soft sizing there.
 - **Two-repo boilerplate coupling.** A contract test mitigates drift, but two source-of-truth constants
   still exist.
