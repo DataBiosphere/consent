@@ -46,6 +46,19 @@ class JsonErrorHandlerTest {
   }
 
   @Test
+  void testWriteErrorJson_404WithEncodedPath_usesDecodedPath() {
+    // getPath() returns the raw path; NotFoundExceptionMapper builds its message from
+    // UriInfo.getRequestUri().getPath(), which is always decoded, so this must match.
+    when(request.getHttpURI()).thenReturn(HttpURI.from("http://localhost/api/data%20sets/123"));
+
+    JsonErrorHandler handler = new JsonErrorHandler();
+    JsonObject json = invokeWriteErrorJson(handler, 404, null);
+
+    assertEquals(
+        "Unable to find requested path: /api/data sets/123", json.get("message").getAsString());
+  }
+
+  @Test
   void testWriteErrorJson_404WithCustomMessage_preservesMessage() {
     JsonErrorHandler handler = new JsonErrorHandler();
     JsonObject json = invokeWriteErrorJson(handler, 404, "Dataset not found");

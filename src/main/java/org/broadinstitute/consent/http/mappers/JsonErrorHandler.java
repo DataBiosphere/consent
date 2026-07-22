@@ -51,7 +51,9 @@ public class JsonErrorHandler extends ErrorHandler {
         message == null || message.isBlank() || message.equals(HttpStatus.getMessage(code));
     String finalMessage;
     if (code == 404 && isGenericMessage) {
-      finalMessage = "Unable to find requested path: " + request.getHttpURI().getPath();
+      // getPath() returns the raw, undecoded path; decode it so this matches the message
+      // NotFoundExceptionMapper builds from UriInfo.getRequestUri().getPath(), which is decoded.
+      finalMessage = "Unable to find requested path: " + request.getHttpURI().getDecodedPath();
     } else if (isGenericMessage) {
       finalMessage = HttpStatus.getMessage(code);
     } else {
