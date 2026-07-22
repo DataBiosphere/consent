@@ -3,7 +3,7 @@ properties:
   auditRecords:
       type: array
       items:
-        $ref: '../schemas/DACAutomationAudit.yaml'
+        $ref: './DACAutomationAudit.yaml'
   totalRecords:
     type: integer
     description: "The total number of audit entries for this DAC"

@@ -48,6 +48,9 @@ import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
+import org.broadinstitute.consent.http.mappers.ForbiddenExceptionMapper;
+import org.broadinstitute.consent.http.mappers.JsonErrorHandler;
+import org.broadinstitute.consent.http.mappers.NotFoundExceptionMapper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
@@ -59,7 +62,6 @@ import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.DocumentResource;
 import org.broadinstitute.consent.http.resources.DraftResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
-import org.broadinstitute.consent.http.resources.ErrorResource;
 import org.broadinstitute.consent.http.resources.FeatureFlagResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
@@ -83,7 +85,6 @@ import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
-import org.eclipse.jetty.ee10.servlet.ErrorPageErrorHandler;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
@@ -151,12 +152,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.healthChecks().register(SAM_CHECK, injector.getInstance(SamHealthCheck.class));
     env.healthChecks().register(SG_CHECK, injector.getInstance(SendGridHealthCheck.class));
 
-    // Custom Error handling. Expand to include other codes when necessary
-    final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
-    errorHandler.addErrorPage(404, "/error/404");
-    env.getApplicationContext().setErrorHandler(errorHandler);
+    // Custom error handling for exceptions that would otherwise reach Jetty with an empty
+    // response body. Expand to include other codes when necessary.
+    env.jersey().register(NotFoundExceptionMapper.class);
+    env.jersey().register(ForbiddenExceptionMapper.class);
+    // Last-resort net for requests that never reach Jersey's dispatch at all (e.g. a path that
+    // matches no @Path template), which the ExceptionMappers above cannot intercept.
+    env.getApplicationContext().setErrorHandler(new JsonErrorHandler());
     env.jersey().register(ResponseServerFilter.class);
-    env.jersey().register(ErrorResource.class);
 
     // Register standard application resources.
     env.jersey().register(injector.getInstance(DaaResource.class));

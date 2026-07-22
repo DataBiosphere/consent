@@ -42,7 +42,7 @@ Representative classes:
 ## Error and Security Model
 
 - Security is expressed at endpoint level (`@RolesAllowed`, `@PermitAll`).
-- Errors are normalized through existing exception/error response patterns (`ErrorResource` and related models).
+- Errors are normalized through existing exception/error response patterns (`Resource.createExceptionResponse`, JAX-RS `ExceptionMapper`s in `org.broadinstitute.consent.http.mappers`, and related models).
 
 ## Architectural Guardrails
 
