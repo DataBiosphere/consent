@@ -568,11 +568,15 @@ public class DatasetService implements ConsentLogger {
     if (dataset == null || dataset.getProperties() == null) {
       return null;
     }
-    return dataset.getProperties().stream()
-        .filter(
-            property ->
-                accessManagement.equalsIgnoreCase(property.getSchemaProperty())
-                    || LEGACY_ACCESS_MANAGEMENT.equalsIgnoreCase(property.getSchemaProperty()))
+    return findAccessManagement(dataset.getProperties(), accessManagement)
+        .or(() -> findAccessManagement(dataset.getProperties(), LEGACY_ACCESS_MANAGEMENT))
+        .orElse(null);
+  }
+
+  private Optional<AccessManagement> findAccessManagement(
+      Set<DatasetProperty> properties, String schemaProperty) {
+    return properties.stream()
+        .filter(property -> schemaProperty.equalsIgnoreCase(property.getSchemaProperty()))
         .map(DatasetProperty::getPropertyValue)
         .filter(Objects::nonNull)
         .map(Object::toString)
@@ -587,8 +591,7 @@ public class DatasetService implements ConsentLogger {
               }
             })
         .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+        .findFirst();
   }
 
   public Study updateStudyCustodians(User user, Integer studyId, String custodians) {

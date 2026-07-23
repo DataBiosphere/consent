@@ -417,6 +417,23 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateDatasetDataUsePrefersCanonicalAccessManagement() {
+    Dataset dataset = new Dataset();
+    dataset.setProperties(
+        Set.of(
+            accessManagementProperty("accessManagement", AccessManagement.OPEN),
+            accessManagementProperty(
+                "consentGroup.accessManagement", AccessManagement.CONTROLLED)));
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+    DataUse dataUse = new DataUseBuilder().setMethodsResearch(true).build();
+
+    assertDoesNotThrow(() -> datasetService.updateDatasetDataUse(admin, 1, dataUse));
+
+    verify(datasetServiceDAO).updateDatasetDataUse(eq(admin), eq(dataset), eq(dataUse), any());
+  }
+
+  @Test
   void testUpdateDatasetDataUseNonAdmin() {
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     User u = new User();
@@ -1726,11 +1743,15 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   private void setAccessManagement(Dataset dataset, AccessManagement value, String schemaProperty) {
+    dataset.setProperties(Set.of(accessManagementProperty(schemaProperty, value)));
+  }
+
+  private DatasetProperty accessManagementProperty(String schemaProperty, AccessManagement value) {
     DatasetProperty property = new DatasetProperty();
     property.setSchemaProperty(schemaProperty);
     property.setPropertyType(PropertyType.String);
     property.setPropertyValue(value.value());
-    dataset.setProperties(Set.of(property));
+    return property;
   }
 
   /* Helper functions */
