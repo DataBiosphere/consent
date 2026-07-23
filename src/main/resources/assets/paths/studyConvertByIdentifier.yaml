@@ -1,7 +1,12 @@
 put:
   summary: Convert Dataset to Study
   operationId: apiDatasetStudyConvertDatasetIdentifierPut
-  description: Converts a Dataset into a Study and updates modifiable fields
+  description: |
+    Converts a Dataset into a Study and updates modifiable fields.
+    When Data Use is supplied, it must be consistent with the dataset's access
+    management: open datasets have no controlled primary category, while
+    controlled, external, and datasets with missing access management have
+    exactly one primary category.
   tags:
     - Admin
   parameters:
@@ -26,7 +31,7 @@ put:
           schema:
             $ref: '../schemas/Study.yaml'
     400:
-      description: Bad Request
+      description: Bad Request (invalid JSON, JSON null, or inconsistent primary Data Use)
     404:
       description: Not Found
     429:

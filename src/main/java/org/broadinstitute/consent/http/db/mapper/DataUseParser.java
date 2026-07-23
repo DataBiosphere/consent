@@ -21,8 +21,8 @@ public class DataUseParser implements ConsentLogger {
         s -> {
           try {
             return gson.fromJson(dataUseString, DataUse.class);
-          } catch (Exception e) {
-            logWarn(String.format("Unable to parse data use string: '%s'", dataUseString));
+          } catch (Exception _) {
+            logWarn("Unable to parse data use string");
           }
           return null;
         });

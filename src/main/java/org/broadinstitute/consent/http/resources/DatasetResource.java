@@ -481,6 +481,9 @@ public class DatasetResource extends Resource {
       // investigation
       Gson gson = new Gson();
       DataUse dataUse = gson.fromJson(dataUseJson, DataUse.class);
+      if (dataUse == null) {
+        throw new BadRequestException("Data Use JSON must be an object");
+      }
       Dataset originalDataset = datasetService.findDatasetById(user, id);
       if (Objects.isNull(originalDataset)) {
         throw new NotFoundException("Dataset not found: " + id);
@@ -491,8 +494,7 @@ public class DatasetResource extends Resource {
       Dataset dataset = datasetService.updateDatasetDataUse(user, id, dataUse);
       return Response.ok().entity(dataset).build();
     } catch (JsonSyntaxException _) {
-      return createExceptionResponse(
-          new BadRequestException("Invalid JSON Syntax: " + dataUseJson));
+      return createExceptionResponse(new BadRequestException("Invalid Data Use JSON"));
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

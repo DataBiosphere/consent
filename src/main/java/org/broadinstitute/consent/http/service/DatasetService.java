@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.accessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -48,6 +50,8 @@ import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -294,6 +298,7 @@ public class DatasetService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new IllegalArgumentException("Admin use only");
     }
+    DataUsePrimaryValidator.validate(dataUse, findAccessManagement(d));
     String translation = ontologyService.translateDataUse(dataUse, DataUseTranslationType.DATASET);
     datasetServiceDAO.updateDatasetDataUse(user, d, dataUse, translation);
     elasticSearchService.synchronizeDatasetInESIndex(d, false);
@@ -471,6 +476,12 @@ public class DatasetService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new NotAuthorizedException("Admin use only");
     }
+    if (studyConversion == null) {
+      throw new BadRequestException("Study conversion is required");
+    }
+    if (studyConversion.getDataUse() != null) {
+      DataUsePrimaryValidator.validate(studyConversion.getDataUse(), findAccessManagement(dataset));
+    }
     // Study updates:
     Integer studyId = updateStudyFromConversion(user, dataset, studyConversion);
 
@@ -549,6 +560,30 @@ public class DatasetService implements ConsentLogger {
     }
 
     return studyDAO.findStudyById(studyId);
+  }
+
+  private AccessManagement findAccessManagement(Dataset dataset) {
+    if (dataset == null || dataset.getProperties() == null) {
+      return null;
+    }
+    return dataset.getProperties().stream()
+        .filter(property -> accessManagement.equals(property.getSchemaProperty()))
+        .map(DatasetProperty::getPropertyValue)
+        .filter(Objects::nonNull)
+        .map(Object::toString)
+        .map(String::trim)
+        .map(value -> value.toLowerCase(Locale.ROOT))
+        .map(
+            value -> {
+              try {
+                return AccessManagement.fromValue(value);
+              } catch (IllegalArgumentException _) {
+                return null;
+              }
+            })
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   public Study updateStudyCustodians(User user, Integer studyId, String custodians) {
