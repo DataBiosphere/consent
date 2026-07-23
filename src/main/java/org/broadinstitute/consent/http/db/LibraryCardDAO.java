@@ -193,7 +193,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       SELECT :daaId, :lcId, :lcUserId, :userId, 'ADD', NOW()
       WHERE EXISTS (SELECT 1 FROM lc_daa_insert)
       """)
-  void createLibraryCardDaaRelation(
+  int createLibraryCardDaaRelation(
       @Bind("lcUserId") Integer lcUserId,
       @Bind("userId") Integer userId,
       @Bind("lcId") Integer lcId,
@@ -211,7 +211,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       SELECT :daaId, :lcId, :lcUserId, :userId, 'REMOVE', NOW()
       WHERE EXISTS (SELECT 1 FROM lc_daa_delete)
       """)
-  void deleteLibraryCardDaaRelation(
+  int deleteLibraryCardDaaRelation(
       @Bind("lcUserId") Integer lcUserId,
       @Bind("userId") Integer userId,
       @Bind("lcId") Integer lcId,

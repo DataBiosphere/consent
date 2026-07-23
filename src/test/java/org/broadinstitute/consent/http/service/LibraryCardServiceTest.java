@@ -11,8 +11,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -350,9 +350,9 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardById(card.getId())).thenReturn(card);
     when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
-    doNothing()
-        .when(libraryCardDAO)
-        .createLibraryCardDaaRelation(user.getUserId(), so.getUserId(), card.getId(), 1);
+    when(libraryCardDAO.createLibraryCardDaaRelation(
+            user.getUserId(), so.getUserId(), card.getId(), 1))
+        .thenReturn(1);
 
     assertDoesNotThrow(
         () -> service.addDaaToLibraryCard(user.getUserId(), so.getUserId(), card.getId(), 1));
@@ -365,9 +365,9 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard card = testLibraryCard(1);
     User so = new User();
     so.setUserId(2);
-    doNothing()
-        .when(libraryCardDAO)
-        .deleteLibraryCardDaaRelation(user.getUserId(), so.getUserId(), card.getId(), 1);
+    when(libraryCardDAO.deleteLibraryCardDaaRelation(
+            user.getUserId(), so.getUserId(), card.getId(), 1))
+        .thenReturn(1);
 
     assertDoesNotThrow(
         () -> service.removeDaaFromLibraryCard(user.getUserId(), so.getUserId(), card.getId(), 1));
@@ -391,7 +391,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(libraryCardDAO.findLibraryCardById(card.getId())).thenReturn(card);
     when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(card);
-    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any(), any(), any());
+    when(libraryCardDAO.createLibraryCardDaaRelation(any(), any(), any(), any())).thenReturn(1);
     LibraryCard foundCard = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
     assertNotNull(foundCard);
   }
@@ -507,7 +507,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
         .thenReturn(testLibraryCard(userId));
     User so = new User();
     so.setUserId(2);
-    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any(), any(), any());
+    when(libraryCardDAO.deleteLibraryCardDaaRelation(any(), any(), any(), any())).thenReturn(1);
     LibraryCard card = service.removeDaaFromUserLibraryCard(user, so, 1);
     // The above deletion only affects the lc-daa join table and does not remove library cards
     assertNotNull(card);
@@ -612,6 +612,84 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     libraryCard.setUserId(userId);
 
     return libraryCard;
+  }
+
+  @Test
+  void testValidateNewLibraryCardCreationPasses() {
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    User soUser =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(institution.getId());
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(null);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
+    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
+
+    assertDoesNotThrow(() -> service.validateNewLibraryCardCreation(user, soUser));
+    // Validation must never write anything — the bulk transaction owns the insert.
+    verify(libraryCardDAO, never())
+        .insertLibraryCard(anyInt(), any(), anyString(), anyInt(), any());
+  }
+
+  @Test
+  void testRequireSigningOfficialInstitutionThrowsWhenNull() {
+    User soUser =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(null);
+
+    assertThrows(
+        BadRequestException.class, () -> service.requireSigningOfficialInstitution(soUser));
+  }
+
+  @Test
+  void testRequireSigningOfficialInstitutionPassesWhenPresent() {
+    Institution institution = testInstitution();
+    User soUser =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(institution.getId());
+
+    assertDoesNotThrow(() -> service.requireSigningOfficialInstitution(soUser));
+  }
+
+  @Test
+  void testValidateNewLibraryCardCreationThrowsWhenCardAlreadyExists() {
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    User soUser =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(institution.getId());
+    LibraryCard existing = new LibraryCard();
+    existing.setUserId(user.getUserId());
+    existing.setUserEmail(user.getEmail());
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(existing);
+
+    assertThrows(
+        ConsentConflictException.class, () -> service.validateNewLibraryCardCreation(user, soUser));
+  }
+
+  @Test
+  void testValidateNewLibraryCardCreationThrowsWhenEmailInstitutionMismatch() {
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    User soUser =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(institution.getId());
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(null);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
+    // The user's email resolves to a different institution than their own.
+    Institution otherInstitution = new Institution();
+    otherInstitution.setId(institution.getId() + 1);
+    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(otherInstitution);
+
+    assertThrows(
+        BadRequestException.class, () -> service.validateNewLibraryCardCreation(user, soUser));
   }
 
   private Institution testInstitution() {

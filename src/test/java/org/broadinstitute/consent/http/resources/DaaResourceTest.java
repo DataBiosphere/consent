@@ -27,6 +27,7 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
+import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -620,13 +621,14 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(3, institutionId));
 
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
-    when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
+    when(daaService.bulkAddUsersToDaa(any(), any(), any()))
+        .thenReturn(DaaBulkRelationResult.allApplied(3));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}")) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(3, ((DaaBulkRelationResult) response.getEntity()).getApplied());
     }
   }
 
@@ -697,7 +699,7 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(3, institutionId));
 
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
-    when(daaService.findById(daaId)).thenThrow(new NotFoundException());
+    when(daaService.bulkAddUsersToDaa(any(), any(), any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -761,13 +763,14 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(3, institutionId));
 
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
-    when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any(), any())).thenReturn(null);
+    when(daaService.bulkRemoveUsersFromDaa(any(), any(), any()))
+        .thenReturn(DaaBulkRelationResult.allApplied(3));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}")) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(3, ((DaaBulkRelationResult) response.getEntity()).getApplied());
     }
   }
 
@@ -813,7 +816,7 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(3, institutionId));
 
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
-    when(daaService.findById(daaId)).thenThrow(new NotFoundException());
+    when(daaService.bulkRemoveUsersFromDaa(any(), any(), any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -843,12 +846,14 @@ class DaaResourceTest extends AbstractTestHelper {
 
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
+    when(daaService.bulkAddDaasToUser(any(), any(), any()))
+        .thenReturn(DaaBulkRelationResult.allApplied(3));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}")) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(3, ((DaaBulkRelationResult) response.getEntity()).getApplied());
     }
   }
 
@@ -906,13 +911,15 @@ class DaaResourceTest extends AbstractTestHelper {
 
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any(), any())).thenReturn(null);
+    when(daaService.bulkRemoveDaasFromUser(any(), any(), any()))
+        .thenReturn(DaaBulkRelationResult.allApplied(3));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response =
         resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}")) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(3, ((DaaBulkRelationResult) response.getEntity()).getApplied());
     }
   }
 

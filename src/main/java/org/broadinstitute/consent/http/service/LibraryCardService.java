@@ -120,15 +120,49 @@ public class LibraryCardService implements ConsentLogger {
   }
 
   public LibraryCard addDaaToUserLibraryCard(User user, User signingOfficial, Integer daaId) {
-    if (signingOfficial.getInstitutionId() == null) {
-      throw new BadRequestException("This signing official does not have an institution.");
-    }
+    requireSigningOfficialInstitution(signingOfficial);
     LibraryCard libraryCard = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
     if (libraryCard == null) {
       libraryCard = createLibraryCardForSigningOfficial(user, signingOfficial);
     }
     addDaaToLibraryCard(user.getUserId(), signingOfficial.getUserId(), libraryCard.getId(), daaId);
     return libraryCardDAO.findLibraryCardByUserId(user.getUserId());
+  }
+
+  /**
+   * The signing-official-level guard that {@link #addDaaToUserLibraryCard} applies to every
+   * pre-authorization regardless of whether a library card ends up being created. The atomic bulk
+   * pre-authorization add flows (see {@code DaaServiceDAO}) call this once, up front, so a bulk
+   * "Approve All" is rejected in the same case the single-link flow would be — even when every
+   * targeted user already has a card and no card creation is triggered.
+   */
+  public void requireSigningOfficialInstitution(User signingOfficial) {
+    if (signingOfficial.getInstitutionId() == null) {
+      throw new BadRequestException("This signing official does not have an institution.");
+    }
+  }
+
+  /**
+   * Runs — without inserting anything — exactly the validations that {@link #createLibraryCard}
+   * performs before persisting a new library card: no card may already exist for the user, the user
+   * must exist with a matching email, and the user's email must map to their institution.
+   *
+   * <p>The atomic bulk pre-authorization flows create library cards inside their own database
+   * transaction (see {@code DaaServiceDAO}) and therefore cannot route through {@link
+   * #createLibraryCard}; they call this for each user who would have a card auto-created so a bulk
+   * "Approve All" rejects that user in every case the per-researcher flow would. The
+   * signing-official guard is applied separately and unconditionally via {@link
+   * #requireSigningOfficialInstitution}.
+   */
+  public void validateNewLibraryCardCreation(User user, User signingOfficial) {
+    LibraryCard payload = new LibraryCard();
+    payload.setUserId(user.getUserId());
+    payload.setUserName(user.getDisplayName());
+    payload.setUserEmail(user.getEmail());
+    payload.setCreateUserId(signingOfficial.getUserId());
+    checkIfCardExists(payload);
+    processUserOnNewLC(payload);
+    checkForValidInstitution(user.getInstitutionId(), payload.getUserEmail());
   }
 
   public LibraryCard removeDaaFromUserLibraryCard(
