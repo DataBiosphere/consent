@@ -59,6 +59,8 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DatasetService implements ConsentLogger {
 
+  private static final String LEGACY_ACCESS_MANAGEMENT = "consentGroup." + accessManagement;
+
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final DatasetDAO datasetDAO;
   private final DaaDAO daaDAO;
@@ -567,7 +569,10 @@ public class DatasetService implements ConsentLogger {
       return null;
     }
     return dataset.getProperties().stream()
-        .filter(property -> accessManagement.equals(property.getSchemaProperty()))
+        .filter(
+            property ->
+                accessManagement.equalsIgnoreCase(property.getSchemaProperty())
+                    || LEGACY_ACCESS_MANAGEMENT.equalsIgnoreCase(property.getSchemaProperty()))
         .map(DatasetProperty::getPropertyValue)
         .filter(Objects::nonNull)
         .map(Object::toString)

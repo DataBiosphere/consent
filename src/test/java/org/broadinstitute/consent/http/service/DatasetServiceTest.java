@@ -359,10 +359,10 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setProperties(Collections.emptySet());
     when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
     User admin = getAdmin();
+    DataUse dataUse = new DataUse();
 
     assertThrows(
-        BadRequestException.class,
-        () -> datasetService.updateDatasetDataUse(admin, 1, new DataUse()));
+        BadRequestException.class, () -> datasetService.updateDatasetDataUse(admin, 1, dataUse));
 
     verifyNoInteractions(ontologyService, datasetServiceDAO, elasticSearchService);
   }
@@ -394,10 +394,17 @@ class DatasetServiceTest extends AbstractTestHelper {
     verifyNoInteractions(ontologyService, datasetServiceDAO, elasticSearchService);
   }
 
-  @Test
-  void testUpdateDatasetDataUseAcceptsOpenWithNoPrimary() {
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "accessManagement",
+        "ACCESSMANAGEMENT",
+        "consentGroup.accessManagement",
+        "CONSENTGROUP.ACCESSMANAGEMENT"
+      })
+  void testUpdateDatasetDataUseAcceptsOpenWithNoPrimary(String schemaProperty) {
     Dataset dataset = new Dataset();
-    setAccessManagement(dataset, AccessManagement.OPEN);
+    setAccessManagement(dataset, AccessManagement.OPEN, schemaProperty);
     when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
     User admin = getAdmin();
     DataUse dataUse = new DataUseBuilder().setMethodsResearch(true).build();
@@ -1715,8 +1722,12 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   private void setAccessManagement(Dataset dataset, AccessManagement value) {
+    setAccessManagement(dataset, value, DatasetRegistrationSchemaV1Builder.accessManagement);
+  }
+
+  private void setAccessManagement(Dataset dataset, AccessManagement value, String schemaProperty) {
     DatasetProperty property = new DatasetProperty();
-    property.setSchemaProperty(DatasetRegistrationSchemaV1Builder.accessManagement);
+    property.setSchemaProperty(schemaProperty);
     property.setPropertyType(PropertyType.String);
     property.setPropertyValue(value.value());
     dataset.setProperties(Set.of(property));
