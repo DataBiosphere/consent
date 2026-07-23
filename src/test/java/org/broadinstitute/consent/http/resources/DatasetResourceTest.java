@@ -707,8 +707,19 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDatasetDataUse_BadRequestJson() {
-    try (var response = resource.updateDatasetDataUse(duosUser, 1, "invalid json")) {
+    String submittedDataUse = "sensitive invalid json";
+    try (var response = resource.updateDatasetDataUse(duosUser, 1, submittedDataUse)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      assertFalse(((Error) response.getEntity()).message().contains(submittedDataUse));
+    }
+  }
+
+  @Test
+  void testUpdateDatasetDataUse_BadRequestJsonNull() {
+    try (var response = resource.updateDatasetDataUse(duosUser, 1, "null")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      verify(datasetService, never()).findDatasetById(any(), any());
+      verify(datasetService, never()).updateDatasetDataUse(any(), any(), any());
     }
   }
 
@@ -792,17 +803,21 @@ class DatasetResourceTest extends AbstractTestHelper {
       """;
     try (var response = resource.createDatasetRegistration(duosUser, null, invalidJson)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      String entity = response.getEntity().toString();
+      Error entity = (Error) response.getEntity();
 
       // Check for specific user-facing error messages, all reported together in one response
-      assertTrue(entity.contains("Please correct the following fields:"));
-      assertTrue(entity.contains("Study Name is required"));
-      assertTrue(entity.contains("Study Description is required"));
-      assertTrue(entity.contains("Data Types is required"));
-      assertTrue(entity.contains("At least one Dataset is required"));
-      assertTrue(entity.contains("NIH Anvil Use is required"));
-      assertTrue(entity.contains("Principal Investigator Name is required"));
-      assertTrue(entity.contains("Public Visibility is required"));
+      assertEquals(
+          """
+          Please correct the following fields:
+           - Study Name is required
+           - Study Description is required
+           - Data Types is required
+           - Public Visibility is required
+           - NIH Anvil Use is required
+           - Principal Investigator Name is required
+           - At least one Dataset is required
+          """,
+          entity.message());
     }
   }
 

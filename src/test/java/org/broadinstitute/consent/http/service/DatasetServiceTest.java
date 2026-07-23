@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
@@ -43,6 +44,7 @@ import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
@@ -63,6 +65,7 @@ import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -348,6 +351,62 @@ class DatasetServiceTest extends AbstractTestHelper {
     } catch (Exception e) {
       fail(e.getMessage());
     }
+  }
+
+  @Test
+  void testUpdateDatasetDataUseRejectsMissingPrimaryBeforeSideEffects() {
+    Dataset dataset = new Dataset();
+    dataset.setProperties(Collections.emptySet());
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetService.updateDatasetDataUse(admin, 1, new DataUse()));
+
+    verifyNoInteractions(ontologyService, datasetServiceDAO, elasticSearchService);
+  }
+
+  @Test
+  void testUpdateDatasetDataUseRejectsOpenWithPrimaryBeforeSideEffects() {
+    Dataset dataset = new Dataset();
+    setAccessManagement(dataset, AccessManagement.OPEN);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+
+    assertThrows(
+        BadRequestException.class, () -> datasetService.updateDatasetDataUse(admin, 1, dataUse));
+
+    verifyNoInteractions(ontologyService, datasetServiceDAO, elasticSearchService);
+  }
+
+  @Test
+  void testUpdateDatasetDataUseRejectsNullBeforeSideEffects() {
+    Dataset dataset = new Dataset();
+    setAccessManagement(dataset, AccessManagement.OPEN);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+
+    assertThrows(
+        BadRequestException.class, () -> datasetService.updateDatasetDataUse(admin, 1, null));
+
+    verifyNoInteractions(ontologyService, datasetServiceDAO, elasticSearchService);
+  }
+
+  @Test
+  void testUpdateDatasetDataUseAcceptsOpenWithNoPrimary() {
+    Dataset dataset = new Dataset();
+    setAccessManagement(dataset, AccessManagement.OPEN);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+    DataUse dataUse = new DataUseBuilder().setMethodsResearch(true).build();
+
+    assertDoesNotThrow(() -> datasetService.updateDatasetDataUse(admin, 1, dataUse));
+
+    verify(ontologyService).translateDataUse(dataUse, DataUseTranslationType.DATASET);
+    verify(datasetServiceDAO).updateDatasetDataUse(eq(admin), eq(dataset), eq(dataUse), any());
+    verify(elasticSearchService).synchronizeDatasetInESIndex(dataset, false);
   }
 
   @Test
@@ -1173,6 +1232,36 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testConvertDatasetToStudy_InvalidDataUseHasNoSideEffects() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDacId(99);
+    conversion.setDataUse(new DataUse());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetService.convertDatasetToStudy(admin, dataset, conversion));
+
+    verifyNoInteractions(
+        studyDAO, datasetDAO, datasetServiceDAO, ontologyService, elasticSearchService, userDAO);
+  }
+
+  @Test
+  void testConvertDatasetToStudy_NullConversionHasNoSideEffects() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetService.convertDatasetToStudy(admin, dataset, null));
+
+    verifyNoInteractions(
+        studyDAO, datasetDAO, datasetServiceDAO, ontologyService, elasticSearchService, userDAO);
+  }
+
+  @Test
   void testConvertDatasetToStudy_DatasetNameUpdated() {
     User admin = getAdmin();
     Dataset dataset = buildDataset(10, 5);
@@ -1623,6 +1712,14 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setCreateUserId(createUserId);
     dataset.setProperties(Collections.emptySet());
     return dataset;
+  }
+
+  private void setAccessManagement(Dataset dataset, AccessManagement value) {
+    DatasetProperty property = new DatasetProperty();
+    property.setSchemaProperty(DatasetRegistrationSchemaV1Builder.accessManagement);
+    property.setPropertyType(PropertyType.String);
+    property.setPropertyValue(value.value());
+    dataset.setProperties(Set.of(property));
   }
 
   /* Helper functions */
