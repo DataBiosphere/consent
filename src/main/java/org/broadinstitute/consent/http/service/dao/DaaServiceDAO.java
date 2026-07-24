@@ -216,9 +216,9 @@ public class DaaServiceDAO implements ConsentLogger {
    * statement runs {@code WHERE EXISTS}, so it returns 1 only on a real change), so re-adding an
    * existing relation or removing one that was never there is reported under {@code skipped} rather
    * than inflating {@code applied}. Because the batch is atomic, any true failure throws and rolls
-   * back rather than surfacing here, so {@code errors} is always empty.
+   * back rather than surfacing here.
    */
   private DaaBulkRelationResult summarize(int requested, int applied) {
-    return new DaaBulkRelationResult(requested, applied, requested - applied, List.of());
+    return new DaaBulkRelationResult(requested, applied, requested - applied);
   }
 }

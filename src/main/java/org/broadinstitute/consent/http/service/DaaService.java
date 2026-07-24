@@ -366,8 +366,11 @@ public class DaaService implements ConsentLogger {
   /** Atomically pre-authorize {@code user} for every DAA in {@code daaIds}. */
   public DaaBulkRelationResult bulkAddDaasToUser(
       User user, List<Integer> daaIds, User signingOfficial) {
-    // Reject before mutating anything, matching the single-link add flow: the signing official must
-    // have an institution regardless of whether a card is created.
+    // Reject before mutating anything, matching the single-link add flow. Each referenced DAA must
+    // exist: findById throws NotFoundException (404), preserving the single-link flow's friendly
+    // error rather than letting a bad id surface as a raw FK violation / generic 500 mid-batch.
+    daaIds.stream().distinct().forEach(this::findById);
+    // The signing official must have an institution regardless of whether a card is created.
     libraryCardService.requireSigningOfficialInstitution(signingOfficial);
     if (libraryCardService.findLibraryCardIdByUserId(user.getUserId()) == null) {
       // Match the single-link flow's card-creation guards for the user getting a new card.
