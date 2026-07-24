@@ -242,9 +242,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         createStudyProperty("externalIdentifier", PropertyType.String),
         createStudyProperty("externalIdentifierType", PropertyType.String));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    DatasetProperty accessManagement =
+        createDatasetProperty("accessManagement", PropertyType.String, "accessManagement");
+    accessManagement.setPropertyValue("open");
     dataset.setProperties(
         Set.of(
-            createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
+            accessManagement,
             createDatasetProperty("numberOfParticipants", PropertyType.Number, "# of participants"),
             createDatasetProperty("url", PropertyType.String, "url"),
             createDatasetProperty("dataLocation", PropertyType.String, "dataLocation")));
@@ -492,6 +495,21 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             .findFirst();
     assertTrue(dataProp.isPresent());
     assertEquals(refMap, term.getData());
+  }
+
+  @Test
+  void testToDatasetTermUsesLegacyAccessManagementProperty() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    DatasetProperty property = new DatasetProperty();
+    property.setSchemaProperty(Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
+    property.setPropertyName("Access Management");
+    property.setPropertyValue("open");
+    dataset.setProperties(Set.of(property));
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertEquals("open", term.getAccessManagement());
   }
 
   @Test

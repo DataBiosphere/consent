@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -44,10 +45,15 @@ class DataUseParserTest {
       assertNull(dataUse);
       List<ILoggingEvent> events = appender.getLoggedEvents();
       assertFalse(events.isEmpty());
-      assertFalse(
-          events.stream()
-              .map(ILoggingEvent::getFormattedMessage)
-              .anyMatch(message -> message.contains(submittedDataUse)));
+      List<String> messages = events.stream().map(ILoggingEvent::getFormattedMessage).toList();
+      assertFalse(messages.stream().anyMatch(message -> message.contains(submittedDataUse)));
+      assertTrue(
+          messages.stream()
+              .anyMatch(
+                  message ->
+                      message.matches(
+                          "Unable to parse data use string \\(length=26,"
+                              + " sha256Prefix=[0-9a-f]{12}\\)")));
     } finally {
       appender.stop();
       logger.detachAppender(appender);

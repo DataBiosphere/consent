@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,7 +25,10 @@ public class DataUseParser implements ConsentLogger {
           try {
             return gson.fromJson(dataUseString, DataUse.class);
           } catch (Exception _) {
-            logWarn("Unable to parse data use string");
+            String hashPrefix = Hashing.sha256().hashString(s, UTF_8).toString().substring(0, 12);
+            logWarn(
+                "Unable to parse data use string (length=%d, sha256Prefix=%s)"
+                    .formatted(s.length(), hashPrefix));
           }
           return null;
         });

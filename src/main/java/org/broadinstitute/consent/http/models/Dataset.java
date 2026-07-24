@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -16,6 +17,12 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class Dataset implements ConsentLogger {
+
+  public static final String ACCESS_MANAGEMENT_SCHEMA_PROPERTY =
+      DatasetRegistrationSchemaV1Builder.accessManagement;
+  // Older dataset-registration records persisted the consent-group path as the schema property.
+  public static final String LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY =
+      "consentGroup." + ACCESS_MANAGEMENT_SCHEMA_PROPERTY;
 
   private Integer datasetId;
 
@@ -188,6 +195,42 @@ public class Dataset implements ConsentLogger {
     this.properties.add(property);
   }
 
+  /**
+   * Returns the persisted access-management value, preferring the canonical schema property over
+   * the legacy consent-group-prefixed property.
+   */
+  public AccessManagement getAccessManagement() {
+    return parseAccessManagementProperty(ACCESS_MANAGEMENT_SCHEMA_PROPERTY)
+        .or(() -> parseAccessManagementProperty(LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY))
+        .orElse(null);
+  }
+
+  private Optional<AccessManagement> parseAccessManagementProperty(String schemaProperty) {
+    if (properties == null) {
+      return Optional.empty();
+    }
+    return properties.stream()
+        .filter(property -> schemaProperty.equalsIgnoreCase(property.getSchemaProperty()))
+        .map(DatasetProperty::getPropertyValue)
+        .filter(Objects::nonNull)
+        .map(Object::toString)
+        .map(String::trim)
+        .map(this::parseAccessManagementValue)
+        .filter(Objects::nonNull)
+        .findFirst();
+  }
+
+  private AccessManagement parseAccessManagementValue(String value) {
+    try {
+      return AccessManagement.fromValue(value.toLowerCase(Locale.ROOT));
+    } catch (IllegalArgumentException _) {
+      logWarn(
+          "Unable to parse access management value '%s' for dataset id: %s"
+              .formatted(value, datasetId));
+      return null;
+    }
+  }
+
   public Boolean getDacApproval() {
     return dacApproval;
   }
@@ -288,19 +331,12 @@ public class Dataset implements ConsentLogger {
     matchTerms.add(this.getDatasetIdentifier());
 
     if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
-      Optional<DatasetProperty> accessManagementProp =
-          getProperties().stream()
-              .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
-              .filter((dp) -> Objects.equals(dp.getPropertyName(), "Access Management"))
-              .findFirst();
-
-      if (accessManagementProp.isEmpty()) {
+      AccessManagement datasetAccessManagement = getAccessManagement();
+      if (datasetAccessManagement == null) {
         if (accessManagement.equals(AccessManagement.OPEN)) {
           return false;
         }
-      } else if (!accessManagement
-          .toString()
-          .equals(accessManagementProp.get().getPropertyValueAsString())) {
+      } else if (!accessManagement.equals(datasetAccessManagement)) {
         return false;
       }
 

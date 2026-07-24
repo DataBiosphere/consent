@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.requestLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -13,6 +14,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.junit.jupiter.api.Test;
 
 class ConsentGroupFromDatasetTest extends AbstractTestHelper {
@@ -29,6 +31,23 @@ class ConsentGroupFromDatasetTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     ConsentGroup result = builder.build(dataset);
     assertNotNull(result);
+  }
+
+  @Test
+  void testBuildUsesLegacyAccessManagementProperty() {
+    ConsentGroupFromDataset builder = new ConsentGroupFromDataset();
+    Dataset dataset = createMockDataset();
+    dataset.addProperty(
+        createDatasetProperty(
+            dataset,
+            Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
+            PropertyType.String,
+            "OPEN"));
+
+    ConsentGroup result = builder.build(dataset);
+
+    assertNotNull(result);
+    assertEquals(AccessManagement.OPEN, result.getAccessManagement());
   }
 
   @Test

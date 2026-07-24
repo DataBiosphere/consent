@@ -426,6 +426,16 @@ class StudyDAOTest extends DAOTestHelper {
               insertAccessManagementDatasetProperty(dataset.getDatasetId(), "open");
             });
 
+    Dataset legacyOpenDataset = insertDatasetForStudy(study2.getStudyId());
+    insertAccessManagementDatasetProperty(
+        legacyOpenDataset.getDatasetId(), "consentGroup.accessManagement", "open");
+
+    Dataset conflictingDataset = insertDatasetForStudy(study2.getStudyId());
+    insertAccessManagementDatasetProperty(
+        conflictingDataset.getDatasetId(), "consentGroup.accessManagement", "open");
+    insertAccessManagementDatasetProperty(
+        conflictingDataset.getDatasetId(), "ACCESSMANAGEMENT", "controlled");
+
     List<StudyDatasetCountRecord> records =
         studyDAO.findStudyDatasetCounts(Set.of(study1.getStudyId()));
 
@@ -440,8 +450,8 @@ class StudyDAOTest extends DAOTestHelper {
     assertEquals(1, records.size());
     assertEquals(study2.getStudyId(), records.getFirst().id());
     assertEquals(study2.getName(), records.getFirst().name());
-    assertEquals("open", records.getFirst().accessTypes());
-    assertEquals(5, records.getFirst().datasetCount());
+    assertEquals("controlled,open", records.getFirst().accessTypes());
+    assertEquals(7, records.getFirst().datasetCount());
 
     records = studyDAO.findStudyDatasetCounts(Set.of(study1.getStudyId(), study2.getStudyId()));
 
@@ -457,10 +467,11 @@ class StudyDAOTest extends DAOTestHelper {
     assertEquals(
         "controlled,external,open", recordsByStudyId.get(study1.getStudyId()).accessTypes());
 
-    // study2 has exactly 5 open datasets created in the second loop.
+    // study2 has 5 canonical open datasets, 1 legacy open dataset, and 1 dataset where the
+    // canonical controlled value takes precedence over a conflicting legacy open value.
     // The initial 3 datasets created for study1 are not included here.
-    assertEquals(5, recordsByStudyId.get(study2.getStudyId()).datasetCount());
-    assertEquals("open", recordsByStudyId.get(study2.getStudyId()).accessTypes());
+    assertEquals(7, recordsByStudyId.get(study2.getStudyId()).datasetCount());
+    assertEquals("controlled,open", recordsByStudyId.get(study2.getStudyId()).accessTypes());
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
@@ -537,13 +548,18 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   private void insertAccessManagementDatasetProperty(Integer datasetId, String propertyValue) {
+    insertAccessManagementDatasetProperty(datasetId, "accessManagement", propertyValue);
+  }
+
+  private void insertAccessManagementDatasetProperty(
+      Integer datasetId, String schemaProperty, String propertyValue) {
     datasetDAO.insertDatasetProperties(
         List.of(
             new DatasetProperty(
                 1,
                 datasetId,
                 1,
-                "accessManagement",
+                schemaProperty,
                 propertyValue,
                 PropertyType.String,
                 Date.from(Instant.now()))));

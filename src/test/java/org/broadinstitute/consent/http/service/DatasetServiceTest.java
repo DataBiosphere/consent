@@ -416,6 +416,35 @@ class DatasetServiceTest extends AbstractTestHelper {
     verify(elasticSearchService).synchronizeDatasetInESIndex(dataset, false);
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"OPEN", " open "})
+  void testUpdateDatasetDataUseNormalizesAccessManagementValue(String propertyValue) {
+    Dataset dataset = new Dataset();
+    setAccessManagement(
+        dataset, propertyValue, DatasetRegistrationSchemaV1Builder.accessManagement);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+    DataUse dataUse = new DataUseBuilder().setMethodsResearch(true).build();
+
+    assertDoesNotThrow(() -> datasetService.updateDatasetDataUse(admin, 1, dataUse));
+
+    verify(datasetServiceDAO).updateDatasetDataUse(eq(admin), eq(dataset), eq(dataUse), any());
+  }
+
+  @Test
+  void testUpdateDatasetDataUseTreatsUnknownAccessManagementAsControlled() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    setAccessManagement(dataset, "unknown", DatasetRegistrationSchemaV1Builder.accessManagement);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    User admin = getAdmin();
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+
+    assertDoesNotThrow(() -> datasetService.updateDatasetDataUse(admin, 1, dataUse));
+
+    verify(datasetServiceDAO).updateDatasetDataUse(eq(admin), eq(dataset), eq(dataUse), any());
+  }
+
   @Test
   void testUpdateDatasetDataUsePrefersCanonicalAccessManagement() {
     Dataset dataset = new Dataset();
@@ -1743,14 +1772,22 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   private void setAccessManagement(Dataset dataset, AccessManagement value, String schemaProperty) {
+    setAccessManagement(dataset, value.value(), schemaProperty);
+  }
+
+  private void setAccessManagement(Dataset dataset, String value, String schemaProperty) {
     dataset.setProperties(Set.of(accessManagementProperty(schemaProperty, value)));
   }
 
   private DatasetProperty accessManagementProperty(String schemaProperty, AccessManagement value) {
+    return accessManagementProperty(schemaProperty, value.value());
+  }
+
+  private DatasetProperty accessManagementProperty(String schemaProperty, String value) {
     DatasetProperty property = new DatasetProperty();
     property.setSchemaProperty(schemaProperty);
     property.setPropertyType(PropertyType.String);
-    property.setPropertyValue(value.value());
+    property.setPropertyValue(value);
     return property;
   }
 

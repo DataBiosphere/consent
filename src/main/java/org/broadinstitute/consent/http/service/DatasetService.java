@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.accessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -50,7 +48,6 @@ import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -58,8 +55,6 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 
 public class DatasetService implements ConsentLogger {
-
-  private static final String LEGACY_ACCESS_MANAGEMENT = "consentGroup." + accessManagement;
 
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final DatasetDAO datasetDAO;
@@ -300,7 +295,7 @@ public class DatasetService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new IllegalArgumentException("Admin use only");
     }
-    DataUsePrimaryValidator.validate(dataUse, findAccessManagement(d));
+    DataUsePrimaryValidator.validate(dataUse, d.getAccessManagement());
     String translation = ontologyService.translateDataUse(dataUse, DataUseTranslationType.DATASET);
     datasetServiceDAO.updateDatasetDataUse(user, d, dataUse, translation);
     elasticSearchService.synchronizeDatasetInESIndex(d, false);
@@ -481,8 +476,9 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion == null) {
       throw new BadRequestException("Study conversion is required");
     }
+    // StudyConversion has patch semantics: an omitted Data Use preserves the persisted value.
     if (studyConversion.getDataUse() != null) {
-      DataUsePrimaryValidator.validate(studyConversion.getDataUse(), findAccessManagement(dataset));
+      DataUsePrimaryValidator.validate(studyConversion.getDataUse(), dataset.getAccessManagement());
     }
     // Study updates:
     Integer studyId = updateStudyFromConversion(user, dataset, studyConversion);
@@ -562,36 +558,6 @@ public class DatasetService implements ConsentLogger {
     }
 
     return studyDAO.findStudyById(studyId);
-  }
-
-  private AccessManagement findAccessManagement(Dataset dataset) {
-    if (dataset == null || dataset.getProperties() == null) {
-      return null;
-    }
-    return findAccessManagement(dataset.getProperties(), accessManagement)
-        .or(() -> findAccessManagement(dataset.getProperties(), LEGACY_ACCESS_MANAGEMENT))
-        .orElse(null);
-  }
-
-  private Optional<AccessManagement> findAccessManagement(
-      Set<DatasetProperty> properties, String schemaProperty) {
-    return properties.stream()
-        .filter(property -> schemaProperty.equalsIgnoreCase(property.getSchemaProperty()))
-        .map(DatasetProperty::getPropertyValue)
-        .filter(Objects::nonNull)
-        .map(Object::toString)
-        .map(String::trim)
-        .map(value -> value.toLowerCase(Locale.ROOT))
-        .map(
-            value -> {
-              try {
-                return AccessManagement.fromValue(value);
-              } catch (IllegalArgumentException _) {
-                return null;
-              }
-            })
-        .filter(Objects::nonNull)
-        .findFirst();
   }
 
   public Study updateStudyCustodians(User user, Integer studyId, String custodians) {

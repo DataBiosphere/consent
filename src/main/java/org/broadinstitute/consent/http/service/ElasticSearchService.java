@@ -483,10 +483,8 @@ public class ElasticSearchService implements ConsentLogger {
     Optional.ofNullable(dataset.getNihInstitutionalCertificationFile())
         .ifPresent(obj -> term.setHasInstitutionCertification(true));
 
-    findDatasetProperty(dataset.getProperties(), "accessManagement")
-        .ifPresent(
-            datasetProperty ->
-                term.setAccessManagement(datasetProperty.getPropertyValueAsString()));
+    Optional.ofNullable(dataset.getAccessManagement())
+        .ifPresent(accessManagement -> term.setAccessManagement(accessManagement.value()));
 
     findFirstDatasetPropertyByName(dataset.getProperties(), "# of participants")
         .ifPresent(
