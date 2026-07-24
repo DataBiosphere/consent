@@ -738,7 +738,6 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
     when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(null);
     when(daaServiceDAO.bulkAddDaasToUser(researcher, daaIds, signingOfficial))
         .thenReturn(bulkAdd(2, researcher.getUserId()));
@@ -756,7 +755,6 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
     when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(10);
     when(daaServiceDAO.bulkAddDaasToUser(researcher, daaIds, signingOfficial))
         .thenReturn(bulkAdd(2));
@@ -833,7 +831,6 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
     when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(null);
     doThrow(new BadRequestException("invalid"))
         .when(libraryCardService)
@@ -848,20 +845,15 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testBulkAddDaasToUserDaaNotFoundDoesNotMutate() throws Exception {
-    User signingOfficial = userWithId(500);
-    User researcher = userWithId(1);
-    List<Integer> daaIds = List.of(10, 11);
-    // The second DAA does not exist; validation must reject with a 404 before any mutation.
+  void testFindDAAsInJsonArrayDaaNotFound() {
+    // The second DAA does not exist; the id-resolution step rejects with a 404 before callers ever
+    // reach a bulk mutation. This is the single guard the bulk add/remove flows rely on.
+    String json = "{daaList:[10,11]}";
     when(daaDAO.findById(10)).thenReturn(new DataAccessAgreement());
     when(daaDAO.findById(11)).thenReturn(null);
 
     initService();
-    assertThrows(
-        NotFoundException.class,
-        () -> service.bulkAddDaasToUser(researcher, daaIds, signingOfficial));
-    verify(daaServiceDAO, never()).bulkAddDaasToUser(any(), any(), any());
-    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+    assertThrows(NotFoundException.class, () -> service.findDAAsInJsonArray(json, "daaList"));
   }
 
   @Test
@@ -894,7 +886,6 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
     doThrow(new BadRequestException("This signing official does not have an institution."))
         .when(libraryCardService)
         .requireSigningOfficialInstitution(signingOfficial);
