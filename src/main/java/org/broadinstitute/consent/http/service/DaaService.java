@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DaaServiceDAO.BulkAddResult;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.Jdbi;
@@ -341,17 +343,17 @@ public class DaaService implements ConsentLogger {
     findById(daaId);
     // Reject before mutating anything, in every case the single-link add flow would. The signing
     // official must have an institution regardless of whether any card is created, and each user
-    // who would have a library card auto-created must pass the same pre-creation validations.
+    // who would have a library card auto-created must pass the same pre-creation validations. The
+    // id-only lookup avoids the DAA/audit joins of the full-card query.
     libraryCardService.requireSigningOfficialInstitution(signingOfficial);
-    List<User> usersNeedingCard =
-        users.stream()
-            .filter(user -> libraryCardService.findLibraryCardByUserId(user.getUserId()) == null)
-            .toList();
-    usersNeedingCard.forEach(
-        user -> libraryCardService.validateNewLibraryCardCreation(user, signingOfficial));
-    DaaBulkRelationResult result = daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial);
-    usersNeedingCard.forEach(this::notifyNewLibraryCard);
-    return result;
+    users.stream()
+        .filter(user -> libraryCardService.findLibraryCardIdByUserId(user.getUserId()) == null)
+        .forEach(user -> libraryCardService.validateNewLibraryCardCreation(user, signingOfficial));
+    BulkAddResult result = daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial);
+    // Notify only users whose card the transaction actually inserted, avoiding a mis-notification
+    // if a card was created for a user between the pre-transaction check and the commit.
+    notifyUsersWithNewCard(users, result.usersWithNewCard());
+    return result.summary();
   }
 
   /** Atomically remove pre-authorization for {@code daaId} from every user in {@code users}. */
@@ -367,22 +369,33 @@ public class DaaService implements ConsentLogger {
     // Reject before mutating anything, matching the single-link add flow: the signing official must
     // have an institution regardless of whether a card is created.
     libraryCardService.requireSigningOfficialInstitution(signingOfficial);
-    boolean needsCard = libraryCardService.findLibraryCardByUserId(user.getUserId()) == null;
-    if (needsCard) {
+    if (libraryCardService.findLibraryCardIdByUserId(user.getUserId()) == null) {
       // Match the single-link flow's card-creation guards for the user getting a new card.
       libraryCardService.validateNewLibraryCardCreation(user, signingOfficial);
     }
-    DaaBulkRelationResult result = daaServiceDAO.bulkAddDaasToUser(user, daaIds, signingOfficial);
-    if (needsCard) {
-      notifyNewLibraryCard(user);
-    }
-    return result;
+    BulkAddResult result = daaServiceDAO.bulkAddDaasToUser(user, daaIds, signingOfficial);
+    // Notify only if the transaction actually created the card (never on a pre-transaction guess).
+    notifyUsersWithNewCard(List.of(user), result.usersWithNewCard());
+    return result.summary();
   }
 
   /** Atomically remove pre-authorization for every DAA in {@code daaIds} from {@code user}. */
   public DaaBulkRelationResult bulkRemoveDaasFromUser(
       User user, List<Integer> daaIds, User signingOfficial) {
     return daaServiceDAO.bulkRemoveDaasFromUser(user, daaIds, signingOfficial);
+  }
+
+  /**
+   * Best-effort "new library card issued" notification for exactly the users whose card was created
+   * by the committed batch, as reported by the transaction in {@code userIdsWithNewCard}. Driving
+   * this off the actual insertions (rather than a pre-transaction estimate) avoids notifying a user
+   * whose card was created by another actor between the pre-check and the commit.
+   */
+  private void notifyUsersWithNewCard(List<User> candidates, List<Integer> userIdsWithNewCard) {
+    Set<Integer> newCardUserIds = new HashSet<>(userIdsWithNewCard);
+    candidates.stream()
+        .filter(user -> newCardUserIds.contains(user.getUserId()))
+        .forEach(this::notifyNewLibraryCard);
   }
 
   /**

@@ -81,6 +81,14 @@ public class LibraryCardService implements ConsentLogger {
     return libraryCardDAO.findLibraryCardByUserId(userId);
   }
 
+  /**
+   * Lightweight existence/id check for a user's library card, avoiding the DAA/audit joins of
+   * {@link #findLibraryCardByUserId}. Returns the card id, or null when the user has no card.
+   */
+  public Integer findLibraryCardIdByUserId(Integer userId) {
+    return libraryCardDAO.findLibraryCardIdByUserId(userId);
+  }
+
   public List<LibraryCard> findLibraryCardsByInstitutionId(Integer institutionId) {
     return libraryCardDAO.findLibraryCardsByInstitutionId(institutionId);
   }

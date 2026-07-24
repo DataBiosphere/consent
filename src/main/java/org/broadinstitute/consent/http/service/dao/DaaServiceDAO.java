@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
@@ -83,20 +82,23 @@ public class DaaServiceDAO implements ConsentLogger {
    * Atomically pre-authorize every user in {@code users} for a single DAA. Any user lacking a
    * library card has one created inside the transaction.
    */
-  public DaaBulkRelationResult bulkAddUsersToDaa(
-      Integer daaId, List<User> users, User signingOfficial) {
-    return inBulkTransaction(
-        users.size(),
-        lcDAO -> {
-          int applied = 0;
-          for (User user : users) {
-            Integer lcId = findOrCreateLibraryCardId(lcDAO, user, signingOfficial);
-            applied +=
-                lcDAO.createLibraryCardDaaRelation(
-                    user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
-          }
-          return applied;
-        });
+  public BulkAddResult bulkAddUsersToDaa(Integer daaId, List<User> users, User signingOfficial) {
+    List<Integer> usersWithNewCard = new ArrayList<>();
+    DaaBulkRelationResult summary =
+        inBulkTransaction(
+            users.size(),
+            lcDAO -> {
+              int applied = 0;
+              for (User user : users) {
+                Integer lcId =
+                    findOrCreateLibraryCardId(lcDAO, user, signingOfficial, usersWithNewCard);
+                applied +=
+                    lcDAO.createLibraryCardDaaRelation(
+                        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
+              }
+              return applied;
+            });
+    return new BulkAddResult(summary, usersWithNewCard);
   }
 
   /** Atomically remove pre-authorization for a single DAA from every user in {@code users}. */
@@ -107,11 +109,11 @@ public class DaaServiceDAO implements ConsentLogger {
         lcDAO -> {
           int applied = 0;
           for (User user : users) {
-            LibraryCard lc = lcDAO.findLibraryCardByUserId(user.getUserId());
-            if (lc != null) {
+            Integer lcId = lcDAO.findLibraryCardIdByUserId(user.getUserId());
+            if (lcId != null) {
               applied +=
                   lcDAO.deleteLibraryCardDaaRelation(
-                      user.getUserId(), signingOfficial.getUserId(), lc.getId(), daaId);
+                      user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
             }
           }
           return applied;
@@ -122,20 +124,23 @@ public class DaaServiceDAO implements ConsentLogger {
    * Atomically pre-authorize a single user for every DAA in {@code daaIds}. If the user lacks a
    * library card one is created inside the transaction.
    */
-  public DaaBulkRelationResult bulkAddDaasToUser(
-      User user, List<Integer> daaIds, User signingOfficial) {
-    return inBulkTransaction(
-        daaIds.size(),
-        lcDAO -> {
-          Integer lcId = findOrCreateLibraryCardId(lcDAO, user, signingOfficial);
-          int applied = 0;
-          for (Integer daaId : daaIds) {
-            applied +=
-                lcDAO.createLibraryCardDaaRelation(
-                    user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
-          }
-          return applied;
-        });
+  public BulkAddResult bulkAddDaasToUser(User user, List<Integer> daaIds, User signingOfficial) {
+    List<Integer> usersWithNewCard = new ArrayList<>();
+    DaaBulkRelationResult summary =
+        inBulkTransaction(
+            daaIds.size(),
+            lcDAO -> {
+              Integer lcId =
+                  findOrCreateLibraryCardId(lcDAO, user, signingOfficial, usersWithNewCard);
+              int applied = 0;
+              for (Integer daaId : daaIds) {
+                applied +=
+                    lcDAO.createLibraryCardDaaRelation(
+                        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
+              }
+              return applied;
+            });
+    return new BulkAddResult(summary, usersWithNewCard);
   }
 
   /** Atomically remove pre-authorization for every DAA in {@code daaIds} from a single user. */
@@ -144,15 +149,15 @@ public class DaaServiceDAO implements ConsentLogger {
     return inBulkTransaction(
         daaIds.size(),
         lcDAO -> {
-          LibraryCard lc = lcDAO.findLibraryCardByUserId(user.getUserId());
-          if (lc == null) {
+          Integer lcId = lcDAO.findLibraryCardIdByUserId(user.getUserId());
+          if (lcId == null) {
             return 0;
           }
           int applied = 0;
           for (Integer daaId : daaIds) {
             applied +=
                 lcDAO.deleteLibraryCardDaaRelation(
-                    user.getUserId(), signingOfficial.getUserId(), lc.getId(), daaId);
+                    user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
           }
           return applied;
         });
@@ -161,20 +166,34 @@ public class DaaServiceDAO implements ConsentLogger {
   /**
    * Returns the id of the user's existing library card, creating a bare card (via the supplied
    * transaction-scoped DAO) if none exists. Must be called from within a transaction so the card
-   * creation participates in the same all-or-nothing batch.
+   * creation participates in the same all-or-nothing batch. When a card is created the user's id is
+   * appended to {@code newCardUserIds} so the caller can notify exactly the users whose card was
+   * actually inserted by this batch (rather than a pre-transaction estimate). Uses the lightweight
+   * id-only lookup to avoid the DAA/audit joins of the full-card query on every iteration.
    */
-  private Integer findOrCreateLibraryCardId(LibraryCardDAO lcDAO, User user, User signingOfficial) {
-    LibraryCard existing = lcDAO.findLibraryCardByUserId(user.getUserId());
-    if (existing != null) {
-      return existing.getId();
+  private Integer findOrCreateLibraryCardId(
+      LibraryCardDAO lcDAO, User user, User signingOfficial, List<Integer> newCardUserIds) {
+    Integer existingId = lcDAO.findLibraryCardIdByUserId(user.getUserId());
+    if (existingId != null) {
+      return existingId;
     }
-    return lcDAO.insertLibraryCard(
-        user.getUserId(),
-        user.getDisplayName(),
-        user.getEmail(),
-        signingOfficial.getUserId(),
-        new Date());
+    Integer newId =
+        lcDAO.insertLibraryCard(
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+    newCardUserIds.add(user.getUserId());
+    return newId;
   }
+
+  /**
+   * Result of a bulk <em>add</em> operation: the relation-count {@code summary} plus the ids of
+   * users whose library card was created as part of this (committed) batch, so the caller sends a
+   * "new card issued" notification to exactly those users and no others.
+   */
+  public record BulkAddResult(DaaBulkRelationResult summary, List<Integer> usersWithNewCard) {}
 
   /**
    * Runs {@code work} inside a single transaction against a transaction-scoped {@link

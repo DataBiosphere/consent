@@ -33,7 +33,7 @@ public class DaaBulkRelationResult {
     this.requested = requested;
     this.applied = applied;
     this.skipped = skipped;
-    this.errors = errors == null ? new ArrayList<>() : errors;
+    setErrors(errors);
   }
 
   /** Convenience factory for the atomic happy path where every requested item was applied. */
@@ -69,7 +69,11 @@ public class DaaBulkRelationResult {
     return errors;
   }
 
+  /**
+   * Normalizes {@code null} to an empty list and defensively copies, preserving the class invariant
+   * that {@code errors} is always a non-null list callers can safely read.
+   */
   public void setErrors(List<String> errors) {
-    this.errors = errors;
+    this.errors = errors == null ? new ArrayList<>() : new ArrayList<>(errors);
   }
 }

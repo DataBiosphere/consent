@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DaaServiceDAO.BulkAddResult;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
@@ -671,8 +672,13 @@ class DaaServiceTest extends AbstractTestHelper {
     return user;
   }
 
+  /** Builds the DAO add-result: {@code applied} count plus the ids of users given a new card. */
+  private BulkAddResult bulkAdd(int applied, Integer... usersWithNewCard) {
+    return new BulkAddResult(DaaBulkRelationResult.allApplied(applied), List.of(usersWithNewCard));
+  }
+
   @Test
-  void testBulkAddUsersToDaaSendsEmailOnlyForUsersWithoutCard() throws Exception {
+  void testBulkAddUsersToDaaSendsEmailOnlyForUsersWithNewlyCreatedCard() throws Exception {
     Integer daaId = randomInt(10, 100);
     User signingOfficial = userWithId(500);
     User withCard = userWithId(1);
@@ -680,11 +686,11 @@ class DaaServiceTest extends AbstractTestHelper {
     List<User> users = List.of(withCard, withoutCard);
 
     when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.findLibraryCardByUserId(withCard.getUserId()))
-        .thenReturn(new LibraryCard());
-    when(libraryCardService.findLibraryCardByUserId(withoutCard.getUserId())).thenReturn(null);
+    when(libraryCardService.findLibraryCardIdByUserId(withCard.getUserId())).thenReturn(10);
+    when(libraryCardService.findLibraryCardIdByUserId(withoutCard.getUserId())).thenReturn(null);
+    // The transaction reports it actually created a card only for withoutCard.
     when(daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial))
-        .thenReturn(DaaBulkRelationResult.allApplied(2));
+        .thenReturn(bulkAdd(2, withoutCard.getUserId()));
 
     initService();
     DaaBulkRelationResult result = service.bulkAddUsersToDaa(daaId, users, signingOfficial);
@@ -732,9 +738,9 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(libraryCardService.findLibraryCardByUserId(researcher.getUserId())).thenReturn(null);
+    when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(null);
     when(daaServiceDAO.bulkAddDaasToUser(researcher, daaIds, signingOfficial))
-        .thenReturn(DaaBulkRelationResult.allApplied(2));
+        .thenReturn(bulkAdd(2, researcher.getUserId()));
 
     initService();
     DaaBulkRelationResult result = service.bulkAddDaasToUser(researcher, daaIds, signingOfficial);
@@ -749,10 +755,9 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(libraryCardService.findLibraryCardByUserId(researcher.getUserId()))
-        .thenReturn(new LibraryCard());
+    when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(10);
     when(daaServiceDAO.bulkAddDaasToUser(researcher, daaIds, signingOfficial))
-        .thenReturn(DaaBulkRelationResult.allApplied(2));
+        .thenReturn(bulkAdd(2));
 
     initService();
     service.bulkAddDaasToUser(researcher, daaIds, signingOfficial);
@@ -787,11 +792,9 @@ class DaaServiceTest extends AbstractTestHelper {
     List<User> users = List.of(withCard, withoutCard);
 
     when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.findLibraryCardByUserId(withCard.getUserId()))
-        .thenReturn(new LibraryCard());
-    when(libraryCardService.findLibraryCardByUserId(withoutCard.getUserId())).thenReturn(null);
-    when(daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial))
-        .thenReturn(DaaBulkRelationResult.allApplied(2));
+    when(libraryCardService.findLibraryCardIdByUserId(withCard.getUserId())).thenReturn(10);
+    when(libraryCardService.findLibraryCardIdByUserId(withoutCard.getUserId())).thenReturn(null);
+    when(daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial)).thenReturn(bulkAdd(2));
 
     initService();
     service.bulkAddUsersToDaa(daaId, users, signingOfficial);
@@ -810,7 +813,7 @@ class DaaServiceTest extends AbstractTestHelper {
     List<User> users = List.of(withoutCard);
 
     when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.findLibraryCardByUserId(withoutCard.getUserId())).thenReturn(null);
+    when(libraryCardService.findLibraryCardIdByUserId(withoutCard.getUserId())).thenReturn(null);
     doThrow(new BadRequestException("invalid"))
         .when(libraryCardService)
         .validateNewLibraryCardCreation(withoutCard, signingOfficial);
@@ -828,7 +831,7 @@ class DaaServiceTest extends AbstractTestHelper {
     User researcher = userWithId(1);
     List<Integer> daaIds = List.of(10, 11);
 
-    when(libraryCardService.findLibraryCardByUserId(researcher.getUserId())).thenReturn(null);
+    when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(null);
     doThrow(new BadRequestException("invalid"))
         .when(libraryCardService)
         .validateNewLibraryCardCreation(researcher, signingOfficial);
@@ -859,7 +862,7 @@ class DaaServiceTest extends AbstractTestHelper {
     // The SO guard runs first and unconditionally: no per-user card lookup, validation, or mutation
     // happens — so a bulk add is rejected even when every targeted user already has a card.
     verify(daaServiceDAO, never()).bulkAddUsersToDaa(any(), any(), any());
-    verify(libraryCardService, never()).findLibraryCardByUserId(any());
+    verify(libraryCardService, never()).findLibraryCardIdByUserId(any());
     verify(libraryCardService, never()).validateNewLibraryCardCreation(any(), any());
     verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
   }
@@ -880,7 +883,7 @@ class DaaServiceTest extends AbstractTestHelper {
         BadRequestException.class,
         () -> service.bulkAddDaasToUser(researcher, daaIds, signingOfficial));
     verify(daaServiceDAO, never()).bulkAddDaasToUser(any(), any(), any());
-    verify(libraryCardService, never()).findLibraryCardByUserId(any());
+    verify(libraryCardService, never()).findLibraryCardIdByUserId(any());
     verify(libraryCardService, never()).validateNewLibraryCardCreation(any(), any());
     verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
   }

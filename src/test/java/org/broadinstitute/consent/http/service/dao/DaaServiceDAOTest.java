@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DaaServiceDAO.BulkAddResult;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.AfterEach;
@@ -192,10 +193,12 @@ class DaaServiceDAOTest extends DAOTestHelper {
     Integer daaId1 = createDaaId(signingOfficial);
     Integer daaId2 = createDaaId(signingOfficial);
 
-    DaaBulkRelationResult result =
+    BulkAddResult result =
         serviceDAO.bulkAddDaasToUser(researcher, List.of(daaId1, daaId2), signingOfficial);
 
-    assertEquals(2, result.getApplied());
+    assertEquals(2, result.summary().getApplied());
+    // The researcher already had a card, so none was created.
+    assertTrue(result.usersWithNewCard().isEmpty());
     List<Integer> daaIds =
         libraryCardDAO.findLibraryCardByUserId(researcher.getUserId()).getDaaIds();
     assertTrue(daaIds.contains(daaId1));
@@ -210,10 +213,12 @@ class DaaServiceDAOTest extends DAOTestHelper {
     assertNull(libraryCardDAO.findLibraryCardByUserId(researcher.getUserId()));
     Integer daaId = createDaaId(signingOfficial);
 
-    DaaBulkRelationResult result =
+    BulkAddResult result =
         serviceDAO.bulkAddUsersToDaa(daaId, List.of(researcher), signingOfficial);
 
-    assertEquals(1, result.getApplied());
+    assertEquals(1, result.summary().getApplied());
+    // The transaction created the card and reported it, so the caller can notify the researcher.
+    assertTrue(result.usersWithNewCard().contains(researcher.getUserId()));
     LibraryCard card = libraryCardDAO.findLibraryCardByUserId(researcher.getUserId());
     assertNotNull(card);
     assertTrue(card.getDaaIds().contains(daaId));
@@ -286,14 +291,14 @@ class DaaServiceDAOTest extends DAOTestHelper {
     libraryCardDAO.createLibraryCardDaaRelation(
         researcher.getUserId(), signingOfficial.getUserId(), card.getId(), alreadyLinkedDaaId);
 
-    DaaBulkRelationResult result =
+    BulkAddResult result =
         serviceDAO.bulkAddDaasToUser(
             researcher, List.of(alreadyLinkedDaaId, newDaaId), signingOfficial);
 
     // applied must reflect only the one relation that actually changed, not the requested count.
-    assertEquals(2, result.getRequested());
-    assertEquals(1, result.getApplied());
-    assertEquals(1, result.getSkipped());
+    assertEquals(2, result.summary().getRequested());
+    assertEquals(1, result.summary().getApplied());
+    assertEquals(1, result.summary().getSkipped());
   }
 
   @Test

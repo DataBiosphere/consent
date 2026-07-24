@@ -1,0 +1,23 @@
+type: object
+title: DaaBulkRelationResult
+description: >-
+  Summary of an atomic bulk pre-authorization operation. The operation is all-or-nothing with
+  respect to failure, so on a returned summary `errors` is always empty and a real failure surfaces
+  as a 4xx/5xx instead. `applied` counts only relationships that actually changed; requested items
+  already in the target state (re-adding an existing pre-authorization, or removing one that was
+  never present) are counted under `skipped`, so `applied + skipped == requested`.
+properties:
+  requested:
+    type: integer
+    description: Number of relationships requested in the batch.
+  applied:
+    type: integer
+    description: Number of relationships that actually changed.
+  skipped:
+    type: integer
+    description: Number of requested relationships that were already in the target state (no-ops).
+  errors:
+    type: array
+    description: Always empty on a returned summary (failures roll back and surface as an error status).
+    items:
+      type: string
