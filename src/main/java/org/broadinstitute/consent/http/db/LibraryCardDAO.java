@@ -131,6 +131,15 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       """)
   LibraryCard findLibraryCardByUserId(@Bind("userId") Integer userId);
 
+  /**
+   * Lightweight lookup of just a user's library-card id (or null). Unlike {@link
+   * #findLibraryCardByUserId} this touches only {@code library_card} (served by the unique index on
+   * {@code user_id}) and joins nothing, so it is cheap to call per-user inside a bulk loop where
+   * the full card with its DAA/audit associations is not needed.
+   */
+  @SqlQuery("SELECT id FROM library_card WHERE user_id = :userId")
+  Integer findLibraryCardIdByUserId(@Bind("userId") Integer userId);
+
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
   @SqlQuery(
@@ -193,7 +202,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       SELECT :daaId, :lcId, :lcUserId, :userId, 'ADD', NOW()
       WHERE EXISTS (SELECT 1 FROM lc_daa_insert)
       """)
-  void createLibraryCardDaaRelation(
+  int createLibraryCardDaaRelation(
       @Bind("lcUserId") Integer lcUserId,
       @Bind("userId") Integer userId,
       @Bind("lcId") Integer lcId,
@@ -211,7 +220,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       SELECT :daaId, :lcId, :lcUserId, :userId, 'REMOVE', NOW()
       WHERE EXISTS (SELECT 1 FROM lc_daa_delete)
       """)
-  void deleteLibraryCardDaaRelation(
+  int deleteLibraryCardDaaRelation(
       @Bind("lcUserId") Integer lcUserId,
       @Bind("userId") Integer userId,
       @Bind("lcId") Integer lcId,

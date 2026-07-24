@@ -34,6 +34,10 @@ post:
   responses:
     200:
       description: Successfully added DAAs to a user
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DaaBulkRelationResult.yaml'
     403:
       description: User not authorized to add DAAs to a user
     404:
@@ -82,6 +86,10 @@ delete:
   responses:
     200:
       description: Successfully removed DAAs from a user
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DaaBulkRelationResult.yaml'
     403:
       description: User not authorized to remove DAAs from a user
     404:

@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
+import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -213,6 +214,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({SIGNINGOFFICIAL})
   @Path("/bulk/{daaId}")
   public Response bulkAddUsersToDaa(
@@ -225,11 +227,8 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
-      daaService.findById(daaId);
-      for (User user : users) {
-        libraryCardService.addDaaToUserLibraryCard(user, authedUser, daaId);
-      }
-      return Response.ok().build();
+      DaaBulkRelationResult result = daaService.bulkAddUsersToDaa(daaId, users, authedUser);
+      return Response.ok(result).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -252,6 +251,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @DELETE
   @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({SIGNINGOFFICIAL})
   @Path("/bulk/{daaId}")
   public Response bulkRemoveUsersFromDaa(
@@ -264,11 +264,8 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
-      daaService.findById(daaId);
-      for (User user : users) {
-        libraryCardService.removeDaaFromUserLibraryCard(user, authedUser, daaId);
-      }
-      return Response.ok().build();
+      DaaBulkRelationResult result = daaService.bulkRemoveUsersFromDaa(daaId, users, authedUser);
+      return Response.ok(result).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -276,6 +273,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({SIGNINGOFFICIAL})
   @Path("/bulk/user/{userId}")
   public Response bulkAddDAAsToUser(
@@ -287,10 +285,9 @@ public class DaaResource extends Resource implements ConsentLogger {
         return Response.status(Status.FORBIDDEN).build();
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
-      for (DataAccessAgreement daa : daaList) {
-        libraryCardService.addDaaToUserLibraryCard(user, authedUser, daa.getDaaId());
-      }
-      return Response.ok().build();
+      List<Integer> daaIds = daaList.stream().map(DataAccessAgreement::getDaaId).toList();
+      DaaBulkRelationResult result = daaService.bulkAddDaasToUser(user, daaIds, authedUser);
+      return Response.ok(result).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -298,6 +295,7 @@ public class DaaResource extends Resource implements ConsentLogger {
 
   @DELETE
   @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({SIGNINGOFFICIAL})
   @Path("/bulk/user/{userId}")
   public Response bulkRemoveDAAsFromUser(
@@ -309,10 +307,9 @@ public class DaaResource extends Resource implements ConsentLogger {
         return Response.status(Status.FORBIDDEN).build();
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
-      for (DataAccessAgreement daa : daaList) {
-        libraryCardService.removeDaaFromUserLibraryCard(user, authedUser, daa.getDaaId());
-      }
-      return Response.ok().build();
+      List<Integer> daaIds = daaList.stream().map(DataAccessAgreement::getDaaId).toList();
+      DaaBulkRelationResult result = daaService.bulkRemoveDaasFromUser(user, daaIds, authedUser);
+      return Response.ok(result).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

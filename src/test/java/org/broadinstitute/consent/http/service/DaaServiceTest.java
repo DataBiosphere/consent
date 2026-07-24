@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
+import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -42,6 +43,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DaaServiceDAO.BulkAddResult;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
@@ -660,5 +662,241 @@ class DaaServiceTest extends AbstractTestHelper {
     verify(daaDAO).createDacDaaRelation(dacId, 801, user.getUserId());
     verify(daaDAO, never()).findByDacId(dacId);
     verify(daaDAO, never()).findDaaIdsByDacId(dacId);
+  }
+
+  // ── Atomic bulk pre-authorization (DT-3325) ─────────────────────────────────────
+
+  private User userWithId(int userId) {
+    User user = new User();
+    user.setUserId(userId);
+    return user;
+  }
+
+  /** Builds the DAO add-result: {@code applied} count plus the ids of users given a new card. */
+  private BulkAddResult bulkAdd(int applied, Integer... usersWithNewCard) {
+    return new BulkAddResult(DaaBulkRelationResult.allApplied(applied), List.of(usersWithNewCard));
+  }
+
+  @Test
+  void testBulkAddUsersToDaaSendsEmailOnlyForUsersWithNewlyCreatedCard() throws Exception {
+    Integer daaId = randomInt(10, 100);
+    User signingOfficial = userWithId(500);
+    User withCard = userWithId(1);
+    User withoutCard = userWithId(2);
+    List<User> users = List.of(withCard, withoutCard);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(libraryCardService.findLibraryCardIdByUserId(withCard.getUserId())).thenReturn(10);
+    when(libraryCardService.findLibraryCardIdByUserId(withoutCard.getUserId())).thenReturn(null);
+    // The transaction reports it actually created a card only for withoutCard.
+    when(daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial))
+        .thenReturn(bulkAdd(2, withoutCard.getUserId()));
+
+    initService();
+    DaaBulkRelationResult result = service.bulkAddUsersToDaa(daaId, users, signingOfficial);
+
+    assertEquals(2, result.getApplied());
+    verify(daaServiceDAO).bulkAddUsersToDaa(daaId, users, signingOfficial);
+    verify(libraryCardService, times(1)).sendNewLibraryCardIssuedMessage(withoutCard);
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(withCard);
+  }
+
+  @Test
+  void testBulkAddUsersToDaaDaaNotFoundDoesNotMutate() {
+    Integer daaId = randomInt(10, 100);
+    User signingOfficial = userWithId(500);
+    List<User> users = List.of(userWithId(1));
+    when(daaDAO.findById(daaId)).thenReturn(null);
+
+    initService();
+    assertThrows(
+        NotFoundException.class, () -> service.bulkAddUsersToDaa(daaId, users, signingOfficial));
+    verify(daaServiceDAO, never()).bulkAddUsersToDaa(any(), any(), any());
+  }
+
+  @Test
+  void testBulkRemoveUsersFromDaaDelegatesWithoutEmail() throws Exception {
+    Integer daaId = randomInt(10, 100);
+    User signingOfficial = userWithId(500);
+    List<User> users = List.of(userWithId(1), userWithId(2));
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(daaServiceDAO.bulkRemoveUsersFromDaa(daaId, users, signingOfficial))
+        .thenReturn(DaaBulkRelationResult.allApplied(2));
+
+    initService();
+    DaaBulkRelationResult result = service.bulkRemoveUsersFromDaa(daaId, users, signingOfficial);
+
+    assertEquals(2, result.getApplied());
+    verify(daaServiceDAO).bulkRemoveUsersFromDaa(daaId, users, signingOfficial);
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  @Test
+  void testBulkAddDaasToUserSendsEmailWhenNoCard() throws Exception {
+    User signingOfficial = userWithId(500);
+    User researcher = userWithId(1);
+    List<Integer> daaIds = List.of(10, 11);
+
+    when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(null);
+    when(daaServiceDAO.bulkAddDaasToUser(researcher, daaIds, signingOfficial))
+        .thenReturn(bulkAdd(2, researcher.getUserId()));
+
+    initService();
+    DaaBulkRelationResult result = service.bulkAddDaasToUser(researcher, daaIds, signingOfficial);
+
+    assertEquals(2, result.getApplied());
+    verify(libraryCardService, times(1)).sendNewLibraryCardIssuedMessage(researcher);
+  }
+
+  @Test
+  void testBulkAddDaasToUserNoEmailWhenCardExists() throws Exception {
+    User signingOfficial = userWithId(500);
+    User researcher = userWithId(1);
+    List<Integer> daaIds = List.of(10, 11);
+
+    when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(10);
+    when(daaServiceDAO.bulkAddDaasToUser(researcher, daaIds, signingOfficial))
+        .thenReturn(bulkAdd(2));
+
+    initService();
+    service.bulkAddDaasToUser(researcher, daaIds, signingOfficial);
+
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  @Test
+  void testBulkRemoveDaasFromUserDelegates() throws Exception {
+    User signingOfficial = userWithId(500);
+    User researcher = userWithId(1);
+    List<Integer> daaIds = List.of(10, 11);
+
+    when(daaServiceDAO.bulkRemoveDaasFromUser(researcher, daaIds, signingOfficial))
+        .thenReturn(DaaBulkRelationResult.allApplied(2));
+
+    initService();
+    DaaBulkRelationResult result =
+        service.bulkRemoveDaasFromUser(researcher, daaIds, signingOfficial);
+
+    assertEquals(2, result.getApplied());
+    verify(daaServiceDAO).bulkRemoveDaasFromUser(researcher, daaIds, signingOfficial);
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  @Test
+  void testBulkAddUsersToDaaValidatesOnlyUsersNeedingACard() {
+    Integer daaId = randomInt(10, 100);
+    User signingOfficial = userWithId(500);
+    User withCard = userWithId(1);
+    User withoutCard = userWithId(2);
+    List<User> users = List.of(withCard, withoutCard);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(libraryCardService.findLibraryCardIdByUserId(withCard.getUserId())).thenReturn(10);
+    when(libraryCardService.findLibraryCardIdByUserId(withoutCard.getUserId())).thenReturn(null);
+    when(daaServiceDAO.bulkAddUsersToDaa(daaId, users, signingOfficial)).thenReturn(bulkAdd(2));
+
+    initService();
+    service.bulkAddUsersToDaa(daaId, users, signingOfficial);
+
+    // The user who would have a card auto-created is validated; the one who already has one is not.
+    verify(libraryCardService, times(1))
+        .validateNewLibraryCardCreation(withoutCard, signingOfficial);
+    verify(libraryCardService, never()).validateNewLibraryCardCreation(withCard, signingOfficial);
+  }
+
+  @Test
+  void testBulkAddUsersToDaaRejectsBeforeMutatingWhenValidationFails() throws Exception {
+    Integer daaId = randomInt(10, 100);
+    User signingOfficial = userWithId(500);
+    User withoutCard = userWithId(2);
+    List<User> users = List.of(withoutCard);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(libraryCardService.findLibraryCardIdByUserId(withoutCard.getUserId())).thenReturn(null);
+    doThrow(new BadRequestException("invalid"))
+        .when(libraryCardService)
+        .validateNewLibraryCardCreation(withoutCard, signingOfficial);
+
+    initService();
+    assertThrows(
+        BadRequestException.class, () -> service.bulkAddUsersToDaa(daaId, users, signingOfficial));
+    verify(daaServiceDAO, never()).bulkAddUsersToDaa(any(), any(), any());
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  @Test
+  void testBulkAddDaasToUserRejectsBeforeMutatingWhenValidationFails() throws Exception {
+    User signingOfficial = userWithId(500);
+    User researcher = userWithId(1);
+    List<Integer> daaIds = List.of(10, 11);
+
+    when(libraryCardService.findLibraryCardIdByUserId(researcher.getUserId())).thenReturn(null);
+    doThrow(new BadRequestException("invalid"))
+        .when(libraryCardService)
+        .validateNewLibraryCardCreation(researcher, signingOfficial);
+
+    initService();
+    assertThrows(
+        BadRequestException.class,
+        () -> service.bulkAddDaasToUser(researcher, daaIds, signingOfficial));
+    verify(daaServiceDAO, never()).bulkAddDaasToUser(any(), any(), any());
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  @Test
+  void testFindDAAsInJsonArrayDaaNotFound() {
+    // The second DAA does not exist; the id-resolution step rejects with a 404 before callers ever
+    // reach a bulk mutation. This is the single guard the bulk add/remove flows rely on.
+    String json = "{daaList:[10,11]}";
+    when(daaDAO.findById(10)).thenReturn(new DataAccessAgreement());
+    when(daaDAO.findById(11)).thenReturn(null);
+
+    initService();
+    assertThrows(NotFoundException.class, () -> service.findDAAsInJsonArray(json, "daaList"));
+  }
+
+  @Test
+  void testBulkAddUsersToDaaRejectsWhenSigningOfficialHasNoInstitutionBeforeAnyCardLookup()
+      throws Exception {
+    Integer daaId = randomInt(10, 100);
+    User signingOfficial = userWithId(500);
+    List<User> users = List.of(userWithId(1), userWithId(2));
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    doThrow(new BadRequestException("This signing official does not have an institution."))
+        .when(libraryCardService)
+        .requireSigningOfficialInstitution(signingOfficial);
+
+    initService();
+    assertThrows(
+        BadRequestException.class, () -> service.bulkAddUsersToDaa(daaId, users, signingOfficial));
+    // The SO guard runs first and unconditionally: no per-user card lookup, validation, or mutation
+    // happens — so a bulk add is rejected even when every targeted user already has a card.
+    verify(daaServiceDAO, never()).bulkAddUsersToDaa(any(), any(), any());
+    verify(libraryCardService, never()).findLibraryCardIdByUserId(any());
+    verify(libraryCardService, never()).validateNewLibraryCardCreation(any(), any());
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  @Test
+  void testBulkAddDaasToUserRejectsWhenSigningOfficialHasNoInstitutionBeforeAnyCardLookup()
+      throws Exception {
+    User signingOfficial = userWithId(500);
+    User researcher = userWithId(1);
+    List<Integer> daaIds = List.of(10, 11);
+
+    doThrow(new BadRequestException("This signing official does not have an institution."))
+        .when(libraryCardService)
+        .requireSigningOfficialInstitution(signingOfficial);
+
+    initService();
+    assertThrows(
+        BadRequestException.class,
+        () -> service.bulkAddDaasToUser(researcher, daaIds, signingOfficial));
+    verify(daaServiceDAO, never()).bulkAddDaasToUser(any(), any(), any());
+    verify(libraryCardService, never()).findLibraryCardIdByUserId(any());
+    verify(libraryCardService, never()).validateNewLibraryCardCreation(any(), any());
+    verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
   }
 }
