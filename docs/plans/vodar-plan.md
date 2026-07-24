@@ -18,6 +18,16 @@ This plan covers the minimum viable feature. Several product requirements are ex
 Future Directions section because they require net-new infrastructure (timed access revocation, active
 auth-list push) rather than extensions of existing behavior.
 
+**Product-confirmed framing — VODAR is a policy control, not a technical one.** Once a VODAR DAR is
+approved, downstream systems do not need to know or care that it was a VODAR. VODAR constrains the
+*user* (they attest to view-only intent and agree not to analyze or publish); it is not a technical
+access restriction imposed on downstream consumers of DUOS authorization grants. Consequently, a VODAR
+approval is intentionally identical to any other approval from the consumer contract's point of view,
+and this plan does **not** need to (and does not) modify the outward-facing approved-users / TDR / Sam
+APIs to carry a view-only scope. This resolves what earlier drafts treated as an "enforcement gap": there
+is no gap, because enforcement of view-only intent lives with the user and the DAC's policy, not with the
+data plane.
+
 ## Background and Scope
 
 A VODAR is not a new entity. It is a `DataAccessRequest` whose data-use payload declares view-only
@@ -35,7 +45,9 @@ plan documents, rather than introducing a parallel request type.
 - **Ethical questions** — for VODAR purposes, *all* of the Section 3 / Step 3
   (`ResearchPurposeStatement.tsx`) questions: the study-characteristic radios and the ethics-concern
   radios. If any Section 3 question is answered Yes, the request cannot be submitted or auto-approved as
-  a VODAR (see the decision table for the exact field list).
+  a VODAR (see the decision table for the exact field list). **Product-confirmed:** per the ticket, "do
+  not allow submission of a VODAR if any Ethical (Step 3) question is 'Yes'." This supersedes any narrower
+  legacy reading of "Section 3" — the gate is the entire current Step 3, both radio groups.
 
 ## Current Behavior
 
@@ -142,6 +154,7 @@ subset of datasets, and truly election-less approvals.
 | Do VODAR approvals reach auth lists? | Yes, automatically, via the existing pull-based `approvedUsers` query (the `RADAR_APPROVE` vote is honored today). No push integration is added in MVP. |
 | How is `vodar` represented durably? | As a first-class, indexable column on the DAR (populated from the payload at write time by a single writer), not only a field inside the `data` JSON. Almost every future goal — 12h expiry sweeps, view-only scope, metrics, DAC oversight, election-less approval — must *query* for VODARs; a JSON-only flag forces a later schema migration and JSON backfill. Add the column in Ticket 1. Keep one writer so the column and payload cannot drift. |
 | What identifies a request as a VODAR? | The `vodar` flag/column (the checkbox), not the boilerplate text. Boilerplate equality is a submission-time integrity check only. All downstream identification (expiry, metrics, scope) keys off the flag, so the boilerplate can be versioned without stranding historical approvals. |
+| What happens to the RUS when VODAR is toggled off? | Restore the RUS the user had before selecting VODAR. On toggle-on, capture the prior `rus` value; on toggle-off, write it back (empty if there was none) and re-enable editing. The invariant is that the VODAR boilerplate must **never** remain in a non-VODAR DAR — leaving VODAR text in a normal DAR is a defect. Clearing to empty is an acceptable fallback, but restoring the prior value is preferred so a researcher who toggles by accident does not lose their draft. |
 | Can a submitted VODAR ever be left for manual DAC voting? | Yes. Auto-approval requires the DAC to have activated `VODAR_V1`; when it has not, the VODAR is submitted as a normal pending DAR and the DAC votes on it manually, exactly like any other DAR. The server does not reject a well-formed VODAR for being non-auto-approvable. The banned-country gate still blocks auto-approval as it does today. |
 | When does a VODAR's approval clock start, and how does 12h expiry work? | Anchor expiry to the approval time (for auto-approval, ≈ submission date). The recommended mechanism is a scope-aware query-time filter (mirroring the existing 1-year filter in `findApprovedDARsByDatasetId`, gated on the `vodar` marker) rather than a state-mutating timer, so no new revocation state is needed for pull consumers. Implementation is deferred, but the anchor and mechanism are decided now so MVP does not foreclose them; the queryable marker is the prerequisite. |
 | What happens to a VODAR that requires Signing-Official approval? | Same as any DAR: it waits in the SO queue until the SO acts, after which RADAR runs (auto-approving if the DAC has `VODAR_V1` on) or the VODAR proceeds to normal DAC review. No special re-check is needed, because a non-auto-approvable VODAR is allowed to fall through to manual review. The future "disable lab staff/collaborators" work is what reduces how often a VODAR needs SO approval. |
@@ -213,19 +226,24 @@ invariant that gates data access.
 
 ## Communication and Notification Touchpoints
 
-A VODAR approval is not only a state change — several audiences must learn it happened, and, critically,
-must be able to tell a *view-only* grant apart from a full analysis approval. Today "approved" is a
-scope-less binary derived from a TRUE `FINAL`/`RADAR_APPROVE` vote, so a VODAR surfaces on approved
-lists indistinguishable from a standard approval. That is convenient (it already appears) but carries a
-risk (see the note on downstream systems below).
+A VODAR approval is not only a state change — several DUOS-internal audiences benefit from learning it
+happened and from seeing that the grant was view-only. Today "approved" is a scope-less binary derived
+from a TRUE `FINAL`/`RADAR_APPROVE` vote, so a VODAR surfaces on approved lists indistinguishable from a
+standard approval. Per the product-confirmed framing above, that is exactly correct for *downstream
+consumers* — they need no VODAR distinction. The labeling described here is a DUOS-internal, user-facing
+courtesy (so researchers and DACs understand what was granted), not a technical control and not a
+prerequisite for correctness.
 
-This section covers DUOS-internal / user-facing communication only. Modifying the outward-facing
-approved-users / TDR APIs to carry a view-only scope is **explicitly out of scope** here (see below).
+This section covers DUOS-internal / user-facing communication only. The outward-facing approved-users /
+TDR / Sam APIs are intentionally **not** changed — a VODAR approval is deliberately identical to any
+other approval from the consumer contract's point of view (see the Objective's product-confirmed
+framing).
 
-**Cross-cutting requirement — approval scope labeling (DUOS-internal surfaces).** Where DUOS itself
-presents an approval to a person, distinguish a view-only grant from a full approval, derived from the
-DAR's `vodar` flag (equivalently, a `RADAR_APPROVE` vote on a VODAR). This applies to the researcher's
-own views, DAC oversight, compliance logging, and metrics — not to the external consumer APIs.
+**Cross-cutting nicety — approval scope labeling (DUOS-internal surfaces only).** Where DUOS itself
+presents an approval to a person, it is helpful to distinguish a view-only grant from a full approval,
+derived from the DAR's `vodar` flag (equivalently, a `RADAR_APPROVE` vote on a VODAR). This applies to the
+researcher's own views, DAC oversight, the researcher/DAC consoles (see Ticket 7), compliance logging,
+and metrics — never to the external consumer APIs.
 
 Touchpoints, by audience:
 
@@ -246,26 +264,30 @@ Touchpoints, by audience:
   ensure the entry carries the view-only classification. `DarMetricsSummary` and DAR dashboards should
   count VODARs and RADAR auto-approvals distinctly from standard approvals.
 
-**Downstream access / auth systems (TDR / Terra / Sam) — out of scope.** A VODAR approval already
-flows into the pull-based approved-users query (`findApprovedDARsByDatasetId` →
+**Downstream access / auth systems (TDR / Terra / Sam) — intentionally unchanged.** A VODAR approval
+already flows into the pull-based approved-users query (`findApprovedDARsByDatasetId` →
 `getApprovedUsersForDataset`), so downstream consumers see the user with no extra work. This plan does
-**not** modify those APIs to carry a view-only scope. The known consequence is that a consumer cannot,
-today, distinguish a view-only user from a fully approved one and could over-grant analysis access.
-Adding a scope to the consumer contract — and propagating revocation for the 12-hour auto-expire — is
-deferred to the auto-expire Future Direction, where it must be designed together with the consuming
-platforms.
+**not** modify those APIs to carry a view-only scope, and — per the product-confirmed framing — it should
+not: VODAR is a policy control on the user, not a technical control on downstream consumers, so a
+consumer neither needs nor should expect to distinguish a view-only user from a fully approved one. There
+is no "over-grant" defect to mitigate here; identical treatment downstream is the intended design.
+(Revocation for a future 12-hour auto-expire is a separate concern handled by the query-time filter in
+that Future Direction; it does not require a consumer-contract scope.)
 
 MVP scope for this section: the VODAR-specific approval message and correct researcher-facing status /
 voting-history display. DAC oversight summaries, institutional records, distinct metrics/compliance
-classification, and any change to the downstream consumer APIs are fast-follow / deferred items.
+classification, and the researcher/DAC console marker (Ticket 7) are DUOS-internal fast-follow items; no
+change to the downstream consumer APIs is planned.
 
 ## Jira-Ready Tickets
 
-Six core tickets: three in `consent`, two in `duos-ui`, and one cross-repo verification ticket. Ticket
+Seven tickets: four in `consent`, two in `duos-ui`, and one cross-repo verification ticket. Ticket
 1 is foundational and unblocks the rest. Tickets 2 and 3 (backend validation and the RADAR rule) can
 proceed in parallel after Ticket 1 and share one seam that should be built once and reused: the "clean
 VODAR" predicate. Ticket 4 (UI form) depends on Ticket 1 for the field/boilerplate contract. Ticket 5
-(UI rule toggle) depends on Ticket 3. Ticket 6 closes the loop.
+(UI rule toggle) depends on Ticket 3. Ticket 6 closes the loop with the end-to-end test. Ticket 7
+(console labeling) is a small DUOS-internal follow-up that depends on Ticket 1's marker and can land any
+time after it. The PR title should carry a risk tag — e.g. `[risk=low]` — per the repo's PR convention.
 
 ### Ticket 1: Add the VODAR data-use flag and canonical boilerplate to the DAR model
 
@@ -290,6 +312,14 @@ RADAR rule arrive in later tickets.
 
 - `consent`: add the field with the same Gson `@SerializedName`/alias conventions as neighboring
   booleans; confirm `DataAccessRequestMapper`/`DataAccessRequestReducer` round-trip it.
+- **OpenAPI (required by the repo's API-change guidance).** The documented API contract must be updated
+  alongside the model, not just the Java/TS types:
+  - Add a `vodar` boolean property to `src/main/resources/assets/schemas/DataAccessRequest.yaml`
+    (alongside `rus`, `hmb`, `methods`, etc.), with a description of the view-only intent and defaulting
+    absent/false.
+  - Add `VODAR_V1` to the `ruleType` enum in `src/main/resources/assets/schemas/DacAutomationRule.yaml`
+    (currently `GRU_V1`, `HMB_V1`). Ticket 3 seeds the rule row and Ticket 5 surfaces it in the UI, but
+    the enum belongs to the contract and is added here so the schema is not left behind.
 - Promote `vodar` to a first-class, indexable column on the DAR (a boolean defaulting false) via a
   Liquibase changeset, with an index. The `data` JSON remains the submission source of truth; the column
   is the query surface for the future goals (expiry sweeps, scope, metrics, DAC oversight). Populate the
@@ -300,8 +330,21 @@ RADAR rule arrive in later tickets.
   check (Ticket 2). This keeps the boilerplate versionable without stranding historical approvals.
 - Decide and document the ownership of the boilerplate string. The frontend populates it; the backend
   must validate against the identical value. Normalize on comparison (trim, collapse internal
-  whitespace/newlines) and pin the exact expected form in a test fixture shared conceptually by both
-  repos.
+  whitespace/newlines) and pin the exact expected form.
+- **Cross-repo drift prevention must be a real cross-repo check, not two copies of the same literal.**
+  Two independently-built repos each asserting `constant == "…same text…"` in their own test suite does
+  **not** prevent drift — either literal can be edited without the other's CI noticing. Choose and
+  document one of these mechanisms so CI actually compares across the repository boundary:
+  - **Single source file fetched in CI (recommended).** Store the canonical boilerplate in one location
+    (a committed `vodar-boilerplate.txt` resource in `consent`, or a tiny shared package). Each repo's
+    CI job fetches the canonical copy (e.g. by raw URL pinned to a ref, or by depending on the shared
+    package) and asserts its local constant equals the fetched canonical value. Drift then fails CI in at
+    least one repo.
+  - **Checksum handshake.** Commit a hash of the canonical string; both repos' CI recompute the hash of
+    their local constant and compare to the committed hash. A change on either side that is not mirrored
+    fails the check.
+  Whichever is chosen, the check must run in CI (Ticket 6) and must be able to fail when only one repo's
+  copy changes.
 - Do not translate `vodar` into `DataUse` in `UseRestrictionConverter` unless Ticket 3's rule needs it;
   the rule reads the DAR payload directly.
 
@@ -311,8 +354,11 @@ RADAR rule arrive in later tickets.
 - A queryable, indexed `vodar` column exists, is populated from the payload by a single writer, and is
   backfilled `false` for existing DARs; the column and JSON never diverge.
 - A single boilerplate constant exists per repo; no duplicated literals.
-- A test asserts the two repos' boilerplate strings are byte-for-byte equal after normalization
-  (contract/fixture test).
+- The OpenAPI schemas are updated: `vodar` is present in `DataAccessRequest.yaml` and `VODAR_V1` is in
+  the `ruleType` enum of `DacAutomationRule.yaml`.
+- A **cross-repo** drift check exists (single fetched source file or checksum handshake — see notes),
+  runs in CI, and demonstrably fails when only one repo's boilerplate copy is changed. Two independent
+  same-literal assertions do not satisfy this criterion.
 - No change to submission, validation, matching, or UI behavior yet.
 
 **Out of scope**
@@ -509,8 +555,10 @@ question is answered Yes.
 
 - Reuse `formFieldChange`/`batchFormFieldChange` and the `ResearchPurposeRow`/`ScrollableTabs` patterns
   already in the form; do not fork a new form component.
-- When VODAR is toggled off, restore normal editing: clear the boilerplate from `rus` (or leave it for
-  the user to edit — confirm with product) and re-enable the hidden Step 2 primary-purpose inputs.
+- When VODAR is toggled off, restore normal editing: **restore the RUS value the user had before
+  selecting VODAR** (captured on toggle-on; empty if there was none) and re-enable the hidden Step 2
+  primary-purpose inputs. The VODAR boilerplate must never be left behind in a non-VODAR DAR — assert
+  this explicitly. Clearing to empty is the acceptable fallback if prior-value capture is impractical.
 - `requiredRusFields` (all of Section 3) stays required under VODAR — do not relax it. Only the hidden
   Step 2 primary-purpose fields become non-required.
 - The Section 3 "any Yes" block is a validation gate, not a silent disable; surface a specific message
@@ -531,7 +579,8 @@ question is answered Yes.
 - Selecting VODAR fills `rus` with the boilerplate and makes it read-only.
 - All Section 3 questions remain visible and required under VODAR.
 - Submitting a VODAR with any Section 3 question Yes is blocked client-side with a tab-routed error.
-- Deselecting VODAR restores the normal form.
+- Deselecting VODAR restores the normal form, restores the pre-VODAR RUS value (empty if there was
+  none), and leaves no VODAR boilerplate text behind in the now-non-VODAR DAR.
 - An auto-approved VODAR reads as view-only in the researcher's status and voting-history views.
 - A VODAR draft saves and reloads with the flag and boilerplate intact.
 - The submitted payload matches what Ticket 2 accepts (verified against a running/mocked backend).
@@ -572,16 +621,34 @@ description explaining that enabling it auto-approves view-only requests for tha
 
 **Implementation notes**
 
-- Confirm the current duos-ui DAC rule-management component and reuse it; VODAR_V1 should appear
-  automatically once seeded (Ticket 3), so this ticket is primarily copy, ordering, and any per-rule
-  UI affordances plus tests. If no such management UI exists yet, split that discovery out and re-scope.
-- Ensure the rule description communicates the view-only, no-DAC-vote semantics clearly to chairs.
+- The management UI already exists: `src/components/dac_bot/DACBotComponent.tsx` and
+  `src/pages/manage_dac/ManageRadar.tsx` in duos-ui. Reuse it; do not build a new surface.
+- **VODAR_V1 will NOT appear correctly on its own.** `DACBotComponent.tsx` maps each `ruleType` to a
+  visual group via `RULE_GROUP_LABELS` (around line 53) and falls back to an **"Other"** group for any
+  unmapped type (`RULE_GROUP_LABELS[rule.ruleType] ?? 'Other'`). VODAR_V1 must be added **explicitly** to
+  `RULE_GROUP_LABELS` (mapped to the `'Automatically approve DARs when...'` group, alongside `GRU_V1` /
+  `HMB_V1` / `GRU_DSV1` / `HMB_DSV1`) or it will render under "Other."
+- The surrounding explanatory copy is currently GRU/HMB-specific. `stripApprovalPrefix` and the
+  `'Automatically approve DARs when...'` framing assume a *primary-purpose* rule ("...when the primary
+  purpose of the research is..."). VODAR approves on view-only intent, not primary purpose, so its
+  displayed description must be updated — likely via a `DESCRIPTION_OVERRIDES` entry for `VODAR_V1` (the
+  same mechanism already used for `AUTO_OPEN_DAR_FOR_ALL_MEMBERS` / `REQUIRE_SO_DAR_APPROVAL`) — so the
+  copy reads correctly for a view-only auto-approval and does not imply a data-use match.
+- If VODAR_V1 warrants its own group heading rather than sharing the primary-purpose group, add it to
+  `RuleGroupLabel`, `GROUP_ORDER`, and `RULE_GROUP_DATA_CY_KEYS` as well; otherwise the existing
+  approval group is fine.
+- Ensure the description communicates the view-only, no-DAC-vote semantics clearly to chairs.
 
 **Acceptance criteria**
 
+- `VODAR_V1` is mapped in `RULE_GROUP_LABELS` and renders under the auto-approval group, **not** under
+  "Other."
+- The displayed description/copy for VODAR_V1 is view-only-specific and does not reuse the GRU/HMB
+  primary-purpose phrasing.
 - A chair can enable and disable VODAR_V1 for their DAC; the toggle persists and audits.
-- The rule is presented with an accurate, chair-facing description.
 - Non-chairs cannot toggle it (enforced by the existing endpoint authorization).
+- A component test asserts VODAR_V1 groups under auto-approval (not "Other") and shows the corrected
+  copy.
 
 **Out of scope**
 
@@ -604,7 +671,7 @@ dataset and is auto-approved with no manual vote and appears in the approved-use
 
 **Description**
 
-Add an end-to-end test (Cypress/Playwright per duos-ui conventions) plus a backend integration test
+Add an end-to-end test (Playwright, per duos-ui conventions) plus a backend integration test
 covering: VODAR selection auto-fills and locks the RUS; the Step 2 primary-purpose inputs are hidden;
 any Section 3 question Yes blocks submission on both client and server; a clean VODAR is auto-approved
 via RADAR when the DAC has the rule enabled; and the approved user surfaces through `approvedUsers`.
@@ -617,11 +684,61 @@ normal pending DAR for manual DAC review (no auto-approval, not rejected).
 - E2E rule-disabled path: a VODAR whose dataset's DAC has not enabled `VODAR_V1` is submitted, is not
   auto-approved, and lands as a normal pending DAR available for manual DAC voting.
 - E2E negative paths pass: Section 3 Yes blocked on client and server; edited RUS rejected.
-- The boilerplate contract test (Ticket 1) is part of CI in both repos.
+- The cross-repo boilerplate drift check (Ticket 1) runs in CI and fails when only one repo's copy is
+  changed — verified by a deliberate one-sided change in a throwaway branch.
 
 **Out of scope**
 
 - Future Directions items.
+
+---
+
+### Ticket 7: Surface the view-only marker in the researcher and DAC consoles
+
+**Issue type:** Story
+
+**Suggested size:** 2 points
+
+**Dependencies:** Ticket 1 (the queryable `vodar` marker)
+
+**Summary**
+
+Add the VODAR marker to the `DarCollectionSummary` projection so the researcher and DAC consoles can
+label a request as view-only, instead of it being indistinguishable from a standard DAR in those lists.
+
+**Description**
+
+The researcher and DAC consoles consume `DarCollectionSummary`
+(`org.broadinstitute.consent.http.models.DarCollectionSummary`, built by `DarCollectionSummaryDAO` /
+`DarCollectionSummaryReducer`, served via `DarCollectionResource`), which currently has **no** `vodar`
+field. Add the marker to that projection — derived from the `vodar` column added in Ticket 1 — and expose
+it so the consoles can render a "view-only" label. This is a DUOS-internal, user-facing labeling
+improvement (see the Communication and Notification Touchpoints section); it does **not** touch the
+downstream approved-users / TDR / Sam contract, which stays intentionally VODAR-agnostic.
+
+**Implementation notes**
+
+- Prefer sourcing the marker from the first-class `vodar` column (Ticket 1) rather than re-parsing the
+  `data` JSON in the summary query.
+- Thread the field through `DarCollectionSummary`, its DAO reducer, and the resource response; add the
+  corresponding field to the duos-ui type consuming the summary and render the label in the console list
+  and detail views.
+- Keep this purely additive — no change to which collections are returned or their ordering.
+
+**Acceptance criteria**
+
+- `DarCollectionSummary` carries a `vodar` marker sourced from the Ticket 1 column.
+- The researcher and DAC consoles display a view-only label for VODAR requests and are unchanged for
+  non-VODAR requests.
+- No change to the downstream approved-users / TDR / Sam APIs.
+- Tests cover the projection field and the console rendering of the label.
+
+**Out of scope**
+
+- Any change to the external consumer contract (intentionally VODAR-agnostic).
+
+> If console labeling cannot be scheduled with the MVP, this ticket may ship as a fast-follow; the
+> Ticket 1 marker is the only hard prerequisite, so deferring it does not block the rest of the feature.
 
 ## Future Directions (deferred, not in MVP)
 
@@ -635,10 +752,12 @@ intentionally out of the MVP scope above. Each should become its own ticket once
   over a state-mutating timer job — no new revocation state is needed for pull consumers. The queryable
   `vodar` marker (Ticket 1) is the prerequisite. Active revocation is only required once a push channel
   exists (below); that combined design is the largest deferred item.
-- **View-only scope on the downstream approved-users / TDR API.** MVP does not modify the outward
-  consumer contract, so consumers cannot distinguish a view-only user from a fully approved one and
-  could over-grant analysis access. Adding a scope to that API must be designed with the consuming
-  platforms and is coupled to the auto-expire revocation channel above.
+- **View-only scope on the downstream approved-users / TDR API — not planned.** Per the product-confirmed
+  framing, VODAR is a policy control on the user, not a technical control on downstream consumers, so the
+  outward consumer contract is intentionally left VODAR-agnostic and there is no "over-grant" gap to
+  close. This item is recorded only because a *future* 12-hour auto-expire needs a revocation channel
+  (see above); that channel, if built, is about expiry timing, not about exposing a view-only scope to
+  consumers.
 - **Add approved users to auth lists (active push).** Today access is pull-based, so VODAR approvals are
   already visible to consumers via `approvedUsers`. An active push to Sam groups / auth domains does not
   exist and would be net-new; only needed if a consumer cannot pull.
@@ -666,7 +785,10 @@ intentionally out of the MVP scope above. Each should become its own ticket once
 ## Definition of Done
 
 - A `vodar` flag and a single canonical VODAR RUS boilerplate exist in both repos, kept in sync by a
-  contract test.
+  **cross-repo** drift check (single fetched source or checksum handshake) that runs in CI and fails when
+  only one repo's copy changes — not two independent same-literal assertions.
+- The OpenAPI schemas are updated: `vodar` in `DataAccessRequest.yaml` and `VODAR_V1` in the `ruleType`
+  enum of `DacAutomationRule.yaml`.
 - `vodar` is a queryable, indexed column populated by a single writer (not only a JSON field), and a
   request's VODAR identity keys off the flag, not the boilerplate text.
 - A well-formed VODAR is always accepted; when its dataset's DAC has not enabled `VODAR_V1` it proceeds
@@ -675,13 +797,17 @@ intentionally out of the MVP scope above. Each should become its own ticket once
   marker) are recorded so the deferred implementation is unblocked.
 - The DAR form renders VODAR as the first data-use option (always available), hides/clears the Step 2
   primary-purpose inputs when selected, auto-fills and locks the RUS, keeps all Section 3 questions
-  required, and blocks submission on any Section 3 Yes.
+  required, and blocks submission on any Section 3 Yes. Deselecting VODAR restores the pre-VODAR RUS and
+  never leaves boilerplate text in a non-VODAR DAR.
 - The backend independently enforces the same VODAR shape invariant on submit and rejects malformed
   VODARs with 400 and no side effects.
 - A `VODAR_V1` RADAR rule auto-approves valid VODARs for DACs that enable it, independent of dataset
   Data Use, gated by the banned-country check, with no manual DAC vote.
-- DAC chairs can enable/disable VODAR_V1 from duos-ui with audit.
-- VODAR approvals surface through the existing pull-based approved-users query.
+- DAC chairs can enable/disable VODAR_V1 from duos-ui with audit; VODAR_V1 is mapped in
+  `RULE_GROUP_LABELS` (not "Other") with view-only-specific copy.
+- VODAR approvals surface through the existing pull-based approved-users query, which is intentionally
+  left VODAR-agnostic (VODAR is a user-facing policy control, not a downstream technical control).
+- The researcher and DAC consoles label VODARs via a `vodar` marker on `DarCollectionSummary` (Ticket 7).
 - End-to-end and unit/integration tests cover the happy path, the ethical-Yes and edited-RUS negative
   paths, and the rule-disabled fall-through to manual DAC review, and pass in CI.
 - Deferred requirements are captured as Future Directions tickets.
@@ -706,10 +832,6 @@ intentionally out of the MVP scope above. Each should become its own ticket once
 
 ### Weaknesses (internal, negative)
 
-- **View-only is not technically enforced in MVP.** The headline promise (view only, no analysis or
-  publication) is an attestation — the downstream TDR/auth API is deliberately unchanged, so a view-only
-  user is indistinguishable from a full-access one to the data plane. The core value is not enforced
-  where the data actually lives.
 - **Strict "all of Section 3 = No"** may push legitimate view-only requesters (e.g. population studies)
   off the fast path; this product rule has not been validated against real requester patterns.
 - **Unverified UI surfaces.** Tickets 4/5 rest on assumptions (the DAC rule-management UI exists; the
@@ -734,13 +856,13 @@ intentionally out of the MVP scope above. Each should become its own ticket once
 
 ### Threats (external, negative)
 
-- **Downstream dependency for the headline features.** True view-only enforcement and 12h auto-expire
-  require Terra/TDR/Sam coordination outside these repos — timelines not controlled by this plan.
+- **Downstream dependency for a future feature.** The 12h auto-expire (a deferred item) would require
+  Terra/TDR/Sam coordination outside these repos — timelines not controlled by this plan. Note this does
+  *not* apply to view-only itself: product has confirmed VODAR is a user-facing policy control, so no
+  downstream enforcement is required for the MVP to be correct.
 - **Governance acceptance is external.** Election-less, attestation-only view access to controlled data
   is a novel access class; IRBs/DACs/data-governance bodies may not accept it, potentially forcing manual
   review anyway. The product-owner paper argues the case, but institutional buy-in is not guaranteed.
-- **Live data-governance risk during the enforcement gap.** For as long as MVP runs before downstream
-  scope lands, consumers can over-grant analysis access to view-only users — a real production exposure.
 - **Regression blast radius.** Refactoring `secondaryConditionChecks` and (later) approval derivation
   touches code that decides existing GRU/HMB approvals and the TDR-consumed approved-users contract — a
   bug there affects production access, not just VODAR.
@@ -751,10 +873,12 @@ intentionally out of the MVP scope above. Each should become its own ticket once
 
 ### Synthesis
 
-The dominant tension: the plan is strong on internal engineering rigor but its headline value
-proposition depends on enforcement it defers to external teams (Weaknesses → Threats). The single most
-consequential decision is therefore framing, not code. Either pull the downstream scope/enforcement
-forward if "view only" must be technically real at launch, or explicitly reframe MVP as
-"attestation-based view access, enforcement to follow" so stakeholders and governance are not surprised.
-The secondary strategic risk is regression in shared approval code, well-mitigated by the
-characterization-tests-first rule but worth flagging to reviewers.
+Product has now resolved what earlier drafts treated as the dominant tension. VODAR is a policy control
+on the user, not a technical control on downstream consumers, so "view only" is *intended* to be an
+attestation and the downstream contract is deliberately VODAR-agnostic — there is no enforcement gap to
+close and no need to pull external-team work forward for the MVP to be correct. What remains is (a)
+governance acceptance of an attestation-based access class, which is external and worth socializing
+early, and (b) the secondary strategic risk of regression in shared approval code
+(`secondaryConditionChecks`, approval derivation), well-mitigated by the characterization-tests-first
+rule but worth flagging to reviewers. The 12h auto-expire is the one deferred feature that still carries
+a genuine downstream dependency, and it is explicitly out of MVP scope.
