@@ -4,7 +4,7 @@ put:
   description: | 
     Admin Only API to update the Dataset's Data Use object from JSON.
     The Data Use must be consistent with the dataset's access management:
-    open datasets have no controlled primary category, while controlled,
+    open datasets have no primary category, while controlled,
     external, and datasets with missing access management have exactly one
     primary category.
     ## Note

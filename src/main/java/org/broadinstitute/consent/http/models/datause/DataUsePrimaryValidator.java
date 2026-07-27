@@ -9,9 +9,10 @@ import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassificati
 public final class DataUsePrimaryValidator {
 
   public static final String VALIDATION_MESSAGE =
-      "Dataset must have exactly one primary data use (open access, or one of:"
+      "Open-access datasets must have no primary data use; controlled, external, and datasets"
+          + " with missing access management must have exactly one primary data use:"
           + " general research use, health/medical/biomedical, populations/origins/ancestry,"
-          + " disease-specific, other)";
+          + " disease-specific, or other";
 
   private DataUsePrimaryValidator() {}
 

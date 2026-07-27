@@ -25,6 +25,7 @@ public class DataUseParser implements ConsentLogger {
           try {
             return gson.fromJson(dataUseString, DataUse.class);
           } catch (Exception _) {
+            // Correlate repeated malformed rows without exposing their raw Data Use JSON.
             String hashPrefix = Hashing.sha256().hashString(s, UTF_8).toString().substring(0, 12);
             logWarn(
                 "Unable to parse data use string (length=%d, sha256Prefix=%s)"

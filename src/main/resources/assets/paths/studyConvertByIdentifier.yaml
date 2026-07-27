@@ -4,7 +4,7 @@ put:
   description: |
     Converts a Dataset into a Study and updates modifiable fields.
     When Data Use is supplied, it must be consistent with the dataset's access
-    management: open datasets have no controlled primary category, while
+    management: open datasets have no primary category, while
     controlled, external, and datasets with missing access management have
     exactly one primary category.
   tags:
