@@ -178,9 +178,19 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       FROM study
           INNER JOIN dataset
               ON study.study_id = dataset.study_id
-          INNER JOIN dataset_property prop
-              ON prop.dataset_id = dataset.dataset_id
-             AND prop.schema_property = 'accessManagement'
+          INNER JOIN LATERAL (
+              SELECT dataset_property.property_value
+              FROM dataset_property
+              WHERE dataset_property.dataset_id = dataset.dataset_id
+                AND LOWER(dataset_property.schema_property)
+                    IN ('accessmanagement', 'consentgroup.accessmanagement')
+              ORDER BY
+                  CASE
+                      WHEN LOWER(dataset_property.schema_property) = 'accessmanagement' THEN 0
+                      ELSE 1
+                  END
+              LIMIT 1
+          ) prop ON TRUE
       WHERE study.study_id IN (<studyIds>)
       GROUP BY study.study_id, study.name
       """)

@@ -3,8 +3,12 @@ package org.broadinstitute.consent.http.models;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.gson.JsonArray;
 import java.util.List;
 import java.util.Set;
@@ -13,9 +17,11 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.util.TestAppender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetTests {
@@ -243,5 +249,32 @@ class DatasetTests {
 
     assertTrue(ds.isDatasetMatch(value, AccessManagement.CONTROLLED));
     assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), AccessManagement.OPEN));
+  }
+
+  @Test
+  void testGetAccessManagementLogsUnparseableValue() {
+    String invalidValue = "unknown";
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(42);
+    DatasetProperty property = new DatasetProperty();
+    property.setSchemaProperty(Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
+    property.setPropertyValue(invalidValue);
+    dataset.setProperties(Set.of(property));
+
+    Logger logger = (Logger) LoggerFactory.getLogger(Dataset.class);
+    TestAppender appender = new TestAppender();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    logger.addAppender(appender);
+    appender.start();
+    try {
+      assertNull(dataset.getAccessManagement());
+      List<String> messages =
+          appender.getLoggedEvents().stream().map(ILoggingEvent::getFormattedMessage).toList();
+      assertTrue(messages.stream().anyMatch(message -> message.contains(invalidValue)));
+      assertTrue(messages.stream().anyMatch(message -> message.contains("dataset id: 42")));
+    } finally {
+      appender.stop();
+      logger.detachAppender(appender);
+    }
   }
 }

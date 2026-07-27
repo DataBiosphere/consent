@@ -12,6 +12,8 @@ import java.util.Set;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 
 public class StudyRegistrationRequestValidator {
 
@@ -290,19 +292,14 @@ public class StudyRegistrationRequestValidator {
   }
 
   protected void validateDataUseConsistency(ConsentGroupRequest cg) {
-    int count = 0;
-    if (AccessManagement.OPEN.equals(cg.getAccessManagement())) count++;
-    if (Boolean.TRUE.equals(cg.getGeneralResearchUse())) count++;
-    if (Boolean.TRUE.equals(cg.getHmb())) count++;
-    if (Boolean.TRUE.equals(cg.getPoa())) count++;
-    if (cg.getDiseaseSpecificUse() != null && !cg.getDiseaseSpecificUse().isEmpty()) count++;
-    if (cg.getOtherPrimary() != null && !cg.getOtherPrimary().isBlank()) count++;
-    if (count != 1) {
-      throw new BadRequestException(
-          "Dataset must have exactly one primary data use (open access, or one of:"
-              + " general research use, health/medical/biomedical, populations/origins/ancestry,"
-              + " disease-specific, other)");
-    }
+    DataUsePrimaryValidator.validate(
+        DataUsePrimaryClassifier.classify(
+            cg.getGeneralResearchUse(),
+            cg.getHmb(),
+            cg.getPoa(),
+            cg.getDiseaseSpecificUse(),
+            cg.getOtherPrimary()),
+        cg.getAccessManagement());
   }
 
   /**

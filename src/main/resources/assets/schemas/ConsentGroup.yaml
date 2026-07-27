@@ -3,8 +3,8 @@ description: |
   Each Consent Group is translated into a separate Dataset. `consentGroupName`
   and `numberOfParticipants` are required when creating a new consent group —
   either via registration create, or by adding a new consent group (no
-  `datasetId`) during a study update. Exactly one primary data use must be
-  set: `accessManagement: open`, or exactly one of `generalResearchUse`,
+  `datasetId`) during a study update. Open-access datasets must have no primary
+  data use. All other datasets must have exactly one of `generalResearchUse`,
   `hmb`, `poa`, `diseaseSpecificUse` (non-empty), or `otherPrimary`.
   `dataAccessCommitteeId` is required unless `accessManagement` is `open` or
   `external` — a missing `accessManagement` is treated the same as

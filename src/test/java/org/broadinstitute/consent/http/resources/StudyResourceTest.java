@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -70,6 +72,30 @@ class StudyResourceTest extends AbstractTestHelper {
     try (var response =
         resource.updateCustodians(duosUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testConvertToStudyRejectsInvalidJsonWithoutEchoingPayload() {
+    String submittedConversion = "sensitive invalid json";
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findDatasetByIdentifier(user, "DUOS-000001")).thenReturn(new Dataset());
+
+    try (var response = resource.convertToStudy(duosUser, "DUOS-000001", submittedConversion)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      assertFalse(((Error) response.getEntity()).message().contains(submittedConversion));
+      verify(datasetService, never()).convertDatasetToStudy(any(), any(), any());
+    }
+  }
+
+  @Test
+  void testConvertToStudyRejectsJsonNull() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findDatasetByIdentifier(user, "DUOS-000001")).thenReturn(new Dataset());
+
+    try (var response = resource.convertToStudy(duosUser, "DUOS-000001", "null")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      verify(datasetService, never()).convertDatasetToStudy(any(), any(), any());
     }
   }
 

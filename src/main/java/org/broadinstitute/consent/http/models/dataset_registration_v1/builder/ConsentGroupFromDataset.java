@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.accessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.fileTypes;
@@ -21,7 +20,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -35,10 +33,8 @@ public class ConsentGroupFromDataset {
       consentGroup.setDatasetId(dataset.getDatasetId());
       consentGroup.setDatasetIdentifier(dataset.getDatasetIdentifier());
       consentGroup.setConsentGroupName(dataset.getName());
-      String accessManagementVal = findStringDSPropValue(dataset.getProperties(), accessManagement);
-      if (Objects.nonNull(accessManagementVal)) {
-        consentGroup.setAccessManagement(AccessManagement.fromValue(accessManagementVal));
-      }
+      Optional.ofNullable(dataset.getAccessManagement())
+          .ifPresent(consentGroup::setAccessManagement);
       if (dataset.getDataUse() != null) {
         DataUse dataUse = dataset.getDataUse();
         consentGroup.setGeneralResearchUse(dataUse.getGeneralUse());

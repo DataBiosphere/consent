@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -294,6 +295,7 @@ public class DatasetService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new IllegalArgumentException("Admin use only");
     }
+    DataUsePrimaryValidator.validate(dataUse, d.getAccessManagement());
     String translation = ontologyService.translateDataUse(dataUse, DataUseTranslationType.DATASET);
     datasetServiceDAO.updateDatasetDataUse(user, d, dataUse, translation);
     elasticSearchService.synchronizeDatasetInESIndex(d, false);
@@ -470,6 +472,13 @@ public class DatasetService implements ConsentLogger {
   public Study convertDatasetToStudy(User user, Dataset dataset, StudyConversion studyConversion) {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new NotAuthorizedException("Admin use only");
+    }
+    if (studyConversion == null) {
+      throw new BadRequestException("Study conversion is required");
+    }
+    // StudyConversion has patch semantics: an omitted Data Use preserves the persisted value.
+    if (studyConversion.getDataUse() != null) {
+      DataUsePrimaryValidator.validate(studyConversion.getDataUse(), dataset.getAccessManagement());
     }
     // Study updates:
     Integer studyId = updateStudyFromConversion(user, dataset, studyConversion);

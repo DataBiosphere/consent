@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -88,8 +89,13 @@ public class StudyResource extends Resource {
       // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
       // investigation
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
+      if (studyConversion == null) {
+        throw new BadRequestException("Study conversion JSON must be an object");
+      }
       Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
       return Response.ok(study).build();
+    } catch (JsonSyntaxException _) {
+      return createExceptionResponse(new BadRequestException("Invalid study conversion JSON"));
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

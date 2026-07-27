@@ -3,6 +3,10 @@ put:
   operationId: apiDatasetIdDatausePut
   description: | 
     Admin Only API to update the Dataset's Data Use object from JSON.
+    The Data Use must be consistent with the dataset's access management:
+    open datasets have no primary category, while controlled,
+    external, and datasets with missing access management have exactly one
+    primary category.
     ## Note
     This endpoint is restricted to updating the data use object only and does
     not perform any logical checks to determine if match results for existing 
@@ -34,7 +38,7 @@ put:
     304:
       description: Not modified
     400:
-      description: Bad Request (invalid input)
+      description: Bad Request (invalid JSON, JSON null, or inconsistent primary Data Use)
     401:
       description: Unauthorized.
     404:
