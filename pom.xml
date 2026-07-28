@@ -34,6 +34,12 @@
     <sonar.organization>broad-databiosphere</sonar.organization>
     <sonar.projectKey>DataBiosphere_consent</sonar.projectKey>
     <sonar.projectName>consent</sonar.projectName>
+
+    <!-- JUnit tags excluded from `mvn test`. Empty by default so a local or IDE run executes
+         everything; the `ci` profile below adds `elasticsearch` so the Elasticsearch container
+         tests do not run automatically in CI. Override with -DexcludedTestGroups=<tags> (or an
+         empty value) on the command line, which wins over the profile. -->
+    <excludedTestGroups/>
   </properties>
 
   <build>
@@ -65,6 +71,7 @@
             -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
             -Xshare:off
           </argLine>
+          <excludedGroups>${excludedTestGroups}</excludedGroups>
         </configuration>
       </plugin>
 
@@ -418,6 +425,30 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <!--
+      Activated automatically by GitHub Actions, which sets CI=true in every job. The
+      Elasticsearch container tests are tagged `elasticsearch` and start up to three
+      Elasticsearch containers; they exist to qualify a local/dev Elasticsearch version, not to
+      gate a build, so they are excluded from the automatic CI test run.
+
+      To run them anyway — in CI or locally with CI set — pass -DexcludedTestGroups= on the
+      command line; a command-line property overrides this profile.
+    -->
+    <profile>
+      <id>ci</id>
+      <activation>
+        <property>
+          <name>env.CI</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <excludedTestGroups>elasticsearch</excludedTestGroups>
+      </properties>
+    </profile>
+  </profiles>
 
   <dependencyManagement>
     <dependencies>

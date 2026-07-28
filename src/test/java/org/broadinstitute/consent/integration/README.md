@@ -72,7 +72,7 @@ Four test classes assert all of it, so upgrading Elasticsearch is a one-line cha
 2. Run the suite:
 
    ```shell
-   ./mvnw test -Dtest='ElasticSearch*Test'
+   ./mvnw test -Dgroups=elasticsearch
    ```
 
 3. Update `config/docker-compose.yaml`, the `elasticsearch-rest-client` version in `pom.xml`, and
@@ -99,11 +99,39 @@ properties — the trial cannot be un-started, and `xpack.security.enabled` cann
 runtime. Classes that only need a secured cluster with a trial license should extend
 `ElasticSearchContainerTests` and add no container of their own.
 
+## Which of these run in CI
+
+The Postgres-backed `ContainerTests` subclasses run in CI as part of the ordinary `mvn test`.
+
+The four Elasticsearch classes do not. They carry the JUnit tag `elasticsearch`, and the `ci`
+profile in `pom.xml` — activated by the `CI=true` GitHub Actions sets in every job — passes that tag
+to surefire's `excludedGroups`. They start up to three Elasticsearch containers and exist to qualify
+an Elasticsearch version or the Epic D security behavior, which is a deliberate act, not something
+every PR should pay for. The tag sits on `ElasticSearchContainerTests` as well, so a new subclass
+inherits the exclusion.
+
+Locally, and in the IDE, nothing is excluded — `excludedTestGroups` defaults to empty. To exclude
+them locally as CI does, or to include them in CI, override the property on the command line, which
+takes precedence over the profile:
+
+```shell
+mvn clean test -DexcludedTestGroups=elasticsearch   # skip them, as CI does
+mvn clean test -DexcludedTestGroups=                # run everything, even with CI set
+```
+
 ## Running via Maven
 
 ```shell
+# every integration test, Postgres- and Elasticsearch-backed alike
 mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
+
+# only the Elasticsearch classes
+mvn clean test -Dgroups=elasticsearch
 ```
+
+Prefer `-Dgroups=elasticsearch` over a name pattern such as `-Dtest='ElasticSearch*Test'`: the
+pattern also picks up the unrelated `ElasticSearchServiceTest` and `ElasticSearchSupportTest` unit
+tests, and it silently matches nothing new when a class is added under a different name.
 
 ## Running from the IDE
 

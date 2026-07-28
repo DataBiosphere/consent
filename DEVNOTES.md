@@ -164,9 +164,13 @@ upgrade does not need to be re-verified by hand:
 
 ```bash
 # 1. bump ElasticSearchTestCluster.IMAGE (the only version pin in the test tree)
-./mvnw test -Dtest='ElasticSearch*Test'
+./mvnw test -Dgroups=elasticsearch
 # 2. then match it here: config/docker-compose.yaml, pom.xml (elasticsearch-rest-client), this file
 ```
+
+These four classes carry the JUnit tag `elasticsearch` and are **not** run by CI — see
+"How they run in CI" below. Running them is a deliberate step when changing the Elasticsearch
+version or the Epic D security work, not something a build does for you.
 
 See "Qualifying a new Elasticsearch version" in
 [the integration test README](src/test/java/org/broadinstitute/consent/integration/README.md).
@@ -252,6 +256,20 @@ The GitHub Actions workflow at `.github/workflows/coverage.yaml` runs
 integration tests together via Testcontainers — no additional CI configuration
 is needed.
 
+The exception is the Elasticsearch container tests. They are tagged
+`elasticsearch`, and the `ci` profile in `pom.xml` — activated by the `CI=true`
+that GitHub Actions sets in every job — feeds that tag to surefire's
+`excludedGroups`, so they do not run in CI. They start up to three Elasticsearch
+containers and exist to qualify a local Elasticsearch version rather than to
+gate the build; see "Upgrading the local Elastic Search version" above.
+
+To run them in CI anyway (a workflow edit, or a `workflow_dispatch` job), pass an
+empty value on the command line, which overrides the profile:
+
+```bash
+./mvnw clean jacoco:prepare-agent test jacoco:report -DexcludedTestGroups=
+```
+
 #### Running integration tests locally
 
 **Integration tests only:**
@@ -265,6 +283,9 @@ mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
 ```bash
 mvn clean test
 ```
+
+Note that locally this *also* runs the Elasticsearch container tests, which CI
+skips. To match CI exactly, add `-DexcludedTestGroups=elasticsearch`.
 
 **From the IDE:** run or debug any test class in the `integration` package
 directly — `DAOTestHelper` activates automatically and provides the database.

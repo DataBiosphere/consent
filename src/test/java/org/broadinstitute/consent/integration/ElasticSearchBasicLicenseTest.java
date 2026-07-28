@@ -14,6 +14,7 @@ import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
@@ -34,6 +35,7 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
  *
  * <p>See {@link ElasticSearchTestCluster} for the version pin and the shared probe payloads.
  */
+@Tag("elasticsearch")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ElasticSearchBasicLicenseTest {
 
@@ -51,19 +53,18 @@ class ElasticSearchBasicLicenseTest {
     CLIENT = ElasticSearchSupport.createRestClient(CONFIGURATION);
   }
 
+  /**
+   * Recreates rather than creates the index: the container and its indices survive between re-runs
+   * of this class in one JVM, which an IDE does routinely, and a plain create would fail the second
+   * time with {@code resource_already_exists_exception}.
+   */
   @BeforeAll
   static void seedIndex() throws Exception {
-    CLIENT.performRequest(
-        ElasticSearchTestCluster.jsonRequest(
-            "PUT", "/" + INDEX, ElasticSearchTestCluster.DATASET_MAPPING));
-    CLIENT.performRequest(
-        ElasticSearchTestCluster.jsonRequest(
-            "PUT", "/" + INDEX + "/_doc/1?refresh=true", ElasticSearchTestCluster.PUBLIC_DOCUMENT));
-    CLIENT.performRequest(
-        ElasticSearchTestCluster.jsonRequest(
-            "PUT",
-            "/" + INDEX + "/_doc/2?refresh=true",
-            ElasticSearchTestCluster.PRIVATE_DOCUMENT));
+    ElasticSearchTestCluster.recreateIndex(CLIENT, INDEX, ElasticSearchTestCluster.DATASET_MAPPING);
+    ElasticSearchTestCluster.indexDocument(
+        CLIENT, INDEX, "1", ElasticSearchTestCluster.PUBLIC_DOCUMENT);
+    ElasticSearchTestCluster.indexDocument(
+        CLIENT, INDEX, "2", ElasticSearchTestCluster.PRIVATE_DOCUMENT);
   }
 
   /** A fresh container self-generates an active basic license — no license file is needed. */

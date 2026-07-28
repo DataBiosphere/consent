@@ -9,9 +9,9 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
@@ -212,18 +212,62 @@ final class ElasticSearchTestCluster {
   }
 
   static int status(RestClient client, Request request) throws Exception {
-    return client.performRequest(request).getStatusLine().getStatusCode();
+    Response response = client.performRequest(request);
+    // The entity is unused here, but it still has to be consumed — see parse(Response).
+    EntityUtils.consumeQuietly(response.getEntity());
+    return response.getStatusLine().getStatusCode();
   }
 
+  /**
+   * Reads a response body as JSON.
+   *
+   * <p>{@link EntityUtils} rather than a raw {@code getEntity().getContent()} read: the client
+   * {@code ElasticSearchSupport} builds is backed by Apache HttpClient with a pooled connection
+   * manager, and a response stream that is read but never closed holds its connection out of the
+   * pool. Tests that issue many requests would then block waiting for a lease and fail
+   * intermittently on timeout. Every {@code EntityUtils} call below closes the stream, releasing
+   * the connection.
+   */
   static JsonObject parse(Response response) throws IOException {
-    String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+    String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
     return JsonParser.parseString(body).getAsJsonObject();
+  }
+
+  /** Executes a request whose response body is not needed, consuming the entity. */
+  static void execute(RestClient client, Request request) throws IOException {
+    EntityUtils.consumeQuietly(client.performRequest(request).getEntity());
+  }
+
+  /**
+   * Drops {@code index} if it exists and recreates it with the supplied mapping body.
+   *
+   * <p>The drop is what makes seeding idempotent. A cluster outlives a single test class — it is
+   * shared per JVM here and left running by an IDE between re-runs — so a plain create would fail
+   * with {@code resource_already_exists_exception} the second time. Recreating also guarantees the
+   * index is empty, rather than carrying documents another class indexed.
+   */
+  static void recreateIndex(RestClient client, String index, String mappingJson)
+      throws IOException {
+    try {
+      execute(client, new Request("DELETE", "/" + index));
+    } catch (ResponseException e) {
+      if (e.getResponse().getStatusLine().getStatusCode() != 404) {
+        throw e;
+      }
+    }
+    execute(client, jsonRequest("PUT", "/" + index, mappingJson));
+  }
+
+  /** Indexes a document and refreshes so it is immediately searchable. */
+  static void indexDocument(RestClient client, String index, String id, String documentJson)
+      throws IOException {
+    execute(
+        client, jsonRequest("PUT", "/%s/_doc/%s?refresh=true".formatted(index, id), documentJson));
   }
 
   /** The response body of a failed request, for asserting on Elasticsearch's error text. */
   static String bodyOf(ResponseException exception) throws IOException {
-    return IOUtils.toString(
-        exception.getResponse().getEntity().getContent(), StandardCharsets.UTF_8);
+    return EntityUtils.toString(exception.getResponse().getEntity(), StandardCharsets.UTF_8);
   }
 
   /** The version tag of {@link #IMAGE}, which the cluster is expected to report back. */

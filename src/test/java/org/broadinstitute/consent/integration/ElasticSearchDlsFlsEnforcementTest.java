@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import org.elasticsearch.client.Request;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -18,16 +19,8 @@ import org.junit.jupiter.api.Test;
  * B) and the auth context resolver exists (Epic C), Ticket D-5's tests assert the same way against
  * generated DLS queries and FLS grants instead of the literal role descriptor used here.
  */
+@Tag("elasticsearch")
 class ElasticSearchDlsFlsEnforcementTest extends ElasticSearchContainerTests {
-
-  private static final String MAPPING =
-      """
-      {"mappings":{"properties":{
-        "datasetId":{"type":"keyword"},
-        "datasetName":{"type":"keyword"},
-        "secretField":{"type":"keyword"},
-        "accessPolicy":{"properties":{"publicVisibility":{"type":"boolean"}}}}}}
-      """;
 
   /** Role descriptor restricting reads to public documents and to two granted fields. */
   private static final String PUBLIC_ONLY_ROLE =
@@ -37,23 +30,16 @@ class ElasticSearchDlsFlsEnforcementTest extends ElasticSearchContainerTests {
         "field_security":{"grant":["datasetId","datasetName"]}}]}}
       """;
 
+  /**
+   * Seeds the shared mapping and documents from {@link ElasticSearchTestCluster}, the same ones
+   * {@link ElasticSearchBasicLicenseTest} uses, so the two license tiers differ only in the
+   * license.
+   */
   @BeforeAll
   static void seedIndex() throws Exception {
-    recreateIndex(datasetIndex(), MAPPING);
-    indexDocument(
-        datasetIndex(),
-        "1",
-        """
-        {"datasetId":"DS-1","datasetName":"public dataset",
-         "secretField":"MUST-NOT-BE-RETURNED","accessPolicy":{"publicVisibility":true}}
-        """);
-    indexDocument(
-        datasetIndex(),
-        "2",
-        """
-        {"datasetId":"DS-2","datasetName":"private dataset",
-         "secretField":"MUST-NOT-BE-RETURNED","accessPolicy":{"publicVisibility":false}}
-        """);
+    recreateIndex(datasetIndex(), ElasticSearchTestCluster.DATASET_MAPPING);
+    indexDocument(datasetIndex(), "1", ElasticSearchTestCluster.PUBLIC_DOCUMENT);
+    indexDocument(datasetIndex(), "2", ElasticSearchTestCluster.PRIVATE_DOCUMENT);
   }
 
   @Test

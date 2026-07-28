@@ -5,8 +5,8 @@ import org.apache.http.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
-import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.Tag;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 /**
@@ -38,7 +38,11 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
  * therefore activates the 30-day trial license before any test runs. Note that {@code POST
  * /_security/api_key} accepts a DLS/FLS role descriptor even on a basic license — the rejection
  * surfaces later, on the search request.
+ *
+ * <p>The {@code elasticsearch} tag is inherited by every subclass and keeps these tests out of the
+ * automatic CI run; see {@code excludedTestGroups} in {@code pom.xml}.
  */
+@Tag("elasticsearch")
 public abstract class ElasticSearchContainerTests {
 
   /**
@@ -105,24 +109,13 @@ public abstract class ElasticSearchContainerTests {
    * known-empty index in a cluster shared with other test classes.
    */
   protected static void recreateIndex(String index, String mappingJson) throws Exception {
-    try {
-      CLIENT.performRequest(new Request("DELETE", "/" + index));
-    } catch (ResponseException e) {
-      if (e.getResponse().getStatusLine().getStatusCode() != 404) {
-        throw e;
-      }
-    }
-    Request create = new Request("PUT", "/" + index);
-    create.setEntity(jsonEntity(mappingJson));
-    CLIENT.performRequest(create);
+    ElasticSearchTestCluster.recreateIndex(CLIENT, index, mappingJson);
   }
 
   /** Indexes a document and refreshes so it is immediately searchable. */
   protected static void indexDocument(String index, String id, String documentJson)
       throws Exception {
-    Request request = new Request("PUT", "/%s/_doc/%s?refresh=true".formatted(index, id));
-    request.setEntity(jsonEntity(documentJson));
-    CLIENT.performRequest(request);
+    ElasticSearchTestCluster.indexDocument(CLIENT, index, id, documentJson);
   }
 
   /**

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import org.elasticsearch.client.Request;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
  * DLS/FLS enforcement of documents and fields. To qualify a new version, bump {@link
  * ElasticSearchTestCluster#IMAGE} and run all four.
  */
+@Tag("elasticsearch")
 class ElasticSearchSecurityBaselineTest extends ElasticSearchContainerTests {
 
   /**

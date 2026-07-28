@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
@@ -25,6 +26,7 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
  * <p>See {@link ElasticSearchTestCluster} for the version pin, and {@link
  * ElasticSearchSecurityBaselineTest} for the security-enabled counterparts.
  */
+@Tag("elasticsearch")
 class ElasticSearchSecurityDisabledTest {
 
   /** Single-node container with security off, matching the compose default. */
