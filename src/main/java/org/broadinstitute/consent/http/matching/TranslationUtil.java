@@ -37,7 +37,8 @@ public class TranslationUtil implements ConsentLogger {
       "Future use for population origins or ancestry research is prohibited. [POA]";
   public static final String NMDS =
       "Data use for methods development research ONLY within the bounds of other data use limitations. [NMDS]";
-  public static final String NCU = "Commercial use prohibited. [NCU]";
+  public static final String NPU =
+      "Use is limited to non-profit and non-commercial research. [NPU]";
   protected static final String OTHER = "Other restrictions: %s.";
   protected static final String SECONDARY_OTHER = "Secondary other restrictions: %s.";
   protected static final String ETHICS_APPROVAL = "Local ethics committee approval is required.";
@@ -110,7 +111,7 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     if (BooleanUtils.isTrue(dataUse.getNonProfitUse())) {
-      summary.add(NCU);
+      summary.add(NPU);
     }
 
     if (StringUtils.isNotBlank(dataUse.getOther())) {
@@ -212,7 +213,7 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     if (BooleanUtils.isTrue(dataUse.getNonProfitUse())) {
-      secondary.add(new DataUseTerm("NCU", NCU));
+      secondary.add(new DataUseTerm("NPU", NPU));
     }
 
     if (StringUtils.isNotBlank(dataUse.getSecondaryOther())) {

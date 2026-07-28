@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.matching;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -83,6 +84,14 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertNotNull(translation);
     assertTrue(translation.contains(TranslationUtil.PURPOSE_HEADER));
     assertTrue(translation.contains("[GRU]"));
+  }
+
+  @Test
+  void testTranslateNonProfitUse() {
+    DataUse dataUse = new DataUseBuilder().setNonProfitUse(true).build();
+    String translation = service.translate(dataUse, DataUseTranslationType.DATASET);
+    assertTrue(translation.contains(TranslationUtil.NPU));
+    assertFalse(translation.contains("[NCU]"));
   }
 
   @Test
@@ -294,14 +303,13 @@ class TranslationUtilTest extends AbstractTestHelper {
   }
 
   @Test
-  void testTranslateSummaryNCU() {
+  void testTranslateSummaryNPU() {
     DataUse dataUse = new DataUseBuilder().setNonProfitUse(true).build();
     DataUseSummary summary = service.translateSummary(dataUse);
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
-    assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("NCU"));
-    assertTrue(
-        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NCU));
+    assertEquals("NPU", summary.getSecondary().getFirst().getCode());
+    assertEquals(TranslationUtil.NPU, summary.getSecondary().getFirst().getDescription());
   }
 
   @Test
