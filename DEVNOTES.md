@@ -71,41 +71,105 @@ and the defaults should be correct.
 
 ### Developing with a local Elastic Search instance:
 
-Update the compose file to include a new section for an ES instance:
-
+ ```
+ elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.4
+    ports:
+      - "9200:9200"
+    container_name: elastic
+    volumes:
+      - elastic:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 4gb
+    environment:
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      # X-Pack Security is OFF by default so the default `docker compose up` behaves exactly as
+      # before. Epics A-C and E (application-layer fallback) need no security. To work on Epic D
+      # (native DLS/FLS), start the stack with security on:
+      #
+      #   ES_SECURITY_ENABLED=true docker-compose -p consent -f config/docker-compose.yaml up
+      #
+      # DLS/FLS is a Platinum feature, so also activate the 30-day trial license once per cluster:
+      #
+      #   curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
+      #
+      # See DEVNOTES.md ("Developing with a local Elastic Search instance") for the full workflow.
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      # Bootstraps the `elastic` superuser password when security is on; ignored when it is off.
+      # Must match authUser/authPassword in consent.yaml.
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-devpassword}
+      # Correct in both modes: transport SSL is only required for multi-node clusters.
+      - xpack.security.transport.ssl.enabled=false
+      # Keep the HTTP layer on plain http so consent's `protocol: http` client keeps working.
+      - xpack.security.http.ssl.enabled=false
 ```
-es:
-  image: docker.elastic.co/elasticsearch/elasticsearch:5.5.0
-  ports:
-    - "9200:9200"
-  volumes:
-    - ../data:/usr/share/elasticsearch/data
-  environment:
-    transport.host: 127.0.0.1
-    xpack.security.enabled: "false"
-    http.host: 0.0.0.0
-```
-
-Add a line to the `app` section to link to that:
-
-```
-  links:
-    - es:es
-```
-
-Finally, update the servers in consent.conf to point to this instance:
-
-```
-elasticSearch:
-  servers:
-    - es
-  indexName: local-ontology    
-  datasetIndexName: datasetIName
-```
-
-Consent will now point to a local ES instance.
 I also suggest changing the default bucket location so uploaded
 ontology files do not interfere with other dev environments.
+
+#### Running local Elastic Search with security enabled
+
+By default the local cluster runs with `xpack.security.enabled=false`: requests are
+unauthenticated, which is what most work needs. Only work on native Elasticsearch document- and
+field-level security (DLS/FLS) requires security to be on. Application-layer authorization work
+does not — it never touches Elasticsearch security.
+
+Security is env-var gated in the compose file, so the default stays off for everyone else:
+
+```bash
+mvn clean compile
+ES_SECURITY_ENABLED=true docker-compose -p consent -f config/docker-compose.yaml up
+```
+
+That bootstraps the `elastic` superuser with the password from `ELASTIC_PASSWORD`
+(default `devpassword`). Override it with
+`ES_SECURITY_ENABLED=true ELASTIC_PASSWORD=<your-password> docker-compose ... up`, and keep
+`elasticSearch.authUser`/`authPassword` in `config/consent.yaml` in sync.
+
+The HTTP layer stays on plain `http` in both modes, so consent's `elasticSearch.protocol: http`
+needs no change. `xpack.security.transport.ssl.enabled=false` is correct even with security
+enabled — transport SSL is only required for multi-node clusters.
+
+#### Enabling DLS/FLS locally (trial license required)
+
+Enabling security is necessary but **not sufficient** for DLS/FLS. The Docker image self-generates
+a **basic** license, and DLS/FLS is a Platinum/Enterprise feature. With a basic license, creating a
+role or API key that carries a DLS `query` or an FLS `field_security` grant fails closed with
+HTTP 403 `current license is non-compliant for [field and document level security]`. Note that
+`POST /_security/api_key` *accepts* such a role descriptor at creation time — the rejection happens
+later, on the search request.
+
+Activate the 30-day trial license once the secured cluster is up:
+
+```bash
+curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
+curl -u elastic:devpassword 'localhost:9200/_license'   # => "type": "trial"
+```
+
+Caveats:
+
+- A trial can be started **once per cluster** (`GET /_license/trial_status` reports eligibility).
+  After 30 days the license reverts to basic and DLS/FLS stops working. To get another trial, wipe
+  the cluster's data volume: `docker-compose -p consent -f config/docker-compose.yaml down` then
+  `docker volume rm consent_elastic` (this deletes local indices — they must be re-indexed).
+- Authentication, role-based access control, and API keys all work fine on the basic license. Only
+  the DLS/FLS grants require trial/Platinum.
+
+#### Upgrading the local Elastic Search version
+
+Everything described above — the two security modes, the license gating, and that an unenforceable
+DLS/FLS grant fails closed instead of returning unrestricted data — is asserted by tests, so an
+upgrade does not need to be re-verified by hand:
+
+```bash
+# 1. bump ElasticSearchTestCluster.IMAGE (the only version pin in the test tree)
+./mvnw test -Dtest='ElasticSearch*Test'
+# 2. then match it here: config/docker-compose.yaml, pom.xml (elasticsearch-rest-client), this file
+```
+
+See "Qualifying a new Elasticsearch version" in
+[the integration test README](src/test/java/org/broadinstitute/consent/integration/README.md).
 
 ## How To...
 

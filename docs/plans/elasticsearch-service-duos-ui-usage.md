@@ -520,6 +520,150 @@ layer and requires no Elasticsearch configuration changes.
 **Dependencies**: None (can run in parallel with A-1; informs D-2 and D-5 test setup).
 **Size**: S
 
+##### A-0 Outcome
+
+**Decision: Option B** — security is env-var gated in `config/docker-compose.yaml`, default off.
+Findings below were verified empirically against `elasticsearch:9.4.4` using throwaway containers
+running the exact env block from `config/docker-compose.yaml`. (Originally established on 9.3.3 and
+re-verified on 9.4.4 when the pin moved; every finding reproduced unchanged, including the exact
+error strings. The only observed delta was the bundled Lucene version, 10.3.2 → 10.4.0.)
+
+These probes are no longer a manual exercise: they are asserted by `ElasticSearchSecurityBaselineTest`,
+`ElasticSearchBasicLicenseTest`, `ElasticSearchSecurityDisabledTest` and
+`ElasticSearchDlsFlsEnforcementTest`. Requalifying a new Elasticsearch version means bumping
+`ElasticSearchTestCluster.IMAGE` and running `./mvnw test -Dtest='ElasticSearch*Test'` — see
+"Qualifying a new Elasticsearch version" in `src/test/java/org/broadinstitute/consent/integration/README.md`.
+
+**Local vs. cloud delta**
+
+| Dimension | Local (`config/docker-compose.yaml`) | Cloud / production |
+| --- | --- | --- |
+| Version | ES 9.4.4, `build_flavor: default`, Lucene 10.4.0 | **Unconfirmed — A-1 must establish this.** Not determinable from this repo; production config is rendered outside it. |
+| Topology | `discovery.type=single-node` | Multi-node (historic dev hostnames `elasticsearch5a{1,2,3}.dsde-dev` are commented out in `config/consent.yaml`) |
+| License | **basic**, self-generated (`GET /_license` → `"type": "basic"`) | Unconfirmed. Determines whether Epic D is possible at all — see below. |
+| Security | `xpack.security.enabled=false` → all requests unauthenticated | Unconfirmed; `ElasticSearchConfiguration.cloudId` support implies Elastic Cloud is a supported deployment, which always has X-Pack Security |
+| Transport SSL | `false` (correct for single-node) | Required for multi-node |
+| HTTP protocol | plain `http`, port 9200 (`consent.yaml` has no `protocol`, so the `"http"` default applies) | Presumably `https`/443 via `protocol`/`port` config keys |
+| Credential model | none by default; single shared `authUser`/`authPassword` when security is on | Single shared `authUser`/`authPassword` (`ElasticSearchSupport.createRestClient`), or `cloudId` |
+| Client | `org.elasticsearch.client:elasticsearch-rest-client` 9.4.4 (pom.xml L872-876) | same |
+
+**Blocking finding for Epic D — DLS/FLS requires a non-basic license**
+
+The premise that "ES 9.x ships with X-Pack Security built in and fully supports DLS/FLS when
+enabled" is only half right. Enabling security is necessary but not sufficient. Verified against
+9.4.4:
+
+- Basic license (the image default), security enabled: `PUT /_security/role` with a DLS `query`
+  **or** an FLS `field_security` grant → HTTP 403,
+  `current license is non-compliant for [field and document level security]`.
+- `POST /_security/api_key` with an inline DLS/FLS role descriptor **succeeds** on basic — the
+  license check is deferred. The subsequent search fails 403 with
+  `indices_with_dls_or_fls: dataset`. It fails closed (no silent bypass), but a naive
+  D-2 implementation would look correct at credential-creation time and only break at query time.
+- After `POST /_license/start_trial?acknowledge=true` (30-day trial, Platinum-equivalent): DLS/FLS
+  role creation succeeds, and a search with a DLS+FLS API key correctly returned only the
+  `publicVisibility: true` document with `_source` reduced to the granted fields.
+- Authentication, RBAC, and API keys themselves work on basic. Only the DLS/FLS grants do not.
+
+Consequences:
+- **A-1 must confirm the production license tier, not just the version and security state.** If
+  production is basic, Epic D is not viable and Epic E becomes the only path — this is a stronger
+  gate than A-1's current acceptance criteria capture.
+- Local Epic D work runs on the 30-day trial. A trial can be started only once per cluster
+  (`GET /_license/trial_status`); after expiry the `consent_elastic` volume must be wiped to obtain
+  another. Document this in D-5's test setup — CI cannot rely on a long-lived trial.
+
+**Verified compose behavior (both modes)**
+
+The `elastic` service now uses `xpack.security.enabled=${ES_SECURITY_ENABLED:-false}`,
+`ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-devpassword}`, and explicit
+`xpack.security.http.ssl.enabled=false`. Confirmed with the exact env block:
+
+| Mode | Unauthenticated | Authenticated | HTTPS on 9200 |
+| --- | --- | --- | --- |
+| default (`ES_SECURITY_ENABLED` unset) | 200 | 200 (credentials tolerated) | not served |
+| `ES_SECURITY_ENABLED=true` | 401 | 200 over plain `http` | not served |
+
+`xpack.security.http.ssl.enabled=false` keeps the HTTP layer plain, so `protocol: http` in
+`consent.yaml` needs no change and no TLS trust configuration is required locally.
+
+`config/consent.yaml` now carries `authUser: elastic` / `authPassword: devpassword`
+unconditionally rather than requiring a per-mode edit: the Apache HttpClient credentials provider
+in `createRestClient` only sends credentials in response to a 401 challenge, which a
+security-disabled cluster never issues. Verified: security-disabled ES returns 200 for a request
+carrying basic-auth credentials.
+
+**Epic E — explicitly no changes needed**
+
+Epic E (`SearchQueryMediator`, mandatory filter injection, response field allowlist) runs entirely
+in the application layer against the unauthenticated default cluster. Developers working only on
+Epic E need **no** `docker-compose.yaml` change, no `ELASTIC_PASSWORD`, no trial license, and no
+`consent.yaml` credentials. The same is true of Epics A, B, C, and G. This is why Option A
+(security on by default for everyone) was rejected: it would impose credential setup and a
+one-shot trial license on the majority of the work for the benefit of one epic.
+
+**Note: `config/` is not version-controlled**
+
+`/config/` is git-ignored (`.gitignore` L149) and rendered by the Broad-internal
+`firecloud-develop/configure.rb` (DEVNOTES.md "Render Configs"). The ticket's framing of
+"committed defaults" does not apply — there is no committed compose file in this repo. The changes
+above were applied to the local rendered copy, and the durable form of this work is the
+`DEVNOTES.md` documentation plus, for other developers to pick it up by default, an equivalent
+change to the `firecloud-develop` compose template. **Follow-up owner needed for the
+`firecloud-develop` change** — it is outside this repository.
+
+**Follow-ups this raises for other tickets**
+
+- **A-1**: add license tier to the required written record; treat basic as a hard stop for Epic D.
+- **D-2**: the ES rest client authenticates challenge-response, not preemptively. Verify that
+  requests carrying an `Authorization: ApiKey` header (rather than the client-level credentials
+  provider) behave as expected, and that the extra 401 round-trip per request is acceptable.
+- **D-5**: integration tests need a security-enabled ES with a trial license. This is proven
+  workable — see "Testcontainers harness for DLS/FLS" below. No CI workflow currently provisions
+  Elasticsearch at all, but Testcontainers needs none.
+
+##### Testcontainers harness for DLS/FLS (verified)
+
+`org.testcontainers:elasticsearch` exists at 1.21.4, the same version as the existing
+`org.testcontainers:postgresql` dependency, and `ElasticsearchContainer` can be started from a test
+exactly as `ContainerTests` starts `PostgreSQLContainer`. Added to `pom.xml` (test scope), with the
+harness landed as the D-5 foundation:
+
+- `src/test/java/org/broadinstitute/consent/integration/ElasticSearchContainerTests.java` — abstract
+  base class, mirroring `ContainerTests`. Starts a security-enabled single-node container in a static
+  initializer, builds a client via the application's own `ElasticSearchSupport.createRestClient`,
+  activates the trial license, and exposes helpers: `elasticSearchConfiguration()`, `restClient()`,
+  `recreateIndex`, `indexDocument`, `createApiKey` (inline role descriptors, per D-2), and
+  `searchAsApiKey`. It does not start the Dropwizard application, so it is independent of
+  `ContainerTests`.
+- `src/test/java/org/broadinstitute/consent/integration/ElasticSearchDlsFlsEnforcementTest.java` —
+  reference usage and proof of the mechanism. 5 tests, ~13s: the application client authenticates
+  against the secured cluster, the trial license is active, the privileged client sees all documents
+  and fields, DLS hides the non-public document, and FLS strips ungranted fields from `_source`.
+
+D-5 extends `ElasticSearchContainerTests` and swaps the literal role descriptor for the generated
+DLS query and FLS grants from D-3.
+
+Two defaults must be overridden, and this is the main trap:
+
+- For image versions ≥ 8.0.0, `ElasticsearchContainer`'s constructor automatically calls
+  `withPassword("changeme")` and `withCertPath("/usr/share/elasticsearch/config/certs/http_ca.crt")`
+  — so out of the box the container serves **HTTPS with a self-signed CA**, and
+  `getHttpHostAddress()` reflects that. `ElasticSearchSupport.createRestClient` builds its
+  `RestClientBuilder` with no `SSLContext` hook, so it cannot trust that CA. The container exposes
+  `caCertAsBytes()` / `createSslContextFromCa()` for tests that build their own client, but tests
+  that exercise the application's client must instead pass
+  `withEnv("xpack.security.http.ssl.enabled", "false")` to force plain `http`, matching the local
+  compose setup. (If production turns out to be HTTPS with a private CA, `createRestClient` needs an
+  `SSLContext` hook — a D-1/D-2 concern, not just a test concern.)
+- `withPassword(...)` sets `ELASTIC_PASSWORD`; the trial license still has to be activated per
+  container via `POST /_license/start_trial?acknowledge=true` before any DLS/FLS call, because each
+  fresh container starts on a self-generated basic license.
+
+This also resolves the D-2 concern about challenge-response authentication: the shared-credential
+client authenticated successfully against the secured cluster, and a per-request
+`Authorization: ApiKey` header on a `Request` was honored alongside it.
+
 ---
 
 #### Ticket A-1 — Confirm Elasticsearch cluster security capabilities
