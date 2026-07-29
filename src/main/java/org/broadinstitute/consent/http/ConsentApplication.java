@@ -61,6 +61,7 @@ import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
 import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.DocumentResource;
 import org.broadinstitute.consent.http.resources.DraftResource;
+import org.broadinstitute.consent.http.resources.ElasticSearchCapabilityResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.FeatureFlagResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
@@ -170,6 +171,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(DatasetResource.class));
     env.jersey().register(injector.getInstance(DocumentResource.class));
     env.jersey().register(injector.getInstance(DraftResource.class));
+    env.jersey().register(injector.getInstance(ElasticSearchCapabilityResource.class));
     env.jersey().register(injector.getInstance(EmailNotifierResource.class));
     env.jersey().register(injector.getInstance(FeatureFlagResource.class));
     env.jersey().register(injector.getInstance(PublicFeatureFlagResource.class));

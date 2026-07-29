@@ -71,41 +71,41 @@ and the defaults should be correct.
 
 ### Developing with a local Elastic Search instance:
 
-Update the compose file to include a new section for an ES instance:
+`config/docker-compose.yaml` already ships an `elastic` service, and `config/consent.yaml` already
+points at it (`servers: [elastic]`), so a normal `docker-compose up` gives you a local cluster with
+no edits. I suggest changing the default bucket location so uploaded ontology files do not
+interfere with other dev environments.
 
-```
-es:
-  image: docker.elastic.co/elasticsearch/elasticsearch:5.5.0
-  ports:
-    - "9200:9200"
-  volumes:
-    - ../data:/usr/share/elasticsearch/data
-  environment:
-    transport.host: 127.0.0.1
-    xpack.security.enabled: "false"
-    http.host: 0.0.0.0
-```
+#### Running with X-Pack Security enabled
 
-Add a line to the `app` section to link to that:
+Security is **on by default**, which is what the security work (`GET /api/elasticSearch/capabilities`
+and native DLS/FLS) needs. Two things make that work, and they have to agree:
 
-```
-  links:
-    - es:es
-```
+* `ELASTIC_PASSWORD` in the compose `elastic` service bootstraps the `elastic` superuser.
+* `authUser` / `authPassword` in `config/consent.yaml` are the credentials Consent sends. They are
+  harmless when security is off — the ES client only sends credentials in response to a 401
+  challenge, which a security-disabled cluster never issues.
 
-Finally, update the servers in consent.conf to point to this instance:
+DLS and FLS are Platinum features, so the compose file self-generates a 30-day **trial** license via
+`xpack.license.self_generated.type`. That setting only applies the first time a cluster forms. If
+your `elastic` data volume predates it, the cluster keeps its `basic` license and DLS/FLS come back
+`LICENSE_BLOCKED`; activate the trial once, by hand:
 
-```
-elasticSearch:
-  servers:
-    - es
-  indexName: local-ontology    
-  datasetIndexName: datasetIName
+```bash
+curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
+curl -s -u elastic:devpassword localhost:9200/_license   # expect "type": "trial"
 ```
 
-Consent will now point to a local ES instance.
-I also suggest changing the default bucket location so uploaded
-ontology files do not interfere with other dev environments.
+Note that transport SSL stays disabled. ES logs a bootstrap warning about it, which is expected and
+correct here — transport SSL is only required for multi-node clusters.
+
+To get the old security-disabled cluster back for a run, without editing the committed file:
+
+```bash
+ES_SECURITY_ENABLED=false docker-compose -p consent -f config/docker-compose.yaml up
+```
+
+Work that lives entirely at the application layer needs no security and is unaffected either way.
 
 ## How To...
 

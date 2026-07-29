@@ -1,0 +1,75 @@
+get:
+  summary: Elasticsearch security capability report
+  operationId: apiElasticSearchCapabilitiesGet
+  description: |
+    Report the security features of the Elasticsearch cluster this deployment is configured
+    against: version, edition, X-Pack Security, document-level security, field-level security,
+    API keys, and run_as impersonation. Requires Admin role.
+
+    Because each environment runs its own deployment against its own cluster, calling this in
+    dev, staging, and production produces the per-environment inventory without needing direct
+    network access to the clusters or a copy of their credentials.
+
+    By default all probes are non-destructive: nothing is created, modified, or deleted on the
+    cluster. The trade-off is certainty — DLS, FLS, and API-key support can only be proven by
+    creating a role or a key, so in that mode those verdicts are inferred from the license tier
+    and cluster settings and are returned with an INFERRED_ verdict. Only run_as and X-Pack
+    Security itself are reported as observed fact.
+
+    Pass writeProbes=true to observe them instead. That mode mints a short-lived API key,
+    creates a role carrying a DLS query and an FLS grant, and checks that a key whose
+    role_descriptors carry those filters is actually enforced against the dataset index —
+    the only way to distinguish a cluster that accepts DLS descriptors from one that enforces
+    them, since a Basic-licensed cluster accepts them at creation and fails only at search time.
+    Everything created is namespaced duos-capability-probe / duos_dlsfls_probe, expires within
+    10 minutes, and is torn down before the response is returned.
+  tags:
+    - ElasticSearch
+  parameters:
+    - name: runAsUser
+      in: query
+      description: |
+        Username to attempt the run_as probe against. Defaults to the deployment credential's
+        own principal, which still establishes whether the feature is licensed and enabled.
+      required: false
+      schema:
+        type: string
+    - name: writeProbes
+      in: query
+      description: |
+        Create and tear down a short-lived API key and role so that DLS, FLS, and API-key
+        support are observed rather than inferred. Requires the deployment credential to hold
+        manage_api_key (or grant_api_key) and manage_security; the report says which of those
+        it has under cluster_privileges. Ignored on OpenSearch or when security is disabled,
+        since there is nothing to probe.
+      required: false
+      schema:
+        type: boolean
+        default: false
+  responses:
+    200:
+      description: The capability report
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ElasticSearchCapabilityReport.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
