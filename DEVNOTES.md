@@ -70,12 +70,6 @@ Set up a remote debug configuration pointing to `local.dsde-dev.broadinstitute.o
 and the defaults should be correct.
 
 ### Developing with a local Elastic Search instance:
-
-`config/docker-compose.yaml` already ships an `elastic` service, and `config/consent.yaml` already
-points at it (`servers: [elastic]`), so a normal `docker-compose up` gives you a local cluster with
-no edits. I suggest changing the default bucket location so uploaded ontology files do not
-interfere with other dev environments.
-
 #### Running with X-Pack Security enabled
 
 Security is **on by default**, which is what the security work (`GET /api/elasticSearch/capabilities`
@@ -105,7 +99,95 @@ To get the old security-disabled cluster back for a run, without editing the com
 ES_SECURITY_ENABLED=false docker-compose -p consent -f config/docker-compose.yaml up
 ```
 
-Work that lives entirely at the application layer needs no security and is unaffected either way.
+An example docker-compose stanza for elastic:
+ ```
+ elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.4
+    ports:
+      - "9200:9200"
+    container_name: elastic
+    volumes:
+      - elastic:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 4gb
+    environment:
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      # X-Pack Security is OFF by default so the default `docker compose up` behaves exactly as
+      # before. Epics A-C and E (application-layer fallback) need no security. To work on Epic D
+      # (native DLS/FLS), start the stack with security on:
+      #
+      #   ES_SECURITY_ENABLED=true docker-compose -p consent -f config/docker-compose.yaml up
+      #
+      # DLS/FLS is a Platinum feature, so also activate the 30-day trial license once per cluster:
+      #
+      #   curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
+      #
+      # See DEVNOTES.md ("Developing with a local Elastic Search instance") for the full workflow.
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-true}
+      # Bootstraps the `elastic` superuser password when security is on; ignored when it is off.
+      # Must match authUser/authPassword in consent.yaml.
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-devpassword}
+      # Correct in both modes: transport SSL is only required for multi-node clusters.
+      - xpack.security.transport.ssl.enabled=false
+      # Keep the HTTP layer on plain http so consent's `protocol: http` client keeps working.
+      - xpack.security.http.ssl.enabled=false
+```
+I also suggest changing the default bucket location so uploaded
+ontology files do not interfere with other dev environments.
+
+#### Running local Elastic Search with security enabled
+
+By default the local cluster runs with `xpack.security.enabled=true`: requests are
+now authenticated, which is what most work needs. Only work on native Elasticsearch document- and
+field-level security (DLS/FLS) requires security to be on. Application-layer authorization work
+does not — it never touches Elasticsearch security.
+
+
+#### Enabling DLS/FLS locally (trial license required)
+
+Enabling security is necessary but **not sufficient** for DLS/FLS. The Docker image self-generates
+a **basic** license, and DLS/FLS is a Platinum/Enterprise feature. With a basic license, creating a
+role or API key that carries a DLS `query` or an FLS `field_security` grant fails closed with
+HTTP 403 `current license is non-compliant for [field and document level security]`. Note that
+`POST /_security/api_key` *accepts* such a role descriptor at creation time — the rejection happens
+later, on the search request.
+
+Activate the 30-day trial license once the secured cluster is up:
+
+```bash
+curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
+curl -u elastic:devpassword 'localhost:9200/_license'   # => "type": "trial"
+```
+
+Caveats:
+
+- A trial can be started **once per cluster** (`GET /_license/trial_status` reports eligibility).
+  After 30 days the license reverts to basic and DLS/FLS stops working. To get another trial, wipe
+  the cluster's data volume: `docker-compose -p consent -f config/docker-compose.yaml down` then
+  `docker volume rm consent_elastic` (this deletes local indices — they must be re-indexed).
+- Authentication, role-based access control, and API keys all work fine on the basic license. Only
+  the DLS/FLS grants require trial/Platinum.
+
+#### Upgrading the local Elastic Search version
+
+Everything described above — the two security modes, the license gating, and that an unenforceable
+DLS/FLS grant fails closed instead of returning unrestricted data — is asserted by tests, so an
+upgrade does not need to be re-verified by hand:
+
+```bash
+# 1. bump ElasticSearchTestCluster.IMAGE (the only version pin in the test tree)
+./mvnw test -Dgroups=elasticsearch
+# 2. then match it here: config/docker-compose.yaml, pom.xml (elasticsearch-rest-client), this file
+```
+
+These four classes carry the JUnit tag `elasticsearch` and are **not** run by CI — see
+"How they run in CI" below. Running them is a deliberate step when changing the Elasticsearch
+version or the Epic D security work, not something a build does for you.
+
+See "Qualifying a new Elasticsearch version" in
+[the integration test README](src/test/java/org/broadinstitute/consent/integration/README.md).
 
 ## How To...
 
@@ -188,6 +270,20 @@ The GitHub Actions workflow at `.github/workflows/coverage.yaml` runs
 integration tests together via Testcontainers — no additional CI configuration
 is needed.
 
+The exception is the Elasticsearch container tests. They are tagged
+`elasticsearch`, and the `ci` profile in `pom.xml` — activated by the `CI=true`
+that GitHub Actions sets in every job — feeds that tag to surefire's
+`excludedGroups`, so they do not run in CI. They start up to three Elasticsearch
+containers and exist to qualify a local Elasticsearch version rather than to
+gate the build; see "Upgrading the local Elastic Search version" above.
+
+To run them in CI anyway (a workflow edit, or a `workflow_dispatch` job), pass an
+empty value on the command line, which overrides the profile:
+
+```bash
+./mvnw clean jacoco:prepare-agent test jacoco:report -DexcludedTestGroups=
+```
+
 #### Running integration tests locally
 
 **Integration tests only:**
@@ -201,6 +297,9 @@ mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
 ```bash
 mvn clean test
 ```
+
+Note that locally this *also* runs the Elasticsearch container tests, which CI
+skips. To match CI exactly, add `-DexcludedTestGroups=elasticsearch`.
 
 **From the IDE:** run or debug any test class in the `integration` package
 directly — `DAOTestHelper` activates automatically and provides the database.
