@@ -6,10 +6,8 @@ description: |
   non-destructive, which is why the DLS, FLS, and API-key verdicts may be inferred rather than
   observed; write_probes_run says which of the two this report is.
 
-  The probes target Elasticsearch's X-Pack security APIs only. Against an OpenSearch cluster —
-  which secures itself through a plugin under /_plugins/_security and has no
-  POST /_security/api_key — the report says so in distribution and notes, returns UNKNOWN for
-  DLS/FLS because it does not inspect that plugin, and never runs write probes.
+  The probes target Elasticsearch's X-Pack security APIs only; this report covers Elasticsearch
+  deployments exclusively.
 
   The example is a real writeProbes=true response from a local trial-licensed cluster, where the
   configured credential is the `elastic` superuser. A deployed environment's shared credential is
@@ -28,14 +26,12 @@ properties:
   distribution:
     type: string
     description: |
-      Distribution reported by the cluster. OpenSearch exposes different security APIs than
-      Elasticsearch and has no API-key endpoint.
+      Distribution reported by the cluster.
     examples:
       - elasticsearch
-      - opensearch
   edition:
     type: string
-    description: OSS, a license tier, Elastic Cloud, or OpenSearch.
+    description: OSS, a license tier, or Elastic Cloud.
   license_type:
     type: string
     description: License tier reported by the cluster.
@@ -102,10 +98,8 @@ properties:
   write_probes_run:
     type: boolean
     description: |
-      Whether write probes ran. When false on an Elasticsearch cluster, the DLS, FLS, and API-key
-      verdicts are inferred from the license tier rather than observed — read this field before
-      reading those verdicts. On OpenSearch it is always false and nothing is inferred: those
-      verdicts report that the X-Pack probes do not apply.
+      Whether write probes ran. When false, the DLS, FLS, and API-key verdicts are inferred from
+      the license tier rather than observed — read this field before reading those verdicts.
   capabilities:
     type: array
     description: |
@@ -137,8 +131,7 @@ properties:
             SUPPORTED and UNAVAILABLE are observed. LICENSE_BLOCKED and NOT_PERMITTED are
             observed refusals. The INFERRED_ values are derived from license tier and cluster
             settings because proving them would require writing to the cluster. UNKNOWN also
-            covers what the probe does not reach — DLS/FLS on OpenSearch, or any capability on
-            a cluster that did not respond.
+            covers any capability on a cluster that did not respond.
           enum:
             - SUPPORTED
             - UNAVAILABLE

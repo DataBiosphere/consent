@@ -36,16 +36,8 @@ import org.elasticsearch.client.RestClient;
  * Inventories the security features of the Elasticsearch cluster this deployment is configured
  * against: version, edition, X-Pack Security, DLS, FLS, API keys, and {@code run_as}.
  *
- * <p><b>Every probe here targets Elasticsearch's X-Pack security APIs, not OpenSearch.</b>
- * OpenSearch implements security differently — DLS and FLS live in its security plugin under {@code
- * /_plugins/_security}, and it has no {@code POST /_security/api_key} at all — so none of the
- * X-Pack probes are meaningful there. This service detects that case from {@code
- * version.distribution} on {@code GET /} and reports it rather than probing: the DLS/FLS verdicts
- * come back {@code UNKNOWN} because this probe does not inspect the OpenSearch security plugin, the
- * API-key verdict comes back {@code UNAVAILABLE} because that endpoint does not exist, and write
- * probes never run. Those verdicts are scope statements, not license inferences, and {@code
- * writeProbes=true} does not change them. Covering OpenSearch properly would mean a separate set of
- * {@code /_plugins/_security} probes.
+ * <p><b>Every probe here targets Elasticsearch's X-Pack security APIs.</b> This service is scoped
+ * to Elasticsearch deployments only; it does not detect or account for other search engines.
  *
  * <p><b>The default pass is non-destructive.</b> Nothing is created, updated, or deleted, so it is
  * safe to run anywhere — but DLS, FLS, and API keys cannot be *proven* without creating a role or a
@@ -92,6 +84,12 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "read_security",
           "monitor");
 
+  // nosemgrep - a cluster setting name, not a key
+  private static final String API_KEY_ENABLED_SETTING = "xpack.security.authc.api_key.enabled";
+  private static final String VERSION_FIELD = "version";
+  private static final String LICENSE_FIELD = "license";
+  private static final String USERNAME_FIELD = "username";
+
   /**
    * The cluster-default security settings worth reporting: each one either gates a capability this
    * report covers, or describes the authentication posture a reader needs in order to interpret the
@@ -101,7 +99,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       Set.of(
           "xpack.security.enabled",
           "xpack.security.dls_fls.enabled",
-          "xpack.security.authc.api_key.enabled",
+          API_KEY_ENABLED_SETTING,
           "xpack.security.authc.run_as.enabled",
           "xpack.security.authc.token.enabled",
           "xpack.security.authc.anonymous.username",
@@ -148,8 +146,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    */
   // nosemgrep - an empty privilege grant, not a key
   private static final String PRIVILEGE_FREE_DESCRIPTOR =
-      """
-      {"probe":{"cluster":[],"indices":[]}}""";
+      "{\"probe\":{\"cluster\":[],\"indices\":[]}}";
 
   /**
    * Builds a client that authenticates as an API key instead of the deployment's shared credential.
@@ -214,82 +211,42 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       return unreachableReport(notes);
     }
 
-    String version = string(root.body(), "version", "number");
-    String distribution = stringOrDefault(root.body(), "elasticsearch", "version", "distribution");
-    boolean isOpenSearch = "opensearch".equalsIgnoreCase(distribution);
+    String version = string(root.body(), VERSION_FIELD, "number");
+    String distribution =
+        stringOrDefault(root.body(), "elasticsearch", VERSION_FIELD, "distribution");
 
     ProbeResult xpack = probe(HttpMethod.GET, "/_xpack");
     ProbeResult license = probe(HttpMethod.GET, "/_license");
-    String licenseType = string(license.body(), "license", "type");
-    String licenseStatus = string(license.body(), "license", "status");
+    String licenseType = string(license.body(), LICENSE_FIELD, "type");
+    String licenseStatus = string(license.body(), LICENSE_FIELD, "status");
 
     Map<String, String> securitySettings = securitySettings();
     Boolean securityEnabled = securityEnabled(xpack, securitySettings);
 
     ProbeResult authenticate = probe(HttpMethod.GET, AUTHENTICATE_PATH);
     boolean securityApiPresent = securityApiPresent(authenticate.status());
-    String authenticatedUser = string(authenticate.body(), "username");
+    String authenticatedUser = string(authenticate.body(), USERNAME_FIELD);
     List<String> roles = stringList(authenticate.body(), "roles");
 
     Map<String, Boolean> clusterPrivileges = securityApiPresent ? clusterPrivileges() : Map.of();
 
     boolean elasticCloud = esConfig.getCloudId() != null && !esConfig.getCloudId().trim().isEmpty();
-    if (elasticCloud) {
-      notes.add(
-          "This deployment is configured with a cloud ID, so the cluster is Elastic Cloud and "
-              + "X-Pack Security is always present.");
-    }
-    if (isOpenSearch) {
-      notes.add(
-          "This cluster is OpenSearch, not Elasticsearch. Every probe in this report targets the "
-              + "X-Pack security APIs, which do not exist here: DLS/FLS come from the OpenSearch "
-              + "security plugin under /_plugins/_security, and there is no POST "
-              + "/_security/api_key. The DLS, FLS, and API-key verdicts below are therefore "
-              + "statements about what this probe covers on OpenSearch, not license inferences, "
-              + "and no value of writeProbes changes them.");
-    }
-    boolean writeProbesRan = writeProbes && securityApiPresent && !isOpenSearch;
-    if (!securityApiPresent) {
-      notes.add(
-          "The /_security API is not available on this cluster, so no security feature can be "
-              + "exercised. Every security verdict below follows from that one fact.");
-    } else if (!writeProbesRan && !isOpenSearch) {
-      // Only an Elasticsearch cluster has verdicts that a write probe would convert from inferred
-      // to observed; on OpenSearch nothing here is inferred and nothing would be written.
-      notes.add(
-          "DLS, FLS, and API-key verdicts are inferred from the license tier and cluster "
-              + "settings. Re-run with writeProbes=true to create and tear down a short-lived key "
-              + "and role and observe them instead.");
-    }
-    if (writeProbes && !writeProbesRan) {
-      notes.add(
-          isOpenSearch
-              ? "Write probes were requested but not run: they create an X-Pack role and API key, "
-                  + "which OpenSearch does not provide."
-              : "Write probes were requested but not run: they need the /_security API, which this "
-                  + "cluster did not answer as a security-enabled cluster would.");
-    }
+    boolean writeProbesRan = writeProbes && securityApiPresent;
+    notes.addAll(deploymentNotes(elasticCloud, securityApiPresent, writeProbes, writeProbesRan));
 
     WriteProbeOutcome writeProbeOutcome = writeProbesRan ? runWriteProbes(notes) : null;
 
-    List<ElasticSearchCapability> capabilities = new ArrayList<>();
-    capabilities.add(securityCapability(securityEnabled, securityApiPresent, xpack));
-    capabilities.add(
-        writeProbeOutcome != null
-            ? writeProbeOutcome.apiKeys()
-            : apiKeyCapability(
-                securityApiPresent, isOpenSearch, securitySettings, clusterPrivileges));
-    capabilities.add(
-        writeProbeOutcome != null
-            ? writeProbeOutcome.dls()
-            : dlsFlsCapability(
-                DLS, securityApiPresent, isOpenSearch, licenseType, securitySettings));
-    capabilities.add(
-        writeProbeOutcome != null
-            ? writeProbeOutcome.fls()
-            : dlsFlsCapability(
-                FLS, securityApiPresent, isOpenSearch, licenseType, securitySettings));
-    capabilities.add(runAsCapability(securityApiPresent, authenticatedUser, runAsUser));
+    List<ElasticSearchCapability> capabilities =
+        buildCapabilities(
+            writeProbeOutcome,
+            securityEnabled,
+            securityApiPresent,
+            xpack,
+            securitySettings,
+            clusterPrivileges,
+            licenseType,
+            authenticatedUser,
+            runAsUser);
 
     return new ElasticSearchCapabilityReport(
         string(root.body(), "cluster_name"),
@@ -297,8 +254,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         distribution,
         edition(
             elasticCloud,
-            isOpenSearch,
-            string(root.body(), "version", "build_flavor"),
+            string(root.body(), VERSION_FIELD, "build_flavor"),
             xpack.status(),
             licenseType),
         licenseType,
@@ -311,9 +267,76 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         securitySettings,
         writeProbesRan,
         capabilities,
-        restClientCompatibility(version, isOpenSearch),
-        recommendation(securityApiPresent, isOpenSearch, licenseType, writeProbeOutcome),
+        restClientCompatibility(version),
+        recommendation(securityApiPresent, licenseType, writeProbeOutcome),
         notes);
+  }
+
+  /**
+   * The advisory notes that depend only on the shape of the deployment and cluster, not on any
+   * probe result — split out of {@link #getCapabilityReport} so its branching does not compound
+   * with the rest of that method's own.
+   */
+  private List<String> deploymentNotes(
+      boolean elasticCloud,
+      boolean securityApiPresent,
+      boolean writeProbes,
+      boolean writeProbesRan) {
+    List<String> notes = new ArrayList<>();
+    if (elasticCloud) {
+      notes.add(
+          "This deployment is configured with a cloud ID, so the cluster is Elastic Cloud and "
+              + "X-Pack Security is always present.");
+    }
+    if (!securityApiPresent) {
+      notes.add(
+          "The /_security API is not available on this cluster, so no security feature can be "
+              + "exercised. Every security verdict below follows from that one fact.");
+    } else if (!writeProbesRan) {
+      notes.add(
+          "DLS, FLS, and API-key verdicts are inferred from the license tier and cluster "
+              + "settings. Re-run with writeProbes=true to create and tear down a short-lived key "
+              + "and role and observe them instead.");
+    }
+    if (writeProbes && !writeProbesRan) {
+      notes.add(
+          "Write probes were requested but not run: they need the /_security API, which this "
+              + "cluster did not answer as a security-enabled cluster would.");
+    }
+    return notes;
+  }
+
+  /**
+   * The five capability verdicts, each preferring an observed write-probe outcome over the inferred
+   * read-only one — split out of {@link #getCapabilityReport} so its own branching does not
+   * compound with the rest of that method's.
+   */
+  private List<ElasticSearchCapability> buildCapabilities(
+      WriteProbeOutcome writeProbeOutcome,
+      Boolean securityEnabled,
+      boolean securityApiPresent,
+      ProbeResult xpack,
+      Map<String, String> securitySettings,
+      Map<String, Boolean> clusterPrivileges,
+      String licenseType,
+      String authenticatedUser,
+      String runAsUser) {
+    List<ElasticSearchCapability> capabilities = new ArrayList<>();
+    capabilities.add(securityCapability(securityEnabled, securityApiPresent, xpack));
+    capabilities.add(
+        writeProbeOutcome != null
+            ? writeProbeOutcome.apiKeys()
+            : apiKeyCapability(securityApiPresent, securitySettings, clusterPrivileges));
+    capabilities.add(
+        writeProbeOutcome != null
+            ? writeProbeOutcome.dls()
+            : dlsFlsCapability(DLS, securityApiPresent, licenseType, securitySettings));
+    capabilities.add(
+        writeProbeOutcome != null
+            ? writeProbeOutcome.fls()
+            : dlsFlsCapability(FLS, securityApiPresent, licenseType, securitySettings));
+    capabilities.add(runAsCapability(securityApiPresent, authenticatedUser, runAsUser));
+    return capabilities;
   }
 
   // ---------------------------------------------------------------------------
@@ -346,17 +369,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   private ElasticSearchCapability apiKeyCapability(
-      boolean securityApiPresent,
-      boolean isOpenSearch,
-      Map<String, String> settings,
-      Map<String, Boolean> privileges) {
-    if (isOpenSearch) {
-      return new ElasticSearchCapability(
-          API_KEYS,
-          CapabilityVerdict.UNAVAILABLE,
-          "OpenSearch has no POST /_security/api_key endpoint.",
-          "GET / -> version.distribution");
-    }
+      boolean securityApiPresent, Map<String, String> settings, Map<String, Boolean> privileges) {
     if (!securityApiPresent) {
       return new ElasticSearchCapability(
           API_KEYS,
@@ -365,7 +378,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "GET " + AUTHENTICATE_PATH);
     }
     // nosemgrep - a cluster setting name, not a key
-    if ("false".equals(settings.get("xpack.security.authc.api_key.enabled"))) {
+    if ("false".equals(settings.get(API_KEY_ENABLED_SETTING))) {
       return new ElasticSearchCapability(
           API_KEYS,
           CapabilityVerdict.UNAVAILABLE,
@@ -392,23 +405,11 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         "Security is enabled and API keys are a Basic-tier feature, so key creation is expected "
             + "to work. Not proven: creating a key is a write.",
         "xpack.security.authc.api_key.enabled=%s; POST /_security/user/_has_privileges"
-            .formatted(settings.getOrDefault("xpack.security.authc.api_key.enabled", "not-set")));
+            .formatted(settings.getOrDefault(API_KEY_ENABLED_SETTING, "not-set")));
   }
 
   private ElasticSearchCapability dlsFlsCapability(
-      String name,
-      boolean securityApiPresent,
-      boolean isOpenSearch,
-      String licenseType,
-      Map<String, String> settings) {
-    if (isOpenSearch) {
-      return new ElasticSearchCapability(
-          name,
-          CapabilityVerdict.UNKNOWN,
-          "OpenSearch provides DLS/FLS through its security plugin, which this probe does not "
-              + "inspect. Check /_plugins/_security instead.",
-          "GET / -> version.distribution");
-    }
+      String name, boolean securityApiPresent, String licenseType, Map<String, String> settings) {
     if (!securityApiPresent) {
       return new ElasticSearchCapability(
           name,
@@ -483,7 +484,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
             .formatted(AUTHENTICATE_PATH, RUN_AS_HEADER, target, result.status());
 
     if (result.status() == 200) {
-      String resolved = string(result.body(), "username");
+      String resolved = string(result.body(), USERNAME_FIELD);
       if (target.equals(resolved)) {
         return new ElasticSearchCapability(
             RUN_AS,
@@ -666,7 +667,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           API_KEYS,
           CapabilityVerdict.SUPPORTED,
           "Observed: a key was created, authenticated as '%s', and invalidated."
-              .formatted(string(asKey.body(), "username")),
+              .formatted(string(asKey.body(), USERNAME_FIELD)),
           evidence + "; GET %s as the key -> 200".formatted(AUTHENTICATE_PATH));
     }
     return new ElasticSearchCapability(
@@ -735,13 +736,14 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
             .formatted(index);
     EnforcementAttempt attempt =
         attemptEnforcement(
-            DLS,
-            "DLS",
-            "duos-capability-probe-dls-" + stamp,
-            descriptor,
-            "a DLS role_descriptor",
-            "a match_none DLS key",
-            index,
+            new EnforcementRequest(
+                DLS,
+                "DLS",
+                "duos-capability-probe-dls-" + stamp,
+                descriptor,
+                "a DLS role_descriptor",
+                "a match_none DLS key",
+                index),
             createdKeyIds);
     if (attempt.settled() != null) {
       return Optional.of(attempt.settled());
@@ -796,13 +798,14 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
             .formatted(index, FLS_GRANT_FIELD);
     EnforcementAttempt attempt =
         attemptEnforcement(
-            FLS,
-            "FLS",
-            "duos-capability-probe-fls-" + stamp,
-            descriptor,
-            "an FLS role_descriptor",
-            "a key granting only '%s'".formatted(FLS_GRANT_FIELD),
-            index,
+            new EnforcementRequest(
+                FLS,
+                "FLS",
+                "duos-capability-probe-fls-" + stamp,
+                descriptor,
+                "an FLS role_descriptor",
+                "a key granting only '%s'".formatted(FLS_GRANT_FIELD),
+                index),
             createdKeyIds);
     if (attempt.settled() != null) {
       return Optional.of(attempt.settled());
@@ -857,43 +860,53 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   /**
-   * The half the DLS and FLS enforcement checks share: mint a key carrying the filter under test,
-   * then search the real index through it. Only the reading of a successful response differs
-   * between the two, so only that is left to the callers.
+   * Everything {@link #attemptEnforcement} needs to mint a probe key and search through it, bundled
+   * so the method itself takes a request and the list of created key ids to reconcile, rather than
+   * one parameter per fact about the attempt.
    *
    * @param descriptorLabel how the {@code role_descriptors} block is described in evidence
    * @param keyLabel how the key is described in evidence, e.g. {@code a match_none DLS key}
    */
-  private EnforcementAttempt attemptEnforcement(
+  private record EnforcementRequest(
       String name,
       String shortName,
       String keyName,
       String descriptor,
       String descriptorLabel,
       String keyLabel,
-      String index,
-      List<String> createdKeyIds) {
-    KeyCreation key = createProbeKey(keyName, descriptor, createdKeyIds);
+      String index) {}
+
+  /**
+   * The half the DLS and FLS enforcement checks share: mint a key carrying the filter under test,
+   * then search the real index through it. Only the reading of a successful response differs
+   * between the two, so only that is left to the callers.
+   */
+  private EnforcementAttempt attemptEnforcement(
+      EnforcementRequest request, List<String> createdKeyIds) {
+    KeyCreation key = createProbeKey(request.keyName(), request.descriptor(), createdKeyIds);
     if (!created(key.response())) {
       // On a license-blocked cluster the key may be refused here rather than at search time.
       return EnforcementAttempt.settled(
           new ElasticSearchCapability(
-              name,
+              request.name(),
               refusalVerdict(key.response()),
-              "A key carrying %s was refused: ".formatted(descriptorLabel)
+              "A key carrying %s was refused: ".formatted(request.descriptorLabel())
                   + reason(key.response().body()),
-              "POST %s with %s -> %d".formatted(API_KEY_PATH, descriptorLabel, key.status())));
+              "POST %s with %s -> %d"
+                  .formatted(API_KEY_PATH, request.descriptorLabel(), key.status())));
     }
     if (key.encoded() == null) {
       return EnforcementAttempt.inconclusive();
     }
 
-    String searchPath = "/%s/_search?size=1".formatted(index);
+    String searchPath = "/%s/_search?size=1".formatted(request.index());
     ProbeResult search = probeAsApiKey(key.encoded(), HttpMethod.GET, searchPath);
-    String evidence = "GET %s through %s -> %d".formatted(searchPath, keyLabel, search.status());
+    String evidence =
+        "GET %s through %s -> %d".formatted(searchPath, request.keyLabel(), search.status());
     return search.status() == 200
         ? EnforcementAttempt.searched(search.body(), evidence)
-        : EnforcementAttempt.settled(searchFailure(name, shortName, search, evidence));
+        : EnforcementAttempt.settled(
+            searchFailure(request.name(), request.shortName(), search, evidence));
   }
 
   /**
@@ -915,8 +928,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   private KeyCreation createProbeKey(
       String keyName, String roleDescriptors, List<String> createdKeyIds) {
     String body =
-        """
-        {"name":"%s","expiration":"%s","role_descriptors":%s}"""
+        "{\"name\":\"%s\",\"expiration\":\"%s\",\"role_descriptors\":%s}"
             .formatted(keyName, PROBE_KEY_EXPIRATION, roleDescriptors);
     ProbeResult created = probe(HttpMethod.POST, API_KEY_PATH, body, Map.of());
     if (!created(created)) {
@@ -939,13 +951,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       List<String> createdKeyIds, String roleName, List<String> notes) {
     for (String keyId : createdKeyIds) {
       ProbeResult result =
-          probe(
-              HttpMethod.DELETE,
-              API_KEY_PATH,
-              """
-              {"ids":["%s"]}"""
-                  .formatted(keyId),
-              Map.of());
+          probe(HttpMethod.DELETE, API_KEY_PATH, "{\"ids\":[\"%s\"]}".formatted(keyId), Map.of());
       if (result.status() != 200) {
         logWarn(
             "Failed to invalidate probe API key %s (status %d)".formatted(keyId, result.status()));
@@ -1043,7 +1049,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    */
   private static boolean licenseRefusal(String reason) {
     String lowered = reason.toLowerCase();
-    return lowered.contains("non-compliant") || lowered.contains("license");
+    return lowered.contains("non-compliant") || lowered.contains(LICENSE_FIELD);
   }
 
   /** Whether the cluster created what was asked of it; PUT role returns 200 or 201. */
@@ -1125,16 +1131,9 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * when the cluster reports it.
    */
   private String edition(
-      boolean elasticCloud,
-      boolean isOpenSearch,
-      String buildFlavor,
-      int xpackStatus,
-      String licenseType) {
+      boolean elasticCloud, String buildFlavor, int xpackStatus, String licenseType) {
     if (elasticCloud) {
       return "Elastic Cloud (X-Pack always present)";
-    }
-    if (isOpenSearch) {
-      return "OpenSearch (Apache 2.0 / security plugin)";
     }
     if ("oss".equalsIgnoreCase(buildFlavor) || xpackStatus == 400 || xpackStatus == 404) {
       return "OSS (no X-Pack endpoint)";
@@ -1147,12 +1146,8 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * low-level client is a version-agnostic HTTP transport with no typed request model, so the only
    * real compatibility axis is major-version skew.
    */
-  private String restClientCompatibility(String clusterVersion, boolean isOpenSearch) {
+  private String restClientCompatibility(String clusterVersion) {
     String clientVersion = RestClient.class.getPackage().getImplementationVersion();
-    if (isOpenSearch) {
-      return "Incompatible path: OpenSearch has no POST /_security/api_key. The low-level client "
-          + "can still reach /_plugins/_security, but the X-Pack API-key design does not apply.";
-    }
     if (clientVersion == null || clusterVersion == null) {
       return "Could not determine the client or cluster version at runtime. This report was itself "
           + "produced through RestClient.performRequest, so the transport reaches /_security.";
@@ -1170,15 +1165,12 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   private String recommendation(
-      boolean securityApiPresent,
-      boolean isOpenSearch,
-      String licenseType,
-      WriteProbeOutcome writeProbeOutcome) {
+      boolean securityApiPresent, String licenseType, WriteProbeOutcome writeProbeOutcome) {
     // An observation outranks the license inference in either direction: a cluster that actually
     // enforced DLS settles the question, and one that refused on licensing grounds settles it just
     // as firmly. A refusal on *privilege* grounds settles nothing about the cluster, so that case
     // falls through to the license reading rather than being read as a verdict against Epic D.
-    if (writeProbeOutcome != null && !isOpenSearch && securityApiPresent) {
+    if (writeProbeOutcome != null && securityApiPresent) {
       if (writeProbeOutcome.dlsUsable()) {
         return "Epic D (native DLS/FLS) is viable on this cluster, and this was observed rather "
             + "than inferred: a probe role and API key carrying DLS/FLS descriptors were accepted "
@@ -1195,10 +1187,6 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       return "Epic E (compatibility fallback). Write probes were run against this cluster and DLS "
           + "was not usable: %s Epic D would need that resolved first."
               .formatted(writeProbeOutcome.dls().detail());
-    }
-    if (isOpenSearch) {
-      return "Epic E (compatibility fallback). This cluster is OpenSearch, where the X-Pack "
-          + "API-key and role-descriptor design behind Epic D does not exist.";
     }
     if (!securityApiPresent) {
       return "Epic E (compatibility fallback) is the only path available on this cluster. "
@@ -1235,13 +1223,13 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   /** Reads the caller's own cluster privileges. A POST, but an evaluation rather than a write. */
   private Map<String, Boolean> clusterPrivileges() {
     String body =
-        """
-        {"cluster":[%s],"index":[{"names":["%s"],"privileges":["read","view_index_metadata"]}]}"""
-            .formatted(
-                PROBED_CLUSTER_PRIVILEGES.stream()
-                    .map("\"%s\""::formatted)
-                    .collect(Collectors.joining(",")),
-                probeIndex());
+        "{\"cluster\":[%s],\"index\":[{\"names\":[\"%s\"],"
+            + "\"privileges\":[\"read\",\"view_index_metadata\"]}]}"
+                .formatted(
+                    PROBED_CLUSTER_PRIVILEGES.stream()
+                        .map("\"%s\""::formatted)
+                        .collect(Collectors.joining(",")),
+                    probeIndex());
 
     ProbeResult result = probe(HttpMethod.POST, "/_security/user/_has_privileges", body, Map.of());
     if (result.status() != 200 || !result.body().has("cluster")) {

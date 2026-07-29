@@ -82,15 +82,9 @@ Three fields carry most of the interpretive weight:
 - **`security_settings`** — filtered to the dozen or so values that gate a capability, out of the
   ~50 defaults a cluster reports.
 
-**Scope: these are X-Pack probes, so they measure Elasticsearch and not OpenSearch.** OpenSearch's
-security works differently — DLS and FLS come from its security plugin under `/_plugins/_security`,
-and there is no `POST /_security/api_key` — so the endpoint identifies the distribution from
-`GET /` and reports the X-Pack capabilities as out of scope rather than drawing X-Pack conclusions
-from probes that do not fit: DLS/FLS come back `UNKNOWN` (not inspected), API keys `UNAVAILABLE`
-(no such endpoint), and write probes never run whatever `writeProbes` says. Those verdicts are not
-license inferences and `writeProbes=true` will not change them. Measuring an OpenSearch cluster
-properly would mean a second set of `/_plugins/_security` probes, which is out of scope here — every
-environment in the inventory below runs Elasticsearch.
+**Scope: these are X-Pack probes, so they measure Elasticsearch only.** The endpoint identifies the
+distribution from `GET /` and is otherwise scoped to Elasticsearch deployments; every environment
+in the inventory below runs Elasticsearch.
 
 ## Environment inventory
 
@@ -105,7 +99,7 @@ inference — this is the first environment where all five capabilities came bac
 | Capability | Verdict | Evidence |
 | --- | --- | --- |
 | Elasticsearch version | 9.4.4 | `GET /` → `version.number` |
-| Distribution | elasticsearch (not OpenSearch) | `GET /` → `version.distribution` |
+| Distribution | elasticsearch | `GET /` → `version.distribution` |
 | Edition / license | Trial (Platinum-equivalent), `status: active`, expires 2026-08-28 | `GET /_license` → `type: trial` |
 | X-Pack Security enabled | **`SUPPORTED`** | `GET /_xpack` 200; `GET /_security/_authenticate` 200 |
 | DLS | **`SUPPORTED` — enforced, not merely accepted** | a `match_none` DLS key returned **0 of 1158** documents from `GET /dataset/_search` |
@@ -318,9 +312,7 @@ between client and cluster, which is what a deployed environment on an older min
 No dependency change is needed. The low-level `RestClient` is a version-agnostic HTTP
 transport with no typed request model, so security endpoints are reached with
 `RestClient.performRequest(Request)` and a JSON entity — neither the high-level REST client
-(removed in 8.x) nor the new typed Java API client is required. The one caveat is that this
-holds for Elasticsearch; against OpenSearch there is no `POST /_security/api_key` at all, and
-the endpoint flags that case explicitly.
+(removed in 8.x) nor the new typed Java API client is required.
 
 `ElasticSearchCapabilityService` is the standing demonstration of that conclusion, which is why no
 separate feasibility test is kept: it drives the same security APIs from inside the application

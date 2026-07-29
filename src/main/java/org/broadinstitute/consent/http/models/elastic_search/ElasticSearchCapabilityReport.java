@@ -14,8 +14,8 @@ import java.util.Map;
  *
  * @param clusterName the cluster's own name, to confirm which cluster was reached
  * @param version Elasticsearch version, e.g. {@code 9.3.3}
- * @param distribution {@code elasticsearch} or {@code opensearch}; the security APIs differ
- * @param edition OSS, Basic, Enterprise, Elastic Cloud, or OpenSearch
+ * @param distribution the distribution reported by the cluster, e.g. {@code elasticsearch}
+ * @param edition OSS, a license tier, or Elastic Cloud
  * @param licenseType license tier reported by the cluster
  * @param licenseStatus whether that license is active
  * @param elasticCloud whether the deployment is configured with a cloud ID

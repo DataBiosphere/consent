@@ -10,11 +10,8 @@ get:
     dev, staging, and production produces the per-environment inventory without needing direct
     network access to the clusters or a copy of their credentials.
 
-    The probes are Elasticsearch X-Pack probes. OpenSearch secures itself differently — DLS and
-    FLS come from its security plugin under /_plugins/_security, and there is no
-    POST /_security/api_key — so against an OpenSearch cluster the report identifies the
-    distribution, returns UNKNOWN for the DLS/FLS verdicts it does not inspect, and skips write
-    probes entirely rather than reporting X-Pack conclusions that would not apply.
+    The probes are Elasticsearch X-Pack probes; this endpoint is scoped to Elasticsearch
+    deployments only.
 
     By default all probes are non-destructive: nothing is created, modified, or deleted on the
     cluster. The trade-off is certainty — DLS, FLS, and API-key support can only be proven by
@@ -46,9 +43,8 @@ get:
         Create and tear down a short-lived API key and role so that DLS, FLS, and API-key
         support are observed rather than inferred. Requires the deployment credential to hold
         manage_api_key (or grant_api_key) and manage_security; the report says which of those
-        it has under cluster_privileges. Ignored on OpenSearch, which has no X-Pack role or
-        API-key endpoints to write to, and when security is disabled, since there is nothing to
-        probe. In both cases a note in the response says the probes were requested but not run.
+        it has under cluster_privileges. Ignored when security is disabled, since there is
+        nothing to probe — a note in the response says the probes were requested but not run.
       required: false
       schema:
         type: boolean

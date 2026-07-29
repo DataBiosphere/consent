@@ -195,8 +195,7 @@ class ElasticSearchCapabilityServiceTest {
    * Baseline: a cluster with security switched off, as the local docker-compose one is. X-Pack is
    * still installed and still reports a license — it has shipped in every default distribution
    * since 6.3 — so this fixture matches what the local cluster was actually measured to return
-   * rather than the OSS shape. A missing /_xpack endpoint is a different cluster, covered by the
-   * OpenSearch case.
+   * rather than the OSS shape.
    */
   private void stubSecurityDisabledCluster() {
     stub(ROOT, 200, ROOT_BODY);
@@ -427,90 +426,6 @@ class ElasticSearchCapabilityServiceTest {
 
     assertEquals(
         CapabilityVerdict.LICENSE_BLOCKED, capability(report, "run_as impersonation").verdict());
-  }
-
-  @Test
-  void testOpenSearchIsCalledOutRatherThanMisreported() throws IOException {
-    stubOpenSearchClusterWithSecurityPresent();
-
-    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
-
-    assertEquals("opensearch", report.distribution());
-    assertEquals("OpenSearch (Apache 2.0 / security plugin)", report.edition());
-    assertEquals(CapabilityVerdict.UNAVAILABLE, capability(report, "API keys").verdict());
-    assertEquals(
-        CapabilityVerdict.UNKNOWN, capability(report, "Document-level security (DLS)").verdict());
-    assertTrue(report.restClientCompatibility().contains("OpenSearch"));
-    assertTrue(report.notes().stream().anyMatch(n -> n.contains("OpenSearch")));
-  }
-
-  /**
-   * A 401 from /_security/_authenticate reads as "security is present but this credential was
-   * refused", which is true on OpenSearch too. That must not pull in the Elasticsearch note about
-   * inferred verdicts: on OpenSearch the DLS, FLS, and API-key verdicts are not license inferences
-   * and write probes never run, so telling the reader to re-run with writeProbes=true would be
-   * advice that changes nothing.
-   */
-  @Test
-  void testOpenSearchIsNotDescribedWithTheElasticsearchInferenceNote() throws IOException {
-    stubOpenSearchClusterWithSecurityPresent();
-
-    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
-
-    assertFalse(report.writeProbesRun());
-    assertTrue(
-        report.notes().stream().noneMatch(n -> n.contains("writeProbes=true")),
-        "no note should suggest write probes against OpenSearch");
-    assertTrue(
-        report.notes().stream().noneMatch(n -> n.startsWith("DLS, FLS, and API-key verdicts are ")),
-        "the inferred-verdict note is an Elasticsearch statement");
-    assertTrue(
-        report.notes().stream()
-            .anyMatch(n -> n.contains("Write probes were requested but not run")),
-        "a requested write probe that did not run has to be said out loud");
-    // Nothing was written, and in particular no attempt was made against endpoints OpenSearch
-    // does not have.
-    assertTrue(requestsTo("POST", "/_security/api_key").isEmpty());
-    assertTrue(requestsTo("PUT", "/_security/role").isEmpty());
-  }
-
-  private void stubOpenSearchClusterWithSecurityPresent() {
-    stub(
-        ROOT,
-        200,
-        """
-        {"cluster_name":"duos-cluster","version":{"number":"2.19.1","distribution":"opensearch"}}""");
-    stub(
-        XPACK,
-        400,
-        """
-        {"error":{"reason":"no handler found"}}""");
-    stub(
-        LICENSE,
-        400,
-        """
-        {"error":{"reason":"no handler found"}}""");
-    stub(
-        SETTINGS,
-        200,
-        """
-        {"defaults":{},"persistent":{},"transient":{}}""");
-    // OpenSearch answers this path from its own security plugin, and refuses rather than 404s.
-    stub(
-        AUTHENTICATE,
-        401,
-        """
-        {"error":{"reason":"unauthorized"}}""");
-    stub(
-        HAS_PRIVILEGES,
-        404,
-        """
-        {"error":{"reason":"no handler found"}}""");
-    stub(
-        RUN_AS,
-        401,
-        """
-        {"error":{"reason":"unauthorized"}}""");
   }
 
   @Test
@@ -1066,6 +981,479 @@ class ElasticSearchCapabilityServiceTest {
     assertTrue(requestsTo("PUT", "/_security/role/").isEmpty());
     assertTrue(requestsTo("DELETE", "/_security/api_key").isEmpty());
     assertTrue(report.notes().stream().anyMatch(n -> n.contains("non-destructive")));
+  }
+
+  @Test
+  void testElasticCloudDeploymentIsReportedAsSuch() throws IOException {
+    config.setCloudId("duos-cloud:ZXhhbXBsZQ==");
+    stubSecurityEnabledCluster("trial");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("Elastic Cloud (X-Pack always present)", report.edition());
+    assertTrue(report.elasticCloud());
+    assertTrue(
+        report.notes().stream().anyMatch(n -> n.contains("cloud ID")),
+        "an Elastic Cloud deployment must be called out in the notes");
+  }
+
+  @Test
+  void testOssDistributionIsReportedWhenXPackEndpointIsMissing() throws IOException {
+    stubSecurityDisabledCluster();
+    stub(
+        XPACK,
+        404,
+        """
+        {"error":{"reason":"no handler found"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("OSS (no X-Pack endpoint)", report.edition());
+  }
+
+  @Test
+  void testSecurityReportedEnabledButApiUnreachableIsDistinguishedFromDisabled()
+      throws IOException {
+    stubSecurityDisabledCluster();
+    stub(
+        XPACK,
+        200,
+        """
+        {"features":{"security":{"available":true,"enabled":true}}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability security = capability(report, "X-Pack Security");
+    assertEquals(CapabilityVerdict.UNAVAILABLE, security.verdict());
+    assertTrue(
+        security.detail().contains("reports itself enabled"),
+        "the two signals disagreeing must be described, not silently resolved: "
+            + security.detail());
+  }
+
+  @Test
+  void testApiKeysExplicitlyDisabledByClusterSettingIsReportedAsUnavailable() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true","xpack.security.dls_fls.enabled":"true",
+        "xpack.security.authc.api_key.enabled":"false"},"persistent":{},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability apiKeys = capability(report, "API keys");
+    assertEquals(CapabilityVerdict.UNAVAILABLE, apiKeys.verdict());
+    assertTrue(apiKeys.detail().contains("explicitly disabled by cluster setting"));
+  }
+
+  @Test
+  void testUnmappedLicenseTierYieldsUnknownDlsFlsVerdict() throws IOException {
+    stubSecurityEnabledCluster("some-future-tier");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.UNKNOWN, dls.verdict());
+    assertTrue(dls.detail().contains("could not be mapped"));
+    assertTrue(report.recommendation().contains("Inconclusive"));
+  }
+
+  @Test
+  void testRunAsAcceptedButResolvedToADifferentUserIsUnknown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        RUN_AS,
+        200,
+        """
+        {"username":"someone-else","roles":["other"]}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability runAs = capability(report, "run_as impersonation");
+    assertEquals(CapabilityVerdict.UNKNOWN, runAs.verdict());
+    assertTrue(runAs.detail().contains("still resolved to"));
+  }
+
+  @Test
+  void testRunAsUnexpectedStatusIsUnknown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        RUN_AS,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability runAs = capability(report, "run_as impersonation");
+    assertEquals(CapabilityVerdict.UNKNOWN, runAs.verdict());
+    assertTrue(runAs.detail().contains("unexpected status"));
+  }
+
+  @Test
+  void testApiKeyCreatedButUnableToAuthenticateIsReportedAsUnknown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        "cGxhaW4=|" + AUTHENTICATE,
+        403,
+        """
+        {"error":{"reason":"unauthorized"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability apiKeys = capability(report, "API keys");
+    assertEquals(CapabilityVerdict.UNKNOWN, apiKeys.verdict());
+    assertTrue(apiKeys.detail().contains("could not authenticate"));
+  }
+
+  @Test
+  void testMalformedProbeKeyResponseLeavesEnforcementInconclusive() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    // Created, but the response carries neither an encoded key nor an id/secret pair to build one.
+    stub(
+        CREATE_DLS_KEY,
+        200,
+        """
+        {"id":"dls-key-id"}""");
+    stub(
+        CREATE_FLS_KEY,
+        200,
+        """
+        {"id":"fls-key-id"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertTrue(
+        report.notes().stream()
+            .anyMatch(n -> n.contains("DLS enforcement check could not be run to a conclusion")));
+    assertTrue(
+        report.notes().stream()
+            .anyMatch(n -> n.contains("FLS projection check returned no document fields")));
+  }
+
+  @Test
+  void testFailedKeyInvalidationIsReportedInTheNotesRatherThanSwallowed() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        INVALIDATE_KEY,
+        500,
+        """
+        {"error":{"reason":"boom"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertTrue(
+        report.notes().stream().anyMatch(n -> n.contains("could not be invalidated")),
+        "an operator must be told a probe key was left on the cluster: " + report.notes());
+  }
+
+  @Test
+  void testRoleRefusalWithNoLicenseOrPrivilegeReasonIsUnknownRatherThanMisclassified()
+      throws IOException {
+    stubSecurityEnabledCluster("trial");
+    // No usable probe key, so the enforcement probes are skipped and the DLS/FLS verdicts stand at
+    // role acceptance alone rather than being overwritten by an end-to-end enforcement result.
+    stub(
+        CREATE_KEY,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+    stub(
+        CREATE_ROLE,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.UNKNOWN, dls.verdict());
+    assertTrue(dls.detail().contains("The role was rejected"));
+  }
+
+  @Test
+  void testEncodedApiKeyIsBuiltFromIdAndSecretWhenEncodedFieldIsAbsent() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        CREATE_KEY,
+        200,
+        """
+        {"id":"plain-key-id","api_key":"plain-secret"}""");
+    String builtKey =
+        java.util.Base64.getEncoder()
+            .encodeToString(
+                "plain-key-id:plain-secret".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    stub(
+        builtKey + "|" + AUTHENTICATE,
+        200,
+        """
+        {"username":"consent"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertEquals(CapabilityVerdict.SUPPORTED, capability(report, "API keys").verdict());
+  }
+
+  @Test
+  void testUnrecognisedSearchResponseShapeFallsBackRatherThanFailingTheProbe() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    // No "total" under "hits" at all: hitCount() must return -1 rather than throw.
+    stub(
+        "ZGxz|" + SEARCH,
+        200,
+        """
+        {"hits":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.UNKNOWN, dls.verdict());
+    assertTrue(dls.detail().contains("no hit total"));
+  }
+
+  @Test
+  void testRunAsWithNoAuthenticatedOrRequestedUserIsUnknown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        AUTHENTICATE,
+        200,
+        """
+        {"roles":["consent"]}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability runAs = capability(report, "run_as impersonation");
+    assertEquals(CapabilityVerdict.UNKNOWN, runAs.verdict());
+    assertTrue(runAs.detail().contains("No target user was available"));
+  }
+
+  @Test
+  void testApiKeyCreatedWithNoUsableCredentialAtAllIsReportedAsUnknown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        CREATE_KEY,
+        200,
+        """
+        {"name":"probe-key"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability apiKeys = capability(report, "API keys");
+    assertEquals(CapabilityVerdict.UNKNOWN, apiKeys.verdict());
+    assertTrue(apiKeys.detail().contains("neither an encoded form nor an id and"));
+  }
+
+  @Test
+  void testDlsKeyCreationRefusedOnLicenseGroundsIsReportedAtCreationRatherThanSearch()
+      throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        CREATE_DLS_KEY,
+        403,
+        """
+        {"error":{"reason":"current license is non-compliant for [field and document level security]"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.LICENSE_BLOCKED, dls.verdict());
+    assertTrue(dls.detail().contains("A key carrying"));
+  }
+
+  @Test
+  void testDlsSearchUnexpectedStatusIsUnknownRatherThanMisclassified() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        "ZGxz|" + SEARCH,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.UNKNOWN, dls.verdict());
+    assertTrue(dls.detail().contains("unexpected status"));
+  }
+
+  @Test
+  void testHitCountReadsAPlainNumericTotalAsWellAsAnObjectShapedOne() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        "ZGxz|" + SEARCH,
+        200,
+        """
+        {"hits":{"total":0,"hits":[]}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.SUPPORTED, dls.verdict());
+  }
+
+  @Test
+  void testFlsSearchWithNoHitsIsReportedAsInconclusiveRatherThanUnprojected() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    // No "hits" array under "hits" at all: firstHitSourceFields() must fall back rather than throw.
+    stub(
+        "Zmxz|" + SEARCH,
+        200,
+        """
+        {"hits":{"total":{"value":0}}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertTrue(
+        report.notes().stream()
+            .anyMatch(n -> n.contains("FLS projection check returned no document fields")));
+  }
+
+  @Test
+  void testFlsSearchWithAnEmptyHitsArrayIsReportedAsInconclusive() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    // "hits" is present as an array, but empty: no document to read fields from.
+    stub(
+        "Zmxz|" + SEARCH,
+        200,
+        """
+        {"hits":{"total":{"value":0},"hits":[]}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertTrue(
+        report.notes().stream()
+            .anyMatch(n -> n.contains("FLS projection check returned no document fields")));
+  }
+
+  @Test
+  void testProbeResponseBodyThatIsNotValidJsonFallsBackToAnEmptyBodyRatherThanThrowing()
+      throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(HAS_PRIVILEGES, 200, "not valid json");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.clusterPrivileges().isEmpty());
+  }
+
+  @Test
+  void testReasonFallsBackToAGenericMessageWhenTheErrorBodyHasNoReasonField() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        RUN_AS,
+        500,
+        """
+        {"error":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability runAs = capability(report, "run_as impersonation");
+    assertTrue(runAs.detail().contains("no reason reported by the cluster"));
+  }
+
+  @Test
+  void testClusterPrivilegesProbeFailureYieldsAnEmptyMapRatherThanAnException() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        HAS_PRIVILEGES,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.clusterPrivileges().isEmpty());
+  }
+
+  @Test
+  void testSecuritySettingsProbeFailureYieldsAnEmptyMapRatherThanAnException() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.securitySettings().isEmpty());
+  }
+
+  @Test
+  void testSecuritySettingsSkipsSectionsThatAreAbsentOrNotAnObject() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true","cluster.name":"duos-cluster"},
+        "persistent":"not-an-object"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("true", report.securitySettings().get("xpack.security.enabled"));
+    assertFalse(
+        report.securitySettings().containsKey("cluster.name"),
+        "a non-security default must be filtered out rather than reported");
+  }
+
+  @Test
+  void testSecurityEnabledFallsBackToClusterSettingWhenXPackIsUnreachable() throws IOException {
+    stubSecurityDisabledCluster();
+    stub(
+        XPACK,
+        404,
+        """
+        {"error":{"reason":"no handler found"}}""");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true"},"persistent":{},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(Boolean.TRUE, report.securityEnabled());
+  }
+
+  @Test
+  void testMissingClusterVersionCannotBeCompatibilityChecked() throws IOException {
+    stubSecurityDisabledCluster();
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":"duos-cluster"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.restClientCompatibility().contains("Could not determine"));
+  }
+
+  @Test
+  void testMajorVersionSkewIsCalledOutRatherThanAssumedCompatible() throws IOException {
+    stubSecurityDisabledCluster();
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":"duos-cluster","version":{"number":"8.1.2","build_flavor":"default"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.restClientCompatibility().contains("Major-version skew"));
   }
 
   private record StubResponse(int status, String body) {}

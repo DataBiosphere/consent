@@ -23,10 +23,8 @@ import org.broadinstitute.consent.http.service.ElasticSearchCapabilityService;
  * network access to the clusters or a copy of their credentials — the application already holds
  * them.
  *
- * <p>The probes behind this endpoint are Elasticsearch X-Pack probes. Against an OpenSearch
- * cluster, whose security works through a different plugin, the report identifies the distribution
- * and reports the X-Pack capabilities as not applicable rather than drawing conclusions from probes
- * that do not fit — see {@link ElasticSearchCapabilityService}.
+ * <p>The probes behind this endpoint are Elasticsearch X-Pack probes — see {@link
+ * ElasticSearchCapabilityService}.
  *
  * <p>The probes behind this endpoint are read-only by default. Pass {@code writeProbes=true} to
  * additionally create and tear down a short-lived API key and role, which is the only way to
