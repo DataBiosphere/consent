@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -172,23 +171,19 @@ class ElasticSearchCapabilityServiceTest {
   }
 
   /**
-   * Stubs are lenient because which accessors get touched depends on the status: only the error
-   * path builds a ResponseException, which is what reads the request line. Under Mockito's default
-   * strictness the unread stub fails the test with an UnnecessaryStubbingException that says
-   * nothing about the code under test — dropping {@code lenient()} here fails every test that stubs
-   * a 2xx response.
+   * Only the error path builds a {@link ResponseException}, which is what reads the request line;
+   * the 2xx path reads just the status and entity. Stubbing the request line only for non-2xx
+   * responses keeps every stub read by the test it's created for, so no stub needs to be lenient.
    */
   private Response response(int status, String body) {
     Response response = mock(Response.class);
-    lenient()
-        .when(response.getStatusLine())
+    when(response.getStatusLine())
         .thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, status, "reason"));
-    lenient()
-        .when(response.getEntity())
-        .thenReturn(new StringEntity(body, ContentType.APPLICATION_JSON));
-    lenient()
-        .when(response.getRequestLine())
-        .thenReturn(new BasicRequestLine("GET", "/", HttpVersion.HTTP_1_1));
+    when(response.getEntity()).thenReturn(new StringEntity(body, ContentType.APPLICATION_JSON));
+    if (status >= 300) {
+      when(response.getRequestLine())
+          .thenReturn(new BasicRequestLine("GET", "/", HttpVersion.HTTP_1_1));
+    }
     return response;
   }
 
