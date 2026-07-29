@@ -173,7 +173,10 @@ class ElasticSearchCapabilityServiceTest {
 
   /**
    * Stubs are lenient because which accessors get touched depends on the status: only the error
-   * path builds a ResponseException, which is what reads the request line.
+   * path builds a ResponseException, which is what reads the request line. Under Mockito's default
+   * strictness the unread stub fails the test with an UnnecessaryStubbingException that says
+   * nothing about the code under test — dropping {@code lenient()} here fails every test that stubs
+   * a 2xx response.
    */
   private Response response(int status, String body) {
     Response response = mock(Response.class);
@@ -433,6 +436,50 @@ class ElasticSearchCapabilityServiceTest {
 
   @Test
   void testOpenSearchIsCalledOutRatherThanMisreported() throws IOException {
+    stubOpenSearchClusterWithSecurityPresent();
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("opensearch", report.distribution());
+    assertEquals("OpenSearch (Apache 2.0 / security plugin)", report.edition());
+    assertEquals(CapabilityVerdict.UNAVAILABLE, capability(report, "API keys").verdict());
+    assertEquals(
+        CapabilityVerdict.UNKNOWN, capability(report, "Document-level security (DLS)").verdict());
+    assertTrue(report.restClientCompatibility().contains("OpenSearch"));
+    assertTrue(report.notes().stream().anyMatch(n -> n.contains("OpenSearch")));
+  }
+
+  /**
+   * A 401 from /_security/_authenticate reads as "security is present but this credential was
+   * refused", which is true on OpenSearch too. That must not pull in the Elasticsearch note about
+   * inferred verdicts: on OpenSearch the DLS, FLS, and API-key verdicts are not license inferences
+   * and write probes never run, so telling the reader to re-run with writeProbes=true would be
+   * advice that changes nothing.
+   */
+  @Test
+  void testOpenSearchIsNotDescribedWithTheElasticsearchInferenceNote() throws IOException {
+    stubOpenSearchClusterWithSecurityPresent();
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertFalse(report.writeProbesRun());
+    assertTrue(
+        report.notes().stream().noneMatch(n -> n.contains("writeProbes=true")),
+        "no note should suggest write probes against OpenSearch");
+    assertTrue(
+        report.notes().stream().noneMatch(n -> n.startsWith("DLS, FLS, and API-key verdicts are ")),
+        "the inferred-verdict note is an Elasticsearch statement");
+    assertTrue(
+        report.notes().stream()
+            .anyMatch(n -> n.contains("Write probes were requested but not run")),
+        "a requested write probe that did not run has to be said out loud");
+    // Nothing was written, and in particular no attempt was made against endpoints OpenSearch
+    // does not have.
+    assertTrue(requestsTo("POST", "/_security/api_key").isEmpty());
+    assertTrue(requestsTo("PUT", "/_security/role").isEmpty());
+  }
+
+  private void stubOpenSearchClusterWithSecurityPresent() {
     stub(
         ROOT,
         200,
@@ -453,6 +500,7 @@ class ElasticSearchCapabilityServiceTest {
         200,
         """
         {"defaults":{},"persistent":{},"transient":{}}""");
+    // OpenSearch answers this path from its own security plugin, and refuses rather than 404s.
     stub(
         AUTHENTICATE,
         401,
@@ -468,16 +516,6 @@ class ElasticSearchCapabilityServiceTest {
         401,
         """
         {"error":{"reason":"unauthorized"}}""");
-
-    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
-
-    assertEquals("opensearch", report.distribution());
-    assertEquals("OpenSearch (Apache 2.0 / security plugin)", report.edition());
-    assertEquals(CapabilityVerdict.UNAVAILABLE, capability(report, "API keys").verdict());
-    assertEquals(
-        CapabilityVerdict.UNKNOWN, capability(report, "Document-level security (DLS)").verdict());
-    assertTrue(report.restClientCompatibility().contains("OpenSearch"));
-    assertTrue(report.notes().stream().anyMatch(n -> n.contains("OpenSearch")));
   }
 
   @Test
@@ -493,6 +531,9 @@ class ElasticSearchCapabilityServiceTest {
     assertEquals("unknown", report.edition());
     assertEquals(1, report.capabilities().size());
     assertEquals(CapabilityVerdict.UNKNOWN, report.capabilities().get(0).verdict());
+    // The published schema enumerates the capability names, so this one entry — the only shape
+    // the report takes other than the five probed capabilities — has to stay in that enum.
+    assertEquals("Cluster reachability", report.capabilities().get(0).name());
     assertTrue(report.recommendation().contains("unreachable"));
   }
 

@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
+import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
@@ -372,13 +373,15 @@ class ConsentModuleTest extends AbstractTestHelper {
   }
 
   @Test
-  void testElasticSearchServicesShareThatOneClient() {
+  void testElasticSearchConsumersShareThatOneClient() {
     RestClient restClient = injector.getInstance(RestClient.class);
 
-    // Both services are constructed with the injected client rather than building their own, so
-    // resolving them must not add any further clients to close.
+    // Every consumer is constructed with the injected client rather than building its own, so
+    // resolving them must not add any further clients to close. The health check is included
+    // because it used to open a second pool of its own.
     injector.getInstance(ElasticSearchService.class);
     injector.getInstance(ElasticSearchCapabilityService.class);
+    injector.getInstance(ElasticSearchHealthCheck.class);
 
     assertEquals(
         1,

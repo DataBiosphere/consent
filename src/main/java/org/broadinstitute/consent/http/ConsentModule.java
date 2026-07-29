@@ -40,6 +40,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.filters.RateLimitFilter;
+import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
@@ -367,8 +368,11 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   /**
    * The application's Elasticsearch client. A singleton because each {@link RestClient} owns its
    * own connection pool and background threads: building one per consumer multiplies pools against
-   * the same cluster for no benefit. Closed on shutdown, since nothing else releases those
-   * connections.
+   * the same cluster for no benefit. Every consumer in the application — {@link
+   * ElasticSearchService}, {@link ElasticSearchCapabilityService}, and {@link
+   * ElasticSearchHealthCheck} — takes this instance by injection rather than calling {@code
+   * ElasticSearchSupport.createRestClient} itself. Closed on shutdown, since nothing else releases
+   * those connections.
    */
   @Provides
   @Singleton

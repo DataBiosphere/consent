@@ -36,6 +36,17 @@ import org.elasticsearch.client.RestClient;
  * Inventories the security features of the Elasticsearch cluster this deployment is configured
  * against: version, edition, X-Pack Security, DLS, FLS, API keys, and {@code run_as}.
  *
+ * <p><b>Every probe here targets Elasticsearch's X-Pack security APIs, not OpenSearch.</b>
+ * OpenSearch implements security differently — DLS and FLS live in its security plugin under {@code
+ * /_plugins/_security}, and it has no {@code POST /_security/api_key} at all — so none of the
+ * X-Pack probes are meaningful there. This service detects that case from {@code
+ * version.distribution} on {@code GET /} and reports it rather than probing: the DLS/FLS verdicts
+ * come back {@code UNKNOWN} because this probe does not inspect the OpenSearch security plugin, the
+ * API-key verdict comes back {@code UNAVAILABLE} because that endpoint does not exist, and write
+ * probes never run. Those verdicts are scope statements, not license inferences, and {@code
+ * writeProbes=true} does not change them. Covering OpenSearch properly would mean a separate set of
+ * {@code /_plugins/_security} probes.
+ *
  * <p><b>The default pass is non-destructive.</b> Nothing is created, updated, or deleted, so it is
  * safe to run anywhere — but DLS, FLS, and API keys cannot be *proven* without creating a role or a
  * key, so a read-only pass reports those with an {@code INFERRED_} verdict reasoned from the
@@ -230,16 +241,21 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     }
     if (isOpenSearch) {
       notes.add(
-          "This cluster is OpenSearch, not Elasticsearch. The X-Pack security APIs do not exist "
-              + "here: DLS/FLS come from the OpenSearch security plugin under /_plugins/_security, "
-              + "and there is no POST /_security/api_key.");
+          "This cluster is OpenSearch, not Elasticsearch. Every probe in this report targets the "
+              + "X-Pack security APIs, which do not exist here: DLS/FLS come from the OpenSearch "
+              + "security plugin under /_plugins/_security, and there is no POST "
+              + "/_security/api_key. The DLS, FLS, and API-key verdicts below are therefore "
+              + "statements about what this probe covers on OpenSearch, not license inferences, "
+              + "and no value of writeProbes changes them.");
     }
     boolean writeProbesRan = writeProbes && securityApiPresent && !isOpenSearch;
     if (!securityApiPresent) {
       notes.add(
           "The /_security API is not available on this cluster, so no security feature can be "
               + "exercised. Every security verdict below follows from that one fact.");
-    } else if (!writeProbesRan) {
+    } else if (!writeProbesRan && !isOpenSearch) {
+      // Only an Elasticsearch cluster has verdicts that a write probe would convert from inferred
+      // to observed; on OpenSearch nothing here is inferred and nothing would be written.
       notes.add(
           "DLS, FLS, and API-key verdicts are inferred from the license tier and cluster "
               + "settings. Re-run with writeProbes=true to create and tear down a short-lived key "
@@ -247,8 +263,11 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     }
     if (writeProbes && !writeProbesRan) {
       notes.add(
-          "Write probes were requested but not run: they need the /_security API on an "
-              + "Elasticsearch distribution.");
+          isOpenSearch
+              ? "Write probes were requested but not run: they create an X-Pack role and API key, "
+                  + "which OpenSearch does not provide."
+              : "Write probes were requested but not run: they need the /_security API, which this "
+                  + "cluster did not answer as a security-enabled cluster would.");
     }
 
     WriteProbeOutcome writeProbeOutcome = writeProbesRan ? runWriteProbes(notes) : null;

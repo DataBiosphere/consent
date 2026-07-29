@@ -6,6 +6,11 @@ description: |
   non-destructive, which is why the DLS, FLS, and API-key verdicts may be inferred rather than
   observed; write_probes_run says which of the two this report is.
 
+  The probes target Elasticsearch's X-Pack security APIs only. Against an OpenSearch cluster —
+  which secures itself through a plugin under /_plugins/_security and has no
+  POST /_security/api_key — the report says so in distribution and notes, returns UNKNOWN for
+  DLS/FLS because it does not inspect that plugin, and never runs write probes.
+
   The example is a real writeProbes=true response from a local trial-licensed cluster, where the
   configured credential is the `elastic` superuser. A deployed environment's shared credential is
   unlikely to hold manage_security or manage_api_key, so expect NOT_PERMITTED verdicts and a
@@ -97,13 +102,19 @@ properties:
   write_probes_run:
     type: boolean
     description: |
-      Whether write probes ran. When false, the DLS, FLS, and API-key verdicts are inferred from
-      the license tier rather than observed — read this field before reading those verdicts.
+      Whether write probes ran. When false on an Elasticsearch cluster, the DLS, FLS, and API-key
+      verdicts are inferred from the license tier rather than observed — read this field before
+      reading those verdicts. On OpenSearch it is always false and nothing is inferred: those
+      verdicts report that the X-Pack probes do not apply.
   capabilities:
     type: array
     description: |
       One entry per probed capability, always in the same order: X-Pack Security, API keys,
       DLS, FLS, run_as impersonation.
+
+      An unreachable cluster is the one exception to that shape: when GET / does not answer, no
+      capability can be probed at all, so the array instead holds the single Cluster reachability
+      entry with an UNKNOWN verdict and the rest of the report is empty.
     items:
       type: object
       title: ElasticSearchCapability
@@ -119,12 +130,15 @@ properties:
             - Document-level security (DLS)
             - Field-level security (FLS)
             - run_as impersonation
+            - Cluster reachability
         verdict:
           type: string
           description: |
             SUPPORTED and UNAVAILABLE are observed. LICENSE_BLOCKED and NOT_PERMITTED are
             observed refusals. The INFERRED_ values are derived from license tier and cluster
-            settings because proving them would require writing to the cluster.
+            settings because proving them would require writing to the cluster. UNKNOWN also
+            covers what the probe does not reach — DLS/FLS on OpenSearch, or any capability on
+            a cluster that did not respond.
           enum:
             - SUPPORTED
             - UNAVAILABLE

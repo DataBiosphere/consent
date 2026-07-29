@@ -82,6 +82,16 @@ Three fields carry most of the interpretive weight:
 - **`security_settings`** — filtered to the dozen or so values that gate a capability, out of the
   ~50 defaults a cluster reports.
 
+**Scope: these are X-Pack probes, so they measure Elasticsearch and not OpenSearch.** OpenSearch's
+security works differently — DLS and FLS come from its security plugin under `/_plugins/_security`,
+and there is no `POST /_security/api_key` — so the endpoint identifies the distribution from
+`GET /` and reports the X-Pack capabilities as out of scope rather than drawing X-Pack conclusions
+from probes that do not fit: DLS/FLS come back `UNKNOWN` (not inspected), API keys `UNAVAILABLE`
+(no such endpoint), and write probes never run whatever `writeProbes` says. Those verdicts are not
+license inferences and `writeProbes=true` will not change them. Measuring an OpenSearch cluster
+properly would mean a second set of `/_plugins/_security` probes, which is out of scope here — every
+environment in the inventory below runs Elasticsearch.
+
 ## Environment inventory
 
 ### Local (`config/docker-compose.yaml`) — measured 2026-07-29 with `writeProbes=true`
