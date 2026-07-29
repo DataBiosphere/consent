@@ -20,6 +20,12 @@ mvn clean compile
 docker-compose -p consent -f config/docker-compose.yaml up
 ```
 
+The stack includes a single-node Elasticsearch container with security disabled, which is the
+correct setup for nearly all work. If you are working on native Elasticsearch document- or
+field-level security, see "Running local Elastic Search with security enabled" in `DEVNOTES.md` —
+security is enabled per-developer with `ES_SECURITY_ENABLED=true` and also requires a trial
+license.
+
 ### Verify the service
 
 - Swagger UI (compose path): `https://local.dsde-dev.broadinstitute.org:27443`
