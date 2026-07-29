@@ -103,6 +103,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "xpack.security.transport.ssl.enabled");
 
   private static final String AUTHENTICATE_PATH = "/_security/_authenticate";
+  // nosemgrep - an endpoint path, not a key
   private static final String API_KEY_PATH = "/_security/api_key";
   private static final String RUN_AS_HEADER = "es-security-runas-user";
 
@@ -114,12 +115,14 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    */
   private static final Pattern RUN_AS_USERNAME = Pattern.compile("[A-Za-z0-9._@+\\-]{1,255}");
 
+  // nosemgrep - a capability label in the report, not a key
   private static final String API_KEYS = "API keys";
   private static final String DLS = "Document-level security (DLS)";
   private static final String FLS = "Field-level security (FLS)";
   private static final String RUN_AS = "run_as impersonation";
 
   /** How long a probe API key lives even if teardown never runs. */
+  // nosemgrep - a duration, not a key
   private static final String PROBE_KEY_EXPIRATION = "10m";
 
   /** The field a probe FLS grant is scoped to; a real field of the dataset index. */
@@ -132,6 +135,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * An empty descriptor grants nothing, and {@code GET /_security/_authenticate} needs nothing, so
    * the round trip is proven just as well by a key that can do nothing else.
    */
+  // nosemgrep - an empty privilege grant, not a key
   private static final String PRIVILEGE_FREE_DESCRIPTOR =
       """
       {"probe":{"cluster":[],"indices":[]}}""";
@@ -341,6 +345,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "Security is disabled, so API keys cannot be issued.",
           "GET " + AUTHENTICATE_PATH);
     }
+    // nosemgrep - a cluster setting name, not a key
     if ("false".equals(settings.get("xpack.security.authc.api_key.enabled"))) {
       return new ElasticSearchCapability(
           API_KEYS,
