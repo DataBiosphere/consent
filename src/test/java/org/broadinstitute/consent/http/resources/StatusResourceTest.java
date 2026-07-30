@@ -2,12 +2,14 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import jakarta.ws.rs.core.Response;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -115,5 +117,26 @@ class StatusResourceTest {
     @SuppressWarnings("rawtypes")
     LinkedHashMap content = (LinkedHashMap) response.getEntity();
     assertEquals(Boolean.TRUE, content.get(StatusResource.DEGRADED));
+  }
+
+  @Test
+  void testMissingEcmResultIsIncludedInSystems() {
+    SortedMap<String, Result> checks = new TreeMap<>();
+    checks.put(DB_ENV, Result.healthy());
+    checks.put(ConsentApplication.ES_CHECK, Result.healthy());
+    checks.put(ConsentApplication.GCS_CHECK, Result.healthy());
+    checks.put(ConsentApplication.SAM_CHECK, Result.healthy());
+    checks.put(ConsentApplication.SG_CHECK, Result.healthy());
+    StatusResource statusResource = initStatusResource(checks);
+
+    Response response = statusResource.getStatus();
+
+    assertEquals(200, response.getStatus());
+    @SuppressWarnings("unchecked")
+    LinkedHashMap<String, Object> content = (LinkedHashMap<String, Object>) response.getEntity();
+    assertEquals(Boolean.TRUE, content.get(StatusResource.DEGRADED));
+    @SuppressWarnings("unchecked")
+    Map<String, Result> systems = (Map<String, Result>) content.get(StatusResource.SYSTEMS);
+    assertFalse(systems.get(ConsentApplication.ECM_CHECK).isHealthy());
   }
 }

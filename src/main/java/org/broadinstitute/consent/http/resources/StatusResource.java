@@ -85,7 +85,9 @@ public class StatusResource extends Resource {
             || !sam.isHealthy()
             || !sendGrid.isHealthy());
     formattedResults.put(DEGRADED, degraded);
-    formattedResults.put(SYSTEMS, results);
+    Map<String, HealthCheck.Result> systems = new LinkedHashMap<>(results);
+    systems.putIfAbsent(ConsentApplication.ECM_CHECK, ecm);
+    formattedResults.put(SYSTEMS, systems);
     return formattedResults;
   }
 

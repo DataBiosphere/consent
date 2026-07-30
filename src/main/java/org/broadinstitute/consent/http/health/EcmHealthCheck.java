@@ -12,6 +12,8 @@ import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
 
 public class EcmHealthCheck extends HealthCheck {
 
+  private static final Gson GSON = new Gson();
+
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
 
@@ -27,7 +29,7 @@ public class EcmHealthCheck extends HealthCheck {
       HttpGet httpGet = new HttpGet(configuration.getEcmStatusUrl());
       SimpleResponse response = clientUtil.getCachedResponse(httpGet);
       if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
-        EcmStatus ecmStatus = new Gson().fromJson(response.entity(), EcmStatus.class);
+        EcmStatus ecmStatus = GSON.fromJson(response.entity(), EcmStatus.class);
         ResultBuilder result =
             Result.builder()
                 .withDetail(StatusResource.OK, ecmStatus.ok)
