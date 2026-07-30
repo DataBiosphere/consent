@@ -15,7 +15,8 @@ class DatasetDeniedMessageTest extends AbstractMailMessageTest {
   void testCreateModel_AddsRequiredFields() {
     User toUser = new User();
     toUser.setDisplayName("researcher name");
-    var message = new DatasetDeniedMessage(toUser, "dac name", "dataset name", "dac email");
+    var message =
+        new DatasetDeniedMessage(toUser, "dac name", "DUOS-000001", "dataset name", "dac email");
 
     assertRequiredModelFields(
         message,
@@ -30,14 +31,41 @@ class DatasetDeniedMessageTest extends AbstractMailMessageTest {
             "dac email"));
   }
 
+  /** The model names the dataset for the reader; the identifier is not part of it. */
+  @Test
+  void testCreateModel_UsesDatasetNameNotIdentifier() {
+    User toUser = new User();
+    toUser.setDisplayName("researcher name");
+    var message =
+        new DatasetDeniedMessage(toUser, "dac name", "DUOS-000001", "dataset name", "dac email");
+
+    Map<String, Object> model = message.createModel();
+
+    assertEquals("dataset name", model.get("datasetName"));
+    assertFalse(model.containsValue("DUOS-000001"), "The identifier is not a model field");
+  }
+
+  /** The email is keyed on the dataset identifier, not on the submitter supplied name. */
+  @Test
+  void testGetEntityReferenceId_UsesDatasetIdentifier() {
+    User toUser = new User();
+    toUser.setDisplayName("researcher name");
+    var message =
+        new DatasetDeniedMessage(toUser, "dac name", "DUOS-000001", "dataset name", "dac email");
+
+    assertEquals("DUOS-000001", message.getEntityReferenceId());
+  }
+
   @Test
   void testGetDatasetApprovedTemplate() throws Exception {
     var serverUrl = "http://localhost:8000/#/";
     User toUser = new User();
     toUser.setDisplayName("researcher name");
     var datasetName = "dataset name";
-    var message = new DatasetDeniedMessage(toUser, "dac name", datasetName, "dac email");
-    assertEquals(datasetName, message.getEntityReferenceId());
+    var datasetIdentifier = "DUOS-000001";
+    var message =
+        new DatasetDeniedMessage(toUser, "dac name", datasetIdentifier, datasetName, "dac email");
+    assertEquals(datasetIdentifier, message.getEntityReferenceId());
 
     var rendered = renderTemplate(message, serverUrl);
 
@@ -50,6 +78,8 @@ class DatasetDeniedMessageTest extends AbstractMailMessageTest {
             .contains(
                 "dataset, dataset name, submitted to the dac name by researcher name for management of future data "
                     + "access requests has been rejected. Please contact the DAC directly at dac email for questions."));
+    // The reader is told which dataset by name, so the identifier does not appear in the body.
+    assertFalse(rendered.content().contains(datasetIdentifier));
     assertFalse(rendered.content().contains("${"));
   }
 }

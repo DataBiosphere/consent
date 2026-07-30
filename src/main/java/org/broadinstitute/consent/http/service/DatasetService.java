@@ -399,7 +399,8 @@ public class DatasetService implements ConsentLogger {
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();
-        sendDatasetDeniedMessage(user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
+        sendDatasetDeniedMessage(
+            user, dac.getName(), dataset.getDatasetIdentifier(), dataset.getName(), dacEmail);
       } else {
         logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
       }
@@ -408,10 +409,11 @@ public class DatasetService implements ConsentLogger {
 
   @VisibleForTesting
   protected void sendDatasetDeniedMessage(
-      User user, String dacName, String datasetName, String dacEmail)
+      User user, String dacName, String datasetIdentifier, String datasetName, String dacEmail)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
+        new DatasetDeniedMessage(user, dacName, datasetIdentifier, datasetName, dacEmail),
+        user.getUserId());
   }
 
   @VisibleForTesting

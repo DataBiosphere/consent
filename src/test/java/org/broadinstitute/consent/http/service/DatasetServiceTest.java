@@ -76,6 +76,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -604,8 +605,13 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
     assertFalse(returnedDataset.getDacApproval());
 
-    // send denied email
-    verify(emailService, times(1)).sendMessage(any(DatasetDeniedMessage.class), any());
+    // send denied email, naming the dataset in the body and referencing it by identifier
+    ArgumentCaptor<DatasetDeniedMessage> messageCaptor =
+        ArgumentCaptor.forClass(DatasetDeniedMessage.class);
+    verify(emailService, times(1)).sendMessage(messageCaptor.capture(), any());
+    DatasetDeniedMessage message = messageCaptor.getValue();
+    assertEquals(dataset.getName(), message.createModel().get("datasetName"));
+    assertEquals(dataset.getDatasetIdentifier(), message.getEntityReferenceId());
   }
 
   @Test
