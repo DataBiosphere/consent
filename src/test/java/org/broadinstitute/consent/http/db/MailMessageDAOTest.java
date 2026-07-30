@@ -24,6 +24,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MailMessageDAOTest extends DAOTestHelper {
 
+  /** Width of email_entity.entity_reference_id. */
+  private static final int ENTITY_REFERENCE_ID_COLUMN_WIDTH = 255;
+
   @Test
   void testInsert_AllFields() {
     User user = createUser();
@@ -80,6 +83,66 @@ class MailMessageDAOTest extends DAOTestHelper {
                 randomAlphanumeric(10),
                 randomInt(200, 399)));
     assertNotNull(mail);
+  }
+
+  /**
+   * Pins the width relied on by {@code EntityReferenceIdLengthTest}: a reference id that fills the
+   * column is stored intact.
+   */
+  @Test
+  void testInsert_MaxLengthEntityReferenceId() {
+    User user = createUser();
+    String entityReferenceId = randomAlphanumeric(ENTITY_REFERENCE_ID_COLUMN_WIDTH);
+    MailMessage mail =
+        mailMessageDAO.insert(
+            new MailMessageInsert(
+                entityReferenceId,
+                randomInt(1, 1000),
+                user.getUserId(),
+                EmailType.COLLECT.getTypeInt(),
+                Date.from(Instant.now()),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                randomInt(200, 399)));
+    assertNotNull(mail);
+    assertEquals(entityReferenceId, mail.entityReferenceId());
+  }
+
+  /**
+   * A reference id longer than the column is not truncated, it fails the insert. EmailService hands
+   * the message to SendGrid before inserting, so any MailMessage returning an over-long entity
+   * reference id sends the email and then loses the record of having sent it. See {@code
+   * EntityReferenceIdLengthTest}, which guards each MailMessage implementation against this.
+   */
+  @Test
+  void testInsert_EntityReferenceIdLongerThanColumnFails() {
+    Integer columnWidth =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        """
+                        SELECT character_maximum_length
+                        FROM information_schema.columns
+                        WHERE table_name = 'email_entity' AND column_name = 'entity_reference_id'
+                        """)
+                    .mapTo(Integer.class)
+                    .one());
+    assertEquals(ENTITY_REFERENCE_ID_COLUMN_WIDTH, columnWidth);
+
+    User user = createUser();
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            randomAlphanumeric(ENTITY_REFERENCE_ID_COLUMN_WIDTH + 1),
+            randomInt(1, 1000),
+            user.getUserId(),
+            EmailType.COLLECT.getTypeInt(),
+            Date.from(Instant.now()),
+            randomAlphanumeric(10),
+            randomAlphanumeric(10),
+            randomInt(200, 399));
+    assertThrows(
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test

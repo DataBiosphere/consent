@@ -226,7 +226,8 @@ public class DatasetRegistrationService implements ConsentLogger {
     // Send notification emails to DAC chairs about new datasets
     sendDatasetSubmittedEmails(datasets);
     // Send confirmation email to submitter
-    sendSubmissionConfirmationEmail(user, registration, datasets.getFirst().getStudyId());
+    sendSubmissionConfirmationEmail(
+        user, registration, datasets.getFirst().getStudyId(), studyInsert.uuid());
     try (Response response = elasticSearchService.indexDatasets(createdDatasetIds)) {
       if (response.getStatus() >= 400) {
         logWarn(
@@ -261,7 +262,8 @@ public class DatasetRegistrationService implements ConsentLogger {
         registration.getPublicVisibility(),
         user.getUserId(),
         registrationRequestMapper.toStudyProperties(registration),
-        uploadFilesForStudy(files, uploadedFileCache, user));
+        uploadFilesForStudy(files, uploadedFileCache, user),
+        UUID.randomUUID());
   }
 
   /**
@@ -582,10 +584,15 @@ public class DatasetRegistrationService implements ConsentLogger {
 
   @VisibleForTesting
   protected void sendStudySubmissionConfirmation(
-      User dataSubmitter, String studyName, Integer studyId, Map<String, Object> studyAssets)
+      User dataSubmitter,
+      String studyName,
+      Integer studyId,
+      UUID studyUuid,
+      Map<String, Object> studyAssets)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new NewStudyRegistrationConfirmationMessage(dataSubmitter, studyName, studyId, studyAssets),
+        new NewStudyRegistrationConfirmationMessage(
+            dataSubmitter, studyName, studyId, studyUuid, studyAssets),
         dataSubmitter.getUserId());
   }
 
@@ -595,12 +602,18 @@ public class DatasetRegistrationService implements ConsentLogger {
    *
    * @param submitter The user who submitted the dataset registration request
    * @param registration The dataset registration object containing the details of the submission
+   * @param studyId The id of the study created by this registration
+   * @param studyUuid The uuid of the study created by this registration
    */
   public void sendSubmissionConfirmationEmail(
-      User submitter, StudyRegistrationRequest registration, Integer studyId) {
+      User submitter, StudyRegistrationRequest registration, Integer studyId, UUID studyUuid) {
     try {
       sendStudySubmissionConfirmation(
-          submitter, registration.getStudyName(), studyId, getAssetsWithDatasets(registration));
+          submitter,
+          registration.getStudyName(),
+          studyId,
+          studyUuid,
+          getAssetsWithDatasets(registration));
     } catch (Exception e) {
       logException(e);
     }
