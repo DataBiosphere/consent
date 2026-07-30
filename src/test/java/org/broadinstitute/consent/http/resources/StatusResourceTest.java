@@ -68,6 +68,7 @@ class StatusResourceTest {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
     checks.put(ConsentApplication.ES_CHECK, Result.healthy());
+    checks.put(ConsentApplication.ECM_CHECK, Result.healthy());
     checks.put(ConsentApplication.GCS_CHECK, Result.healthy());
     checks.put(ConsentApplication.SAM_CHECK, Result.healthy());
     checks.put(ConsentApplication.SG_CHECK, Result.healthy());
@@ -93,6 +94,24 @@ class StatusResourceTest {
     // A failing sam check should not fail the status
     assertEquals(200, response.getStatus());
     // A failing sam check should mark the system as degraded
+    @SuppressWarnings("rawtypes")
+    LinkedHashMap content = (LinkedHashMap) response.getEntity();
+    assertEquals(Boolean.TRUE, content.get(StatusResource.DEGRADED));
+  }
+
+  @Test
+  void testDegradedWhenEcmIsUnhealthy() {
+    SortedMap<String, Result> checks = new TreeMap<>();
+    checks.put(DB_ENV, Result.healthy());
+    checks.put(ConsentApplication.ES_CHECK, Result.healthy());
+    checks.put(ConsentApplication.ECM_CHECK, Result.unhealthy("ECM is down"));
+    checks.put(ConsentApplication.GCS_CHECK, Result.healthy());
+    checks.put(ConsentApplication.SAM_CHECK, Result.healthy());
+    checks.put(ConsentApplication.SG_CHECK, Result.healthy());
+    StatusResource statusResource = initStatusResource(checks);
+
+    Response response = statusResource.getStatus();
+    assertEquals(200, response.getStatus());
     @SuppressWarnings("rawtypes")
     LinkedHashMap content = (LinkedHashMap) response.getEntity();
     assertEquals(Boolean.TRUE, content.get(StatusResource.DEGRADED));

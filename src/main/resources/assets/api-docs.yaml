@@ -1152,9 +1152,9 @@ paths:
       description: |
         A detailed description of the various subsystem statuses that Consent relies upon.
         Current systems include:
+          * ECM
           * Elastic Search
           * GCS
-          * Ontology
           * Postgres DB
           * Sam
           * Sendgrid

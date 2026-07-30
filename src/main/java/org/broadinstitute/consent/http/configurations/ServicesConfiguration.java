@@ -19,6 +19,9 @@ public class ServicesConfiguration {
   public static final String REJECT_TOS_PATH = "api/termsOfService/v1/user/self/reject";
   public static final String SAM_V1_USER_EMAIL = "api/users/v1";
   public static final String ECM_RAS_PROVIDER = "/api/oauth/v1/ras";
+  // ECM's detailed status endpoint is auth-gated at the environment proxy. This legacy endpoint
+  // remains public specifically for unauthenticated service health checks.
+  public static final String ECM_STATUS_PATH = "/status";
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
@@ -78,6 +81,15 @@ public class ServicesConfiguration {
 
   public String getEcmRasProviderUrl() {
     return getEcmUrl() + ECM_RAS_PROVIDER;
+  }
+
+  public String getEcmStatusUrl() {
+    String baseUrl = getEcmUrl();
+    int end = baseUrl.length();
+    while (end > 0 && baseUrl.charAt(end - 1) == '/') {
+      end--;
+    }
+    return baseUrl.substring(0, end) + ECM_STATUS_PATH;
   }
 
   public String getV1ResourceTypesUrl() {

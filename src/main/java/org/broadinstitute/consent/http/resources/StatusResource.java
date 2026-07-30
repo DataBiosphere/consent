@@ -69,6 +69,9 @@ public class StatusResource extends Resource {
         results.getOrDefault(
             ConsentApplication.ES_CHECK,
             HealthCheck.Result.unhealthy("Unable to access Elastic Search"));
+    HealthCheck.Result ecm =
+        results.getOrDefault(
+            ConsentApplication.ECM_CHECK, HealthCheck.Result.unhealthy("Unable to access ECM"));
     HealthCheck.Result sam =
         results.getOrDefault(
             ConsentApplication.SAM_CHECK, HealthCheck.Result.unhealthy("Unable to access Sam"));
@@ -78,6 +81,7 @@ public class StatusResource extends Resource {
     boolean degraded =
         (!gcs.isHealthy()
             || !elasticSearch.isHealthy()
+            || !ecm.isHealthy()
             || !sam.isHealthy()
             || !sendGrid.isHealthy());
     formattedResults.put(DEGRADED, degraded);
