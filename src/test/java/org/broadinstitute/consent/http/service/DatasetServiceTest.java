@@ -605,13 +605,15 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(dataset.getDatasetId(), returnedDataset.getDatasetId());
     assertFalse(returnedDataset.getDacApproval());
 
-    // send denied email, naming the dataset in the body and referencing it by identifier
+    // send denied email, naming the dataset in the body and referencing it by identifier.
+    // Asserted against literals rather than dataset.getName()/getDatasetIdentifier() so the
+    // expected values cannot be recomputed to match whatever the message was handed.
     ArgumentCaptor<DatasetDeniedMessage> messageCaptor =
         ArgumentCaptor.forClass(DatasetDeniedMessage.class);
     verify(emailService, times(1)).sendMessage(messageCaptor.capture(), any());
     DatasetDeniedMessage message = messageCaptor.getValue();
-    assertEquals(dataset.getName(), message.createModel().get("datasetName"));
-    assertEquals(dataset.getDatasetIdentifier(), message.getEntityReferenceId());
+    assertEquals("Test Dataset", message.createModel().get("datasetName"));
+    assertEquals("DUOS-000001", message.getEntityReferenceId());
   }
 
   @Test
