@@ -239,14 +239,15 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     List<ElasticSearchCapability> capabilities =
         buildCapabilities(
             writeProbeOutcome,
-            securityEnabled,
-            securityApiPresent,
-            xpack,
-            securitySettings,
-            clusterPrivileges,
-            licenseType,
-            authenticatedUser,
-            runAsUser);
+            new ClusterObservations(
+                securityEnabled,
+                securityApiPresent,
+                xpack,
+                securitySettings,
+                clusterPrivileges,
+                licenseType,
+                authenticatedUser,
+                runAsUser));
 
     return new ElasticSearchCapabilityReport(
         string(root.body(), "cluster_name"),
@@ -307,12 +308,11 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   /**
-   * The five capability verdicts, each preferring an observed write-probe outcome over the inferred
-   * read-only one — split out of {@link #getCapabilityReport} so its own branching does not
-   * compound with the rest of that method's.
+   * What the read-only pass observed about the cluster, plus the impersonation target it was asked
+   * to probe: the whole of what a capability verdict is reasoned from when no write probe settled
+   * the question. Grouped so the verdict builder takes the cluster's state as one value.
    */
-  private List<ElasticSearchCapability> buildCapabilities(
-      WriteProbeOutcome writeProbeOutcome,
+  private record ClusterObservations(
       Boolean securityEnabled,
       boolean securityApiPresent,
       ProbeResult xpack,
@@ -320,22 +320,45 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       Map<String, Boolean> clusterPrivileges,
       String licenseType,
       String authenticatedUser,
-      String runAsUser) {
+      String runAsUser) {}
+
+  /**
+   * The five capability verdicts, each preferring an observed write-probe outcome over the inferred
+   * read-only one — split out of {@link #getCapabilityReport} so its own branching does not
+   * compound with the rest of that method's.
+   */
+  private List<ElasticSearchCapability> buildCapabilities(
+      WriteProbeOutcome writeProbeOutcome, ClusterObservations observed) {
     List<ElasticSearchCapability> capabilities = new ArrayList<>();
-    capabilities.add(securityCapability(securityEnabled, securityApiPresent, xpack));
+    capabilities.add(
+        securityCapability(
+            observed.securityEnabled(), observed.securityApiPresent(), observed.xpack()));
     capabilities.add(
         writeProbeOutcome != null
             ? writeProbeOutcome.apiKeys()
-            : apiKeyCapability(securityApiPresent, securitySettings, clusterPrivileges));
+            : apiKeyCapability(
+                observed.securityApiPresent(),
+                observed.securitySettings(),
+                observed.clusterPrivileges()));
     capabilities.add(
         writeProbeOutcome != null
             ? writeProbeOutcome.dls()
-            : dlsFlsCapability(DLS, securityApiPresent, licenseType, securitySettings));
+            : dlsFlsCapability(
+                DLS,
+                observed.securityApiPresent(),
+                observed.licenseType(),
+                observed.securitySettings()));
     capabilities.add(
         writeProbeOutcome != null
             ? writeProbeOutcome.fls()
-            : dlsFlsCapability(FLS, securityApiPresent, licenseType, securitySettings));
-    capabilities.add(runAsCapability(securityApiPresent, authenticatedUser, runAsUser));
+            : dlsFlsCapability(
+                FLS,
+                observed.securityApiPresent(),
+                observed.licenseType(),
+                observed.securitySettings()));
+    capabilities.add(
+        runAsCapability(
+            observed.securityApiPresent(), observed.authenticatedUser(), observed.runAsUser()));
     return capabilities;
   }
 
@@ -1223,13 +1246,13 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   /** Reads the caller's own cluster privileges. A POST, but an evaluation rather than a write. */
   private Map<String, Boolean> clusterPrivileges() {
     String body =
-        "{\"cluster\":[%s],\"index\":[{\"names\":[\"%s\"],"
-            + "\"privileges\":[\"read\",\"view_index_metadata\"]}]}"
-                .formatted(
-                    PROBED_CLUSTER_PRIVILEGES.stream()
-                        .map("\"%s\""::formatted)
-                        .collect(Collectors.joining(",")),
-                    probeIndex());
+        ("{\"cluster\":[%s],\"index\":[{\"names\":[\"%s\"],"
+                + "\"privileges\":[\"read\",\"view_index_metadata\"]}]}")
+            .formatted(
+                PROBED_CLUSTER_PRIVILEGES.stream()
+                    .map("\"%s\""::formatted)
+                    .collect(Collectors.joining(",")),
+                probeIndex());
 
     ProbeResult result = probe(HttpMethod.POST, "/_security/user/_has_privileges", body, Map.of());
     if (result.status() != 200 || !result.body().has("cluster")) {

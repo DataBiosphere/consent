@@ -373,6 +373,30 @@ class ElasticSearchCapabilityServiceTest {
     assertEquals(Boolean.FALSE, report.clusterPrivileges().get("grant_api_key"));
   }
 
+  /**
+   * A privileges body that failed to interpolate would be rejected by the cluster, and a rejected
+   * probe degrades quietly to "no privileges reported" rather than to a visible error — so the body
+   * itself is asserted on, not just the verdict it produces.
+   */
+  @Test
+  void testPrivilegeProbeBodyIsFullyInterpolated() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        HAS_PRIVILEGES,
+        200,
+        """
+        {"cluster":{"manage_api_key":true}}""");
+
+    service().getCapabilityReport(null, false);
+
+    List<Request> probes = requestsTo("POST", "/_security/user/_has_privileges");
+    assertEquals(1, probes.size());
+    String body = bodyOf(probes.getFirst());
+    assertFalse(body.contains("%s"), "every placeholder should have been substituted: " + body);
+    assertTrue(body.contains("\"manage_api_key\""), body);
+    assertTrue(body.contains("\"names\":[\"dataset\"]"), body);
+  }
+
   @Test
   void testRunAsDeniedByPrivilegeIsDistinguishedFromLicenseBlock() throws IOException {
     stubSecurityEnabledCluster("trial");
