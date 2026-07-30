@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -229,7 +230,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             true,
             user.getUserId(),
             List.of(),
-            List.of());
+            List.of(),
+            UUID.randomUUID());
 
     DatasetInsert datasetInsert =
         new DatasetInsert(
@@ -262,6 +264,11 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertTrue(Objects.isNull(s.getProperties()) || s.getProperties().isEmpty());
     assertNull(s.getAlternativeDataSharingPlan());
+
+    // The study is persisted with the uuid supplied on the insert, rather than one generated
+    // during the insert. The uuid is not selected as part of a dataset's study, so the study
+    // needs to be loaded directly to see it.
+    assertEquals(studyInsert.uuid(), studyDAO.findStudyById(s.getStudyId()).getUuid());
   }
 
   @Test
@@ -289,7 +296,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             true,
             user.getUserId(),
             List.of(prop1, prop2),
-            List.of());
+            List.of(),
+            UUID.randomUUID());
 
     DatasetInsert datasetInsert =
         new DatasetInsert(
@@ -372,7 +380,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             true,
             user.getUserId(),
             List.of(prop1, prop2),
-            List.of(file));
+            List.of(file),
+            UUID.randomUUID());
 
     DatasetInsert datasetInsert =
         new DatasetInsert(
@@ -1966,7 +1975,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             true,
             user.getUserId(),
             List.of(prop1, prop2),
-            Objects.isNull(alternateSharingPlanFSO) ? List.of() : List.of(alternateSharingPlanFSO));
+            Objects.isNull(alternateSharingPlanFSO) ? List.of() : List.of(alternateSharingPlanFSO),
+            UUID.randomUUID());
 
     DatasetProperty datasetProperty = new DatasetProperty();
     datasetProperty.setSchemaProperty(randomAlphabetic(10));

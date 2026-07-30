@@ -209,7 +209,7 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   private Integer executeInsertStudy(Handle handle, StudyInsert insert) {
     StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
-    UUID uuid = UUID.randomUUID();
+    UUID uuid = insert.uuid;
     Integer studyId =
         studyDAOLocal.insertStudy(
             insert.name,
@@ -697,7 +697,8 @@ public class DatasetServiceDAO implements ConsentLogger {
       Boolean publicVisibility,
       Integer userId,
       List<StudyProperty> props,
-      List<FileStorageObject> files) {}
+      List<FileStorageObject> files,
+      UUID uuid) {}
 
   public record StudyUpdate(
       String name,
