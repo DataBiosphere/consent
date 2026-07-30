@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpVersion;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -22,6 +23,7 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.models.elastic_search.CapabilityVerdict;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapability;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapabilityReport;
+import org.elasticsearch.client.Node;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
@@ -363,7 +365,7 @@ class ElasticSearchCapabilityServiceTest {
         200,
         """
         {"cluster":{"manage_security":false,"manage_api_key":false,"grant_api_key":false,
-        "manage_own_api_key":true,"read_security":false,"monitor":true}}""");
+        "manage_own_api_key":false,"read_security":false,"monitor":true}}""");
 
     ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
 
@@ -371,6 +373,101 @@ class ElasticSearchCapabilityServiceTest {
     assertEquals(CapabilityVerdict.NOT_PERMITTED, apiKeys.verdict());
     assertTrue(apiKeys.detail().contains("manage_api_key"));
     assertEquals(Boolean.FALSE, report.clusterPrivileges().get("grant_api_key"));
+  }
+
+  /**
+   * The probe mints keys with POST /_security/api_key, which manage_own_api_key authorises on its
+   * own. Predicting a refusal for a credential that can in fact create its own keys would
+   * understate what Epic D has to work with.
+   */
+  @Test
+  void testManageOwnApiKeyAloneIsEnoughToMintPerRequestKeys() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        HAS_PRIVILEGES,
+        200,
+        """
+        {"cluster":{"manage_security":false,"manage_api_key":false,"grant_api_key":false,
+        "manage_own_api_key":true,"read_security":false,"monitor":true}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(CapabilityVerdict.INFERRED_SUPPORTED, capability(report, "API keys").verdict());
+  }
+
+  /**
+   * grant_api_key authorises POST /_security/api_key/grant, not the create-key endpoint this probe
+   * and Epic D use, so holding it alone must not be reported as being able to mint keys — the
+   * create-key call would be refused.
+   */
+  @Test
+  void testGrantApiKeyAloneIsNotReadAsAbleToMintKeys() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        HAS_PRIVILEGES,
+        200,
+        """
+        {"cluster":{"manage_security":false,"manage_api_key":false,"grant_api_key":true,
+        "manage_own_api_key":false,"read_security":false,"monitor":true}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    ElasticSearchCapability apiKeys = capability(report, "API keys");
+    assertEquals(CapabilityVerdict.NOT_PERMITTED, apiKeys.verdict());
+    // And the reader is told why the privilege it does hold does not answer the question.
+    assertTrue(apiKeys.detail().contains("grant_api_key"), apiKeys.detail());
+    assertTrue(apiKeys.detail().contains("/grant"), apiKeys.detail());
+  }
+
+  /**
+   * The setting overrides the license: a Platinum-equivalent tier with DLS/FLS switched off
+   * cluster-wide enforces neither, so reading the tier alone would report Epic D as viable on a
+   * cluster where it cannot work.
+   */
+  @Test
+  void testDlsFlsDisabledByClusterSettingOverridesAQualifyingLicense() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true","xpack.security.dls_fls.enabled":"false",
+        "xpack.security.authc.api_key.enabled":"true"},"persistent":{},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    for (String name : List.of("Document-level security (DLS)", "Field-level security (FLS)")) {
+      ElasticSearchCapability capability = capability(report, name);
+      assertEquals(CapabilityVerdict.UNAVAILABLE, capability.verdict(), name);
+      assertTrue(capability.detail().contains("dls_fls.enabled"), capability.detail());
+      assertTrue(capability.evidence().contains("dls_fls.enabled=false"), capability.evidence());
+    }
+    // And the recommendation has to follow the setting rather than the license tier.
+    assertTrue(report.recommendation().contains("Epic E"), report.recommendation());
+    assertTrue(
+        report.recommendation().contains("dls_fls.enabled=false"),
+        "the recommendation must say what blocks the native path: " + report.recommendation());
+  }
+
+  /**
+   * Only an explicit false counts. A cluster that did not report the setting says nothing about it,
+   * and treating that silence as "disabled" would block Epic D on a missing value.
+   */
+  @Test
+  void testUnreportedDlsFlsSettingIsNotReadAsDisabled() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true"},"persistent":{},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertTrue(report.recommendation().contains("Epic D"), report.recommendation());
   }
 
   /**
@@ -469,6 +566,29 @@ class ElasticSearchCapabilityServiceTest {
     // the report takes other than the five probed capabilities — has to stay in that enum.
     assertEquals("Cluster reachability", report.capabilities().get(0).name());
     assertTrue(report.recommendation().contains("unreachable"));
+  }
+
+  /**
+   * The API-key client has to reach the cluster the same way the injected client does. Building it
+   * from the first node alone would make a write-probe pass fail whenever that one node of a
+   * multi-node cluster happened to be down — a failure about the topology, reported as a finding
+   * about the cluster's capabilities.
+   */
+  @Test
+  void testTheApiKeyProbeClientCarriesEveryNodeNotJustTheFirst() {
+    when(esClient.getNodes())
+        .thenReturn(
+            List.of(
+                new Node(new HttpHost("es-1", 9200, "https")),
+                new Node(new HttpHost("es-2", 9200, "https")),
+                new Node(new HttpHost("es-3", 9200, "https"))));
+
+    HttpHost[] hosts = ElasticSearchCapabilityService.probeHosts(esClient);
+
+    assertEquals(3, hosts.length, "a probe must be able to fail over like any other request");
+    assertEquals("es-1", hosts[0].getHostName());
+    assertEquals("es-3", hosts[2].getHostName());
+    assertEquals("https", hosts[0].getSchemeName(), "the scheme must survive the copy");
   }
 
   @Test
@@ -757,9 +877,11 @@ class ElasticSearchCapabilityServiceTest {
     assertTrue(apiKeys.detail().contains("refused"));
     // Without a key, the enforcement probes cannot run, so no key-scoped search is attempted.
     assertTrue(requestsTo("GET", "/dataset/_search").isEmpty());
-    // The role probe still answers the license question on its own.
-    assertEquals(
-        CapabilityVerdict.SUPPORTED, capability(report, "Document-level security (DLS)").verdict());
+    // The role probe still answers the license question on its own — but only that question, so the
+    // verdict stays inferred rather than claiming an enforcement that was never exercised.
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.INFERRED_SUPPORTED, dls.verdict());
+    assertTrue(dls.detail().contains("Not observed: whether it enforces them"), dls.detail());
   }
 
   /**
@@ -901,7 +1023,8 @@ class ElasticSearchCapabilityServiceTest {
 
     // Role acceptance stands, but the report must not let that read as proven enforcement.
     assertEquals(
-        CapabilityVerdict.SUPPORTED, capability(report, "Field-level security (FLS)").verdict());
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Field-level security (FLS)").verdict());
     assertFalse(capability(report, "Field-level security (FLS)").detail().contains("Proven"));
     assertTrue(
         report.notes().stream().anyMatch(n -> n.contains("no document fields to inspect")),
@@ -923,6 +1046,13 @@ class ElasticSearchCapabilityServiceTest {
     assertTrue(
         report.notes().stream().anyMatch(n -> n.contains("No usable probe key")),
         "role acceptance must not be presented as enforcement: " + report.notes());
+    // And the verdict itself must say the same thing the note does.
+    assertEquals(
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertEquals(
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Field-level security (FLS)").verdict());
   }
 
   @Test
@@ -953,12 +1083,19 @@ class ElasticSearchCapabilityServiceTest {
 
     // Role acceptance still stands, but it must not be dressed up as end-to-end proof.
     ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
-    assertEquals(CapabilityVerdict.SUPPORTED, dls.verdict());
+    assertEquals(CapabilityVerdict.INFERRED_SUPPORTED, dls.verdict());
     assertFalse(dls.detail().contains("Proven end to end"));
     assertTrue(
         report.notes().stream().anyMatch(n -> n.contains("empty")),
         "an empty index must be called out rather than read as a pass");
     assertTrue(requestsTo("GET", "/dataset/_search").isEmpty());
+    // The recommendation is the part a reader acts on, so it must not claim enforcement either.
+    assertFalse(
+        report.recommendation().contains("enforced"),
+        "no enforcement was observed, so none may be claimed: " + report.recommendation());
+    assertTrue(
+        report.recommendation().contains("Not settled by the write probes"),
+        report.recommendation());
   }
 
   @Test
@@ -975,7 +1112,9 @@ class ElasticSearchCapabilityServiceTest {
 
     assertTrue(report.notes().stream().anyMatch(n -> n.contains("not readable")));
     assertEquals(
-        CapabilityVerdict.SUPPORTED, capability(report, "Document-level security (DLS)").verdict());
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertFalse(report.recommendation().contains("enforced"), report.recommendation());
   }
 
   @Test

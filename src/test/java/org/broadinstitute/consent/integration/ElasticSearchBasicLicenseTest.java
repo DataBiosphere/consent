@@ -51,6 +51,13 @@ class ElasticSearchBasicLicenseTest {
     ELASTIC.start();
     CONFIGURATION = ElasticSearchTestCluster.configuration(ELASTIC, INDEX);
     CLIENT = ElasticSearchSupport.createRestClient(CONFIGURATION);
+
+    try {
+      // The license is published after the container reports ready; see the helper's javadoc.
+      ElasticSearchTestCluster.awaitLicense(CLIENT);
+    } catch (Exception e) {
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   /**

@@ -66,7 +66,7 @@ class ElasticSearchCapabilityResourceTest extends AbstractTestHelper {
   void testGetCapabilities() {
     when(capabilityService.getCapabilityReport(null, false)).thenReturn(report());
 
-    Response response = resource.getCapabilities(duosUser, null, false);
+    Response response = resource.getCapabilities(duosUser, null);
 
     assertEquals(200, response.getStatus());
     assertNotNull(response.getEntity());
@@ -78,22 +78,46 @@ class ElasticSearchCapabilityResourceTest extends AbstractTestHelper {
   void testGetCapabilitiesPassesRunAsUserThrough() {
     when(capabilityService.getCapabilityReport("someone-else", false)).thenReturn(report());
 
-    Response response = resource.getCapabilities(duosUser, "someone-else", false);
+    Response response = resource.getCapabilities(duosUser, "someone-else");
 
     assertEquals(200, response.getStatus());
     verify(capabilityService).getCapabilityReport("someone-else", false);
   }
 
-  /** Write probes must never be a side effect of calling the endpoint — only of asking for them. */
+  /**
+   * The GET is the whole read-only contract: creating credentials on the cluster must not be
+   * reachable by anything that merely follows a link, so no argument to it can turn writes on.
+   */
   @Test
-  void testWriteProbesAreOnlyRunWhenExplicitlyRequested() {
+  void testGetNeverRunsWriteProbes() {
+    when(capabilityService.getCapabilityReport(null, false)).thenReturn(report());
+
+    resource.getCapabilities(duosUser, null);
+
+    verify(capabilityService, never()).getCapabilityReport(null, true);
+  }
+
+  /** Write probes are what the POST is for, and the only thing that reaches them. */
+  @Test
+  void testPostRunsWriteProbes() {
     when(capabilityService.getCapabilityReport(null, true)).thenReturn(report());
 
-    Response response = resource.getCapabilities(duosUser, null, true);
+    Response response = resource.runCapabilityProbes(duosUser, null);
 
     assertEquals(200, response.getStatus());
+    assertEquals(report(), response.getEntity());
     verify(capabilityService).getCapabilityReport(null, true);
     verify(capabilityService, never()).getCapabilityReport(null, false);
+  }
+
+  @Test
+  void testPostPassesRunAsUserThrough() {
+    when(capabilityService.getCapabilityReport("someone-else", true)).thenReturn(report());
+
+    Response response = resource.runCapabilityProbes(duosUser, "someone-else");
+
+    assertEquals(200, response.getStatus());
+    verify(capabilityService).getCapabilityReport("someone-else", true);
   }
 
   @Test
@@ -101,7 +125,17 @@ class ElasticSearchCapabilityResourceTest extends AbstractTestHelper {
     when(capabilityService.getCapabilityReport(null, false))
         .thenThrow(new RuntimeException("cluster exploded"));
 
-    Response response = resource.getCapabilities(duosUser, null, false);
+    Response response = resource.getCapabilities(duosUser, null);
+
+    assertEquals(500, response.getStatus());
+  }
+
+  @Test
+  void testPostHandlesServiceFailure() {
+    when(capabilityService.getCapabilityReport(null, true))
+        .thenThrow(new RuntimeException("cluster exploded"));
+
+    Response response = resource.runCapabilityProbes(duosUser, null);
 
     assertEquals(500, response.getStatus());
   }

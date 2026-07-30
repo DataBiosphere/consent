@@ -50,6 +50,11 @@ final class ElasticSearchTestCluster {
   static final String USER = "elastic";
   static final String PASSWORD = "devpassword";
 
+  /** How long {@link #awaitLicense} waits for the self-generated license to become readable. */
+  private static final long LICENSE_TIMEOUT_MILLIS = 60_000;
+
+  private static final long LICENSE_POLL_INTERVAL_MILLIS = 250;
+
   /**
    * The error Elasticsearch returns when a document- or field-level security grant is exercised
    * under a basic license. Asserted on directly: a future version that changed this to a silent
@@ -79,6 +84,51 @@ final class ElasticSearchTestCluster {
         .withEnv("xpack.security.http.ssl.enabled", "false")
         .withEnv("xpack.security.transport.ssl.enabled", "false")
         .withPassword(PASSWORD);
+  }
+
+  /**
+   * Blocks until the cluster will answer {@code GET /_license}, which happens strictly later than
+   * the container reporting itself started.
+   *
+   * <p>Testcontainers considers an {@code ElasticsearchContainer} ready as soon as the HTTP layer
+   * answers on port 9200, but the self-generated basic license is published to the cluster state
+   * after that point. In between, {@code GET /_license} returns {@code 404} with an empty body —
+   * documented as a transient of a master node still building cluster state, not a
+   * misconfiguration. The gap is on the order of a second on an idle machine and widens under the
+   * load of a full test run, where three of these containers boot alongside the Postgres one.
+   *
+   * <p>Any class that reads or changes the license immediately after {@code start()} must call this
+   * first, or its first request can fail on that 404.
+   */
+  static void awaitLicense(RestClient client) throws IOException {
+    long deadline = System.nanoTime() + LICENSE_TIMEOUT_MILLIS * 1_000_000L;
+    ResponseException lastRejection;
+    while (true) {
+      try {
+        execute(client, new Request("GET", "/_license"));
+        return;
+      } catch (ResponseException e) {
+        if (e.getResponse().getStatusLine().getStatusCode() != 404) {
+          throw e;
+        }
+        lastRejection = e;
+      }
+      if (System.nanoTime() - deadline >= 0) {
+        throw new IOException(
+            "no license after "
+                + LICENSE_TIMEOUT_MILLIS
+                + "ms; last response: "
+                + bodyOf(lastRejection),
+            lastRejection);
+      }
+      try {
+        // Polling a cluster that has no readiness signal for this; see the javadoc above.
+        Thread.sleep(LICENSE_POLL_INTERVAL_MILLIS); // NOSONAR
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("interrupted while waiting for the license", e);
+      }
+    }
   }
 
   /** Configuration pointing at a running container, carrying the shared dev credentials. */

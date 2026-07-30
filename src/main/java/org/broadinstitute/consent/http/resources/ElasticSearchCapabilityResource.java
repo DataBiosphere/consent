@@ -3,8 +3,8 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -26,10 +26,15 @@ import org.broadinstitute.consent.http.service.ElasticSearchCapabilityService;
  * <p>The probes behind this endpoint are Elasticsearch X-Pack probes — see {@link
  * ElasticSearchCapabilityService}.
  *
- * <p>The probes behind this endpoint are read-only by default. Pass {@code writeProbes=true} to
- * additionally create and tear down a short-lived API key and role, which is the only way to
- * observe DLS, FLS, and API-key support rather than infer it from the license tier — see {@link
- * ElasticSearchCapabilityService} for what each mode establishes.
+ * <p>Two modes, split by HTTP method rather than by a query parameter. {@code GET} is read-only:
+ * nothing is created, modified, or deleted on the cluster. {@code POST} additionally creates and
+ * tears down a short-lived API key and role, which is the only way to observe DLS, FLS, and API-key
+ * support rather than infer it from the license tier — see {@link ElasticSearchCapabilityService}
+ * for what each mode establishes.
+ *
+ * <p>The split is the point: minting credentials is a side effect, and a URL that mints them on
+ * {@code GET} is one a link prefetcher, a monitoring crawler, or a bookmark can fire without anyone
+ * deciding to. Behind {@code POST} it takes a deliberate request.
  */
 @Path("api/elasticSearch")
 public class ElasticSearchCapabilityResource extends Resource {
@@ -43,14 +48,12 @@ public class ElasticSearchCapabilityResource extends Resource {
 
   /**
    * Report the cluster's security capabilities: version, edition, X-Pack Security, DLS, FLS, API
-   * keys, and run_as.
+   * keys, and run_as. Read-only — nothing is created, modified, or deleted on the cluster, so the
+   * DLS, FLS, and API-key verdicts are inferred from the license tier rather than observed.
    *
    * @param duosUser the authenticated admin
    * @param runAsUser optional username to attempt the run_as probe against; defaults to the
    *     credential's own principal, which still establishes whether the feature is licensed
-   * @param writeProbes when true, create and tear down a short-lived API key and role so DLS, FLS,
-   *     and API-key support are observed rather than inferred. Off by default: the caller has to
-   *     ask for writes against the cluster their environment depends on.
    * @return the capability report
    */
   @GET
@@ -58,9 +61,39 @@ public class ElasticSearchCapabilityResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
   public Response getCapabilities(
-      @Auth DuosUser duosUser,
-      @QueryParam("runAsUser") String runAsUser,
-      @QueryParam("writeProbes") @DefaultValue("false") boolean writeProbes) {
+      @Auth DuosUser duosUser, @QueryParam("runAsUser") String runAsUser) {
+    return report(duosUser, runAsUser, false);
+  }
+
+  /**
+   * The same report, with the write probes run: a short-lived API key and a role carrying DLS and
+   * FLS filters are created, used, and torn down, so those verdicts are observed rather than
+   * inferred.
+   *
+   * <p>A {@code POST} because it has side effects on the cluster — credentials are created and
+   * removed — even though the response body is a report. Reaching it therefore takes a deliberate
+   * call rather than anything that merely follows a link.
+   *
+   * @param duosUser the authenticated admin
+   * @param runAsUser optional username to attempt the run_as probe against; defaults to the
+   *     credential's own principal, which still establishes whether the feature is licensed
+   * @return the capability report
+   */
+  @POST
+  @Path("/capabilities")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN})
+  public Response runCapabilityProbes(
+      @Auth DuosUser duosUser, @QueryParam("runAsUser") String runAsUser) {
+    return report(duosUser, runAsUser, true);
+  }
+
+  /**
+   * Audits the call and runs the report. Inside the {@code try} with the report itself so that
+   * anything thrown on the way — including reading the caller's id — still comes back through the
+   * resource's own error mapping rather than as an unmapped server error.
+   */
+  private Response report(DuosUser duosUser, String runAsUser, boolean writeProbes) {
     try {
       // Worth an audit trail either way: this reports on the cluster's security posture, and with
       // write probes it also creates and removes credentials on that cluster.

@@ -67,6 +67,8 @@ public abstract class ElasticSearchContainerTests {
     CLIENT = ElasticSearchSupport.createRestClient(CONFIGURATION);
 
     try {
+      // The basic license is published after the container reports ready; see the helper's javadoc.
+      ElasticSearchTestCluster.awaitLicense(CLIENT);
       // Required before any DLS/FLS grant will be honored; see the class javadoc.
       jsonResponse(new Request("POST", "/_license/start_trial?acknowledge=true"));
     } catch (Exception e) {

@@ -20,12 +20,14 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.models.elastic_search.CapabilityVerdict;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapability;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapabilityReport;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.elasticsearch.client.Node;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
@@ -57,6 +59,12 @@ import org.elasticsearch.client.RestClient;
  * DLS descriptor and only fails later at search time. Everything created is namespaced, expires
  * within {@value #PROBE_KEY_EXPIRATION}, and is torn down in a {@code finally} block.
  *
+ * <p><b>Acceptance is not enforcement,</b> and the DLS/FLS verdicts keep the two apart: {@code
+ * SUPPORTED} means an end-to-end check completed and the filter was applied, while a write-probe
+ * run that could only get as far as the cluster accepting the filters reports {@code
+ * INFERRED_SUPPORTED} with a note saying what stopped the check. Collapsing those two would hide
+ * the exact failure — a filter stored and ignored — that the enforcement probes exist to find.
+ *
  * <p>Because each environment's deployment already holds its own cluster credential, running this
  * with write probes in each environment produces the measured per-environment record without anyone
  * needing cluster network access or a copy of a secret.
@@ -86,6 +94,14 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
 
   // nosemgrep - a cluster setting name, not a key
   private static final String API_KEY_ENABLED_SETTING = "xpack.security.authc.api_key.enabled";
+
+  /**
+   * The setting that switches DLS and FLS off cluster-wide. Independent of the license: a Platinum
+   * cluster with this set to {@code false} enforces neither, so the license tier alone cannot
+   * settle the verdict.
+   */
+  private static final String DLS_FLS_ENABLED_SETTING = "xpack.security.dls_fls.enabled";
+
   private static final String VERSION_FIELD = "version";
   private static final String LICENSE_FIELD = "license";
   private static final String USERNAME_FIELD = "username";
@@ -98,7 +114,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   private static final Set<String> REPORTED_SECURITY_DEFAULTS =
       Set.of(
           "xpack.security.enabled",
-          "xpack.security.dls_fls.enabled",
+          DLS_FLS_ENABLED_SETTING,
           API_KEY_ENABLED_SETTING,
           "xpack.security.authc.run_as.enabled",
           "xpack.security.authc.token.enabled",
@@ -177,16 +193,31 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   /**
-   * Points a second client at the same host the injected client uses, so an API key is exercised
+   * Points a second client at the same nodes the injected client uses, so an API key is exercised
    * against the same cluster — including when the deployment is configured by cloud ID, which the
-   * injected client has already resolved to a host.
+   * injected client has already resolved to hosts.
+   *
+   * <p>Every node is carried over rather than only the first, so a probe fails over between nodes
+   * the way an ordinary request does; taking node 0 alone would make a write-probe pass fail for no
+   * reason other than that one node of a multi-node cluster happened to be down. The list is read
+   * per key rather than once at construction, so a client whose nodes have since been re-resolved
+   * is followed rather than pinned to the set it started with.
    */
   private static ApiKeyClientFactory defaultApiKeyClientFactory(RestClient esClient) {
     return encodedApiKey ->
-        RestClient.builder(esClient.getNodes().get(0).getHost())
+        RestClient.builder(probeHosts(esClient))
             .setDefaultHeaders(
                 new Header[] {new BasicHeader("Authorization", "ApiKey " + encodedApiKey)})
             .build();
+  }
+
+  /**
+   * Every node the injected client currently knows about. Package-private so the failover contract
+   * can be asserted without standing up a cluster — and the contract is precisely that this is the
+   * whole list rather than its first entry.
+   */
+  static HttpHost[] probeHosts(RestClient esClient) {
+    return esClient.getNodes().stream().map(Node::getHost).toArray(HttpHost[]::new);
   }
 
   /**
@@ -269,7 +300,8 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         writeProbesRan,
         capabilities,
         restClientCompatibility(version),
-        recommendation(securityApiPresent, licenseType, writeProbeOutcome),
+        recommendation(
+            securityApiPresent, licenseType, dlsFlsDisabled(securitySettings), writeProbeOutcome),
         notes);
   }
 
@@ -411,15 +443,29 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     // API keys are a Basic-tier feature, so a security-enabled cluster is expected to support
     // them regardless of license. What actually gates Consent is whether the shared credential
     // may mint them.
+    //
+    // Tested against the endpoint that actually mints a key here and in Epic D — POST
+    // /_security/api_key — which manage_own_api_key authorises on its own; manage_api_key is the
+    // broader grant that also covers other users' keys. grant_api_key is deliberately not part of
+    // this test: it authorises POST /_security/api_key/grant, a different endpoint, so reading it
+    // as "can mint" would predict success for a credential whose create-key call is refused.
     boolean canMint =
         Boolean.TRUE.equals(privileges.get("manage_api_key"))
-            || Boolean.TRUE.equals(privileges.get("grant_api_key"));
+            || Boolean.TRUE.equals(privileges.get("manage_own_api_key"));
     if (!privileges.isEmpty() && !canMint) {
+      String grantCaveat =
+          Boolean.TRUE.equals(privileges.get("grant_api_key"))
+              ? " It does hold grant_api_key, but that authorises only POST %s/grant — minting on "
+                      .formatted(API_KEY_PATH)
+                  + "behalf of another user, which is a different endpoint and a different design."
+              : "";
       return new ElasticSearchCapability(
           API_KEYS,
           CapabilityVerdict.NOT_PERMITTED,
           "The cluster supports API keys, but the credential this deployment authenticates with "
-              + "holds neither manage_api_key nor grant_api_key, so it cannot mint per-request keys.",
+              + "holds neither manage_own_api_key nor manage_api_key, so it cannot mint per-request "
+              + "keys through POST %s.".formatted(API_KEY_PATH)
+              + grantCaveat,
           "POST /_security/user/_has_privileges");
     }
     return new ElasticSearchCapability(
@@ -441,7 +487,20 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "GET " + AUTHENTICATE_PATH);
     }
     String license = licenseType == null ? "" : licenseType.toLowerCase();
-    String dlsFlsSetting = settings.getOrDefault("xpack.security.dls_fls.enabled", "not-set");
+    String dlsFlsSetting = settings.getOrDefault(DLS_FLS_ENABLED_SETTING, "not-set");
+    // The setting overrides the license in one direction only: it can switch the feature off on a
+    // cluster whose license includes it, so a qualifying tier is not on its own enough to report
+    // the feature as expected to work.
+    if (dlsFlsDisabled(settings)) {
+      return new ElasticSearchCapability(
+          name,
+          CapabilityVerdict.UNAVAILABLE,
+          "%s=false switches DLS and FLS off cluster-wide, so no role or API key can carry a DLS "
+                  .formatted(DLS_FLS_ENABLED_SETTING)
+              + "query or an FLS grant here — whatever the '%s' license includes."
+                  .formatted(licenseType),
+          "GET /_cluster/settings -> %s=false".formatted(DLS_FLS_ENABLED_SETTING));
+    }
     if (DLS_FLS_LICENSES.contains(license)) {
       return new ElasticSearchCapability(
           name,
@@ -545,9 +604,25 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   private record WriteProbeOutcome(
       ElasticSearchCapability apiKeys, ElasticSearchCapability dls, ElasticSearchCapability fls) {
 
-    /** Whether DLS came back usable, which is the pivot the Epic D / Epic E decision turns on. */
-    boolean dlsUsable() {
+    /**
+     * Whether DLS was observed to be <em>enforced</em>, which is the pivot the Epic D / Epic E
+     * decision turns on. Only a completed end-to-end probe sets {@link CapabilityVerdict#SUPPORTED}
+     * here; a cluster that merely accepted the filters lands on {@link
+     * CapabilityVerdict#INFERRED_SUPPORTED} and is reported by {@link #dlsAcceptedNotEnforced()}.
+     */
+    boolean dlsEnforced() {
       return dls.verdict() == CapabilityVerdict.SUPPORTED;
+    }
+
+    /**
+     * Whether the cluster accepted the DLS filter but its enforcement was never observed — the
+     * verdict a pass lands on when the enforcement check could not be run to a conclusion. Distinct
+     * from {@link #dlsEnforced()} because acceptance does not imply enforcement: a cluster can
+     * store a DLS descriptor and ignore it at search time, which is the failure this probe exists
+     * to catch, so the recommendation must not read one as the other.
+     */
+    boolean dlsAcceptedNotEnforced() {
+      return dls.verdict() == CapabilityVerdict.INFERRED_SUPPORTED;
     }
 
     /**
@@ -654,8 +729,10 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     }
     return "Write probes ran: %d short-lived API key(s)%s were created under the "
             .formatted(keysCreated, roleCreated ? " and one probe role" : "")
-        + "duos-capability-probe / duos_dlsfls_probe names and removed again. The DLS, FLS, and "
-        + "API-key verdicts below are observed rather than inferred.";
+        + "duos-capability-probe / duos_dlsfls_probe names and removed again. The verdicts below "
+        + "come from what the cluster did rather than from its license tier — but a DLS or FLS "
+        + "verdict of INFERRED_SUPPORTED means only that the filters were accepted, with a note "
+        + "above saying what stopped the enforcement check.";
   }
 
   /**
@@ -729,10 +806,16 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         "PUT %s carrying query and field_security -> %d".formatted(path, result.status());
 
     if (created(result)) {
+      // Acceptance, not enforcement — so INFERRED_SUPPORTED, and an enforcement probe that runs to
+      // a conclusion is what upgrades it to SUPPORTED. A cluster can accept a role carrying a DLS
+      // query and then apply nothing at search time, which is the failure mode this whole
+      // write-probe pass exists to catch; reporting acceptance as SUPPORTED would hide exactly it.
       return new RoleAcceptance(
           true,
-          CapabilityVerdict.SUPPORTED,
-          "Observed: the cluster accepted a role carrying both a DLS query and an FLS grant.",
+          CapabilityVerdict.INFERRED_SUPPORTED,
+          "Observed: the cluster accepted a role carrying both a DLS query and an FLS grant, so its "
+              + "license permits the filters. Not observed: whether it enforces them — that needs "
+              + "an end-to-end enforcement probe.",
           evidence);
     }
     CapabilityVerdict verdict = refusalVerdict(result);
@@ -1188,13 +1271,16 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   private String recommendation(
-      boolean securityApiPresent, String licenseType, WriteProbeOutcome writeProbeOutcome) {
+      boolean securityApiPresent,
+      String licenseType,
+      boolean dlsFlsDisabled,
+      WriteProbeOutcome writeProbeOutcome) {
     // An observation outranks the license inference in either direction: a cluster that actually
     // enforced DLS settles the question, and one that refused on licensing grounds settles it just
     // as firmly. A refusal on *privilege* grounds settles nothing about the cluster, so that case
     // falls through to the license reading rather than being read as a verdict against Epic D.
     if (writeProbeOutcome != null && securityApiPresent) {
-      if (writeProbeOutcome.dlsUsable()) {
+      if (writeProbeOutcome.dlsEnforced()) {
         return "Epic D (native DLS/FLS) is viable on this cluster, and this was observed rather "
             + "than inferred: a probe role and API key carrying DLS/FLS descriptors were accepted "
             + "and enforced. Keep Epic E in scope only if another environment cannot support "
@@ -1204,8 +1290,21 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         return "Inconclusive from the write probes: this deployment's credential is not permitted "
             + "to create a role or an API key, so the DLS and FLS verdicts describe the credential "
             + "rather than the cluster (see cluster_privileges). Re-run with a credential holding "
-            + "manage_security and manage_api_key to settle it. On the license alone: "
-            + licenseBasedRecommendation(licenseType);
+            + "manage_security and manage_own_api_key to settle it. On the license alone: "
+            + licenseBasedRecommendation(licenseType, dlsFlsDisabled);
+      }
+      // Accepted but never exercised. Claiming Epic D off the back of that would be claiming
+      // enforcement from acceptance, which is the one inference this whole probe exists to refuse.
+      if (writeProbeOutcome.dlsAcceptedNotEnforced()) {
+        return "Not settled by the write probes. The cluster accepted a role carrying DLS and FLS "
+            + "filters, which establishes that its license permits them, but no end-to-end check "
+            + "was completed, so whether it *enforces* them is still unknown — see notes for what "
+            + "stopped the check (commonly an empty or unreadable '%s' index, or no usable probe "
+                .formatted(probeIndex())
+            + "key). A cluster can accept a filter and silently ignore it, so re-run the write "
+            + "probes once that is resolved rather than recording Epic D on acceptance alone. On "
+            + "the license alone: "
+            + licenseBasedRecommendation(licenseType, dlsFlsDisabled);
       }
       return "Epic E (compatibility fallback). Write probes were run against this cluster and DLS "
           + "was not usable: %s Epic D would need that resolved first."
@@ -1216,12 +1315,24 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           + "Security is not enabled, so DLS, FLS, API keys, and run_as cannot be used at all. "
           + "Epic D stays blocked until X-Pack Security is enabled here.";
     }
-    return licenseBasedRecommendation(licenseType);
+    return licenseBasedRecommendation(licenseType, dlsFlsDisabled);
   }
 
-  /** What the license tier alone implies, used when no write probe settled the question. */
-  private String licenseBasedRecommendation(String licenseType) {
+  /**
+   * What the license tier and the cluster's DLS/FLS setting imply, used when no write probe settled
+   * the question. The setting is checked first: it switches the feature off whatever the license
+   * entitles the cluster to, so a Platinum tier with it disabled is not a viable Epic D cluster.
+   */
+  private String licenseBasedRecommendation(String licenseType, boolean dlsFlsDisabled) {
     String license = licenseType == null ? "" : licenseType.toLowerCase();
+    if (dlsFlsDisabled) {
+      return "Epic E (compatibility fallback). Security is enabled, but %s=false switches DLS and "
+              .formatted(DLS_FLS_ENABLED_SETTING)
+          + "FLS off cluster-wide, so neither can be enforced here whatever the '%s' license "
+              .formatted(licenseType)
+          + "includes. Epic D would need that setting enabled first — an infra change that should "
+          + "precede any commitment to it.";
+    }
     if (DLS_FLS_LICENSES.contains(license)) {
       return "Epic D (native DLS/FLS) is viable on this cluster: security is enabled and the '%s' "
               .formatted(licenseType)
@@ -1300,6 +1411,14 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       }
     }
     return settings;
+  }
+
+  /**
+   * Whether DLS/FLS has been switched off cluster-wide. Only an explicit {@code false} counts: a
+   * setting the cluster did not report says nothing, and must not be read as the feature being off.
+   */
+  private static boolean dlsFlsDisabled(Map<String, String> settings) {
+    return "false".equals(settings.get(DLS_FLS_ENABLED_SETTING));
   }
 
   private boolean isReportableSecuritySetting(String key, boolean isDefault) {

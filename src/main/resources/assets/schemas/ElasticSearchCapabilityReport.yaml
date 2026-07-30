@@ -9,10 +9,10 @@ description: |
   The probes target Elasticsearch's X-Pack security APIs only; this report covers Elasticsearch
   deployments exclusively.
 
-  The example is a real writeProbes=true response from a local trial-licensed cluster, where the
+  The example is a real write-probe (POST) response from a local trial-licensed cluster, where the
   configured credential is the `elastic` superuser. A deployed environment's shared credential is
-  unlikely to hold manage_security or manage_api_key, so expect NOT_PERMITTED verdicts and a
-  narrower cluster_privileges block there rather than this all-true one.
+  unlikely to hold manage_security or a key-minting privilege, so expect NOT_PERMITTED verdicts and
+  a narrower cluster_privileges block there rather than this all-true one.
 properties:
   cluster_name:
     type: string
@@ -132,6 +132,11 @@ properties:
             observed refusals. The INFERRED_ values are derived from license tier and cluster
             settings because proving them would require writing to the cluster. UNKNOWN also
             covers any capability on a cluster that did not respond.
+
+            For DLS and FLS, INFERRED_SUPPORTED also covers a write-probe run in which the cluster
+            accepted the filters but their enforcement could not be checked end to end — a cluster
+            can store a DLS query and ignore it at search time, so only SUPPORTED means enforced.
+            The notes say what stopped the check.
           enum:
             - SUPPORTED
             - UNAVAILABLE
@@ -225,5 +230,7 @@ examples:
     notes:
       - >-
         Write probes ran: 3 short-lived API key(s) and one probe role were created under the
-        duos-capability-probe / duos_dlsfls_probe names and removed again. The DLS, FLS, and
-        API-key verdicts below are observed rather than inferred.
+        duos-capability-probe / duos_dlsfls_probe names and removed again. The verdicts below come
+        from what the cluster did rather than from its license tier — but a DLS or FLS verdict of
+        INFERRED_SUPPORTED means only that the filters were accepted, with a note above saying what
+        stopped the enforcement check.

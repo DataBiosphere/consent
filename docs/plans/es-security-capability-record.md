@@ -8,9 +8,14 @@ Companion to
 
 ## How this record is produced
 
-One tool: [`GET /api/elasticSearch/capabilities`](../../src/main/java/org/broadinstitute/consent/http/resources/ElasticSearchCapabilityResource.java),
-which reports the full inventory for whichever cluster a deployment is pointed at — inferred, or with
-`writeProbes=true` proven. All it needs is an Admin token for that environment.
+One tool: [`/api/elasticSearch/capabilities`](../../src/main/java/org/broadinstitute/consent/http/resources/ElasticSearchCapabilityResource.java),
+which reports the full inventory for whichever cluster a deployment is pointed at — inferred on `GET`,
+proven on `POST`. All it needs is an Admin token for that environment.
+
+The two methods are the two modes. `GET` creates nothing; `POST` runs the write probes. The split is
+deliberate rather than a query flag: minting credentials on a cluster is a side effect, and a URL
+that does it on `GET` is one a prefetcher, a monitoring crawler, or a shared bookmark can fire
+without anyone deciding to.
 
 Each environment already runs its own Consent deployment holding its own cluster credential, so that
 token yields the per-environment record without anyone obtaining cluster network access or a copy of a
@@ -30,8 +35,8 @@ here" are worse than one that is tested.
 To capture a report file, redirect the endpoint's JSON:
 
 ```shell
-curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-    'https://<env-host>/api/elasticSearch/capabilities?writeProbes=true' \
+curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    'https://<env-host>/api/elasticSearch/capabilities' \
     | tee "es-capability-<env>-$(date +%F).json" | jq
 ```
 
@@ -42,25 +47,27 @@ endpoint against that.
 ### Running the capability endpoint
 
 ```shell
-# Read-only. Safe anywhere, but DLS/FLS/API-key verdicts are inferred from the license tier.
+# GET: read-only. Safe anywhere, but DLS/FLS/API-key verdicts are inferred from the license tier.
 curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
     https://<env-host>/api/elasticSearch/capabilities | jq
 
-# Proven instead of inferred: creates and tears down a short-lived key and role.
-curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-    'https://<env-host>/api/elasticSearch/capabilities?writeProbes=true' | jq
+# POST: proven instead of inferred — creates and tears down a short-lived key and role.
+curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    'https://<env-host>/api/elasticSearch/capabilities' | jq
 
 # Optionally probe run_as against a specific username rather than the credential's own principal
+# (accepted by both methods)
 curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
     'https://<env-host>/api/elasticSearch/capabilities?runAsUser=some-user' | jq
 ```
 
-**Read-only mode** creates, modifies, and deletes nothing. That safety is what costs certainty: DLS,
-FLS, and API-key support cannot be proven without writing, so they come back as `INFERRED_SUPPORTED`
-/ `LICENSE_BLOCKED` reasoned from the license tier. Only `run_as` (a header on a read-only request)
-and X-Pack Security itself are observed.
+**Read-only mode (`GET`)** creates, modifies, and deletes nothing. That safety is what costs certainty:
+DLS, FLS, and API-key support cannot be proven without writing, so they come back as
+`INFERRED_SUPPORTED` / `LICENSE_BLOCKED` reasoned from the license tier and the cluster's
+`xpack.security.dls_fls.enabled` setting. Only `run_as` (a header on a read-only request) and X-Pack
+Security itself are observed.
 
-**`writeProbes=true`** mints a short-lived API key and authenticates as it, creates a role carrying
+**Write-probe mode (`POST`)** mints a short-lived API key and authenticates as it, creates a role carrying
 both a DLS query and an FLS grant, then uses keys whose `role_descriptors` carry those filters
 against the real dataset index to check the cluster *enforces* them: a `match_none` DLS key must
 return zero of the documents the shared credential can see, and a key granting one field must return
@@ -76,11 +83,20 @@ Three fields carry most of the interpretive weight:
 - **`write_probes_run`** — read this first. It tells you whether the DLS/FLS/API-key verdicts below
   are observations or inferences.
 - **`cluster_privileges`** — what the deployment's *own* shared credential may do, which is the
-  constraint Epic D has to work within. If it holds neither `manage_security` nor `manage_api_key`,
-  the write probes cannot run and the report says so explicitly rather than reading their refusal as
-  a verdict against the native path (see the decision table below).
+  constraint Epic D has to work within. If it holds neither `manage_security` nor a key-minting
+  privilege (`manage_own_api_key` or `manage_api_key`), the write probes cannot run and the report
+  says so explicitly rather than reading their refusal as a verdict against the native path (see the
+  decision table below).
 - **`security_settings`** — filtered to the dozen or so values that gate a capability, out of the
-  ~50 defaults a cluster reports.
+  ~50 defaults a cluster reports. `xpack.security.dls_fls.enabled` is the one to read alongside the
+  license: set to `false` it switches DLS and FLS off cluster-wide whatever the tier entitles the
+  cluster to, and the report treats it as decisive.
+
+One verdict distinction to keep straight in a write-probe run: `SUPPORTED` for DLS or FLS means the
+filters were *enforced* end to end, while `INFERRED_SUPPORTED` means the cluster accepted them and
+the enforcement check did not complete — an empty or unreadable index, or no usable probe key. A
+cluster can store a DLS query and ignore it at search time, so acceptance is not enforcement, and
+`notes` says which of the two you are reading.
 
 **Scope: these are X-Pack probes, so they measure Elasticsearch only.** The endpoint identifies the
 distribution from `GET /` and is otherwise scoped to Elasticsearch deployments; every environment
@@ -88,7 +104,7 @@ in the inventory below runs Elasticsearch.
 
 ## Environment inventory
 
-### Local (`config/docker-compose.yaml`) — measured 2026-07-29 with `writeProbes=true`
+### Local (`config/docker-compose.yaml`) — measured 2026-07-29 with the write probes
 
 Ticket A-0 is closed: the compose file now sets `xpack.security.enabled` to **true** by default
 (overridable per-run with `ES_SECURITY_ENABLED=false`) and self-generates a **trial** license, so the
@@ -202,7 +218,7 @@ The endpoint was run against the control clusters in both modes and under both l
 9.3.3 and 9.4.4. Its read-only inferences agree with the tier-by-tier measurements above, and its own
 write probes independently reproduce them — so the verdicts have been checked rather than trusted:
 
-| Capability | Basic, read-only | Basic, `writeProbes` | Trial, read-only | Trial, `writeProbes` |
+| Capability | Basic, `GET` | Basic, `POST` | Trial, `GET` | Trial, `POST` |
 | --- | --- | --- | --- | --- |
 | X-Pack Security | `SUPPORTED` | `SUPPORTED` | `SUPPORTED` | `SUPPORTED` |
 | API keys | `INFERRED_SUPPORTED` | `SUPPORTED` — created, authenticated, invalidated | `INFERRED_SUPPORTED` | `SUPPORTED` |
@@ -239,7 +255,7 @@ falls back to the license reading and says which of the two you are looking at.
 
 ### `dev` — not yet measured
 
-> Call `GET /api/elasticSearch/capabilities?writeProbes=true` against dev with an Admin token and
+> Call `POST /api/elasticSearch/capabilities` against dev with an Admin token and
 > paste the findings here. Dev is the right place to run the write probes first in a *deployed*
 > environment — teardown has been confirmed on the control clusters and locally, so what dev adds is
 > confirmation under a real shared credential rather than a superuser one.
@@ -271,7 +287,7 @@ falls back to the license reading and says which of the two you are looking at.
 ### `production` — not yet measured
 
 Call the endpoint read-only first — in that mode it creates nothing, so it cannot leave anything
-behind on the production cluster. Only add `writeProbes=true` after the same call has been run in dev
+behind on the production cluster. Only `POST` it after the same call has been run in dev
 and staging and the teardown has been confirmed there; the probes are designed to be safe in
 production (namespaced, 10-minute expiry, torn down in a `finally`, failures reported in `notes`),
 but production is not the place to find out.
@@ -331,8 +347,10 @@ fixed in advance so the measurement determines the outcome:
 | Security enabled, license lacks DLS/FLS | **Epic E**, and raise the Platinum/Enterprise upgrade as a separate infra decision before committing to Epic D. |
 | Security disabled anywhere | **Epic E** now; Epic D stays blocked on infra enabling X-Pack Security in that environment. |
 | Environments disagree | **Both** — Epic E as the portable path, Epic D where licensed. The access contract from Ticket A-2 must be identical either way, so the enforcement layer stays swappable. |
-| Write probes refused for lack of privileges | **Not a decision.** The probes measured the credential, not the cluster; fall back to the license reading and treat the missing `manage_security` / `manage_api_key` grant as its own prerequisite for Epic D. |
+| Write probes refused for lack of privileges | **Not a decision.** The probes measured the credential, not the cluster; fall back to the license reading and treat the missing `manage_security` / `manage_own_api_key` grant as its own prerequisite for Epic D. |
 | DLS/FLS accepted but **not enforced** | **Epic E**, and treat it as a defect report to infra: a filter that is accepted and silently ignored is worse than one that is refused, and Epic D cannot be built on it. |
+| DLS/FLS accepted, enforcement **not checked** (`INFERRED_SUPPORTED` from a write-probe run) | **Not a decision.** Acceptance is not enforcement. Fix what the notes say stopped the check — usually an empty or unreadable dataset index — and re-run the write probes before recording anything. |
+| DLS/FLS licensed but `xpack.security.dls_fls.enabled=false` | **Epic E** until the setting is enabled. The license entitles the cluster to the feature; the setting switches it off cluster-wide, so it is an infra change, not a license one. |
 
 Known so far: the local environment now falls in the **first** row — security enabled, DLS and FLS
 licensed *and* observed enforced — which closes Ticket A-0 but decides nothing on its own. The rule
@@ -344,13 +362,18 @@ any of them use.
 - The shared `authUser` almost certainly does **not** hold `manage_security` or `manage_api_key`.
   The report's `cluster_privileges` block says exactly which it has, via
   `POST /_security/user/_has_privileges`. If it lacks them, that is itself a finding: Epic D's
-  per-request key minting needs at minimum `grant_api_key` (preferred, since it mints keys on
-  behalf of a user without full `manage_api_key`).
+  per-request key minting goes through `POST /_security/api_key`, which needs at minimum
+  `manage_own_api_key` — the narrowest grant that authorises it, and so the one to ask infra for.
+- `grant_api_key` is **not** a substitute. It authorises `POST /_security/api_key/grant`, which mints
+  a key on behalf of another user from that user's own credentials — a different endpoint and a
+  different design, and not the one these probes or Epic D use. The report's privilege check is
+  scoped to the endpoint actually called, so a credential holding only `grant_api_key` is reported as
+  unable to mint rather than predicted to work and then refused.
 - Because the endpoint authenticates as the deployment's own configured credential, that block *is*
   the shared credential's privileges — there is no way to accidentally record an admin's instead,
   which is what Epic D actually has to work with at runtime. When the credential holds neither
-  `manage_api_key` nor `grant_api_key`, API keys come back `NOT_PERMITTED` rather than supported:
-  the distinction between "the cluster can" and "we can."
+  `manage_own_api_key` nor `manage_api_key`, API keys come back `NOT_PERMITTED` rather than
+  supported: the distinction between "the cluster can" and "we can."
 - The end-to-end DLS check needs a non-empty index. The endpoint uses the configured
   `datasetIndexName` automatically, and says so explicitly when that index is empty or unreadable
   rather than reporting a false pass — an empty index makes a `match_none` key return zero documents

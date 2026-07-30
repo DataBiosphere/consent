@@ -49,6 +49,13 @@ Two things are easy to get wrong here:
   non-compliant for [field and document level security]`. The base class activates the 30-day trial
   in its static initializer. Note that `POST /_security/api_key` accepts a DLS/FLS role descriptor
   even on a basic license — the rejection only surfaces on the search request.
+- **"Container started" is earlier than "license readable."** Testcontainers considers the container
+  ready once the HTTP layer answers on port 9200, but the self-generated basic license reaches the
+  cluster state a beat later, and until it does `GET /_license` returns `404` with an empty body.
+  A class that reads or changes the license in its static initializer must call
+  `ElasticSearchTestCluster.awaitLicense(client)` first. The window is about a second on an idle
+  machine and wider during a full test run, where three of these containers boot alongside the
+  Postgres one — which is why this surfaced as a full-suite-only failure.
 - **The container defaults to HTTPS.** For image versions 8.0.0 and above,
   `ElasticsearchContainer` automatically applies `withPassword("changeme")` and `withCertPath(...)`,
   serving the HTTP layer over TLS with a self-signed CA. `ElasticSearchSupport.createRestClient` has
