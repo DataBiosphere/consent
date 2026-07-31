@@ -411,23 +411,14 @@ public class DataAccessRequestResource extends Resource {
       }
       DataAccessRequest payload =
           DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
-      DataAccessRequest progressReport;
-      try {
-        populateProgressReportWithDocuments(
-            user,
-            collabInputStream,
-            collabFileDetails,
-            ethicsInputStream,
-            ethicsFileDetails,
-            payload,
-            parentDar);
-        progressReport =
-            dataAccessRequestService.createProgressReport(
-                user, payload, parentDar, (ContainerRequest) request);
-      } catch (Exception e) {
-        rollbackProgressReportDocuments(payload);
-        throw e;
-      }
+      DataAccessRequest progressReport =
+          createProgressReportWithDocuments(
+              user,
+              (ContainerRequest) request,
+              payload,
+              parentDar,
+              new ProgressReportDocumentUploads(
+                  collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails));
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
         processNewDarCollection(parentDar.getCollectionId());
       }
@@ -455,6 +446,36 @@ public class DataAccessRequestResource extends Resource {
   private void logCaughtEmailException(Integer collectionId, Exception e) {
     logException("Exception sending email for collection id: " + collectionId, e);
   }
+
+  private DataAccessRequest createProgressReportWithDocuments(
+      User user,
+      ContainerRequest request,
+      DataAccessRequest progressReport,
+      DataAccessRequest parentDar,
+      ProgressReportDocumentUploads documentUploads)
+      throws IOException {
+    try {
+      populateProgressReportWithDocuments(
+          user,
+          documentUploads.collaborationInputStream(),
+          documentUploads.collaborationFileDetails(),
+          documentUploads.ethicsInputStream(),
+          documentUploads.ethicsFileDetails(),
+          progressReport,
+          parentDar);
+      return dataAccessRequestService.createProgressReport(
+          user, progressReport, parentDar, request);
+    } catch (IOException | RuntimeException e) {
+      rollbackProgressReportDocuments(progressReport);
+      throw e;
+    }
+  }
+
+  private record ProgressReportDocumentUploads(
+      InputStream collaborationInputStream,
+      FormDataContentDisposition collaborationFileDetails,
+      InputStream ethicsInputStream,
+      FormDataContentDisposition ethicsFileDetails) {}
 
   public void populateProgressReportWithDocuments(
       User user,
