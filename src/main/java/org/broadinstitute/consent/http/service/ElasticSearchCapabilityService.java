@@ -328,8 +328,8 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     } else if (!writeProbesRan) {
       notes.add(
           "DLS, FLS, and API-key verdicts are inferred from the license tier and cluster "
-              + "settings. Re-run with writeProbes=true to create and tear down a short-lived key "
-              + "and role and observe them instead.");
+              + "settings. Re-run as POST /api/elasticSearch/capabilities to create and tear down "
+              + "a short-lived key and role and observe them instead.");
     }
     if (writeProbes && !writeProbesRan) {
       notes.add(
