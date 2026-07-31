@@ -411,17 +411,23 @@ public class DataAccessRequestResource extends Resource {
       }
       DataAccessRequest payload =
           DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
-      populateProgressReportWithDocuments(
-          user,
-          collabInputStream,
-          collabFileDetails,
-          ethicsInputStream,
-          ethicsFileDetails,
-          payload,
-          parentDar);
-      DataAccessRequest progressReport =
-          dataAccessRequestService.createProgressReport(
-              user, payload, parentDar, (ContainerRequest) request);
+      DataAccessRequest progressReport;
+      try {
+        populateProgressReportWithDocuments(
+            user,
+            collabInputStream,
+            collabFileDetails,
+            ethicsInputStream,
+            ethicsFileDetails,
+            payload,
+            parentDar);
+        progressReport =
+            dataAccessRequestService.createProgressReport(
+                user, payload, parentDar, (ContainerRequest) request);
+      } catch (Exception e) {
+        rollbackProgressReportDocuments(payload);
+        throw e;
+      }
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
         processNewDarCollection(parentDar.getCollectionId());
       }
@@ -486,6 +492,15 @@ public class DataAccessRequestResource extends Resource {
         uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
       }
     }
+  }
+
+  private void rollbackProgressReportDocuments(DataAccessRequest progressReport) {
+    Set<String> uploadedDocumentLocations = new java.util.HashSet<>();
+    uploadedDocumentLocations.add(progressReport.getData().getCollaborationLetterLocation());
+    uploadedDocumentLocations.add(progressReport.getData().getIrbDocumentLocation());
+    uploadedDocumentLocations.stream()
+        .filter(Objects::nonNull)
+        .forEach(location -> deleteDarDocument(progressReport, location));
   }
 
   @GET

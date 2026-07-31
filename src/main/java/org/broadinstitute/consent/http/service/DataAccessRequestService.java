@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -201,12 +200,17 @@ public class DataAccessRequestService implements ConsentLogger {
    * @param referenceId ReferenceId of the corresponding DAR
    */
   private void syncDataAccessRequestDatasets(List<Integer> datasetIds, String referenceId) {
+    syncDataAccessRequestDatasets(datasetIds, referenceId, dataAccessRequestDAO);
+  }
+
+  private void syncDataAccessRequestDatasets(
+      List<Integer> datasetIds, String referenceId, DataAccessRequestDAO targetDarDAO) {
     List<DarDataset> darDatasets =
         datasetIds.stream().map(datasetId -> new DarDataset(referenceId, datasetId)).toList();
-    dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(referenceId);
+    targetDarDAO.deleteDARDatasetRelationByReferenceId(referenceId);
 
     if (!darDatasets.isEmpty()) {
-      dataAccessRequestDAO.insertAllDarDatasets(darDatasets);
+      targetDarDAO.insertAllDarDatasets(darDatasets);
     }
   }
 
@@ -240,41 +244,62 @@ public class DataAccessRequestService implements ConsentLogger {
     if (existingDar != null && !existingDar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
-    Integer collectionId;
-    // Only create a new DarCollection if we haven't done so already
-    if (Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())) {
-      collectionId = existingDar.getCollectionId();
-    } else {
-      String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
-      collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
-    }
-    String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
-    Integer darId;
-    if (Objects.nonNull(existingDar)) {
-      referenceId = dataAccessRequest.getReferenceId();
-      darId = existingDar.getId();
-      dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, referenceId);
-      dataAccessRequestDAO.updateDataByReferenceId(
-          referenceId, user.getUserId(), now, now, darData, user.getEraCommonsId());
-      daaDAO.deleteDarDAARelationship(darId);
-    } else {
-      referenceId = UUID.randomUUID().toString();
-      darId =
-          dataAccessRequestDAO.insertDataAccessRequest(
-              collectionId,
-              referenceId,
-              user.getUserId(),
-              now,
-              now,
-              now,
-              darData,
-              user.getEraCommonsId());
-    }
-    daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
-    syncDataAccessRequestDatasets(datasetIds, referenceId);
-    captureDatasetDaaSnapshots(darId, datasetIds, new Timestamp(now.getTime()));
-    boolean requiresSOApproval = flagIfSOApprovalIsNeeded(user, datasetIds, referenceId);
+    String darCodeSequence =
+        Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())
+            ? null
+            : "DAR-" + counterService.getNextDarSequence();
+    boolean requiresSOApproval = requiresSOApproval(user, datasetIds);
+    String referenceId =
+        dataAccessRequestServiceDAO.inTransaction(
+            transactionDAOs -> {
+              DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
+              DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
+              Integer collectionId =
+                  Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())
+                      ? existingDar.getCollectionId()
+                      : transactionDAOs
+                          .darCollectionDAO()
+                          .insertDarCollection(darCodeSequence, user.getUserId(), now);
+              String transactionReferenceId;
+              Integer darId;
+              if (Objects.nonNull(existingDar)) {
+                transactionReferenceId = dataAccessRequest.getReferenceId();
+                darId = existingDar.getId();
+                transactionalDarDAO.updateDraftToSubmittedForCollection(
+                    collectionId, transactionReferenceId);
+                transactionalDarDAO.updateDataByReferenceId(
+                    transactionReferenceId,
+                    user.getUserId(),
+                    now,
+                    now,
+                    darData,
+                    user.getEraCommonsId());
+                transactionalDaaDAO.deleteDarDAARelationship(darId);
+              } else {
+                transactionReferenceId = UUID.randomUUID().toString();
+                darId =
+                    transactionalDarDAO.insertDataAccessRequest(
+                        collectionId,
+                        transactionReferenceId,
+                        user.getUserId(),
+                        now,
+                        now,
+                        now,
+                        darData,
+                        user.getEraCommonsId());
+              }
+              transactionalDaaDAO.insertDarDAARelationship(
+                  darId, dataAccessRequest.data.getDaaIds());
+              syncDataAccessRequestDatasets(
+                  datasetIds, transactionReferenceId, transactionalDarDAO);
+              captureDatasetDaaSnapshots(
+                  darId, datasetIds, new Timestamp(now.getTime()), transactionalDaaDAO);
+              if (requiresSOApproval) {
+                transactionalDarDAO.updateRequiresSOApproval(true, transactionReferenceId);
+              }
+              return transactionReferenceId;
+            });
     if (!requiresSOApproval) {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     }
@@ -306,25 +331,43 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Progress report can only be created for approved datasets in the parent DAR");
     }
-    Integer id;
+    boolean userIsPreAuthedForDaas =
+        isUserPreAuthorizedForAllDaas(user, progressReport.getDatasetIds());
     try {
-      id =
-          dataAccessRequestDAO.insertProgressReport(
-              progressReport.getParentId(),
-              progressReport.getCollectionId(),
-              referenceId,
-              user.getUserId(),
-              progressReport.getData(),
-              user.getEraCommonsId());
-      if (!progressReport.getIsCloseoutProgressReport()) {
-        daaDAO.insertDarDAARelationship(id, progressReport.getData().getDaaIds());
-      }
+      dataAccessRequestServiceDAO.inTransaction(
+          transactionDAOs -> {
+            DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
+            DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
+            Integer progressReportId =
+                transactionalDarDAO.insertProgressReport(
+                    progressReport.getParentId(),
+                    progressReport.getCollectionId(),
+                    referenceId,
+                    user.getUserId(),
+                    progressReport.getData(),
+                    user.getEraCommonsId());
+            if (!progressReport.getIsCloseoutProgressReport()) {
+              transactionalDaaDAO.insertDarDAARelationship(
+                  progressReportId, progressReport.getData().getDaaIds());
+            }
+            if (!progressReport.getIsCloseoutProgressReport() && !userIsPreAuthedForDaas) {
+              transactionalDarDAO.updateRequiresSOApproval(true, referenceId);
+            }
+            syncDataAccessRequestDatasets(
+                progressReportDatasetIds, referenceId, transactionalDarDAO);
+            if (!progressReport.getIsCloseoutProgressReport()) {
+              captureDatasetDaaSnapshots(
+                  progressReportId,
+                  progressReportDatasetIds,
+                  Timestamp.from(Instant.now()),
+                  transactionalDaaDAO);
+            }
+            return progressReportId;
+          });
     } catch (JdbiException _) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
-    boolean userIsPreAuthedForDaas =
-        isUserPreAuthorizedForAllDaas(user, progressReport.getDatasetIds());
     if (progressReport.getIsCloseoutProgressReport()) {
       try {
         User signingOfficialUser =
@@ -336,15 +379,10 @@ public class DataAccessRequestService implements ConsentLogger {
             referenceId,
             serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
       } catch (TemplateException | IOException e) {
-        throw new InternalServerErrorException(e);
+        // Persistence has already committed, so a notification failure must not make the caller
+        // treat creation as failed and compensate by deleting the progress report documents.
+        logException("Unable to send submitted closeout message for " + referenceId, e);
       }
-    } else if (!userIsPreAuthedForDaas) {
-      dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
-    }
-
-    syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
-    if (!progressReport.getIsCloseoutProgressReport()) {
-      captureDatasetDaaSnapshots(id, progressReportDatasetIds, Timestamp.from(Instant.now()));
     }
 
     if (!progressReport.getIsCloseoutProgressReport()
@@ -857,24 +895,19 @@ public class DataAccessRequestService implements ConsentLogger {
     return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
   }
 
-  private boolean flagIfSOApprovalIsNeeded(
-      User user, List<Integer> datasetIds, String referenceId) {
-    if (!datasetDAO
+  private boolean requiresSOApproval(User user, List<Integer> datasetIds) {
+    return !datasetDAO
             .filterDatasetIdsByAutomationRuleType(
                 datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name())
             .isEmpty()
-        || !isUserPreAuthorizedForAllDaas(user, datasetIds)) {
-      dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
-      return true;
-    }
-    return false;
+        || !isUserPreAuthorizedForAllDaas(user, datasetIds);
   }
 
   private void captureDatasetDaaSnapshots(
-      Integer darId, List<Integer> datasetIds, Timestamp capturedAt) {
+      Integer darId, List<Integer> datasetIds, Timestamp capturedAt, DaaDAO targetDaaDAO) {
     List<DatasetDaaMapping> datasetDaaMappings =
         Objects.requireNonNullElse(
-            daaDAO.findCurrentDaaMappingsByDatasetIds(datasetIds), List.of());
+            targetDaaDAO.findCurrentDaaMappingsByDatasetIds(datasetIds), List.of());
     if (datasetDaaMappings.isEmpty()) {
       return;
     }
@@ -885,6 +918,6 @@ public class DataAccessRequestService implements ConsentLogger {
                     new DarDatasetDaaSnapshot(
                         darId, mapping.datasetId(), mapping.daaId(), capturedAt))
             .toList();
-    daaDAO.insertDarDatasetDaaSnapshots(snapshots);
+    targetDaaDAO.insertDarDatasetDaaSnapshots(snapshots);
   }
 }

@@ -6,6 +6,8 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -14,6 +16,11 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
 public class DataAccessRequestServiceDAO {
+
+  public record TransactionDAOs(
+      DataAccessRequestDAO dataAccessRequestDAO,
+      DaaDAO daaDAO,
+      DarCollectionDAO darCollectionDAO) {}
 
   private final Jdbi jdbi;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -24,6 +31,20 @@ public class DataAccessRequestServiceDAO {
     this.jdbi = jdbi;
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
+  }
+
+  /**
+   * Runs a data access request workflow with every participating DAO attached to the same handle.
+   * Any exception from the callback rolls back all database changes made by the workflow.
+   */
+  public <T> T inTransaction(Function<TransactionDAOs, T> callback) {
+    return jdbi.inTransaction(
+        handle ->
+            callback.apply(
+                new TransactionDAOs(
+                    handle.attach(DataAccessRequestDAO.class),
+                    handle.attach(DaaDAO.class),
+                    handle.attach(DarCollectionDAO.class))));
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar)
