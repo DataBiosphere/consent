@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class ServicesConfigurationTest {
@@ -65,8 +66,9 @@ class ServicesConfigurationTest {
   }
 
   @ParameterizedTest
+  @NullSource
   @ValueSource(strings = {"", " ", "\t\n"})
-  void testBlankServiceBaseUrlsAreRejected(String configuredBaseUrl) {
+  void testNullAndBlankServiceBaseUrlsAreRejected(String configuredBaseUrl) {
     ServicesConfiguration configuration = new ServicesConfiguration();
 
     assertAll(

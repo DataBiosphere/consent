@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
@@ -175,8 +174,10 @@ public class ServicesConfiguration {
   }
 
   private static String normalizeBaseUrl(String baseUrl) {
-    String normalizedBaseUrl =
-        Objects.requireNonNull(baseUrl, "Service base URL must not be null").strip();
+    if (baseUrl == null) {
+      throw new IllegalArgumentException("Service base URL must not be null");
+    }
+    String normalizedBaseUrl = baseUrl.strip();
     if (normalizedBaseUrl.isEmpty()) {
       throw new IllegalArgumentException("Service base URL must not be blank");
     }
