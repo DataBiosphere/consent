@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -20,7 +21,8 @@ public class DataAccessRequestServiceDAO {
   public record TransactionDAOs(
       DataAccessRequestDAO dataAccessRequestDAO,
       DaaDAO daaDAO,
-      DarCollectionDAO darCollectionDAO) {}
+      DarCollectionDAO darCollectionDAO,
+      CounterDAO counterDAO) {}
 
   private final Jdbi jdbi;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -44,7 +46,8 @@ public class DataAccessRequestServiceDAO {
                 new TransactionDAOs(
                     handle.attach(DataAccessRequestDAO.class),
                     handle.attach(DaaDAO.class),
-                    handle.attach(DarCollectionDAO.class))));
+                    handle.attach(DarCollectionDAO.class),
+                    handle.attach(CounterDAO.class))));
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar)

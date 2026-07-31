@@ -17,6 +17,7 @@ class CounterServiceTest {
 
   @Mock private Jdbi jdbi;
   @Mock private CounterDAO counterDAO;
+  @Mock private CounterDAO transactionalCounterDAO;
 
   private CounterService service;
 
@@ -32,6 +33,17 @@ class CounterServiceTest {
     when(counterDAO.incrementCountByName(any())).thenReturn(count);
 
     Integer seq = service.getNextDarSequence();
+    assertEquals(count, seq.intValue());
+  }
+
+  @Test
+  void testGetNextDarSequenceWithTransactionalDao() {
+    int count = 11;
+    when(transactionalCounterDAO.incrementCountByName(CounterService.DAR_COUNTER))
+        .thenReturn(count);
+
+    Integer seq = service.getNextDarSequence(transactionalCounterDAO);
+
     assertEquals(count, seq.intValue());
   }
 }

@@ -245,10 +245,6 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new SubmittedDARCannotBeEditedException();
     }
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
-    String darCodeSequence =
-        Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())
-            ? null
-            : "DAR-" + counterService.getNextDarSequence();
     boolean requiresSOApproval = requiresSOApproval(user, datasetIds);
     String referenceId =
         dataAccessRequestServiceDAO.inTransaction(
@@ -260,7 +256,11 @@ public class DataAccessRequestService implements ConsentLogger {
                       ? existingDar.getCollectionId()
                       : transactionDAOs
                           .darCollectionDAO()
-                          .insertDarCollection(darCodeSequence, user.getUserId(), now);
+                          .insertDarCollection(
+                              "DAR-"
+                                  + counterService.getNextDarSequence(transactionDAOs.counterDAO()),
+                              user.getUserId(),
+                              now);
               String transactionReferenceId;
               Integer darId;
               if (Objects.nonNull(existingDar)) {
@@ -378,7 +378,7 @@ public class DataAccessRequestService implements ConsentLogger {
             parentDar.getDarCode(),
             referenceId,
             serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
-      } catch (TemplateException | IOException e) {
+      } catch (Exception e) {
         // Persistence has already committed, so a notification failure must not make the caller
         // treat creation as failed and compensate by deleting the progress report documents.
         logException("Unable to send submitted closeout message for " + referenceId, e);

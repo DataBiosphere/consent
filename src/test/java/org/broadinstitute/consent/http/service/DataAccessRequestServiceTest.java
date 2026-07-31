@@ -40,6 +40,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -103,6 +104,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock private Jdbi jdbi;
   @Mock private CounterService counterService;
+  @Mock private CounterDAO counterDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DarCollectionDAO darCollectionDAO;
   @Mock private UserDAO userDAO;
@@ -199,7 +201,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
                   invocation.getArgument(0);
               return callback.apply(
                   new DataAccessRequestServiceDAO.TransactionDAOs(
-                      dataAccessRequestDAO, daaDAO, darCollectionDAO));
+                      dataAccessRequestDAO, daaDAO, darCollectionDAO, counterDAO));
             })
         .when(dataAccessRequestServiceDAO)
         .inTransaction(any());
@@ -214,7 +216,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     doNothing()
         .when(dataAccessRequestDAO)
@@ -233,7 +235,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
@@ -266,7 +268,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
@@ -323,7 +325,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.getData().setDaaIds(Set.of(1));
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
@@ -357,7 +359,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
@@ -620,6 +622,41 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
     verify(daaDAO, never()).insertDarDatasetDaaSnapshots(any());
+  }
+
+  @Test
+  void createCloseoutProgressReportIgnoresUncheckedNotificationFailure() throws Exception {
+    mockTransactionalDaos();
+    User user = createUserWithPrerequisites();
+    User signingOfficial = createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    signingOfficial.setSigningOfficialRole();
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(FIXED_TIMESTAMP);
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
+
+    when(userService.findUserById(2)).thenReturn(signingOfficial);
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    doThrow(new RuntimeException("notification failed"))
+        .when(emailService)
+        .sendMessage(any(SubmittedCloseoutMessage.class), any());
+
+    DataAccessRequest createdProgressReport =
+        assertDoesNotThrow(
+            () -> service.createProgressReport(user, progressReport, parentDar, request));
+
+    assertNotNull(createdProgressReport);
   }
 
   @Test

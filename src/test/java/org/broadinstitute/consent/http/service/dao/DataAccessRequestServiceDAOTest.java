@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.CounterService;
 import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,12 +140,14 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   void transactionRollsBackDataAccessRequestWhenDatasetInsertFails() {
     User user = createUser();
     String referenceId = UUID.randomUUID().toString();
+    counterDAO.addCounter(CounterService.DAR_COUNTER, 0);
 
     assertThrows(
         JdbiException.class,
         () ->
             serviceDAO.inTransaction(
                 transactionDAOs -> {
+                  transactionDAOs.counterDAO().incrementCountByName(CounterService.DAR_COUNTER);
                   Integer collectionId =
                       transactionDAOs
                           .darCollectionDAO()
@@ -167,6 +170,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
                 }));
 
     assertNull(dataAccessRequestDAO.findByReferenceId(referenceId));
+    assertEquals(1, counterDAO.incrementCountByName(CounterService.DAR_COUNTER));
   }
 
   private Dataset createDataset() {

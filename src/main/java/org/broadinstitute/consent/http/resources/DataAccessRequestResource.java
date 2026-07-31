@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -454,6 +455,8 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest parentDar,
       ProgressReportDocumentUploads documentUploads)
       throws IOException {
+    // GCS cannot participate in the database transaction. Treat the upload and transactional
+    // create as one application-level unit by compensating for any uploaded blobs if either fails.
     try {
       populateProgressReportWithDocuments(
           user,
@@ -516,7 +519,7 @@ public class DataAccessRequestResource extends Resource {
   }
 
   private void rollbackProgressReportDocuments(DataAccessRequest progressReport) {
-    Set<String> uploadedDocumentLocations = new java.util.HashSet<>();
+    Set<String> uploadedDocumentLocations = new HashSet<>();
     uploadedDocumentLocations.add(progressReport.getData().getCollaborationLetterLocation());
     uploadedDocumentLocations.add(progressReport.getData().getIrbDocumentLocation());
     uploadedDocumentLocations.stream()
