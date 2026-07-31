@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -27,11 +27,11 @@ public class ServicesConfiguration {
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
-  @NotNull private String localURL;
+  @NotBlank private String localURL;
 
-  @NotNull private String samUrl;
+  @NotBlank private String samUrl;
 
-  @NotNull private String ecmUrl;
+  @NotBlank private String ecmUrl;
 
   /**
    * This represents the max time we'll wait for an external status check to return. If it does not
@@ -175,14 +175,15 @@ public class ServicesConfiguration {
   }
 
   private static String normalizeBaseUrl(String baseUrl) {
-    Objects.requireNonNull(baseUrl, "Service base URL must not be null");
-    if (baseUrl.isEmpty()) {
-      return baseUrl;
+    String normalizedBaseUrl =
+        Objects.requireNonNull(baseUrl, "Service base URL must not be null").strip();
+    if (normalizedBaseUrl.isEmpty()) {
+      throw new IllegalArgumentException("Service base URL must not be blank");
     }
-    int end = baseUrl.length();
-    while (end > 0 && baseUrl.charAt(end - 1) == '/') {
+    int end = normalizedBaseUrl.length();
+    while (end > 0 && normalizedBaseUrl.charAt(end - 1) == '/') {
       end--;
     }
-    return baseUrl.substring(0, end) + "/";
+    return normalizedBaseUrl.substring(0, end) + "/";
   }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.configurations;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -13,7 +14,8 @@ class ServicesConfigurationTest {
       strings = {
         "https://services.example.org",
         "https://services.example.org/",
-        "https://services.example.org///"
+        "https://services.example.org///",
+        "  https://services.example.org///  "
       })
   void testServiceBaseUrlNormalization(String configuredBaseUrl) {
     ServicesConfiguration configuration = new ServicesConfiguration();
@@ -60,5 +62,22 @@ class ServicesConfigurationTest {
             assertEquals(
                 baseUrl + "api/users/v1/user%2Btag%40example.org",
                 configuration.getV1UserUrl("user+tag@example.org")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "\t\n"})
+  void testBlankServiceBaseUrlsAreRejected(String configuredBaseUrl) {
+    ServicesConfiguration configuration = new ServicesConfiguration();
+
+    assertAll(
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> configuration.setLocalURL(configuredBaseUrl)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> configuration.setSamUrl(configuredBaseUrl)),
+        () ->
+            assertThrows(
+                IllegalArgumentException.class, () -> configuration.setEcmUrl(configuredBaseUrl)));
   }
 }
