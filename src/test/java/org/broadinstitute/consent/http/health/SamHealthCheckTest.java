@@ -48,7 +48,7 @@ class SamHealthCheckTest {
     try {
       when(response.entity()).thenReturn(okResponse);
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
-      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      when(servicesConfiguration.getSamStatusUrl()).thenReturn("http://localhost:8000/status");
       healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
@@ -63,7 +63,7 @@ class SamHealthCheckTest {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     try {
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
-      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      when(servicesConfiguration.getSamStatusUrl()).thenReturn("http://localhost:8000/status");
       healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
@@ -77,7 +77,7 @@ class SamHealthCheckTest {
   void testCheckException() throws Exception {
     try {
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
-      when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
+      when(servicesConfiguration.getSamStatusUrl()).thenReturn("http://localhost:8000/status");
       healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {
       fail(e.getMessage());
@@ -89,7 +89,7 @@ class SamHealthCheckTest {
 
   @Test
   void testConfigException() throws Exception {
-    doThrow(new RuntimeException()).when(servicesConfiguration).getSamUrl();
+    doThrow(new RuntimeException()).when(servicesConfiguration).getSamStatusUrl();
     try {
       healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);
     } catch (Exception e) {

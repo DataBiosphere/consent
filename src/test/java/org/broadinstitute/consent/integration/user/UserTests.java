@@ -3,7 +3,6 @@ package org.broadinstitute.consent.integration.user;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,8 +26,7 @@ class UserTests extends ContainerTests {
    *       CombinedState} JSON so {@link
    *       org.broadinstitute.consent.http.authentication.DuosUserAuthenticator} can build a {@code
    *       DuosUser} with a non-null {@code UserStatusInfo}.
-   *   <li><b>ECM</b> {@code GET /api/oauth/v1/ras} (also matches the double-slash form produced by
-   *       the config concatenation): returns 404 so {@link
+   *   <li><b>ECM</b> {@code GET /api/oauth/v1/ras}: returns 404 so {@link
    *       org.broadinstitute.consent.http.service.NihService#syncAccount} treats the user as having
    *       no NIH account and returns the user record cleanly.
    * </ul>
@@ -67,10 +65,8 @@ class UserTests extends ContainerTests {
                     .withBody(combinedStateBody)));
 
     // ECM – RAS provider: 404 → NihService treats this as "no NIH account" and returns the user.
-    // The config concatenates ecmUrl ("…9999/") + "/api/oauth/v1/ras", which can produce a
-    // double slash, so the pattern matches both "/api/oauth/v1/ras" and "//api/oauth/v1/ras".
     WIRE_MOCK.stubFor(
-        get(urlPathMatching("/+api/oauth/v1/ras"))
+        get(urlPathEqualTo("/api/oauth/v1/ras"))
             .willReturn(aResponse().withStatus(HttpStatusCodes.STATUS_CODE_NOT_FOUND)));
   }
 

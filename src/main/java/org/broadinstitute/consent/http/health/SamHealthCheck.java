@@ -25,7 +25,7 @@ public class SamHealthCheck extends HealthCheck implements Managed {
   @Override
   protected Result check() throws Exception {
     try {
-      String statusUrl = configuration.getSamUrl() + "status";
+      String statusUrl = configuration.getSamStatusUrl();
       HttpGet httpGet = new HttpGet(statusUrl);
       try {
         SimpleResponse response = clientUtil.getCachedResponse(httpGet);

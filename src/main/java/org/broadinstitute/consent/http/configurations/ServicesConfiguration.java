@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotNull;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesConfiguration {
@@ -18,10 +19,11 @@ public class ServicesConfiguration {
   public static final String ACCEPT_TOS_PATH = "api/termsOfService/v1/user/self/accept";
   public static final String REJECT_TOS_PATH = "api/termsOfService/v1/user/self/reject";
   public static final String SAM_V1_USER_EMAIL = "api/users/v1";
-  public static final String ECM_RAS_PROVIDER = "/api/oauth/v1/ras";
+  public static final String SAM_STATUS_PATH = "status";
+  public static final String ECM_RAS_PROVIDER = "api/oauth/v1/ras";
   // ECM's detailed status endpoint is auth-gated at the environment proxy. This legacy endpoint
   // remains public specifically for unauthenticated service health checks.
-  public static final String ECM_STATUS_PATH = "/status";
+  public static final String ECM_STATUS_PATH = "status";
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
@@ -60,7 +62,7 @@ public class ServicesConfiguration {
   }
 
   public void setLocalURL(String localURL) {
-    this.localURL = localURL;
+    this.localURL = normalizeBaseUrl(localURL);
   }
 
   public String getSamUrl() {
@@ -68,7 +70,7 @@ public class ServicesConfiguration {
   }
 
   public void setSamUrl(String samUrl) {
-    this.samUrl = samUrl;
+    this.samUrl = normalizeBaseUrl(samUrl);
   }
 
   public String getEcmUrl() {
@@ -76,7 +78,7 @@ public class ServicesConfiguration {
   }
 
   public void setEcmUrl(String ecmUrl) {
-    this.ecmUrl = ecmUrl;
+    this.ecmUrl = normalizeBaseUrl(ecmUrl);
   }
 
   public String getEcmRasProviderUrl() {
@@ -84,16 +86,15 @@ public class ServicesConfiguration {
   }
 
   public String getEcmStatusUrl() {
-    String baseUrl = getEcmUrl();
-    int end = baseUrl.length();
-    while (end > 0 && baseUrl.charAt(end - 1) == '/') {
-      end--;
-    }
-    return baseUrl.substring(0, end) + ECM_STATUS_PATH;
+    return getEcmUrl() + ECM_STATUS_PATH;
   }
 
   public String getV1ResourceTypesUrl() {
     return getSamUrl() + RESOURCE_TYPES_PATH;
+  }
+
+  public String getSamStatusUrl() {
+    return getSamUrl() + SAM_STATUS_PATH;
   }
 
   public String getRegisterUserV2SelfInfoUrl() {
@@ -171,5 +172,17 @@ public class ServicesConfiguration {
 
   public void setCacheExpireMinutes(Integer cacheExpireMinutes) {
     this.cacheExpireMinutes = cacheExpireMinutes;
+  }
+
+  private static String normalizeBaseUrl(String baseUrl) {
+    Objects.requireNonNull(baseUrl, "Service base URL must not be null");
+    if (baseUrl.isEmpty()) {
+      return baseUrl;
+    }
+    int end = baseUrl.length();
+    while (end > 0 && baseUrl.charAt(end - 1) == '/') {
+      end--;
+    }
+    return baseUrl.substring(0, end) + "/";
   }
 }
