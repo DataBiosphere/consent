@@ -1181,10 +1181,11 @@ class UserResourceTest extends AbstractTestHelper {
     DuosUser adminDuosUser = new DuosUser(authUser, adminUser);
 
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
-    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080/");
 
     try (var response = userResource.createNewUser(adminDuosUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+      assertEquals(URI.create("http://localhost:8080/api/user/1"), response.getLocation());
     }
   }
 
@@ -1203,7 +1204,7 @@ class UserResourceTest extends AbstractTestHelper {
     institution.setDomains(List.of("@example.com"));
 
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
-    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080/");
 
     try (var response = userResource.createNewUser(nonAdminDuosUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
@@ -1286,7 +1287,7 @@ class UserResourceTest extends AbstractTestHelper {
     User createdUser =
         new User(1, request.email(), request.displayName(), new Date(), request.roles());
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
-    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080/");
     try (var response = userResource.createNewUser(adminUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }

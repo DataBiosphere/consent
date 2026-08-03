@@ -562,11 +562,8 @@ public class UserResource extends Resource {
                 });
       }
       User user = userService.createUser(createDuosUserRequest.newUser());
-      String localUrl =
-          servicesConfiguration.getLocalURL().endsWith("/")
-              ? servicesConfiguration.getLocalURL()
-              : servicesConfiguration.getLocalURL() + "/";
-      URI uri = new URI("%sapi/user/%d".formatted(localUrl, user.getUserId()));
+      URI uri =
+          new URI("%sapi/user/%d".formatted(servicesConfiguration.getLocalURL(), user.getUserId()));
       return Response.created(uri).entity(user).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
