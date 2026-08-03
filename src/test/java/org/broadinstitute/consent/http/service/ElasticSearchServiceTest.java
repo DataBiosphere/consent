@@ -280,7 +280,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     ElasticSearchService elasticSearchSpy = spy(service);
 
-    Logger logger = (Logger) LoggerFactory.getLogger(ElasticSearchService.class);
+    Logger logger = (Logger) LoggerFactory.getLogger(elasticSearchSpy.getClass());
     Level previousLevel = logger.getLevel();
     logger.setLevel(Level.INFO);
     TestAppender appender = new TestAppender();
