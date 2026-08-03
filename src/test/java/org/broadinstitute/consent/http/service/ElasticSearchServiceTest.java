@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
@@ -284,8 +285,10 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     Level previousLevel = logger.getLevel();
     logger.setLevel(Level.INFO);
     TestAppender appender = new TestAppender();
-    appender.start();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    appender.reset();
     logger.addAppender(appender);
+    appender.start();
     try (jakarta.ws.rs.core.Response response =
         elasticSearchSpy.indexStudy(datasetRecord.study.getStudyId())) {
       // Ensure that the synchronous method was called with the expected parameters
@@ -334,10 +337,14 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     RuntimeException failure = new RuntimeException("synthetic indexing failure");
     doThrow(failure).when(elasticSearchSpy).synchronizeDatasetListInESIndex(List.of(dataset));
 
-    Logger logger = (Logger) LoggerFactory.getLogger(ElasticSearchService.class);
+    Logger logger = (Logger) LoggerFactory.getLogger(elasticSearchSpy.getClass());
+    Level previousLevel = logger.getLevel();
+    logger.setLevel(Level.WARN);
     TestAppender appender = new TestAppender();
-    appender.start();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    appender.reset();
     logger.addAppender(appender);
+    appender.start();
     try (jakarta.ws.rs.core.Response response = elasticSearchSpy.indexStudy(study.getStudyId())) {
       assertEquals(500, response.getStatus());
       assertTrue(
@@ -352,6 +359,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     } finally {
       logger.detachAppender(appender);
       appender.stop();
+      logger.setLevel(previousLevel);
     }
   }
 
