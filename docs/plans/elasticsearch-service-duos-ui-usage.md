@@ -657,8 +657,12 @@ Two defaults must be overridden, and this is the main trap:
   compose setup. (If production turns out to be HTTPS with a private CA, `createRestClient` needs an
   `SSLContext` hook — a D-1/D-2 concern, not just a test concern.)
 - `withPassword(...)` sets `ELASTIC_PASSWORD`; the trial license still has to be activated per
-  container via `POST /_license/start_trial?acknowledge=true` before any DLS/FLS call, because each
-  fresh container starts on a self-generated basic license.
+  container before any DLS/FLS call, because each fresh container starts on a self-generated basic
+  license. That activation is an explicit step in the test that needs it, made through the admin
+  endpoint (`POST /api/elasticSearch/license/trial?acknowledge=true`, via
+  `ElasticSearchContainerTests.activateTrialLicense()`) rather than by the harness reaching for
+  `POST /_license/start_trial` on every subclass's behalf — a trial is one-shot per cluster, and the
+  classes that assert what a *basic* license refuses must not have it spent underneath them.
 
 This also resolves the D-2 concern about challenge-response authentication: the shared-credential
 client authenticated successfully against the secured cluster, and a per-request

@@ -1,0 +1,91 @@
+type: object
+title: ElasticSearchLicenseActivation
+description: |
+  Result of asking the Elasticsearch cluster the responding deployment is configured against to start
+  its 30-day trial license.
+
+  Only an outcome of ACTIVATED changed the cluster. The other four all mean nothing was changed, and
+  they are kept apart because the reason is what the caller needs: a cluster already entitled to
+  DLS/FLS needs no action, a cluster whose trial is spent cannot be given another, a refusal is the
+  cluster's own answer, and UNKNOWN means the question was never settled.
+
+  Both sides of the call are reported rather than only the result. A trial is one-shot per cluster and
+  cannot be reverted, so license_before records what was given up, license_after what was obtained,
+  and the outcome says whether this call was the one that spent the trial.
+properties:
+  outcome:
+    type: string
+    enum:
+      - ACTIVATED
+      - ALREADY_LICENSED
+      - TRIAL_UNAVAILABLE
+      - REFUSED
+      - UNKNOWN
+    description: |
+      What the call did.
+
+      * ACTIVATED — the trial was started by this call; the cluster's license tier changed.
+      * ALREADY_LICENSED — the cluster's license already includes DLS/FLS; nothing was changed.
+      * TRIAL_UNAVAILABLE — the cluster reports it is no longer eligible for a trial, so its trial has
+        been used. Nothing was changed and nothing can be: a DLS/FLS-capable license here becomes a
+        purchasing decision rather than an API call.
+      * REFUSED — the cluster was asked and said no; nothing was changed.
+      * UNKNOWN — the cluster could not be reached, or the license could not be read before asking.
+        Whether anything changed does not follow from this response; read the license back.
+  detail:
+    type: string
+    description: |
+      Expansion of the outcome, carrying the cluster's own words when it refused.
+  license_before:
+    $ref: './ElasticSearchLicenseStatus.yaml'
+  license_after:
+    $ref: './ElasticSearchLicenseStatus.yaml'
+  notes:
+    type: array
+    description: |
+      Caveats that apply however the attempt turned out, foremost that a trial is one-shot per
+      cluster and expires after 30 days.
+    items:
+      type: string
+examples:
+  - outcome: ACTIVATED
+    detail: >-
+      The trial license was started, taking the cluster from license 'basic' to 'trial'. License
+      'trial', status 'active'. This tier includes document- and field-level security.
+    license_before:
+      cluster_name: docker-cluster
+      license_type: basic
+      license_status: active
+      dls_fls_licensed: false
+      trial_available: true
+      detail: >-
+        License 'basic', status 'active'. This tier excludes document- and field-level security. A
+        30-day trial that would include them has not yet been used on this cluster; POST
+        /api/elasticSearch/license/trial?acknowledge=true starts it, once.
+      notes:
+        - Read-only. Nothing was created, modified, or deleted on the cluster.
+    license_after:
+      cluster_name: docker-cluster
+      license_type: trial
+      license_status: active
+      dls_fls_licensed: true
+      trial_available: false
+      detail: >-
+        License 'trial', status 'active'. This tier includes document- and field-level security.
+      notes:
+        - Read-only. Nothing was created, modified, or deleted on the cluster.
+        - >-
+          A tier that includes DLS/FLS is not on its own a promise that a filter will be enforced:
+          xpack.security.dls_fls.enabled switches the feature off cluster-wide whatever the license
+          says. GET /api/elasticSearch/capabilities reports both.
+    notes:
+      - >-
+        A trial can be started only once per cluster and cannot be reverted. Once a cluster's trial is
+        spent, a DLS/FLS-capable license there is a purchasing decision rather than an API call.
+      - >-
+        A trial lasts 30 days. When it expires the cluster falls back to its basic license and stops
+        permitting DLS/FLS, at which point a search carrying those filters fails closed rather than
+        returning unfiltered results.
+      - >-
+        This step is deliberately separate from GET/POST /api/elasticSearch/capabilities, which
+        reports what the cluster can do and never changes its license tier.

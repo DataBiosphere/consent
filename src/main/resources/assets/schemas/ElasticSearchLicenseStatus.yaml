@@ -1,0 +1,71 @@
+type: object
+title: ElasticSearchLicenseStatus
+description: |
+  License state of the Elasticsearch cluster the responding deployment is configured against, and
+  whether a trial is still available on it.
+
+  Read-only: nothing is created, modified, or deleted on the cluster.
+
+  The pair of fields to read together is dls_fls_licensed and trial_available. The first says whether
+  document- and field-level security are permitted today; the second says whether that can still be
+  changed, since a trial can be started only once per cluster.
+
+  dls_fls_licensed answers the license question alone. A tier that includes DLS/FLS can still have
+  the feature switched off cluster-wide by xpack.security.dls_fls.enabled, so a true here is not a
+  promise that a filter will be enforced — GET /api/elasticSearch/capabilities reports both.
+properties:
+  cluster_name:
+    type: string
+    description: The cluster's own name, confirming which cluster was reached.
+  license_type:
+    type: string
+    nullable: true
+    description: |
+      License tier reported by the cluster. Null when the license could not be read, in which case
+      nothing else here follows from it.
+    examples:
+      - basic
+      - trial
+      - platinum
+  license_status:
+    type: string
+    nullable: true
+    description: Whether that license is active.
+    examples:
+      - active
+      - expired
+  dls_fls_licensed:
+    type: boolean
+    nullable: true
+    description: |
+      Whether the tier includes document- and field-level security. Null when the tier could not be
+      read — which is not the same as false.
+  trial_available:
+    type: boolean
+    nullable: true
+    description: |
+      Whether the cluster is still eligible to start a 30-day trial. Null when the cluster did not
+      answer the eligibility check; that is not the same as ineligible, and an activation would still
+      be attempted.
+  detail:
+    type: string
+    description: What the state means for DLS/FLS, in one line.
+  notes:
+    type: array
+    description: |
+      Caveats needed to read the fields above correctly: what could not be read, and what a
+      sufficient-looking tier still does not guarantee.
+    items:
+      type: string
+examples:
+  - cluster_name: docker-cluster
+    license_type: basic
+    license_status: active
+    dls_fls_licensed: false
+    trial_available: true
+    detail: >-
+      License 'basic', status 'active'. This tier excludes document- and field-level security. A
+      30-day trial that would include them has not yet been used on this cluster; POST
+      /api/elasticSearch/license/trial?acknowledge=true starts it, once.
+    notes:
+      - Read-only. Nothing was created, modified, or deleted on the cluster.

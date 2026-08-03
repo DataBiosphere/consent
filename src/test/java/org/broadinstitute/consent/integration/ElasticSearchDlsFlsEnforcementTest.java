@@ -31,12 +31,17 @@ class ElasticSearchDlsFlsEnforcementTest extends ElasticSearchContainerTests {
       """;
 
   /**
-   * Seeds the shared mapping and documents from {@link ElasticSearchTestCluster}, the same ones
-   * {@link ElasticSearchBasicLicenseTest} uses, so the two license tiers differ only in the
-   * license.
+   * Puts the cluster on the trial license through the admin endpoint, then seeds the shared mapping
+   * and documents from {@link ElasticSearchTestCluster} — the same ones {@link
+   * ElasticSearchBasicLicenseTest} uses, so the two license tiers differ only in the license.
+   *
+   * <p>The activation is here, in the open, rather than in the harness: everything below asserts
+   * what a trial-licensed cluster does, and the step that made it one belongs where a reader can
+   * see it.
    */
   @BeforeAll
-  static void seedIndex() throws Exception {
+  static void activateTrialLicenseAndSeedIndex() throws Exception {
+    activateTrialLicense();
     recreateIndex(datasetIndex(), ElasticSearchTestCluster.DATASET_MAPPING);
     indexDocument(datasetIndex(), "1", ElasticSearchTestCluster.PUBLIC_DOCUMENT);
     indexDocument(datasetIndex(), "2", ElasticSearchTestCluster.PRIVATE_DOCUMENT);
@@ -47,6 +52,10 @@ class ElasticSearchDlsFlsEnforcementTest extends ElasticSearchContainerTests {
     assertEquals(200, statusOf(new Request("GET", "/")));
   }
 
+  /**
+   * The activation in {@code @BeforeAll} took effect on the cluster itself, read back from the
+   * cluster's own API rather than from the endpoint's response.
+   */
   @Test
   void trialLicenseIsActiveSoDlsFlsIsPermitted() throws Exception {
     JsonObject license = jsonResponse(new Request("GET", "/_license")).getAsJsonObject("license");

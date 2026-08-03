@@ -1,0 +1,45 @@
+get:
+  summary: Elasticsearch license state (read-only)
+  operationId: apiElasticSearchLicenseGet
+  description: |
+    Report the license tier of the Elasticsearch cluster this deployment is configured against, and
+    whether its 30-day trial is still available. Requires Admin role.
+
+    Read-only: nothing is created, modified, or deleted on the cluster.
+
+    This is the call to make before POST /api/elasticSearch/license/trial. The trial is one-shot per
+    cluster, so trial_available is the difference between an activation that can still be spent here
+    and one that cannot, and dls_fls_licensed says whether it is needed at all.
+
+    dls_fls_licensed reports the license entitlement only. A tier that includes DLS/FLS can still
+    have the feature switched off cluster-wide by xpack.security.dls_fls.enabled — GET
+    /api/elasticSearch/capabilities reports the license and the setting together.
+  tags:
+    - Admin
+  responses:
+    200:
+      description: The license state
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ElasticSearchLicenseStatus.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

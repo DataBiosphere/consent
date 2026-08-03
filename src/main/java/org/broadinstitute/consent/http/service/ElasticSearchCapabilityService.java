@@ -26,6 +26,9 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.models.elastic_search.CapabilityVerdict;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapability;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapabilityReport;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseActivation;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseStatus;
+import org.broadinstitute.consent.http.models.elastic_search.LicenseActivationOutcome;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.Request;
@@ -68,6 +71,13 @@ import org.elasticsearch.client.RestClient;
  * <p>Because each environment's deployment already holds its own cluster credential, running this
  * with write probes in each environment produces the measured per-environment record without anyone
  * needing cluster network access or a copy of a secret.
+ *
+ * <p><b>Changing the cluster's license tier is a separate operation,</b> not something any probe
+ * does on its way to a verdict. {@link #getLicenseStatus()} reads the tier and whether a trial
+ * remains available; {@link #activateTrialLicense()} starts that trial. They are kept apart from
+ * the report deliberately: a report that quietly moved a cluster onto a trial in order to make
+ * DLS/FLS come back {@code SUPPORTED} would be measuring a cluster it had itself altered, and would
+ * spend — irreversibly, and once per cluster — a trial nobody asked it to spend.
  *
  * <p>All calls go through the low-level {@link RestClient} using {@link Request}/{@link Response},
  * which is what {@code ElasticSearchSupport.createRestClient} builds. That this class works at all
@@ -127,6 +137,19 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "xpack.security.http.ssl.enabled",
           "xpack.security.transport.ssl.enabled");
 
+  private static final String LICENSE_PATH = "/_license";
+  private static final String TRIAL_STATUS_PATH = "/_license/trial_status";
+
+  /**
+   * Elasticsearch requires {@code acknowledge=true} on this call — it is the cluster's own guard
+   * against a trial being started by accident, and it is always sent here. The guard against it
+   * being started <em>casually</em> is a separate one, on the resource: an admin role, and an
+   * explicit acknowledgement in the request.
+   */
+  private static final String START_TRIAL_PATH = "/_license/start_trial?acknowledge=true";
+
+  private static final String ELIGIBLE_FIELD = "eligible_to_start_trial";
+
   private static final String AUTHENTICATE_PATH = "/_security/_authenticate";
   // nosemgrep - an endpoint path, not a key
   private static final String API_KEY_PATH = "/_security/api_key";
@@ -149,6 +172,22 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   /** How long a probe API key lives even if teardown never runs. */
   // nosemgrep - a duration, not a key
   private static final String PROBE_KEY_EXPIRATION = "10m";
+
+  /**
+   * What a reader of a trial-activation response has to know regardless of how the attempt turned
+   * out. Constant rather than assembled per call: none of it depends on the outcome, and the first
+   * two are the reasons this operation is worth thinking twice about.
+   */
+  private static final List<String> TRIAL_ACTIVATION_NOTES =
+      List.of(
+          "A trial can be started only once per cluster and cannot be reverted. Once a cluster's "
+              + "trial is spent, a DLS/FLS-capable license there is a purchasing decision rather "
+              + "than an API call.",
+          "A trial lasts 30 days. When it expires the cluster falls back to its basic license and "
+              + "stops permitting DLS/FLS, at which point a search carrying those filters fails "
+              + "closed rather than returning unfiltered results.",
+          "This step is deliberately separate from GET/POST /api/elasticSearch/capabilities, which "
+              + "reports what the cluster can do and never changes its license tier.");
 
   /** The field a probe FLS grant is scoped to; a real field of the dataset index. */
   private static final String FLS_GRANT_FIELD = "datasetIdentifier";
@@ -247,7 +286,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         stringOrDefault(root.body(), "elasticsearch", VERSION_FIELD, "distribution");
 
     ProbeResult xpack = probe(HttpMethod.GET, "/_xpack");
-    ProbeResult license = probe(HttpMethod.GET, "/_license");
+    ProbeResult license = probe(HttpMethod.GET, LICENSE_PATH);
     String licenseType = string(license.body(), LICENSE_FIELD, "type");
     String licenseStatus = string(license.body(), LICENSE_FIELD, "status");
 
@@ -338,6 +377,240 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     }
     return notes;
   }
+
+  // ---------------------------------------------------------------------------
+  // License state and trial activation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Reads the cluster's license tier and whether a trial is still available on it. Read-only —
+   * nothing is created, modified, or deleted.
+   *
+   * <p>The pair is the point. The tier says whether DLS and FLS are permitted today; trial
+   * eligibility says whether that can still be changed, and a trial can be started only once per
+   * cluster. Reading both before {@link #activateTrialLicense()} is what turns activation from a
+   * gamble into a decision.
+   *
+   * @return the license state, with a null tier where the cluster did not answer
+   */
+  public ElasticSearchLicenseStatus getLicenseStatus() {
+    return licenseStatus(
+        probe(HttpMethod.GET, "/"),
+        probe(HttpMethod.GET, LICENSE_PATH),
+        probe(HttpMethod.GET, TRIAL_STATUS_PATH));
+  }
+
+  /**
+   * Starts the cluster's 30-day trial license, which is the only tier a self-managed cluster can
+   * reach by API call that includes document- and field-level security.
+   *
+   * <p>Checks before it changes anything, and reports which check stopped it: a cluster already
+   * licensed for DLS/FLS is left alone, and so is one whose trial has already been spent. Only a
+   * cluster that both lacks the entitlement and still has its trial is asked to start one, so
+   * calling this twice is safe — the second call reports {@link
+   * LicenseActivationOutcome#ALREADY_LICENSED} rather than failing or, worse, doing something.
+   *
+   * <p>What it cannot do is undo itself. The trial is one-shot per cluster, so the
+   * deliberate-decision gate belongs on the caller: see {@code
+   * ElasticSearchCapabilityResource#activateTrialLicense}.
+   *
+   * @return what the call did, with the license state from both sides of it
+   */
+  public ElasticSearchLicenseActivation activateTrialLicense() {
+    ElasticSearchLicenseStatus before = getLicenseStatus();
+
+    if (before.licenseType() == null) {
+      return unchanged(
+          LicenseActivationOutcome.UNKNOWN,
+          "No trial was requested: the cluster's current license could not be read, and moving a "
+              + "cluster onto a trial without knowing what it is on now is not a trade this will "
+              + "make blind. "
+              + before.detail(),
+          before);
+    }
+    if (Boolean.TRUE.equals(before.dlsFlsLicensed()) && licenseActive(before)) {
+      return unchanged(
+          LicenseActivationOutcome.ALREADY_LICENSED,
+          "No trial was requested; the cluster is already entitled to DLS/FLS. " + before.detail(),
+          before);
+    }
+    if (Boolean.FALSE.equals(before.trialAvailable())) {
+      return unchanged(
+          LicenseActivationOutcome.TRIAL_UNAVAILABLE,
+          "No trial was requested: the cluster reports it is no longer eligible for one, so its "
+              + "trial has already been used. "
+              + before.detail(),
+          before);
+    }
+
+    // Warn rather than info: this is the one call in this service that changes what the cluster is,
+    // and it is the audit trail for a change that cannot be made twice.
+    logWarn(
+        "Starting the Elasticsearch trial license on cluster '%s' (currently on license '%s'). A "
+                .formatted(before.clusterName(), before.licenseType())
+            + "trial can be started only once per cluster and cannot be reverted.");
+
+    ProbeResult activation = probe(HttpMethod.POST, START_TRIAL_PATH);
+    ElasticSearchLicenseStatus after = getLicenseStatus();
+
+    if (activation.status() == 200 && bool(activation.body(), "trial_was_started")) {
+      logWarn(
+          "Elasticsearch trial license started; the cluster now reports license '%s'."
+              .formatted(after.licenseType()));
+      return activated(before, after);
+    }
+    return notActivated(before, after, activation);
+  }
+
+  /** The outcomes that leave the cluster as it was, where before and after are the same reading. */
+  private ElasticSearchLicenseActivation unchanged(
+      LicenseActivationOutcome outcome, String detail, ElasticSearchLicenseStatus license) {
+    return new ElasticSearchLicenseActivation(
+        outcome, detail, license, license, TRIAL_ACTIVATION_NOTES);
+  }
+
+  private ElasticSearchLicenseActivation activated(
+      ElasticSearchLicenseStatus before, ElasticSearchLicenseStatus after) {
+    return new ElasticSearchLicenseActivation(
+        LicenseActivationOutcome.ACTIVATED,
+        "The trial license was started, taking the cluster from license '%s' to '%s'. "
+                .formatted(before.licenseType(), after.licenseType())
+            + after.detail(),
+        before,
+        after,
+        TRIAL_ACTIVATION_NOTES);
+  }
+
+  /**
+   * Why a trial that was asked for was not started. The distinction that matters is between "the
+   * cluster said no" and "the cluster said nothing": the second leaves the license state genuinely
+   * unknown, and the caller has to read it back rather than assume the tier is unchanged.
+   *
+   * <p>Trial exhaustion is read from the cluster's own eligibility flag rather than from the
+   * wording of its refusal, so it survives a change to that wording.
+   */
+  private ElasticSearchLicenseActivation notActivated(
+      ElasticSearchLicenseStatus before, ElasticSearchLicenseStatus after, ProbeResult activation) {
+    if (activation.status() == 0) {
+      return new ElasticSearchLicenseActivation(
+          LicenseActivationOutcome.UNKNOWN,
+          "The cluster did not answer POST /_license/start_trial, so whether a trial was started "
+              + "cannot be told from this response. Read GET /api/elasticSearch/license back before "
+              + "retrying.",
+          before,
+          after,
+          TRIAL_ACTIVATION_NOTES);
+    }
+    String refusal = stringOrDefault(activation.body(), reason(activation.body()), "error_message");
+    if (Boolean.FALSE.equals(after.trialAvailable())) {
+      return new ElasticSearchLicenseActivation(
+          LicenseActivationOutcome.TRIAL_UNAVAILABLE,
+          "No trial was started: the cluster reports it is no longer eligible for one. It said: "
+              + refusal,
+          before,
+          after,
+          TRIAL_ACTIVATION_NOTES);
+    }
+    return new ElasticSearchLicenseActivation(
+        LicenseActivationOutcome.REFUSED,
+        "The cluster refused to start a trial (HTTP %d). It said: %s"
+            .formatted(activation.status(), refusal),
+        before,
+        after,
+        TRIAL_ACTIVATION_NOTES);
+  }
+
+  /** Assembles the license reading from the three read-only probes it takes. */
+  private ElasticSearchLicenseStatus licenseStatus(
+      ProbeResult root, ProbeResult license, ProbeResult trial) {
+    String licenseType = string(license.body(), LICENSE_FIELD, "type");
+    String licenseStatus = string(license.body(), LICENSE_FIELD, "status");
+    Boolean dlsFlsLicensed =
+        licenseType == null ? null : DLS_FLS_LICENSES.contains(licenseType.toLowerCase());
+    Boolean trialAvailable = trialAvailable(trial);
+
+    return new ElasticSearchLicenseStatus(
+        string(root.body(), "cluster_name"),
+        licenseType,
+        licenseStatus,
+        dlsFlsLicensed,
+        trialAvailable,
+        licenseDetail(licenseType, licenseStatus, dlsFlsLicensed, trialAvailable),
+        licenseNotes(license, trial, licenseType, dlsFlsLicensed, trialAvailable));
+  }
+
+  /** One line saying where the cluster stands and what it means for DLS/FLS. */
+  private String licenseDetail(
+      String licenseType, String licenseStatus, Boolean dlsFlsLicensed, Boolean trialAvailable) {
+    if (licenseType == null) {
+      return "The cluster's license could not be read, so its DLS/FLS entitlement is unknown.";
+    }
+    String tier = "License '%s', status '%s'.".formatted(licenseType, licenseStatus);
+    if (Boolean.TRUE.equals(dlsFlsLicensed)) {
+      return tier + " This tier includes document- and field-level security.";
+    }
+    String excluded = tier + " This tier excludes document- and field-level security.";
+    if (Boolean.TRUE.equals(trialAvailable)) {
+      return excluded
+          + " A 30-day trial that would include them has not yet been used on this cluster; POST "
+          + "/api/elasticSearch/license/trial?acknowledge=true starts it, once.";
+    }
+    if (Boolean.FALSE.equals(trialAvailable)) {
+      return excluded
+          + " The trial has already been used on this cluster, so no API call can add them here.";
+    }
+    return excluded;
+  }
+
+  /** What could not be read, and what a tier that looks sufficient still does not guarantee. */
+  private List<String> licenseNotes(
+      ProbeResult license,
+      ProbeResult trial,
+      String licenseType,
+      Boolean dlsFlsLicensed,
+      Boolean trialAvailable) {
+    List<String> notes = new ArrayList<>();
+    notes.add("Read-only. Nothing was created, modified, or deleted on the cluster.");
+    if (license.status() == 404) {
+      notes.add(
+          "GET /_license answered 404, which a cluster that has not yet published its "
+              + "self-generated license does for a short window after it begins answering on its "
+              + "HTTP port. Read it again before concluding the cluster has no license.");
+    } else if (licenseType == null) {
+      notes.add(
+          "The license tier could not be read: GET /_license returned %d."
+              .formatted(license.status()));
+    }
+    if (trialAvailable == null) {
+      notes.add(
+          "Trial eligibility could not be read: GET /_license/trial_status returned %d. Activation "
+                  .formatted(trial.status())
+              + "would still be attempted, and the cluster would refuse it if the trial were spent.");
+    }
+    if (Boolean.TRUE.equals(dlsFlsLicensed)) {
+      notes.add(
+          "A tier that includes DLS/FLS is not on its own a promise that a filter will be enforced: "
+              + "xpack.security.dls_fls.enabled switches the feature off cluster-wide whatever the "
+              + "license says. GET /api/elasticSearch/capabilities reports both.");
+    }
+    return notes;
+  }
+
+  private static Boolean trialAvailable(ProbeResult trial) {
+    if (trial.status() != 200 || !trial.body().has(ELIGIBLE_FIELD)) {
+      return null;
+    }
+    JsonElement eligible = trial.body().get(ELIGIBLE_FIELD);
+    return eligible.isJsonPrimitive() ? eligible.getAsBoolean() : null;
+  }
+
+  private static boolean licenseActive(ElasticSearchLicenseStatus license) {
+    return "active".equalsIgnoreCase(license.licenseStatus());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Capability report internals
+  // ---------------------------------------------------------------------------
 
   /**
    * What the read-only pass observed about the cluster, plus the impersonation target it was asked
@@ -1344,7 +1617,9 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       return "Epic E (compatibility fallback). Security is enabled but the '%s' license excludes "
               .formatted(licenseType)
           + "DLS/FLS. Epic D would require a Platinum or Enterprise license — a separate infra "
-          + "decision that should precede any commitment to it.";
+          + "decision that should precede any commitment to it. To evaluate Epic D on a "
+          + "non-production cluster first, GET /api/elasticSearch/license reports whether this one "
+          + "still has its 30-day trial available.";
     }
     return "Inconclusive. The license tier could not be mapped to a DLS/FLS entitlement; inspect "
         + "the license and settings in this report before recording a decision.";
@@ -1551,6 +1826,14 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   private static String stringOrDefault(JsonObject source, String fallback, String... path) {
     String value = string(source, path);
     return value == null ? fallback : value;
+  }
+
+  /** A boolean flag, absent or non-primitive reading as false. */
+  private static boolean bool(JsonObject source, String key) {
+    return source != null
+        && source.has(key)
+        && source.get(key).isJsonPrimitive()
+        && source.get(key).getAsBoolean();
   }
 
   private static List<String> stringList(JsonObject source, String key) {

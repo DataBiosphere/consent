@@ -83,6 +83,10 @@ post:
 
     Where security is disabled there is nothing to probe, so the probes are skipped and a note in
     the response says they were requested but not run.
+
+    Neither mode changes the cluster's license tier. Where DLS/FLS comes back LICENSE_BLOCKED, GET
+    /api/elasticSearch/license reports whether a trial that would include it is still available, and
+    POST /api/elasticSearch/license/trial is the separate, deliberate step that starts one.
   tags:
     - Admin
   parameters:

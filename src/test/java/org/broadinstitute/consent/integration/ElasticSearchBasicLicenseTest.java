@@ -6,7 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
+import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseActivation;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseStatus;
+import org.broadinstitute.consent.http.models.elastic_search.LicenseActivationOutcome;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.ResponseException;
@@ -23,9 +27,13 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
  * Asserts what a <em>basic</em> license refuses, and — the part that matters for security — that it
  * refuses it by failing closed rather than by silently returning unrestricted data.
  *
- * <p>This class needs its own container because {@link ElasticSearchContainerTests} activates the
- * trial license in its static initializer, and a trial can be started only once per cluster.
- * Nothing here starts the trial until the final, deliberately-ordered test.
+ * <p>This class needs its own container because the {@link ElasticSearchContainerTests} subclasses
+ * activate the trial license on the one they share, and a trial can be started only once per
+ * cluster. Nothing here starts the trial until the final, deliberately-ordered test.
+ *
+ * <p>That final test is also where the admin activation endpoint gets exercised for real: this is
+ * the only cluster in the suite with an unspent trial, so it is the only place {@code ACTIVATED}
+ * can be observed rather than inferred.
  *
  * <p>The trap this pins down: {@code POST /_security/api_key} <em>accepts</em> a DLS/FLS role
  * descriptor under a basic license, so a D-2 implementation looks correct at credential-creation
@@ -186,18 +194,66 @@ class ElasticSearchBasicLicenseTest {
   }
 
   /**
+   * The read-only admin endpoint on a basic cluster: it must say both that DLS/FLS is not licensed
+   * here and that the trial which would license it has not been used, because those two facts
+   * together are what makes the activation step below worth taking.
+   */
+  @Test
+  @Order(9)
+  void licenseEndpointReportsBasicWithAnUnspentTrial() {
+    ElasticSearchLicenseStatus status =
+        ElasticSearchAdminEndpoints.licenseStatus(CLIENT, CONFIGURATION);
+
+    assertEquals("basic", status.licenseType());
+    assertEquals("active", status.licenseStatus());
+    assertEquals(Boolean.FALSE, status.dlsFlsLicensed());
+    assertEquals(Boolean.TRUE, status.trialAvailable());
+  }
+
+  /**
+   * An unacknowledged activation must be refused before it reaches the cluster. Asserted against a
+   * live cluster with an unspent trial — the one situation where a missing guard would actually
+   * spend something — and the license is read back afterwards to prove nothing moved.
+   */
+  @Test
+  @Order(10)
+  void activationWithoutAcknowledgementIsRefusedAndChangesNothing() throws Exception {
+    Response refused =
+        ElasticSearchAdminEndpoints.resourceFor(CLIENT, CONFIGURATION)
+            .activateTrialLicense(ElasticSearchAdminEndpoints.admin(), null);
+
+    assertEquals(400, refused.getStatus());
+
+    JsonObject license =
+        ElasticSearchTestCluster.json(CLIENT, new Request("GET", "/_license"))
+            .getAsJsonObject("license");
+    assertEquals(
+        "basic", license.get("type").getAsString(), "an unacknowledged call started a trial");
+  }
+
+  /**
    * Runs last, and must: it changes the cluster's license and so would invalidate every assertion
-   * above. Proves the trial is reachable from a fresh basic cluster and is one-shot, which is what
-   * the harness in {@link ElasticSearchContainerTests} relies on.
+   * above. Proves the trial is reachable from a fresh basic cluster through the admin endpoint,
+   * that the endpoint reports what it changed, and that it is one-shot — which is what every other
+   * class in the suite relies on when it calls the same endpoint and finds the trial already
+   * active.
    */
   @Test
   @Order(Integer.MAX_VALUE)
-  void trialLicenseCanBeActivatedOnceFromBasic() throws Exception {
-    JsonObject activation =
-        ElasticSearchTestCluster.json(
-            CLIENT, new Request("POST", "/_license/start_trial?acknowledge=true"));
-    assertTrue(activation.get("trial_was_started").getAsBoolean());
-    assertEquals("trial", activation.get("type").getAsString());
+  void trialLicenseCanBeActivatedOnceThroughTheAdminEndpoint() throws Exception {
+    ElasticSearchLicenseActivation activation =
+        ElasticSearchAdminEndpoints.activateTrialLicense(CLIENT, CONFIGURATION);
+
+    assertEquals(LicenseActivationOutcome.ACTIVATED, activation.outcome());
+    assertEquals("basic", activation.licenseBefore().licenseType());
+    assertEquals(Boolean.FALSE, activation.licenseBefore().dlsFlsLicensed());
+    assertEquals("trial", activation.licenseAfter().licenseType());
+    assertEquals("active", activation.licenseAfter().licenseStatus());
+    assertEquals(Boolean.TRUE, activation.licenseAfter().dlsFlsLicensed());
+    assertEquals(
+        Boolean.FALSE,
+        activation.licenseAfter().trialAvailable(),
+        "a second trial should not be available on the same cluster");
 
     JsonObject license =
         ElasticSearchTestCluster.json(CLIENT, new Request("GET", "/_license"))
@@ -205,11 +261,10 @@ class ElasticSearchBasicLicenseTest {
     assertEquals("trial", license.get("type").getAsString());
     assertEquals("active", license.get("status").getAsString());
 
-    JsonObject trialStatus =
-        ElasticSearchTestCluster.json(CLIENT, new Request("GET", "/_license/trial_status"));
-    assertFalse(
-        trialStatus.get("eligible_to_start_trial").getAsBoolean(),
-        "a second trial should not be available on the same cluster");
+    // Repeating the call must report the cluster already licensed rather than fail or re-request.
+    ElasticSearchLicenseActivation repeated =
+        ElasticSearchAdminEndpoints.activateTrialLicense(CLIENT, CONFIGURATION);
+    assertEquals(LicenseActivationOutcome.ALREADY_LICENSED, repeated.outcome());
   }
 
   private static Request dlsFlsApiKeyRequest(String name) {
