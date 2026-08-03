@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -411,17 +412,14 @@ public class DataAccessRequestResource extends Resource {
       }
       DataAccessRequest payload =
           DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
-      populateProgressReportWithDocuments(
-          user,
-          collabInputStream,
-          collabFileDetails,
-          ethicsInputStream,
-          ethicsFileDetails,
-          payload,
-          parentDar);
       DataAccessRequest progressReport =
-          dataAccessRequestService.createProgressReport(
-              user, payload, parentDar, (ContainerRequest) request);
+          createProgressReportWithDocuments(
+              user,
+              (ContainerRequest) request,
+              payload,
+              parentDar,
+              new ProgressReportDocumentUploads(
+                  collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails));
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
         processNewDarCollection(parentDar.getCollectionId());
       }
@@ -449,6 +447,38 @@ public class DataAccessRequestResource extends Resource {
   private void logCaughtEmailException(Integer collectionId, Exception e) {
     logException("Exception sending email for collection id: " + collectionId, e);
   }
+
+  private DataAccessRequest createProgressReportWithDocuments(
+      User user,
+      ContainerRequest request,
+      DataAccessRequest progressReport,
+      DataAccessRequest parentDar,
+      ProgressReportDocumentUploads documentUploads)
+      throws IOException {
+    // GCS cannot participate in the database transaction. Treat the upload and transactional
+    // create as one application-level unit by compensating for any uploaded blobs if either fails.
+    try {
+      populateProgressReportWithDocuments(
+          user,
+          documentUploads.collaborationInputStream(),
+          documentUploads.collaborationFileDetails(),
+          documentUploads.ethicsInputStream(),
+          documentUploads.ethicsFileDetails(),
+          progressReport,
+          parentDar);
+      return dataAccessRequestService.createProgressReport(
+          user, progressReport, parentDar, request);
+    } catch (IOException | RuntimeException e) {
+      rollbackProgressReportDocuments(progressReport);
+      throw e;
+    }
+  }
+
+  private record ProgressReportDocumentUploads(
+      InputStream collaborationInputStream,
+      FormDataContentDisposition collaborationFileDetails,
+      InputStream ethicsInputStream,
+      FormDataContentDisposition ethicsFileDetails) {}
 
   public void populateProgressReportWithDocuments(
       User user,
@@ -486,6 +516,15 @@ public class DataAccessRequestResource extends Resource {
         uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
       }
     }
+  }
+
+  private void rollbackProgressReportDocuments(DataAccessRequest progressReport) {
+    Set<String> uploadedDocumentLocations = new HashSet<>();
+    uploadedDocumentLocations.add(progressReport.getData().getCollaborationLetterLocation());
+    uploadedDocumentLocations.add(progressReport.getData().getIrbDocumentLocation());
+    uploadedDocumentLocations.stream()
+        .filter(Objects::nonNull)
+        .forEach(location -> deleteDarDocument(progressReport, location));
   }
 
   @GET
