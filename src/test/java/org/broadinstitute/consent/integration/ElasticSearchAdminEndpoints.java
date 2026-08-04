@@ -20,10 +20,10 @@ import org.elasticsearch.client.RestClient;
  *
  * <p>This is how the license gets activated in these tests: a class that needs a trial-licensed
  * cluster asks for one, by calling the endpoint an operator would call in a deployed environment.
- * Not by {@code POST /_license/start_trial} from a shared harness — a trial is one-shot per cluster
- * and cannot be reverted, so a class whose subject is what a *basic* license refuses must not have
- * one spent underneath it, and no test should run against a license tier that some initializer
- * changed on its behalf.
+ * Not by {@code POST /_license/start_trial} from a shared harness — a trial can be started once per
+ * major version per cluster and cannot be reverted, so a class whose subject is what a *basic*
+ * license refuses must not have one spent underneath it, and no test should run against a license
+ * tier that some initializer changed on its behalf.
  *
  * <p>Going through {@link ElasticSearchCapabilityResource} rather than the service beneath it is
  * deliberate — it is the resource that owns the acknowledgement guard, so a test can assert that an

@@ -8,10 +8,10 @@ import java.util.List;
  * trial license.
  *
  * <p>Carries the license state from both sides of the call rather than only the resulting one. A
- * trial can be started once per cluster and cannot be undone, so "what this changed" is the part of
- * the answer worth keeping: {@code license_before} shows what was given up and {@code
- * license_after} what was obtained, and together with {@link #outcome()} they say whether this call
- * was the one that spent the trial.
+ * trial can be started once per major version per cluster and cannot be undone, so "what this
+ * changed" is the part of the answer worth keeping: {@code license_before} shows what was given up
+ * and {@code license_after} what was obtained, and together with {@link #outcome()} they say
+ * whether this call was the one that spent the trial.
  *
  * @param outcome what the call did — only {@link LicenseActivationOutcome#ACTIVATED} changed the
  *     cluster
@@ -20,7 +20,8 @@ import java.util.List;
  * @param licenseBefore the license state read immediately before the attempt
  * @param licenseAfter the license state read immediately after it; equal to {@code licenseBefore}
  *     when nothing was changed
- * @param notes caveats a reader needs, foremost that a trial is one-shot per cluster
+ * @param notes caveats a reader needs, foremost that a trial can be started once per major version
+ *     per cluster
  */
 public record ElasticSearchLicenseActivation(
     LicenseActivationOutcome outcome,

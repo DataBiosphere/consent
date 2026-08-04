@@ -46,9 +46,10 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
  * <p><b>This class does not activate the trial license.</b> A subclass that needs one calls {@link
  * #activateTrialLicense()} in a {@code @BeforeAll}, which goes through the admin endpoint the same
  * way an operator would in a deployed environment. Activating it here instead would put an
- * irreversible, once-per-cluster license change inside the setup of every subclass, including the
- * ones whose subject is what a basic license does — and would leave the license tier of the cluster
- * under test decided by a static initializer nobody reading the test can see.
+ * irreversible, once-per-major-version-per-cluster license change inside the setup of every
+ * subclass, including the ones whose subject is what a basic license does — and would leave the
+ * license tier of the cluster under test decided by a static initializer nobody reading the test
+ * can see.
  *
  * <p>The {@code elasticsearch} tag is inherited by every subclass and keeps these tests out of the
  * automatic CI run; see {@code excludedTestGroups} in {@code pom.xml}.

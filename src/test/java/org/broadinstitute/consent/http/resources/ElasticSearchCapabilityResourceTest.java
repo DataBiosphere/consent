@@ -147,7 +147,7 @@ class ElasticSearchCapabilityResourceTest extends AbstractTestHelper {
             false,
             "License 'trial', status 'active'.",
             List.of()),
-        List.of("A trial can be started only once per cluster."));
+        List.of("A trial can be started only once per major version per cluster."));
   }
 
   @Test
@@ -183,9 +183,9 @@ class ElasticSearchCapabilityResourceTest extends AbstractTestHelper {
   }
 
   /**
-   * The guard that carries the weight here. A trial can be started once per cluster and cannot be
-   * reverted, so an unacknowledged call must be refused before the service — and therefore the
-   * cluster — is reached at all, not merely reported on afterwards.
+   * The guard that carries the weight here. A trial can be started once per major version per
+   * cluster and cannot be reverted, so an unacknowledged call must be refused before the service —
+   * and therefore the cluster — is reached at all, not merely reported on afterwards.
    */
   @Test
   void testActivateTrialLicenseRequiresAcknowledgement() {

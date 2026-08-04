@@ -25,8 +25,8 @@ import java.util.Map;
  * @param clusterPrivileges cluster privileges the shared credential holds, from a read-only check
  * @param securitySettings the cluster's {@code xpack.security.*} settings
  * @param writeProbesRun whether write probes ran; when false the DLS, FLS, and API-key verdicts are
- *     inferred from the license tier rather than observed, which is the first thing a reader of
- *     this report needs to know
+ *     inferred from the license tier and status rather than observed, which is the first thing a
+ *     reader of this report needs to know
  * @param capabilities the capability inventory itself
  * @param restClientCompatibility whether the bundled REST client can drive the security APIs
  * @param recommendation which implementation path the findings point to

@@ -8,8 +8,9 @@ import java.util.List;
  * a trial is still available on it.
  *
  * <p>Read-only, and the thing to read <em>before</em> activating a trial: a trial can be started
- * only once per cluster, so {@link #trialAvailable()} is the difference between an activation that
- * can still be spent and one that cannot.
+ * only once per major version per cluster. {@link #trialAvailable()} is the cluster's authoritative
+ * answer about whether an activation is currently available, including after a major-version
+ * upgrade.
  *
  * <p>{@link #dlsFlsLicensed()} answers the license question only. A cluster whose tier includes
  * DLS/FLS can still have it switched off cluster-wide by {@code xpack.security.dls_fls.enabled},
@@ -21,8 +22,8 @@ import java.util.List;
  * @param licenseStatus whether that license is active
  * @param dlsFlsLicensed whether the tier includes document- and field-level security; null when the
  *     tier could not be read
- * @param trialAvailable whether the cluster is still eligible to start a trial; null when the
- *     cluster did not answer the eligibility check
+ * @param trialAvailable the cluster's authoritative answer about whether it is currently eligible
+ *     to start a trial; null when the cluster did not answer the eligibility check
  * @param detail human-readable summary of the state, including what it means for DLS/FLS
  * @param notes caveats a reader needs in order to interpret the fields above correctly
  */

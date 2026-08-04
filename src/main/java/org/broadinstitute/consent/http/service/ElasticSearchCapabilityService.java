@@ -77,7 +77,7 @@ import org.elasticsearch.client.RestClient;
  * remains available; {@link #activateTrialLicense()} starts that trial. They are kept apart from
  * the report deliberately: a report that quietly moved a cluster onto a trial in order to make
  * DLS/FLS come back {@code SUPPORTED} would be measuring a cluster it had itself altered, and would
- * spend — irreversibly, and once per cluster — a trial nobody asked it to spend.
+ * spend — irreversibly, and once per major version per cluster — a trial nobody asked it to spend.
  *
  * <p>All calls go through the low-level {@link RestClient} using {@link Request}/{@link Response},
  * which is what {@code ElasticSearchSupport.createRestClient} builds. That this class works at all
@@ -181,8 +181,8 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    */
   private static final List<String> TRIAL_ACTIVATION_NOTES =
       List.of(
-          "A trial can be started only once per cluster and cannot be reverted. Once a cluster's "
-              + "trial is spent, a DLS/FLS-capable license there is a purchasing decision rather "
+          "A trial can be started only once per major version per cluster and cannot be reverted. Once a cluster's "
+              + "trial for the current major version is spent, a DLS/FLS-capable license there is a purchasing decision rather "
               + "than an API call.",
           "A trial lasts 30 days. When it expires the cluster falls back to its basic license and "
               + "stops permitting DLS/FLS, at which point a search carrying those filters fails "
@@ -317,6 +317,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
                 securitySettings,
                 clusterPrivileges,
                 licenseType,
+                licenseStatus,
                 authenticatedUser,
                 runAsUser));
 
@@ -341,7 +342,11 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
         capabilities,
         restClientCompatibility(version),
         recommendation(
-            securityApiPresent, licenseType, dlsFlsDisabled(securitySettings), writeProbeOutcome),
+            securityApiPresent,
+            licenseType,
+            licenseStatus,
+            dlsFlsDisabled(securitySettings),
+            writeProbeOutcome),
         notes);
   }
 
@@ -387,10 +392,10 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * Reads the cluster's license tier and whether a trial is still available on it. Read-only —
    * nothing is created, modified, or deleted.
    *
-   * <p>The pair is the point. The tier says whether DLS and FLS are permitted today; trial
-   * eligibility says whether that can still be changed, and a trial can be started only once per
-   * cluster. Reading both before {@link #activateTrialLicense()} is what turns activation from a
-   * gamble into a decision.
+   * <p>The pair is the point. The tier and status say whether DLS and FLS are licensed today; trial
+   * eligibility is the cluster's authoritative answer about whether that can still be changed. A
+   * trial can be started only once per major version per cluster. Reading both before {@link
+   * #activateTrialLicense()} is what turns activation from a gamble into a decision.
    *
    * @return the license state, with a null tier where the cluster did not answer
    */
@@ -411,8 +416,8 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * calling this twice is safe — the second call reports {@link
    * LicenseActivationOutcome#ALREADY_LICENSED} rather than failing or, worse, doing something.
    *
-   * <p>What it cannot do is undo itself. The trial is one-shot per cluster, so the
-   * deliberate-decision gate belongs on the caller: see {@code
+   * <p>What it cannot do is undo itself. The trial can be started once per major version per
+   * cluster, so the deliberate-decision gate belongs on the caller: see {@code
    * ElasticSearchCapabilityResource#activateTrialLicense}.
    *
    * @return what the call did, with the license state from both sides of it
@@ -439,7 +444,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       return unchanged(
           LicenseActivationOutcome.TRIAL_UNAVAILABLE,
           "No trial was requested: the cluster reports it is no longer eligible for one, so its "
-              + "trial has already been used. "
+              + "trial has already been used for this major version. "
               + before.detail(),
           before);
     }
@@ -449,7 +454,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     logWarn(
         "Starting the Elasticsearch trial license on cluster '%s' (currently on license '%s'). A "
                 .formatted(before.clusterName(), before.licenseType())
-            + "trial can be started only once per cluster and cannot be reverted.");
+            + "trial can be started only once per major version per cluster and cannot be reverted.");
 
     ProbeResult activation = probe(HttpMethod.POST, START_TRIAL_PATH + ACKNOWLEDGE_QUERY);
     ElasticSearchLicenseStatus after = getLicenseStatus();
@@ -553,12 +558,12 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     String excluded = tier + " This tier excludes document- and field-level security.";
     if (Boolean.TRUE.equals(trialAvailable)) {
       return excluded
-          + " A 30-day trial that would include them has not yet been used on this cluster; POST "
-          + "/api/elasticSearch/license/trial?acknowledge=true starts it, once.";
+          + " A 30-day trial that would include them has not yet been used for this cluster's current major version; POST "
+          + "/api/elasticSearch/license/trial?acknowledge=true starts it while trial_available remains true.";
     }
     if (Boolean.FALSE.equals(trialAvailable)) {
       return excluded
-          + " The trial has already been used on this cluster, so no API call can add them here.";
+          + " The trial has already been used for this cluster's current major version. The trial_available value remains authoritative about whether an API call can add them here.";
     }
     return excluded;
   }
@@ -630,6 +635,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       Map<String, String> securitySettings,
       Map<String, Boolean> clusterPrivileges,
       String licenseType,
+      String licenseStatus,
       String authenticatedUser,
       String runAsUser) {}
 
@@ -658,6 +664,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
                 DLS,
                 observed.securityApiPresent(),
                 observed.licenseType(),
+                observed.licenseStatus(),
                 observed.securitySettings()));
     capabilities.add(
         writeProbeOutcome != null
@@ -666,6 +673,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
                 FLS,
                 observed.securityApiPresent(),
                 observed.licenseType(),
+                observed.licenseStatus(),
                 observed.securitySettings()));
     capabilities.add(
         runAsCapability(
@@ -757,7 +765,11 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   private ElasticSearchCapability dlsFlsCapability(
-      String name, boolean securityApiPresent, String licenseType, Map<String, String> settings) {
+      String name,
+      boolean securityApiPresent,
+      String licenseType,
+      String licenseStatus,
+      Map<String, String> settings) {
     if (!securityApiPresent) {
       return new ElasticSearchCapability(
           name,
@@ -767,6 +779,23 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     }
     String license = licenseType == null ? "" : licenseType.toLowerCase();
     String dlsFlsSetting = settings.getOrDefault(DLS_FLS_ENABLED_SETTING, "not-set");
+    if (licenseStatus == null || licenseStatus.isBlank()) {
+      return new ElasticSearchCapability(
+          name,
+          CapabilityVerdict.UNKNOWN,
+          "The license status could not be read, so whether the '%s' license currently permits "
+                  .formatted(licenseType)
+              + "DLS/FLS is unknown.",
+          "GET /_license");
+    }
+    if (!"active".equalsIgnoreCase(licenseStatus)) {
+      return new ElasticSearchCapability(
+          name,
+          CapabilityVerdict.LICENSE_BLOCKED,
+          "The '%s' license has status '%s', so its DLS/FLS entitlement is not active."
+              .formatted(licenseType, licenseStatus),
+          "GET /_license");
+    }
     // The setting overrides the license in one direction only: it can switch the feature off on a
     // cluster whose license includes it, so a qualifying tier is not on its own enough to report
     // the feature as expected to work.
@@ -1552,6 +1581,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   private String recommendation(
       boolean securityApiPresent,
       String licenseType,
+      String licenseStatus,
       boolean dlsFlsDisabled,
       WriteProbeOutcome writeProbeOutcome) {
     // An observation outranks the license inference in either direction: a cluster that actually
@@ -1570,7 +1600,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
             + "to create a role or an API key, so the DLS and FLS verdicts describe the credential "
             + "rather than the cluster (see cluster_privileges). Re-run with a credential holding "
             + "manage_security and manage_own_api_key to settle it. On the license alone: "
-            + licenseBasedRecommendation(licenseType, dlsFlsDisabled);
+            + licenseBasedRecommendation(licenseType, licenseStatus, dlsFlsDisabled);
       }
       // Accepted but never exercised. Claiming Epic D off the back of that would be claiming
       // enforcement from acceptance, which is the one inference this whole probe exists to refuse.
@@ -1583,7 +1613,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
             + "key). A cluster can accept a filter and silently ignore it, so re-run the write "
             + "probes once that is resolved rather than recording Epic D on acceptance alone. On "
             + "the license alone: "
-            + licenseBasedRecommendation(licenseType, dlsFlsDisabled);
+            + licenseBasedRecommendation(licenseType, licenseStatus, dlsFlsDisabled);
       }
       return "Epic E (compatibility fallback). Write probes were run against this cluster and DLS "
           + "was not usable: %s Epic D would need that resolved first."
@@ -1594,16 +1624,31 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           + "Security is not enabled, so DLS, FLS, API keys, and run_as cannot be used at all. "
           + "Epic D stays blocked until X-Pack Security is enabled here.";
     }
-    return licenseBasedRecommendation(licenseType, dlsFlsDisabled);
+    return licenseBasedRecommendation(licenseType, licenseStatus, dlsFlsDisabled);
   }
 
   /**
    * What the license tier and the cluster's DLS/FLS setting imply, used when no write probe settled
-   * the question. The setting is checked first: it switches the feature off whatever the license
+   * the question. The license status is checked first because only an active entitlement is usable.
+   * The setting is then checked because it switches the feature off whatever an active license
    * entitles the cluster to, so a Platinum tier with it disabled is not a viable Epic D cluster.
    */
-  private String licenseBasedRecommendation(String licenseType, boolean dlsFlsDisabled) {
+  private String licenseBasedRecommendation(
+      String licenseType, String licenseStatus, boolean dlsFlsDisabled) {
     String license = licenseType == null ? "" : licenseType.toLowerCase();
+    if (licenseStatus == null || licenseStatus.isBlank()) {
+      return "Inconclusive. The license status could not be read, so the '%s' tier cannot be "
+              .formatted(licenseType)
+          + "treated as a current DLS/FLS entitlement. Inspect GET /_license before recording a "
+          + "decision.";
+    }
+    if (!"active".equalsIgnoreCase(licenseStatus)) {
+      return "Epic E (compatibility fallback). Security is enabled, but the '%s' license has "
+              .formatted(licenseType)
+          + "status '%s', so its DLS/FLS entitlement is unavailable. Epic D requires an active "
+              .formatted(licenseStatus)
+          + "qualifying license.";
+    }
     if (dlsFlsDisabled) {
       return "Epic E (compatibility fallback). Security is enabled, but %s=false switches DLS and "
               .formatted(DLS_FLS_ENABLED_SETTING)

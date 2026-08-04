@@ -6,11 +6,12 @@ description: |
 
   Only an outcome of ACTIVATED changed the cluster. The other four all mean nothing was changed, and
   they are kept apart because the reason is what the caller needs: a cluster already entitled to
-  DLS/FLS needs no action, a cluster whose trial is spent cannot be given another, a refusal is the
+  DLS/FLS needs no action, a cluster whose trial is spent cannot be given another for the current major version,
+  a refusal is the
   cluster's own answer, and UNKNOWN means the question was never settled.
 
-  Both sides of the call are reported rather than only the result. A trial is one-shot per cluster and
-  cannot be reverted, so license_before records what was given up, license_after what was obtained,
+  Both sides of the call are reported rather than only the result. A trial can be started once per major
+  version per cluster and cannot be reverted, so license_before records what was given up, license_after what was obtained,
   and the outcome says whether this call was the one that spent the trial.
 properties:
   outcome:
@@ -27,7 +28,9 @@ properties:
       * ACTIVATED — the trial was started by this call; the cluster's license tier changed.
       * ALREADY_LICENSED — the cluster's license already includes DLS/FLS; nothing was changed.
       * TRIAL_UNAVAILABLE — the cluster reports it is no longer eligible for a trial, so its trial has
-        been used. Nothing was changed and nothing can be: a DLS/FLS-capable license here becomes a
+        been used for the current major version. Nothing was changed and nothing can be changed by
+        this endpoint unless trial_available becomes true after a major-version upgrade: a DLS/FLS-capable
+        license here becomes a
         purchasing decision rather than an API call.
       * REFUSED — the cluster was asked and said no; nothing was changed.
       * UNKNOWN — the cluster could not be reached, or the license could not be read before asking.
@@ -43,8 +46,8 @@ properties:
   notes:
     type: array
     description: |
-      Caveats that apply however the attempt turned out, foremost that a trial is one-shot per
-      cluster and expires after 30 days.
+      Caveats that apply however the attempt turned out, foremost that a trial can be started once per
+      major version per cluster and expires after 30 days.
     items:
       type: string
 examples:
@@ -60,8 +63,8 @@ examples:
       trial_available: true
       detail: >-
         License 'basic', status 'active'. This tier excludes document- and field-level security. A
-        30-day trial that would include them has not yet been used on this cluster; POST
-        /api/elasticSearch/license/trial?acknowledge=true starts it, once.
+        30-day trial that would include them has not yet been used for this cluster's current major version; POST
+        /api/elasticSearch/license/trial?acknowledge=true starts it while trial_available remains true.
       notes:
         - Read-only. Nothing was created, modified, or deleted on the cluster.
     license_after:
@@ -80,8 +83,8 @@ examples:
           says. GET /api/elasticSearch/capabilities reports both.
     notes:
       - >-
-        A trial can be started only once per cluster and cannot be reverted. Once a cluster's trial is
-        spent, a DLS/FLS-capable license there is a purchasing decision rather than an API call.
+        A trial can be started only once per major version per cluster and cannot be reverted.
+        Once a cluster's trial for the current major version is spent, a DLS/FLS-capable license there is a purchasing decision rather than an API call.
       - >-
         A trial lasts 30 days. When it expires the cluster falls back to its basic license and stops
         permitting DLS/FLS, at which point a search carrying those filters fails closed rather than

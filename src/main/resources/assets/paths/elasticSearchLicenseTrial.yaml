@@ -12,14 +12,13 @@ post:
     that quietly moved a cluster onto a trial in order to make its own DLS/FLS verdict come out
     better would be measuring a cluster it had itself altered.
 
-    **acknowledge=true is required.** A trial can be started only once per cluster and cannot be
-    reverted, so a bare POST is refused with 400 rather than honored. Read GET
+    **acknowledge=true is required.** A trial can be started only once per major version per cluster and cannot be reverted, so a bare POST is refused with 400 rather than honored. Read GET
     /api/elasticSearch/license first: it reports whether this cluster needs a trial and whether it
     still has one to spend.
 
     Safe to repeat. A cluster already entitled to DLS/FLS is reported as ALREADY_LICENSED and left
     alone; one whose trial is spent is reported as TRIAL_UNAVAILABLE rather than asked again. Only the
-    first call on a given cluster can return ACTIVATED.
+    first successful call for a given cluster and major version can return ACTIVATED.
 
     When the trial expires 30 days later the cluster falls back to its basic license and stops
     permitting DLS/FLS. A search carrying those filters then fails closed rather than returning
@@ -31,7 +30,7 @@ post:
       in: query
       description: |
         Must be true. Acknowledges that this changes the cluster's license tier, can be done only
-        once per cluster, and cannot be reverted.
+        once per major version per cluster, and cannot be reverted.
       required: true
       schema:
         type: boolean

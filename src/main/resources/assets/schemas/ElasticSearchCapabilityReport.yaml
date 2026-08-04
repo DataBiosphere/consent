@@ -42,6 +42,7 @@ properties:
       - enterprise
   license_status:
     type: string
+    description: Whether the reported license entitlement is active.
     examples:
       - active
   elastic_cloud:
@@ -129,8 +130,8 @@ properties:
           type: string
           description: |
             SUPPORTED and UNAVAILABLE are observed. LICENSE_BLOCKED and NOT_PERMITTED are
-            observed refusals. The INFERRED_ values are derived from license tier and cluster
-            settings because proving them would require writing to the cluster. UNKNOWN also
+            observed refusals. The INFERRED_ values are derived from license tier, license status, and cluster settings because proving them
+            would require writing to the cluster. UNKNOWN also
             covers any capability on a cluster that did not respond.
 
             For DLS and FLS, INFERRED_SUPPORTED also covers a write-probe run in which the cluster

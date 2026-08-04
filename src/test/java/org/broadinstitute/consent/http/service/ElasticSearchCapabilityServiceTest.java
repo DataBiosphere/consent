@@ -252,6 +252,11 @@ class ElasticSearchCapabilityServiceTest {
 
   /** A security-enabled cluster; the license tier is what varies between DLS/FLS outcomes. */
   private void stubSecurityEnabledCluster(String licenseType) {
+    stubSecurityEnabledCluster(licenseType, "active");
+  }
+
+  /** A security-enabled cluster; both license tier and status can vary between outcomes. */
+  private void stubSecurityEnabledCluster(String licenseType, String licenseStatus) {
     stub(ROOT, 200, ROOT_BODY);
     stub(
         XPACK,
@@ -262,8 +267,8 @@ class ElasticSearchCapabilityServiceTest {
         LICENSE,
         200,
         """
-        {"license":{"status":"active","type":"%s"}}"""
-            .formatted(licenseType));
+        {"license":{"status":"%s","type":"%s"}}"""
+            .formatted(licenseStatus, licenseType));
     stub(
         SETTINGS,
         200,
@@ -358,6 +363,24 @@ class ElasticSearchCapabilityServiceTest {
         capability(report, "Field-level security (FLS)").verdict());
     assertEquals(CapabilityVerdict.SUPPORTED, capability(report, "X-Pack Security").verdict());
     assertTrue(report.recommendation().contains("Epic D"));
+  }
+
+  @Test
+  void testExpiredQualifyingLicenseBlocksDlsFlsAndNativeRecommendation() throws IOException {
+    stubSecurityEnabledCluster("trial", "expired");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("expired", report.licenseStatus());
+    assertEquals(
+        CapabilityVerdict.LICENSE_BLOCKED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertEquals(
+        CapabilityVerdict.LICENSE_BLOCKED,
+        capability(report, "Field-level security (FLS)").verdict());
+    assertTrue(report.recommendation().contains("Epic E"), report.recommendation());
+    assertTrue(report.recommendation().contains("expired"), report.recommendation());
+    assertFalse(report.recommendation().contains("Epic D (native DLS/FLS) is viable"));
   }
 
   @Test

@@ -121,7 +121,7 @@ curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
 
 The separation is deliberate, and it is the part to keep if this work is refactored. A capability
 report that activated a trial in order to make its own DLS/FLS verdict come out `SUPPORTED` would be
-measuring a cluster it had itself altered — and would spend, irreversibly and once per cluster, a
+measuring a cluster it had itself altered — and would spend, irreversibly and once per major version per cluster, a
 trial nobody asked it to spend. So the report reads and the activation writes, and the two are
 different calls with different guards.
 

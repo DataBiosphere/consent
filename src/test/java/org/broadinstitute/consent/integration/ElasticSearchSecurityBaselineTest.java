@@ -63,13 +63,14 @@ class ElasticSearchSecurityBaselineTest extends ElasticSearchContainerTests {
   }
 
   /**
-   * A trial can be started only once per cluster, so CI cannot rely on a long-lived trial and a
-   * developer whose trial has expired must wipe the {@code elastic} volume. The activation step in
-   * {@link #putClusterOnTrialLicense()} is what makes this false here — and the same one-shot
-   * property is why that step is something a test asks for rather than something it inherits.
+   * A trial can be started only once per major version per cluster, so CI cannot rely on a
+   * long-lived trial and a developer whose trial has expired must wipe the {@code elastic} volume.
+   * The activation step in {@link #putClusterOnTrialLicense()} is what makes this false here — and
+   * the same once-per-major-version constraint is why that step is something a test asks for rather
+   * than something it inherits.
    */
   @Test
-  void trialLicenseCanOnlyBeStartedOnce() throws Exception {
+  void trialLicenseCannotBeStartedTwiceInTheSameMajorVersion() throws Exception {
     JsonObject trialStatus = jsonResponse(new Request("GET", "/_license/trial_status"));
 
     assertFalse(

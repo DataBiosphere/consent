@@ -234,9 +234,9 @@ class ElasticSearchBasicLicenseTest {
   /**
    * Runs last, and must: it changes the cluster's license and so would invalidate every assertion
    * above. Proves the trial is reachable from a fresh basic cluster through the admin endpoint,
-   * that the endpoint reports what it changed, and that it is one-shot — which is what every other
-   * class in the suite relies on when it calls the same endpoint and finds the trial already
-   * active.
+   * that the endpoint reports what it changed, and that a repeat call in the same major version is
+   * safe — which is what every other class in the suite relies on when it calls the same endpoint
+   * and finds the trial already active.
    */
   @Test
   @Order(Integer.MAX_VALUE)

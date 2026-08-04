@@ -3,13 +3,15 @@ get:
   operationId: apiElasticSearchLicenseGet
   description: |
     Report the license tier of the Elasticsearch cluster this deployment is configured against, and
-    whether its 30-day trial is still available. Requires Admin role.
+    whether its 30-day trial is still available. The reported trial_available value is the
+    authoritative eligibility answer, including after a major-version upgrade. Requires Admin role.
 
     Read-only: nothing is created, modified, or deleted on the cluster.
 
-    This is the call to make before POST /api/elasticSearch/license/trial. The trial is one-shot per
-    cluster, so trial_available is the difference between an activation that can still be spent here
-    and one that cannot, and dls_fls_licensed says whether it is needed at all.
+    This is the call to make before POST /api/elasticSearch/license/trial. The trial can be
+    started once per major version per cluster. trial_available is the cluster's authoritative
+    answer about current eligibility, including after a major-version upgrade, and
+    dls_fls_licensed says whether it is needed at all.
 
     dls_fls_licensed reports the license entitlement only. A tier that includes DLS/FLS can still
     have the feature switched off cluster-wide by xpack.security.dls_fls.enabled — GET

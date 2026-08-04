@@ -6,11 +6,12 @@ package org.broadinstitute.consent.http.models.elastic_search;
  * <p>Only {@link #ACTIVATED} changed the cluster. The other four values all mean "nothing was
  * changed", and they are kept apart because the reason matters to whoever asked: a cluster that is
  * already licensed for DLS/FLS needs no action, a cluster whose trial is spent cannot be made to
- * offer one again, a refusal is the cluster's own answer, and {@link #UNKNOWN} means the question
- * was never settled.
+ * offer one again for the current major version, a refusal is the cluster's own answer, and {@link
+ * #UNKNOWN} means the question was never settled.
  *
- * <p>The distinction is also what makes the activation step safe to repeat: only the first call on
- * a given cluster can be {@link #ACTIVATED}, and a caller can tell that it was the first.
+ * <p>The distinction is also what makes the activation step safe to repeat: only the first
+ * successful call for a given cluster and major version can be {@link #ACTIVATED}, and a caller can
+ * tell that it was the first.
  */
 public enum LicenseActivationOutcome {
 
@@ -25,8 +26,10 @@ public enum LicenseActivationOutcome {
 
   /**
    * The cluster reports that it is no longer eligible for a trial — a trial can be started only
-   * once per cluster, and this one's has been used. Nothing was changed, and nothing can be:
-   * obtaining a DLS/FLS-capable license on this cluster is a licensing decision, not an API call.
+   * once per major version per cluster, and this cluster's has been used for the current major
+   * version. Nothing was changed; {@link ElasticSearchLicenseStatus#trialAvailable()} remains
+   * authoritative after any major-version upgrade. Obtaining a DLS/FLS-capable license on this
+   * cluster is a licensing decision, not an API call.
    */
   TRIAL_UNAVAILABLE,
 

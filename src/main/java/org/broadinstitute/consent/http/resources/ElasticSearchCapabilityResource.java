@@ -41,8 +41,8 @@ import org.broadinstitute.consent.http.service.ElasticSearchCapabilityService;
  * endpoint</b> rather than something a capability probe does when it finds DLS/FLS unlicensed. The
  * capability report never changes the cluster's license tier; {@code POST /license/trial} does, and
  * only when asked, by an admin, with an explicit acknowledgement. A trial can be started once per
- * cluster and cannot be reverted, so it is exactly the kind of thing that must not be a side effect
- * of asking a question.
+ * major version per cluster and cannot be reverted, so it is exactly the kind of thing that must
+ * not be a side effect of asking a question.
  */
 @Path("api/elasticSearch")
 public class ElasticSearchCapabilityResource extends Resource {
@@ -99,8 +99,9 @@ public class ElasticSearchCapabilityResource extends Resource {
   /**
    * Report the cluster's license tier and whether its 30-day trial is still available. Read-only.
    *
-   * <p>The call to make before {@link #activateTrialLicense}: the trial is one-shot per cluster,
-   * and this says whether this cluster still has one to spend and whether it needs to.
+   * <p>The call to make before {@link #activateTrialLicense}: the trial can be started once per
+   * major version per cluster, and this says whether this cluster still has one to spend and
+   * whether it needs to.
    *
    * @param duosUser the authenticated admin
    * @return the license state
@@ -129,16 +130,17 @@ public class ElasticSearchCapabilityResource extends Resource {
    * an admin, and only for the environment whose deployment is being called.
    *
    * <p>{@code acknowledge} must be passed explicitly as {@code true}. The activation cannot be
-   * undone and can happen only once per cluster, so an empty {@code POST} that would silently spend
-   * a production cluster's trial is refused with {@code 400} rather than honored. Elasticsearch's
-   * own API takes the same precaution, and this parameter is the human-facing half of it.
+   * undone and can happen only once per major version per cluster, so an empty {@code POST} that
+   * would silently spend a production cluster's trial is refused with {@code 400} rather than
+   * honored. Elasticsearch's own API takes the same precaution, and this parameter is the
+   * human-facing half of it.
    *
    * <p>Repeating the call is safe: a cluster already entitled to DLS/FLS is reported as such and
    * left alone, and one whose trial is spent is reported as such rather than being asked again.
    *
    * @param duosUser the authenticated admin
-   * @param acknowledge must be {@code true}; acknowledges that the trial is one-shot and
-   *     irreversible
+   * @param acknowledge must be {@code true}; acknowledges that the trial can be started once per
+   *     major version per cluster and is irreversible
    * @return what the call did, with the license state from both sides of it
    */
   @POST
@@ -156,7 +158,7 @@ public class ElasticSearchCapabilityResource extends Resource {
                 .formatted(userId));
         throw new BadRequestException(
             "acknowledge=true is required. Starting the trial license changes this cluster's "
-                + "license tier, can be done only once per cluster, and cannot be reverted. GET "
+                + "license tier, can be done only once per major version per cluster, and cannot be reverted. GET "
                 + "/api/elasticSearch/license reports whether this cluster needs it and still has "
                 + "one available.");
       }

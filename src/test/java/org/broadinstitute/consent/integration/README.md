@@ -54,7 +54,7 @@ Two things are easy to get wrong here:
   deployed cluster, so the activation path is itself covered rather than bypassed.
 
   It reads as ceremony until you notice what the alternative hides: a trial can be started only once
-  per cluster and cannot be reverted, and doing it in the shared harness put that change in the setup
+  per major version per cluster and cannot be reverted, and doing it in the shared harness put that change in the setup
   of every subclass — including `ElasticSearchBasicLicenseTest`, whose entire subject is what a
   *basic* license refuses. Repeating the call is safe (the second caller gets `ALREADY_LICENSED`),
   which is what makes per-class activation practical on a cluster shared per JVM.
@@ -100,7 +100,7 @@ Four test classes assert all of it, so upgrading Elasticsearch is a one-line cha
 
 | Class | Cluster state | What it protects |
 | --- | --- | --- |
-| [`ElasticSearchSecurityBaselineTest`](ElasticSearchSecurityBaselineTest.java) | secured, trial license | Reported version matches the pin; `build_flavor` is `default` (the OSS flavor has no X-Pack at all); X-Pack security is available and enabled; DLS, FLS and `run_as` roles are accepted; the trial is one-shot; the port serves plain `http` and not TLS |
+| [`ElasticSearchSecurityBaselineTest`](ElasticSearchSecurityBaselineTest.java) | secured, trial license | Reported version matches the pin; `build_flavor` is `default` (the OSS flavor has no X-Pack at all); X-Pack security is available and enabled; DLS, FLS and `run_as` roles are accepted; the trial can be started once per major version per cluster; the port serves plain `http` and not TLS |
 | [`ElasticSearchBasicLicenseTest`](ElasticSearchBasicLicenseTest.java) | secured, **basic** license | A basic license refuses DLS/FLS roles with a 403, plain RBAC still works, an API key carrying a DLS/FLS descriptor is still *accepted*, and the search it is used for **fails closed** rather than returning unrestricted documents |
 | [`ElasticSearchSecurityDisabledTest`](ElasticSearchSecurityDisabledTest.java) | security off | The compose default still answers unauthenticated, still tolerates configured credentials (which is why `consent.yaml` can carry them unconditionally), and serves no TLS |
 | [`ElasticSearchDlsFlsEnforcementTest`](ElasticSearchDlsFlsEnforcementTest.java) | secured, trial license | DLS actually hides non-public documents and FLS actually strips ungranted fields |

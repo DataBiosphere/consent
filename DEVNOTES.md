@@ -132,7 +132,7 @@ An example docker-compose stanza for elastic:
       #
       #   ES_SECURITY_ENABLED=true docker-compose -p consent -f config/docker-compose.yaml up
       #
-      # DLS/FLS is a Platinum feature, so also activate the 30-day trial license once per cluster --
+      # DLS/FLS is a Platinum feature, so also activate the 30-day trial license once per major version per cluster --
       # either through Consent's admin endpoint or straight at the cluster:
       #
       #   curl -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
@@ -173,7 +173,7 @@ endpoint or against the cluster directly:
 
 ```bash
 # Through Consent (Admin bearer token required); reports what it changed, and refuses without
-# acknowledge=true because the trial is one-shot per cluster.
+# acknowledge=true because the trial can be started once per major version per cluster.
 curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
 
 # Or straight at the cluster.
@@ -188,10 +188,11 @@ their shared harness.
 
 Caveats:
 
-- A trial can be started **once per cluster** (`GET /api/elasticSearch/license` reports eligibility
+- A trial can be started **once per major version per cluster** (`GET /api/elasticSearch/license` reports eligibility
   as `trial_available`, as does `GET /_license/trial_status` on the cluster).
-  After 30 days the license reverts to basic and DLS/FLS stops working. To get another trial, wipe
-  the cluster's data volume: `docker-compose -p consent -f config/docker-compose.yaml down` then
+  After 30 days the license reverts to basic and DLS/FLS stops working. For another trial on
+  the same major version, wipe the cluster's data volume; after a major-version upgrade, check
+  trial_available because the cluster may be eligible again: `docker-compose -p consent -f config/docker-compose.yaml down` then
   `docker volume rm consent_elastic` (this deletes local indices — they must be re-indexed).
 - Authentication, role-based access control, and API keys all work fine on the basic license. Only
   the DLS/FLS grants require trial/Platinum.
