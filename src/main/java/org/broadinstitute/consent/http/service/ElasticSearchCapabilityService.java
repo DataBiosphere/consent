@@ -138,15 +138,16 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "xpack.security.transport.ssl.enabled");
 
   private static final String LICENSE_PATH = "/_license";
-  private static final String TRIAL_STATUS_PATH = "/_license/trial_status";
+  private static final String TRIAL_STATUS_PATH = LICENSE_PATH + "/trial_status";
+  private static final String START_TRIAL_PATH = LICENSE_PATH + "/start_trial";
 
   /**
-   * Elasticsearch requires {@code acknowledge=true} on this call — it is the cluster's own guard
-   * against a trial being started by accident, and it is always sent here. The guard against it
-   * being started <em>casually</em> is a separate one, on the resource: an admin role, and an
-   * explicit acknowledgement in the request.
+   * Elasticsearch requires {@code acknowledge=true} on the start-trial call — it is the cluster's
+   * own guard against a trial being started by accident, and it is always sent here. The guard
+   * against it being started <em>casually</em> is a separate one, on the resource: an admin role,
+   * and an explicit acknowledgement in the request.
    */
-  private static final String START_TRIAL_PATH = "/_license/start_trial?acknowledge=true";
+  private static final String ACKNOWLEDGE_QUERY = "?acknowledge=true";
 
   private static final String ELIGIBLE_FIELD = "eligible_to_start_trial";
 
@@ -450,7 +451,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
                 .formatted(before.clusterName(), before.licenseType())
             + "trial can be started only once per cluster and cannot be reverted.");
 
-    ProbeResult activation = probe(HttpMethod.POST, START_TRIAL_PATH);
+    ProbeResult activation = probe(HttpMethod.POST, START_TRIAL_PATH + ACKNOWLEDGE_QUERY);
     ElasticSearchLicenseStatus after = getLicenseStatus();
 
     if (activation.status() == 200 && bool(activation.body(), "trial_was_started")) {
@@ -527,7 +528,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     String licenseStatus = string(license.body(), LICENSE_FIELD, "status");
     Boolean dlsFlsLicensed =
         licenseType == null ? null : DLS_FLS_LICENSES.contains(licenseType.toLowerCase());
-    Boolean trialAvailable = trialAvailable(trial);
+    Boolean trialAvailable = trialAvailable(trial).orElse(null);
 
     return new ElasticSearchLicenseStatus(
         string(root.body(), "cluster_name"),
@@ -596,12 +597,17 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     return notes;
   }
 
-  private static Boolean trialAvailable(ProbeResult trial) {
+  /**
+   * Empty when the cluster's answer carried no readable eligibility flag — a state distinct from an
+   * explicit {@code false}, which is why this is not a plain {@code boolean}: a trial that cannot
+   * be read about must not be reported as one already spent.
+   */
+  private static Optional<Boolean> trialAvailable(ProbeResult trial) {
     if (trial.status() != 200 || !trial.body().has(ELIGIBLE_FIELD)) {
-      return null;
+      return Optional.empty();
     }
     JsonElement eligible = trial.body().get(ELIGIBLE_FIELD);
-    return eligible.isJsonPrimitive() ? eligible.getAsBoolean() : null;
+    return eligible.isJsonPrimitive() ? Optional.of(eligible.getAsBoolean()) : Optional.empty();
   }
 
   private static boolean licenseActive(ElasticSearchLicenseStatus license) {
