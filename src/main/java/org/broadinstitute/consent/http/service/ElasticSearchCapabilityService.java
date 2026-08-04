@@ -138,6 +138,8 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "xpack.security.transport.ssl.enabled");
 
   private static final String LICENSE_PATH = "/_license";
+  private static final String GET_LICENSE_PROBE = "GET /_license";
+  private static final String ACTIVE_LICENSE_STATUS = "active";
   private static final String TRIAL_STATUS_PATH = LICENSE_PATH + "/trial_status";
   private static final String START_TRIAL_PATH = LICENSE_PATH + "/start_trial";
 
@@ -616,7 +618,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
   }
 
   private static boolean licenseActive(ElasticSearchLicenseStatus license) {
-    return "active".equalsIgnoreCase(license.licenseStatus());
+    return ACTIVE_LICENSE_STATUS.equalsIgnoreCase(license.licenseStatus());
   }
 
   // ---------------------------------------------------------------------------
@@ -786,15 +788,15 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           "The license status could not be read, so whether the '%s' license currently permits "
                   .formatted(licenseType)
               + "DLS/FLS is unknown.",
-          "GET /_license");
+          GET_LICENSE_PROBE);
     }
-    if (!"active".equalsIgnoreCase(licenseStatus)) {
+    if (!ACTIVE_LICENSE_STATUS.equalsIgnoreCase(licenseStatus)) {
       return new ElasticSearchCapability(
           name,
           CapabilityVerdict.LICENSE_BLOCKED,
           "The '%s' license has status '%s', so its DLS/FLS entitlement is not active."
               .formatted(licenseType, licenseStatus),
-          "GET /_license");
+          GET_LICENSE_PROBE);
     }
     // The setting overrides the license in one direction only: it can switch the feature off on a
     // cluster whose license includes it, so a qualifying tier is not on its own enough to report
@@ -825,13 +827,13 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
                   .formatted(licenseType)
               + "rejected, and note that a key with a DLS role descriptor is accepted at creation "
               + "and only fails at search time.",
-          "GET /_license");
+          GET_LICENSE_PROBE);
     }
     return new ElasticSearchCapability(
         name,
         CapabilityVerdict.UNKNOWN,
         "License tier '%s' could not be mapped to a DLS/FLS entitlement.".formatted(licenseType),
-        "GET /_license");
+        GET_LICENSE_PROBE);
   }
 
   /**
@@ -1642,7 +1644,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
           + "treated as a current DLS/FLS entitlement. Inspect GET /_license before recording a "
           + "decision.";
     }
-    if (!"active".equalsIgnoreCase(licenseStatus)) {
+    if (!ACTIVE_LICENSE_STATUS.equalsIgnoreCase(licenseStatus)) {
       return "Epic E (compatibility fallback). Security is enabled, but the '%s' license has "
               .formatted(licenseType)
           + "status '%s', so its DLS/FLS entitlement is unavailable. Epic D requires an active "
