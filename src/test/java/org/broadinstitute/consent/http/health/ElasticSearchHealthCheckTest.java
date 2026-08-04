@@ -12,6 +12,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import java.util.Collections;
 import org.broadinstitute.consent.http.WireMockTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,7 @@ class ElasticSearchHealthCheckTest extends WireMockTestHelper {
       wireMockServer.stubFor(
           any(anyUrl()).willReturn(aResponse().withStatus(statusCode).withBody(stringResponse)));
 
-      healthCheck = new ElasticSearchHealthCheck(config);
+      healthCheck = new ElasticSearchHealthCheck(ElasticSearchSupport.createRestClient(config));
     } catch (Exception e) {
       fail(e.getMessage());
     }

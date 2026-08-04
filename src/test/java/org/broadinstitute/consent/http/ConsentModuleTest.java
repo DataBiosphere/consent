@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -44,6 +45,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
+import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
@@ -59,6 +61,7 @@ import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchCapabilityService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -91,6 +94,7 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
+import org.elasticsearch.client.RestClient;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -338,15 +342,69 @@ class ConsentModuleTest extends AbstractTestHelper {
 
   /**
    * The module registers several lifecycle-managed objects (the JDBI data source, Jersey client
-   * executors, and the shared executor shutdown hook). Find the module's own anonymous Managed.
+   * executors, the shared executor shutdown hook, and the Elasticsearch client shutdown). Find the
+   * module's own anonymous Managed — the executor hook is the only one of those still anonymous.
    */
   private Managed findExecutorManaged() {
+    return managedByModule()
+        .filter(m -> !(m instanceof ConsentModule.ElasticSearchClientShutdown))
+        .findFirst()
+        .orElseThrow();
+  }
+
+  private java.util.stream.Stream<Managed> managedByModule() {
     return environment.lifecycle().getManagedObjects().stream()
         .filter(JettyManaged.class::isInstance)
         .map(JettyManaged.class::cast)
         .map(JettyManaged::getManaged)
-        .filter(m -> m.getClass().getName().startsWith(ConsentModule.class.getName()))
-        .findFirst()
-        .orElseThrow();
+        .filter(m -> m.getClass().getName().startsWith(ConsentModule.class.getName()));
+  }
+
+  /**
+   * One client for the whole application. Each RestClient owns a connection pool and background
+   * threads, so a client per consumer would multiply pools against the same cluster.
+   */
+  @Test
+  void testProvidesASingleSharedElasticSearchClient() {
+    RestClient restClient = injector.getInstance(RestClient.class);
+
+    assertNotNull(restClient);
+    assertSame(restClient, injector.getInstance(RestClient.class));
+  }
+
+  @Test
+  void testElasticSearchConsumersShareThatOneClient() {
+    RestClient restClient = injector.getInstance(RestClient.class);
+
+    // Every consumer is constructed with the injected client rather than building its own, so
+    // resolving them must not add any further clients to close. The health check is included
+    // because it used to open a second pool of its own.
+    injector.getInstance(ElasticSearchService.class);
+    injector.getInstance(ElasticSearchCapabilityService.class);
+    injector.getInstance(ElasticSearchHealthCheck.class);
+
+    assertEquals(
+        1,
+        managedByModule()
+            .filter(ConsentModule.ElasticSearchClientShutdown.class::isInstance)
+            .count(),
+        "exactly one Elasticsearch client should be registered for shutdown");
+    assertSame(restClient, injector.getInstance(RestClient.class));
+  }
+
+  /** Without this the client's connections and threads would outlive the application. */
+  @Test
+  void testElasticSearchClientIsClosedOnShutdown() throws Exception {
+    RestClient restClient = injector.getInstance(RestClient.class);
+    assertTrue(restClient.isRunning());
+
+    Managed managed =
+        managedByModule()
+            .filter(ConsentModule.ElasticSearchClientShutdown.class::isInstance)
+            .findFirst()
+            .orElseThrow();
+    managed.stop();
+
+    assertFalse(restClient.isRunning(), "the shared Elasticsearch client should be closed");
   }
 }

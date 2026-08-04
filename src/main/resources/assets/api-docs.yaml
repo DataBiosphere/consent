@@ -674,6 +674,12 @@ paths:
     $ref: './paths/publicFeatureById.yaml'
   /api/feature/{id}:
     $ref: './paths/adminFeatureById.yaml'
+  /api/elasticSearch/capabilities:
+    $ref: './paths/elasticSearchCapabilities.yaml'
+  /api/elasticSearch/license:
+    $ref: './paths/elasticSearchLicense.yaml'
+  /api/elasticSearch/license/trial:
+    $ref: './paths/elasticSearchLicenseTrial.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:

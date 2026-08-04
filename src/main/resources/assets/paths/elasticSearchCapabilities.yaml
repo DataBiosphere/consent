@@ -1,0 +1,127 @@
+get:
+  summary: Elasticsearch security capability report (read-only)
+  operationId: apiElasticSearchCapabilitiesGet
+  description: |
+    Report the security features of the Elasticsearch cluster this deployment is configured
+    against: version, edition, X-Pack Security, document-level security, field-level security,
+    API keys, and run_as impersonation. Requires Admin role.
+
+    Because each environment runs its own deployment against its own cluster, calling this in
+    dev, staging, and production produces the per-environment inventory without needing direct
+    network access to the clusters or a copy of their credentials.
+
+    The probes are Elasticsearch X-Pack probes; this endpoint is scoped to Elasticsearch
+    deployments only.
+
+    This mode is non-destructive: nothing is created, modified, or deleted on the cluster. The
+    trade-off is certainty — DLS, FLS, and API-key support can only be proven by creating a role
+    or a key, so here those verdicts are inferred from the license tier, license status, and cluster settings and
+    are returned with an INFERRED_ verdict. Only run_as and X-Pack Security itself are reported as
+    observed fact.
+
+    POST the same path to observe them instead.
+  tags:
+    - Admin
+  parameters:
+    - name: runAsUser
+      in: query
+      description: |
+        Username to attempt the run_as probe against. Defaults to the deployment credential's
+        own principal, which still establishes whether the feature is licensed and enabled.
+      required: false
+      schema:
+        type: string
+  responses:
+    200:
+      description: The capability report
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ElasticSearchCapabilityReport.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+post:
+  summary: Elasticsearch security capability report, with write probes
+  operationId: apiElasticSearchCapabilitiesProbePost
+  description: |
+    The same report as GET, with the write probes run, so DLS, FLS, and API-key support are
+    observed rather than inferred. Requires Admin role.
+
+    This mode mints a short-lived API key, creates a role carrying a DLS query and an FLS grant,
+    and checks that a key whose role_descriptors carry those filters is actually enforced against
+    the dataset index — the only way to distinguish a cluster that accepts DLS descriptors from
+    one that enforces them, since a Basic-licensed cluster accepts them at creation and fails only
+    at search time. Everything created is namespaced duos-capability-probe / duos_dlsfls_probe,
+    expires within 10 minutes, and is torn down before the response is returned.
+
+    A POST rather than a GET flag because those creations are side effects on the cluster: they
+    should take a deliberate call, not something that follows a link. The response body is the
+    same report schema either way.
+
+    Requires the deployment credential to hold manage_own_api_key (or the broader manage_api_key)
+    for POST /_security/api_key, and manage_security for the role probe; the report says which of
+    those it has under cluster_privileges. Note that grant_api_key is not sufficient — it
+    authorises POST /_security/api_key/grant, a different endpoint that these probes do not use.
+
+    Where security is disabled there is nothing to probe, so the probes are skipped and a note in
+    the response says they were requested but not run.
+
+    Neither mode changes the cluster's license tier. Where DLS/FLS comes back LICENSE_BLOCKED, GET
+    /api/elasticSearch/license reports whether a trial that would include it is still available, and
+    POST /api/elasticSearch/license/trial is the separate, deliberate step that starts one.
+  tags:
+    - Admin
+  parameters:
+    - name: runAsUser
+      in: query
+      description: |
+        Username to attempt the run_as probe against. Defaults to the deployment credential's
+        own principal, which still establishes whether the feature is licensed and enabled.
+      required: false
+      schema:
+        type: string
+  responses:
+    200:
+      description: The capability report
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ElasticSearchCapabilityReport.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

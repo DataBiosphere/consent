@@ -569,9 +569,10 @@ Consequences:
 - **A-1 must confirm the production license tier, not just the version and security state.** If
   production is basic, Epic D is not viable and Epic E becomes the only path — this is a stronger
   gate than A-1's current acceptance criteria capture.
-- Local Epic D work runs on the 30-day trial. A trial can be started only once per cluster
-  (`GET /_license/trial_status`); after expiry the `consent_elastic` volume must be wiped to obtain
-  another. Document this in D-5's test setup — CI cannot rely on a long-lived trial.
+- Local Epic D work runs on the 30-day trial. A trial can be started only once per major version per cluster
+  (`GET /_license/trial_status`); after expiry the `consent_elastic` volume must be wiped to obtain another on the same major
+  version, while a major-version upgrade can restore eligibility. Treat the reported trial status
+  as authoritative. Document this in D-5's test setup — CI cannot rely on a long-lived trial.
 
 **Verified compose behavior (both modes)**
 
@@ -600,7 +601,7 @@ in the application layer against the unauthenticated default cluster. Developers
 Epic E need **no** `docker-compose.yaml` change, no `ELASTIC_PASSWORD`, no trial license, and no
 `consent.yaml` credentials. The same is true of Epics A, B, C, and G. This is why Option A
 (security on by default for everyone) was rejected: it would impose credential setup and a
-one-shot trial license on the majority of the work for the benefit of one epic.
+once-per-major-version trial license on the majority of the work for the benefit of one epic.
 
 **Note: `config/` is not version-controlled**
 
@@ -657,8 +658,12 @@ Two defaults must be overridden, and this is the main trap:
   compose setup. (If production turns out to be HTTPS with a private CA, `createRestClient` needs an
   `SSLContext` hook — a D-1/D-2 concern, not just a test concern.)
 - `withPassword(...)` sets `ELASTIC_PASSWORD`; the trial license still has to be activated per
-  container via `POST /_license/start_trial?acknowledge=true` before any DLS/FLS call, because each
-  fresh container starts on a self-generated basic license.
+  container before any DLS/FLS call, because each fresh container starts on a self-generated basic
+  license. That activation is an explicit step in the test that needs it, made through the admin
+  endpoint (`POST /api/elasticSearch/license/trial?acknowledge=true`, via
+  `ElasticSearchContainerTests.activateTrialLicense()`) rather than by the harness reaching for
+  `POST /_license/start_trial` on every subclass's behalf — a trial can be started once per major version per cluster, and the
+  classes that assert what a *basic* license refuses must not have it spent underneath them.
 
 This also resolves the D-2 concern about challenge-response authentication: the shared-credential
 client authenticated successfully against the secured cluster, and a per-request

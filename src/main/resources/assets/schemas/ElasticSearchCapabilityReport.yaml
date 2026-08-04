@@ -1,0 +1,237 @@
+type: object
+title: ElasticSearchCapabilityReport
+description: |
+  Security feature inventory for the Elasticsearch cluster the responding deployment is
+  configured against. Unless write probes were requested, every probe behind this report is
+  non-destructive, which is why the DLS, FLS, and API-key verdicts may be inferred rather than
+  observed; write_probes_run says which of the two this report is.
+
+  The probes target Elasticsearch's X-Pack security APIs only; this report covers Elasticsearch
+  deployments exclusively.
+
+  The example is a real write-probe (POST) response from a local trial-licensed cluster, where the
+  configured credential is the `elastic` superuser. A deployed environment's shared credential is
+  unlikely to hold manage_security or a key-minting privilege, so expect NOT_PERMITTED verdicts and
+  a narrower cluster_privileges block there rather than this all-true one.
+properties:
+  cluster_name:
+    type: string
+    description: The cluster's own name, confirming which cluster was reached.
+  version:
+    type: string
+    description: Elasticsearch version.
+    examples:
+      - "9.4.4"
+      - "9.3.3"
+  distribution:
+    type: string
+    description: |
+      Distribution reported by the cluster.
+    examples:
+      - elasticsearch
+  edition:
+    type: string
+    description: OSS, a license tier, or Elastic Cloud.
+  license_type:
+    type: string
+    description: License tier reported by the cluster.
+    examples:
+      - basic
+      - trial
+      - platinum
+      - enterprise
+  license_status:
+    type: string
+    description: Whether the reported license entitlement is active.
+    examples:
+      - active
+  elastic_cloud:
+    type: boolean
+    description: Whether this deployment is configured with a cloud ID.
+  security_enabled:
+    type: boolean
+    description: Whether X-Pack Security is enabled.
+  authenticated_user:
+    type: string
+    description: The principal the deployment's shared credential resolves to.
+  authenticated_user_roles:
+    type: array
+    items:
+      type: string
+  cluster_privileges:
+    type: object
+    description: |
+      Cluster privileges the shared credential holds, from a read-only privilege check. These
+      are the privileges any per-request credential work would have to build on. The six probed
+      privileges are always all present as keys, so a false is a checked refusal rather than an
+      omission.
+    additionalProperties:
+      type: boolean
+    examples:
+      - manage_security: true
+        manage_api_key: true
+        grant_api_key: true
+        manage_own_api_key: true
+        read_security: true
+        monitor: true
+  security_settings:
+    type: object
+    description: |
+      Security-relevant cluster settings. Defaults are filtered to the values that gate a
+      capability or describe the authentication posture, since a cluster reports around fifty
+      xpack.security.* defaults that are pure tuning. Any setting explicitly configured as a
+      persistent or transient override is always included.
+    additionalProperties:
+      type: string
+    examples:
+      - xpack.security.audit.enabled: "false"
+        xpack.security.authc.anonymous.username: _anonymous
+        xpack.security.authc.api_key.enabled: "true"
+        xpack.security.authc.reserved_realm.enabled: "true"
+        xpack.security.authc.run_as.enabled: "true"
+        xpack.security.authc.token.enabled: "false"
+        xpack.security.dls_fls.enabled: "true"
+        xpack.security.enabled: "true"
+        xpack.security.fips_mode.enabled: "false"
+        xpack.security.http.ssl.enabled: "false"
+        xpack.security.operator_privileges.enabled: "false"
+        xpack.security.transport.ssl.enabled: "false"
+  write_probes_run:
+    type: boolean
+    description: |
+      Whether write probes ran. When false, the DLS, FLS, and API-key verdicts are inferred from
+      the license tier rather than observed — read this field before reading those verdicts.
+  capabilities:
+    type: array
+    description: |
+      One entry per probed capability, always in the same order: X-Pack Security, API keys,
+      DLS, FLS, run_as impersonation.
+
+      An unreachable cluster is the one exception to that shape: when GET / does not answer, no
+      capability can be probed at all, so the array instead holds the single Cluster reachability
+      entry with an UNKNOWN verdict and the rest of the report is empty.
+    items:
+      type: object
+      title: ElasticSearchCapability
+      required:
+        - name
+        - verdict
+      properties:
+        name:
+          type: string
+          enum:
+            - X-Pack Security
+            - API keys
+            - Document-level security (DLS)
+            - Field-level security (FLS)
+            - run_as impersonation
+            - Cluster reachability
+        verdict:
+          type: string
+          description: |
+            SUPPORTED and UNAVAILABLE are observed. LICENSE_BLOCKED and NOT_PERMITTED are
+            observed refusals. The INFERRED_ values are derived from license tier, license status, and cluster settings because proving them
+            would require writing to the cluster. UNKNOWN also
+            covers any capability on a cluster that did not respond.
+
+            For DLS and FLS, INFERRED_SUPPORTED also covers a write-probe run in which the cluster
+            accepted the filters but their enforcement could not be checked end to end — a cluster
+            can store a DLS query and ignore it at search time, so only SUPPORTED means enforced.
+            The notes say what stopped the check.
+          enum:
+            - SUPPORTED
+            - UNAVAILABLE
+            - LICENSE_BLOCKED
+            - NOT_PERMITTED
+            - INFERRED_SUPPORTED
+            - INFERRED_UNAVAILABLE
+            - UNKNOWN
+        detail:
+          type: string
+        evidence:
+          type: string
+          description: The probe the verdict is drawn from, so it can be re-run by hand.
+  rest_client_compatibility:
+    type: string
+    description: Whether the bundled elasticsearch-rest-client can drive the security APIs.
+  recommendation:
+    type: string
+    description: Which implementation path the findings point to.
+  notes:
+    type: array
+    description: Caveats required to interpret the report correctly.
+    items:
+      type: string
+examples:
+  - cluster_name: docker-cluster
+    version: "9.4.4"
+    distribution: elasticsearch
+    edition: trial
+    license_type: trial
+    license_status: active
+    elastic_cloud: false
+    security_enabled: true
+    authenticated_user: elastic
+    authenticated_user_roles:
+      - superuser
+    cluster_privileges:
+      manage_security: true
+      manage_api_key: true
+      grant_api_key: true
+      manage_own_api_key: true
+      read_security: true
+      monitor: true
+    security_settings:
+      xpack.security.audit.enabled: "false"
+      xpack.security.authc.anonymous.username: _anonymous
+      xpack.security.authc.api_key.enabled: "true"
+      xpack.security.authc.reserved_realm.enabled: "true"
+      xpack.security.authc.run_as.enabled: "true"
+      xpack.security.authc.token.enabled: "false"
+      xpack.security.dls_fls.enabled: "true"
+      xpack.security.enabled: "true"
+      xpack.security.fips_mode.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.operator_privileges.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    write_probes_run: true
+    capabilities:
+      - name: X-Pack Security
+        verdict: SUPPORTED
+        detail: X-Pack Security is enabled and the /_security API responds.
+        evidence: GET /_xpack (status 200), GET /_security/_authenticate
+      - name: API keys
+        verdict: SUPPORTED
+        detail: "Observed: a key was created, authenticated as 'elastic', and invalidated."
+        evidence: POST /_security/api_key -> 200; GET /_security/_authenticate as the key -> 200
+      - name: Document-level security (DLS)
+        verdict: SUPPORTED
+        detail: "Proven end to end: a match_none DLS key returned 0 of 1158 documents."
+        evidence: >-
+          GET /dataset/_search?size=1 through a match_none DLS key -> 200; 0 of 1158 documents
+          visible
+      - name: Field-level security (FLS)
+        verdict: SUPPORTED
+        detail: >-
+          Proven end to end: documents came back carrying only the granted 'datasetIdentifier'
+          field.
+        evidence: >-
+          GET /dataset/_search?size=1 through a key granting only 'datasetIdentifier' -> 200
+      - name: run_as impersonation
+        verdict: SUPPORTED
+        detail: The cluster honoured the run_as header and resolved the request to 'elastic'.
+        evidence: "GET /_security/_authenticate with es-security-runas-user: elastic -> 200"
+    rest_client_compatibility: >-
+      Compatible: elasticsearch-rest-client 9.4.4 matches cluster major 9. Security calls go
+      through RestClient.performRequest(Request) with no typed-client dependency.
+    recommendation: >-
+      Epic D (native DLS/FLS) is viable on this cluster, and this was observed rather than
+      inferred: a probe role and API key carrying DLS/FLS descriptors were accepted and enforced.
+      Keep Epic E in scope only if another environment cannot support DLS/FLS.
+    notes:
+      - >-
+        Write probes ran: 3 short-lived API key(s) and one probe role were created under the
+        duos-capability-probe / duos_dlsfls_probe names and removed again. The verdicts below come
+        from what the cluster did rather than from its license tier — but a DLS or FLS verdict of
+        INFERRED_SUPPORTED means only that the filters were accepted, with a note above saying what
+        stopped the enforcement check.

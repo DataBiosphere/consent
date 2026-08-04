@@ -6,34 +6,27 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
-import io.dropwizard.lifecycle.Managed;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
-import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 
-public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
+public class ElasticSearchHealthCheck extends HealthCheck {
 
   private final RestClient client;
 
-  @Override
-  public void start() throws Exception {}
-
-  @Override
-  public void stop() throws Exception {
-    if (client != null) {
-      client.close();
-    }
-  }
-
+  /**
+   * Takes the application's shared {@link RestClient} rather than building one: a health check that
+   * opened its own connection pool would double the pools held against the same cluster. The client
+   * is closed by the module that provides it, so nothing is closed here.
+   */
   @Inject
-  public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
-    this.client = ElasticSearchSupport.createRestClient(config);
+  public ElasticSearchHealthCheck(RestClient client) {
+    this.client = client;
   }
 
   @Override

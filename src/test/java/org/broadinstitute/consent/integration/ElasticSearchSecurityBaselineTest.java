@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import org.elasticsearch.client.Request;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,16 @@ import org.junit.jupiter.api.Test;
  */
 @Tag("elasticsearch")
 class ElasticSearchSecurityBaselineTest extends ElasticSearchContainerTests {
+
+  /**
+   * Puts the cluster on the trial license through the admin endpoint. Explicit rather than
+   * inherited from the harness: the DLS, FLS and run_as assertions below are assertions about a
+   * trial-licensed cluster, and the step that makes it one is part of what they establish.
+   */
+  @BeforeAll
+  static void putClusterOnTrialLicense() {
+    activateTrialLicense();
+  }
 
   /**
    * The cluster must report the version we pinned and the {@code default} build flavor. The OSS
@@ -52,17 +63,19 @@ class ElasticSearchSecurityBaselineTest extends ElasticSearchContainerTests {
   }
 
   /**
-   * A trial can be started only once per cluster, so CI cannot rely on a long-lived trial and a
-   * developer whose trial has expired must wipe the {@code elastic} volume. The harness starting
-   * the trial in its initializer is what makes this false here.
+   * A trial can be started only once per major version per cluster, so CI cannot rely on a
+   * long-lived trial and a developer whose trial has expired must wipe the {@code elastic} volume.
+   * The activation step in {@link #putClusterOnTrialLicense()} is what makes this false here — and
+   * the same once-per-major-version constraint is why that step is something a test asks for rather
+   * than something it inherits.
    */
   @Test
-  void trialLicenseCanOnlyBeStartedOnce() throws Exception {
+  void trialLicenseCannotBeStartedTwiceInTheSameMajorVersion() throws Exception {
     JsonObject trialStatus = jsonResponse(new Request("GET", "/_license/trial_status"));
 
     assertFalse(
         trialStatus.get("eligible_to_start_trial").getAsBoolean(),
-        "trial should already be spent — see the harness static initializer");
+        "trial should already be spent — see putClusterOnTrialLicense()");
   }
 
   /** A DLS role is accepted under the trial license. Rejected under basic; see the sibling test. */

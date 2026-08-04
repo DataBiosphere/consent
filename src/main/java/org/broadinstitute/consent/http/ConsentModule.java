@@ -10,6 +10,7 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.ws.rs.client.Client;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.filters.RateLimitFilter;
+import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
@@ -55,6 +57,7 @@ import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.ElasticSearchCapabilityService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -90,6 +93,7 @@ import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.elasticsearch.client.RestClient;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
@@ -361,19 +365,54 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     return new DataUseMatcherV4(dataUseUtil);
   }
 
+  /**
+   * The application's Elasticsearch client. A singleton because each {@link RestClient} owns its
+   * own connection pool and background threads: building one per consumer multiplies pools against
+   * the same cluster for no benefit. Every consumer in the application — {@link
+   * ElasticSearchService}, {@link ElasticSearchCapabilityService}, and {@link
+   * ElasticSearchHealthCheck} — takes this instance by injection rather than calling {@code
+   * ElasticSearchSupport.createRestClient} itself. Closed on shutdown, since nothing else releases
+   * those connections.
+   */
+  @Provides
+  @Singleton
+  private RestClient providesElasticSearchRestClient(
+      ElasticSearchConfiguration elasticSearchConfiguration) {
+    RestClient restClient = ElasticSearchSupport.createRestClient(elasticSearchConfiguration);
+    environment.lifecycle().manage(new ElasticSearchClientShutdown(restClient));
+    return restClient;
+  }
+
+  /**
+   * Releases the shared Elasticsearch client's connection pool and background threads on shutdown.
+   * A named type rather than an anonymous {@link Managed} so that it can be told apart from the
+   * module's other lifecycle registrations.
+   */
+  record ElasticSearchClientShutdown(RestClient restClient) implements Managed {
+
+    @Override
+    public void stop() throws IOException {
+      restClient.close();
+    }
+  }
+
   @Provides
   @Singleton
   private ElasticSearchService providesElasticSearchService(
       Jdbi jdbi,
       DatasetServiceDAO datasetServiceDAO,
+      RestClient esClient,
       ElasticSearchConfiguration elasticSearchConfiguration,
       OntologyService ontologyService) {
     return new ElasticSearchService(
-        jdbi,
-        datasetServiceDAO,
-        ElasticSearchSupport.createRestClient(elasticSearchConfiguration),
-        elasticSearchConfiguration,
-        ontologyService);
+        jdbi, datasetServiceDAO, esClient, elasticSearchConfiguration, ontologyService);
+  }
+
+  @Provides
+  @Singleton
+  private ElasticSearchCapabilityService providesElasticSearchCapabilityService(
+      RestClient esClient, ElasticSearchConfiguration elasticSearchConfiguration) {
+    return new ElasticSearchCapabilityService(esClient, elasticSearchConfiguration);
   }
 
   @Provides

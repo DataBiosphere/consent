@@ -70,7 +70,48 @@ Set up a remote debug configuration pointing to `local.dsde-dev.broadinstitute.o
 and the defaults should be correct.
 
 ### Developing with a local Elastic Search instance:
+#### Running with X-Pack Security enabled
 
+Security is **on by default**, which is what the security work (`GET /api/elasticSearch/capabilities`
+and native DLS/FLS) needs. Two things make that work, and they have to agree:
+
+* `ELASTIC_PASSWORD` in the compose `elastic` service bootstraps the `elastic` superuser.
+* `authUser` / `authPassword` in `config/consent.yaml` are the credentials Consent sends. They are
+  harmless when security is off — the ES client only sends credentials in response to a 401
+  challenge, which a security-disabled cluster never issues.
+
+DLS and FLS are Platinum features, so the compose file self-generates a 30-day **trial** license via
+`xpack.license.self_generated.type`. That setting only applies the first time a cluster forms. If
+your `elastic` data volume predates it, the cluster keeps its `basic` license and DLS/FLS come back
+`LICENSE_BLOCKED`. Activating the trial is a separate, deliberate step — never something a
+capability probe does on your behalf — and Consent exposes it as an admin endpoint, so it works the
+same way here as it does against a deployed cluster:
+
+```bash
+# What tier is this cluster on, and does it still have a trial to spend?
+curl -s -X GET  'localhost:8000/api/elasticSearch/license'
+# Start it. acknowledge=true is required: one trial per cluster, and it cannot be reverted.
+curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
+```
+
+Both need an Admin bearer token. Straight at the cluster works too, and is the quicker path when
+Consent is not running:
+
+```bash
+curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
+curl -s -u elastic:devpassword localhost:9200/_license   # expect "type": "trial"
+```
+
+Note that transport SSL stays disabled. ES logs a bootstrap warning about it, which is expected and
+correct here — transport SSL is only required for multi-node clusters.
+
+To get the old security-disabled cluster back for a run, without editing the committed file:
+
+```bash
+ES_SECURITY_ENABLED=false docker-compose -p consent -f config/docker-compose.yaml up
+```
+
+An example docker-compose stanza for elastic:
  ```
  elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.4.4
@@ -91,12 +132,14 @@ and the defaults should be correct.
       #
       #   ES_SECURITY_ENABLED=true docker-compose -p consent -f config/docker-compose.yaml up
       #
-      # DLS/FLS is a Platinum feature, so also activate the 30-day trial license once per cluster:
+      # DLS/FLS is a Platinum feature, so also activate the 30-day trial license once per major version per cluster --
+      # either through Consent's admin endpoint or straight at the cluster:
       #
+      #   curl -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
       #   curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
       #
       # See DEVNOTES.md ("Developing with a local Elastic Search instance") for the full workflow.
-      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-true}
       # Bootstraps the `elastic` superuser password when security is on; ignored when it is off.
       # Must match authUser/authPassword in consent.yaml.
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-devpassword}
@@ -110,26 +153,11 @@ ontology files do not interfere with other dev environments.
 
 #### Running local Elastic Search with security enabled
 
-By default the local cluster runs with `xpack.security.enabled=false`: requests are
-unauthenticated, which is what most work needs. Only work on native Elasticsearch document- and
+By default the local cluster runs with `xpack.security.enabled=true`: requests are
+now authenticated, which is what most work needs. Only work on native Elasticsearch document- and
 field-level security (DLS/FLS) requires security to be on. Application-layer authorization work
 does not — it never touches Elasticsearch security.
 
-Security is env-var gated in the compose file, so the default stays off for everyone else:
-
-```bash
-mvn clean compile
-ES_SECURITY_ENABLED=true docker-compose -p consent -f config/docker-compose.yaml up
-```
-
-That bootstraps the `elastic` superuser with the password from `ELASTIC_PASSWORD`
-(default `devpassword`). Override it with
-`ES_SECURITY_ENABLED=true ELASTIC_PASSWORD=<your-password> docker-compose ... up`, and keep
-`elasticSearch.authUser`/`authPassword` in `config/consent.yaml` in sync.
-
-The HTTP layer stays on plain `http` in both modes, so consent's `elasticSearch.protocol: http`
-needs no change. `xpack.security.transport.ssl.enabled=false` is correct even with security
-enabled — transport SSL is only required for multi-node clusters.
 
 #### Enabling DLS/FLS locally (trial license required)
 
@@ -140,18 +168,31 @@ HTTP 403 `current license is non-compliant for [field and document level securit
 `POST /_security/api_key` *accepts* such a role descriptor at creation time — the rejection happens
 later, on the search request.
 
-Activate the 30-day trial license once the secured cluster is up:
+Activate the 30-day trial license once the secured cluster is up, either through Consent's admin
+endpoint or against the cluster directly:
 
 ```bash
+# Through Consent (Admin bearer token required); reports what it changed, and refuses without
+# acknowledge=true because the trial can be started once per major version per cluster.
+curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
+
+# Or straight at the cluster.
 curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
 curl -u elastic:devpassword 'localhost:9200/_license'   # => "type": "trial"
 ```
 
+Either way it is a step you take, not one that happens while you are asking a different question:
+`GET`/`POST /api/elasticSearch/capabilities` reports the license tier and never changes it, and the
+container tests activate the trial from the `@BeforeAll` of the classes that need it rather than from
+their shared harness.
+
 Caveats:
 
-- A trial can be started **once per cluster** (`GET /_license/trial_status` reports eligibility).
-  After 30 days the license reverts to basic and DLS/FLS stops working. To get another trial, wipe
-  the cluster's data volume: `docker-compose -p consent -f config/docker-compose.yaml down` then
+- A trial can be started **once per major version per cluster** (`GET /api/elasticSearch/license` reports eligibility
+  as `trial_available`, as does `GET /_license/trial_status` on the cluster).
+  After 30 days the license reverts to basic and DLS/FLS stops working. For another trial on
+  the same major version, wipe the cluster's data volume; after a major-version upgrade, check
+  trial_available because the cluster may be eligible again: `docker-compose -p consent -f config/docker-compose.yaml down` then
   `docker volume rm consent_elastic` (this deletes local indices — they must be re-indexed).
 - Authentication, role-based access control, and API keys all work fine on the basic license. Only
   the DLS/FLS grants require trial/Platinum.
