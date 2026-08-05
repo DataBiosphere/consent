@@ -22,6 +22,9 @@ import org.junit.jupiter.api.Test;
 
 class DatasetIdentityMigrationTest extends DAOTestHelper {
 
+  private static final String DATASET_IDENTITY_CHANGELOG =
+      "changesets/changelog-consent-2026-08-05-dataset-identity.xml";
+
   @Test
   void testRollbackRestoresLegacyIdentityAndMigrationReapplies() throws Exception {
     User user = createUser();
@@ -46,7 +49,8 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
               DatabaseFactory.getInstance()
                   .findCorrectDatabaseImplementation(new JdbcConnection(connection));
           Liquibase liquibase =
-              new Liquibase("changelog-master.xml", new ClassLoaderResourceAccessor(), database);
+              new Liquibase(
+                  DATASET_IDENTITY_CHANGELOG, new ClassLoaderResourceAccessor(), database);
           Contexts contexts = new Contexts();
           LabelExpression labels = new LabelExpression();
 
