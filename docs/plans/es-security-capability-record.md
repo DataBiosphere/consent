@@ -104,13 +104,22 @@ in the inventory below runs Elasticsearch.
 
 ## Environment inventory
 
-### Local (`config/docker-compose.yaml`) — measured 2026-07-29 with the write probes
+### Local (rendered `config/docker-compose.yaml`) — measured 2026-07-29 with the write probes
 
-Ticket A-0 is closed: the compose file now sets `xpack.security.enabled` to **true** by default
-(overridable per-run with `ES_SECURITY_ENABLED=false`) and self-generates a **trial** license, so the
-security features are exercisable locally as shipped. The endpoint has now been run against the
-running local cluster in write-probe mode, so every row below is an observation rather than an
-inference — this is the first environment where all five capabilities came back `SUPPORTED`:
+Ticket A-0 is closed. Be precise about what that does and does not mean for anyone else's machine:
+`/config/` is git-ignored (`.gitignore` L149) and rendered per developer by the Broad-internal
+`firecloud-develop`, so **nothing in this repository sets any Elasticsearch default** — there is no
+committed compose file for a change to land in. The cluster measured below is a local rendered copy,
+edited to set `xpack.security.enabled` to **true** (overridable per-run with
+`ES_SECURITY_ENABLED=false`) and to self-generate a **trial** license. The durable form of that
+change is the `firecloud-develop` compose template, which is outside this repo and still needs an
+owner — see the A-0 outcome in
+[`elasticsearch-service-duos-ui-usage.md`](elasticsearch-service-duos-ui-usage.md). Until it lands,
+each developer applies these settings themselves; see the notice below.
+
+The endpoint has now been run against that local cluster in write-probe mode, so every row below is
+an observation rather than an inference — this is the first environment where all five capabilities
+came back `SUPPORTED`:
 
 | Capability | Verdict | Evidence |
 | --- | --- | --- |
@@ -145,12 +154,12 @@ work, not as a preview of the deployed rows.
 
 #### Notice: developers must update their own local configuration
 
-A local cluster does **not** pick these settings up on its own. `config/docker-compose.yaml` is
-committed, but most people carry local edits to it (the bucket location, ports, memory limits) or run
-a copy of their own, so a pull of this branch will not necessarily put these settings into the file
-you actually start ES with. Each developer has to enable them in their own compose file before the
-endpoint will report anything like the table above — and a local cluster that lags behind produces
-`UNAVAILABLE` / `LICENSE_BLOCKED` verdicts that read like findings when they are only local drift.
+A local cluster does **not** pick these settings up on its own, and pulling this branch will not put
+them anywhere: `config/docker-compose.yaml` is git-ignored and rendered per developer, so the file you
+actually start ES with is not in this repository at all. Each developer has to enable these settings
+in their own rendered copy before the endpoint will report anything like the table above — and a local
+cluster that lags behind produces `UNAVAILABLE` / `LICENSE_BLOCKED` verdicts that read like findings
+when they are only local drift.
 
 What has to be true in your `config/docker-compose.yaml` (and any personal copy or override file you
 run instead of it):
@@ -256,9 +265,11 @@ falls back to the license reading and says which of the two you are looking at.
 ### `dev` — not yet measured
 
 > Call `POST /api/elasticSearch/capabilities` against dev with an Admin token and
-> paste the findings here. Dev is the right place to run the write probes first in a *deployed*
-> environment — teardown has been confirmed on the control clusters and locally, so what dev adds is
-> confirmation under a real shared credential rather than a superuser one.
+> summarise the verdicts here — verdicts only, with the raw report attached to the ticket (see the
+> note under `production` below). Production has since been measured and came back clean, so the
+> write probes are no longer unproven in a *deployed* environment; what dev and staging now add is
+> the other two thirds of the decision rule, and — if either runs a narrower credential than
+> production's — the first reading of what a real least-privilege shared credential can do.
 
 | Capability | Verdict | Evidence |
 | --- | --- | --- |
@@ -284,29 +295,93 @@ falls back to the license reading and says which of the two you are looking at.
 | API keys | | |
 | `run_as` | | |
 
-### `production` — not yet measured
+### `production` — measured 2026-08-05 with the write probes
 
-Call the endpoint read-only first — in that mode it creates nothing, so it cannot leave anything
-behind on the production cluster. Only `POST` it after the same call has been run in dev
-and staging and the teardown has been confirmed there; the probes are designed to be safe in
-production (namespaced, 10-minute expiry, torn down in a `finally`, failures reported in `notes`),
-but production is not the place to find out.
+Measured out of the order this document recommends: the write probes were run against production
+before dev or staging. The run came back clean — five `SUPPORTED` verdicts, `write_probes_run: true`,
+and no teardown failure in `notes` — so nothing was harmed by taking it first, but the sequencing
+advice above stands for the environments still to be measured.
 
-If production's shared credential turns out to lack `manage_security`, the write probes there will be
-inconclusive by construction. That is a finding to record rather than a problem to work around: it
-means Epic D's per-request key minting needs a privilege grant before it can work in production at
-all.
+Production is an **Elastic Cloud** deployment on an **enterprise** license, and every capability was
+observed rather than inferred:
 
 | Capability | Verdict | Evidence |
 | --- | --- | --- |
-| Elasticsearch version | | |
-| Distribution | | |
-| Edition / license | | |
-| X-Pack Security enabled | | |
-| DLS | | |
-| FLS | | |
-| API keys | | |
-| `run_as` | | |
+| Elasticsearch version | 9.x — one minor behind the pinned client, same major | `GET /` → `version.number` |
+| Distribution | elasticsearch | `GET /` → `version.distribution` |
+| Edition / license | Elastic Cloud, `enterprise`, `status: active` | `elastic_cloud: true`; `GET /_license` |
+| X-Pack Security enabled | **`SUPPORTED`** | `GET /_xpack` 200; `GET /_security/_authenticate` 200 |
+| DLS | **`SUPPORTED` — enforced, not merely accepted** | a `match_none` DLS key returned **none** of the documents the shared credential can see from `GET /dataset/_search` |
+| FLS | **`SUPPORTED` — enforced** | a key granting only `datasetIdentifier` returned documents carrying only that field |
+| API keys | **`SUPPORTED`** | key created, authenticated, invalidated |
+| `run_as` | **`SUPPORTED`** (self-impersonation only — see below) | the `es-security-runas-user` header was honoured and the request resolved to the named principal |
+| Credential privileges | the deployment's credential holds the key-minting privilege Epic D needs; the full block is on the ticket, not here | `POST /_security/user/_has_privileges` |
+| `dataset` index | non-empty | so the `match_none` DLS result means enforcement rather than an empty index |
+| `elasticsearch-rest-client` (POM) | 9.4.4 against a cluster one minor older — same major | `rest_client_compatibility` could not read the client version in the deployed jar at the time of this run; since fixed (see below) |
+| Recommendation | Epic D viable here, **observed** | probe role and keys carrying DLS/FLS descriptors accepted *and* enforced |
+
+Teardown behaved as documented: three short-lived keys and one probe role were created under the
+`duos-capability-probe` / `duos_dlsfls_probe` names and removed again, with no teardown failure
+reported in `notes`.
+
+> **Environment specifics are deliberately not in this file, because this repository is public.**
+> The full report — the principal the deployment authenticates as, its roles, the complete
+> `cluster_privileges` block, and the `security_settings` dump including the cluster's audit setting
+> — is attached to **DT-3826**, where access is already scoped. What is kept here is what the Epic D
+> / Epic E decision rule actually consumes: whether security is on, whether DLS and FLS are licensed
+> *and enforced*, and whether the deployment can mint keys. When filling in the rows for dev and
+> staging below, summarise the verdicts the same way and attach the raw report to the ticket rather
+> than pasting it here.
+
+Four things in this run are worth carrying forward as their own findings.
+
+**Epic D's per-request key minting is not privilege-blocked in production.** The note further down
+predicted the opposite — that the shared `authUser` almost certainly does not hold a key-minting
+grant — and production contradicts it in the permissive direction, so there is no privilege to request
+from infra before Epic D can proceed there. Two caveats travel with that. The run says nothing about
+what a *least-privilege* credential could do, exactly as the local superuser run said nothing about
+the deployed ones; and the breadth of what that credential does hold is worth reviewing on its own
+terms, independent of this work — raised on DT-3826. Epic D itself needs only `manage_own_api_key`,
+which is the grant to ask for if that credential is ever narrowed.
+
+**The `run_as` evidence is self-impersonation.** The probe resolved the credential's own principal to
+itself, which shows the cluster accepts and honours the header but not that it will resolve a
+*different* principal. If Epic D's design leans on `run_as` rather than on per-request keys, re-run
+with `?runAsUser=<some-other-user>` to settle it; the DLS/FLS verdicts do not depend on this.
+
+**Do not assume cluster-side audit logging.** Under Epic D the per-request API key *is* the
+access-control decision, so on a cluster with auditing off nothing on the cluster side records which
+key read what. Whatever audit trail the access contract needs must therefore come from the Consent
+side unless auditing is known to be enabled on that deployment — read
+`xpack.security.audit.enabled` out of the report per environment rather than assuming either way, and
+treat enabling it as an infra ask.
+
+**Elastic Cloud reserves some cluster settings to Elastic's operators.** That gates none of DLS, FLS,
+API keys, or `run_as` — all four were observed working — but it does mean any future infra ask
+(enabling audit, for instance) is a support request rather than a settings change.
+
+#### Why `rest_client_compatibility` came back indeterminate — since fixed
+
+The field reported that it "could not determine the client or cluster version at runtime," which reads
+like a gap but was not a finding about the cluster. The cluster version was known (it is in the
+report's own `version` field); the *client* version was not, because
+`ElasticSearchCapabilityService` read it from
+`RestClient.class.getPackage().getImplementationVersion()`, and the shade plugin strips dependency
+manifests (`META-INF/MANIFEST*`, `**/pom.properties`) when assembling the deployable uber jar. Locally,
+where the client keeps its own jar, the same code reported the 9.4.4 match — so the field would have
+stayed indeterminate in *every* deployed environment while working fine everywhere it did not matter.
+
+Fixed: the version now falls back to `elasticsearch.rest.client.version` in `mvn.properties`, the
+build-time property file `properties-maven-plugin` already generates from the pom (the same mechanism
+`SwaggerResource` uses), with the dependency version promoted to a pom property so it lands there.
+The package lookup is still tried first, since it reports the jar actually loaded rather than the one
+the build pinned. Verified against the built `consent.jar`: the package version is null there,
+reproducing the production symptom exactly, and the fallback resolves 9.4.4. **A re-run against
+production should now name the client version rather than declining to.**
+
+The substantive question it would have answered is settled anyway: the pinned 9.4.4 client ran against
+a cluster one minor older, a gap within the same major and the same shape as the 9.3.3 control-cluster
+run recorded below, and every security call in this run succeeded.
 
 ## REST client compatibility — resolved
 
@@ -338,7 +413,7 @@ itself evidence that the transport reaches `/_security` there. The report says a
 
 ## Decision
 
-**Pending** — blocked on the `dev`, `staging`, and `production` rows above. The decision rule,
+**Pending** — blocked on the `dev` and `staging` rows above; `production` is measured. The decision rule,
 fixed in advance so the measurement determines the outcome:
 
 | Measured state of the deployed clusters | Decision |
@@ -352,14 +427,29 @@ fixed in advance so the measurement determines the outcome:
 | DLS/FLS accepted, enforcement **not checked** (`INFERRED_SUPPORTED` from a write-probe run) | **Not a decision.** Acceptance is not enforcement. Fix what the notes say stopped the check — usually an empty or unreadable dataset index — and re-run the write probes before recording anything. |
 | DLS/FLS licensed but `xpack.security.dls_fls.enabled=false` | **Epic E** until the setting is enabled. The license entitles the cluster to the feature; the setting switches it off cluster-wide, so it is an infra change, not a license one. |
 
-Known so far: the local environment now falls in the **first** row — security enabled, DLS and FLS
-licensed *and* observed enforced — which closes Ticket A-0 but decides nothing on its own. The rule
-above is about the deployed clusters, and local's superuser credential is not the shared credential
-any of them use.
+Known so far: **local and production both fall in the first row** — security enabled, DLS and FLS
+licensed *and* observed enforced. Production is the one that counts, since it is a deployed cluster
+measured through its own deployment's credential; local closed Ticket A-0 but decides nothing on its
+own.
+
+That leaves the decision genuinely pending rather than merely unrecorded. The rule turns on all three
+deployed clusters, and two of them are unmeasured — if dev or staging is on a lower license tier, or
+has `dls_fls.enabled` off, the outcome is the "environments disagree" row (**both** epics, Epic E as
+the portable path) rather than a clean Epic D. Production being on Elastic Cloud enterprise makes
+that a real possibility rather than a formality: it is the environment most likely to carry the
+strongest license, so the others cannot be assumed to match it.
+
+One caveat that no further measurement will remove: production's credential is broadly privileged, so
+its write probes have the same limitation local's did. They prove what the *cluster* licenses and
+enforces — which is what the decision rule asks — but not what a least-privilege service credential
+could do there. If that credential is ever narrowed, Epic D's minimum grant is `manage_own_api_key`.
 
 ## Notes for whoever runs this against the deployed clusters
 
-- The shared `authUser` almost certainly does **not** hold `manage_security` or `manage_api_key`.
+- The shared `authUser` may or may not hold `manage_security` or `manage_api_key` — this was expected
+  to be the binding constraint, and in production it turned out not to be. Do not carry that forward
+  as an assumption about dev or staging; measure each, and keep the per-environment specifics on the
+  ticket rather than in this file.
   The report's `cluster_privileges` block says exactly which it has, via
   `POST /_security/user/_has_privileges`. If it lacks them, that is itself a finding: Epic D's
   per-request key minting goes through `POST /_security/api_key`, which needs at minimum

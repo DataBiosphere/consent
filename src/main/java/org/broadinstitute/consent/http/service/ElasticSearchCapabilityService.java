@@ -1,11 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -101,6 +104,12 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * settle the verdict.
    */
   private static final String DLS_FLS_ENABLED_SETTING = "xpack.security.dls_fls.enabled";
+
+  /** Build-time properties written from the pom by {@code properties-maven-plugin}. */
+  private static final String BUILD_PROPERTIES_RESOURCE = "/mvn.properties";
+
+  /** The pom property carrying the pinned {@code elasticsearch-rest-client} version. */
+  private static final String REST_CLIENT_VERSION_PROPERTY = "elasticsearch.rest.client.version";
 
   private static final String VERSION_FIELD = "version";
   private static final String LICENSE_FIELD = "license";
@@ -1005,7 +1014,11 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
       return EnforcementAttempt.inconclusive();
     }
 
-    String searchPath = "/%s/_search?size=1".formatted(request.index());
+    // track_total_hits because the default caps hits.total.value at 10000: without it, a DLS filter
+    // that was accepted and then ignored on a larger index reports "10000 of N" rather than the
+    // number actually visible. The verdict is a 0-vs-non-0 test either way, but the evidence string
+    // is what gets read and quoted, so it has to be the real count.
+    String searchPath = "/%s/_search?size=1&track_total_hits=true".formatted(request.index());
     ProbeResult search = probeAsApiKey(key.encoded(), HttpMethod.GET, searchPath);
     String evidence =
         "GET %s through %s -> %d".formatted(searchPath, request.keyLabel(), search.status());
@@ -1253,7 +1266,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * real compatibility axis is major-version skew.
    */
   private String restClientCompatibility(String clusterVersion) {
-    String clientVersion = RestClient.class.getPackage().getImplementationVersion();
+    String clientVersion = clientVersion();
     if (clientVersion == null || clusterVersion == null) {
       return "Could not determine the client or cluster version at runtime. This report was itself "
           + "produced through RestClient.performRequest, so the transport reaches /_security.";
@@ -1268,6 +1281,49 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
     return "Major-version skew: client %s vs cluster %s. The low-level client is version agnostic "
             .formatted(clientVersion, clusterVersion)
         + "over HTTP, but confirm the skew is within the supported range.";
+  }
+
+  /**
+   * The version of the bundled {@code elasticsearch-rest-client}, from whichever source survives
+   * the build in hand.
+   *
+   * <p>The client's own {@code Package} is the more truthful of the two, since it reports the jar
+   * actually loaded rather than the version the build pinned — but it is only populated when that
+   * jar keeps its manifest. The shade plugin strips dependency manifests when assembling the
+   * deployable uber jar, so in every deployed environment this returns null and the build-time
+   * property is all there is. Falling back keeps the report from going indeterminate exactly where
+   * it is being used to make a decision.
+   */
+  private String clientVersion() {
+    String packageVersion = RestClient.class.getPackage().getImplementationVersion();
+    if (packageVersion != null) {
+      return packageVersion;
+    }
+    return buildProperty(REST_CLIENT_VERSION_PROPERTY);
+  }
+
+  /**
+   * Reads a value from {@code mvn.properties}, which {@code properties-maven-plugin} writes from
+   * the pom at build time into both {@code target/classes} and {@code target/test-classes}. Returns
+   * null rather than throwing: an unreadable build property costs the report one field, and is not
+   * a reason to fail an inventory whose other verdicts were measured against the live cluster.
+   */
+  @VisibleForTesting
+  String buildProperty(String name) {
+    try (InputStream is = getClass().getResourceAsStream(BUILD_PROPERTIES_RESOURCE)) {
+      if (is == null) {
+        return null;
+      }
+      Properties properties = new Properties();
+      properties.load(is);
+      String value = properties.getProperty(name);
+      return (value == null || value.isBlank()) ? null : value;
+    } catch (IOException e) {
+      logWarn(
+          "Could not read %s from %s: %s"
+              .formatted(name, BUILD_PROPERTIES_RESOURCE, e.getMessage()));
+      return null;
+    }
   }
 
   private String recommendation(

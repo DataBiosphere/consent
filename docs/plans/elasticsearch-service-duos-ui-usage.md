@@ -397,11 +397,20 @@ The dataset index stores `DatasetTerm` documents with nested objects used by sea
 - `dataTypes`
 - `assets` (`Map<String, Object>`; includes study asset collections)
 - `data` (`Map<String, Object>`)
+- `externalIdentifier`
+- `externalIdentifierType`
 
 ### UserTerm and DacTerm nested fields
 
 - `submitter` / `updateUser` (`UserTerm`): `userId`, `displayName`, `institution`
+  (`InstitutionTerm`: `id`, `name`)
 - `dac` (`DacTerm`): `dacId`, `dacName`, `dacEmail`
+
+> **Access classification lives elsewhere.** Every path above is classified SEARCH-VISIBLE or
+> INTERNAL in [`es-access-contract.md`](es-access-contract.md) §B, which is enumerated from the model
+> classes and is the authoritative list. Adding a field to `DatasetTerm`, `StudyTerm`, `UserTerm`,
+> `DacTerm`, or `InstitutionTerm` requires classifying it there in the same change — an unclassified
+> field is dropped by the E-3 allowlist and omitted from the D-3 field grant.
 
 ## Test, Config, and Docs Touchpoints In duos-ui
 
@@ -447,9 +456,9 @@ Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** �
 | Epic | Name | Owner | Blocked by | Blocks |
 | --- | --- | --- | --- | --- |
 | A | Discovery & Contract | Infra + Backend | — | B, C, D, E |
-| B | Index Schema & Indexing Pipeline | Backend | A | D, E, F |
-| C | Auth Context Service | Backend | A | D, E |
-| D | Native DLS/FLS Path | Backend + Infra | A, B, C | F |
+| B | Index Schema & Indexing Pipeline | Backend | A-2, A-3 (not A-1) | D, E, F |
+| C | Auth Context Service | Backend | A-2 (not A-1) | D, E |
+| D | Native DLS/FLS Path | Backend + Infra | A-1, B, C | F |
 | E | Compatibility Fallback | Backend | B, C | F |
 | F | API Hardening | Backend | D or E | G |
 | G | Frontend Alignment | Frontend | F | — |
@@ -461,7 +470,19 @@ Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** �
 
 **Goal**: Establish facts about the Elasticsearch cluster's security capabilities, evaluate the
 local developer configuration changes needed, and define the formal access contract that all later
-epics are built on. All other epics are blocked on A-1.
+epics are built on.
+
+**Status**: A-0 closed. A-1 has local, control-cluster, and production measurements recorded in
+[`es-security-capability-record.md`](es-security-capability-record.md); dev and staging remain, and
+they decide Epic D vs. E. A-2 is delivered and complete as
+[`es-access-contract.md`](es-access-contract.md) — every dimension and field is decided, and its
+remaining OPEN items are proposed *changes* to current behavior, each with a preserve-today default,
+so none of them blocks Epics B or C.
+
+**Note on the blocking relationships**: only the *enforcement mechanism* (Epic D vs. E) is blocked on
+A-1. The access contract is not, and was deliberately written to be mechanism-neutral — the rules
+must be identical under native DLS/FLS and under the mediated fallback, or the fallback becomes a
+hole. Epics B and C are blocked on A-2, not A-1.
 
 ---
 
@@ -522,8 +543,12 @@ layer and requires no Elasticsearch configuration changes.
 
 ##### A-0 Outcome
 
-**Decision: Option B** — security is env-var gated in `config/docker-compose.yaml`, default off.
-Findings below were verified empirically against `elasticsearch:9.4.4` using throwaway containers
+**Decision: Option B** — security is env-var gated in `config/docker-compose.yaml` rather than
+unconditionally on. The recommended default *inside* that gate later moved from off to on, once the
+capability endpoint made a secured local cluster useful beyond Epic D (DEVNOTES.md); since `/config/`
+is not version-controlled (see the note at the end of this section), that default is per-developer
+either way, and the gate is the part of the decision that carries. Findings below were verified
+empirically against `elasticsearch:9.4.4` using throwaway containers
 running the exact env block from `config/docker-compose.yaml`. (Originally established on 9.3.3 and
 re-verified on 9.4.4 when the pin moved; every finding reproduced unchanged, including the exact
 error strings. The only observed delta was the bundled Lucene version, 10.3.2 → 10.4.0.)
@@ -575,9 +600,10 @@ Consequences:
 
 **Verified compose behavior (both modes)**
 
-The `elastic` service now uses `xpack.security.enabled=${ES_SECURITY_ENABLED:-false}`,
+The env block verified here was `xpack.security.enabled=${ES_SECURITY_ENABLED:-false}`,
 `ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-devpassword}`, and explicit
-`xpack.security.http.ssl.enabled=false`. Confirmed with the exact env block:
+`xpack.security.http.ssl.enabled=false`. Both modes were exercised, so the table holds whichever way
+the gate defaults — and the recommended default has since moved to `:-true` (DEVNOTES.md):
 
 | Mode | Unauthenticated | Authenticated | HTTPS on 9200 |
 | --- | --- | --- | --- |
@@ -702,25 +728,53 @@ per-request credential work can begin, we need the cluster edition and security 
 in the Elasticsearch index. This ticket defines the contract that shapes both the `accessPolicy`
 nested object (Ticket B-1) and the auth context resolver (Ticket C-1).
 
-**Acceptance criteria**:
-- Completed matrix: for each dimension (`publicVisibility`, ADMIN bypass, creator, custodian, DAC
-  member/chair, institution allowlist, policy tags) record: data source, enforcement level (DLS
-  filter vs. FLS field bundle), and whether persistent backing currently exists.
-- Field-level security groupings decided: e.g. `"public"` profile grants `datasetName`,
-  `datasetId`, `study.studyName`; `"privileged"` additionally grants `study.dataCustodianEmail`,
-  `study.dataSubmitterEmail`.
-- `publicVisibility` DLS semantics decided: invisible to non-privileged callers, or visible with
-  field redaction?
+**Deliverable**: [`es-access-contract.md`](es-access-contract.md) — **written**. The sections below
+record what it settled and what it deliberately did not.
+
+**Acceptance criteria** (all met except where noted):
+- ✅ Completed matrix: for each dimension (`publicVisibility`, ADMIN bypass, dataset creator, study
+  creator, custodian, DAC member/chair, institution allowlist, policy tags) record data source,
+  enforcement level, persistent backing, **and whether the contract preserves current behavior or
+  expands it** — contract §A. Fourteen dimensions; eight PRESERVE, six DEFER.
+- ✅ Field-level security groupings decided — contract §B, classifying **every** indexed path from
+  the model classes into SEARCH-VISIBLE or INTERNAL, with dynamic maps (`data`, `assets`) INTERNAL
+  and no wildcard grants permitted — including for admins, who bypass document filtering but not
+  field filtering.
+- ✅ `publicVisibility` DLS semantics decided — contract Decision 1: restricted documents are
+  **invisible**, not redacted. Redaction is also not expressible in native FLS; see below.
+- ✅ `publicVisibility = NULL` resolved — contract §A.1. It first looked like an undecidable policy
+  question because the two code paths read a null differently, but `study.public_visibility` is
+  `NOT NULL` and the nulls that actually occur come from the summary query's `LEFT JOIN` — i.e. they
+  are the "dataset has no study" case, which both paths already allow. Nothing was left for an owner
+  to decide.
+
+**Findings that change other tickets**:
+- **A per-document `fieldAccessProfile` cannot drive native FLS.** Field grants live in the
+  credential's index privileges and apply uniformly to every document a search request matches;
+  nothing re-selects a grant per hit. B-2 is invalidated as written and B-1 must drop the field —
+  contract Decision 2.
+- **Four dimensions in B-1's `AccessPolicyTerm` grant no access today** (DAC membership/chair,
+  institution, policy tags, principal allowlists). Populating them into a DLS filter would be a
+  silent authorization expansion, so they are DEFERred pending OPEN-3/OPEN-5.
+- **Dataset creator and study creator are distinct** (different columns, both privileged paths);
+  B-1/B-3 must index both document-side IDs, and D-3/E-2 must compare the caller's one user ID
+  against both.
+- **Custodian matching is case-sensitive and trims only the stored side**, so `Alice@x.org` fails
+  against a stored `alice@x.org` — contract §A.2, OPEN-6.
 
 **Implementation notes**:
-- Start from the `StudyTerm` fields listed in the Indexed Elements section of this document. Flag
-  every field containing PII or internal-only data.
-- `dataCustodianEmail` is currently parsed from the study property bag in
-  `DatasetService.isCreatorOrCustodian` (L224–238), not a dedicated DB column — note this as a
-  storage gap candidate.
+- `dataCustodianEmail` is parsed from the study property bag in `DatasetService.isCreatorOrCustodian`
+  (L220–236), not a dedicated DB column. Contract §C records what that does and does not cost, and
+  corrects A-3's "no new storage needed" framing.
+- The Indexed Elements section of this document is incomplete (it omits `study.externalIdentifier`,
+  `study.externalIdentifierType`, and `UserTerm.institution` sub-fields). Contract §B is enumerated
+  from the model classes and supersedes it.
 
-**Dependencies**: A-1.
-**Size**: S
+**Dependencies**: A-1 — **satisfied for this ticket's purposes.** A-1's outstanding dev/staging rows
+choose the enforcement *mechanism* (Epic D vs. E); the contract is stated in mechanism-neutral terms
+because it must be identical either way, so it was not held for them.
+**Size**: S — **actual: L.** The exhaustive field classification and the behavior-preservation audit
+were the bulk of it.
 
 ---
 
@@ -740,10 +794,23 @@ source for every field. Dimensions such as `allowedInstitutionIds`, `allowedPrin
   separate dataset-to-institution mapping table.
 
 **Implementation notes**:
-- `dacId` already exists on `Dataset`; `dataCustodianEmail` already exists in the study property
-  bag — no new storage needed for those dimensions.
+- `dacId` already exists as a column on `Dataset` — genuinely no new storage.
+- `dataCustodianEmail` is **not** the same case, and the earlier "no new storage needed" framing was
+  wrong. Persistent backing exists, but as an unstructured JSON array inside the `study_property`
+  bag: no referential integrity (access is granted to a string, not a principal), no normalization,
+  no index, and no defined behavior for malformed values. [`es-access-contract.md`](es-access-contract.md)
+  §C records this in full. It does **not** block Epics B–E, because B-3 denormalizes custodian emails
+  into `accessPolicy` at index time — but it does make reindex-on-custodian-change a correctness
+  requirement (B-4), it leaves the non-search endpoints parsing the bag, and OPEN-6 (case
+  normalization) has to be answered either way. Whether custodianship should become a first-class
+  relation is this ticket's call to make.
 - `allowedPrincipalIds` (explicit user allowlists) and `policyTags` (consent-code-based access
-  tags) are the most likely to require new storage.
+  tags) are the most likely to require new storage — but answer contract **OPEN-5** first: none of
+  them corresponds to a current requirement, and if the answer is "not now," the storage question
+  does not arise and B-1 should drop the fields.
+- Institution allowlists cannot be derived from `User.institutionId` alone: there is **no
+  dataset-to-institution mapping** of any kind today, so this dimension needs a storage decision
+  before it can mean anything at all.
 
 **Dependencies**: A-2.
 **Size**: M
@@ -770,17 +837,30 @@ Currently it carries no structured access metadata; all visibility logic lives i
 This ticket adds the schema without populating it yet (population is B-3).
 
 **Acceptance criteria**:
-- New `AccessPolicyTerm` class with fields:
-  - `publicVisibility: boolean`
-  - `creatorUserId: Integer`
-  - `creatorEmail: String`
-  - `custodianEmails: List<String>`
-  - `dacId: Integer`
-  - `dacApproval: Boolean`
-  - `allowedInstitutionIds: List<Integer>`
-  - `allowedPrincipalIds: List<Integer>`
-  - `policyTags: List<String>`
-  - `fieldAccessProfile: String` — `"public"` or `"privileged"`
+- New `AccessPolicyTerm` class. **Field set revised by the A-2 contract** — see
+  [`es-access-contract.md`](es-access-contract.md) §D:
+  - `publicVisibility: Boolean`
+  - `hasStudy: Boolean` — carries contract §A row 5 (a dataset with no study is readable by
+    everyone today). Required because the filter treats a null `publicVisibility` on a study-bearing
+    document as *not* public, so "no study" cannot be expressed as an absent visibility.
+  - `datasetCreatorUserId: Integer` — the dataset's creator (`dataset.create_user_id`)
+  - `studyCreatorUserId: Integer` — the study's creator (`study.create_user_id`), a *different*
+    privileged path; contract §A rows 6 and 7
+  - `custodianEmails: List<String>` — trim surrounding whitespace on each stored value, matching
+    today's `custodian.trim()` behavior, but preserve case (contract §A.2). Lowercasing or otherwise
+    normalizing here would authorize case-mismatched custodians through search while the dataset
+    endpoints still rejected them; OPEN-6 proposes fixing both paths together.
+  - `dacId: Integer` — indexed for display/filtering parity, **not** consulted for authorization
+    while contract rows 9–10 are DEFERred
+  - ~~`creatorEmail`~~ — dropped; creator matching is by user ID (contract §A.2)
+  - ~~`dacApproval`~~ — dropped; it is a display attribute, not authorization (contract row 11)
+  - ~~`allowedInstitutionIds`, `allowedPrincipalIds`, `policyTags`~~ — **do not add** until OPEN-5
+    establishes that they are requirements. None has storage or current behavior; shipping them
+    unpopulated invites a later reader to treat them as enforcement.
+  - ~~`fieldAccessProfile`~~ — **removed.** Native FLS cannot select a field grant per document
+    (contract Decision 2).
+- Class-level comment recording that **every** `accessPolicy` path is INTERNAL and must never appear
+  in a field grant (contract §B.4).
 - `DatasetTerm` gains an `accessPolicy: AccessPolicyTerm` field.
 - Elasticsearch index mapping updated with `accessPolicy` as a `nested` (or `object`) type —
   confirm with A-1 outcome which is required for the DLS query approach.
@@ -799,26 +879,26 @@ This ticket adds the schema without populating it yet (population is B-3).
 
 ---
 
-#### Ticket B-2 — Add `fieldAccessProfile` marker to `DatasetTerm`
+#### Ticket B-2 — ~~Add `fieldAccessProfile` marker to `DatasetTerm`~~ — **CANCELLED by A-2**
 
-**Summary**: Add a `fieldAccessProfile` string field (inside `AccessPolicyTerm`) to signal which
-FLS field bundle applies to the document.
+**Do not implement.** The mechanism this ticket specifies does not exist in Elasticsearch.
 
-**Context**: FLS in Elasticsearch requires knowing which fields each document grants to which
-caller profile. A profile marker on the document allows the auth context (C-1) to request a
-field-grant list matched to the document's declared profile, without enumerating fields per
-document in the query path.
+It assumed the auth context could read a profile marker off each document and request a matching
+field grant. Field grants are declared in the credential's index privileges and are evaluated when
+the request is authorized, then applied uniformly to every document that privilege matches; there is
+no stage at which the cluster inspects a hit and re-selects a grant for it.
+([Elastic: controlling access at document and field level](https://www.elastic.co/docs/deploy-manage/users-roles/cluster-or-deployment-auth/controlling-access-at-document-field-level))
 
-**Acceptance criteria**:
-- `AccessPolicyTerm.fieldAccessProfile` present (this may overlap with B-1; keep as a separate
-  deliverable to track separately).
-- Valid values: `"public"` (`publicVisibility=true`), `"privileged"` (`publicVisibility=false` or
-  restricted fields present).
-- Unit test: `fieldAccessProfile` is `"public"` for a dataset whose study has
-  `publicVisibility=true`, and `"privileged"` for `publicVisibility=false`.
+The obvious replacement — a request-wide privileged bundle selected from the caller — is also
+unsafe. Creator and custodian privilege is document-scoped, while the same DLS request also returns
+unrelated public datasets. A privileged request-wide grant would therefore expose privileged fields
+from those unrelated documents. See [`es-access-contract.md`](es-access-contract.md) Decision 2.
 
-**Dependencies**: B-1.
-**Size**: S
+**Replacement work**: D-3 and E-3 apply the single SEARCH-VISIBLE allowlist to every caller,
+including ADMIN. C-1 derives document-visibility context only; it derives no field bundle. No
+separate ticket is needed.
+
+**Size**: — (removed from the plan)
 
 ---
 
@@ -832,16 +912,27 @@ and `institutionDAO` (L58–66). All data needed for `accessPolicy` is reachable
 the mapping.
 
 **Acceptance criteria**:
-- `accessPolicy.publicVisibility` ← `dataset.getStudy().getPublicVisibility()` (null-safe).
-- `accessPolicy.creatorUserId` ← `dataset.getCreateUserId()`.
-- `accessPolicy.creatorEmail` ← `userDAO.getUserById(createUserId).getEmail()`.
-- `accessPolicy.custodianEmails` ← parsed from study property bag using the same logic as
-  `DatasetService.isCreatorOrCustodian` (L224–238).
+- `accessPolicy.publicVisibility` ← `dataset.getStudy().getPublicVisibility()` (null-safe). The
+  column is `NOT NULL`, so a study-bearing dataset always has a real value; the filter treats an
+  unexpected null as *not* public (contract §A.1).
+- `accessPolicy.hasStudy` ← `dataset.getStudyId() != null`. This is what carries contract §A row 5
+  — a dataset with no study is readable by everyone today, and that must not be expressed as a null
+  `publicVisibility`.
+- `accessPolicy.datasetCreatorUserId` ← `dataset.getCreateUserId()`.
+- `accessPolicy.studyCreatorUserId` ← `dataset.getStudy().getCreateUserId()` — a separate privileged
+  path from the dataset creator (contract §A rows 6/7), not a duplicate of it.
+- `accessPolicy.custodianEmails` ← parsed from the study property bag as in
+  `DatasetService.isCreatorOrCustodian` (L220–236), preserving that method's exact matching
+  semantics — apply the same `trim()` on the stored side and **no** case normalization (contract
+  §A.2). Malformed or non-array property values must not throw out of indexing.
 - `accessPolicy.dacId` ← `dataset.getDacId()`.
-- `accessPolicy.dacApproval` ← `dataset.getDacApproval()`.
-- `accessPolicy.fieldAccessProfile` ← `"public"` if `publicVisibility=true`, else `"privileged"`.
-- `allowedInstitutionIds` ← per outcome of A-3; empty list if not yet implemented.
-- Unit test: null study → `accessPolicy.publicVisibility` defaults to `false`, no NPE.
+- ~~`creatorEmail`, `dacApproval`, `fieldAccessProfile`, `allowedInstitutionIds`~~ — not populated;
+  see the revised B-1 field set.
+- **A dataset with no study must remain readable by everyone** (contract §A row 5 — that is current
+  behavior). Do not default a null study to `publicVisibility=false`; that would hide datasets that
+  are visible today. Represent "no study" explicitly so the DLS filter can match it.
+- Unit test: null study → no NPE, and the resulting document is readable by a caller with no
+  relationship to it.
 
 **Implementation notes**:
 - `isCreatorOrCustodian` in `DatasetService` (L224–238) parses custodian email from
@@ -851,7 +942,8 @@ the mapping.
 - Guard all `study` accesses — datasets created outside the registration flow may have a null
   study reference.
 
-**Dependencies**: B-1, B-2, A-3.
+**Dependencies**: B-1. A-3 is not required for the current field set; its speculative dimensions are
+deferred pending OPEN-5.
 **Size**: M
 
 ---
@@ -926,16 +1018,21 @@ cannot add nested types to a live index. The active index is identified by
 and `toStudyTerm` before any auth enforcement code is written against them.
 
 **Acceptance criteria**:
-- `publicVisibility=true` → `fieldAccessProfile == "public"`.
-- `publicVisibility=false` → `fieldAccessProfile == "privileged"`.
+- `publicVisibility` flows through for `true` / `false`.
+- A dataset with no study indexes `hasStudy=false` and remains readable by an unrelated caller
+  (contract §A row 5) — the case a null `publicVisibility` would otherwise have to carry.
 - `custodianEmails` populated when study has `dataCustodianEmail` property.
 - `custodianEmails` is empty (not null) when study has no custodian property.
-- Null study → `publicVisibility` defaults to `false`, no NPE.
-- `dacId`, `dacApproval`, `creatorUserId`, `creatorEmail` flow through from dataset and user DAO.
+- `custodianEmails` preserves case: `" Alice@X.org "` in the property bag indexes as `Alice@X.org`
+  (trimmed, not lowercased), so search authorizes exactly the callers `DatasetService` does today.
+- Malformed `dataCustodianEmail` (not a JSON array, unparseable) does not throw out of indexing.
+- Null study → no NPE, and the document remains readable by an unrelated caller (contract row 5).
+- `dacId`, `datasetCreatorUserId`, `studyCreatorUserId` flow through — with a case where the dataset
+  creator and study creator are **different users**, since conflating them is the likely bug.
+- No `accessPolicy` field is present in the SEARCH-VISIBLE projection (contract §B.4).
 
 **Implementation notes**:
 - Mirror the existing mock-heavy pattern in `ElasticSearchServiceTest` — mock all DAO calls.
-- Use `@ParameterizedTest` for the `fieldAccessProfile` cases.
 
 **Dependencies**: B-3.
 **Size**: M
@@ -964,24 +1061,32 @@ not once per document.
 
 **Acceptance criteria**:
 - `DatasetSearchAuthContext` (record or immutable class) with:
-  - `Integer userId`
-  - `String userEmail`
-  - `Integer institutionId`
+  - `Integer userId` — matches **both** the dataset creator and the study creator dimensions, which
+    are distinct columns and distinct privileged paths ([`es-access-contract.md`](es-access-contract.md)
+    §A rows 6 and 7); the filter must test both, not one
+  - `String userEmail` — passed through **unnormalized**, for the exact custodian matching the
+    dataset endpoints do today (contract §A.2)
   - `boolean isAdmin`
-  - `Set<Integer> dacMemberships` — all DAC IDs the user belongs to
-  - `Set<Integer> dacChairScopes` — DAC IDs where the user is chair
-  - `List<String> policyTagGrants` — initially empty, placeholder for future policy-tag grants
+  - **No field-bundle field.** Search serves one bundle to every caller (contract Decision 2), so
+    there is nothing per-caller to derive. A per-caller `privileged` bundle was considered and
+    rejected: creator/custodian privilege is document-scoped, and a caller privileged on one dataset
+    also receives every public dataset through the same DLS filter, so a request-wide privileged
+    grant would project privileged fields out of unrelated documents.
+  - **No institution, DAC-membership/chair, principal-allowlist, or policy-tag fields.** None is
+    consumed by current read authorization; resolving speculative context adds queries and invites a
+    later implementation to feed it into DLS accidentally. Add a field only with the signed-off
+    requirement that consumes it (contract rows 9–14, OPEN-3/OPEN-5).
 - `DatasetSearchAuthContextResolver` service: accepts a `DuosUser`, returns a
   `DatasetSearchAuthContext`.
 - `isAdmin` is `true` when user has `UserRoles.ADMIN` (L13 in `UserRoles.java`).
-- `dacMemberships` loaded from `DacDAO` — do not pull in `DacService` as a dependency to keep the
-  graph flat.
+- No DAC lookup is performed; DAC membership and chair status grant no search read access today.
 
 **Implementation notes**:
 - `DuosUser.getRoles()` returns the role set; check for `UserRoles.ADMIN`.
-- Keep the resolver stateless; all DB calls happen eagerly in the constructor/factory, not lazily.
-- `DacService` (L51) already resolves DAC memberships — use `dacDAO` directly to avoid
-  introducing a circular dependency through `DacService`.
+- Keep the resolver stateless and derive the context entirely from the supplied `DuosUser`; the
+  current contract requires no DAO lookup.
+- Do not inject `DacDAO` or `DacService` until OPEN-3 is approved. The current resolver needs no
+  DAC dependency.
 
 **Dependencies**: A-2.
 **Size**: M
@@ -1025,17 +1130,19 @@ the two code paths from diverging.
 `DatasetSearchAuthContext` and `DatasetAccessPolicy`.
 
 **Acceptance criteria**:
-- Test matrix: `ADMIN`, public reader (`RESEARCHER`/`MEMBER`/`SIGNINGOFFICIAL`), dataset creator,
-  study custodian, DAC chair for the dataset's DAC, DAC member (not chair),
-  institution-restricted user, user with no matching institution.
-- Each combination tested for `canRead`, `isCreator`, `isCustodian`.
+- Positive matrix: `ADMIN`, public reader (`RESEARCHER`/`MEMBER`/`SIGNINGOFFICIAL`), dataset
+  creator, study creator, and study custodian.
+- Negative matrix: `CHAIRPERSON` or `MEMBER` with a DAC relationship but no creator/custodian
+  relationship, and users sharing an institution with the submitter. These remain ordinary public
+  readers; DAC and institution do not feed the auth context or policy.
+- Each applicable combination tested for `canRead`, `isCreator`, and `isCustodian`.
 - Edge cases: null study, dataset with no DAC, custodian email list empty, user with multiple
   roles.
 
 **Implementation notes**:
 - Use `@ParameterizedTest` with a method source building `DatasetSearchAuthContext` +
   `AccessPolicyTerm` pairs with expected `canRead` outcomes.
-- Mock `DacDAO` in `DatasetSearchAuthContextResolver` tests to control DAC membership data.
+- Assert that `DatasetSearchAuthContextResolver` has no DAC or institution DAO dependency.
 
 **Dependencies**: C-1, C-2.
 **Size**: M
@@ -1056,8 +1163,8 @@ context available).
 
 #### Ticket D-1 — Extend `ElasticSearchConfiguration` with security-mode settings
 
-**Summary**: Add `securityMode`, privileged service-account credential fields, and
-`fieldAccessProfiles` to `ElasticSearchConfiguration`.
+**Summary**: Add `securityMode`, privileged service-account credential fields, and the single search
+field allowlist to `ElasticSearchConfiguration`.
 
 **Context**: `ElasticSearchConfiguration` currently holds a single shared `authUser`/`authPassword`
 (L22–24). The native path requires either a privileged account for API-key generation or a
@@ -1068,16 +1175,18 @@ context available).
   - `String securityMode` — `"none"`, `"fallback"`, `"shadow"`, or `"native-dls"`.
   - `String serviceAccountUser` / `String serviceAccountPassword` — may reuse `authUser`/
     `authPassword` if the same account has sufficient privilege.
-  - `Map<String, List<String>> fieldAccessProfiles` — maps profile name to list of allowed field
-    glob patterns (e.g. `"public"` → `["datasetId", "datasetName", "study.studyName", ...]`).
+  - `List<String> searchVisibleFields` — the one bundle's **literal** allowed paths, transcribed from
+    [`es-access-contract.md`](es-access-contract.md) §B. Not glob patterns: contract §B.5 forbids
+    wildcards, because `data`, `study.data`, and `study.assets` are dynamic maps and a
+    `study.*`-style grant would publish whatever a future registration schema puts in them.
 - Application starts cleanly with `securityMode: none` (legacy behavior unchanged).
 - Startup validation: if `securityMode` is `"native-dls"` and `serviceAccountUser` is blank,
   throw with a descriptive error.
 
 **Implementation notes**:
 - Use Dropwizard `@JsonProperty` / `@NotNull` pattern consistent with existing fields.
-- `fieldAccessProfiles` default should include at minimum `"public"` and `"privileged"` entries
-  reflecting the field lists decided in A-2.
+- `searchVisibleFields` defaults to the complete SEARCH-VISIBLE list from contract §B. There is no
+  public/privileged split and no caller-specific override.
 - Document new keys in the config YAML schema or `docs/`.
 
 **Dependencies**: A-1, A-2.
@@ -1103,7 +1212,8 @@ using the existing low-level `RestClient` — no new client instance is needed p
   DLS query from D-3 and FLS field list; embed the resulting key as `Authorization: ApiKey <base64>`.
 - `run_as` approach (simpler fallback within D): set header
   `es-security-runas-user: <ctx.userId>` on a service-account-authenticated request.
-- Unit test: given `isAdmin=true`, generated credential grants unrestricted access.
+- Unit test: given `isAdmin=true`, generated credential grants unrestricted **document** access but
+  uses the same SEARCH-VISIBLE FLS grant as every other caller.
 - Unit test: given non-admin context, credential includes DLS query and FLS field list.
 
 **Implementation notes**:
@@ -1122,31 +1232,47 @@ using the existing low-level `RestClient` — no new client instance is needed p
 **Summary**: Build `DlsQueryBuilder` and `FlsGrantBuilder` that translate `DatasetSearchAuthContext`
 into an Elasticsearch DLS query string and an FLS field-grant list.
 
-**Context**: The DLS query must express: return documents where `accessPolicy.publicVisibility=true`
-OR `accessPolicy.creatorUserId = <userId>` OR `accessPolicy.custodianEmails` contains `<email>`
-OR `accessPolicy.dacId` is in `<dacMemberships>`. ADMIN bypasses all filters.
+**Context**: The DLS query expresses the contract's document-visibility rules
+([`es-access-contract.md`](es-access-contract.md) §A rows 1–3, 5–8). The FLS grant is **constant** —
+one bundle for every caller including admins (contract Decision 2), so `FlsGrantBuilder` takes no
+caller input at all beyond validating that it was asked for the one bundle that exists.
 
 **Acceptance criteria**:
 - `DlsQueryBuilder.buildForContext(DatasetSearchAuthContext ctx)` → JSON string.
   - ADMIN → `{"match_all": {}}`.
-  - Non-admin → `bool` with `should` clauses for `publicVisibility`, creator, custodian, DAC
-    membership; `minimum_should_match: 1`.
-- `FlsGrantBuilder.buildForContext(DatasetSearchAuthContext ctx,
-  Map<String, List<String>> profiles)` → `List<String>` field patterns.
-  - ADMIN → `["*"]`.
-  - Non-admin → field list from the caller's applicable profile.
-- Unit tests for each access dimension and combinations.
+  - Non-admin → `bool` with `minimum_should_match: 1` over exactly these clauses:
+    `publicVisibility` true; **dataset has no study**; dataset creator; study creator; custodian.
+  - **No DAC clause, no institution clause, no policy-tag clause.** Contract rows 9–14 are DEFERred:
+    none of them grants dataset read access today, and adding them here is an authorization
+    expansion pending OPEN-3/OPEN-5.
+- `FlsGrantBuilder.build()` → `List<String>`: the SEARCH-VISIBLE literal paths from contract §B.
+  - **Same list for admins** — no `["*"]`. An admin wildcard would serve `accessPolicy.*` and the
+    dynamic property maps, contradicting contract §B.4/§B.5/§B.7. ADMIN is a document-visibility
+    bypass, not a projection bypass.
+  - No wildcard or `except` form anywhere in the grant (contract §B.5).
+- Unit tests per dimension, plus negative tests: a DAC member who is not creator/custodian does
+  **not** match a non-public dataset; an admin grant contains no `accessPolicy` path.
 
 **Implementation notes**:
-- Example DLS query for non-admin:
+- DLS query for a non-admin caller:
   ```json
   {"bool": {"should": [
     {"term": {"accessPolicy.publicVisibility": true}},
-    {"term": {"accessPolicy.creatorUserId": 42}},
-    {"terms": {"accessPolicy.custodianEmails": ["user@example.com"]}},
-    {"terms": {"accessPolicy.dacId": [1, 3]}}
+    {"term": {"accessPolicy.hasStudy": false}},
+    {"term": {"accessPolicy.datasetCreatorUserId": 42}},
+    {"term": {"accessPolicy.studyCreatorUserId": 42}},
+    {"terms": {"accessPolicy.custodianEmails": ["user@example.com"]}}
   ], "minimum_should_match": 1}}
   ```
+- `accessPolicy.hasStudy: false` is what keeps the currently-public "dataset with no study" case
+  readable (contract §A row 5). Without it that case is silently denied — it cannot be carried by a
+  null `publicVisibility`, because the filter treats a null on a study-bearing document as *not*
+  public (contract §A.1).
+- Both creator clauses are required and they are different columns; matching only one denies
+  legitimate access to the other kind of creator.
+- Custodian matching is **exact** — `keyword` term match, no lowercase normalizer on the field, and
+  the caller email passed through unnormalized (contract §A.2). This preserves today's
+  case-sensitive behavior; changing it is OPEN-6 and must move both paths at once.
 - If `accessPolicy` is mapped as `nested`, terms must be wrapped in a `nested` query — confirm
   with B-1 mapping decision.
 
@@ -1193,8 +1319,10 @@ document filtering and field omission.
 - Test: non-admin search → `publicVisibility=false` document absent from results.
 - Test: dataset creator search → sees own `publicVisibility=false` document.
 - Test: ADMIN → sees all documents.
-- Test: FLS — non-privileged caller's response does not contain `study.dataCustodianEmail`.
-- Test: ADMIN response contains all fields.
+- Test: FLS — every caller receives the same SEARCH-VISIBLE fields, including
+  `study.dataCustodianEmail`, which is published by search today.
+- Test: ADMIN sees all documents but receives the same SEARCH-VISIBLE fields; `accessPolicy`,
+  `data`, `study.data`, and `study.assets` are absent.
 
 **Implementation notes**:
 - Use `testcontainers` with `docker.elastic.co/elasticsearch/elasticsearch:9.x` and
@@ -1262,7 +1390,9 @@ alongside a server-built access policy filter derived from `DatasetSearchAuthCon
 - Non-admin → access policy filter equivalent to DLS query from D-3 (same logic, different
   execution path — reuse `DlsQueryBuilder.buildForContext` if D-3 has shipped, otherwise implement
   a standalone `AccessFilterBuilder` and unify later).
-- Unit tests for each access dimension: public reader, creator, custodian, DAC member.
+- Unit tests for each enforced access dimension: public reader, dataset creator, study creator, and
+  custodian. Add a negative DAC-member/chair case proving that DAC relationship alone does not add a
+  clause or grant a restricted document.
 - Negative test: crafted client query attempting to retrieve `publicVisibility=false` documents is
   blocked by the injected filter.
 
@@ -1279,28 +1409,38 @@ alongside a server-built access policy filter derived from `DatasetSearchAuthCon
 
 #### Ticket E-3 — Server-managed field allowlist applied to search responses
 
-**Summary**: Strip fields from Elasticsearch response documents that the caller is not permitted
-to see, based on their `fieldAccessProfile`.
+**Summary**: Strip every field outside the single SEARCH-VISIBLE allowlist from Elasticsearch
+response documents, for every caller.
 
 **Context**: The fallback path cannot rely on native FLS. The server must remove restricted fields
 from hit `_source` objects before returning the response.
 
 **Acceptance criteria**:
-- `ResponseFieldFilter.applyProfile(String responseJson, String callerProfile,
-  Map<String, List<String>> profileDefs)` → `String`:
-  - For each hit in `hits.hits[*]._source`, removes fields not in the caller's profile grant list.
-  - ADMIN profile → no fields removed.
-  - `"public"` profile → only fields in the `"public"` grant list retained.
-- Unit test: response with `study.dataCustodianEmail` has that field stripped for `"public"`
-  profile caller.
-- Unit test: ADMIN caller receives the full document.
+- `ResponseFieldFilter.apply(String responseJson, List<String> searchVisibleFields)` → `String`:
+  - For each hit in `hits.hits[*]._source`, retains only the SEARCH-VISIBLE paths from contract §B
+    and drops everything else, including unrecognized paths.
+  - **ADMIN is filtered identically** — no bypass. Admins see every *document* (DLS `match_all`),
+    not every *field*; contract §B.7.
+- Unit test: `accessPolicy` is absent from the response for **every** caller, admin included
+  (contract §B.4).
+- Unit test: `data`, `study.data`, and `study.assets` are absent for every caller (contract §B.5).
+- Unit test: a path not present in §B — simulating a newly added model field — is dropped rather
+  than passed through.
 
 **Implementation notes**:
-- Walk `hits.hits[*]._source` as `Map<String, Object>` and apply a recursive filter against the
-  profile's allowed field glob patterns (e.g. `"study.*"` allows all `study` sub-fields).
-- The caller's profile derives from `DatasetSearchAuthContext.isAdmin` → `"admin"`, otherwise
-  use the document's `accessPolicy.fieldAccessProfile` or a per-caller override from config.
-- The `profileDefs` map comes from `ElasticSearchConfiguration.fieldAccessProfiles` (D-1).
+- Walk `hits.hits[*]._source` as `Map<String, Object>` and apply a recursive **allowlist** filter:
+  retain only paths present in the bundle, drop everything else — including paths the filter does not
+  recognize. A denylist, or a glob like `"study.*"`, fails open on every field added later; contract
+  §B.5 forbids both, because `study.data` / `study.assets` / `data` are dynamic maps whose keys are
+  populated wholesale from property bags.
+- There is one bundle for all callers (contract Decision 2) — it comes neither from the document
+  (cancelled B-2) nor from the caller. Admins included; see contract §B.7.
+- `accessPolicy.*` must be stripped from every response regardless of bundle (contract §B.4). The
+  fallback path retrieves whole `_source` objects, so this is the ticket where an enforcement-input
+  field would otherwise be handed back to the caller.
+- Bundle definitions must be generated from, or checked against, contract §B — the same source D-3
+  builds its FLS grant from. Two hand-maintained lists will diverge, and the divergence will only be
+  visible in whichever environment runs the fallback.
 
 **Dependencies**: E-2, D-1.
 **Size**: M
@@ -1315,7 +1455,7 @@ from hit `_source` objects before returning the response.
 **Acceptance criteria**:
 - When `securityMode == "fallback"`:
   - Client DSL processed by `SearchQueryMediator.mediate(clientDsl, ctx)` before ES submission.
-  - Response processed by `ResponseFieldFilter.applyProfile(...)` before returning to caller.
+  - Response processed by `ResponseFieldFilter.apply(...)` before returning to caller.
 - When `securityMode == "none"`: existing behavior unchanged.
 - Both `searchDatasets` (L212) and `searchDatasetsStream` (L230) updated.
 - `DatasetResource` callers at L425 and L439 updated to pass `duosUser` → resolved
@@ -1340,14 +1480,15 @@ mediator and response filter.
 **Acceptance criteria**:
 - `SearchQueryMediator` tests: DSL passthrough for ADMIN, correct `bool.must` injection for each
   non-admin role/dimension.
-- `ResponseFieldFilter` tests: field stripping per profile, ADMIN bypass, nested field handling
-  (`study.dataCustodianEmail`), null/missing source fields are not errors.
+- `ResponseFieldFilter` tests: the same allowlist is applied to every caller including ADMIN;
+  nested SEARCH-VISIBLE fields such as `study.dataCustodianEmail` are retained; INTERNAL fields and
+  unknown fields are removed; null/missing source fields are not errors.
 - Negative test: client DSL with injected `_source` override does not expose restricted fields
   after full mediation pipeline.
 
 **Implementation notes**:
 - Use `JSONAssert` or Jackson-based assertions for comparing query structure.
-- Test the full pipeline end-to-end: `mediate(...)` → mock response JSON → `applyProfile(...)` →
+- Test the full pipeline end-to-end: `mediate(...)` → mock response JSON → `apply(...)` →
   assert final field set.
 
 **Dependencies**: E-4.
@@ -1485,8 +1626,8 @@ access-policy grounds should be cleaned up.
 
 **Implementation notes**:
 - `BucketUtils.ts:L337` — inspect the query for any visibility-related terms.
-- `DACDatasets.jsx:L52` — verify it does not filter by DAC membership client-side (the server
-  handles this via auth context for CHAIRPERSON callers after F-1).
+- `DACDatasets.jsx:L52` — document any DAC filtering it performs. The server does **not** grant read
+  access from DAC membership or chair status; contract rows 9–10 defer that expansion.
 
 **Dependencies**: G-1, F-1.
 **Size**: M
@@ -1644,7 +1785,7 @@ it affects users.
 ```
 A-1 → A-2 → A-3
                ↓                      ↓
-    B-1→B-2→B-3→B-4→B-5→B-6    C-1→C-2→C-3
+    B-1→B-3→B-4→B-5→B-6         C-1→C-2→C-3
                  ↓                      ↓
           D-1→D-2→D-3→D-4→D-5  (or  E-1→E-2→E-3→E-4→E-5)
                           ↓
@@ -1664,17 +1805,17 @@ supports DLS/FLS.
 | Task | Size | Owner |
 | --- | --- | --- |
 | 0.1 Confirm target Elasticsearch edition, DLS/FLS availability, API-key/run-as support, and operational model for per-request credentials | S | Infra + Backend |
-| 0.2 Define formal access contract: enumerate all dimensions (publicVisibility, ADMIN, creator, custodian, DAC, institution, allowlist, policy tags) and decide which are document-level vs. field-level | S | Backend (policy lead) |
+| 0.2 Define formal access contract — **done and unblocked**: [`es-access-contract.md`](es-access-contract.md). Remaining OPEN items are proposed behavior changes, each defaulting to preserve-today, so Phase 1 can start | S → L | Backend (policy lead) |
 | 0.3 Inventory storage gaps: determine which new dimensions (institution allowlists, explicit user/group lists, policy tags) lack persistent backing and decide whether they go in existing Study/Dataset properties, new DB tables, or external config | M | Backend + DB |
 
 ### Phase 1 — Index Schema and Indexing Pipeline
 
-*~Parallel with Phase 0 once contract is defined. Steps 1.1→1.2→1.3 are sequential; 1.4–1.6 parallel after 1.3.*
+*~Parallel with Phase 0 once contract is defined. Steps 1.1→1.3 are sequential; 1.4–1.6 run in parallel after 1.3. Cancelled step 1.2 is retained below only as a decision record.*
 
 | Task | Size | Owner |
 | --- | --- | --- |
-| 1.1 Add `accessPolicy` nested object to `DatasetTerm` carrying all DLS-needed fields: `publicVisibility`, `creatorUserId`, `creatorEmail`, `custodianEmails`, `datasetCreatorUserId`, `dacId`, `dacApproval`, `allowedInstitutionIds`, `allowedPrincipalIds`, `policyTags` | M | Backend |
-| 1.2 Add field-access profile marker to `DatasetTerm` to control FLS (e.g. `fieldAccessProfile: "public" \| "privileged"`) | S | Backend (depends on 1.1) |
+| 1.1 Add `accessPolicy` nested object to `DatasetTerm` carrying the DLS-needed fields the contract authorizes: `publicVisibility`, `hasStudy`, `datasetCreatorUserId`, `studyCreatorUserId`, `custodianEmails`, `dacId`. The speculative allowlist/tag fields are held back pending OPEN-5 | M | Backend |
+| ~~1.2 Add field-access profile marker to `DatasetTerm` to control FLS~~ — **cancelled**: ES cannot select a field grant per document, and a request-wide caller-specific privileged bundle leaks fields from unrelated public documents. Search uses one allowlist for every caller (contract Decision 2) | — | — |
 | 1.3 Update `ElasticSearchService.toDatasetTerm` and `toStudyTerm` to populate all new `accessPolicy` fields from Dataset/Study/User data | M | Backend (depends on 1.1 and 0.3) |
 | 1.4 Update all reindex trigger paths (dataset registration, dataset update, study update, DAC externalization, explicit reindex endpoint) to ensure `accessPolicy` is always current | M | Backend (depends on 1.3) |
 | 1.5 Design versioned index migration: new index name + Elasticsearch alias cutover + full background reindex strategy; write the reindex script/job | M | Backend + Infra (depends on 1.3) |
@@ -1686,9 +1827,9 @@ supports DLS/FLS.
 
 | Task | Size | Owner |
 | --- | --- | --- |
-| 2.1 Create `DatasetSearchAuthContext` (or similar) that resolves an authenticated `DuosUser` into: userId, email, institutionId, global roles, DAC memberships by dacId, DAC chair scopes, and any policy-tag grants | M | Backend |
+| 2.1 Create `DatasetSearchAuthContext` (or similar) with only the currently enforced inputs: userId, unnormalized email, and global roles. Do not resolve DAC, institution, allowlist, or policy-tag context until a signed-off requirement consumes it | M | Backend |
 | 2.2 Normalize existing Consent read rules from `DatasetService.verifyPublicVisibilityAccess` / `canReadStudy` / `isCreatorOrCustodian` into a shared policy evaluator usable by both search mediation and native DLS role generation; avoid duplicating the logic | S | Backend (depends on 2.1) |
-| 2.3 Unit-test auth context for each role/dimension combination: ADMIN, public reader, creator, custodian, DAC chair, institution-restricted, explicit allowlist | M | Backend (depends on 2.1, 2.2) |
+| 2.3 Unit-test auth context and policy evaluation for ADMIN, public reader, dataset creator, study creator, and custodian; add negative cases proving DAC membership/chair status and institution alone grant no access | M | Backend (depends on 2.1, 2.2) |
 
 ### Phase 3A — Native Elasticsearch DLS/FLS Path
 
@@ -1696,11 +1837,11 @@ supports DLS/FLS.
 
 | Task | Size | Owner |
 | --- | --- | --- |
-| 3A.1 Extend `ElasticSearchConfiguration` with security-mode flag, impersonation/API-key settings, and field-security profile definitions | S | Backend + Infra |
+| 3A.1 Extend `ElasticSearchConfiguration` with security-mode flag, impersonation/API-key settings, and the single SEARCH-VISIBLE field allowlist | S | Backend + Infra |
 | 3A.2 Update `ElasticSearchSupport` to support per-request credential construction: either generate API keys with inline role descriptors or set run-as headers from a privileged service account | L | Backend (depends on 2.1, 3A.1) |
 | 3A.3 Build role/query descriptor generator that translates `DatasetSearchAuthContext` into Elasticsearch DLS query (wrapping index's `accessPolicy` fields) and FLS field-grant list | L | Backend (depends on 2.2, 3A.2) |
 | 3A.4 Wire per-request credentials into `ElasticSearchService.searchDatasets` and `searchDatasetsStream` so they use the secured client rather than the shared service credential | M | Backend (depends on 3A.3) |
-| 3A.5 Add integration tests against a security-enabled Elasticsearch instance to validate DLS and FLS enforcement: document filtering, field omission, and admin bypass | L | Backend + QA (depends on 3A.4) |
+| 3A.5 Add integration tests against a security-enabled Elasticsearch instance to validate DLS and FLS enforcement: document filtering, field omission, and admin document-bypass — asserting that the admin bypass is document-scoped only and that no caller receives `accessPolicy` or the dynamic maps | L | Backend + QA (depends on 3A.4) |
 
 ### Phase 3B — Compatibility Fallback
 
@@ -1709,10 +1850,10 @@ supports DLS/FLS.
 | Task | Size | Owner |
 | --- | --- | --- |
 | 3B.1 Build `SearchQueryMediator` that accepts client DSL, strips unsafe response-shaping surfaces (`_source`, `docvalue_fields`, `script_fields`, `explain`, `profile`), and wraps the client query inside a server-built `bool` filter | M | Backend |
-| 3B.2 Add mandatory authorization filter injection to `SearchQueryMediator` using `DatasetSearchAuthContext`: emit a `must` bool clause enforcing publicVisibility/creator/custodian/DAC/institution constraints as Elasticsearch terms/bool queries against indexed `accessPolicy` fields | L | Backend (depends on 2.1, 3B.1) |
-| 3B.3 Add server-managed field allowlist per caller profile applied to search responses; strip sensitive fields server-side, not in the client | M | Backend (depends on 3B.2) |
+| 3B.2 Add mandatory authorization filter injection to `SearchQueryMediator` using `DatasetSearchAuthContext`: emit a `must` bool clause enforcing publicVisibility / no-study / dataset-creator / study-creator / custodian as terms queries against indexed `accessPolicy` fields. **No DAC or institution clause** — contract rows 9–12 are DEFERred and adding them expands authorization | L | Backend (depends on 2.1, 3B.1) |
+| 3B.3 Add the server-managed field allowlist (contract §B, one bundle for all callers) to search responses; strip internal fields server-side, not in the client, and apply it to admins too | M | Backend (depends on 3B.2) |
 | 3B.4 Wire `SearchQueryMediator` into both `searchDatasets` and `searchDatasetsStream` in `ElasticSearchService` | S | Backend (depends on 3B.2, 3B.3) |
-| 3B.5 Unit-test `SearchQueryMediator` for each access dimension and confirm sensitive fields are absent from responses, not blanked on the client side | M | Backend (depends on 3B.4) |
+| 3B.5 Unit-test `SearchQueryMediator` for each enforced dimension, add negative DAC/institution cases, and confirm INTERNAL fields are absent from responses rather than blanked on the client side | M | Backend (depends on 3B.4) |
 
 ### Phase 4 — API Hardening and Long-term Contract
 
@@ -1759,9 +1900,10 @@ support. Phases 3B and 4.2/4.3 can be deferred if the cluster unambiguously supp
   `accessPolicy` metadata and backend-generated per-request Elasticsearch auth context.
 - **Required fallback**: server-owned query mediation and field allowlisting if native cluster
   capabilities or rollout timing block immediate DLS/FLS adoption.
-- **Included scope**: `publicVisibility` enforcement on the server side, explicit allow lists,
-  institution restrictions, DAC-scoped access, policy tags/system-defined criteria, streaming
-  endpoint behavior, reindex strategy, testing, and duos-ui alignment.
+- **Included scope**: `publicVisibility`, creator, and custodian enforcement on the server side;
+  explicit inventory and deferral of institution, DAC, principal-allowlist, and policy-tag access;
+  streaming endpoint behavior, reindex strategy, testing, and duos-ui alignment. Deferred dimensions
+  become enforcement scope only after their OPEN decision is approved.
 - **Excluded scope**: redesign of non-search Consent endpoints, unrelated UI behavior changes, and
   implementation of arbitrary policy-authoring UX unless policy storage gaps force a minimal
   admin/data-model addition.
@@ -1774,10 +1916,11 @@ support. Phases 3B and 4.2/4.3 can be deferred if the cluster unambiguously supp
 1. **Search API direction**: Option A — harden existing raw-DSL endpoints first for compatibility.
    Option B — add a server-owned search API in parallel and migrate clients over time.
    Recommendation: do both, but treat the server-owned API as the long-term destination.
-2. **Field-level policy granularity**: Option A — role/profile-based field bundles (e.g.
-   `public-reader` vs `privileged-reader`). Option B — fully policy-tag-driven per-document field
-   exposure. Recommendation: start with profile-based bundles to control complexity, then evolve to
-   tag-driven rules if required.
+2. **Field-level policy granularity**: the current contract deliberately has one SEARCH-VISIBLE
+   bundle for every caller. Role/profile-based or policy-tag-driven field exposure would be
+   document-scoped for creators and custodians and therefore cannot be implemented safely by native
+   FLS in a single search. If that requirement appears, reopen Decision 2 and use application-owned
+   per-document projection rather than adding another FLS profile.
 3. **Institution restrictions source of truth**: Option A — user institution alone. Option B —
    institution plus library-card or other status-derived qualifiers. Recommendation: separate
    identity context from eligibility state so document policy remains stable even if login checks

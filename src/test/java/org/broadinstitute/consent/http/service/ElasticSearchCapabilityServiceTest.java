@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -55,8 +56,9 @@ class ElasticSearchCapabilityServiceTest {
   private static final String INVALIDATE_KEY = "DELETE /_security/api_key";
   private static final String CREATE_ROLE = "PUT /_security/role";
   private static final String DELETE_ROLE = "DELETE /_security/role";
+  private static final String REST_CLIENT_VERSION_PROPERTY = "elasticsearch.rest.client.version";
   private static final String COUNT = "/dataset/_count";
-  private static final String SEARCH = "/dataset/_search?size=1";
+  private static final String SEARCH = "/dataset/_search?size=1&track_total_hits=true";
 
   private static final String ROOT_BODY =
       """
@@ -86,6 +88,11 @@ class ElasticSearchCapabilityServiceTest {
 
   private ElasticSearchCapabilityService service() throws IOException {
     stubClient(esClient, this::keyFor);
+    return new ElasticSearchCapabilityService(esClient, config, this::apiKeyClient);
+  }
+
+  /** For the checks that never reach the cluster, so the client stub would go unused. */
+  private ElasticSearchCapabilityService serviceWithoutClientStubs() {
     return new ElasticSearchCapabilityService(esClient, config, this::apiKeyClient);
   }
 
@@ -1617,6 +1624,49 @@ class ElasticSearchCapabilityServiceTest {
     ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
 
     assertTrue(report.restClientCompatibility().contains("Major-version skew"));
+  }
+
+  /**
+   * Guards the pom wiring rather than the Java. The client version is read from the shaded jar's
+   * missing manifest in every deployed environment, so {@code mvn.properties} is the only source
+   * that survives packaging — and it only carries the version because the pom declares it as a
+   * property instead of inline on the dependency. Inlining it again would silently return the
+   * report to "Could not determine" in exactly the environments it is used to make a decision in,
+   * and nothing else in the suite would notice.
+   */
+  @Test
+  void testRestClientVersionSurvivesPackagingAsABuildProperty() {
+    String version = serviceWithoutClientStubs().buildProperty(REST_CLIENT_VERSION_PROPERTY);
+
+    assertNotNull(
+        version,
+        "elasticsearch.rest.client.version is missing from mvn.properties; it must be declared as a "
+            + "pom property (not inline on the dependency) and listed in src/test/resources/"
+            + "mvn.properties, which shadows the generated file on the test classpath");
+    assertTrue(version.matches("\\d+\\.\\d+.*"), "expected a version number, got: " + version);
+  }
+
+  @Test
+  void testUnknownBuildPropertyIsReportedAsAbsentRatherThanThrowing() {
+    assertNull(serviceWithoutClientStubs().buildProperty("no.such.property"));
+  }
+
+  @Test
+  void testMatchingMajorVersionNamesTheResolvedClientVersion() throws IOException {
+    stubSecurityDisabledCluster();
+    String clientMajor =
+        serviceWithoutClientStubs().buildProperty(REST_CLIENT_VERSION_PROPERTY).split("\\.")[0];
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":"duos-cluster","version":{"number":"%s.0.0","build_flavor":"default"}}"""
+            .formatted(clientMajor));
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.restClientCompatibility().startsWith("Compatible:"));
+    assertFalse(report.restClientCompatibility().contains("Could not determine"));
   }
 
   private record StubResponse(int status, String body) {}
