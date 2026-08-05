@@ -15,7 +15,7 @@ get:
 
     This mode is non-destructive: nothing is created, modified, or deleted on the cluster. The
     trade-off is certainty — DLS, FLS, and API-key support can only be proven by creating a role
-    or a key, so here those verdicts are inferred from the license tier and cluster settings and
+    or a key, so here those verdicts are inferred from the license tier, license status, and cluster settings and
     are returned with an INFERRED_ verdict. Only run_as and X-Pack Security itself are reported as
     observed fact.
 
@@ -83,6 +83,10 @@ post:
 
     Where security is disabled there is nothing to probe, so the probes are skipped and a note in
     the response says they were requested but not run.
+
+    Neither mode changes the cluster's license tier. Where DLS/FLS comes back LICENSE_BLOCKED, GET
+    /api/elasticSearch/license reports whether a trial that would include it is still available, and
+    POST /api/elasticSearch/license/trial is the separate, deliberate step that starts one.
   tags:
     - Admin
   parameters:

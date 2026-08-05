@@ -676,6 +676,10 @@ paths:
     $ref: './paths/adminFeatureById.yaml'
   /api/elasticSearch/capabilities:
     $ref: './paths/elasticSearchCapabilities.yaml'
+  /api/elasticSearch/license:
+    $ref: './paths/elasticSearchLicense.yaml'
+  /api/elasticSearch/license/trial:
+    $ref: './paths/elasticSearchLicenseTrial.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
@@ -1154,9 +1158,9 @@ paths:
       description: |
         A detailed description of the various subsystem statuses that Consent relies upon.
         Current systems include:
+          * ECM
           * Elastic Search
           * GCS
-          * Ontology
           * Postgres DB
           * Sam
           * Sendgrid

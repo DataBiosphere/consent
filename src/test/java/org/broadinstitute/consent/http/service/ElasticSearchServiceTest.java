@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -19,6 +20,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -67,6 +72,7 @@ import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
+import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
@@ -81,6 +87,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class ElasticSearchServiceTest extends AbstractTestHelper {
@@ -274,12 +281,86 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     ElasticSearchService elasticSearchSpy = spy(service);
 
-    jakarta.ws.rs.core.Response response =
-        elasticSearchSpy.indexStudy(datasetRecord.study.getStudyId());
-    // Ensure that the synchronous method was called with the expected parameters
-    verify(elasticSearchSpy, timeout(1000))
-        .synchronizeDatasetListInESIndex(List.of(datasetRecord.dataset));
-    assertEquals(200, response.getStatus());
+    Logger logger = (Logger) LoggerFactory.getLogger(elasticSearchSpy.getClass());
+    Level previousLevel = logger.getLevel();
+    logger.setLevel(Level.INFO);
+    TestAppender appender = new TestAppender();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    appender.reset();
+    logger.addAppender(appender);
+    appender.start();
+    try (jakarta.ws.rs.core.Response response =
+        elasticSearchSpy.indexStudy(datasetRecord.study.getStudyId())) {
+      // Ensure that the synchronous method was called with the expected parameters
+      verify(elasticSearchSpy, timeout(1000))
+          .synchronizeDatasetListInESIndex(List.of(datasetRecord.dataset));
+      assertEquals(200, response.getStatus());
+      List<ILoggingEvent> events = appender.getLoggedEvents();
+      assertTrue(
+          events.stream()
+              .anyMatch(
+                  event ->
+                      event.getLevel() == Level.INFO
+                          && event
+                              .getFormattedMessage()
+                              .equals(
+                                  "Loading datasets for study: %d"
+                                      .formatted(datasetRecord.study.getStudyId()))));
+      assertTrue(
+          events.stream()
+              .anyMatch(
+                  event ->
+                      event.getLevel() == Level.INFO
+                          && event
+                              .getFormattedMessage()
+                              .equals(
+                                  "Loaded 1 datasets for study: %d"
+                                      .formatted(datasetRecord.study.getStudyId()))));
+    } finally {
+      logger.detachAppender(appender);
+      appender.stop();
+      logger.setLevel(previousLevel);
+    }
+  }
+
+  @Test
+  void testIndexStudyLogsWarningOnFailure() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetId(1);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds())).thenReturn(List.of(dataset));
+
+    ElasticSearchService elasticSearchSpy = spy(service);
+    RuntimeException failure = new RuntimeException("synthetic indexing failure");
+    doThrow(failure).when(elasticSearchSpy).synchronizeDatasetListInESIndex(List.of(dataset));
+
+    Logger logger = (Logger) LoggerFactory.getLogger(elasticSearchSpy.getClass());
+    Level previousLevel = logger.getLevel();
+    logger.setLevel(Level.WARN);
+    TestAppender appender = new TestAppender();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    appender.reset();
+    logger.addAppender(appender);
+    appender.start();
+    try (jakarta.ws.rs.core.Response response = elasticSearchSpy.indexStudy(study.getStudyId())) {
+      assertEquals(500, response.getStatus());
+      assertTrue(
+          appender.getLoggedEvents().stream()
+              .anyMatch(
+                  event ->
+                      event.getLevel() == Level.WARN
+                          && event
+                              .getFormattedMessage()
+                              .equals("Exception, unable to index study: 1")
+                          && event.getThrowableProxy() != null));
+    } finally {
+      logger.detachAppender(appender);
+      appender.stop();
+      logger.setLevel(previousLevel);
+    }
   }
 
   @Test

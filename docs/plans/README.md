@@ -12,3 +12,4 @@ Use this directory for documents that describe a proposed path forward, migratio
 | `vodar-plan.md` | Plan for VODAR (View Only Data Access Requests) across duos-ui and consent: a constrained DAR for viewing data without analysis or publication, RADAR auto-approved when the DAC opts in and otherwise sent to normal DAC review. |
 | `dataset-registration-schema-migration-plan.md` | Plan for migrating dataset/study registration away from `dataset-registration-schema_v1.json` backend validation. |
 | `elasticsearch-service-duos-ui-usage.md` | Plan for adding access control to the information in consent's Elasticsearch infrastructure. |
+| `es-security-capability-record.md` | Ticket A-1 record: measured Elasticsearch security capabilities (DLS/FLS/API keys/`run_as`) per environment, and the resulting Epic D / Epic E decision. |

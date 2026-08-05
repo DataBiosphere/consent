@@ -24,6 +24,9 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.models.elastic_search.CapabilityVerdict;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapability;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapabilityReport;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseActivation;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseStatus;
+import org.broadinstitute.consent.http.models.elastic_search.LicenseActivationOutcome;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
@@ -41,6 +44,8 @@ class ElasticSearchCapabilityServiceTest {
   private static final String ROOT = "/";
   private static final String XPACK = "/_xpack";
   private static final String LICENSE = "/_license";
+  private static final String TRIAL_STATUS = "/_license/trial_status";
+  private static final String START_TRIAL = "POST /_license/start_trial?acknowledge=true";
   private static final String SETTINGS =
       "/_cluster/settings?include_defaults=true&flat_settings=true";
   private static final String AUTHENTICATE = "/_security/_authenticate";
@@ -74,6 +79,17 @@ class ElasticSearchCapabilityServiceTest {
   /** Every request the service issued, so teardown can be asserted on rather than assumed. */
   private List<Request> requests;
 
+  /**
+   * Re-stubs to apply the first time a given request is served, keyed the same way as {@link
+   * #stubs}.
+   *
+   * <p>Needed by the trial-activation tests and nothing else: their subject is a call that changes
+   * the cluster, so the license has to read differently after it than before it. A canned response
+   * per endpoint cannot express that, and without it a test could not tell an activation that
+   * worked from one that reported success and changed nothing.
+   */
+  private Map<String, Runnable> sideEffects;
+
   private RestClient keyClient;
   private String activeApiKey;
 
@@ -83,6 +99,7 @@ class ElasticSearchCapabilityServiceTest {
     config.setDatasetIndexName("dataset");
     config.setIndexName("ontology");
     stubs = new HashMap<>();
+    sideEffects = new HashMap<>();
     requests = new java.util.ArrayList<>();
   }
 
@@ -110,6 +127,11 @@ class ElasticSearchCapabilityServiceTest {
               StubResponse stub = stubs.get(key);
               if (stub == null) {
                 throw new IOException("no stub for " + key);
+              }
+              // Removed as it fires, so a request served twice sees the state its first call left.
+              Runnable sideEffect = sideEffects.remove(key);
+              if (sideEffect != null) {
+                sideEffect.run();
               }
               Response response = response(stub.status(), stub.body());
               if (stub.status() >= 300) {
@@ -200,6 +222,10 @@ class ElasticSearchCapabilityServiceTest {
     stubs.put(key, new StubResponse(status, body));
   }
 
+  private void onceServed(String key, Runnable sideEffect) {
+    sideEffects.put(key, sideEffect);
+  }
+
   /**
    * Baseline: a cluster with security switched off, as the local docker-compose one is. X-Pack is
    * still installed and still reports a license — it has shipped in every default distribution
@@ -232,6 +258,11 @@ class ElasticSearchCapabilityServiceTest {
 
   /** A security-enabled cluster; the license tier is what varies between DLS/FLS outcomes. */
   private void stubSecurityEnabledCluster(String licenseType) {
+    stubSecurityEnabledCluster(licenseType, "active");
+  }
+
+  /** A security-enabled cluster; both license tier and status can vary between outcomes. */
+  private void stubSecurityEnabledCluster(String licenseType, String licenseStatus) {
     stub(ROOT, 200, ROOT_BODY);
     stub(
         XPACK,
@@ -242,8 +273,8 @@ class ElasticSearchCapabilityServiceTest {
         LICENSE,
         200,
         """
-        {"license":{"status":"active","type":"%s"}}"""
-            .formatted(licenseType));
+        {"license":{"status":"%s","type":"%s"}}"""
+            .formatted(licenseStatus, licenseType));
     stub(
         SETTINGS,
         200,
@@ -338,6 +369,24 @@ class ElasticSearchCapabilityServiceTest {
         capability(report, "Field-level security (FLS)").verdict());
     assertEquals(CapabilityVerdict.SUPPORTED, capability(report, "X-Pack Security").verdict());
     assertTrue(report.recommendation().contains("Epic D"));
+  }
+
+  @Test
+  void testExpiredQualifyingLicenseBlocksDlsFlsAndNativeRecommendation() throws IOException {
+    stubSecurityEnabledCluster("trial", "expired");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("expired", report.licenseStatus());
+    assertEquals(
+        CapabilityVerdict.LICENSE_BLOCKED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertEquals(
+        CapabilityVerdict.LICENSE_BLOCKED,
+        capability(report, "Field-level security (FLS)").verdict());
+    assertTrue(report.recommendation().contains("Epic E"), report.recommendation());
+    assertTrue(report.recommendation().contains("expired"), report.recommendation());
+    assertFalse(report.recommendation().contains("Epic D (native DLS/FLS) is viable"));
   }
 
   @Test
@@ -1667,6 +1716,293 @@ class ElasticSearchCapabilityServiceTest {
 
     assertTrue(report.restClientCompatibility().startsWith("Compatible:"));
     assertFalse(report.restClientCompatibility().contains("Could not determine"));
+  }
+
+  // ---------------------------------------------------------------------------
+  // License state and trial activation
+  // ---------------------------------------------------------------------------
+
+  /** The three read-only probes a license reading takes, on a cluster of the given tier. */
+  private void stubLicense(String type, String status, Boolean eligibleForTrial) {
+    stub(ROOT, 200, ROOT_BODY);
+    stub(
+        LICENSE,
+        200,
+        """
+        {"license":{"status":"%s","type":"%s"}}"""
+            .formatted(status, type));
+    if (eligibleForTrial != null) {
+      stub(
+          TRIAL_STATUS,
+          200,
+          """
+          {"eligible_to_start_trial":%s}"""
+              .formatted(eligibleForTrial));
+    }
+  }
+
+  private List<Request> activationRequests() {
+    return requestsTo("POST", "/_license/start_trial");
+  }
+
+  @Test
+  void testLicenseStatusReportsBasicAsUnlicensedForDlsFls() throws IOException {
+    stubLicense("basic", "active", true);
+
+    ElasticSearchLicenseStatus license = service().getLicenseStatus();
+
+    assertEquals("duos-cluster", license.clusterName());
+    assertEquals("basic", license.licenseType());
+    assertEquals("active", license.licenseStatus());
+    assertEquals(Boolean.FALSE, license.dlsFlsLicensed());
+    assertEquals(Boolean.TRUE, license.trialAvailable());
+    assertTrue(
+        license.detail().contains("/api/elasticSearch/license/trial"),
+        "a cluster with an unspent trial should be told how to spend it: " + license.detail());
+  }
+
+  /** Reading the license must not change it, which is the whole basis of the GET/POST split. */
+  @Test
+  void testLicenseStatusChangesNothingOnTheCluster() throws IOException {
+    stubLicense("basic", "active", true);
+
+    service().getLicenseStatus();
+
+    assertTrue(activationRequests().isEmpty(), "reading the license started a trial");
+    assertTrue(
+        requests.stream().allMatch(request -> request.getMethod().equals("GET")),
+        "a read-only license reading issued a non-GET request");
+  }
+
+  /**
+   * A tier that includes DLS/FLS still carries the caveat that the cluster setting can switch the
+   * feature off, because a report that omitted it would read as a guarantee it cannot make.
+   */
+  @Test
+  void testLicenseStatusReportsTrialAsLicensedForDlsFlsWithTheSettingCaveat() throws IOException {
+    stubLicense("trial", "active", false);
+
+    ElasticSearchLicenseStatus license = service().getLicenseStatus();
+
+    assertEquals(Boolean.TRUE, license.dlsFlsLicensed());
+    assertEquals(Boolean.FALSE, license.trialAvailable());
+    assertTrue(
+        license.notes().stream().anyMatch(note -> note.contains("dls_fls.enabled")),
+        "a licensed tier is not a promise of enforcement: " + license.notes());
+  }
+
+  /**
+   * The 404 window a freshly-started cluster has before it publishes its self-generated license is
+   * called out by name: read as "this cluster has no license" it would send someone hunting a
+   * configuration problem that does not exist.
+   */
+  @Test
+  void testLicenseStatusExplainsA404AsTheStartupWindow() throws IOException {
+    stubLicense("basic", "active", true);
+    stub(LICENSE, 404, "{}");
+
+    ElasticSearchLicenseStatus license = service().getLicenseStatus();
+
+    assertNull(license.licenseType());
+    assertNull(license.dlsFlsLicensed());
+    assertTrue(
+        license.notes().stream().anyMatch(note -> note.contains("404")),
+        "the startup window must be named: " + license.notes());
+  }
+
+  @Test
+  void testLicenseStatusReportsUnreadableTrialEligibilityAsUnknown() throws IOException {
+    stubLicense("basic", "active", null);
+    stub(
+        TRIAL_STATUS,
+        400,
+        """
+        {"error":{"reason":"no handler found"}}""");
+
+    ElasticSearchLicenseStatus license = service().getLicenseStatus();
+
+    assertEquals("basic", license.licenseType());
+    assertNull(license.trialAvailable(), "unreadable eligibility must not read as ineligible");
+    assertTrue(
+        license.notes().stream().anyMatch(note -> note.contains("trial_status")),
+        "the failed probe must be named: " + license.notes());
+  }
+
+  @Test
+  void testActivateTrialLicenseStartsTheTrialAndReportsWhatItChanged() throws IOException {
+    stubLicense("basic", "active", true);
+    stub(
+        START_TRIAL,
+        200,
+        """
+        {"acknowledged":true,"trial_was_started":true,"type":"trial"}""");
+    // The cluster is on a different tier after the call than before it, which is the point of it.
+    onceServed(
+        START_TRIAL,
+        () -> {
+          stub(
+              LICENSE,
+              200,
+              """
+              {"license":{"status":"active","type":"trial"}}""");
+          stub(
+              TRIAL_STATUS,
+              200,
+              """
+              {"eligible_to_start_trial":false}""");
+        });
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.ACTIVATED, activation.outcome());
+    assertEquals("basic", activation.licenseBefore().licenseType());
+    assertEquals(Boolean.FALSE, activation.licenseBefore().dlsFlsLicensed());
+    assertEquals("trial", activation.licenseAfter().licenseType());
+    assertEquals(Boolean.TRUE, activation.licenseAfter().dlsFlsLicensed());
+    assertEquals(Boolean.FALSE, activation.licenseAfter().trialAvailable());
+    assertEquals(1, activationRequests().size(), "the trial must be requested exactly once");
+    assertFalse(activation.notes().isEmpty(), "an irreversible change must carry its caveats");
+  }
+
+  /**
+   * Asking twice must be safe. The cluster is left alone on the second call rather than asked
+   * again, so the harness and an operator can both call this without having to know whether it
+   * already ran.
+   */
+  @Test
+  void testActivateTrialLicenseLeavesAnAlreadyLicensedClusterAlone() throws IOException {
+    stubLicense("trial", "active", false);
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.ALREADY_LICENSED, activation.outcome());
+    assertEquals(activation.licenseBefore(), activation.licenseAfter());
+    assertTrue(activationRequests().isEmpty(), "an entitled cluster was asked for a trial anyway");
+  }
+
+  /** A spent trial is reported from the cluster's own eligibility flag, without asking it again. */
+  @Test
+  void testActivateTrialLicenseDoesNotAskWhenTheTrialIsSpent() throws IOException {
+    stubLicense("basic", "active", false);
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.TRIAL_UNAVAILABLE, activation.outcome());
+    assertEquals(activation.licenseBefore(), activation.licenseAfter());
+    assertTrue(activationRequests().isEmpty(), "a spent trial was requested anyway");
+  }
+
+  /**
+   * An expired trial is a tier that includes DLS/FLS on paper and enforces nothing, so it must not
+   * be reported as already licensed — the honest answer is that this cluster's trial is gone.
+   */
+  @Test
+  void testActivateTrialLicenseTreatsAnExpiredTrialAsUnavailableRatherThanLicensed()
+      throws IOException {
+    stubLicense("trial", "expired", false);
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.TRIAL_UNAVAILABLE, activation.outcome());
+    assertTrue(activationRequests().isEmpty());
+  }
+
+  /**
+   * Moving a cluster onto a trial without first reading what it is on is a change made blind, so an
+   * unreadable license stops the attempt rather than triggering an optimistic one.
+   */
+  @Test
+  void testActivateTrialLicenseWillNotActBlindOnAnUnreadableLicense() throws IOException {
+    stubLicense("basic", "active", true);
+    stub(LICENSE, 503, "{}");
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.UNKNOWN, activation.outcome());
+    assertTrue(activationRequests().isEmpty(), "a trial was requested with the tier unknown");
+  }
+
+  @Test
+  void testActivateTrialLicenseReportsTheClustersOwnRefusal() throws IOException {
+    stubLicense("basic", "active", true);
+    stub(
+        START_TRIAL,
+        403,
+        """
+        {"trial_was_started":false,"error_message":"Operation failed: cluster is not eligible."}""");
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.REFUSED, activation.outcome());
+    assertTrue(
+        activation.detail().contains("cluster is not eligible"),
+        "the cluster's own words are the finding here: " + activation.detail());
+    assertEquals("basic", activation.licenseAfter().licenseType(), "a refusal changed the tier");
+  }
+
+  /**
+   * A refusal that comes with the cluster reporting no remaining eligibility is trial exhaustion,
+   * and is read from that flag rather than from the wording of the refusal, which a version bump
+   * can change. Eligibility unreadable beforehand is what allows the attempt at all here.
+   */
+  @Test
+  void testActivateTrialLicenseReadsExhaustionFromEligibilityRatherThanTheMessage()
+      throws IOException {
+    stubLicense("basic", "active", null);
+    stub(
+        TRIAL_STATUS,
+        400,
+        """
+        {"error":{"reason":"no handler found"}}""");
+    stub(
+        START_TRIAL,
+        403,
+        """
+        {"trial_was_started":false,"error_message":"Operation failed: Trial was already activated."}""");
+    onceServed(
+        START_TRIAL,
+        () ->
+            stub(
+                TRIAL_STATUS,
+                200,
+                """
+                {"eligible_to_start_trial":false}"""));
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.TRIAL_UNAVAILABLE, activation.outcome());
+    assertTrue(activation.detail().contains("already activated"), activation.detail());
+  }
+
+  /**
+   * A cluster that never answers the activation leaves the outcome genuinely open: reporting a
+   * failure would claim the tier is unchanged, which this response cannot establish.
+   */
+  @Test
+  void testActivateTrialLicenseReportsAnUnansweredActivationAsUnknown() throws IOException {
+    stubLicense("basic", "active", true);
+    // No stub for the activation, which is how a transport failure surfaces in this harness.
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.UNKNOWN, activation.outcome());
+    assertTrue(
+        activation.detail().contains("/api/elasticSearch/license"),
+        "the caller has to be told to read the license back: " + activation.detail());
+    assertEquals(1, activationRequests().size());
+  }
+
+  /**
+   * The capability report is a reader, not a writer. Whatever it finds, it must not reach for the
+   * trial that would make its own DLS/FLS verdict come out better.
+   */
+  @Test
+  void testCapabilityReportNeverActivatesTheTrial() throws IOException {
+    stubSecurityEnabledCluster("basic");
+
+    service().getCapabilityReport(null, false);
+
+    assertTrue(activationRequests().isEmpty(), "the capability report started a trial license");
   }
 
   private record StubResponse(int status, String body) {}

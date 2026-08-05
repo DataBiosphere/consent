@@ -102,6 +102,39 @@ cluster can store a DLS query and ignore it at search time, so acceptance is not
 distribution from `GET /` and is otherwise scoped to Elasticsearch deployments; every environment
 in the inventory below runs Elasticsearch.
 
+### Changing the license tier is a separate endpoint
+
+Neither capability mode touches the cluster's license. Where DLS/FLS comes back `LICENSE_BLOCKED`, the
+only tier a self-managed cluster can reach by API call that includes it is the 30-day trial, and
+starting that trial is its own admin call:
+
+```shell
+# What tier is this cluster on, and does it still have a trial to spend? Read-only.
+curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    'https://<env-host>/api/elasticSearch/license' | jq
+
+# Start it. acknowledge=true is required; without it the call is refused with 400 and the cluster is
+# never contacted.
+curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    'https://<env-host>/api/elasticSearch/license/trial?acknowledge=true' | jq
+```
+
+The separation is deliberate, and it is the part to keep if this work is refactored. A capability
+report that activated a trial in order to make its own DLS/FLS verdict come out `SUPPORTED` would be
+measuring a cluster it had itself altered — and would spend, irreversibly and once per major version per cluster, a
+trial nobody asked it to spend. So the report reads and the activation writes, and the two are
+different calls with different guards.
+
+Read `outcome` rather than the status code: `ACTIVATED` is the only value that changed anything.
+`ALREADY_LICENSED` and `TRIAL_UNAVAILABLE` both mean the cluster was left alone, which is what makes
+the call safe to repeat. `license_before` and `license_after` record what the call moved the cluster
+between.
+
+Worth being blunt about the limits of the guard: an admin who has read `trial_available: true` on a
+production cluster and then posts with `acknowledge=true` will spend that cluster's trial, and nothing
+will give it back. The endpoint makes that a decision rather than an accident; it does not make it
+reversible. Treat a production activation as an infra change, not a diagnostic.
+
 ## Environment inventory
 
 ### Local (rendered `config/docker-compose.yaml`) — measured 2026-07-29 with the write probes
@@ -179,9 +212,10 @@ Two things that trip people up, both consequences of state that outlives a compo
 
 - The self-generated license type only takes effect **the first time a cluster forms**. On an existing
   `elastic` volume that already registered a `basic` license, editing the compose file changes
-  nothing; activate the trial once by hand:
+  nothing; activate the trial once, either through the admin endpoint or straight at the cluster:
 
   ```shell
+  curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true' | jq
   curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
   ```
 

@@ -87,7 +87,19 @@ run. Two things make it work, and they have to agree:
 DLS and FLS are Platinum features, so the stanza self-generates a 30-day **trial** license via
 `xpack.license.self_generated.type`. That setting only applies the first time a cluster forms. If
 your `elastic` data volume predates it, the cluster keeps its `basic` license and DLS/FLS come back
-`LICENSE_BLOCKED`; activate the trial once, by hand:
+`LICENSE_BLOCKED`. Activating the trial is a separate, deliberate step — never something a
+capability probe does on your behalf — and Consent exposes it as an admin endpoint, so it works the
+same way here as it does against a deployed cluster:
+
+```bash
+# What tier is this cluster on, and does it still have a trial to spend?
+curl -s -X GET  'localhost:8000/api/elasticSearch/license'
+# Start it. acknowledge=true is required: one trial per cluster, and it cannot be reverted.
+curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
+```
+
+Both need an Admin bearer token. Straight at the cluster works too, and is the quicker path when
+Consent is not running:
 
 ```bash
 curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
@@ -127,8 +139,10 @@ An example docker-compose stanza for elastic:
       - xpack.security.enabled=${ES_SECURITY_ENABLED:-true}
       # DLS/FLS is a Platinum feature, so self-generate a trial rather than the default basic
       # license. Only applies the first time a cluster forms — on an existing `elastic` volume,
-      # activate it by hand instead:
+      # activate it by hand instead, once per major version per cluster, either through Consent's
+      # admin endpoint or straight at the cluster:
       #
+      #   curl -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
       #   curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
       - xpack.license.self_generated.type=${ES_LICENSE_TYPE:-trial}
       # Bootstraps the `elastic` superuser password when security is on; ignored when it is off.
@@ -157,18 +171,31 @@ HTTP 403 `current license is non-compliant for [field and document level securit
 `POST /_security/api_key` *accepts* such a role descriptor at creation time — the rejection happens
 later, on the search request.
 
-Activate the 30-day trial license once the secured cluster is up:
+Activate the 30-day trial license once the secured cluster is up, either through Consent's admin
+endpoint or against the cluster directly:
 
 ```bash
+# Through Consent (Admin bearer token required); reports what it changed, and refuses without
+# acknowledge=true because the trial can be started once per major version per cluster.
+curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
+
+# Or straight at the cluster.
 curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
 curl -u elastic:devpassword 'localhost:9200/_license'   # => "type": "trial"
 ```
 
+Either way it is a step you take, not one that happens while you are asking a different question:
+`GET`/`POST /api/elasticSearch/capabilities` reports the license tier and never changes it, and the
+container tests activate the trial from the `@BeforeAll` of the classes that need it rather than from
+their shared harness.
+
 Caveats:
 
-- A trial can be started **once per cluster** (`GET /_license/trial_status` reports eligibility).
-  After 30 days the license reverts to basic and DLS/FLS stops working. To get another trial, wipe
-  the cluster's data volume: `docker-compose -p consent -f config/docker-compose.yaml down` then
+- A trial can be started **once per major version per cluster** (`GET /api/elasticSearch/license` reports eligibility
+  as `trial_available`, as does `GET /_license/trial_status` on the cluster).
+  After 30 days the license reverts to basic and DLS/FLS stops working. For another trial on
+  the same major version, wipe the cluster's data volume; after a major-version upgrade, check
+  trial_available because the cluster may be eligible again: `docker-compose -p consent -f config/docker-compose.yaml down` then
   `docker volume rm consent_elastic` (this deletes local indices — they must be re-indexed).
 - Authentication, role-based access control, and API keys all work fine on the basic license. Only
   the DLS/FLS grants require trial/Platinum.

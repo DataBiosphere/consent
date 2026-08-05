@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.CounterService;
+import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -130,6 +134,43 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     Timestamp oldTimestamp = new Timestamp(old.getTime());
     assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
     assertEquals(List.of(dataset.getDatasetId()), updatedDar.getDatasetIds());
+  }
+
+  @Test
+  void transactionRollsBackDataAccessRequestWhenDatasetInsertFails() {
+    User user = createUser();
+    String referenceId = UUID.randomUUID().toString();
+    counterDAO.addCounter(CounterService.DAR_COUNTER, 0);
+
+    assertThrows(
+        JdbiException.class,
+        () ->
+            serviceDAO.inTransaction(
+                transactionDAOs -> {
+                  transactionDAOs.counterDAO().incrementCountByName(CounterService.DAR_COUNTER);
+                  Integer collectionId =
+                      transactionDAOs
+                          .darCollectionDAO()
+                          .insertDarCollection("DAR-ROLLBACK", user.getUserId(), new Date());
+                  transactionDAOs
+                      .dataAccessRequestDAO()
+                      .insertDataAccessRequest(
+                          collectionId,
+                          referenceId,
+                          user.getUserId(),
+                          new Date(),
+                          new Date(),
+                          new Date(),
+                          new DataAccessRequestData(),
+                          user.getEraCommonsId());
+                  transactionDAOs
+                      .dataAccessRequestDAO()
+                      .insertAllDarDatasets(List.of(new DarDataset(referenceId, -1)));
+                  return null;
+                }));
+
+    assertNull(dataAccessRequestDAO.findByReferenceId(referenceId));
+    assertEquals(1, counterDAO.incrementCountByName(CounterService.DAR_COUNTER));
   }
 
   private Dataset createDataset() {

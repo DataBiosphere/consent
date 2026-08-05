@@ -429,14 +429,15 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDataset() {
+  void testUpdateDatasetByDatasetIdUpdatesNameAuditFieldsAndDac() {
     Dataset d = insertDataset();
     Dac dac = insertDac();
     String name = randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
     User user = createUser();
 
-    datasetDAO.updateDataset(d.getDatasetId(), name, now, user.getUserId(), dac.getDacId());
+    datasetDAO.updateDatasetByDatasetId(
+        d.getDatasetId(), name, now, user.getUserId(), dac.getDacId());
     Dataset updated = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(name, updated.getName());
@@ -903,13 +904,13 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(new Date().getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset1.getDatasetId(),
         dataset1.getDatasetName(),
         timestamp,
         user.getUserId(),
         dac1.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset2.getDatasetId(),
         dataset2.getDatasetName(),
         timestamp,
@@ -917,13 +918,13 @@ class DatasetDAOTest extends DAOTestHelper {
         dac1.getDacId());
 
     Dac dac2 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset3.getDatasetId(),
         dataset3.getDatasetName(),
         timestamp,
         user.getUserId(),
         dac2.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset4.getDatasetId(),
         dataset4.getDatasetName(),
         timestamp,
@@ -982,13 +983,13 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(new Date().getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset1.getDatasetId(),
         dataset1.getDatasetName(),
         timestamp,
         user.getUserId(),
         dac1.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset2.getDatasetId(),
         dataset2.getDatasetName(),
         timestamp,
@@ -996,13 +997,13 @@ class DatasetDAOTest extends DAOTestHelper {
         dac1.getDacId());
 
     Dac dac2 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset3.getDatasetId(),
         dataset3.getDatasetName(),
         timestamp,
         user.getUserId(),
         dac2.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset4.getDatasetId(),
         dataset4.getDatasetName(),
         timestamp,
@@ -1092,13 +1093,13 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(new Date().getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset1.getDatasetId(),
         dataset1.getDatasetName(),
         timestamp,
         user.getUserId(),
         dac1.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset2.getDatasetId(),
         dataset2.getDatasetName(),
         timestamp,
@@ -1146,13 +1147,13 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(now.getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset1.getDatasetId(),
         dataset1.getDatasetName(),
         timestamp,
         chairperson1.getUserId(),
         dac1.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset2.getDatasetId(),
         dataset2.getDatasetName(),
         timestamp,
@@ -1164,13 +1165,13 @@ class DatasetDAOTest extends DAOTestHelper {
         true, Instant.now(), chairperson1.getUserId(), dataset2.getDatasetId());
 
     Dac dac2 = insertDac();
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset3.getDatasetId(),
         dataset3.getDatasetName(),
         timestamp,
         chairperson2.getUserId(),
         dac2.getDacId());
-    datasetDAO.updateDataset(
+    datasetDAO.updateDatasetByDatasetId(
         dataset4.getDatasetId(),
         dataset4.getDatasetName(),
         timestamp,

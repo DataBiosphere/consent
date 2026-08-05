@@ -613,6 +613,45 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testPostProgressReportDeletesUploadedDocumentsWhenCreationFails() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(user.getUserId());
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setCollaboratorRequired(true).build());
+    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
+
+    InputStream collaborationInput =
+        IOUtils.toInputStream("synthetic collaboration", Charset.defaultCharset());
+    FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
+    when(collaborationFile.getSize()).thenReturn(1L);
+    when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
+    when(collaborationFile.getType()).thenReturn("text/plain");
+    when(gcsService.storeDocument(any(), eq("text/plain"), any()))
+        .thenReturn(BlobId.of("bucket", "uploaded-collaboration"));
+    doThrow(new BadRequestException("persistence failed"))
+        .when(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser,
+            request,
+            "",
+            "{\"datasetIds\":[1]}",
+            collaborationInput,
+            collaborationFile,
+            null,
+            null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    verify(gcsService).deleteDocument("uploaded-collaboration");
+  }
+
+  @Test
   void testPostProgressReportDelegatesToCreateProgressReport() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     mockProgressReportUserAndParentDar(parentDar);

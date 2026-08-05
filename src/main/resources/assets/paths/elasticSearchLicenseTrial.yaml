@@ -1,0 +1,71 @@
+post:
+  summary: Activate the Elasticsearch trial license
+  operationId: apiElasticSearchLicenseTrialPost
+  description: |
+    Start the 30-day trial license on the Elasticsearch cluster this deployment is configured against
+    — the only tier a self-managed cluster can reach by API call that includes document- and
+    field-level security. Requires Admin role.
+
+    An independent step, not a stage of any capability probe. GET/POST
+    /api/elasticSearch/capabilities reports whether the cluster is entitled to DLS/FLS and never
+    changes that entitlement; changing it is this call, made deliberately, per environment. A report
+    that quietly moved a cluster onto a trial in order to make its own DLS/FLS verdict come out
+    better would be measuring a cluster it had itself altered.
+
+    **acknowledge=true is required.** A trial can be started only once per major version per cluster and cannot be reverted, so a bare POST is refused with 400 rather than honored. Read GET
+    /api/elasticSearch/license first: it reports whether this cluster needs a trial and whether it
+    still has one to spend.
+
+    Safe to repeat. A cluster already entitled to DLS/FLS is reported as ALREADY_LICENSED and left
+    alone; one whose trial is spent is reported as TRIAL_UNAVAILABLE rather than asked again. Only the
+    first successful call for a given cluster and major version can return ACTIVATED.
+
+    When the trial expires 30 days later the cluster falls back to its basic license and stops
+    permitting DLS/FLS. A search carrying those filters then fails closed rather than returning
+    unfiltered results, so an expiring trial degrades availability rather than confidentiality.
+  tags:
+    - Admin
+  parameters:
+    - name: acknowledge
+      in: query
+      description: |
+        Must be true. Acknowledges that this changes the cluster's license tier, can be done only
+        once per major version per cluster, and cannot be reverted.
+      required: true
+      schema:
+        type: boolean
+  responses:
+    200:
+      description: |
+        What the call did, with the license state from both sides of it. A 200 does not by itself mean
+        a trial was started — read `outcome`.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ElasticSearchLicenseActivation.yaml'
+    400:
+      description: acknowledge=true was not supplied; the cluster was not contacted
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

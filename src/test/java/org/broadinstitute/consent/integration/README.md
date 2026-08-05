@@ -38,23 +38,36 @@ This means:
 
 [`ElasticSearchContainerTests`](ElasticSearchContainerTests.java) is a separate base class for tests
 that need Elasticsearch document- and field-level security (DLS/FLS). It starts a Testcontainers
-`ElasticsearchContainer` in a static initializer, builds a client through the application's own
-`ElasticSearchSupport.createRestClient`, and activates the trial license. Extend it directly; it is
-independent of `ContainerTests` and does not start the Dropwizard application.
+`ElasticsearchContainer` in a static initializer and builds a client through the application's own
+`ElasticSearchSupport.createRestClient`. Extend it directly; it is independent of `ContainerTests`
+and does not start the Dropwizard application.
 
 Two things are easy to get wrong here:
 
-- **DLS/FLS needs a non-basic license.** Each fresh container self-generates a *basic* license, and
-  a DLS query or FLS field grant is rejected under it with HTTP 403 `current license is
-  non-compliant for [field and document level security]`. The base class activates the 30-day trial
-  in its static initializer. Note that `POST /_security/api_key` accepts a DLS/FLS role descriptor
-  even on a basic license — the rejection only surfaces on the search request.
+- **DLS/FLS needs a non-basic license, and getting one is an explicit step.** Each fresh container
+  self-generates a *basic* license, and a DLS query or FLS field grant is rejected under it with
+  HTTP 403 `current license is non-compliant for [field and document level security]`. A class that
+  needs the trial calls `activateTrialLicense()` from its own `@BeforeAll`; the base class does not
+  do it. That call goes through
+  [`ElasticSearchAdminEndpoints`](ElasticSearchAdminEndpoints.java) to
+  `POST /api/elasticSearch/license/trial`, the same admin endpoint an operator uses against a
+  deployed cluster, so the activation path is itself covered rather than bypassed.
+
+  It reads as ceremony until you notice what the alternative hides: a trial can be started only once
+  per major version per cluster and cannot be reverted, and doing it in the shared harness put that change in the setup
+  of every subclass — including `ElasticSearchBasicLicenseTest`, whose entire subject is what a
+  *basic* license refuses. Repeating the call is safe (the second caller gets `ALREADY_LICENSED`),
+  which is what makes per-class activation practical on a cluster shared per JVM.
+
+  Note that `POST /_security/api_key` accepts a DLS/FLS role descriptor even on a basic license — the
+  rejection only surfaces on the search request.
 - **"Container started" is earlier than "license readable."** Testcontainers considers the container
   ready once the HTTP layer answers on port 9200, but the self-generated basic license reaches the
   cluster state a beat later, and until it does `GET /_license` returns `404` with an empty body.
-  A class that reads or changes the license in its static initializer must call
-  `ElasticSearchTestCluster.awaitLicense(client)` first. The window is about a second on an idle
-  machine and wider during a full test run, where three of these containers boot alongside the
+  A class that reads or changes the license must call
+  `ElasticSearchTestCluster.awaitLicense(client)` first — the base class does, which is also what lets
+  `activateTrialLicense()` read the tier before deciding anything. The window is about a second on an
+  idle machine and wider during a full test run, where three of these containers boot alongside the
   Postgres one — which is why this surfaced as a full-suite-only failure.
 - **The container defaults to HTTPS.** For image versions 8.0.0 and above,
   `ElasticsearchContainer` automatically applies `withPassword("changeme")` and `withCertPath(...)`,
@@ -87,7 +100,7 @@ Four test classes assert all of it, so upgrading Elasticsearch is a one-line cha
 
 | Class | Cluster state | What it protects |
 | --- | --- | --- |
-| [`ElasticSearchSecurityBaselineTest`](ElasticSearchSecurityBaselineTest.java) | secured, trial license | Reported version matches the pin; `build_flavor` is `default` (the OSS flavor has no X-Pack at all); X-Pack security is available and enabled; DLS, FLS and `run_as` roles are accepted; the trial is one-shot; the port serves plain `http` and not TLS |
+| [`ElasticSearchSecurityBaselineTest`](ElasticSearchSecurityBaselineTest.java) | secured, trial license | Reported version matches the pin; `build_flavor` is `default` (the OSS flavor has no X-Pack at all); X-Pack security is available and enabled; DLS, FLS and `run_as` roles are accepted; the trial can be started once per major version per cluster; the port serves plain `http` and not TLS |
 | [`ElasticSearchBasicLicenseTest`](ElasticSearchBasicLicenseTest.java) | secured, **basic** license | A basic license refuses DLS/FLS roles with a 403, plain RBAC still works, an API key carrying a DLS/FLS descriptor is still *accepted*, and the search it is used for **fails closed** rather than returning unrestricted documents |
 | [`ElasticSearchSecurityDisabledTest`](ElasticSearchSecurityDisabledTest.java) | security off | The compose default still answers unauthenticated, still tolerates configured credentials (which is why `consent.yaml` can carry them unconditionally), and serves no TLS |
 | [`ElasticSearchDlsFlsEnforcementTest`](ElasticSearchDlsFlsEnforcementTest.java) | secured, trial license | DLS actually hides non-public documents and FLS actually strips ungranted fields |

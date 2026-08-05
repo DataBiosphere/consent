@@ -17,6 +17,9 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.CapabilityVerdict;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapability;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchCapabilityReport;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseActivation;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseStatus;
+import org.broadinstitute.consent.http.models.elastic_search.LicenseActivationOutcome;
 import org.broadinstitute.consent.http.service.ElasticSearchCapabilityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,6 +121,106 @@ class ElasticSearchCapabilityResourceTest extends AbstractTestHelper {
 
     assertEquals(200, response.getStatus());
     verify(capabilityService).getCapabilityReport("someone-else", true);
+  }
+
+  private ElasticSearchLicenseStatus licenseStatus() {
+    return new ElasticSearchLicenseStatus(
+        "duos-cluster",
+        "basic",
+        "active",
+        false,
+        true,
+        "License 'basic', status 'active'.",
+        List.of("Read-only."));
+  }
+
+  private ElasticSearchLicenseActivation activation() {
+    return new ElasticSearchLicenseActivation(
+        LicenseActivationOutcome.ACTIVATED,
+        "The trial license was started.",
+        licenseStatus(),
+        new ElasticSearchLicenseStatus(
+            "duos-cluster",
+            "trial",
+            "active",
+            true,
+            false,
+            "License 'trial', status 'active'.",
+            List.of()),
+        List.of("A trial can be started only once per major version per cluster."));
+  }
+
+  @Test
+  void testGetLicense() {
+    when(capabilityService.getLicenseStatus()).thenReturn(licenseStatus());
+
+    Response response = resource.getLicense(duosUser);
+
+    assertEquals(200, response.getStatus());
+    assertEquals(licenseStatus(), response.getEntity());
+    verify(capabilityService).getLicenseStatus();
+  }
+
+  /** Reading the license must not be able to change it, whatever else the resource can do. */
+  @Test
+  void testGetLicenseNeverActivatesTheTrial() {
+    when(capabilityService.getLicenseStatus()).thenReturn(licenseStatus());
+
+    resource.getLicense(duosUser);
+
+    verify(capabilityService, never()).activateTrialLicense();
+  }
+
+  @Test
+  void testActivateTrialLicense() {
+    when(capabilityService.activateTrialLicense()).thenReturn(activation());
+
+    Response response = resource.activateTrialLicense(duosUser, true);
+
+    assertEquals(200, response.getStatus());
+    assertEquals(activation(), response.getEntity());
+    verify(capabilityService).activateTrialLicense();
+  }
+
+  /**
+   * The guard that carries the weight here. A trial can be started once per major version per
+   * cluster and cannot be reverted, so an unacknowledged call must be refused before the service —
+   * and therefore the cluster — is reached at all, not merely reported on afterwards.
+   */
+  @Test
+  void testActivateTrialLicenseRequiresAcknowledgement() {
+    Response response = resource.activateTrialLicense(duosUser, null);
+
+    assertEquals(400, response.getStatus());
+    verify(capabilityService, never()).activateTrialLicense();
+  }
+
+  /** An explicit {@code acknowledge=false} is a refusal to acknowledge, not an acknowledgement. */
+  @Test
+  void testActivateTrialLicenseRejectsFalseAcknowledgement() {
+    Response response = resource.activateTrialLicense(duosUser, false);
+
+    assertEquals(400, response.getStatus());
+    verify(capabilityService, never()).activateTrialLicense();
+  }
+
+  @Test
+  void testGetLicenseHandlesServiceFailure() {
+    when(capabilityService.getLicenseStatus()).thenThrow(new RuntimeException("cluster exploded"));
+
+    Response response = resource.getLicense(duosUser);
+
+    assertEquals(500, response.getStatus());
+  }
+
+  @Test
+  void testActivateTrialLicenseHandlesServiceFailure() {
+    when(capabilityService.activateTrialLicense())
+        .thenThrow(new RuntimeException("cluster exploded"));
+
+    Response response = resource.activateTrialLicense(duosUser, true);
+
+    assertEquals(500, response.getStatus());
   }
 
   @Test

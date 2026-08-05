@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
+import org.broadinstitute.consent.http.health.EcmHealthCheck;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
@@ -101,6 +102,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
   public static final String GCS_CHECK = "google-cloud-storage";
   public static final String ES_CHECK = "elastic-search";
+  public static final String ECM_CHECK = "ecm";
   public static final String SAM_CHECK = "sam";
   public static final String SG_CHECK = "sendgrid";
   private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
@@ -150,6 +152,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Health Checks
     env.healthChecks().register(GCS_CHECK, injector.getInstance(GCSHealthCheck.class));
     env.healthChecks().register(ES_CHECK, injector.getInstance(ElasticSearchHealthCheck.class));
+    env.healthChecks().register(ECM_CHECK, injector.getInstance(EcmHealthCheck.class));
     env.healthChecks().register(SAM_CHECK, injector.getInstance(SamHealthCheck.class));
     env.healthChecks().register(SG_CHECK, injector.getInstance(SendGridHealthCheck.class));
 

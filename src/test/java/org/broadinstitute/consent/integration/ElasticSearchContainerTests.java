@@ -1,8 +1,13 @@
 package org.broadinstitute.consent.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 import com.google.gson.JsonObject;
 import org.apache.http.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchLicenseActivation;
+import org.broadinstitute.consent.http.models.elastic_search.LicenseActivationOutcome;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
@@ -34,10 +39,17 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
  *
  * <p>DLS/FLS is a Platinum feature and every fresh container self-generates a <em>basic</em>
  * license, under which a DLS query or FLS field grant is rejected with HTTP 403 {@code current
- * license is non-compliant for [field and document level security]}. The static initializer
- * therefore activates the 30-day trial license before any test runs. Note that {@code POST
+ * license is non-compliant for [field and document level security]}. Note that {@code POST
  * /_security/api_key} accepts a DLS/FLS role descriptor even on a basic license — the rejection
  * surfaces later, on the search request.
+ *
+ * <p><b>This class does not activate the trial license.</b> A subclass that needs one calls {@link
+ * #activateTrialLicense()} in a {@code @BeforeAll}, which goes through the admin endpoint the same
+ * way an operator would in a deployed environment. Activating it here instead would put an
+ * irreversible, once-per-major-version-per-cluster license change inside the setup of every
+ * subclass, including the ones whose subject is what a basic license does — and would leave the
+ * license tier of the cluster under test decided by a static initializer nobody reading the test
+ * can see.
  *
  * <p>The {@code elasticsearch} tag is inherited by every subclass and keeps these tests out of the
  * automatic CI run; see {@code excludedTestGroups} in {@code pom.xml}.
@@ -68,12 +80,37 @@ public abstract class ElasticSearchContainerTests {
 
     try {
       // The basic license is published after the container reports ready; see the helper's javadoc.
+      // Waited on here rather than per subclass because activateTrialLicense() reads the license
+      // before deciding anything, and would read the 404 this closes.
       ElasticSearchTestCluster.awaitLicense(CLIENT);
-      // Required before any DLS/FLS grant will be honored; see the class javadoc.
-      jsonResponse(new Request("POST", "/_license/start_trial?acknowledge=true"));
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
+  }
+
+  /**
+   * Puts the shared cluster on the trial license, which is what makes a DLS or FLS grant permitted,
+   * by invoking the admin endpoint {@code POST /api/elasticSearch/license/trial}.
+   *
+   * <p>An explicit step, called from the {@code @BeforeAll} of each class that needs it. The
+   * cluster is shared per JVM, so the first class to run activates the trial and the rest find it
+   * already active — hence the assertion is on the license the cluster ends up with rather than on
+   * which of those two happened.
+   *
+   * @return the endpoint's response, for a test that wants to assert more
+   */
+  protected static ElasticSearchLicenseActivation activateTrialLicense() {
+    ElasticSearchLicenseActivation activation =
+        ElasticSearchAdminEndpoints.activateTrialLicense(CLIENT, CONFIGURATION);
+    assertNotEquals(
+        LicenseActivationOutcome.TRIAL_UNAVAILABLE,
+        activation.outcome(),
+        "this cluster's trial is spent, so DLS/FLS cannot be exercised on it: " + activation);
+    assertEquals(
+        Boolean.TRUE,
+        activation.licenseAfter().dlsFlsLicensed(),
+        "the cluster is not licensed for DLS/FLS after activation: " + activation);
+    return activation;
   }
 
   /**

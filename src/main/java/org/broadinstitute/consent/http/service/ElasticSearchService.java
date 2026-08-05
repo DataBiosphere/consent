@@ -329,9 +329,9 @@ public class ElasticSearchService implements ConsentLogger {
 
   public Response indexStudy(Integer studyId) {
     Study study = studyDAO.findStudyById(studyId);
-    logWarn("Loading datasets for study: %d".formatted(studyId));
+    logInfo("Loading datasets for study: %d".formatted(studyId));
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    logWarn("Loaded %d datasets for study: %d".formatted(datasets.size(), studyId));
+    logInfo("Loaded %d datasets for study: %d".formatted(datasets.size(), studyId));
     datasets.forEach(d -> d.setStudy(study));
     if (datasets.isEmpty()) {
       return Response.status(Status.NOT_FOUND).build();
@@ -339,7 +339,8 @@ public class ElasticSearchService implements ConsentLogger {
     try {
       synchronizeDatasetListInESIndex(datasets);
       return Response.ok().build();
-    } catch (Exception _) {
+    } catch (Exception e) {
+      logWarn("Exception, unable to index study: %d".formatted(studyId), e);
       return Response.status(500, "Indexing failed.").build();
     }
   }
@@ -381,9 +382,9 @@ public class ElasticSearchService implements ConsentLogger {
   public Response indexDatasets(List<Integer> datasetIds) throws IOException {
     // Datasets in list context may not have their study populated, so we need to ensure that is
     // true before trying to index them in ES.
-    logWarn("Fetching %d datasets from database".formatted(datasetIds.size()));
+    logInfo("Fetching %d datasets from database".formatted(datasetIds.size()));
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
-    logWarn("Fetched %d datasets from database".formatted(datasetIds.size()));
+    logInfo("Fetched %d datasets from database".formatted(datasets.size()));
     Map<Integer, Study> studyCache = new HashMap<>();
     datasets.forEach(
         dataset -> {
@@ -392,9 +393,9 @@ public class ElasticSearchService implements ConsentLogger {
                 studyCache.computeIfAbsent(
                     dataset.getStudyId(),
                     k -> {
-                      logWarn("Fetching study id %d from database".formatted(k));
+                      logInfo("Fetching study id %d from database".formatted(k));
                       Study study = studyDAO.findStudyById(k);
-                      logWarn("Study id %d fetched.".formatted(k));
+                      logInfo("Study id %d fetched.".formatted(k));
                       return study;
                     }));
           }
