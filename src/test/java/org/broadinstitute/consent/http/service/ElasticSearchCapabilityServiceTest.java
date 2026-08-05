@@ -35,6 +35,8 @@ import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -205,12 +207,16 @@ class ElasticSearchCapabilityServiceTest {
    * Only the error path builds a {@link ResponseException}, which is what reads the request line;
    * the 2xx path reads just the status and entity. Stubbing the request line only for non-2xx
    * responses keeps every stub read by the test it's created for, so no stub needs to be lenient.
+   *
+   * <p>A null body is an entity-less response, which is a shape a real cluster returns and a
+   * distinct one from an empty JSON body: it is the null the parser has to survive.
    */
   private Response response(int status, String body) {
     Response response = mock(Response.class);
     when(response.getStatusLine())
         .thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, status, "reason"));
-    when(response.getEntity()).thenReturn(new StringEntity(body, ContentType.APPLICATION_JSON));
+    when(response.getEntity())
+        .thenReturn(body == null ? null : new StringEntity(body, ContentType.APPLICATION_JSON));
     if (status >= 300) {
       when(response.getRequestLine())
           .thenReturn(new BasicRequestLine("GET", "/", HttpVersion.HTTP_1_1));
@@ -220,6 +226,11 @@ class ElasticSearchCapabilityServiceTest {
 
   private void stub(String key, int status, String body) {
     stubs.put(key, new StubResponse(status, body));
+  }
+
+  /** A response that carries no entity at all, rather than an empty JSON one. */
+  private void stubWithNoBody(String key, int status) {
+    stubs.put(key, new StubResponse(status, null));
   }
 
   private void onceServed(String key, Runnable sideEffect) {
@@ -1065,29 +1076,6 @@ class ElasticSearchCapabilityServiceTest {
   }
 
   @Test
-  void testFlsWithNoInspectableFieldsFallsBackAndSaysWhy() throws IOException {
-    stubSecurityEnabledCluster("trial");
-    stubWorkingWriteProbes();
-    // A hit with no _source at all: nothing to check the projection against.
-    stub(
-        "Zmxz|" + SEARCH,
-        200,
-        """
-        {"hits":{"total":{"value":2},"hits":[{"_id":"1"}]}}""");
-
-    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
-
-    // Role acceptance stands, but the report must not let that read as proven enforcement.
-    assertEquals(
-        CapabilityVerdict.INFERRED_SUPPORTED,
-        capability(report, "Field-level security (FLS)").verdict());
-    assertFalse(capability(report, "Field-level security (FLS)").detail().contains("Proven"));
-    assertTrue(
-        report.notes().stream().anyMatch(n -> n.contains("no document fields to inspect")),
-        "the reader must be told the projection check was inconclusive: " + report.notes());
-  }
-
-  @Test
   void testMissingProbeKeyIsSaidToLimitTheDlsAndFlsVerdicts() throws IOException {
     stubSecurityEnabledCluster("trial");
     stubWorkingWriteProbes();
@@ -1520,40 +1508,42 @@ class ElasticSearchCapabilityServiceTest {
     assertEquals(CapabilityVerdict.SUPPORTED, dls.verdict());
   }
 
-  @Test
-  void testFlsSearchWithNoHitsIsReportedAsInconclusiveRatherThanUnprojected() throws IOException {
+  /**
+   * Every search-response shape that leaves no document field to inspect. None of them is evidence
+   * about the projection either way, so each has to fall back to role acceptance and say so — and
+   * none may reach {@code firstHitSourceFields} as an exception or as a claim of enforcement.
+   */
+  @ParameterizedTest(name = "{0}")
+  @ValueSource(
+      strings = {
+        // No "hits" object at all.
+        "{\"took\":1,\"timed_out\":false}",
+        // A "hits" object with no inner "hits" array.
+        "{\"hits\":{\"total\":{\"value\":0}}}",
+        // An inner "hits" that is present but not an array.
+        "{\"hits\":{\"total\":{\"value\":2},\"hits\":{\"unexpected\":\"shape\"}}}",
+        // An array with no documents in it.
+        "{\"hits\":{\"total\":{\"value\":0},\"hits\":[]}}",
+        // A first hit that is not an object.
+        "{\"hits\":{\"total\":{\"value\":2},\"hits\":[\"unexpected\"]}}",
+        // A hit with no _source, so nothing to check the projection against.
+        "{\"hits\":{\"total\":{\"value\":2},\"hits\":[{\"_id\":\"1\"}]}}"
+      })
+  void testFlsSearchShapesWithNoInspectableFieldsFallBackAndSayWhy(String searchBody)
+      throws IOException {
     stubSecurityEnabledCluster("trial");
     stubWorkingWriteProbes();
-    // No "hits" array under "hits" at all: firstHitSourceFields() must fall back rather than throw.
-    stub(
-        "Zmxz|" + SEARCH,
-        200,
-        """
-        {"hits":{"total":{"value":0}}}""");
+    stub("Zmxz|" + SEARCH, 200, searchBody);
 
     ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
 
+    ElasticSearchCapability fls = capability(report, "Field-level security (FLS)");
+    assertEquals(CapabilityVerdict.INFERRED_SUPPORTED, fls.verdict(), searchBody);
+    assertFalse(fls.detail().contains("Proven"), fls.detail());
     assertTrue(
         report.notes().stream()
-            .anyMatch(n -> n.contains("FLS projection check returned no document fields")));
-  }
-
-  @Test
-  void testFlsSearchWithAnEmptyHitsArrayIsReportedAsInconclusive() throws IOException {
-    stubSecurityEnabledCluster("trial");
-    stubWorkingWriteProbes();
-    // "hits" is present as an array, but empty: no document to read fields from.
-    stub(
-        "Zmxz|" + SEARCH,
-        200,
-        """
-        {"hits":{"total":{"value":0},"hits":[]}}""");
-
-    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
-
-    assertTrue(
-        report.notes().stream()
-            .anyMatch(n -> n.contains("FLS projection check returned no document fields")));
+            .anyMatch(n -> n.contains("FLS projection check returned no document fields")),
+        "the reader must be told the projection check was inconclusive: " + report.notes());
   }
 
   @Test
@@ -2003,6 +1993,651 @@ class ElasticSearchCapabilityServiceTest {
     service().getCapabilityReport(null, false);
 
     assertTrue(activationRequests().isEmpty(), "the capability report started a trial license");
+  }
+
+  // ---------------------------------------------------------------------------
+  // The default API-key client
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The injecting constructor's own factory, which every deployment uses and which the other write
+   * probe tests replace with a stub. Exercised against a closed port so no cluster is needed: what
+   * is under test is that the factory builds a usable client from the injected client's nodes at
+   * all, and that a client which cannot connect degrades to an unproven verdict rather than an
+   * exception escaping the report.
+   */
+  @Test
+  void testTheDefaultApiKeyClientFactoryBuildsAClientFromTheInjectedClientsNodes()
+      throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    // The discard port: a connection here is refused immediately rather than hanging.
+    when(esClient.getNodes()).thenReturn(List.of(new Node(new HttpHost("127.0.0.1", 9, "http"))));
+    stubClient(esClient, this::keyFor);
+
+    ElasticSearchCapabilityReport report =
+        new ElasticSearchCapabilityService(esClient, config).getCapabilityReport(null, true);
+
+    ElasticSearchCapability apiKeys = capability(report, "API keys");
+    assertEquals(CapabilityVerdict.UNKNOWN, apiKeys.verdict());
+    assertTrue(apiKeys.detail().contains("could not authenticate"), apiKeys.detail());
+    // The key was still minted, so it must still be invalidated.
+    assertEquals(1, requestsTo("DELETE", "/_security/api_key").size());
+  }
+
+  // ---------------------------------------------------------------------------
+  // License readings the cluster answers only partly
+  // ---------------------------------------------------------------------------
+
+  /**
+   * A tier with no status is not the same as a tier that is inactive. Reading it as LICENSE_BLOCKED
+   * would state a finding about the cluster from a field the cluster never sent.
+   */
+  @Test
+  void testMissingLicenseStatusLeavesDlsFlsUnknownRatherThanBlocked() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        LICENSE,
+        200,
+        """
+        {"license":{"type":"trial"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    for (String name : List.of("Document-level security (DLS)", "Field-level security (FLS)")) {
+      ElasticSearchCapability capability = capability(report, name);
+      assertEquals(CapabilityVerdict.UNKNOWN, capability.verdict(), name);
+      assertTrue(capability.detail().contains("license status could not be read"), name);
+    }
+    assertTrue(report.recommendation().contains("Inconclusive"), report.recommendation());
+    assertTrue(
+        report.recommendation().contains("license status could not be read"),
+        report.recommendation());
+  }
+
+  /** A status of whitespace carries no more information than an absent one. */
+  @Test
+  void testBlankLicenseStatusIsTreatedAsUnreadableRatherThanInactive() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        LICENSE,
+        200,
+        """
+        {"license":{"type":"trial","status":"   "}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(
+        CapabilityVerdict.UNKNOWN, capability(report, "Document-level security (DLS)").verdict());
+    assertTrue(report.recommendation().contains("Inconclusive"), report.recommendation());
+  }
+
+  /** A status without a tier maps to no entitlement, and must not be guessed at either. */
+  @Test
+  void testActiveLicenseWithNoTierReportedIsUnknownRatherThanBlocked() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        LICENSE,
+        200,
+        """
+        {"license":{"status":"active"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertNull(report.licenseType());
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.UNKNOWN, dls.verdict());
+    assertTrue(dls.detail().contains("could not be mapped"), dls.detail());
+  }
+
+  /**
+   * The edition is what a reader scans first, so a cluster whose license could not be read has to
+   * say "unknown" there rather than inherit a tier from somewhere else.
+   */
+  @Test
+  void testUnreadableLicenseLeavesTheEditionUnknown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        LICENSE,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("unknown", report.edition());
+    assertNull(report.licenseType());
+    assertEquals(
+        CapabilityVerdict.UNKNOWN, capability(report, "Document-level security (DLS)").verdict());
+    assertTrue(report.recommendation().contains("Inconclusive"), report.recommendation());
+  }
+
+  @Test
+  void testTrialStatusWithoutTheEligibilityFieldIsReportedAsUnknown() throws IOException {
+    stubLicense("basic", "active", null);
+    stub(TRIAL_STATUS, 200, "{}");
+
+    ElasticSearchLicenseStatus license = service().getLicenseStatus();
+
+    assertNull(license.trialAvailable(), "a missing flag must not read as an ineligible cluster");
+    assertTrue(license.notes().stream().anyMatch(note -> note.contains("trial_status")));
+  }
+
+  @Test
+  void testANonPrimitiveEligibilityFlagIsReportedAsUnknown() throws IOException {
+    stubLicense("basic", "active", null);
+    stub(
+        TRIAL_STATUS,
+        200,
+        """
+        {"eligible_to_start_trial":{"unexpected":"shape"}}""");
+
+    ElasticSearchLicenseStatus license = service().getLicenseStatus();
+
+    assertNull(license.trialAvailable());
+  }
+
+  /**
+   * A 200 is not an activation. Only the cluster's own {@code trial_was_started} flag says a trial
+   * was started, so every 200 that does not carry it as a true boolean has to be reported as a
+   * non-activation — recording ACTIVATED from any of these would put an irreversible change that
+   * never happened into the per-environment record.
+   */
+  @ParameterizedTest(name = "{0}")
+  @ValueSource(
+      strings = {
+        // The flag absent entirely.
+        "{\"acknowledged\":true}",
+        // The flag present and explicitly false.
+        "{\"acknowledged\":true,\"trial_was_started\":false}",
+        // The flag present but not a boolean.
+        "{\"trial_was_started\":{\"unexpected\":\"shape\"}}"
+      })
+  void testA200WithoutATrueStartedFlagIsNotReportedAsActivated(String activationBody)
+      throws IOException {
+    stubLicense("basic", "active", true);
+    stub(START_TRIAL, 200, activationBody);
+
+    ElasticSearchLicenseActivation activation = service().activateTrialLicense();
+
+    assertEquals(LicenseActivationOutcome.REFUSED, activation.outcome(), activationBody);
+    assertEquals("basic", activation.licenseAfter().licenseType());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Edition and deployment shape
+  // ---------------------------------------------------------------------------
+
+  /**
+   * {@code build_flavor} says the distribution directly, so an OSS build is reported as one even on
+   * a cluster whose {@code /_xpack} endpoint answers — the flavor is the more specific signal.
+   */
+  @Test
+  void testAnOssBuildFlavorIsReportedAsOssEvenWhenTheXPackEndpointAnswers() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":"duos-cluster","version":{"number":"9.3.3","build_flavor":"oss"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("OSS (no X-Pack endpoint)", report.edition());
+  }
+
+  /** Older clusters answer 400 rather than 404 for an endpoint they do not have. */
+  @Test
+  void testAnXPack400IsReadAsAnOssBuildJustLikeA404() throws IOException {
+    stubSecurityDisabledCluster();
+    stub(
+        XPACK,
+        400,
+        """
+        {"error":{"reason":"no handler found for uri [/_xpack]"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("OSS (no X-Pack endpoint)", report.edition());
+  }
+
+  /**
+   * A cloud ID present but empty is an unset configuration value, and reading it as Elastic Cloud
+   * would put a note in the report asserting a deployment shape that was never configured.
+   */
+  @Test
+  void testABlankCloudIdIsNotReadAsAnElasticCloudDeployment() throws IOException {
+    config.setCloudId("   ");
+    stubSecurityEnabledCluster("trial");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertFalse(report.elasticCloud());
+    assertEquals("trial", report.edition());
+    assertTrue(report.notes().stream().noneMatch(n -> n.contains("cloud ID")));
+  }
+
+  /**
+   * A missing version cannot be compared, but nor may it be read as a cluster whose {@code version}
+   * block is simply shaped differently than expected.
+   */
+  @Test
+  void testAPrimitiveWhereTheClusterShouldHaveSentAnObjectIsReadAsAbsent() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":"duos-cluster","version":"9.3.3"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertNull(report.version());
+    assertTrue(report.restClientCompatibility().contains("Could not determine"));
+  }
+
+  @Test
+  void testAnObjectWhereTheClusterShouldHaveSentAStringIsReadAsAbsent() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":{"unexpected":"shape"},"version":{"number":"9.3.3"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertNull(report.clusterName());
+    assertEquals("9.3.3", report.version());
+  }
+
+  @Test
+  void testRolesThatAreNotAnArrayAreReadAsNoRoles() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        AUTHENTICATE,
+        200,
+        """
+        {"username":"consent","roles":"superuser"}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("consent", report.authenticatedUser());
+    assertTrue(report.authenticatedUserRoles().isEmpty());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Probe scope and the security API's own answers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * {@code datasetIndexName} is {@code @NotNull} in the configuration, so this is only reachable
+   * from a hand-built one — and the fallback has to be a name no real index uses, because a probe
+   * that widened its own scope would run a DLS role and a search against a live index it was never
+   * pointed at.
+   */
+  @Test
+  void testAnUnconfiguredIndexFallsBackToANamespacedNameRatherThanWideningScope()
+      throws IOException {
+    config.setDatasetIndexName(null);
+    stubSecurityEnabledCluster("trial");
+
+    service().getCapabilityReport(null, false);
+
+    String body = bodyOf(requestsTo("POST", "/_security/user/_has_privileges").getFirst());
+    assertTrue(body.contains("\"names\":[\"duos-capability-probe-index\"]"), body);
+  }
+
+  @Test
+  void testABlankConfiguredIndexFallsBackTheSameWay() throws IOException {
+    config.setDatasetIndexName("   ");
+    stubSecurityEnabledCluster("trial");
+
+    service().getCapabilityReport(null, false);
+
+    String body = bodyOf(requestsTo("POST", "/_security/user/_has_privileges").getFirst());
+    assertTrue(body.contains("\"names\":[\"duos-capability-probe-index\"]"), body);
+  }
+
+  /**
+   * A 401 is security answering, not security absent: an unauthenticated call to a security-enabled
+   * cluster is exactly what produces one. Reading it as an absent API would report every security
+   * verdict as UNAVAILABLE on a cluster that has security switched on.
+   */
+  @Test
+  void testA401FromTheSecurityApiMeansSecurityIsPresentNotAbsent() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        AUTHENTICATE,
+        401,
+        """
+        {"error":{"reason":"missing authentication credentials"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(CapabilityVerdict.SUPPORTED, capability(report, "X-Pack Security").verdict());
+    assertEquals(
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertTrue(
+        report.notes().stream().noneMatch(n -> n.contains("/_security API is not available")),
+        report.notes().toString());
+  }
+
+  @Test
+  void testA403FromTheSecurityApiMeansSecurityIsPresentNotAbsent() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        AUTHENTICATE,
+        403,
+        """
+        {"error":{"reason":"action is unauthorized for user [consent]"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(CapabilityVerdict.SUPPORTED, capability(report, "X-Pack Security").verdict());
+    assertFalse(report.clusterPrivileges().isEmpty(), "the privilege probe should still be tried");
+  }
+
+  @Test
+  void testXPackAnswerWithoutASecurityFeatureBlockFallsBackToTheClusterSetting()
+      throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        XPACK,
+        200,
+        """
+        {"features":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals(Boolean.TRUE, report.securityEnabled());
+  }
+
+  /**
+   * Neither source answering leaves the question genuinely open. A null is not a false: reported as
+   * one it would state that security is off on a cluster that said nothing either way.
+   */
+  @Test
+  void testSecurityEnabledIsUnknownWhenNeitherXPackNorTheSettingsSayAnything() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        XPACK,
+        200,
+        """
+        {"features":{"security":{"available":true}}}""");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.authc.api_key.enabled":"true"},"persistent":{},
+        "transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertNull(report.securityEnabled());
+    // The /_security API still answered, so the feature verdicts stand on that rather than on a
+    // security-enabled flag nobody reported.
+    assertEquals(CapabilityVerdict.UNAVAILABLE, capability(report, "X-Pack Security").verdict());
+    assertEquals(
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Document-level security (DLS)").verdict());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Settings filtering
+  // ---------------------------------------------------------------------------
+
+  /** A DLS/FLS setting outside the {@code xpack.security} namespace still gates the capability. */
+  @Test
+  void testADlsFlsSettingOutsideTheXPackNamespaceIsStillReported() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true"},
+        "persistent":{"indices.dls_fls.enabled":"false"},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("false", report.securitySettings().get("indices.dls_fls.enabled"));
+  }
+
+  /**
+   * Audit-logfile settings are filtered even when explicitly configured: they describe log
+   * formatting rather than capability, and there are enough of them to bury the settings that do.
+   */
+  @Test
+  void testExplicitlyConfiguredAuditLogfileSettingsAreStillFilteredOut() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true"},
+        "persistent":{"xpack.security.audit.logfile.events.include":"access_granted",
+        "xpack.security.audit.enabled":"true"},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertFalse(
+        report.securitySettings().containsKey("xpack.security.audit.logfile.events.include"),
+        report.securitySettings().toString());
+    assertEquals("true", report.securitySettings().get("xpack.security.audit.enabled"));
+  }
+
+  /** Structured settings values are skipped rather than stringified into the report. */
+  @Test
+  void testNonPrimitiveSettingValuesAreSkippedRatherThanStringified() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        SETTINGS,
+        200,
+        """
+        {"defaults":{"xpack.security.enabled":"true",
+        "xpack.security.authc.realms":{"native":{"native1":{"order":"0"}}}},
+        "persistent":{},"transient":{}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertEquals("true", report.securitySettings().get("xpack.security.enabled"));
+    assertFalse(report.securitySettings().containsKey("xpack.security.authc.realms"));
+  }
+
+  // ---------------------------------------------------------------------------
+  // run_as target selection
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void testABlankRunAsUserFallsBackToTheAuthenticatedUser() throws IOException {
+    stubSecurityEnabledCluster("trial");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport("   ", false);
+
+    assertEquals(CapabilityVerdict.SUPPORTED, capability(report, "run_as impersonation").verdict());
+    assertTrue(
+        requests.stream()
+            .flatMap(r -> r.getOptions().getHeaders().stream())
+            .filter(h -> h.getName().equals("es-security-runas-user"))
+            .allMatch(h -> h.getValue().equals("consent")),
+        "a blank request should impersonate the authenticated user, not blank");
+  }
+
+  @Test
+  void testABlankAuthenticatedUserLeavesRunAsWithNoTarget() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(
+        AUTHENTICATE,
+        200,
+        """
+        {"username":"   ","roles":[]}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport("  ", false);
+
+    ElasticSearchCapability runAs = capability(report, "run_as impersonation");
+    assertEquals(CapabilityVerdict.UNKNOWN, runAs.verdict());
+    assertTrue(runAs.detail().contains("No target user was available"), runAs.detail());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Write-probe refusals and response shapes
+  // ---------------------------------------------------------------------------
+
+  /** PUT role answers 201 as readily as 200, and both mean the cluster took the filters. */
+  @Test
+  void testARoleAcceptedWith201IsTreatedAsCreatedAndTornDown() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        CREATE_ROLE,
+        201,
+        """
+        {"role":{"created":true}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertEquals(
+        CapabilityVerdict.SUPPORTED, capability(report, "Document-level security (DLS)").verdict());
+    assertEquals(1, requestsTo("DELETE", "/_security/role/").size());
+  }
+
+  @Test
+  void testA401OnKeyCreationIsReadAsAPrivilegeRefusal() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        CREATE_KEY,
+        401,
+        """
+        {"error":{"reason":"missing authentication credentials"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertEquals(CapabilityVerdict.NOT_PERMITTED, capability(report, "API keys").verdict());
+  }
+
+  @Test
+  void testA401OnTheEnforcementSearchIsReadAsAPrivilegeRefusal() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        "ZGxz|" + SEARCH,
+        401,
+        """
+        {"error":{"reason":"missing authentication credentials"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.NOT_PERMITTED, dls.verdict());
+    assertTrue(dls.detail().contains("privilege rather than licensing"), dls.detail());
+  }
+
+  /**
+   * The licence/privilege split is what the whole report turns on, and a cluster does not always
+   * use the word "non-compliant" when it refuses on licensing grounds. Missing this refusal would
+   * report a licensing limit as a privilege one and send someone to fix the wrong thing.
+   */
+  @Test
+  void testARefusalNamingTheLicenseWithoutTheWordNonCompliantIsStillALicenseBlock()
+      throws IOException {
+    stubSecurityEnabledCluster("basic");
+    stub(
+        CREATE_KEY,
+        500,
+        """
+        {"error":{"reason":"internal server error"}}""");
+    stub(
+        CREATE_ROLE,
+        403,
+        """
+        {"error":{"reason":"field and document level security requires a platinum license"}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.LICENSE_BLOCKED, dls.verdict());
+    assertTrue(dls.detail().contains("The license does not permit it"), dls.detail());
+  }
+
+  @Test
+  void testACountResponseWithoutACountFieldIsTreatedAsUnreadable() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(COUNT, 200, "{}");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertTrue(
+        report.notes().stream().anyMatch(n -> n.contains("not readable")),
+        report.notes().toString());
+    assertEquals(
+        CapabilityVerdict.INFERRED_SUPPORTED,
+        capability(report, "Document-level security (DLS)").verdict());
+    assertTrue(requestsTo("GET", "/dataset/_search").isEmpty());
+  }
+
+  /** A hit total whose shape is unrecognised must never become the "not enforced" verdict. */
+  @Test
+  void testATotalObjectWithoutAValueIsUnknownRatherThanNotEnforced() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        "ZGxz|" + SEARCH,
+        200,
+        """
+        {"hits":{"total":{}}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    ElasticSearchCapability dls = capability(report, "Document-level security (DLS)");
+    assertEquals(CapabilityVerdict.UNKNOWN, dls.verdict());
+    assertTrue(dls.detail().contains("no hit total"), dls.detail());
+  }
+
+  @Test
+  void testATotalOfAnUnexpectedJsonTypeIsUnknownRatherThanNotEnforced() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWorkingWriteProbes();
+    stub(
+        "ZGxz|" + SEARCH,
+        200,
+        """
+        {"hits":{"total":["unexpected"]}}""");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, true);
+
+    assertEquals(
+        CapabilityVerdict.UNKNOWN, capability(report, "Document-level security (DLS)").verdict());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Transport-level response shapes
+  // ---------------------------------------------------------------------------
+
+  /** A response with no entity at all, which is not the same as one with an empty JSON body. */
+  @Test
+  void testAResponseCarryingNoEntityIsHandledAsAnEmptyBody() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stubWithNoBody(HAS_PRIVILEGES, 200);
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.clusterPrivileges().isEmpty());
+    // A credential whose privileges could not be read is not a credential known to lack them.
+    assertEquals(CapabilityVerdict.INFERRED_SUPPORTED, capability(report, "API keys").verdict());
+  }
+
+  /** Valid JSON that is not an object is as unusable as invalid JSON, and must not throw either. */
+  @Test
+  void testAJsonBodyThatIsNotAnObjectIsHandledAsAnEmptyBody() throws IOException {
+    stubSecurityEnabledCluster("trial");
+    stub(HAS_PRIVILEGES, 200, "[\"unexpected\"]");
+
+    ElasticSearchCapabilityReport report = service().getCapabilityReport(null, false);
+
+    assertTrue(report.clusterPrivileges().isEmpty());
   }
 
   private record StubResponse(int status, String body) {}
