@@ -21,7 +21,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, 'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent, r.*
+      SELECT m.match_id, m.dataset_id, m.purpose, m.match_entity, m.failed,
+             m.create_date, m.algorithm_version, m.abstain,
+             'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent,
+             r.rationale
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
@@ -32,7 +35,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, 'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent, r.*
+      SELECT m.match_id, m.dataset_id, m.purpose, m.match_entity, m.failed,
+             m.create_date, m.algorithm_version, m.abstain,
+             'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent,
+             r.rationale
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
@@ -43,7 +49,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, 'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent, r.*
+      SELECT m.match_id, m.dataset_id, m.purpose, m.match_entity, m.failed,
+             m.create_date, m.algorithm_version, m.abstain,
+             'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent,
+             r.rationale
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
