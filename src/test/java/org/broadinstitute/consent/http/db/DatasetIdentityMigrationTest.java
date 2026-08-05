@@ -70,6 +70,25 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
                     .bind("purpose", purposeId)
                     .mapTo(String.class)
                     .one());
+            assertEquals(
+                0L,
+                handle
+                    .createQuery(
+                        """
+                        INSERT INTO dataset
+                            (name, create_date, create_user_id, update_date,
+                             update_user_id, object_id, data_use)
+                        VALUES (:name, :createDate, :userId, :createDate,
+                                :userId, :objectId, :dataUse)
+                        RETURNING alias
+                        """)
+                    .bind("name", "Legacy Default Dataset " + UUID.randomUUID())
+                    .bind("createDate", FIXED_TIMESTAMP)
+                    .bind("userId", user.getUserId())
+                    .bind("objectId", "Legacy Default Object " + UUID.randomUUID())
+                    .bind("dataUse", dataUse.toString())
+                    .mapTo(Long.class)
+                    .one());
           } finally {
             liquibase.update(contexts, labels);
           }

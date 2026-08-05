@@ -33,6 +33,8 @@
       <dropNotNullConstraint tableName="dataset" columnName="alias" columnDataType="bigint"/>
       <dropDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"/>
       <dropSequence sequenceName="dataset_alias_seq"/>
+      <addDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"
+        defaultValueNumeric="0"/>
     </rollback>
   </changeSet>
 
