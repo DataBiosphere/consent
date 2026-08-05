@@ -37,6 +37,12 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
             "Rollback Object " + UUID.randomUUID(),
             dataUse.toString(),
             null);
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate("UPDATE dataset SET alias = 1000000 WHERE dataset_id = :datasetId")
+                .bind("datasetId", datasetId)
+                .execute());
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     String purposeId = UUID.randomUUID().toString();
     matchDAO.insertMatch(
@@ -58,7 +64,7 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
             // DAOTestHelper clears data between tests, including Liquibase's tracking rows. Restore
             // the tracking metadata without rerunning the already-present schema changes.
             liquibase.changeLogSync(contexts, labels);
-            liquibase.rollback(4, contexts, labels);
+            liquibase.rollback(5, contexts, labels);
 
             assertTrue(columnExists(handle, "match_entity", "consent"));
             assertFalse(columnExists(handle, "match_entity", "dataset_id"));
@@ -93,7 +99,7 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
             liquibase.update(contexts, labels);
           }
 
-          assertFalse(columnExists(handle, "match_entity", "consent"));
+          assertTrue(columnExists(handle, "match_entity", "consent"));
           assertTrue(columnExists(handle, "match_entity", "dataset_id"));
           assertTrue(sequenceExists(handle, "dataset_alias_seq"));
           assertEquals(
@@ -103,6 +109,45 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
                   .bind("purpose", purposeId)
                   .mapTo(Integer.class)
                   .one());
+          assertEquals(
+              "DUOS-1000000",
+              handle
+                  .createQuery("SELECT consent FROM match_entity WHERE purpose = :purpose")
+                  .bind("purpose", purposeId)
+                  .mapTo(String.class)
+                  .one());
+          assertEquals(
+              datasetId,
+              handle
+                  .createQuery(
+                      """
+                      INSERT INTO match_entity (consent, purpose, match_entity, failed)
+                      VALUES (:consent, :purpose, true, false)
+                      RETURNING dataset_id
+                      """)
+                  .bind("consent", dataset.getDatasetIdentifier())
+                  .bind("purpose", UUID.randomUUID().toString())
+                  .mapTo(Integer.class)
+                  .one());
+          assertTrue(
+              handle
+                      .createQuery(
+                          """
+                          INSERT INTO dataset
+                              (name, create_date, create_user_id, update_date,
+                               update_user_id, object_id, data_use, alias)
+                          VALUES (:name, :createDate, :userId, :createDate,
+                                  :userId, :objectId, :dataUse, 5000000)
+                          RETURNING alias
+                          """)
+                      .bind("name", "Legacy Sequence Dataset " + UUID.randomUUID())
+                      .bind("createDate", FIXED_TIMESTAMP)
+                      .bind("userId", user.getUserId())
+                      .bind("objectId", "Legacy Sequence Object " + UUID.randomUUID())
+                      .bind("dataUse", dataUse.toString())
+                      .mapTo(Long.class)
+                      .one()
+                  < 5000000L);
           handle.commit();
         });
   }

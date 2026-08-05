@@ -43,6 +43,31 @@ class MatchDAOTest extends DAOTestHelper {
     assertEquals(found.getMatch(), m.getMatch());
   }
 
+  @Test
+  void testPublicIdentifierDoesNotTruncateAliasesLongerThanSixDigits() {
+    Dataset dataset = createDataset();
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate("UPDATE dataset SET alias = 1000000 WHERE dataset_id = :datasetId")
+                .bind("datasetId", dataset.getDatasetId())
+                .execute());
+    String purposeId = UUID.randomUUID().toString();
+    Integer matchId =
+        matchDAO.insertMatch(
+            dataset.getDatasetId(),
+            purposeId,
+            true,
+            false,
+            FIXED_DATE,
+            MatchAlgorithm.V4.getVersion(),
+            false);
+
+    Match match = matchDAO.findMatchById(matchId);
+
+    assertEquals("DUOS-1000000", match.getConsent());
+  }
+
   private Match makeMockMatch() {
     Dataset dataset = createDataset();
     Match match = new Match();

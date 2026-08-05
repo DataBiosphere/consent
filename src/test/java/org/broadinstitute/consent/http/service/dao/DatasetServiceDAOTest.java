@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.Dac;
@@ -82,6 +83,26 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
     assertEquals(1, audits.size());
     assertEquals(AuditActions.DELETE.name(), audits.getFirst().getAction());
+  }
+
+  @Test
+  void testDeleteDatasetCascadesToMatchesAndRationales() throws Exception {
+    Dataset dataset = createDataset();
+    Integer matchId =
+        matchDAO.insertMatch(
+            dataset.getDatasetId(),
+            UUID.randomUUID().toString(),
+            true,
+            false,
+            FIXED_DATE,
+            MatchAlgorithm.V4.getVersion(),
+            false);
+    matchDAO.insertRationale(matchId, "Synthetic rationale");
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+
+    assertNull(datasetDAO.findDatasetById(dataset.getDatasetId()));
+    assertNull(matchDAO.findMatchById(matchId));
   }
 
   @Test

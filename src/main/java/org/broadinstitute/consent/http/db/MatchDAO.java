@@ -23,7 +23,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       """
       SELECT m.match_id, m.dataset_id, m.purpose, m.match_entity, m.failed,
              m.create_date, m.algorithm_version, m.abstain,
-             'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent,
+             'DUOS-' || REPEAT('0', GREATEST(0, 6 - LENGTH(d.alias::text)))
+               || d.alias::text AS consent,
              r.rationale
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
@@ -37,7 +38,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       """
       SELECT m.match_id, m.dataset_id, m.purpose, m.match_entity, m.failed,
              m.create_date, m.algorithm_version, m.abstain,
-             'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent,
+             'DUOS-' || REPEAT('0', GREATEST(0, 6 - LENGTH(d.alias::text)))
+               || d.alias::text AS consent,
              r.rationale
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
@@ -51,7 +53,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       """
       SELECT m.match_id, m.dataset_id, m.purpose, m.match_entity, m.failed,
              m.create_date, m.algorithm_version, m.abstain,
-             'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent,
+             'DUOS-' || REPEAT('0', GREATEST(0, 6 - LENGTH(d.alias::text)))
+               || d.alias::text AS consent,
              r.rationale
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
@@ -69,9 +72,13 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate(
       """
         INSERT INTO match_entity
-          (dataset_id, purpose, match_entity, failed, create_date, algorithm_version, abstain)
-        VALUES
-          (:datasetId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
+          (dataset_id, consent, purpose, match_entity, failed, create_date, algorithm_version,
+           abstain)
+        SELECT d.dataset_id,
+               'DUOS-' || REPEAT('0', GREATEST(0, 6 - LENGTH(d.alias::text))) || d.alias::text,
+               :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain
+        FROM dataset d
+        WHERE d.dataset_id = :datasetId
       """)
   @GetGeneratedKeys
   Integer insertMatch(

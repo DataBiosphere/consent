@@ -709,13 +709,16 @@ class DatasetDAOTest extends DAOTestHelper {
                   index ->
                       executor.submit(
                           () ->
-                              datasetDAO.insertDataset(
-                                  "Concurrent Dataset " + index + " " + UUID.randomUUID(),
-                                  now,
-                                  user.getUserId(),
-                                  "Concurrent Object " + index + " " + UUID.randomUUID(),
-                                  dataUse,
-                                  null)))
+                              index % 2 == 0
+                                  ? datasetDAO.insertDataset(
+                                      "Concurrent Dataset " + index + " " + UUID.randomUUID(),
+                                      now,
+                                      user.getUserId(),
+                                      "Concurrent Object " + index + " " + UUID.randomUUID(),
+                                      dataUse,
+                                      null)
+                                  : insertDatasetLikeLegacyVersion(
+                                      index, now, user.getUserId(), dataUse)))
               .toList();
 
       Set<Integer> aliases = new HashSet<>();
@@ -734,6 +737,30 @@ class DatasetDAOTest extends DAOTestHelper {
             "Dataset insertion executor did not terminate");
       }
     }
+  }
+
+  private Integer insertDatasetLikeLegacyVersion(
+      int index, Timestamp createDate, Integer userId, String dataUse) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    INSERT INTO dataset
+                        (name, create_date, create_user_id, update_date,
+                         update_user_id, object_id, dac_id, alias, data_use)
+                    SELECT :name, :createDate, :userId, :createDate,
+                           :userId, :objectId, NULL, COALESCE(MAX(alias), 0) + 1, :dataUse
+                    FROM dataset
+                    RETURNING dataset_id
+                    """)
+                .bind("name", "Legacy Concurrent Dataset " + index + " " + UUID.randomUUID())
+                .bind("createDate", createDate)
+                .bind("userId", userId)
+                .bind("objectId", "Legacy Concurrent Object " + index + " " + UUID.randomUUID())
+                .bind("dataUse", dataUse)
+                .mapTo(Integer.class)
+                .one());
   }
 
   @Test
