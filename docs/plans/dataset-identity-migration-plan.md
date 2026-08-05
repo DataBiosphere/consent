@@ -42,8 +42,10 @@ dataset aliases or match identifiers, so it cannot resolve an unmatched alias.
 ## Rollout
 
 The bounded compatibility phase runs during application startup, before the new application code
-serves traffic:
+serves traffic.
 
+Deployment note: avoid mixed-version dataset writes during the alias sequence cutover (older
+`COALESCE(MAX(alias), 0) + 1` inserts won’t advance `dataset_alias_seq` and can cause alias collisions).
 1. Verify aliases are non-null, non-negative, and unique.
 2. Create `dataset_alias_seq` above the audited maximum, make it the alias default, and add database
    uniqueness and non-null constraints.
