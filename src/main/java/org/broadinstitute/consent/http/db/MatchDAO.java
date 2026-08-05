@@ -21,8 +21,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, r.*
+      SELECT m.*, 'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent, r.*
         FROM match_entity m
+        INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
         WHERE m.purpose = :purposeId
       """)
@@ -31,8 +32,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, r.*
+      SELECT m.*, 'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent, r.*
         FROM match_entity m
+        INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
         WHERE m.match_id = :id
       """)
@@ -41,14 +43,16 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT match_entity.*, r.* FROM match_entity
-        LEFT JOIN match_rationale r on r.match_entity_id = match_entity.match_id
+      SELECT m.*, 'DUOS-' || LPAD(d.alias::text, 6, '0') AS consent, r.*
+        FROM match_entity m
+        INNER JOIN dataset d ON d.dataset_id = m.dataset_id
+        LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
         INNER JOIN (
           SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.dataset_id) AS latest
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
-          ) AS e ON e.reference_id = match_entity.purpose
-        WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
+          ) AS e ON e.reference_id = m.purpose AND e.dataset_id = m.dataset_id
+        WHERE m.purpose IN (<purposeIds>) AND e.election_id = latest
       """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
       @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
@@ -56,13 +60,13 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate(
       """
         INSERT INTO match_entity
-          (consent, purpose, match_entity, failed, create_date, algorithm_version, abstain)
+          (dataset_id, purpose, match_entity, failed, create_date, algorithm_version, abstain)
         VALUES
-          (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
+          (:datasetId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
   Integer insertMatch(
-      @Bind("consentId") String consentId,
+      @Bind("datasetId") Integer datasetId,
       @Bind("purposeId") String purposeId,
       @Bind("match") Boolean match,
       @Bind("failed") Boolean failed,

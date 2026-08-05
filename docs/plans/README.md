@@ -13,3 +13,4 @@ Use this directory for documents that describe a proposed path forward, migratio
 | `dataset-registration-schema-migration-plan.md` | Plan for migrating dataset/study registration away from `dataset-registration-schema_v1.json` backend validation. |
 | `elasticsearch-service-duos-ui-usage.md` | Plan for adding access control to the information in consent's Elasticsearch infrastructure. |
 | `es-security-capability-record.md` | Ticket A-1 record: measured Elasticsearch security capabilities (DLS/FLS/API keys/`run_as`) per environment, and the resulting Epic D / Epic E decision. |
+| `dataset-identity-migration-plan.md` | Plan for replacing alias-derived match identity with dataset foreign keys and sequence-backed public aliases. |

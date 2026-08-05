@@ -14,6 +14,7 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
         map.computeIfAbsent(
             rowView.getColumn("match_id", Integer.class), id -> rowView.getRow(Match.class));
     hasOptionalColumn(rowView, "consent", String.class).ifPresent(match::setConsent);
+    hasOptionalColumn(rowView, "dataset_id", Integer.class).ifPresent(match::setDatasetId);
     hasOptionalColumn(rowView, "purpose", String.class).ifPresent(match::setPurpose);
     hasOptionalColumn(rowView, "algorithm_version", String.class)
         .ifPresent(match::setAlgorithmVersion);

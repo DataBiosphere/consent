@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Abstain;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Approve;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +16,8 @@ public class Match {
   private Integer id;
 
   private String consent;
+
+  @JsonIgnore private Integer datasetId;
 
   private String purpose;
 
@@ -85,6 +88,15 @@ public class Match {
     this.consent = consent;
   }
 
+  @JsonIgnore
+  public Integer getDatasetId() {
+    return datasetId;
+  }
+
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
+  }
+
   public String getPurpose() {
     return purpose;
   }
@@ -153,13 +165,30 @@ public class Match {
     }
   }
 
-  public static Match matchFailure(String consentId, String purposeId, List<String> rationales) {
-    return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V4, rationales);
+  public static Match matchFailure(
+      Integer datasetId, String consentId, String purposeId, List<String> rationales) {
+    Match match =
+        new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V4, rationales);
+    match.setDatasetId(datasetId);
+    return match;
   }
 
   public static Match matchSuccess(
-      String consentId, String purposeId, DataUseMatchResultType match, List<String> rationales) {
-    return new Match(
-        consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V4, rationales);
+      Integer datasetId,
+      String consentId,
+      String purposeId,
+      DataUseMatchResultType matchResult,
+      List<String> rationales) {
+    Match match =
+        new Match(
+            consentId,
+            purposeId,
+            Approve(matchResult),
+            Abstain(matchResult),
+            false,
+            MatchAlgorithm.V4,
+            rationales);
+    match.setDatasetId(datasetId);
+    return match;
   }
 }

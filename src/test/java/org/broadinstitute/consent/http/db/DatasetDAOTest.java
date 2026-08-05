@@ -23,6 +23,9 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -688,6 +691,42 @@ class DatasetDAOTest extends DAOTestHelper {
     assertEquals(0, updatedDataset.getAlias());
     updatedDataset.setDatasetIdentifier();
     assertNotNull(updatedDataset.getDatasetIdentifier());
+  }
+
+  @Test
+  void testConcurrentDatasetInsertsAllocateUniqueAliases() throws Exception {
+    User user = createUser();
+    Timestamp now = new Timestamp(new Date().getTime());
+    String dataUse = new DataUseBuilder().setGeneralUse(true).build().toString();
+    int datasetCount = 12;
+    ExecutorService executor = Executors.newFixedThreadPool(6);
+
+    try {
+      List<Future<Integer>> insertions =
+          IntStream.range(0, datasetCount)
+              .mapToObj(
+                  index ->
+                      executor.submit(
+                          () ->
+                              datasetDAO.insertDataset(
+                                  "Concurrent Dataset " + index + " " + UUID.randomUUID(),
+                                  now,
+                                  user.getUserId(),
+                                  "Concurrent Object " + index + " " + UUID.randomUUID(),
+                                  dataUse,
+                                  null)))
+              .toList();
+
+      Set<Integer> aliases = new HashSet<>();
+      for (Future<Integer> insertion : insertions) {
+        Dataset dataset = datasetDAO.findDatasetById(insertion.get());
+        aliases.add(dataset.getAlias());
+      }
+
+      assertEquals(datasetCount, aliases.size());
+    } finally {
+      executor.shutdownNow();
+    }
   }
 
   @Test

@@ -45,7 +45,7 @@ public class MatchService implements ConsentLogger {
         m -> {
           Integer id =
               matchDAO.insertMatch(
-                  m.getConsent(),
+                  m.getDatasetId(),
                   m.getPurpose(),
                   m.getMatch(),
                   m.getFailed(),
@@ -91,7 +91,10 @@ public class MatchService implements ConsentLogger {
                   logWarn(message);
                   matches.add(
                       matchFailure(
-                          dataset.getDatasetIdentifier(), dar.getReferenceId(), List.of(message)));
+                          dataset.getDatasetId(),
+                          dataset.getDatasetIdentifier(),
+                          dar.getReferenceId(),
+                          List.of(message)));
                 }
               }
             });
@@ -116,6 +119,7 @@ public class MatchService implements ConsentLogger {
     MatchResult matchResult =
         dataUseMatcherV4.matchPurposeAndDatasetV4(darDataUse, dataset.getDataUse());
     return matchSuccess(
+        dataset.getDatasetId(),
         dataset.getDatasetIdentifier(),
         dar.getReferenceId(),
         matchResult.getMatchResultType(),

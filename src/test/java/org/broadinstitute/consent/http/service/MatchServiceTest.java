@@ -94,6 +94,7 @@ class MatchServiceTest extends AbstractTestHelper {
     try {
       List<Match> matches = service.createMatchesForDataAccessRequest(dar);
       assertFalse(matches.isEmpty());
+      assertEquals(dataset.getDatasetId(), matches.getFirst().getDatasetId());
       // Each match should be false since the exception is thrown during the matching process
       matches.forEach(m -> assertFalse(m.getMatch()));
     } catch (Exception e) {
@@ -151,6 +152,7 @@ class MatchServiceTest extends AbstractTestHelper {
 
     Match match = service.singleEntitiesMatch(dataset, dar);
     assertNotNull(match);
+    assertEquals(dataset.getDatasetId(), match.getDatasetId());
     assertTrue(match.getMatch());
   }
 

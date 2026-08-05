@@ -1,0 +1,115 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+  <changeSet id="changelog-consent-2026-08-05-audit-and-sequence-dataset-alias" author="kmarete">
+    <preConditions onFail="HALT" onError="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM dataset WHERE alias IS NULL OR alias &lt; 0
+      </sqlCheck>
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM (SELECT alias FROM dataset GROUP BY alias HAVING COUNT(*) &gt; 1) duplicate_aliases
+      </sqlCheck>
+    </preConditions>
+
+    <createSequence sequenceName="dataset_alias_seq"/>
+    <sql>
+      SELECT setval(
+        'dataset_alias_seq',
+        COALESCE((SELECT MAX(alias) FROM dataset), 0) + 1,
+        false
+      )
+    </sql>
+    <addDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"
+      defaultValueSequenceNext="dataset_alias_seq"/>
+    <addNotNullConstraint tableName="dataset" columnName="alias" columnDataType="bigint"/>
+    <addUniqueConstraint tableName="dataset" columnNames="alias"
+      constraintName="uq_dataset_alias"/>
+
+    <rollback>
+      <dropUniqueConstraint tableName="dataset" constraintName="uq_dataset_alias"/>
+      <dropNotNullConstraint tableName="dataset" columnName="alias" columnDataType="bigint"/>
+      <dropDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"/>
+      <dropSequence sequenceName="dataset_alias_seq"/>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-08-05-add-match-dataset-id" author="kmarete">
+    <addColumn tableName="match_entity">
+      <column name="dataset_id" type="bigint"/>
+    </addColumn>
+    <addForeignKeyConstraint baseTableName="match_entity" baseColumnNames="dataset_id"
+      constraintName="fk_match_entity_dataset_id" referencedTableName="dataset"
+      referencedColumnNames="dataset_id" onDelete="NO ACTION" onUpdate="NO ACTION"/>
+    <createIndex tableName="match_entity" indexName="idx_match_entity_dataset_id">
+      <column name="dataset_id"/>
+    </createIndex>
+
+    <rollback>
+      <dropIndex tableName="match_entity" indexName="idx_match_entity_dataset_id"/>
+      <dropForeignKeyConstraint baseTableName="match_entity"
+        constraintName="fk_match_entity_dataset_id"/>
+      <dropColumn tableName="match_entity" columnName="dataset_id"/>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-08-05-backfill-match-dataset-id" author="kmarete">
+    <!-- Only canonical, exact, and unambiguous public identifiers are eligible for backfill. -->
+    <sql>
+      UPDATE match_entity m
+      SET dataset_id = d.dataset_id
+      FROM dataset d
+      WHERE m.consent = 'DUOS-' || LPAD(d.alias::text, 6, '0')
+    </sql>
+    <rollback>
+      <sql>UPDATE match_entity SET dataset_id = NULL</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-08-05-finalize-match-dataset-id" author="kmarete">
+    <preConditions onFail="HALT" onError="HALT">
+      <!-- A failure leaves the nullable column in place so unmatched rows can be isolated/resolved. -->
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM match_entity WHERE dataset_id IS NULL
+      </sqlCheck>
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM (
+          SELECT purpose, dataset_id
+          FROM match_entity
+          GROUP BY purpose, dataset_id
+          HAVING COUNT(*) &gt; 1
+        ) duplicate_matches
+      </sqlCheck>
+    </preConditions>
+
+    <addNotNullConstraint tableName="match_entity" columnName="dataset_id"
+      columnDataType="bigint"/>
+    <dropUniqueConstraint tableName="match_entity" constraintName="purpose_consent"/>
+    <addUniqueConstraint tableName="match_entity" columnNames="purpose,dataset_id"
+      constraintName="uq_match_entity_purpose_dataset_id"/>
+    <dropColumn tableName="match_entity" columnName="consent"/>
+
+    <rollback>
+      <addColumn tableName="match_entity">
+        <column name="consent" type="varchar(255)"/>
+      </addColumn>
+      <sql>
+        UPDATE match_entity m
+        SET consent = 'DUOS-' || LPAD(d.alias::text, 6, '0')
+        FROM dataset d
+        WHERE d.dataset_id = m.dataset_id
+      </sql>
+      <addNotNullConstraint tableName="match_entity" columnName="consent"
+        columnDataType="varchar(255)"/>
+      <dropUniqueConstraint tableName="match_entity"
+        constraintName="uq_match_entity_purpose_dataset_id"/>
+      <addUniqueConstraint tableName="match_entity" columnNames="purpose,consent"
+        constraintName="purpose_consent"/>
+      <dropNotNullConstraint tableName="match_entity" columnName="dataset_id"
+        columnDataType="bigint"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
