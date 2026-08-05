@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -719,13 +720,19 @@ class DatasetDAOTest extends DAOTestHelper {
 
       Set<Integer> aliases = new HashSet<>();
       for (Future<Integer> insertion : insertions) {
-        Dataset dataset = datasetDAO.findDatasetById(insertion.get());
+        Dataset dataset = datasetDAO.findDatasetById(insertion.get(30, TimeUnit.SECONDS));
         aliases.add(dataset.getAlias());
       }
 
       assertEquals(datasetCount, aliases.size());
     } finally {
-      executor.shutdownNow();
+      executor.shutdown();
+      if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+        executor.shutdownNow();
+        assertTrue(
+            executor.awaitTermination(5, TimeUnit.SECONDS),
+            "Dataset insertion executor did not terminate");
+      }
     }
   }
 
