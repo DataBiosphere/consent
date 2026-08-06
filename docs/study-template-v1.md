@@ -61,8 +61,8 @@ fields, and asset properties are errors and are never silently ignored.
 | Integer | Base-10 digits with an optional leading minus sign; no decimal point or separator. Domain validation may reject negative values. |
 | Date | ISO local date `YYYY-MM-DD`; calendar-invalid dates are rejected. |
 | URI | Absolute `http` or `https` URI. |
-| Array | Compact JSON array in one CSV cell, such as `["Genomic","Phenotypic"]`. CSV escaping still applies. |
-| Object | Compact JSON object in one CSV cell, used only for supported asset payloads and `fileTypes` entries. |
+| Array | JSON array in one CSV cell, such as `["Genomic","Phenotypic"]`. CSV escaping still applies. |
+| Object | JSON object in one CSV cell, used only for supported asset payloads and `fileTypes` entries. |
 | Empty value | An empty `value` cell means absent (`null`), not an empty string or empty array. Omit optional fields; empty required values fail validation. |
 
 For example, `["Genomic","Phenotypic"]` is represented as this CSV cell:
