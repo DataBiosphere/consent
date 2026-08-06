@@ -64,7 +64,7 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
             // DAOTestHelper clears data between tests, including Liquibase's tracking rows. Restore
             // the tracking metadata without rerunning the already-present schema changes.
             liquibase.changeLogSync(contexts, labels);
-            liquibase.rollback(5, contexts, labels);
+            liquibase.rollback(Integer.MAX_VALUE, contexts, labels);
 
             assertTrue(columnExists(handle, "match_entity", "consent"));
             assertFalse(columnExists(handle, "match_entity", "dataset_id"));
