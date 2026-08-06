@@ -103,6 +103,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertNull(datasetDAO.findDatasetById(dataset.getDatasetId()));
     assertNull(matchDAO.findMatchById(matchId));
+    long rationaleCount =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT COUNT(*) FROM match_rationale WHERE match_entity_id = :matchId")
+                    .bind("matchId", matchId)
+                    .mapTo(Long.class)
+                    .one());
+    assertEquals(0L, rationaleCount);
   }
 
   @Test
