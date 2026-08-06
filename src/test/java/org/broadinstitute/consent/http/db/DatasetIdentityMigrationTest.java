@@ -129,6 +129,35 @@ class DatasetIdentityMigrationTest extends DAOTestHelper {
                   .bind("purpose", UUID.randomUUID().toString())
                   .mapTo(Integer.class)
                   .one());
+          String explicitDatasetIdPurpose = UUID.randomUUID().toString();
+          assertEquals(
+              datasetId,
+              handle
+                  .createQuery(
+                      """
+                      INSERT INTO match_entity
+                          (dataset_id, consent, purpose, match_entity, failed)
+                      VALUES (:datasetId, 'unresolved-legacy-consent', :purpose, true, false)
+                      RETURNING dataset_id
+                      """)
+                  .bind("datasetId", datasetId)
+                  .bind("purpose", explicitDatasetIdPurpose)
+                  .mapTo(Integer.class)
+                  .one());
+          assertEquals(
+              datasetId,
+              handle
+                  .createQuery(
+                      """
+                      UPDATE match_entity
+                      SET consent = :consent, dataset_id = NULL
+                      WHERE purpose = :purpose
+                      RETURNING dataset_id
+                      """)
+                  .bind("consent", dataset.getDatasetIdentifier())
+                  .bind("purpose", explicitDatasetIdPurpose)
+                  .mapTo(Integer.class)
+                  .one());
           assertTrue(
               handle
                       .createQuery(

@@ -98,10 +98,14 @@
   </changeSet>
 
   <changeSet id="changelog-consent-2026-08-05-sync-legacy-match-writes" author="kmarete">
-    <!-- Populate dataset_id for match inserts made by an older application instance. -->
+    <!-- Populate dataset_id for legacy writes that do not supply it or change consent. -->
     <sql splitStatements="false"><![CDATA[
       CREATE FUNCTION populate_match_dataset_id() RETURNS trigger AS $$
       BEGIN
+        IF TG_OP = 'INSERT' AND NEW.dataset_id IS NOT NULL THEN
+          RETURN NEW;
+        END IF;
+
         SELECT d.dataset_id INTO NEW.dataset_id
         FROM dataset d
         WHERE NEW.consent = 'DUOS-'
