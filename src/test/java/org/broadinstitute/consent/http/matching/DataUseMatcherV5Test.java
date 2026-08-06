@@ -40,7 +40,7 @@ class DataUseMatcherV5Test {
 
     assertEquals(ABSTAIN, result.getMatchResultType());
     assertEquals(List.of(expectedRationale), result.getMessage());
-    assertFalse(result.getMessage().contains(SENSITIVE_OTHER_TEXT));
+    assertOtherTextIsNotExposed(result);
     verifyNoInteractions(dataUseMatcherV4);
   }
 
@@ -80,7 +80,13 @@ class DataUseMatcherV5Test {
 
     assertEquals(ABSTAIN, result.getMatchResultType());
     assertEquals(List.of(DataUseMatcherV5.MULTIPLE_PRIMARY_RATIONALE), result.getMessage());
-    assertFalse(result.getMessage().contains(SENSITIVE_OTHER_TEXT));
+    assertOtherTextIsNotExposed(result);
+  }
+
+  private static void assertOtherTextIsNotExposed(MatchResult result) {
+    assertFalse(
+        result.getMessage().stream()
+            .anyMatch(rationale -> rationale.contains(SENSITIVE_OTHER_TEXT)));
   }
 
   private static Stream<Arguments> unsupportedDatasetPurposeMatrix() {
