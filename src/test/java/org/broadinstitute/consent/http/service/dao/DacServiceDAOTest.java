@@ -283,6 +283,11 @@ class DacServiceDAOTest extends DAOTestHelper {
 
   private ExternalizationTestFixture buildExternalizationFixture(
       Boolean shouldConvertOpenAccessDatasets) {
+    return buildExternalizationFixture(shouldConvertOpenAccessDatasets, null);
+  }
+
+  private ExternalizationTestFixture buildExternalizationFixture(
+      Boolean shouldConvertOpenAccessDatasets, Integer controlledDatasetAlias) {
     User admin = createUser();
     User darOwner = createUser();
     User openDarOwner = createUser();
@@ -312,6 +317,15 @@ class DacServiceDAOTest extends DAOTestHelper {
             openDatasetObjectId,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
+    if (controlledDatasetAlias != null) {
+      jdbi.useHandle(
+          handle ->
+              handle
+                  .createUpdate("UPDATE dataset SET alias = :alias WHERE dataset_id = :datasetId")
+                  .bind("alias", controlledDatasetAlias)
+                  .bind("datasetId", datasetId)
+                  .execute());
+    }
     jdbi.useHandle(
         handle ->
             handle
@@ -537,6 +551,23 @@ class DacServiceDAOTest extends DAOTestHelper {
     assertTrue(
         controlledDarAdminNotes.contains(
             "the following datasets were removed administratively from this request because the responsible Data Access Committee no longer manages access using DUOS."));
+  }
+
+  @Test
+  void testConvertDacDatasetsToExternal_preservesAliasLongerThanSixDigits() {
+    ExternalizationTestFixture f = buildExternalizationFixture(null, 1234567);
+
+    String controlledDarAdminNotes =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT admin_dar_notes FROM data_access_request WHERE reference_id = :referenceId")
+                    .bind("referenceId", f.referenceId())
+                    .mapTo(String.class)
+                    .one());
+
+    assertTrue(controlledDarAdminNotes.contains("DUOS-1234567"));
   }
 
   @Test

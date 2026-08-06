@@ -105,6 +105,13 @@ class DatasetTests {
   }
 
   @Test
+  void testParseAliasToIdentifierPadsToMinimumWidthWithoutTruncating() {
+    assertEquals("DUOS-000042", Dataset.parseAliasToIdentifier(42));
+    assertEquals("DUOS-123456", Dataset.parseAliasToIdentifier(123456));
+    assertEquals("DUOS-1234567", Dataset.parseAliasToIdentifier(1234567));
+  }
+
+  @Test
   void testIsDatasetMatchName() {
     String name = RandomStringUtils.randomAlphanumeric(20);
 

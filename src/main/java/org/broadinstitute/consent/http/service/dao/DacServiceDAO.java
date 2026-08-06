@@ -91,9 +91,15 @@ public class DacServiceDAO implements ConsentLogger {
             FROM (
               SELECT dd.reference_id,
                      STRING_AGG(
-                       COALESCE('DUOS-' || LPAD(d.alias::TEXT, 6, '0'), d.object_id, d.dataset_id::TEXT),
+                       COALESCE(
+                         'DUOS-' || LPAD(d.alias::TEXT, GREATEST(6, LENGTH(d.alias::TEXT)), '0'),
+                         d.object_id,
+                         d.dataset_id::TEXT),
                        ', '
-                       ORDER BY COALESCE('DUOS-' || LPAD(d.alias::TEXT, 6, '0'), d.object_id, d.dataset_id::TEXT)
+                       ORDER BY COALESCE(
+                         'DUOS-' || LPAD(d.alias::TEXT, GREATEST(6, LENGTH(d.alias::TEXT)), '0'),
+                         d.object_id,
+                         d.dataset_id::TEXT)
                      ) AS removed_dataset_identifiers
               FROM dar_dataset dd
               INNER JOIN dataset d ON d.dataset_id = dd.dataset_id
