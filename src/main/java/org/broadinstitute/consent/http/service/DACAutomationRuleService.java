@@ -26,6 +26,8 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassification.Shape;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
@@ -159,6 +161,14 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
+    if (dataset.getDataUse() == null
+        || DataUsePrimaryClassifier.classify(dataset.getDataUse()).shape() != Shape.SINGLE) {
+      logInfo(
+          String.format(
+              "Rule %s not triggered for DAC id: %s and dataset id: %s because the dataset does not have a single primary Data Use",
+              rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
+      return Optional.empty();
+    }
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
     boolean darContainsBannedCountry = CountryValidator.containsBannedCountry(dar);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
