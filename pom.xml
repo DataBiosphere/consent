@@ -22,6 +22,7 @@
     <swagger.ui.version>5.32.11</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
+    <commons.csv.version>1.14.1</commons.csv.version>
     <junit.version>6.1.2</junit.version>
     <mockito.version>5.23.0</mockito.version>
     <sonar.plugin.version>5.7.0.6970</sonar.plugin.version>
@@ -756,6 +757,13 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
       <version>${dropwizard.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>${commons.csv.version}</version>
       <scope>test</scope>
     </dependency>
 
