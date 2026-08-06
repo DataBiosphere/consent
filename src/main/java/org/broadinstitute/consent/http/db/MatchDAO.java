@@ -74,11 +74,13 @@ public interface MatchDAO extends Transactional<MatchDAO> {
         INSERT INTO match_entity
           (dataset_id, consent, purpose, match_entity, failed, create_date, algorithm_version,
            abstain)
-        SELECT d.dataset_id,
-               'DUOS-' || REPEAT('0', GREATEST(0, 6 - LENGTH(d.alias::text))) || d.alias::text,
-               :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain
-        FROM dataset d
-        WHERE d.dataset_id = :datasetId
+        VALUES (
+          :datasetId,
+          (SELECT 'DUOS-' || REPEAT('0', GREATEST(0, 6 - LENGTH(d.alias::text)))
+                    || d.alias::text
+             FROM dataset d
+            WHERE d.dataset_id = :datasetId),
+          :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
   Integer insertMatch(

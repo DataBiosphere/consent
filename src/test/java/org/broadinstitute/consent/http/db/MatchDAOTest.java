@@ -226,6 +226,19 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testInsertMatchFailsWhenDatasetDoesNotExist() {
+    Integer missingDatasetId = Integer.MAX_VALUE;
+    String purposeId = UUID.randomUUID().toString();
+    String algorithmVersion = MatchAlgorithm.V4.getVersion();
+
+    assertThrows(
+        UnableToExecuteStatementException.class,
+        () ->
+            matchDAO.insertMatch(
+                missingDatasetId, purposeId, true, false, FIXED_DATE, algorithmVersion, false));
+  }
+
+  @Test
   void testMatchUniquenessUsesPurposeAndDatasetId() {
     Dataset firstDataset = createDataset();
     Dataset secondDataset = createDataset();
