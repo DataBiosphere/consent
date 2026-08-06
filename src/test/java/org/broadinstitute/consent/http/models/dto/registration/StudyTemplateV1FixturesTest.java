@@ -54,7 +54,8 @@ class StudyTemplateV1FixturesTest {
 
       Set<String> fieldKeys = new HashSet<>();
       for (CSVRecord csvRecord : records.subList(1, records.size())) {
-        assertEquals(HEADERS.size(), csvRecord.size(), name + " row " + csvRecord.getRecordNumber());
+        assertEquals(
+            HEADERS.size(), csvRecord.size(), name + " row " + csvRecord.getRecordNumber());
         assertEquals("1", csvRecord.get(0), name + " row " + csvRecord.getRecordNumber());
 
         String fieldKey = csvRecord.get(1) + '\0' + csvRecord.get(2) + '\0' + csvRecord.get(4);
