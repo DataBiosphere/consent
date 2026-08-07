@@ -29,9 +29,9 @@ platform upload limit: the shared check in `Resource#validateFileDetails` uses t
 certification documents but far too permissive for a text template.
 
 The limit is generous for the intended client. Rows average roughly 120 bytes. A study with 40
-study-level rows, 100 consent groups at about 25 rows each, and 20 asset rows is about 2,560 rows,
-or roughly 300 KB — about a tenth of the limit. A file that exceeds 5 MiB is not a study template
-that a person authored in a spreadsheet.
+study-level rows and 100 consent groups at about 25 rows each, file types included, is around 2,540
+rows, or roughly 300 KB — about a tenth of the limit. A file that exceeds 5 MiB is not a study
+template that a person authored in a spreadsheet.
 
 ### Spreadsheet compatibility
 
@@ -82,18 +82,18 @@ Each row assigns one `field` to one logical record.
 | --- | --- | --- | --- |
 | `study` | Must be `study` | Empty | One field on the single `StudyRegistrationRequest`. |
 | `consentGroup` | Unique non-empty template ID | Must be `study` | One field on a `ConsentGroupRequest`; each ID becomes one `consentGroups[]` item. |
-| `asset` | Unique non-empty template ID | Must be `study` | One supported non-file asset; `field` names the asset collection and `value` is a JSON object. |
+| `fileType` | Unique non-empty template ID | Must be a `consentGroup` `recordId` | One field on a `fileTypes[]` item belonging to that consent group. |
 
-`recordId` is template-only grouping metadata for study and consent-group records. For assets it
-also becomes the client asset identifier (`modelId`, `workspaceId`, `publicationId`,
-`presentationId`, `clinicalTrialId`, `fundingId`, or `ipId`). Numeric study and dataset IDs remain
-server-owned.
+`recordId` is template-only grouping metadata. It never reaches the wire: numeric study and dataset
+IDs remain server-owned, and `fileTypes[]` items are positional. A `fileType` record's
+`parentRecordId` must name a `consentGroup` record declared in the same file; `fileTypes` items are
+attached to that consent group in file order.
 
 Rows may appear in any order after the header. A `(recordType, recordId, field)` tuple may occur
 only once for a single-valued field; duplicate assignments are errors even if their values match.
 Scalar array fields are the one exception: they repeat the tuple once per item, as described under
-Value encoding. Unknown headers, record types, fields, and asset properties are errors and are never
-silently ignored.
+Value encoding. Unknown headers, record types, and fields are errors and are never silently
+ignored.
 
 ## Value encoding
 
@@ -105,12 +105,12 @@ silently ignored.
 | Date | ISO local date `YYYY-MM-DD`; calendar-invalid dates are rejected. |
 | URI | Absolute `http` or `https` URI. |
 | Scalar array | One row per item, repeating the same `(recordType, recordId, field)` tuple. Each `value` cell holds one plain string or enum item, encoded exactly as a single value of that kind. |
-| Object array | JSON array in one CSV cell. Used only by `fileTypes`. |
-| Object | JSON object in one CSV cell. Used only for supported asset payloads. |
 | Empty value | An empty `value` cell means absent (`null`), not an empty string or empty array. Omit optional fields; empty required values fail validation. |
 
-Every array-typed field is a scalar array except `fileTypes`, which is an object array. So the wire
-value `["Genomic","Phenotypic"]` is two rows, and neither cell needs quoting:
+Every `value` cell is a single scalar. **v1 has no JSON encoding at all**: structured wire values
+are expressed as rows, not as embedded documents. Arrays of scalars repeat their row, and the one
+array of objects, `fileTypes`, is its own record type. So the wire value `["Genomic","Phenotypic"]`
+is two rows, and neither cell needs quoting:
 
 ```csv
 1,study,study,,dataTypes,Genomic
@@ -122,16 +122,16 @@ field is absent when it has no rows; there is no encoding for an explicitly empt
 `value` cell on a repeated row is an error, not a skipped item, and the same item value may not
 appear twice within one field.
 
-JSON in a `value` cell is therefore limited to `fileTypes` and asset payloads, which have no
-lossless flat representation. Both are optional and neither appears in a minimal template.
+Product asked for a template with no JSON in it, which is what set the v1 boundary: the wire
+properties that cannot be expressed as scalar rows without inventing new encodings are excluded from
+v1 rather than embedded as JSON. That is why non-file assets are not in this contract.
 
-Product confirmed that producers get the template by downloading it from the DUOS UI rather than
-building it from this contract. Those JSON cells are edited in place, not authored from scratch,
-which is what makes them acceptable in a user-facing template. That makes the download a v1
-dependency rather than a convenience: it must emit the header and the `templateVersion`,
-`recordType`, `recordId`, `parentRecordId`, and `field` columns for the fields being offered,
-leaving `value` empty for the producer to fill in, and it must escape leading `=`, `+`, and `@` as
-described under Spreadsheet compatibility.
+Product also confirmed that producers get the template by downloading it from the DUOS UI rather
+than building it from this contract. The download is therefore a v1 dependency rather than a
+convenience: it must emit the header and the `templateVersion`, `recordType`, `recordId`,
+`parentRecordId`, and `field` columns for the fields being offered, leaving `value` empty for the
+producer to fill in, and it must escape leading `=`, `+`, and `@` as described under Spreadsheet
+compatibility.
 
 ## Study field mapping
 
@@ -173,7 +173,7 @@ The following wire properties are deliberately not direct template fields:
 | Wire property | Reason |
 | --- | --- |
 | `consentGroups` | Constructed from `consentGroup` records. |
-| `assets` | Constructed from `asset` records. |
+| `assets` | Non-file assets are out of scope for v1. See below. |
 | All `alternativeDataSharingPlan*` properties | The alternative sharing plan is file-backed and its file cannot be uploaded through the template. See below. |
 | `data` | Opaque client metadata is not part of the stable v1 contract. |
 | `externalIdentifier`, `externalIdentifierType` | Integration-owned identifiers are outside this user-authored template. |
@@ -184,7 +184,17 @@ the template cannot carry, so importing them would populate a draft that still c
 without returning to the form for the file. A user who needs an alternative sharing plan fills that
 section in on the populated draft, where the file upload lives, and the group is a candidate for a
 later template version once file-bearing imports are supported. (Confirmed as the intended v1 scope
-with @otchet-broad; pending confirmation from @jlaw-codes.)
+with @otchet-broad and @jlaw-codes.)
+
+Non-file assets — models, workspaces, publications, presentations, clinical trials, funding, and
+intellectual properties — are excluded from v1 for a different reason. Their payloads nest: a
+publication carries an `authors` array of `Author` objects, a presentation carries a `presenter`
+object, and a model carries a `maintainer` object. Expressing those without JSON needs encodings
+this contract otherwise has no use for, such as dotted field paths or a second level of child
+records, which is a poor trade in a template meant to be filled in by hand. Assets are optional,
+additive metadata: excluding them leaves nothing blocked, since a user can add them on the populated
+draft the same way they do today. They are the first candidate for v2, where they can be designed as
+records rather than retrofitted. (Product preference for no JSON confirmed by @jlaw-codes.)
 
 NIH institutional certification files are also excluded. They are not fields on the canonical wire
 request and must be uploaded on the populated draft form.
@@ -217,32 +227,32 @@ Wire paths are relative to one `consentGroups[]` item.
 | `url` | `url` | URI | Optional absolute HTTP(S) data URL. |
 | `requestLocation` | `requestLocation` | URI | Optional absolute HTTP(S) external-request URL. |
 | `numberOfParticipants` | `numberOfParticipants` | Integer | Required. |
-| `fileTypes` | `fileTypes` | Object array | Optional; each item has exact `fileType` and optional `functionalEquivalence`. These describe data formats, not uploads. |
+| `fileTypes` | `fileTypes` | Object array | Optional; supplied as `fileType` records, not as a field on this record. See below. |
 
 Primary data-use rules are unchanged: `open` requires no primary data use; `controlled` and
 `external` require exactly one of general research use, HMB, disease-specific use, POA, or other.
 `datasetId` is server-assigned, and the opaque consent-group `data` property is unsupported.
 
-## Non-file asset mapping
+## File-type mapping
 
-An asset record contains exactly one row. Its `field` is one collection name below and its `value`
-is a JSON object using existing duos-ui property names. It maps to
-`StudyRegistrationRequest.assets.<field>[]`.
+`fileTypes` is the only array of objects in v1, so it is a record type rather than a field. Each
+`fileType` record contributes one `fileTypes[]` item to the consent group named by its
+`parentRecordId`. These describe data formats; they are not uploads.
 
-| Asset `field` | `recordId` maps to | Required JSON properties | Optional JSON properties |
+| CSV `field` | Wire target | Type | Requirement / existing rule |
 | --- | --- | --- | --- |
-| `models` | `modelId` | `name`, `url`, `format`, `license`, `maintainer` (`name`, `email`) | `description`, `cloud`, `trainedOnDatasets`, `tags` |
-| `workspaces` | `workspaceId` | `name`, `platform`, `url`, `description` | `cloud`, `tools`, `access`, `tags` |
-| `publications` | `publicationId` | `title`, `publishedDate`, `authors`, `datasetCitation`, `citation`, `journal`, `doi` | `pubmedId`, `bibliographicCitation`, `url`, `access`, `tags` |
-| `presentations` | `presentationId` | `title`, `date`, `citation` | `url`, `authors`, `datasetCitation`, `presenter`, `event`, `location`, `format`, `access`, `tags` |
-| `clinicalTrials` | `clinicalTrialId` | `title`, `registry`, `identifier`, `status`, `sponsor`, `startDate`, `interventionType`, `description`, `phase`, `url` | `endDate`, `tags` |
-| `funding` | `fundingId` | `funderName`, `funderProgram`, `grantNumber`, `projectTitle`, `url` | `startDate`, `endDate`, `tags` |
-| `intellectualProperties` | `ipId` | `type`, `title`, `assignee`, `patentNumber`, `filingDate`, `status`, `url`, `contact` | `tags` |
+| `fileType` | `fileType` | Enum | Required; exact `FileType` wire value. |
+| `functionalEquivalence` | `functionalEquivalence` | String | Optional. |
 
-Asset objects must not contain their ID property or `studyId`; the importer supplies the ID from
-`recordId`, and draft/study processing supplies `studyId`. Biospecimens are excluded because the
-current study form does not allow users to add them. No file-storage object or file-content asset is
-supported.
+```csv
+1,consentGroup,dataset-controlled,study,consentGroupName,Synthetic Controlled Dataset
+1,fileType,ft-genome,dataset-controlled,fileType,Genome
+1,fileType,ft-genome,dataset-controlled,functionalEquivalence,Synthetic reference build
+```
+
+A `fileType` record whose `parentRecordId` does not name a `consentGroup` record in the same file is
+an orphan and is rejected. Biospecimens are excluded because the current study form does not allow
+users to add them, and no file-storage object or file-content asset is supported.
 
 ## Invalid-input behavior
 
@@ -265,11 +275,11 @@ preserving aggregation across otherwise independent fields.
 | Missing, unknown, reordered, or duplicate header | Reject. |
 | Non-comma delimiter detected in the header | Reject, naming the detected character and asking for a comma-delimited re-export. |
 | Missing, unsupported, or mixed version | Reject affected rows; only major version `1` is supported. |
-| Unknown record type, field, asset collection, or asset property | Reject the row. |
+| Unknown record type or field | Reject the row. |
 | Duplicate `(recordType, recordId, field)` on a single-valued field | Reject the later assignment. |
 | Repeated item value within one scalar array field | Reject the later row. |
 | Missing parent, multiple study records, or orphan record | Reject the affected record. |
-| Empty required value, empty scalar array item, or invalid scalar/JSON | Reject with row and column context. |
+| Empty required value, empty scalar array item, or invalid scalar | Reject with row and column context. |
 | Existing registration-rule violation | Reject with the existing validator message; row and column may be absent. |
 
 Errors and general logs must not echo raw rows or sensitive free-text values.
@@ -286,6 +296,7 @@ Fixtures live under `src/test/resources/fixtures/study-template/v1`:
 - `invalid/duplicate-field.csv`
 - `invalid/semicolon-delimited.csv` — a European-locale Excel export
 - `invalid/duplicate-array-item.csv`
+- `invalid/orphan-file-type.csv`
 - `invalid/unknown-field.csv`
 - `invalid/unsupported-version.csv`
 - `invalid/field-values.csv`
@@ -330,13 +341,13 @@ On success, route with the exact returned draft UUID and require
 `draftType === 'StudyDatasetSubmissionV1'`. The loaded document has the
 `StudyRegistrationRequest` wire shape described by this contract. Hydration must:
 
-- populate supported study fields, consent groups, and non-file assets;
-- leave file upload controls empty;
+- populate supported study fields, consent groups, and their file types;
+- leave file upload controls empty and asset sections untouched;
 - allow review and edits through the existing study registration form; and
 - submit through the existing study-creation path.
 
-The CSV contract's `recordId` values are template grouping keys. Consent converts asset record IDs
-to the corresponding client asset ID. Numeric study and dataset IDs remain server-owned.
+The CSV contract's `recordId` values are template grouping keys and do not reach the wire. Numeric
+study and dataset IDs remain server-owned.
 
 ## Approval gate
 

@@ -1,0 +1,4 @@
+templateVersion,recordType,recordId,parentRecordId,field,value
+1,study,study,,studyName,Synthetic Orphan File Type Study
+1,consentGroup,dataset-open,study,consentGroupName,Synthetic Open Dataset
+1,fileType,ft-genome,dataset-missing,fileType,Genome

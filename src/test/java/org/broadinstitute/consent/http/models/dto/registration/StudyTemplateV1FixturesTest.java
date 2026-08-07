@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.dto.registration;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -18,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -38,6 +38,7 @@ class StudyTemplateV1FixturesTest {
           "duplicate-header.csv",
           "empty-file.csv",
           "field-values.csv",
+          "orphan-file-type.csv",
           "semicolon-delimited.csv",
           "unknown-field.csv",
           "unsupported-version.csv");
@@ -77,16 +78,9 @@ class StudyTemplateV1FixturesTest {
         String value = csvRecord.get(5);
         assertTrue(fieldKeys.add(fieldKey(csvRecord)), name + " duplicates " + fieldKey(csvRecord));
         assertFalse(value.isEmpty(), name + " row " + csvRecord.getRecordNumber());
-
-        if (SCALAR_ARRAY_FIELDS.contains(csvRecord.get(4))) {
-          assertFalse(
-              value.startsWith("[") || value.startsWith("{"),
-              name + " row " + csvRecord.getRecordNumber() + " encodes an array as JSON");
-        }
-        if (value.startsWith("[") || value.startsWith("{")) {
-          assertDoesNotThrow(
-              () -> OBJECT_MAPPER.readTree(value), name + " row " + csvRecord.getRecordNumber());
-        }
+        assertFalse(
+            value.startsWith("[") || value.startsWith("{"),
+            name + " row " + csvRecord.getRecordNumber() + " encodes a value as JSON");
       }
     }
   }
@@ -201,6 +195,65 @@ class StudyTemplateV1FixturesTest {
     assertEquals(1, header.size(), "semicolon-delimited.csv");
     assertTrue(header.getFirst().contains(";"), "semicolon-delimited.csv");
     assertNotEquals(HEADERS, header, "semicolon-delimited.csv");
+  }
+
+  @Test
+  void noFixtureEncodesAValueAsJson() throws Exception {
+    // v1 expresses structured wire values as rows, never as an embedded document. fileTypes, the
+    // one array of objects, is its own record type.
+    for (String name : VALID_FIXTURES) {
+      assertNoJsonValues("valid/" + name);
+    }
+    for (String name : INVALID_FIXTURES) {
+      assertNoJsonValues("invalid/" + name);
+    }
+  }
+
+  @Test
+  void fileTypeRecordsReferenceADeclaredConsentGroup() throws Exception {
+    for (String name : VALID_FIXTURES) {
+      List<CSVRecord> records = parse(readResource("valid/" + name));
+      Set<String> consentGroupIds = recordIdsOfType(records, "consentGroup");
+
+      records.stream()
+          .filter(csvRecord -> csvRecord.get(1).equals("fileType"))
+          .forEach(
+              csvRecord ->
+                  assertTrue(
+                      consentGroupIds.contains(csvRecord.get(3)),
+                      name + " row " + csvRecord.getRecordNumber() + " has an orphan parent"));
+    }
+
+    List<CSVRecord> orphan = parse(readResource("invalid/orphan-file-type.csv"));
+    Set<String> consentGroupIds = recordIdsOfType(orphan, "consentGroup");
+    assertTrue(
+        orphan.stream()
+            .filter(csvRecord -> csvRecord.get(1).equals("fileType"))
+            .anyMatch(csvRecord -> !consentGroupIds.contains(csvRecord.get(3))),
+        "orphan-file-type.csv");
+  }
+
+  private static void assertNoJsonValues(String relativePath) throws IOException {
+    byte[] bytes = readResource(relativePath);
+    if (bytes.length == 0) {
+      return;
+    }
+    for (CSVRecord csvRecord : parse(bytes)) {
+      if (csvRecord.size() < HEADERS.size()) {
+        continue;
+      }
+      String value = csvRecord.get(5);
+      assertFalse(
+          value.startsWith("[") || value.startsWith("{"),
+          relativePath + " row " + csvRecord.getRecordNumber() + " encodes a value as JSON");
+    }
+  }
+
+  private static Set<String> recordIdsOfType(List<CSVRecord> records, String recordType) {
+    return records.stream()
+        .filter(csvRecord -> csvRecord.get(1).equals(recordType))
+        .map(csvRecord -> csvRecord.get(2))
+        .collect(Collectors.toSet());
   }
 
   private static String fieldKey(CSVRecord csvRecord) {
