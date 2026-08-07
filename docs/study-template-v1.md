@@ -12,6 +12,11 @@ it does not define a new registration API or replace existing registration valid
 Canonical synthetic fixtures live in `src/test/resources/fixtures/study-template/v1`, where Consent
 parser tests can load them directly. DT-3869 itself does not implement parsing or UI behavior.
 
+DT-3869 is Ticket 1 of the workflow planned in duos-ui at
+`docs/plans/study-template-validation-workflow.md` (DT-1855). That plan defers to this document for
+the layout and records how the decisions taken here change the later tickets — in particular that
+the UI must offer a blank-template download, since v1 expresses every structured value as a row.
+
 ## File contract
 
 - File extension: `.csv`.
@@ -20,6 +25,18 @@ parser tests can load them directly. DT-3869 itself does not implement parsing o
 - Dialect: RFC 4180-style comma-separated values. Double quotes enclose values; a literal quote is
   escaped as `""`. CRLF and LF record separators are accepted.
 - One file represents exactly one study.
+- The case-sensitive header is required exactly once and in this order:
+
+```text
+templateVersion,recordType,recordId,parentRecordId,field,value
+```
+
+- `templateVersion` is required on every data row and must be major version `1`. Mixed or
+  unsupported versions are errors.
+- Blank physical lines may be ignored. A zero-byte, BOM-only, header-only, or otherwise record-free
+  file is invalid.
+- Leading and trailing whitespace is significant in string values. Producers should not add
+  whitespace around unquoted values.
 
 ### Size limit rationale
 
@@ -61,18 +78,6 @@ guessed at:
 The importer treats every cell as literal text and never evaluates a leading `=`, `+`, or `@` as a
 formula. Any template Consent generates for download must escape those prefixes so the exported file
 is not a CSV-injection vector in the producer's spreadsheet application.
-- The case-sensitive header is required exactly once and in this order:
-
-```text
-templateVersion,recordType,recordId,parentRecordId,field,value
-```
-
-- `templateVersion` is required on every data row and must be major version `1`. Mixed or
-  unsupported versions are errors.
-- Blank physical lines may be ignored. A zero-byte, BOM-only, header-only, or otherwise record-free
-  file is invalid.
-- Leading and trailing whitespace is significant in string values. Producers should not add
-  whitespace around unquoted values.
 
 ## Record model
 
@@ -108,9 +113,9 @@ ignored.
 | Empty value | An empty `value` cell means absent (`null`), not an empty string or empty array. Omit optional fields; empty required values fail validation. |
 
 Every `value` cell is a single scalar. **v1 has no JSON encoding at all**: structured wire values
-are expressed as rows, not as embedded documents. Arrays of scalars repeat their row, and the one
-array of objects, `fileTypes`, is its own record type. So the wire value `["Genomic","Phenotypic"]`
-is two rows, and neither cell needs quoting:
+are expressed as rows, not as embedded documents. Arrays of scalars repeat their row, and the only
+wire array of objects, `fileTypes`, is a record type rather than a cell. So the wire value
+`["Genomic","Phenotypic"]` is two rows, and neither cell needs quoting:
 
 ```csv
 1,study,study,,dataTypes,Genomic
@@ -127,11 +132,17 @@ properties that cannot be expressed as scalar rows without inventing new encodin
 v1 rather than embedded as JSON. That is why non-file assets are not in this contract.
 
 Product also confirmed that producers get the template by downloading it from the DUOS UI rather
-than building it from this contract. The download is therefore a v1 dependency rather than a
-convenience: it must emit the header and the `templateVersion`, `recordType`, `recordId`,
-`parentRecordId`, and `field` columns for the fields being offered, leaving `value` empty for the
-producer to fill in, and it must escape leading `=`, `+`, and `@` as described under Spreadsheet
-compatibility.
+than building it from this contract. The download must emit the header and the `templateVersion`,
+`recordType`, `recordId`, `parentRecordId`, and `field` columns for the fields being offered,
+leaving `value` empty for the producer to fill in, and it must escape leading `=`, `+`, and `@` as
+described under Spreadsheet compatibility.
+
+That download is a v1 dependency rather than a convenience, and it is **not currently tracked by any
+ticket**. It was a convenience while asset payloads were JSON; removing JSON made every structured
+value a row, so a hand-built file means keeping `recordType`, `recordId`, and `parentRecordId`
+consistent across dozens of rows. The work belongs to duos-ui rather than Consent, so it needs a
+ticket in that repo's scope before the import path is considered usable — DT-3869 covers this
+contract only.
 
 ## Study field mapping
 
@@ -227,7 +238,7 @@ Wire paths are relative to one `consentGroups[]` item.
 | `url` | `url` | URI | Optional absolute HTTP(S) data URL. |
 | `requestLocation` | `requestLocation` | URI | Optional absolute HTTP(S) external-request URL. |
 | `numberOfParticipants` | `numberOfParticipants` | Integer | Required. |
-| `fileTypes` | `fileTypes` | Object array | Optional; supplied as `fileType` records, not as a field on this record. See below. |
+| `fileTypes` | `fileTypes` | Records, not a field | Optional. Never appears as a `field` on a `consentGroup` row; supplied as `fileType` records that name this consent group as their parent. A `fileTypes` row on a `consentGroup` record is an unknown field and is rejected. See below. |
 
 Primary data-use rules are unchanged: `open` requires no primary data use; `controlled` and
 `external` require exactly one of general research use, HMB, disease-specific use, POA, or other.
@@ -235,7 +246,8 @@ Primary data-use rules are unchanged: `open` requires no primary data use; `cont
 
 ## File-type mapping
 
-`fileTypes` is the only array of objects in v1, so it is a record type rather than a field. Each
+`fileTypes` is the only array of objects on the wire, so v1 expresses it as a record type rather
+than as a JSON cell. Each
 `fileType` record contributes one `fileTypes[]` item to the consent group named by its
 `parentRecordId`. These describe data formats; they are not uploads.
 
