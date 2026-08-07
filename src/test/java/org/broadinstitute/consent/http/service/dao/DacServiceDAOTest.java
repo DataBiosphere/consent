@@ -34,6 +34,8 @@ import org.broadinstitute.consent.http.rules.RuleState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -553,9 +555,16 @@ class DacServiceDAOTest extends DAOTestHelper {
             "the following datasets were removed administratively from this request because the responsible Data Access Committee no longer manages access using DUOS."));
   }
 
-  @Test
-  void testConvertDacDatasetsToExternal_preservesAliasLongerThanSixDigits() {
-    ExternalizationTestFixture f = buildExternalizationFixture(null, 1234567);
+  @ParameterizedTest
+  @CsvSource({
+    "99999, DUOS-099999",
+    "999999, DUOS-999999",
+    "1000000, DUOS-1000000",
+    "1234567, DUOS-1234567"
+  })
+  void testConvertDacDatasetsToExternal_preservesAliasLongerThanSixDigits(
+      Integer alias, String expectedIdentifier) {
+    ExternalizationTestFixture f = buildExternalizationFixture(null, alias);
 
     String controlledDarAdminNotes =
         jdbi.withHandle(
@@ -567,7 +576,10 @@ class DacServiceDAOTest extends DAOTestHelper {
                     .mapTo(String.class)
                     .one());
 
-    assertTrue(controlledDarAdminNotes.contains("DUOS-1234567"));
+    assertTrue(
+        controlledDarAdminNotes.contains(expectedIdentifier),
+        "Admin notes should contain %s but were: %s"
+            .formatted(expectedIdentifier, controlledDarAdminNotes));
   }
 
   @Test

@@ -112,6 +112,19 @@ class DatasetTests {
   }
 
   @Test
+  void testParseAliasToIdentifierAtSixDigitBoundary() {
+    assertEquals("DUOS-099999", Dataset.parseAliasToIdentifier(99999));
+    assertEquals("DUOS-999999", Dataset.parseAliasToIdentifier(999999));
+    assertEquals("DUOS-1000000", Dataset.parseAliasToIdentifier(1000000));
+  }
+
+  @Test
+  void testParseIdentifierToAliasAtSixDigitBoundary() {
+    assertEquals(999999, (int) Dataset.parseIdentifierToAlias("DUOS-999999"));
+    assertEquals(1000000, (int) Dataset.parseIdentifierToAlias("DUOS-1000000"));
+  }
+
+  @Test
   void testIsDatasetMatchName() {
     String name = RandomStringUtils.randomAlphanumeric(20);
 
