@@ -123,9 +123,15 @@ field is absent when it has no rows; there is no encoding for an explicitly empt
 appear twice within one field.
 
 JSON in a `value` cell is therefore limited to `fileTypes` and asset payloads, which have no
-lossless flat representation. Both are optional and neither appears in a minimal template. This
-narrowing is pending confirmation with product; if hand-authored JSON is unacceptable for assets
-too, the remaining option is dropping non-file assets from v1 rather than re-encoding them.
+lossless flat representation. Both are optional and neither appears in a minimal template.
+
+Product confirmed that producers get the template by downloading it from the DUOS UI rather than
+building it from this contract. Those JSON cells are edited in place, not authored from scratch,
+which is what makes them acceptable in a user-facing template. That makes the download a v1
+dependency rather than a convenience: it must emit the header and the `templateVersion`,
+`recordType`, `recordId`, `parentRecordId`, and `field` columns for the fields being offered,
+leaving `value` empty for the producer to fill in, and it must escape leading `=`, `+`, and `@` as
+described under Spreadsheet compatibility.
 
 ## Study field mapping
 
