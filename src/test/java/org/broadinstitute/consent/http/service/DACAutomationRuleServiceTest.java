@@ -676,6 +676,21 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testApplyRuleDoesNotApproveOtherOnlyPrimaryDatasetShape() {
+    DACAutomationRule rule = makeDacAutomationRuleHMB();
+    Dataset dataset = makeDataset();
+    dataset.getDataUse().setGeneralUse(false);
+    dataset.getDataUse().setOther("sensitive free text");
+    DataAccessRequest dar = makeDAR();
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    Optional<Vote> appliedVote = serviceSpy.applyRule(rule, dataset, dar, request);
+
+    assertTrue(appliedVote.isEmpty());
+    verify(serviceSpy, never()).openElectionAndApprove(any(), any(), any(), any(), any());
+  }
+
+  @Test
   void testApplyRuleDoesNotApproveObservedHmbOtherDatasetShape() {
     DACAutomationRule rule = makeDacAutomationRuleHMB();
     Dataset dataset = makeDataset();
