@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.dto.registration;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,15 +30,30 @@ class StudyTemplateV1FixturesTest {
   private static final List<String> HEADERS =
       List.of("templateVersion", "recordType", "recordId", "parentRecordId", "field", "value");
   private static final List<String> VALID_FIXTURES =
-      List.of("minimal-valid.csv", "multi-consent-group-valid.csv");
+      List.of("minimal-valid.csv", "multi-consent-group-valid.csv", "excel-export-valid.csv");
   private static final List<String> INVALID_FIXTURES =
       List.of(
+          "duplicate-array-item.csv",
           "duplicate-field.csv",
           "duplicate-header.csv",
           "empty-file.csv",
           "field-values.csv",
+          "semicolon-delimited.csv",
           "unknown-field.csv",
           "unsupported-version.csv");
+
+  /**
+   * Array-typed fields that the contract encodes as one row per item, so the same (recordType,
+   * recordId, field) tuple may legitimately repeat. Every other field is single-valued. {@code
+   * fileTypes} is an object array and stays a single JSON cell.
+   */
+  private static final Set<String> SCALAR_ARRAY_FIELDS =
+      Set.of(
+          "dataTypes",
+          "dataCustodianEmail",
+          "collaboratingSites",
+          "nihICsSupportingStudy",
+          "diseaseSpecificUse");
 
   private static final CSVFormat CSV_FORMAT =
       CSVFormat.RFC4180.builder().setIgnoreEmptyLines(true).get();
@@ -58,10 +74,15 @@ class StudyTemplateV1FixturesTest {
             HEADERS.size(), csvRecord.size(), name + " row " + csvRecord.getRecordNumber());
         assertEquals("1", csvRecord.get(0), name + " row " + csvRecord.getRecordNumber());
 
-        String fieldKey = csvRecord.get(1) + '\0' + csvRecord.get(2) + '\0' + csvRecord.get(4);
-        assertTrue(fieldKeys.add(fieldKey), name + " duplicates " + fieldKey);
-
         String value = csvRecord.get(5);
+        assertTrue(fieldKeys.add(fieldKey(csvRecord)), name + " duplicates " + fieldKey(csvRecord));
+        assertFalse(value.isEmpty(), name + " row " + csvRecord.getRecordNumber());
+
+        if (SCALAR_ARRAY_FIELDS.contains(csvRecord.get(4))) {
+          assertFalse(
+              value.startsWith("[") || value.startsWith("{"),
+              name + " row " + csvRecord.getRecordNumber() + " encodes an array as JSON");
+        }
         if (value.startsWith("[") || value.startsWith("{")) {
           assertDoesNotThrow(
               () -> OBJECT_MAPPER.readTree(value), name + " row " + csvRecord.getRecordNumber());
@@ -112,9 +133,23 @@ class StudyTemplateV1FixturesTest {
     Set<String> fieldKeys = new HashSet<>();
     assertFalse(
         duplicateField.subList(1, duplicateField.size()).stream()
-            .map(csvRecord -> csvRecord.get(1) + '\0' + csvRecord.get(2) + '\0' + csvRecord.get(4))
+            .map(StudyTemplateV1FixturesTest::fieldKey)
             .allMatch(fieldKeys::add),
         "duplicate-field.csv");
+
+    // A repeated scalar-array field is only invalid because the item value repeats, so the key that
+    // catches it has to include the value.
+    List<CSVRecord> duplicateItem = parse(readResource("invalid/duplicate-array-item.csv"));
+    Set<String> itemKeys = new HashSet<>();
+    assertFalse(
+        duplicateItem.subList(1, duplicateItem.size()).stream()
+            .map(StudyTemplateV1FixturesTest::fieldKey)
+            .allMatch(itemKeys::add),
+        "duplicate-array-item.csv");
+    assertTrue(
+        duplicateItem.subList(1, duplicateItem.size()).stream()
+            .anyMatch(csvRecord -> csvRecord.get(5).isEmpty()),
+        "duplicate-array-item.csv should also cover an empty item");
 
     List<CSVRecord> unsupportedVersion = parse(readResource("invalid/unsupported-version.csv"));
     assertTrue(
@@ -135,6 +170,43 @@ class StudyTemplateV1FixturesTest {
     System.arraycopy(fixture, 0, withBom, 3, fixture.length);
 
     assertEquals(HEADERS, parse(withBom).getFirst().toList());
+  }
+
+  @Test
+  void excelStyleExportIsAccepted() throws Exception {
+    byte[] excelExport = readResource("valid/excel-export-valid.csv");
+
+    assertEquals(
+        (byte) 0xEF, excelExport[0], "excel-export-valid.csv should start with a UTF-8 BOM");
+    assertEquals((byte) 0xBB, excelExport[1]);
+    assertEquals((byte) 0xBF, excelExport[2]);
+    assertTrue(
+        decodeUtf8(excelExport).contains("\r\n"),
+        "excel-export-valid.csv should use CRLF record separators");
+
+    // BOM and CRLF are the only differences from the plain minimal fixture.
+    List<List<String>> excelRows = parse(excelExport).stream().map(CSVRecord::toList).toList();
+    List<List<String>> minimalRows =
+        parse(readResource("valid/minimal-valid.csv")).stream().map(CSVRecord::toList).toList();
+    assertEquals(minimalRows, excelRows);
+  }
+
+  @Test
+  void semicolonDelimitedExportIsDetectableAsSuch() throws Exception {
+    List<CSVRecord> records = parse(readResource("invalid/semicolon-delimited.csv"));
+
+    // Read as comma-separated values, a European-locale export collapses to one column per row.
+    // That is the signal the parser uses to report the delimiter instead of a missing header.
+    List<String> header = records.getFirst().toList();
+    assertEquals(1, header.size(), "semicolon-delimited.csv");
+    assertTrue(header.getFirst().contains(";"), "semicolon-delimited.csv");
+    assertNotEquals(HEADERS, header, "semicolon-delimited.csv");
+  }
+
+  private static String fieldKey(CSVRecord csvRecord) {
+    String field = csvRecord.get(4);
+    String key = csvRecord.get(1) + '\0' + csvRecord.get(2) + '\0' + field;
+    return SCALAR_ARRAY_FIELDS.contains(field) ? key + '\0' + csvRecord.get(5) : key;
   }
 
   private static byte[] readResource(String relativePath) throws IOException {

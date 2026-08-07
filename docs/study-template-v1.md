@@ -20,6 +20,47 @@ parser tests can load them directly. DT-3869 itself does not implement parsing o
 - Dialect: RFC 4180-style comma-separated values. Double quotes enclose values; a literal quote is
   escaped as `""`. CRLF and LF record separators are accepted.
 - One file represents exactly one study.
+
+### Size limit rationale
+
+5 MiB is a template-specific limit that the import endpoint must enforce itself. It is not the
+platform upload limit: the shared check in `Resource#validateFileDetails` uses the OWASP
+`FileValidator` default of 500,000,000 bytes (500 MB), which is appropriate for institutional
+certification documents but far too permissive for a text template.
+
+The limit is generous for the intended client. Rows average roughly 120 bytes. A study with 40
+study-level rows, 100 consent groups at about 25 rows each, and 20 asset rows is about 2,560 rows,
+or roughly 300 KB — about a tenth of the limit. A file that exceeds 5 MiB is not a study template
+that a person authored in a spreadsheet.
+
+### Spreadsheet compatibility
+
+Producers are expected to author templates in Excel or Google Sheets, so v1 accepts what those tools
+emit by default:
+
+| Producer behavior | v1 handling |
+| --- | --- |
+| CRLF record separators (Excel default) | Accepted; LF is also accepted. |
+| UTF-8 BOM (Excel "CSV UTF-8 (Comma delimited)") | Accepted at the beginning of the file only. |
+| Quoting only cells that need it | Accepted; quoting is per RFC 4180 and never required for cells without commas, quotes, or line breaks. |
+| Trailing blank lines at end of file | Ignored. |
+| Google Sheets "Download → Comma-separated values" | Accepted; it is comma-delimited UTF-8 without a BOM. |
+
+Excel is not strictly RFC 4180-conformant, and two of its deviations are rejected rather than
+guessed at:
+
+- **Locale list separator.** Excel writes the Windows list separator, which is a semicolon in many
+  European locales. v1 is comma-delimited only. When the header row parses as a single cell that
+  contains a semicolon or a tab, reject with an actionable message naming the detected character and
+  telling the producer to re-export as comma-delimited, rather than reporting a missing header. An
+  optional producer-supplied delimiter is a deferred v2 item, not a v1 requirement.
+- **Value auto-formatting.** Excel may coerce cells that look like dates or long numbers, so a
+  `value` cell can arrive as `15-Jan-2026` or in scientific notation. v1 does not reverse this. Such
+  values fail their field's normal type rule with the usual row and column context.
+
+The importer treats every cell as literal text and never evaluates a leading `=`, `+`, or `@` as a
+formula. Any template Consent generates for download must escape those prefixes so the exported file
+is not a CSV-injection vector in the producer's spreadsheet application.
 - The case-sensitive header is required exactly once and in this order:
 
 ```text
@@ -48,9 +89,11 @@ also becomes the client asset identifier (`modelId`, `workspaceId`, `publication
 `presentationId`, `clinicalTrialId`, `fundingId`, or `ipId`). Numeric study and dataset IDs remain
 server-owned.
 
-Rows may appear in any order after the header. A `(recordType, recordId, field)` tuple may occur only
-once; duplicate assignments are errors even if their values match. Unknown headers, record types,
-fields, and asset properties are errors and are never silently ignored.
+Rows may appear in any order after the header. A `(recordType, recordId, field)` tuple may occur
+only once for a single-valued field; duplicate assignments are errors even if their values match.
+Scalar array fields are the one exception: they repeat the tuple once per item, as described under
+Value encoding. Unknown headers, record types, fields, and asset properties are errors and are never
+silently ignored.
 
 ## Value encoding
 
@@ -61,15 +104,28 @@ fields, and asset properties are errors and are never silently ignored.
 | Integer | Base-10 digits with an optional leading minus sign; no decimal point or separator. Domain validation may reject negative values. |
 | Date | ISO local date `YYYY-MM-DD`; calendar-invalid dates are rejected. |
 | URI | Absolute `http` or `https` URI. |
-| Array | JSON array in one CSV cell, such as `["Genomic","Phenotypic"]`. CSV escaping still applies. |
-| Object | JSON object in one CSV cell, used only for supported asset payloads and `fileTypes` entries. |
+| Scalar array | One row per item, repeating the same `(recordType, recordId, field)` tuple. Each `value` cell holds one plain string or enum item, encoded exactly as a single value of that kind. |
+| Object array | JSON array in one CSV cell. Used only by `fileTypes`. |
+| Object | JSON object in one CSV cell. Used only for supported asset payloads. |
 | Empty value | An empty `value` cell means absent (`null`), not an empty string or empty array. Omit optional fields; empty required values fail validation. |
 
-For example, `["Genomic","Phenotypic"]` is represented as this CSV cell:
+Every array-typed field is a scalar array except `fileTypes`, which is an object array. So the wire
+value `["Genomic","Phenotypic"]` is two rows, and neither cell needs quoting:
 
 ```csv
-"[""Genomic"",""Phenotypic""]"
+1,study,study,,dataTypes,Genomic
+1,study,study,,dataTypes,Phenotypic
 ```
+
+Repeated rows are collected in file order and that order is preserved on the wire. A scalar array
+field is absent when it has no rows; there is no encoding for an explicitly empty array. An empty
+`value` cell on a repeated row is an error, not a skipped item, and the same item value may not
+appear twice within one field.
+
+JSON in a `value` cell is therefore limited to `fileTypes` and asset payloads, which have no
+lossless flat representation. Both are optional and neither appears in a minimal template. This
+narrowing is pending confirmation with product; if hand-authored JSON is unacceptable for assets
+too, the remaining option is dropping non-file assets from v1 rather than re-encoding them.
 
 ## Study field mapping
 
@@ -86,7 +142,7 @@ existing `StudyRegistrationRequestValidator` rules.
 | `species` | `species` | String | Optional. |
 | `piName` | `piName` | String | Required and non-blank. |
 | `piEmail` | `piEmail` | String | Optional; must be a valid email when present. |
-| `dataCustodianEmail` | `dataCustodianEmail` | String array | Optional; every non-empty item must be a valid email. |
+| `dataCustodianEmail` | `dataCustodianEmail` | String array | Optional; every item must be a valid email. |
 | `publicVisibility` | `publicVisibility` | Boolean | Required. |
 | `throughBioId` | `throughBioId` | String | Optional. |
 | `nihAnvilUse` | `nihAnvilUse` | Enum | Required; exact `NihAnvilUse` wire value. |
@@ -105,14 +161,6 @@ existing `StudyRegistrationRequestValidator` rules.
 | `collaboratingSites` | `collaboratingSites` | String array | Optional. |
 | `controlledAccessRequiredForGenomicSummaryResultsGSR` | Same name | Boolean | Optional. |
 | `controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation` | Same name | String | Required when controlled GSR access is `true`. |
-| `alternativeDataSharingPlan` | `alternativeDataSharingPlan` | Boolean | Optional. |
-| `alternativeDataSharingPlanReasons` | `alternativeDataSharingPlanReasons` | Enum array | Required and non-empty when an alternative plan is `true`. |
-| `alternativeDataSharingPlanExplanation` | `alternativeDataSharingPlanExplanation` | String | Required when an alternative plan is `true`. |
-| `alternativeDataSharingPlanDataSubmitted` | Same name | Enum | Optional; exact wire value. |
-| `alternativeDataSharingPlanDataReleased` | Same name | Boolean | Optional. |
-| `alternativeDataSharingPlanTargetDeliveryDate` | Same name | Date | Optional; valid ISO local date when present. |
-| `alternativeDataSharingPlanTargetPublicReleaseDate` | Same name | Date | Optional; valid ISO local date when present. |
-| `alternativeDataSharingPlanAccessManagement` | Same name | Enum | Optional; exact wire value. |
 
 The following wire properties are deliberately not direct template fields:
 
@@ -120,9 +168,17 @@ The following wire properties are deliberately not direct template fields:
 | --- | --- |
 | `consentGroups` | Constructed from `consentGroup` records. |
 | `assets` | Constructed from `asset` records. |
-| `alternativeDataSharingPlanFileName` | File-backed and filename-only fields are unsupported. Add the actual file on the populated draft form. |
+| All `alternativeDataSharingPlan*` properties | The alternative sharing plan is file-backed and its file cannot be uploaded through the template. See below. |
 | `data` | Opaque client metadata is not part of the stable v1 contract. |
 | `externalIdentifier`, `externalIdentifierType` | Integration-owned identifiers are outside this user-authored template. |
+
+The whole `alternativeDataSharingPlan*` group is excluded, not just
+`alternativeDataSharingPlanFileName`. The remaining properties only describe a plan whose document
+the template cannot carry, so importing them would populate a draft that still cannot be completed
+without returning to the form for the file. A user who needs an alternative sharing plan fills that
+section in on the populated draft, where the file upload lives, and the group is a candidate for a
+later template version once file-bearing imports are supported. (Confirmed as the intended v1 scope
+with @otchet-broad; pending confirmation from @jlaw-codes.)
 
 NIH institutional certification files are also excluded. They are not fields on the canonical wire
 request and must be uploaded on the populated draft form.
@@ -201,11 +257,13 @@ preserving aggregation across otherwise independent fields.
 | File larger than 5 MiB | Reject before parsing; no draft is created. |
 | Malformed CSV or invalid UTF-8 | Reject with location when known. |
 | Missing, unknown, reordered, or duplicate header | Reject. |
+| Non-comma delimiter detected in the header | Reject, naming the detected character and asking for a comma-delimited re-export. |
 | Missing, unsupported, or mixed version | Reject affected rows; only major version `1` is supported. |
 | Unknown record type, field, asset collection, or asset property | Reject the row. |
-| Duplicate `(recordType, recordId, field)` | Reject the later assignment. |
+| Duplicate `(recordType, recordId, field)` on a single-valued field | Reject the later assignment. |
+| Repeated item value within one scalar array field | Reject the later row. |
 | Missing parent, multiple study records, or orphan record | Reject the affected record. |
-| Empty required value or invalid scalar/JSON | Reject with row and column context. |
+| Empty required value, empty scalar array item, or invalid scalar/JSON | Reject with row and column context. |
 | Existing registration-rule violation | Reject with the existing validator message; row and column may be absent. |
 
 Errors and general logs must not echo raw rows or sensitive free-text values.
@@ -216,9 +274,12 @@ Fixtures live under `src/test/resources/fixtures/study-template/v1`:
 
 - `valid/minimal-valid.csv`
 - `valid/multi-consent-group-valid.csv`
+- `valid/excel-export-valid.csv` — the minimal study as Excel "CSV UTF-8" writes it: BOM and CRLF
 - `invalid/empty-file.csv`
 - `invalid/duplicate-header.csv`
 - `invalid/duplicate-field.csv`
+- `invalid/semicolon-delimited.csv` — a European-locale Excel export
+- `invalid/duplicate-array-item.csv`
 - `invalid/unknown-field.csv`
 - `invalid/unsupported-version.csv`
 - `invalid/field-values.csv`

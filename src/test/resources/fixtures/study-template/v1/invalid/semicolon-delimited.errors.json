@@ -1,0 +1,6 @@
+[
+  {
+    "row": 1,
+    "message": "Template must be comma-delimited. Detected ';' as the column separator. Re-export the file as comma-separated values."
+  }
+]

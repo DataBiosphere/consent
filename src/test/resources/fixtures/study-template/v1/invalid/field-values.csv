@@ -1,7 +1,7 @@
 templateVersion,recordType,recordId,parentRecordId,field,value
 1,study,study,,studyName,
 1,study,study,,studyDescription,Synthetic invalid field example.
-1,study,study,,dataTypes,"[""Genomic""]"
+1,study,study,,dataTypes,Genomic
 1,study,study,,publicVisibility,yes
 1,study,study,,nihAnvilUse,Unknown AnVIL choice
 1,study,study,,piName,Synthetic Investigator
