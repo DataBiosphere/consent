@@ -70,6 +70,7 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.SigningOfficialDashboardService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -451,6 +452,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
+  private SigningOfficialDashboardService providesSigningOfficialDashboardService(
+      Jdbi jdbi, ElasticSearchService elasticSearchService, ExecutorService executorService) {
+    return new SigningOfficialDashboardService(jdbi, elasticSearchService, executorService);
+  }
+
+  @Provides
+  @Singleton
   private OidcAuthorityDAO providesOidcAuthorityDAO(
       HttpClientUtil httpClientUtil, OidcConfiguration oidcConfiguration) {
     return new OidcAuthorityDAO(httpClientUtil, oidcConfiguration);
@@ -655,9 +663,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       Jdbi jdbi,
       DacServiceDAO dacServiceDAO,
       VoteService voteService,
-      ElasticSearchService elasticSearchService,
-      DaaService daaService) {
-    return new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService, daaService);
+      ElasticSearchService elasticSearchService) {
+    return new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService);
   }
 
   @Provides

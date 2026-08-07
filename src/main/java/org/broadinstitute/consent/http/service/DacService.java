@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
 import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
-import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -46,7 +45,6 @@ public class DacService implements ConsentLogger {
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final VoteService voteService;
   private final ElasticSearchService elasticSearchService;
-  private final DaaService daaService;
   private final DacServiceDAO dacServiceDAO;
   private final DACAutomationRuleDAO ruleDAO;
 
@@ -55,8 +53,7 @@ public class DacService implements ConsentLogger {
       Jdbi jdbi,
       DacServiceDAO dacServiceDAO,
       VoteService voteService,
-      ElasticSearchService elasticSearchService,
-      DaaService daaService) {
+      ElasticSearchService elasticSearchService) {
     this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.userDAO = jdbi.onDemand(UserDAO.class);
     this.dataSetDAO = jdbi.onDemand(DatasetDAO.class);
@@ -64,22 +61,12 @@ public class DacService implements ConsentLogger {
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.voteService = voteService;
     this.elasticSearchService = elasticSearchService;
-    this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;
     this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
   }
 
   public List<Dac> findAll() {
-    List<Dac> dacs = dacDAO.findAll();
-    for (Dac dac : dacs) {
-      if (dac.getAssociatedDaa() != null) {
-        DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
-        associatedDaa.setBroadDaa(
-            daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
-        dac.setAssociatedDaa(associatedDaa);
-      }
-    }
-    return dacs;
+    return dacDAO.findAll();
   }
 
   public List<User> findAllDACUsersBySearchString(String term) {
@@ -168,12 +155,6 @@ public class DacService implements ConsentLogger {
     if (Objects.nonNull(dac)) {
       dac.setChairpersons(chairs);
       dac.setMembers(members);
-      if (dac.getAssociatedDaa() != null) {
-        DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
-        associatedDaa.setBroadDaa(
-            daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
-        dac.setAssociatedDaa(associatedDaa);
-      }
       return dac;
     }
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
