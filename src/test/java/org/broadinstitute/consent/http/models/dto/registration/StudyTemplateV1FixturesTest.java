@@ -46,7 +46,8 @@ class StudyTemplateV1FixturesTest {
   /**
    * Array-typed fields that the contract encodes as one row per item, so the same (recordType,
    * recordId, field) tuple may legitimately repeat. Every other field is single-valued. {@code
-   * fileTypes} is an object array and stays a single JSON cell.
+   * fileTypes} is absent here because it is not a field at all: it is the {@code fileType} record
+   * type, parented to a consent group.
    */
   private static final Set<String> SCALAR_ARRAY_FIELDS =
       Set.of(
