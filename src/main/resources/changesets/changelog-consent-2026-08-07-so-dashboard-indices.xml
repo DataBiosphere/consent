@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Indices supporting the Signing Official dashboard summary query.
+
+    Each index is built CONCURRENTLY in its own changeSet with runInTransaction="false".
+    A plain CREATE INDEX takes a SHARE lock that blocks writes for the duration of the build,
+    which is not acceptable on `vote` or `users`. CONCURRENTLY cannot run inside a transaction,
+    hence one changeSet per index.
+
+    IF NOT EXISTS makes each changeSet safe to re-run against an environment where the index was
+    created by hand. Note that an interrupted CONCURRENTLY build leaves an INVALID index behind
+    that IF NOT EXISTS will then skip - if a deploy fails partway through, check for invalid
+    indices (pg_index.indisvalid = false) and drop them before re-running.
+  -->
+  <changeSet id="changelog-consent-2026-08-07-so-dashboard-indices-vote-election-id" author="otchet"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vote_election_id ON vote (election_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_vote_election_id</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-08-07-so-dashboard-indices-users-institution-id"
+    author="otchet" runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_institution_id ON users (institution_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_users_institution_id</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-08-07-so-dashboard-indices-dar-dataset" author="otchet"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dar_dataset_reference_id_dataset_id ON dar_dataset (reference_id, dataset_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_dar_dataset_reference_id_dataset_id</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-08-07-so-dashboard-indices-dar-collection-create-user"
+    author="otchet" runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dar_collection_create_user_id ON dar_collection (create_user_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_dar_collection_create_user_id</sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

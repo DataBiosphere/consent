@@ -1,0 +1,50 @@
+type: object
+required:
+  - researcherStatus
+  - darRequests
+  - darApprovals
+  - dataSubmitters
+  - institutionLibrary
+  - daaAssociations
+properties:
+  researcherStatus:
+    type: object
+    required: [active, inactive]
+    properties:
+      active: { type: integer, format: int64 }
+      inactive: { type: integer, format: int64 }
+  darRequests:
+    type: object
+    description: >-
+      Counts mirroring the statuses on the Signing Official DAR Requests page. `canceled` counts
+      collections withdrawn by the researcher; `inProcess` is everything not yet fully approved
+      or canceled.
+    required: [total, approved, canceled, inProcess]
+    properties:
+      total: { type: integer, format: int64 }
+      approved: { type: integer, format: int64 }
+      canceled: { type: integer, format: int64 }
+      inProcess: { type: integer, format: int64 }
+  darApprovals:
+    type: object
+    required: [total, awaitingSoAction]
+    properties:
+      total: { type: integer, format: int64 }
+      awaitingSoAction: { type: integer, format: int64 }
+  dataSubmitters:
+    type: object
+    required: [approved]
+    properties:
+      approved: { type: integer, format: int64 }
+  institutionLibrary:
+    type: object
+    required: [datasets, studies]
+    properties:
+      datasets: { type: integer, format: int64 }
+      studies: { type: integer, format: int64 }
+  daaAssociations:
+    type: object
+    required: [agreements, researchersApproved]
+    properties:
+      agreements: { type: integer, format: int64 }
+      researchersApproved: { type: integer, format: int64 }
