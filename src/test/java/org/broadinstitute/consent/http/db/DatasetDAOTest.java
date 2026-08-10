@@ -23,6 +23,11 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -58,6 +63,47 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetDAOTest extends DAOTestHelper {
+
+  @Test
+  void testInsertDatasetAllocatesUniqueAliasesConcurrently() throws Exception {
+    int insertCount = 16;
+    User user = createUser();
+    Timestamp now = Timestamp.from(Instant.now());
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    CountDownLatch ready = new CountDownLatch(insertCount);
+    CountDownLatch start = new CountDownLatch(1);
+
+    try (ExecutorService executor = Executors.newFixedThreadPool(insertCount)) {
+      List<Future<Integer>> inserts =
+          IntStream.range(0, insertCount)
+              .mapToObj(
+                  index ->
+                      executor.submit(
+                          () -> {
+                            ready.countDown();
+                            start.await();
+                            return datasetDAO.insertDataset(
+                                "Concurrent dataset " + index,
+                                now,
+                                user.getUserId(),
+                                "concurrent-object-" + index,
+                                dataUse.toString(),
+                                null);
+                          }))
+              .toList();
+
+      assertTrue(ready.await(10, TimeUnit.SECONDS));
+      start.countDown();
+      Set<Integer> aliases = new HashSet<>();
+      for (Future<Integer> insert : inserts) {
+        Dataset dataset = datasetDAO.findDatasetById(insert.get(10, TimeUnit.SECONDS));
+        assertNotNull(dataset.getAlias());
+        aliases.add(dataset.getAlias());
+      }
+
+      assertEquals(insertCount, aliases.size());
+    }
+  }
 
   @Test
   void testFindDatasetWithoutFSOInformation() {

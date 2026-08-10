@@ -1,0 +1,52 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-08-10-dataset-alias-sequence" author="kmarete">
+    <comment>
+      Allocate public dataset aliases with a database sequence. The trigger is a rolling-deployment
+      compatibility mechanism: it replaces aliases supplied by old application instances as well as
+      allocating aliases for new instances that omit the column.
+    </comment>
+
+    <!-- Keep writes out until the sequence is positioned and the trigger and constraints exist. -->
+    <sql>LOCK TABLE dataset IN ACCESS EXCLUSIVE MODE</sql>
+
+    <createSequence sequenceName="dataset_alias_seq" startValue="1" incrementBy="1"/>
+    <sql>
+      SELECT setval(
+        'dataset_alias_seq',
+        COALESCE((SELECT MAX(alias) FROM dataset), 0) + 1,
+        false
+      )
+    </sql>
+
+    <sql splitStatements="false">
+      CREATE FUNCTION allocate_dataset_alias() RETURNS trigger AS $$
+      BEGIN
+        NEW.alias := nextval('dataset_alias_seq');
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    </sql>
+    <sql splitStatements="false">
+      CREATE TRIGGER dataset_alias_allocate
+        BEFORE INSERT ON dataset
+        FOR EACH ROW EXECUTE FUNCTION allocate_dataset_alias()
+    </sql>
+
+    <addNotNullConstraint tableName="dataset" columnName="alias" columnDataType="bigint"/>
+    <addUniqueConstraint tableName="dataset" columnNames="alias"
+                         constraintName="dataset_alias_unique"/>
+
+    <rollback>
+      <dropUniqueConstraint tableName="dataset" constraintName="dataset_alias_unique"/>
+      <dropNotNullConstraint tableName="dataset" columnName="alias" columnDataType="bigint"/>
+      <sql>DROP TRIGGER IF EXISTS dataset_alias_allocate ON dataset</sql>
+      <sql>DROP FUNCTION IF EXISTS allocate_dataset_alias()</sql>
+      <dropSequence sequenceName="dataset_alias_seq"/>
+      <addDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"
+                       defaultValueNumeric="0"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
