@@ -81,7 +81,9 @@ class DatasetDAOTest extends DAOTestHelper {
                       executor.submit(
                           () -> {
                             ready.countDown();
-                            start.await();
+                            if (!start.await(10, TimeUnit.SECONDS)) {
+                              throw new IllegalStateException("Timed out waiting to start insert");
+                            }
                             return datasetDAO.insertDataset(
                                 "Concurrent dataset " + index,
                                 now,
@@ -92,8 +94,11 @@ class DatasetDAOTest extends DAOTestHelper {
                           }))
               .toList();
 
-      assertTrue(ready.await(10, TimeUnit.SECONDS));
-      start.countDown();
+      try {
+        assertTrue(ready.await(10, TimeUnit.SECONDS));
+      } finally {
+        start.countDown();
+      }
       Set<Integer> aliases = new HashSet<>();
       for (Future<Integer> insert : inserts) {
         Dataset dataset = datasetDAO.findDatasetById(insert.get(10, TimeUnit.SECONDS));
