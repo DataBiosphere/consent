@@ -17,11 +17,14 @@ import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 class DatasetAliasSequenceMigrationTest {
@@ -75,6 +78,20 @@ class DatasetAliasSequenceMigrationTest {
         SQLException.class, () -> execute("UPDATE dataset SET alias = NULL WHERE dataset_id = 1"));
     assertThrows(
         SQLException.class, () -> execute("UPDATE dataset SET alias = 42 WHERE dataset_id = 2"));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"NULL", "0", "42"})
+  void migrationRejectsUnsafeExistingAliasesBeforeChangingSchema(String unsafeAlias)
+      throws Exception {
+    execute("INSERT INTO dataset (alias) VALUES (" + unsafeAlias + ")");
+
+    assertThrows(LiquibaseException.class, this::update);
+
+    assertNull(queryObject("SELECT to_regclass('dataset_alias_seq')"));
+    assertFalse(
+        queryBoolean(
+            "SELECT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'dataset_alias_allocate')"));
   }
 
   @Test
