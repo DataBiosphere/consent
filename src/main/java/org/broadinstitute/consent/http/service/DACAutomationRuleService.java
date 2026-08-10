@@ -23,9 +23,13 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryCategory;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassification.Shape;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
@@ -159,6 +163,13 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
+    if (dataset.getDataUse() == null || !hasCanonicalSinglePrimaryDataUse(dataset.getDataUse())) {
+      logInfo(
+          String.format(
+              "Rule %s not triggered for DAC id: %s and dataset id: %s because the dataset does not have a canonical single primary Data Use",
+              rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
+      return Optional.empty();
+    }
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
     boolean darContainsBannedCountry = CountryValidator.containsBannedCountry(dar);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
@@ -177,6 +188,17 @@ public class DACAutomationRuleService implements ConsentLogger {
               darContainsBannedCountry));
     }
     return Optional.empty();
+  }
+
+  /**
+   * DAC automation only supports canonical single-primary Data Use shapes. {@code Shape.SINGLE}
+   * also covers an Other-only primary category, which is non-canonical and must be excluded here to
+   * match the abstention policy in {@code DataUseMatcherV5}.
+   */
+  private boolean hasCanonicalSinglePrimaryDataUse(DataUse dataUse) {
+    var classification = DataUsePrimaryClassifier.classify(dataUse);
+    return classification.shape() == Shape.SINGLE
+        && !classification.categories().contains(DataUsePrimaryCategory.OTHER);
   }
 
   @VisibleForTesting

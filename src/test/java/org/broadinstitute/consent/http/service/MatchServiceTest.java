@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,6 +24,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV5;
 import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -46,7 +48,6 @@ class MatchServiceTest extends AbstractTestHelper {
   @Mock private UseRestrictionConverter useRestrictionConverter;
   @Mock private OntologyService ontologyService;
 
-  private DataUseMatcherV4 dataUseMatcherV4;
   private MatchService service;
 
   @BeforeEach
@@ -54,8 +55,9 @@ class MatchServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(MatchDAO.class)).thenReturn(matchDAO);
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
-    dataUseMatcherV4 = new DataUseMatcherV4(new DataUseUtil(ontologyService));
-    service = new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV4);
+    DataUseMatcherV4 dataUseMatcherV4 = new DataUseMatcherV4(new DataUseUtil(ontologyService));
+    DataUseMatcherV5 dataUseMatcherV5 = new DataUseMatcherV5(dataUseMatcherV4);
+    service = new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV5);
   }
 
   @Test
@@ -152,6 +154,7 @@ class MatchServiceTest extends AbstractTestHelper {
     Match match = service.singleEntitiesMatch(dataset, dar);
     assertNotNull(match);
     assertTrue(match.getMatch());
+    assertEquals(MatchAlgorithm.V5.getVersion(), match.getAlgorithmVersion());
   }
 
   @Test
@@ -184,7 +187,8 @@ class MatchServiceTest extends AbstractTestHelper {
     service.reprocessMatchesForPurpose(dar.getReferenceId());
     verify(matchDAO).deleteRationalesByPurposeIds(List.of(dar.getReferenceId()));
     verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
-    verify(matchDAO).insertMatch(any(), any(), any(), any(), any(), any(), any());
+    verify(matchDAO)
+        .insertMatch(any(), any(), any(), any(), any(), eq(MatchAlgorithm.V5.getVersion()), any());
   }
 
   @Test

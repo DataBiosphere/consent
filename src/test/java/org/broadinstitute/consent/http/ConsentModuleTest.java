@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV5;
 import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
@@ -297,6 +298,8 @@ class ConsentModuleTest extends AbstractTestHelper {
     assertSame(injector.getInstance(DataUseUtil.class), injector.getInstance(DataUseUtil.class));
     assertSame(
         injector.getInstance(DataUseMatcherV4.class), injector.getInstance(DataUseMatcherV4.class));
+    assertSame(
+        injector.getInstance(DataUseMatcherV5.class), injector.getInstance(DataUseMatcherV5.class));
     assertSame(
         injector.getInstance(CountryValidator.class), injector.getInstance(CountryValidator.class));
     assertSame(

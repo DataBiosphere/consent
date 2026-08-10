@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV5;
 import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
@@ -364,6 +365,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private DataUseMatcherV4 providesDataUseMatcherV4(DataUseUtil dataUseUtil) {
     return new DataUseMatcherV4(dataUseUtil);
+  }
+
+  @Provides
+  @Singleton
+  private DataUseMatcherV5 providesDataUseMatcherV5(DataUseMatcherV4 dataUseMatcherV4) {
+    return new DataUseMatcherV5(dataUseMatcherV4);
   }
 
   /**
@@ -752,8 +759,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private MatchService providesMatchService(
       Jdbi jdbi,
       UseRestrictionConverter useRestrictionConverter,
-      DataUseMatcherV4 dataUseMatcherV4) {
-    return new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV4);
+      DataUseMatcherV5 dataUseMatcherV5) {
+    return new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV5);
   }
 
   @Provides

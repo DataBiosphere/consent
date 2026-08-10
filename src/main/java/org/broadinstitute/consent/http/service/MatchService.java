@@ -11,7 +11,8 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV5;
 import org.broadinstitute.consent.http.matching.MatchResult;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -26,18 +27,18 @@ public class MatchService implements ConsentLogger {
   private final UseRestrictionConverter useRestrictionConverter;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
-  private final DataUseMatcherV4 dataUseMatcherV4;
+  private final DataUseMatcherV5 dataUseMatcherV5;
 
   @Inject
   public MatchService(
       Jdbi jdbi,
       UseRestrictionConverter useRestrictionConverter,
-      DataUseMatcherV4 dataUseMatcherV4) {
+      DataUseMatcherV5 dataUseMatcherV5) {
     this.matchDAO = jdbi.onDemand(MatchDAO.class);
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.useRestrictionConverter = useRestrictionConverter;
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
-    this.dataUseMatcherV4 = dataUseMatcherV4;
+    this.dataUseMatcherV5 = dataUseMatcherV5;
   }
 
   public void insertMatches(List<Match> match) {
@@ -91,7 +92,10 @@ public class MatchService implements ConsentLogger {
                   logWarn(message);
                   matches.add(
                       matchFailure(
-                          dataset.getDatasetIdentifier(), dar.getReferenceId(), List.of(message)));
+                          dataset.getDatasetIdentifier(),
+                          dar.getReferenceId(),
+                          MatchAlgorithm.V5,
+                          List.of(message)));
                 }
               }
             });
@@ -114,11 +118,12 @@ public class MatchService implements ConsentLogger {
           "Data Use for the provided Data Access Request cannot be null");
     }
     MatchResult matchResult =
-        dataUseMatcherV4.matchPurposeAndDatasetV4(darDataUse, dataset.getDataUse());
+        dataUseMatcherV5.matchPurposeAndDatasetV5(darDataUse, dataset.getDataUse());
     return matchSuccess(
         dataset.getDatasetIdentifier(),
         dar.getReferenceId(),
         matchResult.getMatchResultType(),
+        MatchAlgorithm.V5,
         matchResult.getMessage());
   }
 

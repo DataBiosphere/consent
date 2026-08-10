@@ -185,12 +185,14 @@ match_usage AS (
   SELECT d.dataset_id, COUNT(*) AS match_count
   FROM match_entity m
   JOIN dataset d
-    ON m.consent = 'DUOS-' || LPAD(d.alias::text, 6, '0')
+    ON m.consent =
+      'DUOS-' || LPAD(d.alias::text, GREATEST(6, LENGTH(d.alias::text)), '0')
   GROUP BY d.dataset_id
 )
 SELECT
   d.dataset_id,
-  'DUOS-' || LPAD(d.alias::text, 6, '0') AS dataset_identifier,
+  'DUOS-' || LPAD(d.alias::text, GREATEST(6, LENGTH(d.alias::text)), '0')
+    AS dataset_identifier,
   COALESCE(am.access_management, 'missing') AS access_management,
   d.data_use,
   COALESCE(du.dar_count, 0) AS dar_count,

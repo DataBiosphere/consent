@@ -98,6 +98,18 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
         "admin@example.com");
   }
 
+  private static DACAutomationRule makeDacAutomationRuleHMB() {
+    return new DACAutomationRule(
+        2,
+        DACAutomationRuleType.HMB_V1,
+        "Test HMB Rule",
+        RuleState.AVAILABLE,
+        FIXED_TIMESTAMP,
+        1,
+        "admin",
+        "admin@example.com");
+  }
+
   private static User makeResearcher() {
     User researcher = new User();
     researcher.setUserId(1);
@@ -649,6 +661,49 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
             any(DataAccessRequest.class),
             any(Dataset.class),
             any(ContainerRequest.class));
+  }
+
+  @Test
+  void testApplyRuleDoesNotApproveDatasetWithMultiplePrimaryDataUses() {
+    Dataset dataset = makeDataset();
+    dataset.getDataUse().setHmbResearch(true);
+    DataAccessRequest dar = makeDAR();
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    List.of(makeDacAutomationRuleGRU(), makeDacAutomationRuleHMB())
+        .forEach(rule -> assertTrue(serviceSpy.applyRule(rule, dataset, dar, request).isEmpty()));
+    verify(serviceSpy, never()).openElectionAndApprove(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testApplyRuleDoesNotApproveOtherOnlyPrimaryDatasetShape() {
+    DACAutomationRule rule = makeDacAutomationRuleHMB();
+    Dataset dataset = makeDataset();
+    dataset.getDataUse().setGeneralUse(false);
+    dataset.getDataUse().setOther("sensitive free text");
+    DataAccessRequest dar = makeDAR();
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    Optional<Vote> appliedVote = serviceSpy.applyRule(rule, dataset, dar, request);
+
+    assertTrue(appliedVote.isEmpty());
+    verify(serviceSpy, never()).openElectionAndApprove(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testApplyRuleDoesNotApproveObservedHmbOtherDatasetShape() {
+    DACAutomationRule rule = makeDacAutomationRuleHMB();
+    Dataset dataset = makeDataset();
+    dataset.getDataUse().setGeneralUse(false);
+    dataset.getDataUse().setHmbResearch(true);
+    dataset.getDataUse().setOther("sensitive free text");
+    DataAccessRequest dar = makeDAR();
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    Optional<Vote> appliedVote = serviceSpy.applyRule(rule, dataset, dar, request);
+
+    assertTrue(appliedVote.isEmpty());
+    verify(serviceSpy, never()).openElectionAndApprove(any(), any(), any(), any(), any());
   }
 
   @Test
