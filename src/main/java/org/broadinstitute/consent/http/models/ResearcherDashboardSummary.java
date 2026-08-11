@@ -1,20 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
+import org.broadinstitute.consent.http.models.DashboardSummary.DarRequests;
+import org.broadinstitute.consent.http.models.DashboardSummary.DataLibrary;
+
 public record ResearcherDashboardSummary(
     DataLibrary dataLibrary,
     DarRequests darRequests,
     DatasetApprovals datasetApprovals,
     DataSubmissions dataSubmissions) {
-
-  /** What the researcher can see in the Data Library, by asset tab. */
-  public record DataLibrary(long studies, long datasets, long models, long workspaces) {}
-
-  /**
-   * Mirrors the statuses on the researcher's DAR Requests page (see {@code DarCollectionStatus}).
-   * No denied count: the system records no denial, so an unapproved request stays In Process.
-   * Drafts are excluded.
-   */
-  public record DarRequests(long total, long approved, long canceled, long inProcess) {}
 
   /**
    * One count per approved dataset per DAR. An approval expires {@link

@@ -40,7 +40,9 @@ class SigningOfficialDashboardServiceTest {
   void setUp() {
     executorService = MoreExecutors.newDirectExecutorService();
     when(jdbi.onDemand(SigningOfficialDashboardDAO.class)).thenReturn(dashboardDAO);
-    service = new SigningOfficialDashboardService(jdbi, elasticSearchService, executorService);
+    service =
+        new SigningOfficialDashboardService(
+            jdbi, new DashboardSearchService(elasticSearchService), executorService);
     user = new User();
     user.setUserId(10);
     user.setInstitutionId(42);

@@ -105,7 +105,9 @@ class ResearcherDashboardServiceTest {
   void setUp() {
     executorService = MoreExecutors.newDirectExecutorService();
     when(jdbi.onDemand(ResearcherDashboardDAO.class)).thenReturn(dashboardDAO);
-    service = new ResearcherDashboardService(jdbi, elasticSearchService, executorService);
+    service =
+        new ResearcherDashboardService(
+            jdbi, new DashboardSearchService(elasticSearchService), executorService);
     user = new User();
     user.setUserId(10);
     user.setEmail("researcher@example.org");
