@@ -496,6 +496,28 @@
         <scope>import</scope>
       </dependency>
       <!--
+       google-api-client pins google-http-client to an older version than google-cloud-storage
+       needs. Without this BOM, google-http-client resolves to 2.0.0 and gax-httpjson's Conscrypt
+       setup fails at startup with NoSuchMethodError on NetHttpTransport.Builder.setSecurityProvider.
+      -->
+      <dependency>
+        <groupId>com.google.http-client</groupId>
+        <artifactId>google-http-client-bom</artifactId>
+        <version>2.2.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!--
+       dropwizard-dependencies manages conscrypt to 2.5.2, which predates
+       Conscrypt.setNamedGroups. gax-httpjson calls it from the Conscrypt SSL socket
+       configurator, so every outbound GCS request fails without this pin.
+      -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <version>2.6.0</version>
+      </dependency>
+      <!--
        See https://broadworkbench.atlassian.net/browse/DT-3748
        Pin tools.jackson.core:jackson-databind to 3.1.4 to address a reported security issue in 3.1.1
       -->
