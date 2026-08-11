@@ -50,12 +50,14 @@ import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.SoApprovalModel;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -71,6 +73,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -102,6 +105,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Mock private DacDAO dacDAO;
 
+  @Mock private DACAutomationRuleDAO dacAutomationRuleDAO;
+
   @Mock private UserDAO userDao;
 
   @Mock private InstitutionDAO institutionDAO;
@@ -117,6 +122,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @BeforeEach
   void initService() {
     when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(dacAutomationRuleDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDao);
     when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
@@ -576,6 +582,65 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             .findFirst();
     assertTrue(dataProp.isPresent());
     assertEquals(refMap, term.getData());
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelPerDar() {
+    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+        .thenReturn(Set.of(7));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PER_DAR, term.getSoApprovalModel());
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelPreAuthorized() {
+    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+        .thenReturn(Set.of(99));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelWithNoDac() {
+    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+        .thenReturn(Set.of(7));
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelUnsetWhenRuleLookupFails() {
+    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+        .thenThrow(new RuntimeException("db down"));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    // Indexing continues, but an unresolved rule must not be reported as a model
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertNull(term.getSoApprovalModel());
   }
 
   @Test

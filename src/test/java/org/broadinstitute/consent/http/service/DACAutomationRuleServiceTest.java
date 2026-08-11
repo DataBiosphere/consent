@@ -21,6 +21,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -81,6 +83,8 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   @Mock private UserDAO userDAO;
 
   @Mock private VoteService voteService;
+
+  @Mock private ElasticSearchService elasticSearchService;
 
   @Mock private ContainerRequest request;
 
@@ -153,7 +157,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
-    service = new DACAutomationRuleService(jdbi, voteServiceDAO, voteService);
+    service = new DACAutomationRuleService(jdbi, voteServiceDAO, voteService, elasticSearchService);
   }
 
   @Test
@@ -235,6 +239,75 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     assertFalse(result.isRuleEnabled());
     assertEquals(1, result.getRuleId());
     assertEquals(-1, result.getEnabledTime());
+  }
+
+  @Test
+  void testToggleSoApprovalRuleReindexesDacDatasets() throws Exception {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10, 11));
+    when(elasticSearchService.indexDatasets(List.of(10, 11))).thenReturn(Response.ok().build());
+
+    AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
+
+    assertTrue(result.isRuleEnabled());
+    verify(elasticSearchService).indexDatasets(List.of(10, 11));
+  }
+
+  @Test
+  void testToggleNonSoApprovalRuleDoesNotReindex() throws Exception {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+
+    service.toggleRule(1, 1, user);
+
+    verify(elasticSearchService, never()).indexDatasets(any());
+  }
+
+  @Test
+  void testToggleSoApprovalRuleSucceedsWhenReindexFails() throws Exception {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    FIXED_TIMESTAMP,
+                    1,
+                    "alice",
+                    "alice@fake.org")));
+    doNothing().when(ruleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
+    when(elasticSearchService.indexDatasets(List.of(10))).thenThrow(new IOException("es down"));
+
+    // The rule change is already committed and audited, so a failed reindex must not surface
+    AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
+
+    assertFalse(result.isRuleEnabled());
   }
 
   @Test

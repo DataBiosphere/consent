@@ -2,10 +2,12 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleMapper;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -154,6 +156,24 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       ORDER BY rules.id ASC
       """)
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
+
+  /**
+   * Ids of every DAC that currently has the given rule enabled. A rule is enabled for a DAC when a
+   * dac_rule_settings row exists for that pairing.
+   *
+   * <p>Deliberately keyed by DAC rather than by dataset — unlike {@code
+   * DatasetDAO.filterDatasetIdsByAutomationRuleType}, which takes a dataset id list. Indexing walks
+   * the entire dataset corpus, so a dataset-keyed query would mean an unbounded IN list; the result
+   * here is bounded by the number of DACs no matter how many datasets are being indexed.
+   */
+  @SqlQuery(
+      """
+      SELECT DISTINCT settings.dac_id
+      FROM dac_rule_settings settings
+      INNER JOIN dac_automation_rules rules ON rules.id = settings.rule_id
+      WHERE rules.rule::text = :ruleType AND rules.state = 'AVAILABLE'
+      """)
+  Set<Integer> findDacIdsWithRuleEnabled(@Bind("ruleType") DACAutomationRuleType ruleType);
 
   @RegisterRowMapper(DACAutomationRuleAuditMapper.class)
   @SqlQuery(

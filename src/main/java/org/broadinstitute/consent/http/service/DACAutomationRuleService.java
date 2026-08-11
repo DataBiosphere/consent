@@ -4,6 +4,7 @@ import static java.util.Objects.isNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,10 +53,15 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final VoteDAO voteDAO;
   private final VoteService voteService;
   private final VoteServiceDAO voteServiceDAO;
+  private final ElasticSearchService elasticSearchService;
 
   @Inject
   public DACAutomationRuleService(
-      Jdbi jdbi, VoteServiceDAO voteServiceDAO, VoteService voteService) {
+      Jdbi jdbi,
+      VoteServiceDAO voteServiceDAO,
+      VoteService voteService,
+      ElasticSearchService elasticSearchService) {
+    this.elasticSearchService = elasticSearchService;
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
@@ -89,24 +95,48 @@ public class DACAutomationRuleService implements ConsentLogger {
   public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user)
       throws ConsentConflictException, UnprocessableEntityException {
     List<DACAutomationRule> dacRules = ruleDAO.findAllDACAutomationRulesByDACId(dacId);
-    Optional<DACAutomationRule> matchingRule =
+    DACAutomationRule ruleBeingToggled =
         dacRules.stream()
-            .filter(r -> Objects.equals(r.id(), ruleId) && !isNull(r.enabledByUserId()))
-            .findFirst();
-    if (matchingRule.isPresent()) {
+            .filter(r -> Objects.equals(r.id(), ruleId))
+            .findFirst()
+            .orElseThrow(() -> new UnprocessableEntityException("Rule ID not found."));
+    if (!isNull(ruleBeingToggled.enabledByUserId())) {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
+      reindexDatasetsForSoApprovalChange(dacId, ruleBeingToggled);
       return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
-    } else {
-      Optional<DACAutomationRule> optionalRuleBeingUpdated =
-          dacRules.stream().filter(r -> Objects.equals(r.id(), ruleId)).findFirst();
-      if (optionalRuleBeingUpdated.isEmpty()) {
-        throw new UnprocessableEntityException("Rule ID not found.");
-      }
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
+    reindexDatasetsForSoApprovalChange(dacId, ruleBeingToggled);
     return new AutomationRuleToggleResponse(
         ruleId, true, insertTime.toEpochMilli(), user.getDisplayName(), user.getEmail());
+  }
+
+  /**
+   * Indexed datasets carry their DAC's Signing Official authorization model, so toggling
+   * REQUIRE_SO_DAR_APPROVAL leaves those documents stale. Reindex failures are logged rather than
+   * raised: the toggle itself is already committed and audited, and the next reindex corrects the
+   * documents.
+   */
+  private void reindexDatasetsForSoApprovalChange(Integer dacId, DACAutomationRule rule) {
+    if (!DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.equals(rule.ruleType())) {
+      return;
+    }
+    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDacIds(List.of(dacId));
+    if (datasetIds.isEmpty()) {
+      return;
+    }
+    try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
+      if (response.getStatus() >= 400) {
+        logWarn(
+            "Error reindexing datasets after SO approval rule toggle for DAC %d: status %d"
+                .formatted(dacId, response.getStatus()));
+      }
+    } catch (Exception e) {
+      logException(
+          "Unable to reindex datasets after SO approval rule toggle for DAC %d".formatted(dacId),
+          e);
+    }
   }
 
   public Integer removeChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
