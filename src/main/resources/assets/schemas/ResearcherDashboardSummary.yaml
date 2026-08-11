@@ -1,0 +1,51 @@
+type: object
+required:
+  - dataLibrary
+  - darRequests
+  - datasetApprovals
+  - dataSubmissions
+properties:
+  dataLibrary:
+    type: object
+    description: >-
+      Counts of what the researcher can see in the Data Library, matching the tab badges on
+      /datalibrary. Users without a privileged role only see publicly visible studies.
+    required: [studies, datasets, models, workspaces]
+    properties:
+      studies: { type: integer, format: int64 }
+      datasets: { type: integer, format: int64 }
+      models: { type: integer, format: int64 }
+      workspaces: { type: integer, format: int64 }
+  darRequests:
+    type: object
+    description: >-
+      Counts mirroring the statuses on the researcher's DAR Requests page. `canceled` counts
+      collections the researcher withdrew; `inProcess` is everything not yet fully approved or
+      canceled. Denials are not counted because the system does not record one. Drafts are
+      excluded.
+    required: [total, approved, canceled, inProcess]
+    properties:
+      total: { type: integer, format: int64 }
+      approved: { type: integer, format: int64 }
+      canceled: { type: integer, format: int64 }
+      inProcess: { type: integer, format: int64 }
+  datasetApprovals:
+    type: object
+    description: >-
+      Dataset approvals the researcher holds, counted per approved dataset per DAR. An approval
+      expires one year after the DAR was submitted; `expiringSoon` is the subset of `active`
+      expiring within 30 days.
+    required: [active, expiringSoon, expired]
+    properties:
+      active: { type: integer, format: int64 }
+      expiringSoon: { type: integer, format: int64 }
+      expired: { type: integer, format: int64 }
+  dataSubmissions:
+    type: object
+    description: >-
+      Sum of the nine tab counts on My Data Submissions (studies, datasets, and the seven
+      study-asset tabs), scoped to records the researcher registered or is data custodian for.
+      Zero for users without the Data Submitter role.
+    required: [total]
+    properties:
+      total: { type: integer, format: int64 }

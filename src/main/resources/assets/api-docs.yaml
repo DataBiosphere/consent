@@ -26,6 +26,8 @@ security:
       - profile
 
 paths:
+  /api/researcher/dashboard-summary:
+    $ref: './paths/researcherDashboardSummary.yaml'
   /api/signing-official/dashboard-summary:
     $ref: './paths/signingOfficialDashboardSummary.yaml'
   /api/collections/{collectionId}:
@@ -1245,6 +1247,8 @@ components:
       $ref: './schemas/DataAccessAgreement.yaml'
     DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
+    ResearcherDashboardSummary:
+      $ref: './schemas/ResearcherDashboardSummary.yaml'
     SigningOfficialDashboardSummary:
       $ref: './schemas/SigningOfficialDashboardSummary.yaml'
     DacDatasetExternalizationRequest:
