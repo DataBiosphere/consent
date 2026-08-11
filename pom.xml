@@ -131,7 +131,7 @@
           </suppressionFiles>
           <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.2.2</version>
+        <version>13.0.0</version>
         <executions>
           <execution>
             <goals>
