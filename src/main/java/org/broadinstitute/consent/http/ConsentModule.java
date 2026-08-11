@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.ResearcherDashboardService;
 import org.broadinstitute.consent.http.service.SigningOfficialDashboardService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
@@ -455,6 +456,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private SamService providesSamService(SamDAO samDAO) {
     return new SamService(samDAO);
+  }
+
+  @Provides
+  @Singleton
+  private ResearcherDashboardService providesResearcherDashboardService(
+      Jdbi jdbi, ElasticSearchService elasticSearchService, ExecutorService executorService) {
+    return new ResearcherDashboardService(jdbi, elasticSearchService, executorService);
   }
 
   @Provides
