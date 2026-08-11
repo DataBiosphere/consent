@@ -43,6 +43,9 @@ public class ResearcherDashboardService {
           UserRoles.ADMIN,
           UserRoles.SIGNINGOFFICIAL);
 
+  /** Field on each indexed study holding the asset arrays the tab counts are summed from. */
+  private static final String ASSETS_FIELD = "assets";
+
   /** Asset arrays behind the Data Library's AI Models and Workspaces tiles. */
   private static final List<String> LIBRARY_ASSET_KEYS = List.of("models", "workspaces");
 
@@ -237,8 +240,8 @@ public class ResearcherDashboardService {
       return null;
     }
     JsonObject study = source.getAsJsonObject("study");
-    return study.has("assets") && study.get("assets").isJsonObject()
-        ? study.getAsJsonObject("assets")
+    return study.has(ASSETS_FIELD) && study.get(ASSETS_FIELD).isJsonObject()
+        ? study.getAsJsonObject(ASSETS_FIELD)
         : null;
   }
 
