@@ -14,7 +14,6 @@ public class DataAccessAgreement {
   private Integer initialDacId;
   private FileStorageObject file;
   private List<Dac> dacs;
-  private Boolean broadDaa = false;
 
   public Integer getDaaId() {
     return daaId;
@@ -78,14 +77,6 @@ public class DataAccessAgreement {
 
   public void setDacs(List<Dac> dacs) {
     this.dacs = dacs;
-  }
-
-  public Boolean getBroadDaa() {
-    return broadDaa;
-  }
-
-  public void setBroadDaa(Boolean broadDaa) {
-    this.broadDaa = broadDaa;
   }
 
   public void addDac(Dac dac) {

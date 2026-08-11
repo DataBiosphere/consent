@@ -26,17 +26,14 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -67,8 +64,6 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Mock private UserService userService;
 
-  @Mock private DacDAO dacDAO;
-
   @Mock private LibraryCardService libraryCardService;
 
   private final InputStream inputStream = mock(InputStream.class);
@@ -81,7 +76,6 @@ class DaaServiceTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
-    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
   }
 
   // Called per-test rather than @BeforeEach so each test can configure collaborator stubs before
@@ -240,44 +234,19 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFindAllWithBroadDaa() {
-    Dac broadDac = new Dac();
-    broadDac.setName("Broad DAC");
-    broadDac.setDacId(randomInt(1, 10));
+  void testFindAllReturnsAllDaas() {
+    DataAccessAgreement daa1 = new DataAccessAgreement();
+    daa1.setDaaId(randomInt(1, 10));
 
-    Dac otherDac = new Dac();
-    otherDac.setName("Other DAC");
-    otherDac.setDacId(randomInt(11, 20));
+    DataAccessAgreement daa2 = new DataAccessAgreement();
+    daa2.setDaaId(randomInt(11, 20));
 
-    DataAccessAgreement broadDAA = new DataAccessAgreement();
-    broadDAA.setDaaId(randomInt(1, 10));
-    broadDAA.setInitialDacId(broadDac.getDacId());
-
-    DataAccessAgreement nonBroadDAA1 = new DataAccessAgreement();
-    nonBroadDAA1.setDaaId(randomInt(11, 20));
-    nonBroadDAA1.setInitialDacId(otherDac.getDacId());
-
-    DataAccessAgreement nonBroadDAA2 = new DataAccessAgreement();
-    nonBroadDAA2.setDaaId(randomInt(21, 30));
-    nonBroadDAA2.setInitialDacId(otherDac.getDacId());
-
-    when(daaDAO.findAll()).thenReturn(List.of(broadDAA, nonBroadDAA1, nonBroadDAA2));
-    when(dacDAO.findAll()).thenReturn(List.of(broadDac, otherDac));
+    when(daaDAO.findAll()).thenReturn(List.of(daa1, daa2));
 
     initService();
     List<DataAccessAgreement> foundDaas = service.findAll();
 
-    Optional<DataAccessAgreement> foundBroadDAA =
-        foundDaas.stream().filter(d -> d.getDaaId().equals(broadDAA.getDaaId())).findFirst();
-    assertTrue(foundBroadDAA.isPresent() && foundBroadDAA.get().getBroadDaa());
-
-    Optional<DataAccessAgreement> foundNonBroadDAA1 =
-        foundDaas.stream().filter(d -> d.getDaaId().equals(nonBroadDAA1.getDaaId())).findFirst();
-    assertTrue(foundNonBroadDAA1.isPresent() && !foundNonBroadDAA1.get().getBroadDaa());
-
-    Optional<DataAccessAgreement> foundNonBroadDAA2 =
-        foundDaas.stream().filter(d -> d.getDaaId().equals(nonBroadDAA2.getDaaId())).findFirst();
-    assertTrue(foundNonBroadDAA2.isPresent() && !foundNonBroadDAA2.get().getBroadDaa());
+    assertEquals(List.of(daa1, daa2), foundDaas);
   }
 
   @Test
@@ -463,90 +432,6 @@ class DaaServiceTest extends AbstractTestHelper {
     String json = "{daaList:[1,2,3]}";
     initService();
     assertThrows(BadRequestException.class, () -> service.findDAAsInJsonArray(json, "invalidKey"));
-  }
-
-  @Test
-  void testIsBroadDAANoDaasNoDacs() {
-    initService();
-    assertFalse(service.isBroadDAA(randomInt(0, 50), List.of(), List.of()));
-  }
-
-  @Test
-  void testIsBroadDAANoDacs() {
-    initService();
-
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    DataAccessAgreement daa2 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa2.setDaaId(2);
-
-    assertTrue(service.isBroadDAA(1, List.of(daa1, daa2), List.of()));
-    assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of()));
-  }
-
-  @Test
-  void testIsBroadDAANoBroadDacs() {
-    initService();
-
-    Dac dac = new Dac();
-    dac.setName("dacName");
-
-    Dac dac2 = new Dac();
-    dac2.setName("dacName2");
-
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    DataAccessAgreement daa2 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa2.setDaaId(2);
-
-    assertTrue(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
-    assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
-  }
-
-  @Test
-  void testIsBroadDAANoMatchingDaa() {
-    initService();
-
-    Dac dac = new Dac();
-    dac.setName("dacName");
-    dac.setDacId(1);
-
-    Dac dac2 = new Dac();
-    dac2.setName("broadDac");
-    dac2.setDacId(2);
-
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    DataAccessAgreement daa2 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa1.setInitialDacId(randomInt(3, 50));
-    daa2.setDaaId(2);
-    daa2.setInitialDacId(randomInt(3, 50));
-
-    assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
-    assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
-  }
-
-  @Test
-  void testIsBroadDAAMatching() {
-    initService();
-
-    Dac dac = new Dac();
-    dac.setName("dacName");
-    dac.setDacId(1);
-
-    Dac dac2 = new Dac();
-    dac2.setName("broadDac");
-    dac2.setDacId(2);
-
-    DataAccessAgreement daa1 = new DataAccessAgreement();
-    DataAccessAgreement daa2 = new DataAccessAgreement();
-    daa1.setDaaId(1);
-    daa1.setInitialDacId(randomInt(3, 50));
-    daa2.setDaaId(2);
-    daa2.setInitialDacId(2);
-
-    assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
-    assertTrue(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
   }
 
   @Test

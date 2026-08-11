@@ -79,8 +79,6 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Mock private ElasticSearchService elasticSearchService;
 
-  @Mock private DaaService daaService;
-
   @Mock private DacServiceDAO dacServiceDAO;
 
   @Mock private DACAutomationRuleDAO ruleDAO;
@@ -93,7 +91,7 @@ class DacServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
     when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(ruleDAO);
-    service = new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService, daaService);
+    service = new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService);
   }
 
   @Test
@@ -105,10 +103,10 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindAllWithDaas() {
-    Dac broadDac = new Dac();
-    int broadDacId = randomInt(3, 50);
-    broadDac.setName("broadDac");
-    broadDac.setDacId(broadDacId);
+    Dac dac1 = new Dac();
+    int dac1Id = randomInt(3, 50);
+    dac1.setName("dac1");
+    dac1.setDacId(dac1Id);
 
     Dac dac2 = new Dac();
     int dac2Id = randomInt(3, 50);
@@ -117,21 +115,20 @@ class DacServiceTest extends AbstractTestHelper {
 
     DataAccessAgreement daa1 = new DataAccessAgreement();
     daa1.setDaaId(1);
-    daa1.setInitialDacId(broadDacId);
+    daa1.setInitialDacId(dac1Id);
     DataAccessAgreement daa2 = new DataAccessAgreement();
     daa2.setDaaId(2);
     daa2.setInitialDacId(dac2Id);
 
-    broadDac.setAssociatedDaa(daa1);
+    dac1.setAssociatedDaa(daa1);
     dac2.setAssociatedDaa(daa2);
 
-    when(dacDAO.findAll()).thenReturn(List.of(broadDac, dac2));
-    when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true); // Mock isBroadDAA method
+    when(dacDAO.findAll()).thenReturn(List.of(dac1, dac2));
 
     List<Dac> foundDacs = service.findAll();
     assertEquals(2, foundDacs.size());
-    assertTrue(foundDacs.get(0).getAssociatedDaa().getBroadDaa());
-    assertTrue(foundDacs.get(1).getAssociatedDaa().getBroadDaa());
+    assertEquals(daa1, foundDacs.get(0).getAssociatedDaa());
+    assertEquals(daa2, foundDacs.get(1).getAssociatedDaa());
   }
 
   @Test
@@ -142,14 +139,12 @@ class DacServiceTest extends AbstractTestHelper {
         .thenReturn(Collections.singletonList(getDacUsers().get(0)));
     when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId()))
         .thenReturn(Collections.singletonList(getDacUsers().get(1)));
-    when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true);
 
     Dac dac = service.findById(dacId);
     assertNotNull(dac);
     assertFalse(dac.getChairpersons().isEmpty());
     assertFalse(dac.getMembers().isEmpty());
     assertNotNull(dac.getAssociatedDaa());
-    assertTrue(dac.getAssociatedDaa().getBroadDaa());
   }
 
   @Test

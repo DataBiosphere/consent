@@ -1,0 +1,18 @@
+get:
+  summary: Get Researcher dashboard statistics
+  operationId: getResearcherDashboardSummary
+  tags:
+    - Researcher
+  responses:
+    200:
+      description: Researcher-scoped dashboard counts
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ResearcherDashboardSummary.yaml'
+    401:
+      description: Unauthorized
+    403:
+      description: The user does not have the Researcher role
+    500:
+      description: Unable to aggregate dashboard statistics
