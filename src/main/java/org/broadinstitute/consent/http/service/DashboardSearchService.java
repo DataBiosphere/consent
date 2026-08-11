@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 public class DashboardSearchService {
 
   private static final String ASSETS_FIELD = "assets";
+  private static final String VALUE_FIELD = "value";
   private static final List<String> LIBRARY_ASSET_KEYS = List.of("models", "workspaces");
   private static final List<String> SUBMISSION_ASSET_KEYS =
       List.of(
@@ -187,12 +188,12 @@ public class DashboardSearchService {
             .formatted(institutionId);
     JsonObject response = search(query, "Unable to load institution library statistics");
     long datasets =
-        response.getAsJsonObject("hits").getAsJsonObject("total").get("value").getAsLong();
+        response.getAsJsonObject("hits").getAsJsonObject("total").get(VALUE_FIELD).getAsLong();
     long studies =
         response
             .getAsJsonObject("aggregations")
             .getAsJsonObject("total_studies")
-            .get("value")
+            .get(VALUE_FIELD)
             .getAsLong();
     return new InstitutionLibrary(datasets, studies);
   }
@@ -231,7 +232,7 @@ public class DashboardSearchService {
     }
     DataLibrary dataLibrary =
         new DataLibrary(
-            aggregations.getAsJsonObject("total_studies").get("value").getAsLong(),
+            aggregations.getAsJsonObject("total_studies").get(VALUE_FIELD).getAsLong(),
             aggregations.getAsJsonObject("datasets_count").get("doc_count").getAsLong(),
             assetTotals.get(0),
             assetTotals.get(1));
