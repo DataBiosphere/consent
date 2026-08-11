@@ -15,6 +15,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -255,7 +258,7 @@ class ResearcherDashboardServiceTest {
   @Test
   void keepsTheSubmissionsQueryValidWhenAnEmailNeedsEscaping() throws Exception {
     makeDataSubmitter();
-    user.setEmail("od\"d\\name@example.org");
+    user.setEmail("od\"d\\na\tme\n@example.org");
     stubDatabaseCounts(new DashboardDatabaseCounts(0, 0, 0, 0, 0, 0));
     stubLibrarySearch();
     stubSubmissionSearch();
@@ -269,8 +272,27 @@ class ResearcherDashboardServiceTest {
             .filter(q -> q.contains("dataSubmitterId"))
             .findFirst()
             .orElseThrow();
-    assertDoesNotThrow(() -> JsonParser.parseString(submissionQuery));
-    assertTrue(submissionQuery.contains("od\\\"d\\\\name@example.org"));
+    JsonObject parsed =
+        assertDoesNotThrow(() -> JsonParser.parseString(submissionQuery).getAsJsonObject());
+    assertEquals(user.getEmail(), custodianEmailTerm(parsed));
+  }
+
+  /** Reads back the email the submissions query filters on, as Elastic Search would parse it. */
+  private String custodianEmailTerm(JsonObject query) {
+    JsonArray must = query.getAsJsonObject("query").getAsJsonObject("bool").getAsJsonArray("must");
+    for (JsonElement clause : must) {
+      if (!clause.getAsJsonObject().has("bool")) {
+        continue;
+      }
+      for (JsonElement should :
+          clause.getAsJsonObject().getAsJsonObject("bool").getAsJsonArray("should")) {
+        JsonObject term = should.getAsJsonObject().getAsJsonObject("term");
+        if (term != null && term.has("study.dataCustodianEmail")) {
+          return term.get("study.dataCustodianEmail").getAsString();
+        }
+      }
+    }
+    throw new AssertionError("no dataCustodianEmail term in query");
   }
 
   @Test

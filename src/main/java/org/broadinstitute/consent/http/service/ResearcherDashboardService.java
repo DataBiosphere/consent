@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +26,7 @@ import org.broadinstitute.consent.http.models.ResearcherDashboardSummary.DataLib
 import org.broadinstitute.consent.http.models.ResearcherDashboardSummary.DataSubmissions;
 import org.broadinstitute.consent.http.models.ResearcherDashboardSummary.DatasetApprovals;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 
 public class ResearcherDashboardService {
@@ -155,13 +157,13 @@ public class ResearcherDashboardService {
             "should": [
               {"term": {"createUserId": %d}},
               {"term": {"study.dataSubmitterId": %d}},
-              {"term": {"study.dataCustodianEmail": "%s"}}
+              {"term": {"study.dataCustodianEmail": %s}}
             ],
             "minimum_should_match": 1
           }
         }
         """
-            .formatted(user.getUserId(), user.getUserId(), escapeJson(user.getEmail()));
+            .formatted(user.getUserId(), user.getUserId(), toJsonString(user.getEmail()));
     TabCounts counts =
         countTabs(
             ownershipClause,
@@ -256,7 +258,8 @@ public class ResearcherDashboardService {
     return !user.hasAnyUserRole(UNRESTRICTED_VISIBILITY_ROLES);
   }
 
-  private String escapeJson(String value) {
-    return value == null ? "" : value.replace("\\", "\\\\").replace("\"", "\\\"");
+  /** Renders the value as a quoted JSON string literal, so no character can break the query. */
+  private String toJsonString(String value) {
+    return GsonUtil.getInstance().toJson(Objects.toString(value, ""));
   }
 }
