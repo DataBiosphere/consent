@@ -7,11 +7,11 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Assertions;
@@ -30,45 +30,48 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
         rules.stream().anyMatch(rule -> rule.ruleType().equals(DACAutomationRuleType.GRU_V1)));
   }
 
-  @Test
-  void testFindDacIdsWithRuleEnabled() {
-    User user = createUser();
-    Integer enabledDacId = createRandomDAC();
-    Integer untouchedDacId = createRandomDAC();
-    DACAutomationRule soRule =
-        dacAutomationRuleDAO.findAll().stream()
-            .filter(r -> r.ruleType().equals(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
-            .findFirst()
-            .orElseThrow();
-    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
-        enabledDacId, soRule.id(), user.getUserId(), Instant.now());
-
-    Set<Integer> dacIds =
-        dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
-
-    assertTrue(dacIds.contains(enabledDacId));
-    Assertions.assertFalse(dacIds.contains(untouchedDacId));
+  private DACAutomationRule findRule(DACAutomationRuleType ruleType) {
+    return dacAutomationRuleDAO.findAll().stream()
+        .filter(r -> r.ruleType().equals(ruleType))
+        .findFirst()
+        .orElseThrow();
   }
 
   @Test
-  void testFindDacIdsWithRuleEnabledIsScopedToTheRequestedRule() {
+  void testFindEnabledRuleAssignments() {
+    User user = createUser();
+    Integer enabledDacId = createRandomDAC();
+    Integer untouchedDacId = createRandomDAC();
+    DACAutomationRule soRule = findRule(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
+        enabledDacId, soRule.id(), user.getUserId(), Instant.now());
+
+    List<DACRuleAssignment> assignments = dacAutomationRuleDAO.findEnabledRuleAssignments();
+
+    assertTrue(
+        assignments.contains(
+            new DACRuleAssignment(enabledDacId, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL)));
+    Assertions.assertFalse(
+        assignments.stream().anyMatch(a -> Objects.equals(a.dacId(), untouchedDacId)));
+  }
+
+  @Test
+  void testFindEnabledRuleAssignmentsReportsTheRuleThatIsEnabled() {
     User user = createUser();
     Integer dacId = createRandomDAC();
-    DACAutomationRule gruRule =
-        dacAutomationRuleDAO.findAll().stream()
-            .filter(r -> r.ruleType().equals(DACAutomationRuleType.GRU_V1))
-            .findFirst()
-            .orElseThrow();
+    DACAutomationRule gruRule = findRule(DACAutomationRuleType.GRU_V1);
     dacAutomationRuleDAO.auditedInsertDACRuleSetting(
         dacId, gruRule.id(), user.getUserId(), Instant.now());
 
-    // Enabling an unrelated rule must not mark the DAC as requiring SO DAR approval
-    Set<Integer> dacIds =
-        dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+    List<DACRuleAssignment> assignments = dacAutomationRuleDAO.findEnabledRuleAssignments();
 
-    Assertions.assertFalse(dacIds.contains(dacId));
+    // Enabling one rule must not report the DAC as having any other rule enabled
+    assertEquals(
+        List.of(DACAutomationRuleType.GRU_V1),
+        assignments.stream()
+            .filter(a -> Objects.equals(a.dacId(), dacId))
+            .map(DACRuleAssignment::ruleType)
+            .toList());
   }
 
   @Test

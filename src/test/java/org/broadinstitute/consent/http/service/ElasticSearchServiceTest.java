@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
+import static org.broadinstitute.consent.http.rules.DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,6 +75,7 @@ import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -584,11 +586,17 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(refMap, term.getData());
   }
 
+  /** A data use that clears hasNoModifiers, so only the primary code decides which rules match. */
+  private DataUse unmodifiedDataUse() {
+    DataUse dataUse = new DataUse();
+    dataUse.setDiseaseRestrictions(List.of());
+    return dataUse;
+  }
+
   @Test
-  void testToDatasetTermSoApprovalModelPerDar() {
-    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
-        .thenReturn(Set.of(7));
+  void testToDatasetTermSoApprovalModelPerRequest() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, REQUIRE_SO_DAR_APPROVAL)));
     when(dacDAO.findById(7)).thenReturn(new Dac());
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
@@ -596,14 +604,13 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     DatasetTerm term = service.toDatasetTerm(dataset);
 
-    assertEquals(SoApprovalModel.PER_DAR, term.getSoApprovalModel());
+    assertEquals(SoApprovalModel.PER_REQUEST, term.getSoApprovalModel());
   }
 
   @Test
   void testToDatasetTermSoApprovalModelPreAuthorized() {
-    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
-        .thenReturn(Set.of(99));
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(99, REQUIRE_SO_DAR_APPROVAL)));
     when(dacDAO.findById(7)).thenReturn(new Dac());
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
@@ -616,45 +623,193 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Test
   void testToDatasetTermSoApprovalModelWithNoDac() {
-    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
-        .thenReturn(Set.of(7));
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
 
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+    assertFalse(term.getInstantApprovalEligible());
+    // Nothing about a DAC-less dataset depends on the rules, so the lookup is skipped entirely
+    verify(dacAutomationRuleDAO, never()).findEnabledRuleAssignments();
   }
 
   @Test
-  void testToDatasetTermSoApprovalModelUnsetWhenRuleLookupFails() {
-    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+  void testToDatasetTermRuleDerivedFieldsUnsetWhenRuleLookupFails() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
         .thenThrow(new RuntimeException("db down"));
     when(dacDAO.findById(7)).thenReturn(new Dac());
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDacId(7);
 
-    // Indexing continues, but an unresolved rule must not be reported as a model
+    // Indexing continues, but unresolved rules must not be reported as dataset state
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertNull(term.getSoApprovalModel());
+    assertNull(term.getInstantApprovalEligible());
   }
 
   @Test
-  void testToDatasetTermSoApprovalModelWithNoDacWhenRuleLookupFails() {
-    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
-        .thenThrow(new RuntimeException("db down"));
+  void testToDatasetTermTreatsNullRuleLookupAsNoRulesEnabled() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments()).thenReturn(null);
+    when(dacDAO.findById(7)).thenReturn(new Dac());
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
+    dataset.setDacId(7);
 
-    // A dataset with no DAC does not depend on the rule, so it resolves even when the lookup fails
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalEligibleForMatchingRule() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertTrue(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleWhenRuleCoversOtherCode() {
+    // The DAC auto-approves GRU, but this dataset is HMB
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setHmbResearch(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleWhenDataUseCarriesModifier() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    dataUse.setEthicsApprovalRequired(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  /**
+   * The indexed document is duos-ui's only source for these two fields, and it reads them by the
+   * exact names and values asserted here (DT-3799). Serialized through the same GsonUtil the bulk
+   * indexer uses, so a rename on either side fails this rather than silently blanking the Data
+   * Library's SO Approval column and instant-approval badge.
+   */
+  @Test
+  void testIndexedDocumentCarriesTheRuleDerivedFieldsClientsRead() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(
+            List.of(
+                new DACRuleAssignment(7, REQUIRE_SO_DAR_APPROVAL),
+                new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    String json = GsonUtil.getInstance().toJson(service.toDatasetTerm(dataset));
+
+    assertTrue(json.contains("\"soApprovalModel\":\"PER_REQUEST\""), json);
+    assertTrue(json.contains("\"instantApprovalEligible\":true"), json);
+  }
+
+  @Test
+  void testIndexedDocumentOmitsRuleDerivedFieldsWhenUnresolved() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenThrow(new RuntimeException("db down"));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    String json = GsonUtil.getInstance().toJson(service.toDatasetTerm(dataset));
+
+    // Absent rather than false/null, so clients can tell "not eligible" from "not yet known"
+    assertFalse(json.contains("soApprovalModel"), json);
+    assertFalse(json.contains("instantApprovalEligible"), json);
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleForMultiplePrimaryDataUse() {
+    // Two primary categories is not a shape automation acts on, so the engine abstains before
+    // consulting any rule — the indexed flag has to abstain with it
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    dataUse.setHmbResearch(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleForNonApprovingRule() {
+    // REQUIRE_SO_DAR_APPROVAL never auto-approves, so it cannot make a dataset eligible
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, REQUIRE_SO_DAR_APPROVAL)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleWithoutDataUse() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
   }
 
   @Test

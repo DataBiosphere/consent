@@ -26,6 +26,7 @@ public class DatasetTerm {
   private UserTerm updateUser;
   private DacTerm dac;
   private SoApprovalModel soApprovalModel;
+  private Boolean instantApprovalEligible;
   private Boolean hasInstitutionCertification;
   private Map<String, Object> data;
 
@@ -179,6 +180,14 @@ public class DatasetTerm {
 
   public void setSoApprovalModel(SoApprovalModel soApprovalModel) {
     this.soApprovalModel = soApprovalModel;
+  }
+
+  public Boolean getInstantApprovalEligible() {
+    return instantApprovalEligible;
+  }
+
+  public void setInstantApprovalEligible(Boolean instantApprovalEligible) {
+    this.instantApprovalEligible = instantApprovalEligible;
   }
 
   public Boolean getHasInstitutionCertification() {

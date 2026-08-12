@@ -2,12 +2,12 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleMapper;
+import org.broadinstitute.consent.http.db.mapper.DACRuleAssignmentMapper;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
-import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -158,23 +158,27 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
 
   /**
-   * Ids of every DAC that currently has the given rule enabled. A rule counts as enabled for a DAC
-   * when a dac_rule_settings row exists for that pairing and the rule itself is still AVAILABLE, so
-   * a retired rule is not reported as enabled — matching findAllDACAutomationRulesByDACId.
+   * Every DAC-to-rule pairing that is currently enabled. A rule counts as enabled for a DAC when a
+   * dac_rule_settings row exists for that pairing and the rule itself is still AVAILABLE, so a
+   * retired rule is not reported as enabled — matching findAllDACAutomationRulesByDACId.
    *
    * <p>Deliberately keyed by DAC rather than by dataset — unlike {@code
    * DatasetDAO.filterDatasetIdsByAutomationRuleType}, which takes a dataset id list. Indexing walks
    * the entire dataset corpus, so a dataset-keyed query would mean an unbounded IN list; the result
    * here is bounded by the number of DACs no matter how many datasets are being indexed.
+   *
+   * <p>Returns all rule types in one pass rather than taking a rule type argument, so indexing
+   * resolves every rule it decorates datasets with in a single query.
    */
+  @RegisterRowMapper(DACRuleAssignmentMapper.class)
   @SqlQuery(
       """
-      SELECT DISTINCT settings.dac_id
+      SELECT DISTINCT settings.dac_id, rules.rule
       FROM dac_rule_settings settings
       INNER JOIN dac_automation_rules rules ON rules.id = settings.rule_id
-      WHERE rules.rule = :ruleType::dac_rule_type AND rules.state = 'AVAILABLE'
+      WHERE rules.state = 'AVAILABLE'
       """)
-  Set<Integer> findDacIdsWithRuleEnabled(@Bind("ruleType") DACAutomationRuleType ruleType);
+  List<DACRuleAssignment> findEnabledRuleAssignments();
 
   @RegisterRowMapper(DACAutomationRuleAuditMapper.class)
   @SqlQuery(

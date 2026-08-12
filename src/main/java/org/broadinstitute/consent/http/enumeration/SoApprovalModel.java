@@ -11,9 +11,9 @@ import com.google.gson.annotations.SerializedName;
  * change the published contract.
  */
 public enum SoApprovalModel {
-  /** The SO named in each DAR must approve that request before the DAC reviews it. */
-  @SerializedName("PER_DAR")
-  PER_DAR,
+  /** The SO named in each access request must approve that request before the DAC reviews it. */
+  @SerializedName("PER_REQUEST")
+  PER_REQUEST,
 
   /** The SO authorizes researchers in advance; no per-request SO approval is needed. */
   @SerializedName("PRE_AUTHORIZED")

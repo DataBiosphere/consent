@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.models.elastic_search.DacTerm;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
@@ -53,6 +54,8 @@ import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
+import org.broadinstitute.consent.http.rules.Rules;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -410,11 +413,12 @@ public class ElasticSearchService implements ConsentLogger {
 
   public Response indexDatasetList(List<Dataset> datasets) throws IOException {
     // Resolved once for the whole batch rather than per dataset
-    Set<Integer> dacIdsRequiringSoDarApproval = resolveDacIdsRequiringSoDarApproval().orElse(null);
+    Map<Integer, Set<DACAutomationRuleType>> enabledRulesByDacId =
+        resolveEnabledRulesByDacId().orElse(null);
     List<DatasetTerm> datasetTerms =
         datasets.parallelStream()
             .filter(Objects::nonNull)
-            .map(dataset -> toDatasetTerm(dataset, dacIdsRequiringSoDarApproval))
+            .map(dataset -> toDatasetTerm(dataset, enabledRulesByDacId))
             .toList();
     if (datasetTerms.isEmpty()) {
       return Response.status(Status.NOT_FOUND).build();
@@ -444,34 +448,62 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   /**
-   * Ids of DACs that require the Signing Official named in a DAR to approve that request before DAC
-   * review.
+   * The automation rules each DAC currently has enabled, keyed by DAC id.
    *
-   * <p>{@code Optional.empty()} means the rule could not be resolved at all; an empty {@code Set}
-   * inside the Optional means it resolved successfully and no DAC has the rule enabled. Indexing
-   * continues either way, but an unresolved rule must not be reported as an authorization model.
+   * <p>{@code Optional.empty()} means the rules could not be resolved at all; an empty map inside
+   * the Optional means they resolved successfully and no DAC has any rule enabled. Indexing
+   * continues either way, but unresolved rules must not be reported as dataset state.
    */
-  private Optional<Set<Integer>> resolveDacIdsRequiringSoDarApproval() {
+  private Optional<Map<Integer, Set<DACAutomationRuleType>>> resolveEnabledRulesByDacId() {
     try {
+      List<DACRuleAssignment> assignments =
+          Objects.requireNonNullElse(dacAutomationRuleDAO.findEnabledRuleAssignments(), List.of());
       return Optional.of(
-          dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
-              DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL));
+          assignments.stream()
+              .collect(
+                  Collectors.groupingBy(
+                      DACRuleAssignment::dacId,
+                      Collectors.mapping(
+                          DACRuleAssignment::ruleType, Collectors.toUnmodifiableSet()))));
     } catch (Exception e) {
-      logWarn("Unable to resolve DACs requiring SO DAR approval", e);
+      logWarn("Unable to resolve enabled DAC automation rules", e);
       return Optional.empty();
     }
   }
 
+  /**
+   * Whether the dataset's DAC has an enabled rule that would automatically approve a matching
+   * request for it. Evaluated with the rule implementations themselves rather than a re-derivation,
+   * so the indexed flag and the approval engine cannot disagree about which datasets qualify. Only
+   * the dataset half of each rule applies here; the request half is unknowable at indexing time.
+   *
+   * <p>Mirrors {@code DACAutomationRuleService.applyRule}: the shape gate comes first, because
+   * automation abstains on a non-canonical primary Data Use before any rule is consulted.
+   */
+  private boolean isInstantApprovalEligible(Dataset dataset, Set<DACAutomationRuleType> dacRules) {
+    if (!DataUsePrimaryClassifier.hasCanonicalSinglePrimary(dataset.getDataUse())) {
+      return false;
+    }
+    return Rules.implementationList.stream()
+        .filter(rule -> dacRules.contains(rule.getRuleType()))
+        .anyMatch(rule -> rule.datasetQualifies(dataset));
+  }
+
   public DatasetTerm toDatasetTerm(Dataset dataset) {
-    return toDatasetTerm(dataset, resolveDacIdsRequiringSoDarApproval().orElse(null));
+    // A dataset with no DAC has no rules to resolve, so it does not need the query at all
+    if (Objects.nonNull(dataset) && Objects.isNull(dataset.getDacId())) {
+      return toDatasetTerm(dataset, Map.of());
+    }
+    return toDatasetTerm(dataset, resolveEnabledRulesByDacId().orElse(null));
   }
 
   /**
-   * @param dacIdsRequiringSoDarApproval resolved DAC ids, or {@code null} when the rule could not
-   *     be resolved — the SO approval model is then left unset so clients render nothing rather
-   *     than being told the wrong approval process
+   * @param enabledRulesByDacId resolved DAC rules, or {@code null} when they could not be resolved
+   *     — the rule-derived fields are then left unset so clients render nothing rather than being
+   *     told the wrong approval process
    */
-  private DatasetTerm toDatasetTerm(Dataset dataset, Set<Integer> dacIdsRequiringSoDarApproval) {
+  private DatasetTerm toDatasetTerm(
+      Dataset dataset, Map<Integer, Set<DACAutomationRuleType>> enabledRulesByDacId) {
     if (Objects.isNull(dataset)) {
       return null;
     }
@@ -510,15 +542,20 @@ public class ElasticSearchService implements ConsentLogger {
               term.setDac(toDacTerm(dac));
             });
 
-    // A dataset with no DAC has no per-DAR approval step to satisfy, which holds whether or not
-    // the rule resolved; only datasets whose model depends on the unresolved rule are left unset
+    // A dataset with no DAC has no per-request approval step to satisfy and no DAC rule that could
+    // auto-approve it, which holds whether or not the rules resolved; only datasets whose state
+    // depends on the unresolved rules are left unset
     if (Objects.isNull(dataset.getDacId())) {
       term.setSoApprovalModel(SoApprovalModel.PRE_AUTHORIZED);
-    } else if (Objects.nonNull(dacIdsRequiringSoDarApproval)) {
+      term.setInstantApprovalEligible(false);
+    } else if (Objects.nonNull(enabledRulesByDacId)) {
+      Set<DACAutomationRuleType> dacRules =
+          enabledRulesByDacId.getOrDefault(dataset.getDacId(), Set.of());
       term.setSoApprovalModel(
-          dacIdsRequiringSoDarApproval.contains(dataset.getDacId())
-              ? SoApprovalModel.PER_DAR
+          dacRules.contains(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL)
+              ? SoApprovalModel.PER_REQUEST
               : SoApprovalModel.PRE_AUTHORIZED);
+      term.setInstantApprovalEligible(isInstantApprovalEligible(dataset, dacRules));
     }
 
     if (Objects.nonNull(dataset.getDataUse())) {
