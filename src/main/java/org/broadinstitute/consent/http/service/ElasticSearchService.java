@@ -445,9 +445,11 @@ public class ElasticSearchService implements ConsentLogger {
 
   /**
    * Ids of DACs that require the Signing Official named in a DAR to approve that request before DAC
-   * review. Empty when the rule could not be resolved at all, which is distinct from resolving to
-   * no DACs: indexing continues either way, but an unresolved rule must not be reported as an
-   * authorization model.
+   * review.
+   *
+   * <p>{@code Optional.empty()} means the rule could not be resolved at all; an empty {@code Set}
+   * inside the Optional means it resolved successfully and no DAC has the rule enabled. Indexing
+   * continues either way, but an unresolved rule must not be reported as an authorization model.
    */
   private Optional<Set<Integer>> resolveDacIdsRequiringSoDarApproval() {
     try {
@@ -508,7 +510,6 @@ public class ElasticSearchService implements ConsentLogger {
               term.setDac(toDacTerm(dac));
             });
 
-    // Left unset when the rule is unresolved; a dataset with no DAC has no per-DAR step to satisfy
     // A dataset with no DAC has no per-DAR approval step to satisfy, which holds whether or not
     // the rule resolved; only datasets whose model depends on the unresolved rule are left unset
     if (Objects.isNull(dataset.getDacId())) {
