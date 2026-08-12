@@ -471,7 +471,7 @@ public class ElasticSearchService implements ConsentLogger {
    *     be resolved — the SO approval model is then left unset so clients render nothing rather
    *     than being told the wrong approval process
    */
-  public DatasetTerm toDatasetTerm(Dataset dataset, Set<Integer> dacIdsRequiringSoDarApproval) {
+  private DatasetTerm toDatasetTerm(Dataset dataset, Set<Integer> dacIdsRequiringSoDarApproval) {
     if (Objects.isNull(dataset)) {
       return null;
     }

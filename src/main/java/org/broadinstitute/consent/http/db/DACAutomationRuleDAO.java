@@ -158,8 +158,9 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
 
   /**
-   * Ids of every DAC that currently has the given rule enabled. A rule is enabled for a DAC when a
-   * dac_rule_settings row exists for that pairing.
+   * Ids of every DAC that currently has the given rule enabled. A rule counts as enabled for a DAC
+   * when a dac_rule_settings row exists for that pairing and the rule itself is still AVAILABLE, so
+   * a retired rule is not reported as enabled — matching findAllDACAutomationRulesByDACId.
    *
    * <p>Deliberately keyed by DAC rather than by dataset — unlike {@code
    * DatasetDAO.filterDatasetIdsByAutomationRuleType}, which takes a dataset id list. Indexing walks
