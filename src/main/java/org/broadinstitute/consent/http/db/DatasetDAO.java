@@ -132,9 +132,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """
           INSERT INTO dataset
               (name, create_date, create_user_id, update_date,
-              update_user_id, object_id, dac_id, data_use)
-          VALUES (:name, :createDate, :createUserId, :createDate,
-              :createUserId, :objectId, :dacId, :dataUse)
+              update_user_id, object_id, dac_id, alias, data_use)
+          (SELECT :name, :createDate, :createUserId, :createDate,
+              :createUserId, :objectId, :dacId, COALESCE(MAX(alias),0)+1, :dataUse FROM dataset)
           """)
   @GetGeneratedKeys
   Integer insertDataset(
