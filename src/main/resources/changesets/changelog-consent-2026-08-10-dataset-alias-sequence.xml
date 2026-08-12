@@ -4,13 +4,13 @@
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
   <changeSet id="changelog-consent-2026-08-10-dataset-alias-sequence" author="kmarete">
     <!-- Aliases are public identifiers, so unsafe legacy values must be reconciled explicitly
-         rather than silently rewritten by this migration. -->
+         rather than silently rewritten by this migration. Alias 0 is a valid legacy identifier. -->
     <preConditions onFail="HALT" onError="HALT"
-                   onFailMessage="Dataset aliases must be positive, non-null, and unique before migration">
+                   onFailMessage="Dataset aliases must be non-negative, non-null, and unique before migration">
       <dbms type="postgresql"/>
       <sqlCheck expectedResult="0">
         SELECT
-          (SELECT COUNT(*) FROM dataset WHERE alias IS NULL OR alias &lt;= 0)
+          (SELECT COUNT(*) FROM dataset WHERE alias IS NULL OR alias &lt; 0)
           +
           (SELECT COUNT(*) FROM (
             SELECT alias FROM dataset GROUP BY alias HAVING COUNT(*) &gt; 1

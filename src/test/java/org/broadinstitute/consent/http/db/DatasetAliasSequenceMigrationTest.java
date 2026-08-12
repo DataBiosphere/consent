@@ -53,7 +53,7 @@ class DatasetAliasSequenceMigrationTest {
       // Dev's legacy alias column is numeric, which exercises the setval bigint cast.
       statement.execute(
           "CREATE TABLE dataset (dataset_id bigserial PRIMARY KEY, alias numeric DEFAULT 0)");
-      statement.execute("INSERT INTO dataset (alias) VALUES (42), (900000)");
+      statement.execute("INSERT INTO dataset (alias) VALUES (42), (900000), (0)");
     }
   }
 
@@ -63,6 +63,7 @@ class DatasetAliasSequenceMigrationTest {
 
     assertEquals(42, queryLong("SELECT alias FROM dataset WHERE dataset_id = 1"));
     assertEquals(900000, queryLong("SELECT alias FROM dataset WHERE dataset_id = 2"));
+    assertEquals(0, queryLong("SELECT alias FROM dataset WHERE dataset_id = 3"));
 
     // An old instance supplies its MAX(alias) + 1 result, but the compatibility trigger replaces
     // it.
@@ -82,7 +83,7 @@ class DatasetAliasSequenceMigrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"NULL", "0", "42"})
+  @ValueSource(strings = {"NULL", "-1", "42"})
   void migrationRejectsUnsafeExistingAliasesBeforeChangingSchema(String unsafeAlias)
       throws Exception {
     execute("INSERT INTO dataset (alias) VALUES (" + unsafeAlias + ")");
