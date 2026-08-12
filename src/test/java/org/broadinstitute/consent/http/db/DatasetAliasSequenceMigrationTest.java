@@ -50,8 +50,9 @@ class DatasetAliasSequenceMigrationTest {
         Statement statement = connection.createStatement()) {
       statement.execute("DROP SCHEMA public CASCADE");
       statement.execute("CREATE SCHEMA public");
+      // Dev's legacy alias column is numeric, which exercises the setval bigint cast.
       statement.execute(
-          "CREATE TABLE dataset (dataset_id bigserial PRIMARY KEY, alias bigint DEFAULT 0)");
+          "CREATE TABLE dataset (dataset_id bigserial PRIMARY KEY, alias numeric DEFAULT 0)");
       statement.execute("INSERT INTO dataset (alias) VALUES (42), (900000)");
     }
   }

@@ -31,7 +31,7 @@
     <sql>
       SELECT setval(
         'dataset_alias_seq',
-        COALESCE((SELECT MAX(alias) FROM dataset), 0) + 1,
+        (COALESCE((SELECT MAX(alias) FROM dataset), 0) + 1)::bigint,
         false
       )
     </sql>
