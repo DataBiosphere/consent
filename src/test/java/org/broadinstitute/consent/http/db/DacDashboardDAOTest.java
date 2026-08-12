@@ -26,7 +26,8 @@ class DacDashboardDAOTest extends DAOTestHelper {
   void returnsZeroCountsWithoutDacsOrRequests() {
     DashboardDatabaseCounts counts =
         jdbi.onDemand(DacDashboardDAO.class)
-            .getCounts(Integer.MAX_VALUE, UserRoles.CHAIRPERSON.getRoleId(), true);
+            .getCounts(
+                Integer.MAX_VALUE, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
 
     assertEquals(0, counts.dacs());
     assertEquals(0, counts.darTotal());
@@ -49,7 +50,7 @@ class DacDashboardDAOTest extends DAOTestHelper {
 
     createSubmittedDar(researcher, createDataset(owner, dacId), false);
 
-    DashboardDatabaseCounts counts = getCounts(chair, UserRoles.CHAIRPERSON, true);
+    DashboardDatabaseCounts counts = getCounts(chair);
 
     assertEquals(1, counts.dacs());
     assertEquals(3, counts.darTotal());
@@ -66,7 +67,7 @@ class DacDashboardDAOTest extends DAOTestHelper {
     String closeout = createSubmittedDar(researcher, createDataset(owner, dacId), true);
     createElection(closeout, datasetIdFor(closeout), ElectionStatus.OPEN);
 
-    DashboardDatabaseCounts counts = getCounts(chair, UserRoles.CHAIRPERSON, true);
+    DashboardDatabaseCounts counts = getCounts(chair);
 
     assertEquals(1, counts.darTotal());
     assertEquals(0, counts.awaitingMyVote());
@@ -87,7 +88,7 @@ class DacDashboardDAOTest extends DAOTestHelper {
     String noVote = createSubmittedDar(researcher, createDataset(owner, dacId), false);
     createElection(noVote, datasetIdFor(noVote), ElectionStatus.OPEN);
 
-    DashboardDatabaseCounts counts = getCounts(member, UserRoles.MEMBER, false);
+    DashboardDatabaseCounts counts = getCounts(member);
 
     assertEquals(2, counts.darTotal());
     assertEquals(0, counts.darApproved());
@@ -95,7 +96,7 @@ class DacDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void scopesRequestsToTheSelectedRoleAndUsesTheLatestElection() {
+  void aggregatesDualRoleScopesAndDeduplicatesCollections() {
     User owner = createUser();
     Integer chairDacId = createDac(owner);
     Integer memberDacId = createDac(owner);
@@ -105,24 +106,46 @@ class DacDashboardDAOTest extends DAOTestHelper {
     User researcher = createUser();
 
     String chairDar = createSubmittedDar(researcher, createDataset(owner, chairDacId), false);
-    Integer chairDataset = datasetIdFor(chairDar);
-    createElection(chairDar, chairDataset, ElectionStatus.CLOSED);
-    createElection(chairDar, chairDataset, ElectionStatus.OPEN);
+    createElection(chairDar, datasetIdFor(chairDar), ElectionStatus.CLOSED);
+    createElection(chairDar, datasetIdFor(chairDar), ElectionStatus.OPEN);
 
-    createSubmittedDar(researcher, createDataset(owner, memberDacId), false);
+    String memberDar = createSubmittedDar(researcher, createDataset(owner, memberDacId), false);
+    Integer memberElection =
+        createElection(memberDar, datasetIdFor(memberDar), ElectionStatus.OPEN);
+    voteDAO.insertVote(user.getUserId(), memberElection, VoteType.DAC.getValue());
 
-    DashboardDatabaseCounts chairCounts = getCounts(user, UserRoles.CHAIRPERSON, true);
-    DashboardDatabaseCounts memberCounts = getCounts(user, UserRoles.MEMBER, false);
+    String overlappingDar = createSubmittedDar(researcher, createDataset(owner, chairDacId), false);
+    Integer memberDataset = createDataset(owner, memberDacId);
+    dataAccessRequestDAO.insertDARDatasetRelation(overlappingDar, memberDataset);
+    createElection(overlappingDar, datasetIdFor(overlappingDar), ElectionStatus.CLOSED);
+    createElection(overlappingDar, memberDataset, ElectionStatus.CLOSED);
 
-    assertEquals(1, chairCounts.darTotal());
-    assertEquals(0, chairCounts.darApproved());
-    assertEquals(1, chairCounts.awaitingMyVote());
-    assertEquals(1, memberCounts.darTotal());
+    String chairCloseout = createSubmittedDar(researcher, createDataset(owner, chairDacId), true);
+    Integer chairCloseoutElection =
+        createElection(chairCloseout, datasetIdFor(chairCloseout), ElectionStatus.OPEN);
+    voteDAO.insertVote(user.getUserId(), chairCloseoutElection, VoteType.DAC.getValue());
+
+    String memberCloseout = createSubmittedDar(researcher, createDataset(owner, memberDacId), true);
+    Integer memberCloseoutElection =
+        createElection(memberCloseout, datasetIdFor(memberCloseout), ElectionStatus.OPEN);
+    voteDAO.insertVote(user.getUserId(), memberCloseoutElection, VoteType.DAC.getValue());
+
+    String memberWithoutVote =
+        createSubmittedDar(researcher, createDataset(owner, memberDacId), false);
+    createElection(memberWithoutVote, datasetIdFor(memberWithoutVote), ElectionStatus.OPEN);
+
+    DashboardDatabaseCounts counts = getCounts(user);
+
+    assertEquals(1, counts.dacs());
+    assertEquals(6, counts.darTotal());
+    assertEquals(1, counts.darApproved());
+    assertEquals(3, counts.awaitingMyVote());
   }
 
-  private DashboardDatabaseCounts getCounts(User user, UserRoles role, boolean isChair) {
+  private DashboardDatabaseCounts getCounts(User user) {
     return jdbi.onDemand(DacDashboardDAO.class)
-        .getCounts(user.getUserId(), role.getRoleId(), isChair);
+        .getCounts(
+            user.getUserId(), UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
   }
 
   private Integer createDac(User owner) {

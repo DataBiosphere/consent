@@ -35,12 +35,16 @@ public class DacDashboardService {
 
   public DacDashboardSummary getSummary(User user) {
     boolean isChair = user.hasUserRole(UserRoles.CHAIRPERSON);
-    int roleId = isChair ? UserRoles.CHAIRPERSON.getRoleId() : UserRoles.MEMBER.getRoleId();
     List<Integer> dacIds = getDacIds(user);
 
     CompletableFuture<DashboardDatabaseCounts> databaseCounts =
         CompletableFuture.supplyAsync(
-            () -> dashboardDAO.getCounts(user.getUserId(), roleId, isChair), executorService);
+            () ->
+                dashboardDAO.getCounts(
+                    user.getUserId(),
+                    UserRoles.CHAIRPERSON.getRoleId(),
+                    UserRoles.MEMBER.getRoleId()),
+            executorService);
     CompletableFuture<DacSearchCounts> searchCounts =
         CompletableFuture.supplyAsync(
             () -> dashboardSearchService.getDacSearchCounts(isChair, dacIds), executorService);

@@ -63,7 +63,8 @@ class DacDashboardServiceTest {
     UserRole otherDacRole = UserRoles.Member();
     otherDacRole.setDacId(43);
     user.getRoles().add(otherDacRole);
-    when(dashboardDAO.getCounts(10, UserRoles.CHAIRPERSON.getRoleId(), true))
+    when(dashboardDAO.getCounts(
+            10, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
         .thenReturn(new DashboardDatabaseCounts(5, 8, 3, 2));
     ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
     when(elasticSearchService.searchDatasetsStream(queryCaptor.capture()))
@@ -90,7 +91,8 @@ class DacDashboardServiceTest {
   @Test
   void includesPublicAndAssignedPrivateStudiesForMembersAndOmitsChairOnlyCounts() throws Exception {
     User user = userWithRole(UserRoles.MEMBER, 11, 44);
-    when(dashboardDAO.getCounts(11, UserRoles.MEMBER.getRoleId(), false))
+    when(dashboardDAO.getCounts(
+            11, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
         .thenReturn(new DashboardDatabaseCounts(99, 3, 1, 1));
     ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
     when(elasticSearchService.searchDatasetsStream(queryCaptor.capture()))
@@ -114,7 +116,8 @@ class DacDashboardServiceTest {
     User user = new User();
     user.setUserId(12);
     user.setRoles(new ArrayList<>(List.of(chairRole)));
-    when(dashboardDAO.getCounts(12, UserRoles.CHAIRPERSON.getRoleId(), true))
+    when(dashboardDAO.getCounts(
+            12, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
         .thenReturn(new DashboardDatabaseCounts(0, 0, 0, 0));
     ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
     when(elasticSearchService.searchDatasetsStream(queryCaptor.capture()))
@@ -128,7 +131,8 @@ class DacDashboardServiceTest {
   @Test
   void treatsMissingOrMalformedStudyAssetsAsEmpty() throws Exception {
     User user = userWithRole(UserRoles.CHAIRPERSON, 13, 45);
-    when(dashboardDAO.getCounts(13, UserRoles.CHAIRPERSON.getRoleId(), true))
+    when(dashboardDAO.getCounts(
+            13, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
         .thenReturn(new DashboardDatabaseCounts(0, 0, 0, 0));
     when(elasticSearchService.searchDatasetsStream(anyString()))
         .thenReturn(searchResponseWithMissingAssets());
@@ -142,7 +146,8 @@ class DacDashboardServiceTest {
   @Test
   void failsWholeSummaryWhenSearchAggregationFails() throws Exception {
     User user = userWithRole(UserRoles.CHAIRPERSON, 14, 46);
-    when(dashboardDAO.getCounts(14, UserRoles.CHAIRPERSON.getRoleId(), true))
+    when(dashboardDAO.getCounts(
+            14, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
         .thenReturn(new DashboardDatabaseCounts(0, 0, 0, 0));
     when(elasticSearchService.searchDatasetsStream(anyString()))
         .thenThrow(new IOException("Elasticsearch unavailable"));
@@ -156,7 +161,8 @@ class DacDashboardServiceTest {
   @Test
   void preservesCompletionExceptionForNonRuntimeAsyncFailure() throws Exception {
     User user = userWithRole(UserRoles.CHAIRPERSON, 15, 47);
-    when(dashboardDAO.getCounts(15, UserRoles.CHAIRPERSON.getRoleId(), true))
+    when(dashboardDAO.getCounts(
+            15, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
         .thenThrow(new AssertionError("database failure"));
     when(elasticSearchService.searchDatasetsStream(anyString())).thenReturn(emptySearchResponse(0));
 

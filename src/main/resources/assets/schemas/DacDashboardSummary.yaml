@@ -10,7 +10,9 @@ properties:
     description: >-
       Counts mirroring the DAC DAR Requests page. `approved` is a completed collection and
       `pending` is every other collection. `awaitingMyVote` follows the Vote actions shown to the
-      caller. There is no denied count because DUOS has no denied collection status.
+      caller. Chairperson and Member assignments are combined for dual-role callers, with
+      collections spanning both scopes counted once. There is no denied count because DUOS has no
+      denied collection status.
     required: [total, approved, pending, awaitingMyVote]
     properties:
       total: { type: integer, format: int64 }
