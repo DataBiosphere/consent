@@ -171,7 +171,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       SELECT DISTINCT settings.dac_id
       FROM dac_rule_settings settings
       INNER JOIN dac_automation_rules rules ON rules.id = settings.rule_id
-      WHERE rules.rule::text = :ruleType AND rules.state = 'AVAILABLE'
+      WHERE rules.rule = :ruleType::dac_rule_type AND rules.state = 'AVAILABLE'
       """)
   Set<Integer> findDacIdsWithRuleEnabled(@Bind("ruleType") DACAutomationRuleType ruleType);
 
