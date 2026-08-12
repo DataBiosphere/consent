@@ -26,6 +26,8 @@ security:
       - profile
 
 paths:
+  /api/dac/dashboard-summary:
+    $ref: './paths/dacDashboardSummary.yaml'
   /api/researcher/dashboard-summary:
     $ref: './paths/researcherDashboardSummary.yaml'
   /api/signing-official/dashboard-summary:

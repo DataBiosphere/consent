@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
+import org.broadinstitute.consent.http.models.DashboardSummary.DarRequests;
+import org.broadinstitute.consent.http.models.DashboardSummary.InstitutionLibrary;
+
 public record SigningOfficialDashboardSummary(
     ResearcherStatus researcherStatus,
     DarRequests darRequests,
@@ -9,18 +12,9 @@ public record SigningOfficialDashboardSummary(
     DaaAssociations daaAssociations) {
   public record ResearcherStatus(long active, long inactive) {}
 
-  /**
-   * Counts mirror the statuses shown on the Signing Official DAR Requests page (see {@code
-   * DarCollectionStatus}): a collection the researcher withdrew is Canceled, and anything not yet
-   * fully approved or canceled is In Process.
-   */
-  public record DarRequests(long total, long approved, long canceled, long inProcess) {}
-
   public record DarApprovals(long total, long awaitingSoAction) {}
 
   public record DataSubmitters(long approved) {}
-
-  public record InstitutionLibrary(long datasets, long studies) {}
 
   public record DaaAssociations(long agreements, long researchersApproved) {}
 }

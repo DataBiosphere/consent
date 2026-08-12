@@ -5,14 +5,14 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DashboardSummary.DarRequests;
+import org.broadinstitute.consent.http.models.DacDashboardSummary;
+import org.broadinstitute.consent.http.models.DacDashboardSummary.DacDatasets;
+import org.broadinstitute.consent.http.models.DacDashboardSummary.Dacs;
+import org.broadinstitute.consent.http.models.DacDashboardSummary.DarRequests;
 import org.broadinstitute.consent.http.models.DashboardSummary.DataLibrary;
 import org.broadinstitute.consent.http.models.DuosUser;
-import org.broadinstitute.consent.http.models.ResearcherDashboardSummary;
-import org.broadinstitute.consent.http.models.ResearcherDashboardSummary.DataSubmissions;
-import org.broadinstitute.consent.http.models.ResearcherDashboardSummary.DatasetApprovals;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.ResearcherDashboardService;
+import org.broadinstitute.consent.http.service.DacDashboardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,30 +20,30 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ResearcherDashboardResourceTest {
+class DacDashboardResourceTest {
 
-  @Mock private ResearcherDashboardService dashboardService;
+  @Mock private DacDashboardService dashboardService;
 
-  private ResearcherDashboardResource resource;
+  private DacDashboardResource resource;
   private DuosUser duosUser;
   private User user;
 
   @BeforeEach
   void setUp() {
-    resource = new ResearcherDashboardResource(dashboardService);
+    resource = new DacDashboardResource(dashboardService);
     user = new User();
-    user.setEmail("researcher@example.org");
-    duosUser = new DuosUser(new AuthUser("researcher@example.org"), user);
+    user.setEmail("dac-user@example.org");
+    duosUser = new DuosUser(new AuthUser("dac-user@example.org"), user);
   }
 
   @Test
   void returnsSummary() {
-    ResearcherDashboardSummary summary =
-        new ResearcherDashboardSummary(
-            new DataLibrary(1, 2, 3, 4),
-            new DarRequests(5, 2, 1, 2),
-            new DatasetApprovals(6, 2, 3),
-            new DataSubmissions(7));
+    DacDashboardSummary summary =
+        new DacDashboardSummary(
+            new DarRequests(8, 3, 5, 2),
+            new Dacs(4),
+            new DacDatasets(6),
+            new DataLibrary(7, 8, 9, 10));
     when(dashboardService.getSummary(user)).thenReturn(summary);
 
     Response response = resource.getDashboardSummary(duosUser);

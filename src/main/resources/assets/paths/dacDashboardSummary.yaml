@@ -1,0 +1,18 @@
+get:
+  summary: Get DAC dashboard statistics
+  operationId: getDacDashboardSummary
+  tags:
+    - DAC
+  responses:
+    200:
+      description: DAC-role-scoped dashboard counts
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DacDashboardSummary.yaml'
+    401:
+      description: Unauthorized
+    403:
+      description: The user does not have the Chairperson or Member role
+    500:
+      description: Unable to aggregate dashboard statistics

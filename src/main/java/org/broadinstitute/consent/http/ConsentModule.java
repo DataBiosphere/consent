@@ -53,8 +53,10 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DacDashboardService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.DashboardSearchService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -460,16 +462,30 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
+  private DashboardSearchService providesDashboardSearchService(
+      ElasticSearchService elasticSearchService) {
+    return new DashboardSearchService(elasticSearchService);
+  }
+
+  @Provides
+  @Singleton
   private ResearcherDashboardService providesResearcherDashboardService(
-      Jdbi jdbi, ElasticSearchService elasticSearchService, ExecutorService executorService) {
-    return new ResearcherDashboardService(jdbi, elasticSearchService, executorService);
+      Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
+    return new ResearcherDashboardService(jdbi, dashboardSearchService, executorService);
   }
 
   @Provides
   @Singleton
   private SigningOfficialDashboardService providesSigningOfficialDashboardService(
-      Jdbi jdbi, ElasticSearchService elasticSearchService, ExecutorService executorService) {
-    return new SigningOfficialDashboardService(jdbi, elasticSearchService, executorService);
+      Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
+    return new SigningOfficialDashboardService(jdbi, dashboardSearchService, executorService);
+  }
+
+  @Provides
+  @Singleton
+  private DacDashboardService providesDacDashboardService(
+      Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
+    return new DacDashboardService(jdbi, dashboardSearchService, executorService);
   }
 
   @Provides
