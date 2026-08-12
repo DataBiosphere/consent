@@ -1,0 +1,20 @@
+get:
+  summary: Get Signing Official dashboard statistics
+  operationId: getSigningOfficialDashboardSummary
+  tags:
+    - Signing Official
+  responses:
+    200:
+      description: Institution-scoped dashboard counts
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SigningOfficialDashboardSummary.yaml'
+    400:
+      description: The Signing Official is not associated with an institution
+    401:
+      description: Unauthorized
+    403:
+      description: The user does not have the Signing Official role
+    500:
+      description: Unable to aggregate dashboard statistics

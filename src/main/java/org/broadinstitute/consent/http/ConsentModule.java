@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV5;
 import org.broadinstitute.consent.http.matching.DataUseUtil;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
@@ -52,8 +53,10 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DacDashboardService;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.DashboardSearchService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -70,6 +73,8 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.ResearcherDashboardService;
+import org.broadinstitute.consent.http.service.SigningOfficialDashboardService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -365,6 +370,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     return new DataUseMatcherV4(dataUseUtil);
   }
 
+  @Provides
+  @Singleton
+  private DataUseMatcherV5 providesDataUseMatcherV5(DataUseMatcherV4 dataUseMatcherV4) {
+    return new DataUseMatcherV5(dataUseMatcherV4);
+  }
+
   /**
    * The application's Elasticsearch client. A singleton because each {@link RestClient} owns its
    * own connection pool and background threads: building one per consumer multiplies pools against
@@ -458,6 +469,34 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private SamService providesSamService(SamDAO samDAO) {
     return new SamService(samDAO);
+  }
+
+  @Provides
+  @Singleton
+  private DashboardSearchService providesDashboardSearchService(
+      ElasticSearchService elasticSearchService) {
+    return new DashboardSearchService(elasticSearchService);
+  }
+
+  @Provides
+  @Singleton
+  private ResearcherDashboardService providesResearcherDashboardService(
+      Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
+    return new ResearcherDashboardService(jdbi, dashboardSearchService, executorService);
+  }
+
+  @Provides
+  @Singleton
+  private SigningOfficialDashboardService providesSigningOfficialDashboardService(
+      Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
+    return new SigningOfficialDashboardService(jdbi, dashboardSearchService, executorService);
+  }
+
+  @Provides
+  @Singleton
+  private DacDashboardService providesDacDashboardService(
+      Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
+    return new DacDashboardService(jdbi, dashboardSearchService, executorService);
   }
 
   @Provides
@@ -666,9 +705,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       Jdbi jdbi,
       DacServiceDAO dacServiceDAO,
       VoteService voteService,
-      ElasticSearchService elasticSearchService,
-      DaaService daaService) {
-    return new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService, daaService);
+      ElasticSearchService elasticSearchService) {
+    return new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService);
   }
 
   @Provides
@@ -756,8 +794,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private MatchService providesMatchService(
       Jdbi jdbi,
       UseRestrictionConverter useRestrictionConverter,
-      DataUseMatcherV4 dataUseMatcherV4) {
-    return new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV4);
+      DataUseMatcherV5 dataUseMatcherV5) {
+    return new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV5);
   }
 
   @Provides

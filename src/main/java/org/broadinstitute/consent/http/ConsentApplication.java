@@ -56,6 +56,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
+import org.broadinstitute.consent.http.resources.DacDashboardResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
 import org.broadinstitute.consent.http.resources.DataAccessRequestResource;
@@ -76,7 +77,9 @@ import org.broadinstitute.consent.http.resources.OAuth2Resource;
 import org.broadinstitute.consent.http.resources.OntologyResource;
 import org.broadinstitute.consent.http.resources.PassportResource;
 import org.broadinstitute.consent.http.resources.PublicFeatureFlagResource;
+import org.broadinstitute.consent.http.resources.ResearcherDashboardResource;
 import org.broadinstitute.consent.http.resources.SamResource;
+import org.broadinstitute.consent.http.resources.SigningOfficialDashboardResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.StudyResource;
 import org.broadinstitute.consent.http.resources.SupportResource;
@@ -168,6 +171,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Register standard application resources.
     env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
+    env.jersey().register(injector.getInstance(DacDashboardResource.class));
     env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(injector.getInstance(DarCollectionResource.class));
     env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
@@ -188,7 +192,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(OAuth2Resource.class));
     env.jersey().register(injector.getInstance(OntologyResource.class));
     env.jersey().register(injector.getInstance(PassportResource.class));
+    env.jersey().register(injector.getInstance(ResearcherDashboardResource.class));
     env.jersey().register(injector.getInstance(SamResource.class));
+    env.jersey().register(injector.getInstance(SigningOfficialDashboardResource.class));
     env.jersey().register(injector.getInstance(SwaggerResource.class));
     env.jersey().register(injector.getInstance(StatusResource.class));
     env.jersey().register(injector.getInstance(StudyResource.class));

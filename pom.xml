@@ -22,12 +22,13 @@
     <swagger.ui.version>5.32.11</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
-    <junit.version>6.1.2</junit.version>
+    <commons.csv.version>1.14.1</commons.csv.version>
+    <junit.version>6.1.3</junit.version>
     <mockito.version>5.23.0</mockito.version>
     <sonar.plugin.version>5.7.0.6970</sonar.plugin.version>
-    <netty.override.version>4.2.16.Final</netty.override.version>
-    <spotless.version>3.8.0</spotless.version>
-    <jetty.version>12.1.11</jetty.version>
+    <netty.override.version>4.2.17.Final</netty.override.version>
+    <spotless.version>3.9.0</spotless.version>
+    <jetty.version>12.1.12</jetty.version>
     <!-- Declared here rather than inline on the dependency so properties-maven-plugin writes it to
          mvn.properties, which is how ElasticSearchCapabilityService reports the client version in a
          deployed build: the shade plugin strips dependency manifests, so the client's own
@@ -135,7 +136,7 @@
           </suppressionFiles>
           <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.2.2</version>
+        <version>13.0.0</version>
         <executions>
           <execution>
             <goals>
@@ -467,7 +468,7 @@
       <dependency>
         <groupId>org.eclipse.jetty.ee10</groupId>
         <artifactId>jetty-ee10-bom</artifactId>
-        <version>12.1.11</version>
+        <version>12.1.12</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -495,9 +496,31 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.50.1</version>
+        <version>8.52.0</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <!--
+       google-api-client pins google-http-client to an older version than google-cloud-storage
+       needs. Without this BOM, google-http-client resolves to 2.0.0 and gax-httpjson's Conscrypt
+       setup fails at startup with NoSuchMethodError on NetHttpTransport.Builder.setSecurityProvider.
+      -->
+      <dependency>
+        <groupId>com.google.http-client</groupId>
+        <artifactId>google-http-client-bom</artifactId>
+        <version>2.2.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!--
+       dropwizard-dependencies manages conscrypt to 2.5.2, which predates
+       Conscrypt.setNamedGroups. gax-httpjson calls it from the Conscrypt SSL socket
+       configurator, so every outbound GCS request fails without this pin.
+      -->
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <version>2.6.0</version>
       </dependency>
       <!--
        See https://broadworkbench.atlassian.net/browse/DT-3748
@@ -527,7 +550,7 @@
     <dependency>
       <groupId>io.swagger.parser.v3</groupId>
       <artifactId>swagger-parser</artifactId>
-      <version>2.1.45</version>
+      <version>2.1.46</version>
     </dependency>
 
     <dependency>
@@ -612,13 +635,13 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.85</version>
+      <version>1.85.2</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.6.2</version>
+      <version>5.6.4</version>
     </dependency>
 
     <dependency>
@@ -765,6 +788,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
+      <version>${commons.csv.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
@@ -806,7 +836,7 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.22.2</version>
+      <version>1.23.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -866,7 +896,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.70.0</version>
+      <version>2.71.0</version>
     </dependency>
 
     <dependency>
@@ -896,7 +926,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
-      <version>4.5.0</version>
+      <version>4.6.0</version>
     </dependency>
 
     <dependency>
@@ -921,7 +951,7 @@
     <dependency>
       <groupId>commons-validator</groupId>
       <artifactId>commons-validator</artifactId>
-      <version>1.10.1</version>
+      <version>1.11.0</version>
       <exclusions>
         <exclusion>
           <groupId>commons-beanutils</groupId>

@@ -1,0 +1,44 @@
+type: object
+required:
+  - darRequests
+  - dacs
+  - dacDatasets
+  - dataLibrary
+properties:
+  darRequests:
+    type: object
+    description: >-
+      Counts mirroring the DAC DAR Requests page. `approved` is a completed collection and
+      `pending` is every other collection. `awaitingMyVote` follows the Vote actions shown to the
+      caller. Chairperson and Member assignments are combined for dual-role callers, with
+      collections spanning both scopes counted once. There is no denied count because DUOS has no
+      denied collection status.
+    required: [total, approved, pending, awaitingMyVote]
+    properties:
+      total: { type: integer, format: int64 }
+      approved: { type: integer, format: int64 }
+      pending: { type: integer, format: int64 }
+      awaitingMyVote: { type: integer, format: int64 }
+  dacs:
+    type: object
+    description: DACs available on Manage DACs. Zero for a DAC member.
+    required: [total]
+    properties:
+      total: { type: integer, format: int64 }
+  dacDatasets:
+    type: object
+    description: Datasets associated with the caller's DACs. Zero for a DAC member.
+    required: [total]
+    properties:
+      total: { type: integer, format: int64 }
+  dataLibrary:
+    type: object
+    description: >-
+      Counts matching the four Data Library tab badges. DAC chairpersons and members see publicly
+      visible studies plus non-public datasets assigned to any DAC they belong to.
+    required: [studies, datasets, models, workspaces]
+    properties:
+      studies: { type: integer, format: int64 }
+      datasets: { type: integer, format: int64 }
+      models: { type: integer, format: int64 }
+      workspaces: { type: integer, format: int64 }

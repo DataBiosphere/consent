@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Supports the Researcher dashboard summary query, which reads every DAR a researcher submitted.
+    `data_access_request.user_id` carries only a foreign key, and Postgres does not index the
+    referencing side of one, so this lookup was a sequential scan.
+
+    Built CONCURRENTLY (runInTransaction="false") to avoid the write-blocking SHARE lock; see
+    changelog-consent-2026-08-07-so-dashboard-indices.xml for recovery notes.
+  -->
+  <changeSet id="changelog-consent-2026-08-11-researcher-dashboard-indices-dar-user-id"
+    author="otchet" runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_data_access_request_user_id ON data_access_request (user_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_data_access_request_user_id</sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

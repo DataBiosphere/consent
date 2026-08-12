@@ -1,0 +1,12 @@
+[
+  {
+    "row": 4,
+    "column": "value",
+    "message": "Duplicate item 'Genomic' for study field 'dataTypes'"
+  },
+  {
+    "row": 5,
+    "column": "value",
+    "message": "Empty item for study field 'collaboratingSites'"
+  }
+]

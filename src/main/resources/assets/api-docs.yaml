@@ -26,6 +26,12 @@ security:
       - profile
 
 paths:
+  /api/dac/dashboard-summary:
+    $ref: './paths/dacDashboardSummary.yaml'
+  /api/researcher/dashboard-summary:
+    $ref: './paths/researcherDashboardSummary.yaml'
+  /api/signing-official/dashboard-summary:
+    $ref: './paths/signingOfficialDashboardSummary.yaml'
   /api/collections/{collectionId}:
     $ref: './paths/collection.yaml'
   /api/collections/{collectionId}/electionHistory:
@@ -1243,6 +1249,10 @@ components:
       $ref: './schemas/DataAccessAgreement.yaml'
     DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
+    ResearcherDashboardSummary:
+      $ref: './schemas/ResearcherDashboardSummary.yaml'
+    SigningOfficialDashboardSummary:
+      $ref: './schemas/SigningOfficialDashboardSummary.yaml'
     DacDatasetExternalizationRequest:
       $ref: './schemas/DacDatasetExternalizationRequest.yaml'
     DacDatasetExternalizationResponse:
