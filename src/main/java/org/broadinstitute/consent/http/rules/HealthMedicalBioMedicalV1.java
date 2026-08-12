@@ -12,8 +12,11 @@ public class HealthMedicalBioMedicalV1 implements RuleImplementationInterface {
 
   @Override
   public boolean compare(Dataset dataset, DataAccessRequest dataAccessRequest) {
-    return Boolean.TRUE.equals(dataset.getDataUse().getHmbResearch())
-        && hasNoModifiers(dataset.getDataUse())
-        && requestIsOnlyHMB(dataAccessRequest.getData());
+    return datasetQualifies(dataset) && requestIsOnlyHMB(dataAccessRequest.getData());
+  }
+
+  @Override
+  public boolean datasetQualifies(Dataset dataset) {
+    return datasetIsUnmodifiedHmbResearch(dataset);
   }
 }
