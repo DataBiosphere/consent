@@ -80,10 +80,14 @@ class DatasetAliasSequenceMigrationTest {
         SQLException.class, () -> execute("UPDATE dataset SET alias = NULL WHERE dataset_id = 1"));
     assertThrows(
         SQLException.class, () -> execute("UPDATE dataset SET alias = 42 WHERE dataset_id = 2"));
+    assertThrows(
+        SQLException.class, () -> execute("UPDATE dataset SET alias = -1 WHERE dataset_id = 1"));
+    assertThrows(
+        SQLException.class, () -> execute("UPDATE dataset SET alias = 1.5 WHERE dataset_id = 1"));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"NULL", "-1", "42"})
+  @ValueSource(strings = {"NULL", "-1", "1.5", "42"})
   void migrationRejectsUnsafeExistingAliasesBeforeChangingSchema(String unsafeAlias)
       throws Exception {
     execute("INSERT INTO dataset (alias) VALUES (" + unsafeAlias + ")");
@@ -94,6 +98,10 @@ class DatasetAliasSequenceMigrationTest {
     assertFalse(
         queryBoolean(
             "SELECT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'dataset_alias_allocate')"));
+    assertFalse(
+        queryBoolean(
+            "SELECT EXISTS (SELECT 1 FROM pg_constraint "
+                + "WHERE conname = 'dataset_alias_non_negative_integer')"));
   }
 
   @Test
@@ -105,6 +113,10 @@ class DatasetAliasSequenceMigrationTest {
     assertFalse(
         queryBoolean(
             "SELECT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'dataset_alias_allocate')"));
+    assertFalse(
+        queryBoolean(
+            "SELECT EXISTS (SELECT 1 FROM pg_constraint "
+                + "WHERE conname = 'dataset_alias_non_negative_integer')"));
     assertTrue(
         queryBoolean(
             "SELECT is_nullable = 'YES' FROM information_schema.columns "
