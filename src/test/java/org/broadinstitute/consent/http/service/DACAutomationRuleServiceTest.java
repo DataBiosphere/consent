@@ -19,6 +19,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -379,6 +381,38 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
       releaseFirstPass.countDown();
       realExecutor.shutdownNow();
     }
+  }
+
+  @Test
+  void testToggleRuleSurvivesARejectedReindexAndStaysSchedulable() throws Exception {
+    // An executor shutting down rejects the submission. The toggle is already committed and
+    // audited by then, so it must not fail — and reindexRunning must be released, or the
+    // coalescing guard would swallow every later reindex for the life of the process.
+    ExecutorService rejecting = mock(ExecutorService.class);
+    when(rejecting.submit(any(Runnable.class))).thenThrow(new RejectedExecutionException("down"));
+    service =
+        new DACAutomationRuleService(
+            jdbi, voteServiceDAO, voteService, elasticSearchService, rejecting);
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+
+    AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
+    assertTrue(result.isRuleEnabled());
+
+    // A second toggle must still attempt to schedule rather than coalescing into a dead pass
+    service.toggleRule(1, 1, user);
+    verify(rejecting, times(2)).submit(any(Runnable.class));
   }
 
   @Test

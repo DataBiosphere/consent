@@ -142,7 +142,17 @@ public class DACAutomationRuleService implements ConsentLogger {
       }
       reindexRunning = true;
     }
-    executorService.submit(this::drainPendingReindexes);
+    try {
+      executorService.submit(this::drainPendingReindexes);
+    } catch (RuntimeException e) {
+      // Rejected submission (an executor shutting down) would otherwise leave reindexRunning set
+      // with nothing draining it, so every later toggle would coalesce into a pass that never runs.
+      // reindexPending stays true, so the next toggle that does schedule picks this one up.
+      synchronized (reindexLock) {
+        reindexRunning = false;
+      }
+      logException("Unable to schedule dataset reindex after DAC rule toggle", e);
+    }
   }
 
   /**

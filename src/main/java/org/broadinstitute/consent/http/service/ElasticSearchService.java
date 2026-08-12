@@ -490,8 +490,11 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public DatasetTerm toDatasetTerm(Dataset dataset) {
+    if (Objects.isNull(dataset)) {
+      return null;
+    }
     // A dataset with no DAC has no rules to resolve, so it does not need the query at all
-    if (Objects.nonNull(dataset) && Objects.isNull(dataset.getDacId())) {
+    if (Objects.isNull(dataset.getDacId())) {
       return toDatasetTerm(dataset, Map.of());
     }
     return toDatasetTerm(dataset, resolveEnabledRulesByDacId().orElse(null));
