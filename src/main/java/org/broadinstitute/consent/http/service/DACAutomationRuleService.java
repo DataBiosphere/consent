@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -24,12 +25,9 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.datause.DataUsePrimaryCategory;
-import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassification.Shape;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
@@ -54,14 +52,23 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final VoteService voteService;
   private final VoteServiceDAO voteServiceDAO;
   private final ElasticSearchService elasticSearchService;
+  private final ExecutorService executorService;
+
+  /** Guards both reindex flags; see {@link #reindexDatasetsForRuleChange}. */
+  private final Object reindexLock = new Object();
+
+  private boolean reindexRunning = false;
+  private boolean reindexPending = false;
 
   @Inject
   public DACAutomationRuleService(
       Jdbi jdbi,
       VoteServiceDAO voteServiceDAO,
       VoteService voteService,
-      ElasticSearchService elasticSearchService) {
+      ElasticSearchService elasticSearchService,
+      ExecutorService executorService) {
     this.elasticSearchService = elasticSearchService;
+    this.executorService = executorService;
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
@@ -102,44 +109,79 @@ public class DACAutomationRuleService implements ConsentLogger {
             .orElseThrow(() -> new UnprocessableEntityException("Rule ID not found."));
     if (!isNull(ruleBeingToggled.enabledByUserId())) {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
-      reindexDatasetsForSoApprovalChange(dacId, ruleBeingToggled);
+      reindexDatasetsForRuleChange();
       return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
-    reindexDatasetsForSoApprovalChange(dacId, ruleBeingToggled);
+    reindexDatasetsForRuleChange();
     return new AutomationRuleToggleResponse(
         ruleId, true, insertTime.toEpochMilli(), user.getDisplayName(), user.getEmail());
   }
 
   /**
-   * Indexed datasets carry their DAC's Signing Official authorization model, so toggling
-   * REQUIRE_SO_DAR_APPROVAL leaves those documents stale. Reindex failures are logged rather than
-   * raised: the toggle itself is already committed and audited, and the next reindex corrects the
-   * documents.
+   * Indexed datasets carry state derived from their DAC's automation rules — the Signing Official
+   * approval model and instant-approval eligibility — so a toggle leaves those documents stale.
+   *
+   * <p>Reindexes the whole corpus rather than just the toggling DAC's datasets, matching {@code
+   * POST /api/dataset/index}. Rule toggles are rare, and this keeps the reindex off the
+   * unbounded-IN-list path a DAC with many datasets would otherwise take. It runs off the request
+   * thread so toggle latency does not track corpus size.
+   *
+   * <p>Reindexes are coalesced: a toggle arriving while one is in flight does not start a second
+   * pass over the whole corpus, it marks another pass as pending so exactly one more runs once the
+   * current one finishes. Coalescing rather than skipping matters — the toggle that arrives last
+   * carries the newest state, so dropping it would leave the index behind until something else
+   * triggered a reindex.
    */
-  private void reindexDatasetsForSoApprovalChange(Integer dacId, DACAutomationRule rule) {
-    if (!DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.equals(rule.ruleType())) {
-      return;
+  private void reindexDatasetsForRuleChange() {
+    synchronized (reindexLock) {
+      reindexPending = true;
+      if (reindexRunning) {
+        return;
+      }
+      reindexRunning = true;
     }
-    // The dataset lookup is inside the try as well: the rule change is already committed and
-    // audited by this point, so nothing here may fail the toggle
+    executorService.submit(this::drainPendingReindexes);
+  }
+
+  /**
+   * Runs reindex passes until none is pending. Both flags are read and written under {@code
+   * reindexLock}, so a toggle cannot observe {@code reindexRunning} as true moments before this
+   * clears it and have its request dropped.
+   */
+  private void drainPendingReindexes() {
+    while (true) {
+      synchronized (reindexLock) {
+        if (!reindexPending) {
+          reindexRunning = false;
+          return;
+        }
+        reindexPending = false;
+      }
+      reindexAllDatasets();
+    }
+  }
+
+  /**
+   * Failures are logged rather than raised: the toggle that triggered this is already committed and
+   * audited, so nothing here may fail it, and the next reindex corrects the documents either way.
+   */
+  private void reindexAllDatasets() {
     try {
-      List<Integer> datasetIds = datasetDAO.findDatasetIdsByDacIds(List.of(dacId));
+      List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
       if (datasetIds.isEmpty()) {
         return;
       }
       try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
         if (response.getStatus() >= 400) {
           logWarn(
-              "Error reindexing datasets after SO approval rule toggle for DAC %d: status %d"
-                  .formatted(dacId, response.getStatus()));
+              "Error reindexing datasets after DAC rule toggle: status %d"
+                  .formatted(response.getStatus()));
         }
       }
     } catch (Exception e) {
-      logException(
-          "Unable to reindex datasets after SO approval rule toggle for DAC %d".formatted(dacId),
-          e);
+      logException("Unable to reindex datasets after DAC rule toggle", e);
     }
   }
 
@@ -197,7 +239,7 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
-    if (dataset.getDataUse() == null || !hasCanonicalSinglePrimaryDataUse(dataset.getDataUse())) {
+    if (!DataUsePrimaryClassifier.hasCanonicalSinglePrimary(dataset.getDataUse())) {
       logInfo(
           String.format(
               "Rule %s not triggered for DAC id: %s and dataset id: %s because the dataset does not have a canonical single primary Data Use",
@@ -222,17 +264,6 @@ public class DACAutomationRuleService implements ConsentLogger {
               darContainsBannedCountry));
     }
     return Optional.empty();
-  }
-
-  /**
-   * DAC automation only supports canonical single-primary Data Use shapes. {@code Shape.SINGLE}
-   * also covers an Other-only primary category, which is non-canonical and must be excluded here to
-   * match the abstention policy in {@code DataUseMatcherV5}.
-   */
-  private boolean hasCanonicalSinglePrimaryDataUse(DataUse dataUse) {
-    var classification = DataUsePrimaryClassifier.classify(dataUse);
-    return classification.shape() == Shape.SINGLE
-        && !classification.categories().contains(DataUsePrimaryCategory.OTHER);
   }
 
   @VisibleForTesting

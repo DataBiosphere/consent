@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -21,12 +22,18 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -59,6 +66,7 @@ import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.transaction.TransactionalCallback;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,6 +97,8 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   @Mock private ContainerRequest request;
 
   private DACAutomationRuleService service;
+
+  private ExecutorService executorService;
 
   private static DACAutomationRule makeDacAutomationRuleGRU() {
     return new DACAutomationRule(
@@ -157,7 +167,16 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
-    service = new DACAutomationRuleService(jdbi, voteServiceDAO, voteService, elasticSearchService);
+    // Direct executor so the best-effort reindex runs inline and these tests can assert on it
+    executorService = MoreExecutors.newDirectExecutorService();
+    service =
+        new DACAutomationRuleService(
+            jdbi, voteServiceDAO, voteService, elasticSearchService, executorService);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdownNow();
   }
 
   @Test
@@ -242,7 +261,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testToggleSoApprovalRuleReindexesDacDatasets() throws Exception {
+  void testToggleSoApprovalRuleReindexesAllDatasets() throws Exception {
     when(ruleDAO.findAllDACAutomationRulesByDACId(1))
         .thenReturn(
             List.of(
@@ -256,7 +275,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null)));
     when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
-    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10, 11));
+    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10, 11));
     when(elasticSearchService.indexDatasets(List.of(10, 11))).thenReturn(Response.ok().build());
 
     AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
@@ -266,7 +285,8 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testToggleNonSoApprovalRuleDoesNotReindex() throws Exception {
+  void testToggleAutoApprovalRuleAlsoReindexes() throws Exception {
+    // Auto-approve rules drive instantApprovalEligible, so their toggles stale documents too
     when(ruleDAO.findAllDACAutomationRulesByDACId(1))
         .thenReturn(
             List.of(
@@ -280,6 +300,30 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null)));
     when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10, 11));
+    when(elasticSearchService.indexDatasets(List.of(10, 11))).thenReturn(Response.ok().build());
+
+    service.toggleRule(1, 1, user);
+
+    verify(elasticSearchService).indexDatasets(List.of(10, 11));
+  }
+
+  @Test
+  void testToggleRuleSkipsReindexWhenThereAreNoDatasets() throws Exception {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of());
 
     service.toggleRule(1, 1, user);
 
@@ -287,7 +331,58 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testToggleSoApprovalRuleSucceedsWhenReindexFails() throws Exception {
+  void testTogglesDuringAnInFlightReindexCoalesceIntoOneFollowUpPass() throws Exception {
+    // A real executor, so the reindex genuinely runs off-thread and can be held mid-flight
+    ExecutorService realExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    service =
+        new DACAutomationRuleService(
+            jdbi, voteServiceDAO, voteService, elasticSearchService, realExecutor);
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10, 11));
+    CountDownLatch firstPassStarted = new CountDownLatch(1);
+    CountDownLatch releaseFirstPass = new CountDownLatch(1);
+    AtomicInteger passes = new AtomicInteger();
+    when(elasticSearchService.indexDatasets(any()))
+        .thenAnswer(
+            invocation -> {
+              if (passes.incrementAndGet() == 1) {
+                firstPassStarted.countDown();
+                releaseFirstPass.await(5, TimeUnit.SECONDS);
+              }
+              return Response.ok().build();
+            });
+
+    try {
+      service.toggleRule(1, 1, user);
+      assertTrue(firstPassStarted.await(5, TimeUnit.SECONDS));
+      // Both land while the first pass is still running, so they share a single follow-up pass
+      service.toggleRule(1, 1, user);
+      service.toggleRule(1, 1, user);
+      releaseFirstPass.countDown();
+
+      // after() waits the full window before verifying, so an uncoalesced third pass fails this;
+      // timeout().times(2) would return as soon as it saw the second and never notice
+      verify(elasticSearchService, after(1000).times(2)).indexDatasets(List.of(10, 11));
+      assertEquals(2, passes.get());
+    } finally {
+      releaseFirstPass.countDown();
+      realExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  void testToggleRuleSucceedsWhenReindexFails() throws Exception {
     when(ruleDAO.findAllDACAutomationRulesByDACId(1))
         .thenReturn(
             List.of(
@@ -301,7 +396,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     "alice",
                     "alice@fake.org")));
     doNothing().when(ruleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
-    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
+    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10));
     when(elasticSearchService.indexDatasets(List.of(10))).thenThrow(new IOException("es down"));
 
     // The rule change is already committed and audited, so a failed reindex must not surface
