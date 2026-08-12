@@ -122,15 +122,19 @@ public class DACAutomationRuleService implements ConsentLogger {
     if (!DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.equals(rule.ruleType())) {
       return;
     }
-    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDacIds(List.of(dacId));
-    if (datasetIds.isEmpty()) {
-      return;
-    }
-    try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
-      if (response.getStatus() >= 400) {
-        logWarn(
-            "Error reindexing datasets after SO approval rule toggle for DAC %d: status %d"
-                .formatted(dacId, response.getStatus()));
+    // The dataset lookup is inside the try as well: the rule change is already committed and
+    // audited by this point, so nothing here may fail the toggle
+    try {
+      List<Integer> datasetIds = datasetDAO.findDatasetIdsByDacIds(List.of(dacId));
+      if (datasetIds.isEmpty()) {
+        return;
+      }
+      try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
+        if (response.getStatus() >= 400) {
+          logWarn(
+              "Error reindexing datasets after SO approval rule toggle for DAC %d: status %d"
+                  .formatted(dacId, response.getStatus()));
+        }
       }
     } catch (Exception e) {
       logException(
