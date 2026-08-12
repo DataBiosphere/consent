@@ -644,6 +644,20 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testToDatasetTermSoApprovalModelWithNoDacWhenRuleLookupFails() {
+    when(dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+        .thenThrow(new RuntimeException("db down"));
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+
+    // A dataset with no DAC does not depend on the rule, so it resolves even when the lookup fails
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+  }
+
+  @Test
   void testToDatasetTermUsesLegacyAccessManagementProperty() {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);

@@ -455,7 +455,7 @@ public class ElasticSearchService implements ConsentLogger {
           dacAutomationRuleDAO.findDacIdsWithRuleEnabled(
               DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL));
     } catch (Exception e) {
-      logWarn("Unable to resolve DACs requiring SO DAR approval: %s".formatted(e.getMessage()));
+      logWarn("Unable to resolve DACs requiring SO DAR approval", e);
       return Optional.empty();
     }
   }
@@ -509,10 +509,13 @@ public class ElasticSearchService implements ConsentLogger {
             });
 
     // Left unset when the rule is unresolved; a dataset with no DAC has no per-DAR step to satisfy
-    if (Objects.nonNull(dacIdsRequiringSoDarApproval)) {
+    // A dataset with no DAC has no per-DAR approval step to satisfy, which holds whether or not
+    // the rule resolved; only datasets whose model depends on the unresolved rule are left unset
+    if (Objects.isNull(dataset.getDacId())) {
+      term.setSoApprovalModel(SoApprovalModel.PRE_AUTHORIZED);
+    } else if (Objects.nonNull(dacIdsRequiringSoDarApproval)) {
       term.setSoApprovalModel(
-          Objects.nonNull(dataset.getDacId())
-                  && dacIdsRequiringSoDarApproval.contains(dataset.getDacId())
+          dacIdsRequiringSoDarApproval.contains(dataset.getDacId())
               ? SoApprovalModel.PER_DAR
               : SoApprovalModel.PRE_AUTHORIZED);
     }

@@ -24,6 +24,17 @@ properties:
   dacId:
     type: integer
     description: The unique identifier for a DAC
+  soApprovalModel:
+    type: string
+    enum:
+      - PER_DAR
+      - PRE_AUTHORIZED
+    description: >-
+      Which Signing Official authorization model the dataset's DAC uses. PER_DAR means the SO
+      named in each Data Access Request must approve that request before the DAC reviews it;
+      PRE_AUTHORIZED means the SO authorizes researchers in advance. Absent when the model
+      could not be resolved at indexing time, or on documents indexed before this field
+      existed; clients should treat an absent value as unknown rather than assuming a model.
   study:
     type: object
     title: DatasetSearchStudy
