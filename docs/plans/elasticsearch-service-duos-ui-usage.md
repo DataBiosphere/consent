@@ -446,8 +446,15 @@ caller-specific access policy, not just query syntax. The recommended path is na
 document-level security (DLS) and field-level security (FLS) with backend-generated per-request
 search credentials or impersonation context, backed by explicit access metadata in indexed dataset
 documents. Because the current API accepts arbitrary raw Elasticsearch DSL through a shared service
-credential, the plan also includes a compatibility fallback: server-owned query rewriting and
-response shaping while preserving current endpoints.
+credential, the plan also includes server-owned query mediation and response shaping while preserving
+current endpoints.
+
+**Revised after A-2's proof of concept.** Query mediation and response shaping were originally scoped
+as a *fallback* for clusters without DLS/FLS. Measurement showed they are required on the native path
+too: DLS does not isolate every index-wide statistic the query surface exposes, and a field outside an
+FLS grant is not queryable, so the native grant must be wider than the response bundle and something
+else must narrow the response. Epic E's E-0, E-1 and E-3 therefore ship in **both** configurations;
+only E-2 and E-4 are fallback-specific. See the A-2 outcome.
 
 Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** ≈ 1 week+
 
@@ -458,11 +465,15 @@ Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** �
 | A | Discovery & Contract | Infra + Backend | — | B, C, D, E |
 | B | Index Schema & Indexing Pipeline | Backend | A-2, A-3 (not A-1) | D, E, F |
 | C | Auth Context Service | Backend | A-2 (not A-1) | D, E |
-| D | Native DLS/FLS Path | Backend + Infra | A-1, B, C | F |
-| E | Compatibility Fallback | Backend | B, C | F |
-| F | API Hardening | Backend | D or E | G |
+| D | Native DLS/FLS Path | Backend + Infra | A-1, B, C, **E-0/E-1/E-3** | F |
+| E | Query Mediation & Response Shaping | Backend | B, C | D, F |
+| F | API Hardening | Backend | E, and D where licensed | G |
 | G | Frontend Alignment | Frontend | F | — |
-| H | Observability, Rollout & Docs | Backend + Infra | D or E | — |
+| H | Observability, Rollout & Docs | Backend + Infra | E, and D where licensed | — |
+
+Epic D no longer stands alone, and Epic E is no longer conditional. The old "D **or** E" framing is
+replaced throughout by "**E-0/E-1/E-3 always; D-1…D-5 additionally where licensed**" — see the A-2
+outcome for the two measurements that force it.
 
 ---
 
@@ -668,8 +679,23 @@ harness landed as the D-5 foundation:
   against the secured cluster, the trial license is active, the privileged client sees all documents
   and fields, DLS hides the non-public document, and FLS strips ungranted fields from `_source`.
 
+- `src/test/java/org/broadinstitute/consent/integration/ElasticSearchLeakDefensePocTest.java` — the
+  end-to-end proof of concept for the access contract, with fixtures in
+  `ElasticSearchAccessContractFixtures` and the enforcement modeled in
+  `ElasticSearchAccessContractModel`. 254 tests, ~21s: a corpus of 26 exfiltration attempts and 7
+  legitimate requests, run under four enforcement configurations. See the A-2 outcome below for what
+  it measured; it is the reason D-3, E-0, E-1 and E-3 changed.
+
 D-5 extends `ElasticSearchContainerTests` and swaps the literal role descriptor for the generated
-DLS query and FLS grants from D-3.
+DLS query and FLS grants from D-3. It should reuse the PoC's corpus rather than write a new one —
+see D-5's revised criteria.
+
+**Note for a version bump.** `ElasticSearchDlsFlsEnforcementTest` and the three security-baseline
+classes assert that a *capability exists*; `ElasticSearchLeakDefensePocTest` pins *behaviors* of DLS
+and FLS that the access contract's reasoning depends on — which aggregations DLS does and does not
+isolate, and whether a field outside an FLS grant stays queryable. Those are the assertions most
+likely to change silently across versions, so it must be run alongside the other four. Each carries a
+failure message naming what to re-derive in `es-access-contract.md` if the answer changes.
 
 Two defaults must be overridden, and this is the main trap:
 
@@ -710,7 +736,9 @@ per-request credential work can begin, we need the cluster edition and security 
   enabled, DLS/FLS availability, API-key support, and `run_as` privilege availability.
 - Confirm that `org.elasticsearch.client:elasticsearch-rest-client` in the current POM is
   compatible with any required security API calls (API-key creation, `_security/api_key`).
-- Decision documented: native DLS/FLS path (Epic D), compatibility fallback (Epic E), or both.
+- Decision documented: whether Epic D (native DLS/FLS) is added on top of Epic E, or Epic E ships
+  alone. **Not a choice between them** — A-2's proof of concept established that E-0/E-1/E-3 are
+  required either way, so what A-1 decides is Epic D's inclusion, not the enforcement strategy.
 
 **Implementation notes**:
 - Run `GET /_xpack` and `GET /_cluster/settings` against the cluster.
@@ -766,6 +794,37 @@ record what it settled and what it deliberately did not.
   against both.
 - **Custodian matching is case-sensitive and trims only the stored side**, so `Alice@x.org` fails
   against a stored `alice@x.org` — contract §A.2, OPEN-6.
+
+##### A-2 Outcome — proof of concept, and what measuring the design changed
+
+The contract was written as an argument. It is now also exercised: `ElasticSearchLeakDefensePocTest`
+runs a corpus of 26 exfiltration attempts and 7 legitimate requests against a real security-enabled
+cluster on a trial license, under four configurations — today's endpoint, Epic D as originally
+specified, Epic D with §F mediation, and Epic E. Enforcement is modeled in the test tree
+(`ElasticSearchAccessContractModel`) because E-0/E-1/E-2/E-3 do not exist yet and D-3 was blocked;
+everything else is real, including the API keys and their DLS/FLS role descriptors. Contract §1.1a
+describes it in full.
+
+**The design holds.** Today's endpoint leaks by every route tried; Epic D as originally specified
+still leaks; the enforcement the contract now describes closes all of it, on both paths, with
+identical results between them, while every legitimate request the product makes still returns data.
+
+**Six statements in the contract were wrong, and are corrected there.** They are listed here because
+four of them change tickets in this document:
+
+| # | Finding | Tickets affected |
+| --- | --- | --- |
+| 1 | §1.1's headline examples do not reproduce on 9.4.4. `terms` with `min_doc_count: 0`, `cardinality`, `value_count` and `rare_terms` are all correctly isolated by DLS. **But `significant_terms` reports `bg_count` for the whole index, and `explain` reports index-wide `N`/`docFreq`** — so §1.1's conclusion stands on different evidence, and stripping `explain` is load-bearing. | E-0, E-1 |
+| 2 | **OPEN-8 is resolved, restrictively.** A `term` query on a path outside the FLS grant matches **zero documents with no error**. It affects **three** paths, not the two §B.0a named — `study.publicVisibility` is in the same position, on the data library's main query path. | **D-3 (unblocked)**, E-3 |
+| 3 | **A granted multi-field does not carry its `.keyword` subfield.** Sorting on `datasetName.keyword` with only `datasetName` granted returns *a* page, not the right one, silently. Contract §F.1's `.keyword` normalization rule conceals this by accepting a reference the grant will not serve. | D-3 |
+| 4 | E-1's "add `fields` to the strip list" + "strip at every depth" **breaks the library search box and every highlighted column**: `fields` is a legitimate member of `multi_match`/`query_string`/`highlight`. | E-1 |
+| 5 | §F.2's "filter the sort channel against the allowlist" is not implementable — sort values carry no field names. The channel must be **dropped**. | E-3 |
+| 6 | Two enforcement controls could be deleted without any test noticing, found by deliberately weakening the model. Both now have assertions. One consequence is structural: §F.2's `aggregations.**` walk defends against *our own* enumeration drift (OPEN-9), not against callers. | E-3, B-6 |
+
+**The structural consequence is the important one.** Findings 1 and 2 each independently make Epic D
+depend on Epic E's components: on E-0/E-1 because DLS does not isolate index-wide statistics, and on
+E-3 because the native path's FLS grant must be wider than the response bundle. Epic E is therefore
+not a fallback that Epic D replaces — see the revised Epic E goal and Phase 3A/3B.
 
 **Implementation notes**:
 - `dataCustodianEmail` is parsed from the study property bag in `DatasetService.isCreatorOrCustodian`
@@ -825,8 +884,8 @@ source for every field. Dimensions such as `allowedInstitutionIds`, `allowedPrin
 ### Epic B — Index Schema & Indexing Pipeline
 
 **Goal**: Add an `accessPolicy` nested object to every indexed dataset document and ensure all
-reindex paths populate it correctly. Foundation for both Epic D (native DLS/FLS) and Epic E
-(fallback).
+reindex paths populate it correctly. Foundation for both Epic D (native DLS/FLS) and Epic E (query
+mediation and response shaping).
 
 **Blocked by**: A-2, A-3.
 **Blocks**: D, E.
@@ -1160,9 +1219,18 @@ the two code paths from diverging.
 or `run_as` headers) that enforce DLS and FLS natively at the cluster level.
 
 **Blocked by**: A-1 (cluster capability confirmed), B-3 (`accessPolicy` indexed), C-1 (auth
-context available).
+context available), **E-0 + E-1** (contract §1.1 — DLS does not deliver Decision 1 on its own),
+**E-3** (contract §B.5c — the native FLS grant is wider than the response bundle, so the response
+filter is what closes the difference).
 **Blocks**: F.
 **Condition**: Proceed only if A-1 confirms DLS/FLS support.
+
+**Epic D is not sufficient on its own, and this is not a matter of degree.** Native DLS/FLS is a
+component of the enforcement, not the whole of it. Two measurements from A-2's proof of concept
+establish it independently: DLS leaves `significant_terms` and `explain` reporting index-wide
+statistics, and FLS makes a non-granted path unqueryable so the grant has to include paths that must
+not be returned. Shipping D-1…D-5 without E-0/E-1/E-3 produces a system that filters documents and
+still leaks, and whose "My Data Submissions" and library visibility filters silently return nothing.
 
 ---
 
@@ -1250,13 +1318,26 @@ caller input at all beyond validating that it was asked for the one bundle that 
   - **No DAC clause, no institution clause, no policy-tag clause.** Contract rows 9–14 are DEFERred:
     none of them grants dataset read access today, and adding them here is an authorization
     expansion pending OPEN-3/OPEN-5.
-- `FlsGrantBuilder.build()` → `List<String>`: the SEARCH-VISIBLE literal paths from contract §B.
+- `FlsGrantBuilder.build()` → `List<String>`. **Revised by measurement — this is no longer the
+  SEARCH-VISIBLE list** (contract §B.5c). It is:
+  - the RESPONSE-VISIBLE paths from contract §B, **plus**
+  - every QUERYABLE path, including the three that are RESPONSE-INTERNAL — `createUserId`,
+    `study.dataSubmitterId`, `study.publicVisibility` — because a path outside the grant matches
+    nothing (OPEN-8, resolved restrictively), **plus**
+  - the `.keyword` subfield of every granted multi-field the product sorts or exact-matches on
+    (`datasetName.keyword`, `study.studyName.keyword`), because granting `datasetName` does not grant
+    its subfield and a sort on it then returns the wrong page silently.
   - **Same list for admins** — no `["*"]`. An admin wildcard would serve `accessPolicy.*` and the
     dynamic property maps, contradicting contract §B.4/§B.5/§B.7. ADMIN is a document-visibility
     bypass, not a projection bypass.
-  - No wildcard or `except` form anywhere in the grant (contract §B.5).
+  - No wildcard or `except` form anywhere in the grant (contract §B.5), which is what makes the
+    subfield enumeration real work: `datasetName*` would solve it and is forbidden.
+- **E-3's response filter must run on this path**, since the grant now returns three paths that must
+  not reach the caller. The grant governs what the *search* can resolve; the response filter governs
+  what the *caller* receives. Native FLS cannot do both (contract §B.5c).
 - Unit tests per dimension, plus negative tests: a DAC member who is not creator/custodian does
-  **not** match a non-public dataset; an admin grant contains no `accessPolicy` path.
+  **not** match a non-public dataset; an admin grant contains no `accessPolicy` path; the grant
+  contains a `.keyword` entry for every multi-field in the mapping that any sort target resolves to.
 
 **Implementation notes**:
 - DLS query for a non-admin caller:
@@ -1280,9 +1361,19 @@ caller input at all beyond validating that it was asked for the one bundle that 
   case-sensitive behavior; changing it is OPEN-6 and must move both paths at once.
 - If `accessPolicy` is mapped as `nested`, terms must be wrapped in a `nested` query — confirm
   with B-1 mapping decision.
+- **Generate the grant from the index mapping, not from contract §B's tables.** The tables enumerate
+  logical paths and contain no subfields, so a grant generated from them compiles, passes review, and
+  breaks sorting. This is OPEN-9's drift problem in a second place, and the second argument for
+  generating rather than hand-maintaining.
+- Build the role descriptor as a JSON tree and let the serializer escape the DLS query into the
+  `query` string, rather than hand-escaping it. Hand-escaping is where these descriptors go wrong, and
+  a mis-escaped DLS query can fail open. The PoC's `roleDescriptors` does it this way for that reason.
+- **OPEN-8 no longer blocks this ticket.** It was resolved by measurement — see the A-2 outcome. The
+  answer is restrictive, which is why the grant above is wider than originally specified.
 
-**Dependencies**: D-2, C-2, B-1.
-**Size**: L
+**Dependencies**: D-2, C-2, B-1, **E-0 + E-1** (contract §1.1), **E-3** (contract §B.5c).
+**Size**: L → **L/XL.** The generator itself is unchanged in size; the mapping-derived subfield
+enumeration and the E-3 dependency are the additions.
 
 ---
 
@@ -1318,36 +1409,123 @@ to use per-request DLS credentials when `securityMode` is `"native-dls"`.
 **Summary**: Integration tests against a security-enabled Elasticsearch instance validating
 document filtering and field omission.
 
+> **Mostly written already.** A-2's proof of concept (`ElasticSearchLeakDefensePocTest`) is this
+> ticket's corpus, running against a real cluster with the enforcement modeled in the test tree. This
+> ticket's work is **substituting the real components for the model**, not authoring a new suite. Do
+> not start over: the attack corpus, the leak-marker scheme, the caller fixtures and the two-path
+> parity assertion all transfer unchanged, and the record of which assertions are load-bearing
+> (contract §1.1a) is not cheap to reconstruct.
+
 **Acceptance criteria**:
-- Setup: security-enabled ES (Docker/Testcontainers), two datasets: one `publicVisibility=true`,
-  one `publicVisibility=false`.
-- Test: non-admin search → `publicVisibility=false` document absent from results.
-- Test: dataset creator search → sees own `publicVisibility=false` document.
-- Test: ADMIN → sees all documents.
-- Test: FLS — every caller receives the same SEARCH-VISIBLE fields, including
-  `study.dataCustodianEmail`, which is published by search today.
-- Test: ADMIN sees all documents but receives the same SEARCH-VISIBLE fields; `accessPolicy`,
-  `data`, `study.data`, and `study.assets` are absent.
+- Replace `ElasticSearchAccessContractModel`'s four modeled components with `DlsQueryBuilder`,
+  `FlsGrantBuilder`, `AggregationVocabulary`, `SearchQueryMediator` and `ResponseFieldFilter`. The
+  test class should need no changes beyond the call sites.
+- **Keep the `UNMEDIATED` and `NATIVE_UNMEDIATED` configurations.** They are what prove the corpus can
+  still detect a leak, and without them every "defended" assertion can pass vacuously. Deleting them
+  because the code is now correct is the single most likely way to lose this suite's value.
+- Keep the two-path parity assertion. Contract §1.1 warns that the enforcement paths drifting apart is
+  how the fallback becomes a hole, and drift is invisible in whichever environment runs the other path.
+  Both findings 2 and 3 first surfaced as parity failures.
+- Seed test data via `ElasticSearchService.indexDataset` rather than the fixtures' literal documents,
+  so the same code path as production populates `accessPolicy` (B-3) — this is the one substantive
+  addition to the PoC, and it is what makes the suite a test of the pipeline rather than of the index.
+- Retain the four Elasticsearch-behavior probes as regression tests against a version bump:
+  `min_doc_count: 0` isolation, `significant_terms` `bg_count`, `explain` statistics, and FLS
+  queryability of a non-granted path.
 
 **Implementation notes**:
-- Use `testcontainers` with `docker.elastic.co/elasticsearch/elasticsearch:9.x` and
-  `xpack.security.enabled=true`.
-- Seed test data via `ElasticSearchService.indexDataset` (not direct ES API) to exercise the same
-  code path as production and ensure `accessPolicy` is populated.
+- Extends `ElasticSearchContainerTests`; the image is pinned once, in `ElasticSearchTestCluster`.
+- Detect leaks by scanning the whole serialized response, not by walking named paths. Contract §F.2
+  requires unrecognized channels to fail closed, and a test that inspects `hits.hits[*]._source` shares
+  the exact blind spot it exists to catch — that is how the §B.5b hole survived review in the first
+  place.
+- **Mutation-test the suite once it is real.** Two of the four deliberate weakenings tried against the
+  model were not caught (contract §1.1a), and both gaps were in controls that looked obviously
+  necessary. Re-run that exercise against the production components: remove `aggs` from the strip list,
+  drop E-2's filter, narrow E-3 to `hits._source`, retain the `sort` channel.
 
 **Dependencies**: D-4.
-**Size**: L
+**Size**: L → **M.** The corpus exists; this is substitution plus the `indexDataset` seeding path.
 
 ---
 
 ### Epic E — Compatibility Fallback
 
-**Goal**: Server-side query mediation and field allowlisting that enforce access policy without
-native Elasticsearch DLS/FLS. Ships independently of Epic D and becomes the primary Phase 3
-delivery if the cluster lacks DLS/FLS support.
+**Goal**: Server-owned aggregations, query mediation, and response field allowlisting.
+
+**Renamed from "Compatibility Fallback", because it is not one.** E-0, E-1 and E-3 are required in
+every configuration, licensed or not — the A-2 proof of concept measured Epic D to be insufficient
+without them (contract §1.1, §B.5c). Only **E-2** (the injected authorization filter, which DLS
+replaces) and **E-4** (wiring for the unlicensed path) are fallback-specific. The epic ships whole
+where DLS/FLS is unavailable, and ships minus E-2 alongside Epic D where it is available.
+
+The ticket IDs are unchanged deliberately: `es-access-contract.md` references E-0/E-1/E-2/E-3 by
+number throughout, and renumbering them to reflect the regrouping would invalidate every one of those
+references for no gain.
 
 **Blocked by**: B-3 (`accessPolicy` indexed), C-1 (auth context available).
-**Blocks**: F.
+**Blocks**: D (via E-0/E-1/E-3), F.
+
+---
+
+#### Ticket E-0 — Server-owned aggregation vocabulary
+
+**Summary**: Build the aggregations server-side from a closed, named vocabulary selected by
+`(tab, filters, page, size, sort)`, so callers never send `aggs` at all.
+
+**Context**: Contract §F.1. Caller-supplied aggregations are the one surface where neither DLS nor a
+field allowlist closes the leak — `significant_terms` on a perfectly legitimate field such as
+`study.piName` reports `bg_count`, the document count of the entire index, because it compares against
+an index-wide background set by design. Validating shapes means maintaining a denylist against an open
+grammar that grows with every Elasticsearch release.
+
+> **Measured, and the example changed (A-2 finding 1).** This ticket originally led with `terms` +
+> `min_doc_count: 0`, on Elastic's documented warning. That does **not** reproduce on 9.4.4 — DLS
+> isolates it correctly, as it does `shard_min_doc_count: 0`, an `include` regex, `_key` ordering,
+> `rare_terms`, the `global` aggregation, `cardinality`, `value_count` and the `_terms_enum` API. What
+> does leak past DLS is `significant_terms`' `bg_count` and `explain`'s `_explanation`, which reports
+> index-wide `N` and `docFreq`. The justification for this ticket is unchanged and the denylist
+> argument is now stronger, not weaker: two of the three shapes that denylist would have named have
+> swapped status against the version we actually run, in the direction nobody would have re-checked.
+
+The vocabulary is already closed in practice. Every aggregation the product issues is one of three
+shapes, all in `duos-ui/src/components/data_library/assets/`:
+
+1. **`FILTER_AGGS`** (`datasetAsset.ts:18-22`) — four fixed `terms` facets on `accessManagement`,
+   `dataUse.primary.code`, `study.dataTypes`, `dac.dacName`. No parameters.
+2. **`STUDIES_AGG`** (`definition.ts:42-56`) — `terms(study.studyId, size 10000)` +
+   `top_hits(size 1)`. Shared unchanged by **nine** study-asset tabs; the asset type selects which
+   `study.assets.*` leaves the `top_hits` `_source` requests.
+3. **studyAsset composite** (`studyAsset.ts:42-72`) — `cardinality(study.studyId)`, a `composite`
+   page over `study.studyId`, plus `top_hits`, `value_count(datasetId)`, `sum(participantCount)`,
+   `terms(datasetId)`, and the filter facets.
+
+**Acceptance criteria**:
+- `AggregationVocabulary.build(AssetType tab, FilterState filters, PaginationState page, SortState sort)`
+  → the `aggs` node, covering all three shapes above.
+- Shape 2's `top_hits` `_source` is the **enumerated** `study.assets.<type>.*` leaf list for the
+  requested tab (contract §B.5a) — never `["study.*"]`, never a wildcard.
+- No parameter of any shape is caller-settable beyond the four listed: no `min_doc_count`, no
+  aggregation type, no `background_filter`, no field target.
+- Unit test: each of the eleven asset tabs produces an `aggs` node equivalent to what
+  `duos-ui/develop` sends today, so the migration is behavior-preserving.
+- Unit test: a caller-supplied `min_doc_count`, `significant_terms`, or arbitrary field target cannot
+  reach the built aggregation by any input to `build(...)`.
+- Unit test: the studies tab's `composite` paging returns the same page boundaries as the current
+  client-built query.
+
+**Implementation notes**:
+- Nine of eleven tabs share shape 2, so the duos-ui side of this concentrates in `definition.ts` and
+  `useLibraryData.ts` rather than spreading across all eleven asset files.
+- This is the first increment of deferred plan item 4.2 (server-owned search API taking business
+  parameters) — see contract §F.1a and OPEN-11. Building it here is not throwaway scaffolding; the
+  remaining increment is the `query` clause.
+- Ship behind the same `securityMode` switch as the rest of Epic E, but note the dependency direction:
+  D-3 needs this too (contract §1.1), so it cannot be fallback-gated permanently.
+
+**Dependencies**: C-1, B-3 *(for the §B.5a leaf enumeration)*.
+**Blocks**: E-1, D-3.
+**Size**: L
 
 ---
 
@@ -1361,23 +1539,86 @@ directly to `ElasticSearchService.searchDatasets` with no sanitization. A client
 `_source` overrides, `script_fields`, `explain`, or `profile` to extract information about
 documents it should not see.
 
+> **Revised by contract §F.1 and §B.5b.** The original criteria stripped *top-level* keys and
+> preserved `aggs`/`sort`/`highlight` wholesale. Both halves are unsafe: the client's own
+> `STUDIES_AGG` carries a nested `_source` wildcard inside `aggs.*.top_hits` that a root-level
+> `remove()` does not touch, and a preserved `aggs`/`sort`/`highlight` can target a
+> RESPONSE-INTERNAL path.
+>
+> `aggs` is now **stripped rather than validated** — see the new **E-0**, which rebuilds the three
+> aggregation shapes the product actually uses on the server. Contract §F.1 explains why validating
+> caller aggregations is not a defensible position: the field allowlist cannot close count-and-
+> existence leaks that ride on legitimately queryable fields, which leaves a three-item denylist of
+> aggregation shapes doing the security work.
+>
+> This ticket is also **no longer fallback-only** — contract §1.1 makes query mediation a prerequisite
+> of the native path too, so Epic D depends on it.
+
 **Acceptance criteria**:
 - `SearchQueryMediator.sanitize(String clientDsl)` → `String`:
-  - Removes top-level keys: `_source`, `docvalue_fields`, `script_fields`, `stored_fields`,
-    `explain`, `profile`, `seq_no_primary_term`, `version`.
-  - Preserves: `query`, `aggs`/`aggregations`, `sort`, `size`, `from`, `search_after`, `pit`,
-    `highlight`.
+  - Removes these keys **at every depth**, not only at the root: `aggs`, `aggregations`, `_source`,
+    `docvalue_fields`, `script`, `script_fields`, `stored_fields`, `explain`, `profile`,
+    `seq_no_primary_term`, `version`, `runtime_mappings`, `collapse`, `inner_hits`, `rescore`,
+    `suggest`, `indices_boost`.
+  - **`fields` is removed conditionally, not at every depth** — see the correction below. It is a
+    response channel at request level and inside `top_hits`/`inner_hits`, but the clause's own field
+    list inside `multi_match`, `query_string`, `simple_query_string`, `combined_fields` and
+    `highlight`. Strip it in the first role; keep and validate it in the second.
+  - Structurally permits `query`, `sort`, `size`, `from`, `search_after`, `pit`, `highlight` — but
+    every **field reference** inside them is validated (below), not passed through unexamined.
+  - Aggregations are **not** validated and forwarded; they are stripped here and rebuilt by E-0 from
+    a closed server-owned vocabulary (contract §F.1).
   - Result is valid JSON.
-- Unit test: sanitized DSL contains none of the stripped keys.
-- Unit test: DSL with only `query` and `size` is returned unchanged.
+- `SearchQueryMediator.validateFieldReferences(String dsl, Set<String> queryableFields)`:
+  - Collects every field reference at every depth from the surfaces that remain caller-controlled:
+    query clause targets, `sort` keys, `highlight.fields` keys, and the `fields` entries of the
+    `multi_match` family.
+  - **Rejects** (does not silently drop) a request referencing a path outside the QUERYABLE
+    allowlist — dropping a `filter` clause broadens the query and dropping a `sort` changes paging.
+  - Normalizes before matching: resolves `.keyword` suffixes and strips `field^boost`. **Refuses
+    wildcards** rather than expanding them — with the server owning `aggs` and `_source`, no
+    legitimate caller reference contains one.
+  - **Resolving `.keyword` here obliges D-3's grant to serve the subfield.** Accepting
+    `datasetName.keyword` because it normalizes to an allowlisted `datasetName` is only sound if the
+    FLS grant actually contains `datasetName.keyword`, and by default it does not (contract §B.5c).
+    The two must change together or sorting silently returns the wrong page.
+  - **No aggregation-shape validation.** Contract §F.1 rejects that approach: a denylist of
+    `min_doc_count: 0` / `significant_terms` / `significant_text` fails open on the next aggregation
+    type, and a field allowlist cannot close count-and-existence leaks that ride on legitimately
+    QUERYABLE fields. Aggregations are stripped and rebuilt server-side by **E-0** instead.
+- Unit test: sanitized DSL contains none of the stripped keys **including inside a nested
+  `aggs.*.top_hits`** — use the real `STUDIES_AGG` shape as the fixture.
+- Unit test: a caller-supplied `aggs` block is removed entirely, whatever it contains.
+- Unit test: a `sort` on `study.throughBioId` is rejected.
+- Unit test: DSL with only an allowlisted `query` and `size` is returned unchanged.
+- Unit test: `{"term": {"createUserId": 42}}` is **accepted** — it is RESPONSE-INTERNAL but
+  QUERYABLE, and "My Data Submissions" depends on it (contract §B.0a).
+- Unit test: `{"multi_match": {"query": "x", "fields": ["datasetName", "study.studyName^2"]}}` is
+  **accepted with its `fields` intact**, and `{"multi_match": {"query": "x", "fields": ["*"]}}` is
+  **rejected**. The first fails if `fields` is stripped unconditionally; the second only passes if it
+  was not, because there is nothing left to reject once it has been removed.
+- Unit test: `{"highlight": {"fields": {"datasetName": {}}}}` survives sanitization with its `fields`
+  intact, and the same shape naming `study.throughBioId` is rejected.
 
 **Implementation notes**:
-- Parse using Jackson `ObjectNode`: `((ObjectNode) root).remove(List.of("_source", "explain",
-  ...))` — clean and avoids manual JSON manipulation.
-- Keep sanitization separate from auth filter injection (E-2) for independent testability.
+- A single recursive `JsonNode` walk, not `((ObjectNode) root).remove(...)`. The original note is
+  the source of the nested-`_source` hole; do not reinstate it.
+- **The walk must carry its parent key**, because the `fields` rule is context-dependent. A strip list
+  that only knows the current key cannot tell `$.fields` from `$.query.multi_match.fields`.
+- **Correction from A-2's proof of concept (finding 4).** The earlier revision of this ticket said to
+  add `fields` to the strip list *and* to strip at every depth. Those two instructions together break
+  the library search box — a stripped `multi_match.fields` silently widens the search to every field
+  in the mapping rather than erroring — and disable every highlighted column. They also delete the
+  `["*"]` reference the validator needs in order to refuse it, so the sanitizer ends up quietly
+  permitting the thing it was added to block. Contract §F.1 rule 1 has the corrected rule.
+- The QUERYABLE allowlist and the RESPONSE-VISIBLE allowlist are **different sets** (contract §B).
+  Keep them as two named constants so a future edit cannot conflate them.
+- Keep sanitization/validation separate from auth filter injection (E-2) for independent testability.
 
-**Dependencies**: C-1.
-**Size**: M
+**Dependencies**: C-1, E-0 *(E-0 owns the aggregations this ticket strips)*.
+**Blocks**: D-3 (contract §1.1), E-2, E-4.
+**Size**: M *(unchanged — E-0 absorbs the aggregation work, so this ticket stays a strip list plus a
+field-reference check; contract §F.3)*
 
 ---
 
@@ -1417,20 +1658,57 @@ alongside a server-built access policy filter derived from `DatasetSearchAuthCon
 **Summary**: Strip every field outside the single SEARCH-VISIBLE allowlist from Elasticsearch
 response documents, for every caller.
 
-**Context**: The fallback path cannot rely on native FLS. The server must remove restricted fields
-from hit `_source` objects before returning the response.
+**Context**: The server must remove restricted fields from response documents before returning them.
+
+> **Revised by contract §F.2 and §B.5b.** Filtering `hits.hits[*]._source` is not sufficient.
+> A `top_hits` sub-aggregation returns whole `_source` documents at
+> `aggregations.**.hits.hits[*]._source`, and that is the **primary** response channel for nine of
+> the data library's eleven tabs — so as originally specified this ticket returned complete,
+> unfiltered `study` objects to every caller. `sort`, `highlight`, and `fields` leak per-hit values
+> the same way.
+>
+> **Revised again by contract §B.5c — this ticket is no longer fallback-only.** It runs on the native
+> path too. OPEN-8 resolved restrictively: a path outside the FLS grant is not queryable, so D-3's
+> grant has to include the three QUERYABLE-but-RESPONSE-INTERNAL paths, and something other than FLS
+> must then keep them out of the response. That something is this filter. The grant governs what the
+> *search* can resolve; this ticket governs what the *caller* receives. **Epic D depends on it.**
 
 **Acceptance criteria**:
-- `ResponseFieldFilter.apply(String responseJson, List<String> searchVisibleFields)` → `String`:
-  - For each hit in `hits.hits[*]._source`, retains only the SEARCH-VISIBLE paths from contract §B
-    and drops everything else, including unrecognized paths.
+- `ResponseFieldFilter.apply(String responseJson, List<String> responseVisibleFields)` → `String`
+  retains only RESPONSE-VISIBLE paths from contract §B, dropping everything else including
+  unrecognized paths, across **every** channel:
+  - `hits.hits[*]._source`
+  - `aggregations.**.hits.hits[*]._source` — `top_hits` at arbitrary nesting depth
+  - `aggregations.**.buckets[*].key` — a `terms` bucket key *is* a field value
+  - `hits.hits[*].highlight` and `hits.hits[*].fields` — **projected**, not dropped: both are keyed by
+    field path, so they can be filtered, and dropping them wholesale would disable highlighting on
+    `datasetName`, which the catalog uses.
+  - `hits.hits[*].sort` — **dropped entirely, not filtered** (contract §F.2, A-2 finding 5). Sort
+    values are a positional array carrying no field names, so no allowlist applies to them. It matters
+    because the two §B axes overlap here: `createUserId` is QUERYABLE and RESPONSE-INTERNAL, E-1
+    therefore accepts it as a sort key, and this channel then echoes its value once per hit. Nothing is
+    lost — no duos-ui caller reads sort values.
+  - `hits.hits[*].inner_hits.**._source`
   - **ADMIN is filtered identically** — no bypass. Admins see every *document* (DLS `match_all`),
     not every *field*; contract §B.7.
 - Unit test: `accessPolicy` is absent from the response for **every** caller, admin included
-  (contract §B.4).
-- Unit test: `data`, `study.data`, and `study.assets` are absent for every caller (contract §B.5).
+  (contract §B.4) — asserted on the `top_hits` channel as well as `hits._source`.
+- Unit test: `data` and `study.data` are absent for every caller (contract §B.5).
+- Unit test: `study.assets.*` **is** present, limited to the enumerated leaves the eleven
+  `AssetDefinition`s declare (contract §B.5a). This is the regression test for the misclassification
+  that would otherwise have emptied nine library tabs.
+- Unit test: `requestLocation`, `deletable`, and `submitter.displayName` are **present** — all three
+  are live UI dependencies (contract §B.0a).
+- Unit test: `createUserId` and `study.dataSubmitterId` are **absent** from the response while
+  remaining accepted in a query (paired with E-1's test).
+- Unit test: a real `STUDIES_AGG`-shaped response has its nested `_source` filtered.
 - Unit test: a path not present in §B — simulating a newly added model field — is dropped rather
-  than passed through.
+  than passed through, in every channel above.
+- Unit test: `hits.hits[*].sort` is absent from the filtered response after a sort on `createUserId`,
+  which E-1 legitimately accepts.
+- Unit test: an aggregation whose **server-built** `top_hits` `_source` names a non-RESPONSE-VISIBLE
+  leaf still has it stripped. This is the OPEN-9 drift case, and it is the only test in this ticket
+  that fails if the `aggregations.**` walk is removed — see the implementation note below.
 
 **Implementation notes**:
 - Walk `hits.hits[*]._source` as `Map<String, Object>` and apply a recursive **allowlist** filter:
@@ -1445,10 +1723,30 @@ from hit `_source` objects before returning the response.
   field would otherwise be handed back to the caller.
 - Bundle definitions must be generated from, or checked against, contract §B — the same source D-3
   builds its FLS grant from. Two hand-maintained lists will diverge, and the divergence will only be
-  visible in whichever environment runs the fallback.
+  visible in whichever environment runs the other path. Note that D-3's grant is a **superset** of this
+  ticket's allowlist (contract §B.5c), so "the same list" is no longer literally true — derive both
+  from §B, but do not assume they are equal.
+- **Recurse structurally, not by known path.** `aggregations` nests arbitrarily and its keys are
+  caller-named. The cleanest form is a single rule — *any object carrying a `_source` is a hit,
+  wherever it occurs* — which covers `top_hits` and `inner_hits` through the same code path as ordinary
+  hits, and needs no list of channels to look in.
+- **Fail closed by retention, not by removal.** Keep a named set of hit-level keys (`_id`, `_score`,
+  `_source`, `highlight`, `fields`) and drop everything else, rather than enumerating channels to
+  remove. That way a response channel added by a future Elasticsearch version is dropped by default —
+  which is what contract §F.2 asks for and is not achievable with a removal list.
+- **What the `aggregations.**` walk is actually for (A-2 finding 6).** Once E-0 makes aggregations
+  server-owned, callers cannot reach that channel, and removing the walk changes no result for any
+  caller-supplied request — this was measured by deleting it and watching the PoC stay green. Keep it
+  anyway: what it defends against is **us**. Contract §B.5a puts the `study.assets.*` leaf enumeration
+  in duos-ui's asset definitions and OPEN-9 warns the backend copy will drift; a drifted copy makes the
+  *server* ask Elasticsearch for an internal leaf, where neither E-1's strip list nor its field
+  validator is involved and the caller has done nothing wrong. This projection is the only control
+  left. The unit test above is that scenario, and it exists so the walk cannot be simplified away as
+  dead weight once E-0 lands.
 
 **Dependencies**: E-2, D-1.
-**Size**: M
+**Blocks**: **D-3** (contract §B.5c).
+**Size**: M → **L.** Multi-channel recursion, plus running on both paths rather than one.
 
 ---
 
@@ -1490,11 +1788,18 @@ mediator and response filter.
   unknown fields are removed; null/missing source fields are not errors.
 - Negative test: client DSL with injected `_source` override does not expose restricted fields
   after full mediation pipeline.
+- Negative test: a `fields` list inside `multi_match` survives sanitization while a root-level `fields`
+  does not (E-1's context-dependent rule — A-2 finding 4).
+- Negative test: `hits.hits[*].sort` is absent from a filtered response (E-3 — A-2 finding 5).
 
 **Implementation notes**:
 - Use `JSONAssert` or Jackson-based assertions for comparing query structure.
 - Test the full pipeline end-to-end: `mediate(...)` → mock response JSON → `apply(...)` →
   assert final field set.
+- **These are the unit-level companions to D-5, not a substitute for it.** The mediator and response
+  filter can both be unit-tested into a state that passes every assertion here and still leaks, because
+  what leaks is a channel nobody thought to assert on. The whole-response scan against a real cluster
+  is the check that catches those; keep both.
 
 **Dependencies**: E-4.
 **Size**: M
@@ -1506,7 +1811,8 @@ mediator and response filter.
 **Goal**: Harden the existing search endpoints to always route through the secured/mediated path,
 and design the long-term server-owned search API.
 
-**Blocked by**: Epic D or E (at least one live).
+**Blocked by**: Epic E live (E-0/E-1/E-3 at minimum), and Epic D additionally where the cluster is
+licensed. Not "either one" — see the A-2 outcome.
 **Blocks**: G.
 
 ---
@@ -1693,7 +1999,7 @@ fully with the server-authoritative search flow.
 **Goal**: Feature flags for safe staged rollout, audit logging for access enforcement events,
 shadow-mode comparison tooling, and documentation updates.
 
-**Blocked by**: D or E live.
+**Blocked by**: E live, and D additionally where licensed.
 **Blocks**: Nothing (runs in parallel with G).
 
 ---
@@ -1792,7 +2098,9 @@ A-1 → A-2 → A-3
                ↓                      ↓
     B-1→B-3→B-4→B-5→B-6         C-1→C-2→C-3
                  ↓                      ↓
-          D-1→D-2→D-3→D-4→D-5  (or  E-1→E-2→E-3→E-4→E-5)
+       E-0→E-1→E-3  (always; +E-2→E-4 where unlicensed)
+                 ↓
+       D-1→D-2→D-3→D-4→D-5  (additionally, where licensed)
                           ↓
                        F-1 → [F-2 → F-3 (deferrable)]
                           ↓
@@ -1800,8 +2108,10 @@ A-1 → A-2 → A-3
 ```
 
 Rough total (native DLS/FLS path): ~14–18 backend-engineer weeks; ~3–4 frontend-engineer weeks;
-~1–2 infra-engineer weeks. Epics E, F-2, and F-3 can be deferred if the cluster unambiguously
-supports DLS/FLS.
+~1–2 infra-engineer weeks. **Epic E can no longer be deferred when the cluster supports DLS/FLS** —
+E-0, E-1 and E-3 are prerequisites of Epic D, not alternatives to it (see the A-2 outcome). What a
+supporting cluster defers is only **E-2** and **E-4**, plus F-2/F-3 as before. The native-path total is
+therefore closer to the combined figure than the original framing implied.
 
 ### Phase 0 — Pre-requisites and Contract
 
@@ -1838,36 +2148,42 @@ supports DLS/FLS.
 
 ### Phase 3A — Native Elasticsearch DLS/FLS Path
 
-*Depends on Phase 0.1 confirming cluster support. Run parallel with 3B during evaluation.*
+*Depends on Phase 0.1 confirming cluster support, **and on 3B.1/3B.3 plus the server-owned aggregation
+vocabulary** — see the A-2 outcome. 3A is a superset of the shared mediation work, not a substitute for
+it, so it can no longer run "parallel with 3B during evaluation": the shared parts land first either
+way.*
 
 | Task | Size | Owner |
 | --- | --- | --- |
 | 3A.1 Extend `ElasticSearchConfiguration` with security-mode flag, impersonation/API-key settings, and the single SEARCH-VISIBLE field allowlist | S | Backend + Infra |
 | 3A.2 Update `ElasticSearchSupport` to support per-request credential construction: either generate API keys with inline role descriptors or set run-as headers from a privileged service account | L | Backend (depends on 2.1, 3A.1) |
-| 3A.3 Build role/query descriptor generator that translates `DatasetSearchAuthContext` into Elasticsearch DLS query (wrapping index's `accessPolicy` fields) and FLS field-grant list | L | Backend (depends on 2.2, 3A.2) |
+| 3A.3 Build role/query descriptor generator that translates `DatasetSearchAuthContext` into Elasticsearch DLS query (wrapping index's `accessPolicy` fields) and FLS field-grant list. **The grant is wider than the response allowlist** — it adds the QUERYABLE-but-internal paths and the `.keyword` subfields of sorted multi-fields, and must be generated from the index mapping rather than from the contract's field tables (contract §B.5c) | L | Backend (depends on 2.2, 3A.2, 3B.0, 3B.1, 3B.3) |
 | 3A.4 Wire per-request credentials into `ElasticSearchService.searchDatasets` and `searchDatasetsStream` so they use the secured client rather than the shared service credential | M | Backend (depends on 3A.3) |
-| 3A.5 Add integration tests against a security-enabled Elasticsearch instance to validate DLS and FLS enforcement: document filtering, field omission, and admin document-bypass — asserting that the admin bypass is document-scoped only and that no caller receives `accessPolicy` or the dynamic maps | L | Backend + QA (depends on 3A.4) |
+| 3A.5 Substitute the real components into the existing end-to-end harness (`ElasticSearchLeakDefensePocTest`) and seed through `indexDataset`; keep the unmediated configurations and the two-path parity assertion, and re-run the mutation exercise against production code | L → M | Backend + QA (depends on 3A.4) |
 
-### Phase 3B — Compatibility Fallback
+### Phase 3B — Query Mediation and Response Shaping
 
-*Parallel with 3A; becomes the primary Phase 3 if cluster cannot support DLS/FLS. Can ship independently.*
+*Formerly "Compatibility Fallback". **3B.0, 3B.1 and 3B.3 are required in every configuration** and
+must land before 3A.3; only 3B.2 and 3B.4 are specific to the unlicensed path. Ships whole where
+DLS/FLS is unavailable.*
 
 | Task | Size | Owner |
 | --- | --- | --- |
-| 3B.1 Build `SearchQueryMediator` that accepts client DSL, strips unsafe response-shaping surfaces (`_source`, `docvalue_fields`, `script_fields`, `explain`, `profile`), and wraps the client query inside a server-built `bool` filter | M | Backend |
+| **3B.0 Build the server-owned aggregation vocabulary**: the three shapes the product actually issues, selected by `(tab, filters, page, size, sort)`, so callers never send `aggs`. Required on both paths — DLS does not isolate `significant_terms`' index-wide background count (contract §F.1) | L | Backend |
+| 3B.1 Build `SearchQueryMediator` that accepts client DSL, strips unsafe response-shaping surfaces at **every depth** (`_source`, `aggs`, `docvalue_fields`, `script_fields`, `explain`, `profile`, `runtime_mappings`, `collapse`, `inner_hits`), validates remaining field references against the QUERYABLE allowlist, and wraps the client query inside a server-built `bool` filter. Note `fields` is stripped as a response channel but **kept and validated** inside `multi_match`/`query_string`/`highlight` | M | Backend (depends on 3B.0) |
 | 3B.2 Add mandatory authorization filter injection to `SearchQueryMediator` using `DatasetSearchAuthContext`: emit a `must` bool clause enforcing publicVisibility / no-study / dataset-creator / study-creator / custodian as terms queries against indexed `accessPolicy` fields. **No DAC or institution clause** — contract rows 9–12 are DEFERred and adding them expands authorization | L | Backend (depends on 2.1, 3B.1) |
-| 3B.3 Add the server-managed field allowlist (contract §B, one bundle for all callers) to search responses; strip internal fields server-side, not in the client, and apply it to admins too | M | Backend (depends on 3B.2) |
+| 3B.3 Add the server-managed field allowlist (contract §B, one bundle for all callers) to **every response channel** — `hits._source`, `aggregations.**` `top_hits`, bucket keys, `highlight`, `fields`, `inner_hits` — dropping the `sort` array outright; strip internal fields server-side, not in the client, and apply it to admins too. **Required on the native path as well** (contract §B.5c) | M → L | Backend (depends on 3B.1) |
 | 3B.4 Wire `SearchQueryMediator` into both `searchDatasets` and `searchDatasetsStream` in `ElasticSearchService` | S | Backend (depends on 3B.2, 3B.3) |
 | 3B.5 Unit-test `SearchQueryMediator` for each enforced dimension, add negative DAC/institution cases, and confirm INTERNAL fields are absent from responses rather than blanked on the client side | M | Backend (depends on 3B.4) |
 
 ### Phase 4 — API Hardening and Long-term Contract
 
-*Depends on 3A or 3B being live.*
+*Depends on 3B being live, and on 3A additionally where the cluster is licensed.*
 
 | Task | Size | Owner |
 | --- | --- | --- |
-| 4.1 Harden existing `/api/dataset/search/index` and `/api/dataset/search/index/v2` in `DatasetResource` to always pass `duosUser` into the mediated/secured search path; remove the current passthrough-to-raw-ES behavior | S | Backend (depends on 3A or 3B) |
-| 4.2 Design server-owned search API that accepts business parameters instead of raw Elasticsearch DSL (filters, pagination, sort, text query) and returns shaped response; scope as v3 endpoint | L | Backend *(deferrable)* |
+| 4.1 Harden existing `/api/dataset/search/index` and `/api/dataset/search/index/v2` in `DatasetResource` to always pass `duosUser` into the mediated/secured search path; remove the current passthrough-to-raw-ES behavior | S | Backend (depends on 3B, and 3A where licensed) |
+| 4.2 Design server-owned search API that accepts business parameters instead of raw Elasticsearch DSL (filters, pagination, sort, text query) and returns shaped response; scope as v3 endpoint. **3B.0 is its first increment** — the `aggs` half is already being built, so this is finishing the `query` half, and doing so retires the mediator, the field validator and the response-channel walker entirely (contract §F.1a, OPEN-11) | L | Backend *(recommend promoting from deferrable)* |
 | 4.3 Update `DatasetResource` to expose the v3 search endpoint and maintain backward compatibility for v1/v2 during migration | M | Backend (depends on 4.2) |
 
 ### Phase 5 — Frontend Alignment
@@ -1892,19 +2208,28 @@ supports DLS/FLS.
 
 ### Critical Path
 
-Phase 0.1 → Phase 0.2/0.3 → Phase 1.1–1.3 / Phase 2.1–2.2 (parallel) → Phase 3A or 3B →
-Phase 4.1 → Phase 5.1 → Phase 6.1–6.3
+Phase 0.1 → Phase 0.2/0.3 → Phase 1.1–1.3 / Phase 2.1–2.2 (parallel) → Phase 3B.0/3B.1/3B.3 →
+Phase 3A (where licensed) → Phase 4.1 → Phase 5.1 → Phase 6.1–6.3
 
 Rough total (native DLS/FLS path): ~14–18 backend-engineer weeks end-to-end across phases;
 ~3–4 frontend-engineer weeks; ~1–2 infra-engineer weeks for cluster security setup and rollout
-support. Phases 3B and 4.2/4.3 can be deferred if the cluster unambiguously supports DLS/FLS.
+support. **Only 3B.2, 3B.4 and 4.3 can be deferred if the cluster unambiguously supports DLS/FLS** —
+3B.0, 3B.1 and 3B.3 cannot, and 4.2 is now recommended rather than deferred. The earlier claim that
+"Phases 3B and 4.2/4.3 can be deferred" was wrong, and it was the estimate most affected by the A-2
+proof of concept.
 
 ### Decisions
 
 - **Recommended target architecture**: native Elasticsearch DLS/FLS now, backed by indexed
   `accessPolicy` metadata and backend-generated per-request Elasticsearch auth context.
-- **Required fallback**: server-owned query mediation and field allowlisting if native cluster
-  capabilities or rollout timing block immediate DLS/FLS adoption.
+- **Required in every configuration**: server-owned aggregations, query mediation, and response-channel
+  field allowlisting. Originally scoped as a fallback for clusters without DLS/FLS; A-2's proof of
+  concept measured Epic D to be insufficient without them, on two independent grounds (contract §1.1,
+  §B.5c). Native DLS/FLS is a component of the enforcement, not the whole of it.
+- **Every Elasticsearch behavior this plan relies on is measured, not cited.**
+  `ElasticSearchLeakDefensePocTest` exercises the design end-to-end against a real cluster, and three
+  of the five behavioral claims the contract originally made turned out to be wrong. Any future claim
+  about what DLS or FLS does should be added to that suite rather than to a document.
 - **Included scope**: `publicVisibility`, creator, and custodian enforcement on the server side;
   explicit inventory and deferral of institution, DAC, principal-allowlist, and policy-tag access;
   streaming endpoint behavior, reindex strategy, testing, and duos-ui alignment. Deferred dimensions
@@ -1913,8 +2238,9 @@ support. Phases 3B and 4.2/4.3 can be deferred if the cluster unambiguously supp
   implementation of arbitrary policy-authoring UX unless policy storage gaps force a minimal
   admin/data-model addition.
 - **Critical assumption**: the target Elasticsearch environment supports the native security
-  features needed for DLS/FLS; if not, the fallback path becomes the first implementation
-  milestone.
+  features needed for DLS/FLS. If not, Epic D is skipped and Epic E ships whole — but E-0/E-1/E-3 are
+  the first implementation milestone either way, so this assumption no longer gates the start of work,
+  only Epic D's inclusion.
 
 ### Further Considerations
 

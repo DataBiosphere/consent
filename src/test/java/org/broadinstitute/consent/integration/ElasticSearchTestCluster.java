@@ -35,6 +35,13 @@ import org.testcontainers.utility.DockerImageName;
  * they assert every capability Epic D depends on, in both license tiers and both security modes. No
  * other test file carries a version.
  *
+ * <p>{@link ElasticSearchLeakDefensePocTest} must be run for a version bump too, and for a
+ * different reason: it does not assert that a capability exists, it pins <em>behaviors</em> of DLS
+ * and FLS that the access contract's reasoning depends on — which aggregations DLS does and does
+ * not isolate, and whether a field outside an FLS grant remains queryable. Those are the assertions
+ * most likely to change silently across versions, and each carries a failure message saying what to
+ * re-derive in {@code docs/plans/es-access-contract.md} if it does.
+ *
  * <p>The role and role-descriptor payloads are deliberately shared between the basic-license and
  * trial-license tests, so the only difference between "rejected" and "permitted" is the license
  * tier, not the request.
