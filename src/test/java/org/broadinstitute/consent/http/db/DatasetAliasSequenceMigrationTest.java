@@ -84,10 +84,26 @@ class DatasetAliasSequenceMigrationTest {
         SQLException.class, () -> execute("UPDATE dataset SET alias = -1 WHERE dataset_id = 1"));
     assertThrows(
         SQLException.class, () -> execute("UPDATE dataset SET alias = 1.5 WHERE dataset_id = 1"));
+    assertThrows(
+        SQLException.class,
+        () -> execute("UPDATE dataset SET alias = 2147483648 WHERE dataset_id = 1"));
+    execute("UPDATE dataset SET alias = 2147483647 WHERE dataset_id = 1");
+    assertEquals(2147483647, queryLong("SELECT alias FROM dataset WHERE dataset_id = 1"));
+  }
+
+  @Test
+  void migrationAllocatesLastIntegerAliasWhenExistingMaximumLeavesRoom() throws Exception {
+    execute("UPDATE dataset SET alias = 2147483646 WHERE dataset_id = 2");
+
+    update();
+
+    assertEquals(2147483647, queryLong("INSERT INTO dataset DEFAULT VALUES RETURNING alias"));
+    assertThrows(
+        SQLException.class, () -> queryLong("INSERT INTO dataset DEFAULT VALUES RETURNING alias"));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"NULL", "-1", "1.5", "42"})
+  @ValueSource(strings = {"NULL", "-1", "1.5", "42", "2147483647"})
   void migrationRejectsUnsafeExistingAliasesBeforeChangingSchema(String unsafeAlias)
       throws Exception {
     execute("INSERT INTO dataset (alias) VALUES (" + unsafeAlias + ")");
@@ -101,7 +117,7 @@ class DatasetAliasSequenceMigrationTest {
     assertFalse(
         queryBoolean(
             "SELECT EXISTS (SELECT 1 FROM pg_constraint "
-                + "WHERE conname = 'dataset_alias_non_negative_integer')"));
+                + "WHERE conname = 'dataset_alias_valid_integer')"));
   }
 
   @Test
@@ -116,7 +132,7 @@ class DatasetAliasSequenceMigrationTest {
     assertFalse(
         queryBoolean(
             "SELECT EXISTS (SELECT 1 FROM pg_constraint "
-                + "WHERE conname = 'dataset_alias_non_negative_integer')"));
+                + "WHERE conname = 'dataset_alias_valid_integer')"));
     assertTrue(
         queryBoolean(
             "SELECT is_nullable = 'YES' FROM information_schema.columns "

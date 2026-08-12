@@ -6,12 +6,15 @@
     <!-- Aliases are public identifiers, so unsafe legacy values must be reconciled explicitly
          rather than silently rewritten by this migration. Alias 0 is a valid legacy identifier. -->
     <preConditions onFail="HALT" onError="HALT"
-                   onFailMessage="Dataset aliases must be non-negative integers, non-null, and unique before migration">
+                   onFailMessage="Dataset aliases must be unique, non-null integers between 0 and 2147483646 before migration">
       <dbms type="postgresql"/>
       <sqlCheck expectedResult="0">
         SELECT
           (SELECT COUNT(*) FROM dataset
-           WHERE alias IS NULL OR alias &lt; 0 OR alias != trunc(alias))
+           WHERE alias IS NULL
+             OR alias &lt; 0
+             OR alias &gt; 2147483646
+             OR alias != trunc(alias))
           +
           (SELECT COUNT(*) FROM (
             SELECT alias FROM dataset GROUP BY alias HAVING COUNT(*) &gt; 1
@@ -56,12 +59,12 @@
                          constraintName="dataset_alias_unique"/>
     <sql>
       ALTER TABLE dataset
-        ADD CONSTRAINT dataset_alias_non_negative_integer
-        CHECK (alias &gt;= 0 AND alias = trunc(alias))
+        ADD CONSTRAINT dataset_alias_valid_integer
+        CHECK (alias &gt;= 0 AND alias &lt;= 2147483647 AND alias = trunc(alias))
     </sql>
 
     <rollback>
-      <sql>ALTER TABLE dataset DROP CONSTRAINT dataset_alias_non_negative_integer</sql>
+      <sql>ALTER TABLE dataset DROP CONSTRAINT dataset_alias_valid_integer</sql>
       <dropUniqueConstraint tableName="dataset" constraintName="dataset_alias_unique"/>
       <dropNotNullConstraint tableName="dataset" columnName="alias" columnDataType="bigint"/>
       <sql>DROP TRIGGER IF EXISTS dataset_alias_allocate ON dataset</sql>
