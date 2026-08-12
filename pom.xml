@@ -33,7 +33,7 @@
          mvn.properties, which is how ElasticSearchCapabilityService reports the client version in a
          deployed build: the shade plugin strips dependency manifests, so the client's own
          Package.getImplementationVersion() is null in the uber jar. -->
-    <elasticsearch.rest.client.version>9.4.4</elasticsearch.rest.client.version>
+    <elasticsearch.rest.client.version>9.5.1</elasticsearch.rest.client.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

@@ -118,7 +118,7 @@ ES_SECURITY_ENABLED=false docker-compose -p consent -f config/docker-compose.yam
 An example docker-compose stanza for elastic:
  ```
  elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
     ports:
       - "9200:9200"
     container_name: elastic

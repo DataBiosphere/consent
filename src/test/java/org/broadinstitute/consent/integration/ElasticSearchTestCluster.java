@@ -52,7 +52,7 @@ final class ElasticSearchTestCluster {
    * The only Elasticsearch version pin in the test tree. Keep in step with the {@code elastic}
    * service in {@code config/docker-compose.yaml}.
    */
-  static final String IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.4.4";
+  static final String IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.5.1";
 
   static final String USER = "elastic";
   static final String PASSWORD = "devpassword";
