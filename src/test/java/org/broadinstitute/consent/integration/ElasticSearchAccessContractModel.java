@@ -615,8 +615,12 @@ final class ElasticSearchAccessContractModel {
         case "query" -> validateQuery(member.getValue(), references);
         case "sort" -> validateSort(member.getValue(), references);
         case "highlight" -> validateHighlight(member.getValue(), references);
-        // from/size/search_after/track_total_hits carry paging and counting values, never a path.
-        default -> {}
+        default -> {
+          // Nothing to collect. The remaining supported members — from/size/search_after/
+          // track_total_hits — carry paging and counting values, never a field path, so there is
+          // no reference for the mapping check to resolve. Membership of
+          // SUPPORTED_REQUEST_MEMBERS above is the whole of their validation.
+        }
       }
     }
   }

@@ -13,6 +13,7 @@ import static org.broadinstitute.consent.integration.ElasticSearchAccessContract
 import static org.broadinstitute.consent.integration.ElasticSearchAccessContractModel.EnforcementMode.NATIVE;
 import static org.broadinstitute.consent.integration.ElasticSearchAccessContractModel.EnforcementMode.NATIVE_UNMEDIATED;
 import static org.broadinstitute.consent.integration.ElasticSearchAccessContractModel.EnforcementMode.UNMEDIATED;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -1269,7 +1270,20 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
   @Test
   void everyEntryInTheAggregationVocabularyIsValid() {
     for (String tab : List.of("datasets", "models")) {
-      ElasticSearchAccessContractModel.serverAggregations(tab);
+      JsonObject aggregations =
+          assertDoesNotThrow(
+              () -> ElasticSearchAccessContractModel.serverAggregations(tab),
+              """
+              A vocabulary entry the product depends on was refused by its own check. Either the \
+              entry has drifted onto a path that is not RESPONSE-VISIBLE, or the check has \
+              tightened past what the tab needs — tab: """
+                  + tab);
+      assertFalse(
+          aggregations.isEmpty(),
+          """
+          The entry passed validation by being empty, which would let a vocabulary that expresses \
+          nothing satisfy this test. Every tab issues at least one aggregation — tab: """
+              + tab);
     }
   }
 
