@@ -153,24 +153,28 @@ public class DACAutomationRuleService implements ConsentLogger {
    * reindexLock}, so a toggle cannot have its request dropped by clearing {@code reindexRunning}.
    */
   private void drainPendingReindexes() {
+    boolean released = false;
     try {
       while (true) {
         synchronized (reindexLock) {
           if (!reindexPending) {
             reindexRunning = false;
+            released = true;
             return;
           }
           reindexPending = false;
         }
         reindexAllDatasets();
       }
-    } catch (Throwable t) {
-      // An Error escaping the inner catch would otherwise leave reindexRunning stuck set
-      synchronized (reindexLock) {
-        reindexRunning = false;
+    } finally {
+      // Reached only when an Error escapes reindexAllDatasets, which catches every Exception. The
+      // guard must still be released; the flag is local because another drain may own it by now.
+      if (!released) {
+        synchronized (reindexLock) {
+          reindexRunning = false;
+        }
+        logWarn("Dataset reindex after DAC rule toggle terminated unexpectedly");
       }
-      logWarn("Dataset reindex after DAC rule toggle terminated unexpectedly", t);
-      throw t;
     }
   }
 
