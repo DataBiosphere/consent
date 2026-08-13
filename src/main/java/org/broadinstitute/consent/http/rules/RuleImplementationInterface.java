@@ -12,6 +12,33 @@ public interface RuleImplementationInterface {
 
   boolean compare(Dataset dataset, DataAccessRequest dataAccessRequest);
 
+  /**
+   * Whether the dataset's own data use qualifies it for automatic approval under this rule,
+   * independent of any request. {@link #compare} layers the request-side conditions on top, and
+   * dataset indexing applies this half alone. Rules that never auto-approve return false.
+   */
+  default boolean datasetQualifies(Dataset dataset) {
+    return false;
+  }
+
+  /** Reached during indexing for datasets that may carry no data use, so absence is a non-match. */
+  default boolean datasetIsUnmodifiedGeneralUse(Dataset dataset) {
+    DataUse dataUse = dataset.getDataUse();
+    return dataUse != null
+        && Boolean.TRUE.equals(dataUse.getGeneralUse())
+        && hasNoModifiers(dataUse);
+  }
+
+  /**
+   * @see #datasetIsUnmodifiedGeneralUse
+   */
+  default boolean datasetIsUnmodifiedHmbResearch(Dataset dataset) {
+    DataUse dataUse = dataset.getDataUse();
+    return dataUse != null
+        && Boolean.TRUE.equals(dataUse.getHmbResearch())
+        && hasNoModifiers(dataUse);
+  }
+
   default boolean hasNoModifiers(DataUse data) {
     if (Boolean.TRUE.equals(data.getCollaboratorRequired())) {
       return false;

@@ -29,11 +29,13 @@ import java.util.stream.Collectors;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.SoApprovalModel;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -41,6 +43,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.models.elastic_search.DacTerm;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
@@ -50,6 +53,9 @@ import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
+import org.broadinstitute.consent.http.rules.Rules;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -62,6 +68,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DacDAO dacDAO;
+  private final DACAutomationRuleDAO dacAutomationRuleDAO;
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
@@ -81,6 +88,7 @@ public class ElasticSearchService implements ConsentLogger {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.dacAutomationRuleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
     this.userDAO = jdbi.onDemand(UserDAO.class);
     this.ontologyService = ontologyService;
     this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
@@ -404,8 +412,14 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public Response indexDatasetList(List<Dataset> datasets) throws IOException {
+    // Resolved once for the whole batch rather than per dataset
+    Map<Integer, Set<DACAutomationRuleType>> enabledRulesByDacId =
+        resolveEnabledRulesByDacId().orElse(null);
     List<DatasetTerm> datasetTerms =
-        datasets.parallelStream().filter(Objects::nonNull).map(this::toDatasetTerm).toList();
+        datasets.parallelStream()
+            .filter(Objects::nonNull)
+            .map(dataset -> toDatasetTerm(dataset, enabledRulesByDacId))
+            .toList();
     if (datasetTerms.isEmpty()) {
       return Response.status(Status.NOT_FOUND).build();
     }
@@ -433,7 +447,49 @@ public class ElasticSearchService implements ConsentLogger {
     };
   }
 
-  public DatasetTerm toDatasetTerm(Dataset dataset) {
+  /**
+   * The automation rules each DAC currently has enabled, keyed by DAC id. {@code Optional.empty()}
+   * means they could not be resolved at all, unlike an empty map, which means no DAC has any rule
+   * enabled. Indexing continues either way, but unresolved rules are not reported as dataset state.
+   */
+  Optional<Map<Integer, Set<DACAutomationRuleType>>> resolveEnabledRulesByDacId() {
+    try {
+      List<DACRuleAssignment> assignments =
+          Objects.requireNonNullElse(dacAutomationRuleDAO.findEnabledRuleAssignments(), List.of());
+      return Optional.of(
+          assignments.stream()
+              .collect(
+                  Collectors.groupingBy(
+                      DACRuleAssignment::dacId,
+                      Collectors.mapping(
+                          DACRuleAssignment::ruleType, Collectors.toUnmodifiableSet()))));
+    } catch (Exception e) {
+      logWarn("Unable to resolve enabled DAC automation rules", e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Whether the dataset's DAC has an enabled rule that would automatically approve a matching
+   * request for it. Only the dataset half of each rule applies; the request half is unknowable at
+   * indexing time. Mirrors {@code DACAutomationRuleService.applyRule}, shape gate first.
+   */
+  private boolean isInstantApprovalEligible(Dataset dataset, Set<DACAutomationRuleType> dacRules) {
+    if (!DataUsePrimaryClassifier.hasCanonicalSinglePrimary(dataset.getDataUse())) {
+      return false;
+    }
+    return Rules.implementationList.stream()
+        .filter(rule -> dacRules.contains(rule.getRuleType()))
+        .anyMatch(rule -> rule.datasetQualifies(dataset));
+  }
+
+  /**
+   * @param enabledRulesByDacId resolved DAC rules, or {@code null} when they could not be resolved
+   *     — the rule-derived fields are then left unset so clients render nothing rather than being
+   *     told the wrong approval process
+   */
+  DatasetTerm toDatasetTerm(
+      Dataset dataset, Map<Integer, Set<DACAutomationRuleType>> enabledRulesByDacId) {
     if (Objects.isNull(dataset)) {
       return null;
     }
@@ -471,6 +527,22 @@ public class ElasticSearchService implements ConsentLogger {
               }
               term.setDac(toDacTerm(dac));
             });
+
+    // A dataset with no DAC has no per-request approval step to satisfy and no DAC rule that could
+    // auto-approve it, which holds whether or not the rules resolved; only datasets whose state
+    // depends on the unresolved rules are left unset
+    if (Objects.isNull(dataset.getDacId())) {
+      term.setSoApprovalModel(SoApprovalModel.PRE_AUTHORIZED);
+      term.setInstantApprovalEligible(false);
+    } else if (Objects.nonNull(enabledRulesByDacId)) {
+      Set<DACAutomationRuleType> dacRules =
+          enabledRulesByDacId.getOrDefault(dataset.getDacId(), Set.of());
+      term.setSoApprovalModel(
+          dacRules.contains(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL)
+              ? SoApprovalModel.PER_REQUEST
+              : SoApprovalModel.PRE_AUTHORIZED);
+      term.setInstantApprovalEligible(isInstantApprovalEligible(dataset, dacRules));
+    }
 
     if (Objects.nonNull(dataset.getDataUse())) {
       DataUseSummary summary = ontologyService.translateDataUseSummary(dataset.getDataUse());

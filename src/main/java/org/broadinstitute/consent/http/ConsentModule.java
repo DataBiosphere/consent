@@ -682,8 +682,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Provides
   @Singleton
   private DACAutomationRuleService providesRuleService(
-      Jdbi jdbi, VoteServiceDAO voteServiceDAO, VoteService voteService) {
-    return new DACAutomationRuleService(jdbi, voteServiceDAO, voteService);
+      Jdbi jdbi,
+      VoteServiceDAO voteServiceDAO,
+      VoteService voteService,
+      ElasticSearchService elasticSearchService,
+      ExecutorService executorService) {
+    return new DACAutomationRuleService(
+        jdbi, voteServiceDAO, voteService, elasticSearchService, executorService);
   }
 
   @Provides

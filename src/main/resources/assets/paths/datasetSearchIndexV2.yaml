@@ -79,6 +79,8 @@ post:
                               - code: NCU
                           dacId: 2
                           dacApproval: true
+                          soApprovalModel: PER_REQUEST
+                          instantApprovalEligible: false
                           approvedUserIds: [1,2,3]
                           submitter:
                             userId: 10

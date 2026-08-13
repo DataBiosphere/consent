@@ -24,6 +24,25 @@ properties:
   dacId:
     type: integer
     description: The unique identifier for a DAC
+  soApprovalModel:
+    type: string
+    enum:
+      - PER_REQUEST
+      - PRE_AUTHORIZED
+    description: >-
+      Which Signing Official authorization model the dataset's DAC uses. PER_REQUEST means the
+      SO named in each access request must approve that request before the DAC reviews it;
+      PRE_AUTHORIZED means the SO authorizes researchers in advance. Absent when the model
+      could not be resolved at indexing time, or on documents indexed before this field
+      existed; clients should treat an absent value as unknown rather than assuming a model.
+  instantApprovalEligible:
+    type: boolean
+    description: >-
+      Whether the dataset's DAC has an automation rule enabled that would automatically approve a
+      matching access request for it. Only the dataset half of each rule is evaluated here, so a
+      true value means the dataset qualifies, not that any given request will be approved. Absent
+      when the DAC's rules could not be resolved at indexing time, or on documents indexed before
+      this field existed; clients should treat an absent value as unknown rather than as false.
   study:
     type: object
     title: DatasetSearchStudy

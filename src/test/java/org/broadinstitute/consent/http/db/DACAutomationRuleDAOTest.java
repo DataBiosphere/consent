@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Assertions;
@@ -27,6 +28,79 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertFalse(rules.isEmpty());
     assertTrue(
         rules.stream().anyMatch(rule -> rule.ruleType().equals(DACAutomationRuleType.GRU_V1)));
+  }
+
+  private DACAutomationRule findRule(DACAutomationRuleType ruleType) {
+    return dacAutomationRuleDAO.findAll().stream()
+        .filter(r -> r.ruleType().equals(ruleType))
+        .findFirst()
+        .orElseThrow();
+  }
+
+  @Test
+  void testFindEnabledRuleAssignments() {
+    User user = createUser();
+    Integer enabledDacId = createRandomDAC();
+    Integer untouchedDacId = createRandomDAC();
+    DACAutomationRule soRule = findRule(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
+        enabledDacId, soRule.id(), user.getUserId(), Instant.now());
+
+    List<DACRuleAssignment> assignments = dacAutomationRuleDAO.findEnabledRuleAssignments();
+
+    assertTrue(
+        assignments.contains(
+            new DACRuleAssignment(enabledDacId, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL)));
+    Assertions.assertFalse(
+        assignments.stream().anyMatch(a -> Objects.equals(a.dacId(), untouchedDacId)));
+  }
+
+  @Test
+  void testFindEnabledRuleAssignmentsReportsTheRuleThatIsEnabled() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    DACAutomationRule gruRule = findRule(DACAutomationRuleType.GRU_V1);
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
+        dacId, gruRule.id(), user.getUserId(), Instant.now());
+
+    List<DACRuleAssignment> assignments = dacAutomationRuleDAO.findEnabledRuleAssignments();
+
+    // Enabling one rule must not report the DAC as having any other rule enabled
+    assertEquals(
+        List.of(DACAutomationRuleType.GRU_V1),
+        assignments.stream()
+            .filter(a -> Objects.equals(a.dacId(), dacId))
+            .map(DACRuleAssignment::ruleType)
+            .toList());
+  }
+
+  @Test
+  void testFindEnabledRuleAssignmentsIgnoresIncompleteSettingsRows() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    DACAutomationRule gruRule = findRule(DACAutomationRuleType.GRU_V1);
+    // dac_id and user_id are both nullable. A row naming no user is what
+    // findAllDACAutomationRulesByDACId reports as disabled, and a null dac_id has no pairing to key
+    jdbi.useHandle(
+        handle -> {
+          handle
+              .createUpdate(
+                  "INSERT INTO dac_rule_settings (dac_id, rule_id, user_id) VALUES (:dacId, :ruleId, NULL)")
+              .bind("dacId", dacId)
+              .bind("ruleId", gruRule.id())
+              .execute();
+          handle
+              .createUpdate(
+                  "INSERT INTO dac_rule_settings (dac_id, rule_id, user_id) VALUES (NULL, :ruleId, :userId)")
+              .bind("ruleId", gruRule.id())
+              .bind("userId", user.getUserId())
+              .execute();
+        });
+
+    List<DACRuleAssignment> assignments = dacAutomationRuleDAO.findEnabledRuleAssignments();
+
+    Assertions.assertFalse(assignments.stream().anyMatch(a -> Objects.equals(a.dacId(), dacId)));
+    Assertions.assertTrue(assignments.stream().allMatch(a -> Objects.nonNull(a.dacId())));
   }
 
   @Test

@@ -4,8 +4,10 @@ import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleMapper;
+import org.broadinstitute.consent.http.db.mapper.DACRuleAssignmentMapper;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -154,6 +156,26 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       ORDER BY rules.id ASC
       """)
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
+
+  /**
+   * Every enabled DAC-to-rule pairing, in one pass. Keyed by DAC rather than by dataset — unlike
+   * {@code DatasetDAO.filterDatasetIdsByAutomationRuleType} — so indexing the whole corpus does not
+   * need an unbounded IN list.
+   *
+   * <p>Both columns are nullable, so both are checked: a settings row naming no user is what
+   * findAllDACAutomationRulesByDACId reports as disabled, and a null dac_id has no pairing to key.
+   */
+  @RegisterRowMapper(DACRuleAssignmentMapper.class)
+  @SqlQuery(
+      """
+      SELECT DISTINCT settings.dac_id, rules.rule
+      FROM dac_rule_settings settings
+      INNER JOIN dac_automation_rules rules ON rules.id = settings.rule_id
+      WHERE rules.state = 'AVAILABLE'
+        AND settings.dac_id IS NOT NULL
+        AND settings.user_id IS NOT NULL
+      """)
+  List<DACRuleAssignment> findEnabledRuleAssignments();
 
   @RegisterRowMapper(DACAutomationRuleAuditMapper.class)
   @SqlQuery(

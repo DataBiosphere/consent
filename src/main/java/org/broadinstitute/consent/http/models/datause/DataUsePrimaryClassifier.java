@@ -9,6 +9,21 @@ public final class DataUsePrimaryClassifier {
 
   private DataUsePrimaryClassifier() {}
 
+  /**
+   * Whether a Data Use has the single-primary shape DAC automation supports. {@code Shape.SINGLE}
+   * also covers an Other-only primary category, which is non-canonical and excluded here to match
+   * the abstention policy in {@code DataUseMatcherV5}. Shared by the approval engine and dataset
+   * indexing, which both gate on it before consulting a rule.
+   */
+  public static boolean hasCanonicalSinglePrimary(DataUse dataUse) {
+    if (dataUse == null) {
+      return false;
+    }
+    DataUsePrimaryClassification classification = classify(dataUse);
+    return classification.shape() == DataUsePrimaryClassification.Shape.SINGLE
+        && !classification.categories().contains(DataUsePrimaryCategory.OTHER);
+  }
+
   public static DataUsePrimaryClassification classify(DataUse dataUse) {
     return classify(
         dataUse.getGeneralUse(),

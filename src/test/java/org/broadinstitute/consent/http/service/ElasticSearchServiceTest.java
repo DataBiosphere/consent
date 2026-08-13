@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
+import static org.broadinstitute.consent.http.rules.DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,12 +51,14 @@ import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.SoApprovalModel;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -71,6 +74,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -102,6 +107,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Mock private DacDAO dacDAO;
 
+  @Mock private DACAutomationRuleDAO dacAutomationRuleDAO;
+
   @Mock private UserDAO userDao;
 
   @Mock private InstitutionDAO institutionDAO;
@@ -117,6 +124,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @BeforeEach
   void initService() {
     when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(dacAutomationRuleDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDao);
     when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
@@ -229,6 +237,11 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataUseSummary.setPrimary(List.of(new DataUseTerm("DS", "Description")));
     dataUseSummary.setPrimary(List.of(new DataUseTerm("NMDS", "Description")));
     return dataUseSummary;
+  }
+
+  /** Mirrors indexDatasetList: rules resolved once, then applied to the dataset. */
+  private DatasetTerm toDatasetTerm(Dataset dataset) {
+    return service.toDatasetTerm(dataset, service.resolveEnabledRulesByDacId().orElse(null));
   }
 
   /** Private container record to consolidate dataset and associated object creation */
@@ -376,7 +389,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         .thenReturn(datasetRecord.updateUser.getInstitution());
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.createUser.getUserId(), term.getCreateUserId());
     assertEquals(datasetRecord.createUser.getDisplayName(), term.getCreateUserDisplayName());
     assertEquals(datasetRecord.createUser.getUserId(), term.getSubmitter().userId());
@@ -404,7 +417,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         .thenReturn(datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
     assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
     assertEquals(datasetRecord.study.getStudyId(), term.getStudy().getStudyId());
@@ -481,7 +494,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         .thenReturn(datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
     switch (propKey) {
       case assets:
         assertEquals(refMap, term.getStudy().getAssets());
@@ -511,7 +524,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     card2.setUserId(dar2.getUserId());
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDatasetId(), term.getDatasetId());
     assertEquals(datasetRecord.dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
@@ -569,13 +582,237 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     datasetProperties.add(newProperty);
     dataset.setProperties(datasetProperties);
 
-    DatasetTerm term = service.toDatasetTerm(dataset);
+    DatasetTerm term = toDatasetTerm(dataset);
     Optional<DatasetProperty> dataProp =
         dataset.getProperties().stream()
             .filter(p -> p.getSchemaProperty().equals(data))
             .findFirst();
     assertTrue(dataProp.isPresent());
     assertEquals(refMap, term.getData());
+  }
+
+  /** A data use that clears hasNoModifiers, so only the primary code decides which rules match. */
+  private DataUse unmodifiedDataUse() {
+    DataUse dataUse = new DataUse();
+    dataUse.setDiseaseRestrictions(List.of());
+    return dataUse;
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelPerRequest() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, REQUIRE_SO_DAR_APPROVAL)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PER_REQUEST, term.getSoApprovalModel());
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelPreAuthorized() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(99, REQUIRE_SO_DAR_APPROVAL)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+  }
+
+  @Test
+  void testToDatasetTermSoApprovalModelWithNoDac() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermRuleDerivedFieldsUnsetWhenRuleLookupFails() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenThrow(new RuntimeException("db down"));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    // Indexing continues, but unresolved rules must not be reported as dataset state
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertNull(term.getSoApprovalModel());
+    assertNull(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermTreatsNullRuleLookupAsNoRulesEnabled() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments()).thenReturn(null);
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertEquals(SoApprovalModel.PRE_AUTHORIZED, term.getSoApprovalModel());
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalEligibleForMatchingRule() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertTrue(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleWhenRuleCoversOtherCode() {
+    // The DAC auto-approves GRU, but this dataset is HMB
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setHmbResearch(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleWhenDataUseCarriesModifier() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    dataUse.setEthicsApprovalRequired(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  /**
+   * The indexed document is duos-ui's only source for these two fields, and it reads them by the
+   * exact names and values asserted here (DT-3799). Serialized through the same GsonUtil the bulk
+   * indexer uses, so a rename on either side fails this rather than silently blanking the Data
+   * Library's SO Approval column and instant-approval badge.
+   */
+  @Test
+  void testIndexedDocumentCarriesTheRuleDerivedFieldsClientsRead() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(
+            List.of(
+                new DACRuleAssignment(7, REQUIRE_SO_DAR_APPROVAL),
+                new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    String json = GsonUtil.getInstance().toJson(toDatasetTerm(dataset));
+
+    assertTrue(json.contains("\"soApprovalModel\":\"PER_REQUEST\""), json);
+    assertTrue(json.contains("\"instantApprovalEligible\":true"), json);
+  }
+
+  @Test
+  void testIndexedDocumentOmitsRuleDerivedFieldsWhenUnresolved() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenThrow(new RuntimeException("db down"));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    String json = GsonUtil.getInstance().toJson(toDatasetTerm(dataset));
+
+    // Absent rather than false/null, so clients can tell "not eligible" from "not yet known"
+    assertFalse(json.contains("soApprovalModel"), json);
+    assertFalse(json.contains("instantApprovalEligible"), json);
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleForMultiplePrimaryDataUse() {
+    // Two primary categories is not a shape automation acts on, so the engine abstains before
+    // consulting any rule — the indexed flag has to abstain with it
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    dataUse.setHmbResearch(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleForNonApprovingRule() {
+    // REQUIRE_SO_DAR_APPROVAL never auto-approves, so it cannot make a dataset eligible
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, REQUIRE_SO_DAR_APPROVAL)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    DataUse dataUse = unmodifiedDataUse();
+    dataUse.setGeneralUse(true);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+    dataset.setDataUse(dataUse);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
+  }
+
+  @Test
+  void testToDatasetTermInstantApprovalIneligibleWithoutDataUse() {
+    when(dacAutomationRuleDAO.findEnabledRuleAssignments())
+        .thenReturn(List.of(new DACRuleAssignment(7, DACAutomationRuleType.GRU_V1)));
+    when(dacDAO.findById(7)).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(7);
+
+    DatasetTerm term = toDatasetTerm(dataset);
+
+    assertFalse(term.getInstantApprovalEligible());
   }
 
   @Test
@@ -588,7 +825,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     property.setPropertyValue("open");
     dataset.setProperties(Set.of(property));
 
-    DatasetTerm term = service.toDatasetTerm(dataset);
+    DatasetTerm term = toDatasetTerm(dataset);
 
     assertEquals("open", term.getAccessManagement());
   }
@@ -599,7 +836,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(userDao.findUserById(datasetRecord.createUser.getUserId()))
         .thenReturn(datasetRecord.createUser);
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
     assertEquals(datasetRecord.dac.getDacId(), term.getDacId());
@@ -613,7 +850,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(userDao.findUserById(datasetRecord.createUser.getUserId()))
         .thenReturn(datasetRecord.createUser);
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
     assertEquals(
         datasetRecord.dataset.getNihInstitutionalCertificationFile() != null,
         term.getHasInstitutionCertification());
@@ -626,7 +863,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(userDao.findUserById(datasetRecord.createUser.getUserId()))
         .thenReturn(datasetRecord.createUser);
     datasetRecord.dataset.setNihInstitutionalCertificationFile(null);
-    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    DatasetTerm term = toDatasetTerm(datasetRecord.dataset);
     assertNull(term.getHasInstitutionCertification());
   }
 
@@ -652,7 +889,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(userDao.findUserById(datasetRecord.createUser.getUserId()))
         .thenReturn(datasetRecord.createUser);
-    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+    assertDoesNotThrow(() -> toDatasetTerm(dataset));
   }
 
   @Test
@@ -663,7 +900,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
 
-    DatasetTerm term = service.toDatasetTerm(dataset);
+    DatasetTerm term = toDatasetTerm(dataset);
 
     assertEquals(dataset.getDatasetId(), term.getDatasetId());
     assertEquals(dataset.getDatasetIdentifier(), term.getDatasetIdentifier());
@@ -681,7 +918,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataset.setStudy(study);
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
 
-    DatasetTerm term = service.toDatasetTerm(dataset);
+    DatasetTerm term = toDatasetTerm(dataset);
 
     Optional<DatasetProperty> requestLocationProp =
         dataset.getProperties().stream()
@@ -702,7 +939,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataset.setProperties(Set.of(createDatasetProperty("url", PropertyType.String, "url")));
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
 
-    DatasetTerm term = service.toDatasetTerm(dataset);
+    DatasetTerm term = toDatasetTerm(dataset);
 
     assertNull(term.getRequestLocation());
   }
@@ -710,7 +947,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Test
   void testToDatasetTermNullDatasetProps() {
     Dataset dataset = new Dataset();
-    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+    assertDoesNotThrow(() -> toDatasetTerm(dataset));
   }
 
   @Test
@@ -721,7 +958,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     study.setDescription(randomAlphabetic(20));
     study.setStudyId(randomInt(1, 100));
     dataset.setStudy(study);
-    assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
+    assertDoesNotThrow(() -> toDatasetTerm(dataset));
   }
 
   @Captor ArgumentCaptor<Request> request;

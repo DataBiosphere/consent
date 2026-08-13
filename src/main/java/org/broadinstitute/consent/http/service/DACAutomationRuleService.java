@@ -4,12 +4,17 @@ import static java.util.Objects.isNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -23,12 +28,9 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.datause.DataUsePrimaryCategory;
-import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassification.Shape;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
@@ -52,10 +54,26 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final VoteDAO voteDAO;
   private final VoteService voteService;
   private final VoteServiceDAO voteServiceDAO;
+  private final ElasticSearchService elasticSearchService;
+  private final ExecutorService executorService;
+
+  /** Guards the queue and the running flag; see {@link #reindexDatasetsForRuleChange}. */
+  private final Object reindexLock = new Object();
+
+  /** DACs awaiting a reindex, in toggle order. A Set so a DAC queued twice is reindexed once. */
+  private final Set<Integer> pendingDacIds = new LinkedHashSet<>();
+
+  private boolean reindexRunning = false;
 
   @Inject
   public DACAutomationRuleService(
-      Jdbi jdbi, VoteServiceDAO voteServiceDAO, VoteService voteService) {
+      Jdbi jdbi,
+      VoteServiceDAO voteServiceDAO,
+      VoteService voteService,
+      ElasticSearchService elasticSearchService,
+      ExecutorService executorService) {
+    this.elasticSearchService = elasticSearchService;
+    this.executorService = executorService;
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
@@ -89,24 +107,111 @@ public class DACAutomationRuleService implements ConsentLogger {
   public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user)
       throws ConsentConflictException, UnprocessableEntityException {
     List<DACAutomationRule> dacRules = ruleDAO.findAllDACAutomationRulesByDACId(dacId);
-    Optional<DACAutomationRule> matchingRule =
+    DACAutomationRule ruleBeingToggled =
         dacRules.stream()
-            .filter(r -> Objects.equals(r.id(), ruleId) && !isNull(r.enabledByUserId()))
-            .findFirst();
-    if (matchingRule.isPresent()) {
+            .filter(r -> Objects.equals(r.id(), ruleId))
+            .findFirst()
+            .orElseThrow(() -> new UnprocessableEntityException("Rule ID not found."));
+    if (!isNull(ruleBeingToggled.enabledByUserId())) {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
+      reindexDatasetsForRuleChange(dacId);
       return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
-    } else {
-      Optional<DACAutomationRule> optionalRuleBeingUpdated =
-          dacRules.stream().filter(r -> Objects.equals(r.id(), ruleId)).findFirst();
-      if (optionalRuleBeingUpdated.isEmpty()) {
-        throw new UnprocessableEntityException("Rule ID not found.");
-      }
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
+    reindexDatasetsForRuleChange(dacId);
     return new AutomationRuleToggleResponse(
         ruleId, true, insertTime.toEpochMilli(), user.getDisplayName(), user.getEmail());
+  }
+
+  /**
+   * Indexed datasets carry state derived from their DAC's automation rules, so a toggle leaves that
+   * DAC's documents stale. Only they are reindexed — most of the corpus is external entries with no
+   * DAC, which no rule change can affect. It runs off the request thread so toggle latency does not
+   * track DAC size.
+   *
+   * <p>Queued FIFO, so DACs are reindexed in the order they were toggled. A DAC already queued is
+   * not queued twice: the pending pass has not started and will read the newest state when it does.
+   */
+  private void reindexDatasetsForRuleChange(Integer dacId) {
+    synchronized (reindexLock) {
+      pendingDacIds.add(dacId);
+      if (reindexRunning) {
+        return;
+      }
+      reindexRunning = true;
+    }
+    try {
+      executorService.submit(this::drainPendingReindexes);
+    } catch (RuntimeException e) {
+      // Released so a rejected submission does not leave every later toggle queueing behind a drain
+      // that never runs. The queue keeps its entries, so the next toggle picks this one up.
+      synchronized (reindexLock) {
+        reindexRunning = false;
+      }
+      logException("Unable to schedule dataset reindex after DAC rule toggle", e);
+    }
+  }
+
+  /**
+   * Reindexes queued DACs until the queue is empty. The queue and {@code reindexRunning} are read
+   * and written under {@code reindexLock}, so a toggle cannot have its DAC dropped by clearing it.
+   */
+  private void drainPendingReindexes() {
+    boolean released = false;
+    try {
+      while (true) {
+        Integer dacId;
+        synchronized (reindexLock) {
+          Iterator<Integer> queued = pendingDacIds.iterator();
+          if (!queued.hasNext()) {
+            reindexRunning = false;
+            released = true;
+            return;
+          }
+          dacId = queued.next();
+          queued.remove();
+        }
+        reindexDatasetsForDac(dacId);
+      }
+    } finally {
+      // Reached only when an Error escapes reindexDatasetsForDac, which catches every Exception.
+      // The guard must still be released; the flag is local because another drain may own it by
+      // now.
+      if (!released) {
+        synchronized (reindexLock) {
+          reindexRunning = false;
+        }
+        logWarn("Dataset reindex after DAC rule toggle terminated unexpectedly");
+      }
+    }
+  }
+
+  /**
+   * Failures are logged rather than raised: the toggle that triggered this is already committed and
+   * audited, so nothing here may fail it, and the next reindex corrects the documents either way.
+   */
+  private void reindexDatasetsForDac(Integer dacId) {
+    try {
+      // Covers datasets carrying the DAC as a property as well as those assigned to it directly
+      List<Integer> datasetIds =
+          datasetDAO.findDatasetsAssociatedWithDac(dacId).stream()
+              .map(Dataset::getDatasetId)
+              .distinct()
+              .toList();
+      if (datasetIds.isEmpty()) {
+        return;
+      }
+      try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
+        if (response.getStatus() >= 400) {
+          logWarn(
+              "Error reindexing datasets for DAC %d after rule toggle: status %d"
+                  .formatted(dacId, response.getStatus()));
+        }
+      }
+    } catch (Exception e) {
+      logException("Unable to reindex datasets for DAC %d after rule toggle".formatted(dacId), e);
+    }
   }
 
   public Integer removeChairpersonFromDAC(Integer dacId, Integer userId, Integer auditUserId) {
@@ -163,7 +268,7 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
-    if (dataset.getDataUse() == null || !hasCanonicalSinglePrimaryDataUse(dataset.getDataUse())) {
+    if (!DataUsePrimaryClassifier.hasCanonicalSinglePrimary(dataset.getDataUse())) {
       logInfo(
           String.format(
               "Rule %s not triggered for DAC id: %s and dataset id: %s because the dataset does not have a canonical single primary Data Use",
@@ -188,17 +293,6 @@ public class DACAutomationRuleService implements ConsentLogger {
               darContainsBannedCountry));
     }
     return Optional.empty();
-  }
-
-  /**
-   * DAC automation only supports canonical single-primary Data Use shapes. {@code Shape.SINGLE}
-   * also covers an Other-only primary category, which is non-canonical and must be excluded here to
-   * match the abstention policy in {@code DataUseMatcherV5}.
-   */
-  private boolean hasCanonicalSinglePrimaryDataUse(DataUse dataUse) {
-    var classification = DataUsePrimaryClassifier.classify(dataUse);
-    return classification.shape() == Shape.SINGLE
-        && !classification.categories().contains(DataUsePrimaryCategory.OTHER);
   }
 
   @VisibleForTesting

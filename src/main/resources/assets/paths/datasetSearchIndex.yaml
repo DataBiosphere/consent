@@ -67,6 +67,8 @@ post:
                         description: Local ethics committee approval is required.
                   dataLocation: Not Determined
                   dacId: 3
+                  soApprovalModel: PRE_AUTHORIZED
+                  instantApprovalEligible: false
                   accessManagement: controlled
                   study:
                     description: Test study details
