@@ -483,20 +483,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setData(data);
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
-    Election election = createMockElection();
-    election.setReferenceId(dar.getReferenceId());
-    election.setStatus(ElectionStatus.OPEN.getValue());
-    election.setElectionId(1);
-    when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
-    when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
-        .thenReturn(collection);
-
-    service.cancelDarCollectionByRole(new User(), collection, UserRoles.ADMIN);
-    verify(electionDAO).findOpenElectionsByReferenceIds(anyList());
-    verify(electionDAO).updateElectionById(anyInt(), anyString(), any());
-    verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
-    verify(darCollectionDAO, atLeastOnce())
-        .findDARCollectionByCollectionId(collection.getDarCollectionId());
+    User user = new User();
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.ADMIN));
+    verifyNoInteractions(electionDAO);
+    verifyNoInteractions(dataAccessRequestDAO);
   }
 
   @Test
@@ -603,6 +595,17 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(any());
     verify(emailService).sendMessage(any(NewCaseMessage.class), any());
     verify(darCollectionDAO).findDARCollectionByCollectionId(any());
+  }
+
+  @Test
+  void testCreateElectionsForDarCollectionAsAdminIsForbidden() {
+    User user = new User();
+    user.setAdminRole();
+    DarCollection collection = new DarCollection();
+
+    assertThrows(
+        ForbiddenException.class, () -> service.createElectionsForDarCollection(user, collection));
+    verifyNoInteractions(darCollectionServiceDAO);
   }
 
   @Test
@@ -1132,14 +1135,15 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setUserId(1);
     DarCollectionSummary summary = new DarCollectionSummary();
     summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addAction(DarCollectionActions.OPEN);
+    summary.addAction(DarCollectionActions.CANCEL);
     when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(List.of(summary));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.ADMIN);
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    // With no elections, there should be an Open action
-    assertFalse(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
+    assertTrue(summaries.getFirst().getActions().isEmpty());
   }
 
   @Test
@@ -1491,12 +1495,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.ADMIN);
 
     DarCollectionSummary testOne = summaries.getFirst();
-    Set<String> expectedOneActions = Set.of(DarCollectionActions.CANCEL.getValue());
+    Set<String> expectedOneActions = Set.of();
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedOneActions, testOne.getActions());
 
     DarCollectionSummary testTwo = summaries.get(1);
-    Set<String> expectedTwoActions = Set.of(DarCollectionActions.CANCEL.getValue());
+    Set<String> expectedTwoActions = Set.of();
     assertTrue(testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedTwoActions, testTwo.getActions());
 
@@ -1911,7 +1915,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         service.getSummaryForRoleByCollectionId(user, UserRoles.ADMIN, collectionId);
     assertNotNull(summaryResult);
 
-    Set<String> expectedActions = Set.of(DarCollectionActions.CANCEL.getValue());
+    Set<String> expectedActions = Set.of();
     assertTrue(
         summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedActions, summaryResult.getActions());

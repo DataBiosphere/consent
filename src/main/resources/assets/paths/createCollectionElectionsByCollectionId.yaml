@@ -1,7 +1,7 @@
 post:
   summary: Create Elections for Collection By ID
   operationId: apiCollectionsCollectionIdElectionPost
-  description: Returns created Elections for Dars in Collection
+  description: Creates elections for the DARs in a collection. Only a DAC Chairperson is authorized.
   tags:
     - DAR Collection
     - Election
@@ -22,7 +22,9 @@ post:
     400:
       description: Bad Request.  Check error details
     401:
-      description: Not authorized to perform this action.
+      description: Authentication required.
+    403:
+      description: Forbidden. The authenticated user is not a DAC Chairperson.
     404:
       description: Not Found
     409:

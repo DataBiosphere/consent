@@ -6,9 +6,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Date;
@@ -429,17 +431,10 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testCancelDarCollection_asAdmin() {
-    DarCollection collection = mockDarCollection();
-    collection.setCreateUserId(admin.getUserId());
-    int collectionId = collection.getDarCollectionId();
-    when(darCollectionService.getByCollectionId(admin, collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionByRole(admin, collection, UserRoles.ADMIN))
-        .thenReturn(collection);
-
     try (var response =
         resource.cancelDarCollectionByCollectionId(
-            duosAdmin, request, collectionId, Resource.ADMIN)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+            duosAdmin, request, randomInt(1, 100), Resource.ADMIN)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 
@@ -461,11 +456,25 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCancelDarCollection_asChairWithoutRoleName() {
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUserId(chairperson.getUserId());
+    int collectionId = collection.getDarCollectionId();
+    when(darCollectionService.getByCollectionId(chairperson, collectionId)).thenReturn(collection);
+    when(darCollectionService.cancelDarCollectionByRole(
+            chairperson, collection, UserRoles.CHAIRPERSON))
+        .thenReturn(collection);
+
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(duosChairperson, request, collectionId, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
   void testCancelDarCollection_asChairAsAdmin() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(chairperson.getUserId());
-    when(darCollectionService.getByCollectionId(chairperson, collection.getDarCollectionId()))
-        .thenReturn(collection);
 
     try (var response =
         resource.cancelDarCollectionByCollectionId(
@@ -495,8 +504,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testCancelDarCollection_asResearcherAsAdmin() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getUserId());
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
-        .thenReturn(collection);
 
     try (var response =
         resource.cancelDarCollectionByCollectionId(
@@ -566,13 +573,55 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForCollection() {
-    DarCollection collection = mock(DarCollection.class);
-    when(darCollectionService.getByCollectionId(researcher, 1)).thenReturn(collection);
-
+  void testCreateElectionsForCollectionAsResearcherIsForbidden() {
     try (var response = resource.createElectionsForCollection(duosResearcher, 1, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateElectionsForCollectionAsAdminIsForbidden() {
+    try (var response = resource.createElectionsForCollection(duosAdmin, 1, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateElectionsForCollectionAsChairperson() throws Exception {
+    DarCollection collection = mock(DarCollection.class);
+    when(darCollectionService.getByCollectionId(chairperson, 1)).thenReturn(collection);
+    when(darCollectionService.createElectionsForDarCollection(chairperson, collection))
+        .thenReturn(collection);
+
+    try (var response = resource.createElectionsForCollection(duosChairperson, 1, request)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  @Test
+  void testElectionEndpointRoles() throws NoSuchMethodException {
+    RolesAllowed roles =
+        DarCollectionResource.class
+            .getDeclaredMethod(
+                "createElectionsForCollection", DuosUser.class, Integer.class, Request.class)
+            .getAnnotation(RolesAllowed.class);
+
+    assertEquals(Set.of(Resource.CHAIRPERSON), Set.of(roles.value()));
+  }
+
+  @Test
+  void testCancelEndpointRoles() throws NoSuchMethodException {
+    RolesAllowed roles =
+        DarCollectionResource.class
+            .getDeclaredMethod(
+                "cancelDarCollectionByCollectionId",
+                DuosUser.class,
+                Request.class,
+                Integer.class,
+                String.class)
+            .getAnnotation(RolesAllowed.class);
+
+    assertEquals(Set.of(Resource.CHAIRPERSON, Resource.RESEARCHER), Set.of(roles.value()));
   }
 
   @Test

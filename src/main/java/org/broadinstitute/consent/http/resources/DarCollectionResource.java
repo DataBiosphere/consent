@@ -8,6 +8,7 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -193,7 +194,7 @@ public class DarCollectionResource extends Resource {
   @PUT
   @Path("{id}/cancel")
   @Produces("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
+  @RolesAllowed({CHAIRPERSON, RESEARCHER})
   public Response cancelDarCollectionByCollectionId(
       @Auth DuosUser duosUser,
       @Context Request request,
@@ -201,15 +202,21 @@ public class DarCollectionResource extends Resource {
       @QueryParam("roleName") String roleName) {
     try {
       User user = duosUser.getUser();
-      DarCollection collection = darCollectionService.getByCollectionId(user, collectionId);
-      isCollectionPresent(collection);
-
-      // Default to the least impactful role if none provided.
-      UserRoles actingRole = UserRoles.RESEARCHER;
-      if (roleName != null) {
-        actingRole = validateUserHasRoleName(user, roleName);
+      // Default to the least impactful role the user has if none is provided.
+      String actingRoleName = roleName;
+      if (actingRoleName == null) {
+        actingRoleName =
+            user.hasUserRole(UserRoles.RESEARCHER)
+                ? UserRoles.RESEARCHER.getRoleName()
+                : UserRoles.CHAIRPERSON.getRoleName();
+      }
+      UserRoles actingRole = validateUserHasRoleName(user, actingRoleName);
+      if (actingRole != UserRoles.CHAIRPERSON && actingRole != UserRoles.RESEARCHER) {
+        throw new ForbiddenException("Only chairpersons and researchers can cancel a collection");
       }
 
+      DarCollection collection = darCollectionService.getByCollectionId(user, collectionId);
+      isCollectionPresent(collection);
       DarCollection cancelledCollection =
           darCollectionService.cancelDarCollectionByRole(user, collection, actingRole);
       ComplianceLogger.logDARCancellation(
@@ -253,6 +260,9 @@ public class DarCollectionResource extends Resource {
       @Context Request request) {
     try {
       User user = duosUser.getUser();
+      if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
+        throw new ForbiddenException("Only chairpersons can create elections");
+      }
       DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       DarCollection updatedCollection =
