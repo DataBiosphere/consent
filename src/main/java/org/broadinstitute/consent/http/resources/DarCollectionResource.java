@@ -41,7 +41,6 @@ public class DarCollectionResource extends Resource {
       "Only chairpersons and researchers can cancel a collection";
   private static final String CHAIR_ROLE_REQUIRED_ERROR =
       "roleName=" + CHAIRPERSON + " is required to cancel the elections for a collection";
-  private static final String CREATE_ELECTION_ROLE_ERROR = "Only chairpersons can create elections";
 
   private final DarCollectionService darCollectionService;
 
@@ -270,9 +269,6 @@ public class DarCollectionResource extends Resource {
       @Context Request request) {
     try {
       User user = duosUser.getUser();
-      if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
-        throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
-      }
       DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       DarCollection updatedCollection =

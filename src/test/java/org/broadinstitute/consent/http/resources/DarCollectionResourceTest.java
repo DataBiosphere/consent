@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Request;
@@ -577,14 +578,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForCollectionAsResearcherIsForbidden() {
-    try (var response = resource.createElectionsForCollection(duosResearcher, 1, request)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
-    }
-  }
+  void testCreateElectionsForCollectionIsForbidden() throws Exception {
+    DarCollection collection = mock(DarCollection.class);
+    when(darCollectionService.getByCollectionId(admin, 1)).thenReturn(collection);
+    when(darCollectionService.createElectionsForDarCollection(admin, collection))
+        .thenThrow(new ForbiddenException());
 
-  @Test
-  void testCreateElectionsForCollectionAsAdminIsForbidden() {
     try (var response = resource.createElectionsForCollection(duosAdmin, 1, request)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
