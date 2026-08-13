@@ -65,8 +65,36 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
         rendered.document().body().html(),
         containsString(urlStringPattern.formatted(serverUrl, record2.id(), record2.name())));
 
-    // Assert display-formatted access types from template
-    assertThat(rendered.document().body().html(), containsString("Controlled, External"));
-    assertThat(rendered.document().body().html(), containsString("Open"));
+    // Assert display-formatted access types from template, rendered as one badge per type
+    assertEquals(
+        List.of("Controlled", "External", "Open"),
+        rendered.document().select(".access-type-badge").eachText());
+
+    // Assert the summary count line is present and pluralized for multiple studies
+    assertEquals(
+        "2 new studies were registered today.",
+        getElementTextById(rendered.document(), "newStudyCount"));
+
+    // Assert dataset counts are bare numbers, right-aligned under the column heading
+    var datasetCounts = rendered.document().select(".dataset-count");
+    assertEquals(List.of("1", "2"), datasetCounts.eachText());
+    datasetCounts.forEach(
+        cell -> assertThat(cell.attr("style"), containsString("text-align: right")));
+  }
+
+  @Test
+  void testNewStudyDigestMessage_SingleStudyCountIsSingular() throws Exception {
+    List<StudyDatasetCountRecord> newStudies =
+        List.of(new StudyDatasetCountRecord("My only new study", 3, "open", 1));
+    User user = new User();
+    user.setDisplayName("Test User");
+    var message = new NewStudyDigestMessage(user, newStudies, "My reference id");
+
+    var rendered = renderTemplate(message, "http://localhost:8080/");
+
+    assertEquals(
+        "1 new study was registered today.",
+        getElementTextById(rendered.document(), "newStudyCount"));
+    assertEquals(List.of("1"), rendered.document().select(".dataset-count").eachText());
   }
 }
