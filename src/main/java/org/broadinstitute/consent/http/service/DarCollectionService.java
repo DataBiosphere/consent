@@ -774,6 +774,35 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
+   * Validate that the user can create elections for the collection and return the DAR they will be
+   * created for.
+   *
+   * @param user The User initiating new elections
+   * @param collection The DarCollection
+   * @return The most recent DAR in the collection
+   */
+  private DataAccessRequest validateElectionCreation(User user, DarCollection collection) {
+    if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
+      throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
+    }
+    DataAccessRequest dar = collection.getMostRecentDar();
+    if (Objects.isNull(dar)) {
+      throw new BadRequestException(
+          "DAR Collection ID: [%s] does not have any associated DAR ids"
+              .formatted(collection.getDarCollectionId()));
+    }
+    List<Integer> darDatasetIds = dar.getDatasetIds();
+    if (!darDatasetIds.isEmpty()) {
+      Set<Integer> governedDatasetIds =
+          Set.copyOf(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
+      if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
+        throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
+      }
+    }
+    return dar;
+  }
+
+  /**
    * DarCollections with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Elections in open, closed, pending, or final states are not
    * valid.
@@ -784,18 +813,7 @@ public class DarCollectionService implements ConsentLogger {
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
-    if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
-    }
-    DataAccessRequest dar = collection.getMostRecentDar();
-    List<Integer> darDatasetIds = dar.getDatasetIds();
-    if (!darDatasetIds.isEmpty()) {
-      Set<Integer> governedDatasetIds =
-          Set.copyOf(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
-      if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
-        throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
-      }
-    }
+    DataAccessRequest dar = validateElectionCreation(user, collection);
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =

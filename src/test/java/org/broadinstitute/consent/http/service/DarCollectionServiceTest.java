@@ -598,6 +598,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateElectionsForDarCollectionWithoutDarsIsBadRequest() {
+    User user = new User();
+    user.setUserId(1);
+    user.setChairpersonRole();
+    DarCollection collection = createMockCollections().getFirst();
+
+    assertThrows(
+        BadRequestException.class, () -> service.createElectionsForDarCollection(user, collection));
+    verifyNoInteractions(darCollectionServiceDAO);
+  }
+
+  @Test
   void testCreateElectionsForDarCollectionAsChairOfAnotherDacIsForbidden() {
     User user = new User();
     user.setUserId(1);
