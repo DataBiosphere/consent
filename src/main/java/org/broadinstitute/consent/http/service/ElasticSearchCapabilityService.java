@@ -1605,11 +1605,22 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    * it is being used to make a decision.
    */
   private String clientVersion() {
-    String packageVersion = RestClient.class.getPackage().getImplementationVersion();
+    String packageVersion = restClientPackageVersion();
     if (packageVersion != null) {
       return packageVersion;
     }
     return buildProperty(REST_CLIENT_VERSION_PROPERTY);
+  }
+
+  /**
+   * The version the loaded {@code elasticsearch-rest-client} jar records in its own manifest, or
+   * null where that manifest did not survive the build. A seam rather than an inline call because a
+   * test JVM always runs against the unshaded jar, so the manifest is always present there and the
+   * fallback every deployed environment actually takes could not otherwise be exercised.
+   */
+  @VisibleForTesting
+  String restClientPackageVersion() {
+    return RestClient.class.getPackage().getImplementationVersion();
   }
 
   /**
@@ -1620,7 +1631,7 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
    */
   @VisibleForTesting
   String buildProperty(String name) {
-    try (InputStream is = getClass().getResourceAsStream(BUILD_PROPERTIES_RESOURCE)) {
+    try (InputStream is = buildProperties()) {
       if (is == null) {
         return null;
       }
@@ -1634,6 +1645,17 @@ public class ElasticSearchCapabilityService implements ConsentLogger {
               .formatted(name, BUILD_PROPERTIES_RESOURCE, e.getMessage()));
       return null;
     }
+  }
+
+  /**
+   * Opens {@code mvn.properties}, returning null where the classpath does not carry it. A seam for
+   * the same reason as {@link #restClientPackageVersion()}: the file is always present on a test
+   * classpath, so the absent and unreadable cases — the ones whose whole job is to keep an
+   * unreadable build property from failing an otherwise measured report — need one to be reached.
+   */
+  @VisibleForTesting
+  InputStream buildProperties() {
+    return getClass().getResourceAsStream(BUILD_PROPERTIES_RESOURCE);
   }
 
   private String recommendation(

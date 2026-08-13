@@ -10,10 +10,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpVersion;
 import org.apache.http.entity.ContentType;
@@ -113,6 +117,54 @@ class ElasticSearchCapabilityServiceTest {
   /** For the checks that never reach the cluster, so the client stub would go unused. */
   private ElasticSearchCapabilityService serviceWithoutClientStubs() {
     return new ElasticSearchCapabilityService(esClient, config, this::apiKeyClient);
+  }
+
+  /**
+   * A service whose two client-version sources are under the test's control.
+   *
+   * <p>Both are seams on the service for the same reason: a test JVM runs against the unshaded rest
+   * client jar and always has {@code mvn.properties} on its classpath, so the fallbacks a deployed
+   * jar actually depends on — where the shade plugin has stripped the manifest — cannot be reached
+   * here any other way.
+   *
+   * @param packageVersion what the jar manifest reports; null is a shaded deployment
+   * @param properties the mvn.properties stream, or null to read the real one off the classpath
+   */
+  private ElasticSearchCapabilityService versionService(
+      String packageVersion, Supplier<InputStream> properties) {
+    return new ElasticSearchCapabilityService(esClient, config, this::apiKeyClient) {
+      @Override
+      String restClientPackageVersion() {
+        return packageVersion;
+      }
+
+      @Override
+      InputStream buildProperties() {
+        return properties == null ? super.buildProperties() : properties.get();
+      }
+    };
+  }
+
+  /** A shaded deployment: no manifest version, so the build property is the only source left. */
+  private ElasticSearchCapabilityService serviceWithoutPackageVersion() throws IOException {
+    stubClient(esClient, this::keyFor);
+    return versionService(null, null);
+  }
+
+  /** A deployment where neither version source survived the build. */
+  private ElasticSearchCapabilityService serviceWithoutVersionSources() throws IOException {
+    stubClient(esClient, this::keyFor);
+    return versionService(null, () -> null);
+  }
+
+  /** For the build-property reads themselves, which never reach the cluster. */
+  private ElasticSearchCapabilityService serviceWithBuildProperties(
+      Supplier<InputStream> properties) {
+    return versionService(null, properties);
+  }
+
+  private static InputStream propertiesStream(String content) {
+    return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
   }
 
   /**
@@ -1688,6 +1740,77 @@ class ElasticSearchCapabilityServiceTest {
   @Test
   void testUnknownBuildPropertyIsReportedAsAbsentRatherThanThrowing() {
     assertNull(serviceWithoutClientStubs().buildProperty("no.such.property"));
+  }
+
+  /**
+   * The path every deployed environment actually takes. The shade plugin strips the rest client
+   * jar's manifest, so {@code getImplementationVersion()} is null there and the pom property is the
+   * only source left — the case a test JVM, which always runs against the unshaded jar, never
+   * reaches on its own.
+   */
+  @Test
+  void testShadedDeploymentFallsBackToTheBuildProperty() throws IOException {
+    String buildVersion = serviceWithoutClientStubs().buildProperty(REST_CLIENT_VERSION_PROPERTY);
+    stubSecurityDisabledCluster();
+    stub(
+        ROOT,
+        200,
+        """
+        {"cluster_name":"duos-cluster","version":{"number":"%s.0.0","build_flavor":"default"}}"""
+            .formatted(buildVersion.split("\\.")[0]));
+
+    ElasticSearchCapabilityReport report =
+        serviceWithoutPackageVersion().getCapabilityReport(null, false);
+
+    assertTrue(report.restClientCompatibility().startsWith("Compatible:"));
+    assertTrue(
+        report.restClientCompatibility().contains(buildVersion),
+        "expected the build property to name the client version, got: "
+            + report.restClientCompatibility());
+  }
+
+  /**
+   * Neither version source available. The report has to say the version is unknown rather than
+   * treat the absence as a skew or a match: the other verdicts here were measured against the live
+   * cluster, and one unreadable build property is not a reason to distrust them.
+   */
+  @Test
+  void testNoReadableVersionSourceLeavesCompatibilityUndetermined() throws IOException {
+    stubSecurityDisabledCluster();
+
+    ElasticSearchCapabilityReport report =
+        serviceWithoutVersionSources().getCapabilityReport(null, false);
+
+    assertTrue(report.restClientCompatibility().contains("Could not determine"));
+    assertNotNull(report.version(), "the cluster version was still read from the cluster");
+  }
+
+  /** An unreadable properties file costs the report one field rather than throwing out of it. */
+  @Test
+  void testUnreadableBuildPropertiesIsReportedAsAbsentRatherThanThrowing() {
+    ElasticSearchCapabilityService service =
+        serviceWithBuildProperties(
+            () ->
+                new InputStream() {
+                  @Override
+                  public int read() throws IOException {
+                    throw new IOException("simulated read failure");
+                  }
+                });
+
+    assertNull(service.buildProperty(REST_CLIENT_VERSION_PROPERTY));
+  }
+
+  /**
+   * A property present but empty is the same as one absent. Returning the blank would put an empty
+   * client version into the compatibility line, which reads as a version rather than as a gap.
+   */
+  @Test
+  void testBlankBuildPropertyValueIsTreatedAsAbsent() {
+    ElasticSearchCapabilityService service =
+        serviceWithBuildProperties(() -> propertiesStream(REST_CLIENT_VERSION_PROPERTY + "=   "));
+
+    assertNull(service.buildProperty(REST_CLIENT_VERSION_PROPERTY));
   }
 
   @Test
