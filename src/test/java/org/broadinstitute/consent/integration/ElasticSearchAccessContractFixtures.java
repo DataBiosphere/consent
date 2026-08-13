@@ -267,6 +267,54 @@ final class ElasticSearchAccessContractFixtures {
       """;
 
   // ---------------------------------------------------------------------------------------------
+  // A second index, for the two mapping constructs §B does not constrain
+  // ---------------------------------------------------------------------------------------------
+
+  /**
+   * Index for the mapping-hazard measurement. Separate from {@link #INDEX} on purpose: the point is
+   * what a <em>mapping</em> can do to an FLS grant, so the mapping has to be the variable.
+   */
+  static final String MAPPING_HAZARD_INDEX = "dataset-leak-defense-poc-mapping-hazards";
+
+  /**
+   * A mapping carrying the two constructs §B's field tables cannot express, both of which make a
+   * non-granted field reachable under a granted name.
+   *
+   * <ul>
+   *   <li>{@code copy_to} — {@code internalSecret}'s content is copied into {@code publicNote}'s
+   *       index at index time. Granting {@code publicNote} therefore grants the ability to
+   *       <em>search</em> {@code internalSecret}'s values, whatever the grant says about the field
+   *       itself. Elastic's rule is that a user "cannot perform operations that effectively make
+   *       contents accessible under another name"; a {@code copy_to} does exactly that, at index
+   *       time, before any role is consulted.
+   *   <li>{@code alias} — a second name for a concrete field. Elastic states plainly that "field
+   *       level security should not be set on alias fields. To secure a concrete field, its field
+   *       name must be used directly."
+   * </ul>
+   *
+   * <p>Neither is hypothetical for DUOS: {@code copy_to} is the standard way to build an all-in-one
+   * search field, which is exactly what a "search everything" box invites, and an alias is the
+   * standard way to rename a field without reindexing.
+   */
+  static final String MAPPING_HAZARD_MAPPING =
+      """
+      {"mappings":{"properties":{
+        "datasetIdentifier":{"type":"keyword"},
+        "publicNote":{"type":"text"},
+        "internalSecret":{"type":"keyword","copy_to":"publicNote"},
+        "internalSecretAlias":{"type":"alias","path":"internalSecret"}}}}
+      """;
+
+  static final String MAPPING_HAZARD_DOCUMENT =
+      """
+      {"datasetIdentifier":"DUOS-90001","publicNote":"an ordinary description",
+       "internalSecret":"INTERNAL-COPIED-VALUE"}
+      """;
+
+  /** The grant a §B-derived {@code FlsGrantBuilder} would produce for the mapping above. */
+  static final Set<String> MAPPING_HAZARD_GRANT = Set.of("datasetIdentifier", "publicNote");
+
+  // ---------------------------------------------------------------------------------------------
   // Documents — one per §A row that carries a distinct rule
   // ---------------------------------------------------------------------------------------------
 

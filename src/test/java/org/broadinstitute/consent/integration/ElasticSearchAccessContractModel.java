@@ -302,39 +302,142 @@ final class ElasticSearchAccessContractModel {
    *
    * <p>E-1's revised criteria say both "add {@code fields} to the strip list" and "strip at every
    * depth". Taken together those two instructions are wrong, and wrong in the quiet direction:
-   * {@code fields} is a response channel at request level, but inside {@code multi_match}, {@code
-   * query_string} and {@code highlight} it is the clause's own field list — which the product uses
-   * on every library search and every highlighted column. Stripping it there does not fail loudly.
-   * It silently widens the search to every field in the mapping, silently disables highlighting,
-   * and removes the very reference the §F.1 validator needs in order to refuse {@code "fields":
-   * ["*"]}.
+   * {@code fields} is a response channel at request level, but inside {@code multi_match} and
+   * {@code highlight} it is the clause's own field list — which the product uses on every library
+   * search and every highlighted column. Stripping it there does not fail loudly. It silently
+   * widens the search to every field in the mapping, silently disables highlighting, and removes
+   * the very reference the §F.1 validator needs in order to refuse {@code "fields": ["*"]}.
    *
    * <p>So the rule has to be context-aware as well as depth-aware: strip {@code fields} where it is
    * a response channel, keep it where it names query targets, and validate it there.
+   *
+   * <p>E-1's criteria name three more clauses with a legitimate {@code fields} member — {@code
+   * query_string}, {@code simple_query_string} and {@code combined_fields}. They are absent here
+   * because {@link #SUPPORTED_QUERY_CLAUSES} refuses all three outright, so their {@code fields}
+   * member never reaches validation. This set stays a separate list rather than being derived from
+   * that one: stripping runs before shape validation and must be readable without it.
    */
   private static final Set<String> CLAUSES_WITH_A_LEGITIMATE_FIELDS_MEMBER =
-      Set.of("multi_match", "query_string", "simple_query_string", "combined_fields", "highlight");
-
-  /** Query clauses whose member names are field paths. */
-  private static final Set<String> FIELD_KEYED_CLAUSES =
-      Set.of(
-          "term",
-          "terms",
-          "terms_set",
-          "match",
-          "match_phrase",
-          "match_phrase_prefix",
-          "match_bool_prefix",
-          "prefix",
-          "wildcard",
-          "regexp",
-          "fuzzy",
-          "range",
-          "span_term",
-          "distance_feature");
+      Set.of("multi_match", "highlight");
 
   /** Sort keys that name a scoring pseudo-field rather than a document field. */
   private static final Set<String> SORT_PSEUDO_FIELDS = Set.of("_score", "_doc", "_id", "_shard");
+
+  // --- §F.1 rule 0 — the closed shape allowlist ------------------------------------------------
+
+  /**
+   * Request-level members the mediator understands. Everything else is refused.
+   *
+   * <p>This is the correction the PoC's finding 5 forces, and it is a change of principle rather
+   * than an addition to a list. §F.1 rule 2 says to validate "the remaining field references",
+   * which presumes every field reference can be found — true only for the shapes somebody
+   * enumerated. The DSL has several where it is false: {@code query_string} hides its references in
+   * query <em>text</em>, {@code knn} carries a {@code field} at request level, {@code pit} replaces
+   * the target index outright, and a {@code terms} lookup reads its values out of another document
+   * entirely. A reference collector that walks known positions returns nothing for any of them and
+   * reports success.
+   *
+   * <p>So the mediator states what it supports instead of what it forbids, on both axes: this set
+   * at request level, {@link #SUPPORTED_QUERY_CLAUSES} inside {@code query}, and a member allowlist
+   * within each clause. A shape nobody enumerated is refused, which is the same allowlist principle
+   * §B.5 applies to fields and §F.2 applies to response channels, applied to request grammar.
+   *
+   * <p>It also changes what {@link #STRIPPED_AT_EVERY_DEPTH} is for. The two lists overlap
+   * completely at request level — every key on the strip list is outside this set — but they are
+   * not redundant, and the order they run in is the reason. Stripping is the <em>compatibility</em>
+   * layer: it quietly removes the channels the server owns, so a client sending today's {@code
+   * _source} and {@code aggs} keeps working. This set is the <em>security</em> layer: it refuses
+   * whatever the first pass did not account for. Reverse the order and duos-ui's current request
+   * body is rejected on its first call; drop the second layer and the mediator is back to guessing
+   * about shapes nobody enumerated. The strip list also keeps doing work no member allowlist can,
+   * at <em>depth</em>, where §B.5b's nested {@code _source} lives.
+   */
+  private static final Set<String> SUPPORTED_REQUEST_MEMBERS =
+      Set.of("query", "sort", "highlight", "from", "size", "search_after", "track_total_hits");
+
+  /**
+   * Query clauses the mediator supports, and the members each one may carry.
+   *
+   * <p>Chosen from what the product sends, not from what Elasticsearch offers. Three exclusions are
+   * the substance of finding 5 and deserve naming, because each looks harmless next to clauses that
+   * are on the list:
+   *
+   * <ul>
+   *   <li>{@code query_string} — its {@code query} member is a mini-language with fielded terms
+   *       ({@code accessPolicy.custodianEmails:x@example.org}), {@code _exists_}, ranges and
+   *       grouping. Extracting field references from it means implementing a parser for a grammar
+   *       Lucene extends, and rule 3 already refuses wildcards rather than approximate a grammar.
+   *   <li>{@code simple_query_string} and {@code combined_fields} — no fielded syntax, but both
+   *       fall back to {@code index.query.default_field} when {@code fields} is omitted, and that
+   *       defaults to {@code *}. A clause with no field reference at all therefore searches every
+   *       field in the mapping. This is why {@link #validateMultiMatch} requires {@code fields}
+   *       rather than treating its absence as nothing to validate.
+   *   <li>{@code more_like_this} — its {@code like} member takes document <em>ids</em>, so the
+   *       clause reads term vectors out of documents the caller cannot see and searches with them.
+   *       No field reference is involved at all.
+   * </ul>
+   *
+   * <p>Adding a clause here is a security decision, not a convenience one: the question to answer
+   * first is where the clause can name a field, and whether every such position is a member name or
+   * a string in a fixed slot.
+   */
+  private static final Map<String, Set<String>> SUPPORTED_QUERY_CLAUSES =
+      Map.of(
+          "match_all", Set.of("boost"),
+          "match_none", Set.of(),
+          "bool", Set.of("must", "should", "filter", "must_not", "minimum_should_match", "boost"),
+          "exists", Set.of("field"),
+          "multi_match",
+              Set.of(
+                  "query",
+                  "fields",
+                  "type",
+                  "operator",
+                  "minimum_should_match",
+                  "tie_breaker",
+                  "boost"),
+          "term", Set.of("value", "boost"),
+          "terms", Set.of(),
+          "match", Set.of("query", "operator", "fuzziness", "minimum_should_match", "boost"),
+          "match_phrase", Set.of("query", "slop", "boost"),
+          "range", Set.of("gt", "gte", "lt", "lte", "boost", "format"));
+
+  /**
+   * Clauses whose single member name is a field path, keyed to the options that member may carry.
+   */
+  private static final Set<String> FIELD_KEYED_CLAUSES =
+      Set.of("term", "terms", "match", "match_phrase", "range");
+
+  /** {@code bool} members that are themselves queries, as opposed to scalar options. */
+  private static final Set<String> BOOL_QUERY_MEMBERS =
+      Set.of("must", "should", "filter", "must_not");
+
+  /**
+   * Options a {@code sort} entry may carry.
+   *
+   * <p>Deliberately excludes {@code nested}, {@code _script} and {@code _geo_distance}, each of
+   * which embeds a query or a script inside the sort and so carries field references the {@code
+   * sort}-key walk never looks at.
+   */
+  private static final Set<String> SORT_OPTIONS =
+      Set.of("order", "mode", "missing", "unmapped_type", "numeric_type", "format");
+
+  /**
+   * Options {@code highlight} and each of its per-field entries may carry.
+   *
+   * <p>Excludes {@code highlight_query} and {@code matched_fields}, which are the two members that
+   * name fields somewhere other than the {@code highlight.fields} keys §F.1 rule 2 walks.
+   */
+  private static final Set<String> HIGHLIGHT_OPTIONS =
+      Set.of(
+          "pre_tags",
+          "post_tags",
+          "fragment_size",
+          "number_of_fragments",
+          "require_field_match",
+          "no_match_size",
+          "order",
+          "type");
 
   /**
    * Applies the contract's request-side enforcement and returns the body actually sent to
@@ -347,7 +450,12 @@ final class ElasticSearchAccessContractModel {
    *       controls no projection and no aggregation, so §F.1's count-and-existence leaks have no
    *       surface left — closed by construction rather than by detecting leak techniques against a
    *       grammar that grows every release.
-   *   <li><b>Validate</b> every remaining field reference against {@link
+   *   <li><b>Refuse</b> any request member, query clause, clause member or clause value shape
+   *       outside {@link #SUPPORTED_REQUEST_MEMBERS} and {@link #SUPPORTED_QUERY_CLAUSES}. This
+   *       step is what makes the next one meaningful: a field-reference walk can only be trusted
+   *       over shapes whose field positions are known, and several DSL clauses hide references
+   *       where no walk reaches them (finding 5).
+   *   <li><b>Validate</b> every field reference the walk collected against {@link
    *       ElasticSearchAccessContractFixtures#QUERYABLE} and <b>reject</b> on a violation.
    *       Rejecting rather than dropping is required: a dropped {@code filter} broadens the query
    *       and a dropped {@code sort} changes paging, so silently removing an offending clause would
@@ -363,18 +471,46 @@ final class ElasticSearchAccessContractModel {
    *     is the entire caller influence over aggregations that E-0 allows.
    */
   static String mediate(String callerDsl, Caller caller, EnforcementMode mode, String serverTab) {
+    return mediate(callerDsl, caller, mode, serverTab, true);
+  }
+
+  /**
+   * {@link #mediate} with its two request-side validations switched off — the request-shape walk
+   * and the aggregation-vocabulary check — but everything else intact: the strip list still runs,
+   * E-2's filter is still injected, the server still owns the projection and the aggregations, and
+   * E-3 still filters the response.
+   *
+   * <p>This is the "control removed" leg the PoC's teeth assertions need. Two of the leaks measured
+   * here carry no marker and produce a perfectly ordinary-looking response — a query-shape oracle
+   * discloses by hit count and an aggregation bucket key is indistinguishable from a legitimate
+   * facet — so {@code assertNoLeak}'s scan cannot see them, and a test that only asserted "the
+   * fixed configuration is clean" would pass whether or not the validation existed.
+   */
+  static String mediateWithoutRequestValidation(
+      String callerDsl, Caller caller, EnforcementMode mode, String serverTab) {
+    return mediate(callerDsl, caller, mode, serverTab, false);
+  }
+
+  private static String mediate(
+      String callerDsl,
+      Caller caller,
+      EnforcementMode mode,
+      String serverTab,
+      boolean validateRequest) {
     JsonObject root = JsonParser.parseString(callerDsl).getAsJsonObject().deepCopy();
 
     stripAtEveryDepth(root, null);
 
-    Set<String> references = new LinkedHashSet<>();
-    collectFieldReferences(root, null, references);
-    for (String reference : references) {
-      String path = normalizeFieldReference(reference);
-      if (!QUERYABLE.contains(path)) {
-        throw new RejectedQueryException(
-            "query references a field that is not QUERYABLE: '%s' (normalized to '%s')"
-                .formatted(reference, path));
+    if (validateRequest) {
+      Set<String> references = new LinkedHashSet<>();
+      validateRequest(root, references);
+      for (String reference : references) {
+        String path = normalizeFieldReference(reference);
+        if (!QUERYABLE.contains(path)) {
+          throw new RejectedQueryException(
+              "query references a field that is not QUERYABLE: '%s' (normalized to '%s')"
+                  .formatted(reference, path));
+        }
       }
     }
 
@@ -398,7 +534,9 @@ final class ElasticSearchAccessContractModel {
     }
 
     if (serverTab != null) {
-      root.add("aggs", serverAggregations(serverTab));
+      root.add(
+          "aggs",
+          validateRequest ? serverAggregations(serverTab) : unvalidatedAggregations(serverTab));
       root.addProperty("size", 0);
     }
 
@@ -409,10 +547,15 @@ final class ElasticSearchAccessContractModel {
   }
 
   /**
-   * Removes the caller's {@code query} node, returning {@code match_all} when nothing usable
-   * survived the strip. A caller whose entire query was a {@code script} clause lands here, and
-   * substituting {@code match_all} keeps the request valid — safely, because the authorization
-   * filter is applied as a sibling and does not depend on what the caller asked for.
+   * Removes the caller's {@code query} node, returning {@code match_all} when the request carried
+   * none. Substituting {@code match_all} is safe because the authorization filter is applied as a
+   * sibling and does not depend on what the caller asked for.
+   *
+   * <p>Note that a request whose query the strip pass <em>emptied</em> — one whose entire query was
+   * a {@code script} clause, say — does not reach here: an empty clause object names no query type,
+   * and {@link #validateQuery} refuses it. That is the §F.1 reject-rather-than-drop rule applied to
+   * the strip list's own output, and it is a change from substituting {@code match_all} there,
+   * which silently broadened such a request to the caller's whole authorized set.
    */
   private static JsonObject takeCallerQuery(JsonObject root) {
     JsonElement query = root.remove("query");
@@ -450,76 +593,213 @@ final class ElasticSearchAccessContractModel {
   }
 
   /**
-   * Walks the DSL collecting every path that will be resolved against the mapping.
+   * Walks the request against the closed shape allowlist, collecting every path that will be
+   * resolved against the mapping and refusing anything the walk cannot account for.
    *
-   * <p>Structural rather than key-name-based wherever possible, because the leaf clauses are the
-   * only place a field path is positionally identifiable. {@code sort}, {@code highlight.fields}
-   * and the {@code multi_match} family each carry paths in a different position, and each is a
-   * channel §F.2 shows returns values.
+   * <p>Validation and collection are one traversal on purpose. Separating them is what allowed
+   * finding 5: a collector that returns an empty set for a shape it does not recognize is
+   * indistinguishable from one that correctly found no references, so the caller of a separate
+   * collector has no way to tell "nothing to check" from "no idea what this is". Here a reference
+   * can only be missed by a clause that reached {@code default} in one of the switches below, and
+   * {@code default} throws.
    */
-  private static void collectFieldReferences(JsonElement node, String key, Set<String> out) {
-    if (node.isJsonArray()) {
-      node.getAsJsonArray().forEach(element -> collectFieldReferences(element, key, out));
-      return;
-    }
-
-    if ("sort".equals(key)) {
-      collectSortReferences(node, out);
-      return;
-    }
-    if (!node.isJsonObject()) {
-      return;
-    }
-    JsonObject object = node.getAsJsonObject();
-
-    if (key != null && FIELD_KEYED_CLAUSES.contains(key)) {
-      out.addAll(object.keySet());
-      return;
-    }
-    if ("exists".equals(key) && object.has("field")) {
-      out.add(object.get("field").getAsString());
-      return;
-    }
-    if ("nested".equals(key) && object.has("path")) {
-      out.add(object.get("path").getAsString());
-    }
-    if (object.has("fields") && isMultiFieldClause(key)) {
-      object.getAsJsonArray("fields").forEach(field -> out.add(field.getAsString()));
-    }
-    if (object.has("default_field")) {
-      out.add(object.get("default_field").getAsString());
-    }
-    if ("highlight".equals(key) && object.has("fields")) {
-      out.addAll(object.getAsJsonObject("fields").keySet());
-    }
-
-    for (Map.Entry<String, JsonElement> member : object.entrySet()) {
-      collectFieldReferences(member.getValue(), member.getKey(), out);
+  private static void validateRequest(JsonObject root, Set<String> references) {
+    for (Map.Entry<String, JsonElement> member : root.entrySet()) {
+      String name = member.getKey();
+      if (!SUPPORTED_REQUEST_MEMBERS.contains(name)) {
+        throw new RejectedQueryException(
+            "unsupported request member: '%s'. Supported: %s"
+                .formatted(name, new java.util.TreeSet<>(SUPPORTED_REQUEST_MEMBERS)));
+      }
+      switch (name) {
+        case "query" -> validateQuery(member.getValue(), references);
+        case "sort" -> validateSort(member.getValue(), references);
+        case "highlight" -> validateHighlight(member.getValue(), references);
+        // from/size/search_after/track_total_hits carry paging and counting values, never a path.
+        default -> {}
+      }
     }
   }
 
-  private static boolean isMultiFieldClause(String key) {
-    return "multi_match".equals(key)
-        || "query_string".equals(key)
-        || "simple_query_string".equals(key)
-        || "combined_fields".equals(key);
+  /** Validates one query clause — an object naming exactly one supported clause type. */
+  private static void validateQuery(JsonElement node, Set<String> references) {
+    JsonObject clause = requireObject(node, "query");
+    if (clause.size() != 1) {
+      throw new RejectedQueryException(
+          "a query clause names exactly one query type, found " + clause.keySet());
+    }
+    Map.Entry<String, JsonElement> only = clause.entrySet().iterator().next();
+    String type = only.getKey();
+    Set<String> supportedMembers = SUPPORTED_QUERY_CLAUSES.get(type);
+    if (supportedMembers == null) {
+      throw new RejectedQueryException(
+          "unsupported query clause: '%s'. Supported: %s"
+              .formatted(type, new java.util.TreeSet<>(SUPPORTED_QUERY_CLAUSES.keySet())));
+    }
+
+    JsonObject body = requireObject(only.getValue(), type);
+    if (FIELD_KEYED_CLAUSES.contains(type)) {
+      validateFieldKeyedClause(type, body, supportedMembers, references);
+      return;
+    }
+    switch (type) {
+      case "bool" -> validateBool(body, supportedMembers, references);
+      case "exists" -> {
+        requireMembers(type, body, supportedMembers);
+        references.add(stringMember(body, "field", type));
+      }
+      case "multi_match" -> validateMultiMatch(body, supportedMembers, references);
+      // match_all / match_none: no field reference, and requireMembers refuses everything but
+      // boost.
+      default -> requireMembers(type, body, supportedMembers);
+    }
   }
 
-  private static void collectSortReferences(JsonElement sort, Set<String> out) {
+  private static void validateBool(
+      JsonObject bool, Set<String> supportedMembers, Set<String> references) {
+    requireMembers("bool", bool, supportedMembers);
+    for (Map.Entry<String, JsonElement> member : bool.entrySet()) {
+      if (!BOOL_QUERY_MEMBERS.contains(member.getKey())) {
+        continue;
+      }
+      JsonElement value = member.getValue();
+      if (value.isJsonArray()) {
+        value.getAsJsonArray().forEach(element -> validateQuery(element, references));
+      } else {
+        validateQuery(value, references);
+      }
+    }
+  }
+
+  /**
+   * Validates a clause whose single member name is the field path, and whose member <em>value</em>
+   * is the thing being matched.
+   *
+   * <p>The value shape is checked as well as the field name, which the reference-collector design
+   * never did. {@code terms} is the reason: its value may be a literal array or a <em>lookup</em>
+   * ({@code {"index":…,"id":…,"path":…}}) that fetches the terms out of another document. A lookup
+   * names its source field in {@code path}, in a position no field-reference walk covers, and it
+   * reads that field from a document the caller has no authorization for at all — the DLS query and
+   * the injected filter both bound the <em>search</em>, not the lookup's GET. Refusing the shape is
+   * the only control that applies.
+   */
+  private static void validateFieldKeyedClause(
+      String type, JsonObject clause, Set<String> supportedOptions, Set<String> references) {
+    if (clause.size() != 1) {
+      throw new RejectedQueryException(
+          "a %s clause names exactly one field, found %s".formatted(type, clause.keySet()));
+    }
+    Map.Entry<String, JsonElement> only = clause.entrySet().iterator().next();
+    references.add(only.getKey());
+    JsonElement value = only.getValue();
+
+    if ("terms".equals(type)) {
+      boolean literalValues =
+          value.isJsonArray()
+              && value.getAsJsonArray().asList().stream().allMatch(JsonElement::isJsonPrimitive);
+      if (!literalValues) {
+        throw new RejectedQueryException(
+            "a terms clause must carry a literal array of values; the terms-lookup form reads a "
+                + "field out of a document the caller may not be authorized for");
+      }
+      return;
+    }
+    if (value.isJsonPrimitive()) {
+      return;
+    }
+    requireMembers(type, requireObject(value, type), supportedOptions);
+  }
+
+  /**
+   * Validates a {@code multi_match}, requiring it to name its fields.
+   *
+   * <p>An omitted {@code fields} is not "no references to check": Elasticsearch falls back to
+   * {@code index.query.default_field}, which defaults to {@code *}, so the clause searches every
+   * field in the mapping — including every RESPONSE-INTERNAL one — and the caller learns which
+   * documents matched. This is the same failure E-1's "strip {@code fields} at every depth"
+   * instruction would have produced on every library search (§F.1 rule 1), arriving by a different
+   * route.
+   */
+  private static void validateMultiMatch(
+      JsonObject clause, Set<String> supportedMembers, Set<String> references) {
+    requireMembers("multi_match", clause, supportedMembers);
+    if (!clause.has("fields")) {
+      throw new RejectedQueryException(
+          "a multi_match clause must name its fields; without them it falls back to "
+              + "index.query.default_field ('*') and searches every field in the mapping");
+    }
+    for (JsonElement field : clause.getAsJsonArray("fields")) {
+      references.add(field.getAsString());
+    }
+  }
+
+  private static void validateSort(JsonElement sort, Set<String> references) {
+    if (sort.isJsonArray()) {
+      sort.getAsJsonArray().forEach(element -> validateSort(element, references));
+      return;
+    }
     if (sort.isJsonPrimitive()) {
-      String field = sort.getAsString();
-      if (!SORT_PSEUDO_FIELDS.contains(field)) {
-        out.add(field);
-      }
+      addSortKey(sort.getAsString(), references);
       return;
     }
-    if (sort.isJsonObject()) {
-      for (String field : sort.getAsJsonObject().keySet()) {
-        if (!SORT_PSEUDO_FIELDS.contains(field)) {
-          out.add(field);
-        }
+    for (Map.Entry<String, JsonElement> entry : requireObject(sort, "sort").entrySet()) {
+      addSortKey(entry.getKey(), references);
+      if (!entry.getValue().isJsonPrimitive()) {
+        requireMembers("sort", requireObject(entry.getValue(), "sort"), SORT_OPTIONS);
       }
     }
+  }
+
+  private static void addSortKey(String key, Set<String> references) {
+    if (!SORT_PSEUDO_FIELDS.contains(key)) {
+      references.add(key);
+    }
+  }
+
+  private static void validateHighlight(JsonElement node, Set<String> references) {
+    JsonObject highlight = requireObject(node, "highlight");
+    for (Map.Entry<String, JsonElement> member : highlight.entrySet()) {
+      if (HIGHLIGHT_OPTIONS.contains(member.getKey())) {
+        continue;
+      }
+      if (!"fields".equals(member.getKey())) {
+        throw new RejectedQueryException(
+            "unsupported highlight member: '%s'".formatted(member.getKey()));
+      }
+      for (Map.Entry<String, JsonElement> field :
+          requireObject(member.getValue(), "highlight.fields").entrySet()) {
+        references.add(field.getKey());
+        requireMembers(
+            "highlight.fields",
+            requireObject(field.getValue(), "highlight.fields"),
+            HIGHLIGHT_OPTIONS);
+      }
+    }
+  }
+
+  private static JsonObject requireObject(JsonElement node, String what) {
+    if (node == null || !node.isJsonObject()) {
+      throw new RejectedQueryException("'%s' must be a JSON object".formatted(what));
+    }
+    return node.getAsJsonObject();
+  }
+
+  private static void requireMembers(String what, JsonObject object, Set<String> supported) {
+    for (String member : object.keySet()) {
+      if (!supported.contains(member)) {
+        throw new RejectedQueryException(
+            "unsupported member '%s' of '%s'. Supported: %s"
+                .formatted(member, what, new java.util.TreeSet<>(supported)));
+      }
+    }
+  }
+
+  private static String stringMember(JsonObject object, String member, String what) {
+    JsonElement value = object.get(member);
+    if (value == null || !value.isJsonPrimitive()) {
+      throw new RejectedQueryException("'%s' requires a '%s' member".formatted(what, member));
+    }
+    return value.getAsString();
   }
 
   /**
@@ -560,6 +840,89 @@ final class ElasticSearchAccessContractModel {
    * list for the requested tab (§B.5a), never {@code study.*}.
    */
   static JsonObject serverAggregations(String tab) {
+    JsonObject aggregations = unvalidatedAggregations(tab);
+    validateAggregationVocabulary(aggregations);
+    return aggregations;
+  }
+
+  /**
+   * Aggregation shapes E-0's vocabulary may express, and the parameters each may set. §F.1's shapes
+   * 1 and 2 and nothing else.
+   *
+   * <p>Closing the parameter list matters as much as closing the type list: {@code min_doc_count},
+   * {@code include}, {@code background_filter} and {@code order} are the members §F.1's rejected
+   * denylist was built around, and a vocabulary that cannot express them cannot drift into them.
+   */
+  private static final Map<String, Set<String>> SUPPORTED_AGGREGATIONS =
+      Map.of("terms", Set.of("field", "size"), "top_hits", Set.of("size", "_source"));
+
+  /**
+   * Checks a vocabulary entry before it runs — the control finding 6 shows has no response-side
+   * equivalent.
+   *
+   * <p>§F.2 asks for {@code aggregations.**.buckets[*].key} to be "projected defensively" against
+   * RESPONSE-VISIBLE. It cannot be. A bucket key is a bare value with no field name attached, and
+   * it is structurally identical to the {@code accessManagement} keys the filter panel is built
+   * from, so nothing in the response distinguishes a legitimate facet key from an internal one —
+   * the same argument §F.2 already accepts for the sort channel. {@link #filterResponse} therefore
+   * passes bucket keys through, and the PoC asserts that it does.
+   *
+   * <p>What is available instead is the request. The vocabulary is server-owned (§F.1), so its
+   * field targets are known before execution, and checking them there covers both drift shapes at
+   * once: a {@code terms} target becomes a bucket key and a {@code top_hits} projection becomes a
+   * document, so both are checked against RESPONSE-VISIBLE rather than QUERYABLE.
+   *
+   * <p>The vocabulary is a constant, so in production this belongs in a test over every entry as
+   * well as on the request path — the check here fails closed at runtime, but a build-time failure
+   * is what catches a drifted enumeration before it reaches an environment.
+   */
+  static void validateAggregationVocabulary(JsonObject aggregations) {
+    for (Map.Entry<String, JsonElement> named : aggregations.entrySet()) {
+      JsonObject body = requireObject(named.getValue(), "aggregation '" + named.getKey() + "'");
+      for (Map.Entry<String, JsonElement> member : body.entrySet()) {
+        String type = member.getKey();
+        if ("aggs".equals(type) || "aggregations".equals(type)) {
+          validateAggregationVocabulary(requireObject(member.getValue(), type));
+          continue;
+        }
+        Set<String> parameters = SUPPORTED_AGGREGATIONS.get(type);
+        if (parameters == null) {
+          throw new RejectedQueryException(
+              "aggregation type outside the vocabulary: '%s' in '%s'. Supported: %s"
+                  .formatted(
+                      type,
+                      named.getKey(),
+                      new java.util.TreeSet<>(SUPPORTED_AGGREGATIONS.keySet())));
+        }
+        JsonObject aggregation = requireObject(member.getValue(), type);
+        requireMembers(type, aggregation, parameters);
+        if ("terms".equals(type)) {
+          requireResponseVisible(
+              stringMember(aggregation, "field", type), "a terms bucket key is the field's value");
+        } else {
+          if (!aggregation.has("_source")) {
+            throw new RejectedQueryException(
+                "a top_hits entry must set its own _source; without one it returns whole documents");
+          }
+          for (JsonElement leaf : aggregation.getAsJsonArray("_source")) {
+            requireResponseVisible(leaf.getAsString(), "top_hits returns whole documents");
+          }
+        }
+      }
+    }
+  }
+
+  private static void requireResponseVisible(String reference, String why) {
+    String path = normalizeFieldReference(reference);
+    if (!RESPONSE_VISIBLE.contains(path)) {
+      throw new RejectedQueryException(
+          "the aggregation vocabulary targets '%s', which is not RESPONSE-VISIBLE (%s)"
+              .formatted(reference, why));
+    }
+  }
+
+  /** The vocabulary entry for {@code tab}, exactly as written. */
+  private static JsonObject unvalidatedAggregations(String tab) {
     return switch (tab) {
       case "datasets" -> filterAggregations();
       case "models" ->
@@ -577,6 +940,7 @@ final class ElasticSearchAccessContractModel {
                   "study.assets.models.name",
                   "study.assets.models.license",
                   "study.assets.models.internalCheckpointUri"));
+      case DRIFTED_BUCKET_KEY_TAB -> driftedBucketKeyAggregations();
       default -> throw new IllegalArgumentException("no such tab in the vocabulary: " + tab);
     };
   }
@@ -601,6 +965,26 @@ final class ElasticSearchAccessContractModel {
    */
   static final String DRIFTED_ENUMERATION_TAB = "models-with-a-drifted-enumeration";
 
+  /**
+   * A second drifted vocabulary entry, and the one that shows §F.2's bucket-key row cannot be
+   * implemented as written: its {@code terms} aggregations target RESPONSE-INTERNAL paths directly,
+   * so the <em>bucket keys</em> are the internal values.
+   *
+   * <p>§F.2 says to "project defensively" {@code aggregations.**.buckets[*].key}. There is nothing
+   * to project against. A bucket key is a bare value carrying no field name — structurally
+   * identical to the {@code accessManagement} facet keys the filter panel depends on — so a
+   * response-side allowlist has no way to tell a legitimate facet key from an internal one, and
+   * {@link #filterResponse} passes both through. That is the same argument §F.2 already accepts for
+   * the sort channel, applied to a row §F.2 did not apply it to.
+   *
+   * <p>Which leaves the request side. The field targets are known there, they belong to the server,
+   * and checking them is {@link #validateAggregationVocabulary}. Both fields below are exactly the
+   * §F.2 case: {@code accessPolicy.custodianEmails} is the example the row itself gives, and {@code
+   * study.throughBioId} carries an {@code INTERNAL-*} marker so the leak is visible to the PoC's
+   * scan rather than only to a reader who knows what the values mean.
+   */
+  static final String DRIFTED_BUCKET_KEY_TAB = "models-with-a-drifted-bucket-key";
+
   /** Shape 1 — {@code FILTER_AGGS}. Fixed facets, no parameters, default {@code min_doc_count}. */
   private static JsonObject filterAggregations() {
     JsonObject aggs = new JsonObject();
@@ -622,6 +1006,14 @@ final class ElasticSearchAccessContractModel {
     JsonObject studies = termsAggregation("study.studyId", 100);
     studies.add("aggs", inner);
     return ElasticSearchAccessContractFixtures.object("studies", studies);
+  }
+
+  /** {@link #DRIFTED_BUCKET_KEY_TAB}'s facets: ordinary {@code terms} aggs on internal paths. */
+  private static JsonObject driftedBucketKeyAggregations() {
+    JsonObject aggs = new JsonObject();
+    aggs.add("custodians", termsAggregation("accessPolicy.custodianEmails", 100));
+    aggs.add("bioIds", termsAggregation("study.throughBioId", 100));
+    return aggs;
   }
 
   private static JsonObject termsAggregation(String field, int size) {

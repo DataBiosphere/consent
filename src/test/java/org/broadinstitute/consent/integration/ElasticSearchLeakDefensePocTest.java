@@ -92,7 +92,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * <h2>Findings this PoC produced</h2>
  *
- * Four measurements contradict or sharpen what the contract currently states. Each has its own test
+ * Six measurements contradict or sharpen what the contract currently states. Each has its own test
  * so the contract can be corrected against a citable result:
  *
  * <ol>
@@ -104,7 +104,37 @@ import org.junit.jupiter.params.provider.MethodSource;
  *       affects three paths rather than the two §B.0a names.
  *   <li>{@link #aGrantedMultiFieldDoesNotCarryItsKeywordSubfield} — the FLS grant and §F.1's {@code
  *       .keyword} normalization disagree, and the failure is silent.
+ *   <li>{@link #queryStringEmbeddedFieldReferencesAreRefusedRatherThanValidated} — §F.1 rule 2's
+ *       field-reference validator cannot be trusted over an open grammar, so the mediator needs a
+ *       closed allowlist of request shapes.
+ *   <li>{@link #driftedAggregationBucketKeysAreRefusedBeforeExecutionBecauseE3CannotFilterThem} —
+ *       §F.2's {@code buckets[*].key} row is not implementable, so E-0 must validate its own
+ *       vocabulary before running it.
+ *   <li>{@link #aQueryableButResponseInternalFieldIsRecoverableByBinarySearch} — QUERYABLE implies
+ *       readable, so §B's two axes are not independent for any field a caller can put in a
+ *       predicate.
+ *   <li>{@link #aSecondRoleDescriptorOnTheApiKeyUnionsAwayDocumentAndFieldSecurity} — role
+ *       descriptors union rather than intersect, so D-2 must mint exactly one.
+ *   <li>{@link #copyToAndFieldAliasBothReachAroundTheFlsGrant} — a {@code copy_to} in the mapping
+ *       reaches around the FLS grant, and no request-side control can close it.
  * </ol>
+ *
+ * <h2>How the DSL surface is covered</h2>
+ *
+ * The corpus attacks the shapes with a demonstrable leak behind them. Two table-driven sweeps cover
+ * the rest by enumeration rather than by inspiration: {@link
+ * #everyUnsupportedQueryClauseIsRefusedByName} walks every clause in Elasticsearch's Query DSL
+ * reference, and {@link #noUnsupportedRequestMemberReachesElasticsearch} walks every top-level
+ * member of the Search API reference. Together they are what makes "closed allowlist" a checkable
+ * claim rather than a statement about how many examples someone thought of — and neither covers a
+ * clause a later Elasticsearch version adds, which is the argument for the allowlist rather than
+ * against it.
+ *
+ * <p>The last two are the ones to read first if you are changing this class, because neither is
+ * visible to {@link #assertNoLeak}: one discloses through a hit count over documents the caller is
+ * authorized for, the other through a bucket key indistinguishable from a legitimate facet. Both
+ * therefore run the mediator with the relevant control switched off and assert what it was holding.
+ * A control the corpus cannot detect the absence of needs that treatment or it is untested.
  *
  * @see ElasticSearchAccessContractFixtures for the documents and the marker scheme
  * @see ElasticSearchAccessContractModel for the modeled enforcement
@@ -129,6 +159,13 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
     for (Document document : ElasticSearchAccessContractFixtures.documents()) {
       indexDocument(INDEX, document.id(), document.body());
     }
+    recreateIndex(
+        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_INDEX,
+        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_MAPPING);
+    indexDocument(
+        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_INDEX,
+        "1",
+        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_DOCUMENT);
   }
 
   // =============================================================================================
@@ -326,6 +363,172 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
             true,
             """
             {"query":{"multi_match":{"query":"INTERNAL-BIO-2","fields":["*"]}},"size":50}
+            """),
+
+        // ---- §F.1 rule 0: shapes whose field references no walk can reach --------------------
+        // Every entry here passed the field-reference validator untouched before the closed shape
+        // allowlist existed, because each one puts its field reference somewhere §F.1 rule 2 does
+        // not look: in query text, in another document, in a nested query, or nowhere at all.
+        rejected(
+            "query_string with a fielded term in its query text",
+            "§F.1 rule 0 — a field reference inside the clause's own mini-language",
+            true,
+            """
+            {"query":{"query_string":{"query":"accessPolicy.custodianEmails:\\"nobody@example.org\\""}},
+             "size":50}
+            """),
+        rejected(
+            "simple_query_string with no fields, searching every field in the mapping",
+            "§F.1 rule 0 — an omitted 'fields' is not an absent field reference",
+            true,
+            """
+            {"query":{"simple_query_string":{"query":"INTERNAL-BIO-2"}},"size":50}
+            """),
+        rejected(
+            "terms lookup reading a field out of a restricted document",
+            "§F.1 rule 0 — the lookup's 'path' is a field reference in an unwalked position",
+            true,
+            """
+            {"query":{"terms":{"study.piName":{"index":"dataset-leak-defense-poc","id":"3",
+              "path":"study.piName"}}},"size":50}
+            """),
+        rejected(
+            "more_like_this seeded with a restricted document's id",
+            "§F.1 rule 0 — searching by document reference rather than by field",
+            true,
+            """
+            {"query":{"more_like_this":{"fields":["study.piName"],
+              "like":[{"_index":"dataset-leak-defense-poc","_id":"3"}],
+              "min_term_freq":1,"min_doc_freq":1,"include":true}},"size":50}
+            """),
+        rejected(
+            "sort by _script",
+            "§F.1 rule 0 — a script sort names its fields inside the script body",
+            true,
+            """
+            {"query":{"match_all":{}},"size":50,
+             "sort":[{"_script":{"type":"string","order":"asc",
+               "script":{"source":
+                 "doc['study.throughBioId'].size()==0 ? 'none' : doc['study.throughBioId'].value"}}}]}
+            """),
+        rejected(
+            "highlight_query naming a field the highlight.fields walk never sees",
+            "§F.1 rule 0 — highlight carries a second query",
+            false,
+            """
+            {"query":{"match_all":{}},"size":50,
+             "highlight":{"fields":{"datasetName":{"highlight_query":
+               {"match":{"study.throughBioId":"INTERNAL-BIO-2"}}}}}}
+            """),
+        rejected(
+            "function_score wrapping the caller's query",
+            "§F.1 rule 0 — an unenumerated compound clause",
+            false,
+            """
+            {"query":{"function_score":{"query":{"match_all":{}},
+              "script_score":{"script":{"source":"doc['study.dataSubmitterId'].value"}}}},"size":50}
+            """),
+        rejected(
+            "knn at request level",
+            "§F.1 rule 0 — a request member carrying a 'field', absent from E-1's strip list",
+            false,
+            """
+            {"knn":{"field":"study.throughBioId","query_vector":[1.0],"k":5,"num_candidates":10},
+             "size":50}
+            """),
+        rejected(
+            "pit replacing the search target",
+            "§F.1 rule 0 — a request member that changes which index is searched",
+            false,
+            """
+            {"query":{"match_all":{}},"size":50,
+             "pit":{"id":"not-a-real-point-in-time","keep_alive":"1m"}}
+            """),
+
+        // ---- §F.1 rule 0: shapes Elastic's own documentation names -----------------------------
+        // Elastic documents each of the next four as unsupported *under DLS* — the cluster refuses
+        // or ignores them when a role query is active. That protection does not exist on the
+        // fallback path, which runs with privileged credentials and no DLS, so the mediator is the
+        // only thing standing between these and the index. The asymmetry is the point: reading
+        // "Elasticsearch does not allow this" as "we are covered" is only true on one of the two
+        // paths the contract has to make identical.
+        rejected(
+            "wrapper query carrying a base64-encoded query body",
+            "§F.1 rule 0 — a clause whose entire content is opaque to any JSON-level validator",
+            true,
+            """
+            {"query":{"wrapper":{"query":
+              "eyJ0ZXJtIjp7InN0dWR5LnRocm91Z2hCaW9JZCI6IklOVEVSTkFMLUJJTy0yIn19"}},"size":50}
+            """),
+        neutralized(
+            "term suggester enumerating a restricted document's terms",
+            "§F.1 rule 0 / CVE-2021-22135 — DLS ignores suggesters, the fallback path does not",
+            true,
+            """
+            {"query":{"match_all":{}},"size":0,
+             "suggest":{"pis":{"text":"PI-RESTRICTED-CINNABON",
+               "term":{"field":"study.piName","suggest_mode":"always"}}}}
+            """),
+        rejected(
+            "geo_shape query with an indexed_shape lookup",
+            "§F.1 rule 0 — Elastic's second documented remote-call query, after terms lookup",
+            false,
+            """
+            {"query":{"geo_shape":{"location":{"indexed_shape":
+              {"index":"dataset-leak-defense-poc","id":"3","path":"location"}}}},"size":50}
+            """),
+        rejected(
+            "percolate query",
+            "§F.1 rule 0 — Elastic's third documented remote-call query",
+            false,
+            """
+            {"query":{"percolate":{"field":"query","index":"dataset-leak-defense-poc","id":"3"}},
+             "size":50}
+            """),
+        rejected(
+            "has_child query",
+            "§F.1 rule 0 — unsupported in a DLS role definition, unconstrained on the fallback path",
+            false,
+            """
+            {"query":{"has_child":{"type":"child","query":{"match_all":{}}}},"size":50}
+            """),
+
+        // ---- §F.1 rule 0: request members that are a second way in ----------------------------
+        rejected(
+            "retriever as a second query entry point",
+            "§F.1 rule 0 — a request member that carries a query without being named 'query'",
+            true,
+            """
+            {"retriever":{"standard":{"query":{"match_all":{}}}},"size":50}
+            """),
+        rejected(
+            "post_filter applied after the query",
+            "§F.1 rule 0 — a second filter position at request level",
+            true,
+            """
+            {"query":{"match_all":{}},"size":50,
+             "post_filter":{"term":{"study.throughBioId":"INTERNAL-BIO-2"}}}
+            """),
+        rejected(
+            "ids query probing document existence directly",
+            "§F.1 rule 0 — _id is a queryable surface that names no mapped field",
+            true,
+            """
+            {"query":{"ids":{"values":["2","3"]}},"size":50}
+            """),
+        rejected(
+            "min_score turning the relevance score into a filter",
+            "§F.1 rule 0 / OPEN-10 — makes the residual scoring leak a clean boolean",
+            true,
+            """
+            {"query":{"match":{"datasetName":"cohort"}},"size":50,"min_score":0.0001}
+            """),
+        rejected(
+            "version and seq_no_primary_term metadata channels",
+            "§F.1 rule 0 — request members absent from E-1's strip list",
+            true,
+            """
+            {"query":{"match_all":{}},"size":50,"version":true,"seq_no_primary_term":true}
             """),
 
         // ---- §F.2: the response channels other than hits._source -----------------------------
@@ -996,23 +1199,30 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
   }
 
   /**
-   * §F.2's {@code aggregations.**} channel, made falsifiable: E-3 catches an internal field that
-   * the <em>server's own</em> aggregation asked for.
+   * §F.2's {@code aggregations.**} channel, made falsifiable, and the two controls that cover it in
+   * the order they apply: E-0 refuses a drifted {@code top_hits} enumeration before it runs, and
+   * E-3 catches it again if it ever does.
    *
-   * <p>Every other attack in this class comes from the caller, and against a caller the strip list
-   * and the field validator do the work — which means that with §F.1's server-owned aggregations in
-   * place, deleting E-3's aggregation walk entirely changes no result in the rest of the corpus.
-   * That was measured, not assumed, and it is a genuine observation about the design: the walk is
-   * not defending the aggregation channel against callers, because callers no longer reach it.
+   * <p>Every attack in the corpus comes from the caller, and against a caller the strip list and
+   * the shape allowlist do the work — which means that with §F.1's server-owned aggregations in
+   * place, deleting E-3's aggregation walk entirely changes no result anywhere else in this class.
+   * That was measured, not assumed: the walk is not defending the aggregation channel against
+   * callers, because callers no longer reach it.
    *
-   * <p>What it does defend against is us. §B.5a puts the {@code study.assets.*} leaf enumeration in
+   * <p>What it defends against is us. §B.5a puts the {@code study.assets.*} leaf enumeration in
    * duos-ui's asset definitions and OPEN-9 warns the backend copy will drift; a drifted copy asks
-   * Elasticsearch for an internal leaf directly, and only a response-side projection stands between
-   * that and the caller. This test is that scenario, and it is the reason to keep §F.2's walk in
-   * E-3 rather than simplify it away once E-0 lands.
+   * Elasticsearch for an internal leaf directly, where neither the strip list nor the field
+   * validator is involved and the caller has done nothing wrong.
+   *
+   * <p>Both controls are asserted here because they fail differently. The vocabulary check is the
+   * one that stops the request, and it is the only control available for the bucket-key form of the
+   * same drift ({@link
+   * #driftedAggregationBucketKeysAreRefusedBeforeExecutionBecauseE3CannotFilterThem}). E-3's walk
+   * is what remains if a future vocabulary entry is built somewhere the check does not run, and it
+   * is the reason to keep §F.2's walk in E-3 rather than simplify it away once E-0 lands.
    */
   @Test
-  void responseFilterCatchesAnInternalFieldTheServersOwnAggregationRequested() {
+  void aDriftedTopHitsEnumerationIsRefusedBeforeExecutionAndCaughtAgainByE3() {
     Attack driftedTab =
         legitimate(
             "study-asset tab whose leaf enumeration has drifted",
@@ -1023,7 +1233,7 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
             {"query":{"match_all":{}}}
             """);
 
-    Outcome unfiltered = executeWithoutResponseFilter(driftedTab, CUSTODIAN);
+    Outcome unfiltered = executeWithoutRequestValidation(driftedTab, CUSTODIAN, false);
     assertTrue(
         unfiltered.contains("INTERNAL-CHECKPOINT-"),
         """
@@ -1032,11 +1242,672 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
         longer exercises §F.2's aggregations.** requirement. """
             + unfiltered.summary());
 
-    Outcome filtered = execute(driftedTab, CUSTODIAN, FALLBACK);
+    Outcome filtered = executeWithoutRequestValidation(driftedTab, CUSTODIAN, true);
     assertNoLeak(filtered, CUSTODIAN, driftedTab, FALLBACK);
     assertTrue(
         returnsData(filtered.response()),
-        "the tab must still return its studies: " + filtered.summary());
+        "the tab must still return its studies once E-3 has projected them: " + filtered.summary());
+
+    Outcome refused = execute(driftedTab, CUSTODIAN, FALLBACK);
+    assertTrue(
+        refused.rejected(),
+        """
+        The drifted enumeration ran. E-3 catches this particular form (asserted above), but the \
+        bucket-key form of the same drift has no response-side control at all, so E-0 must validate \
+        the vocabulary before executing it (§F.2, OPEN-9). """
+            + refused.summary());
+  }
+
+  /**
+   * Every entry the product actually uses passes the vocabulary check.
+   *
+   * <p>The vocabulary is a constant, so this is where the check belongs in production too: a
+   * build-time failure catches a drifted enumeration before it reaches an environment, whereas the
+   * runtime check in {@code serverAggregations} only fails closed once someone has opened the tab.
+   * Both are wanted, and this test is the first half.
+   */
+  @Test
+  void everyEntryInTheAggregationVocabularyIsValid() {
+    for (String tab : List.of("datasets", "models")) {
+      ElasticSearchAccessContractModel.serverAggregations(tab);
+    }
+  }
+
+  // =============================================================================================
+  // 7. The two channels a marker scan cannot see
+  // =============================================================================================
+
+  /**
+   * FINDING 5 — a field reference embedded in {@code query_string} syntax reaches Elasticsearch
+   * unvalidated, and §F.1's rule 2 cannot see it.
+   *
+   * <p>Rule 2 validates "query clause targets, {@code sort} keys, {@code highlight.fields} keys,
+   * {@code multi_match}-family {@code fields} entries" — every one of them a position where a field
+   * path is a JSON member name or a JSON string in a known slot. {@code query_string} does not put
+   * its field references in any of those places. It puts them inside its own query <em>text</em>,
+   * in a mini-language with fielded terms, grouping, ranges and {@code _exists_}, so {@code
+   * {"query_string":{"query":"accessPolicy.custodianEmails:\"x@example.org\""}}} collects zero
+   * field references and passes validation unchanged.
+   *
+   * <p>What that buys the caller on the fallback path — privileged credentials, no FLS, so every
+   * field in the mapping is resolvable — is a boolean oracle over RESPONSE-INTERNAL values. The
+   * injected §E-2 filter still bounds the result set to documents the caller may read, so this is
+   * not a Decision 1 violation: it is a §B.4 violation, one bit at a time, over the documents the
+   * caller can already see. Guess the custodian email of a visible dataset and one hit comes back;
+   * guess wrong and none does.
+   *
+   * <p>The reason this needs its own test is in the first assertion: {@link #assertNoLeak} passes
+   * on the leaking response. Nothing forbidden is <em>in</em> it — the disclosure is the hit count
+   * of a document the caller is authorized for. Every other attack in this class is caught by the
+   * marker scan, so a corpus entry would have asserted nothing here.
+   *
+   * <p>The fix is not a better extractor. A parser for the {@code query_string} grammar would have
+   * to stay correct against a syntax Lucene extends, and rule 3 already refuses wildcards precisely
+   * because approximating a grammar is how an allowlist ends up approving a path nobody enumerated.
+   * The mediator instead accepts a closed set of query shapes and refuses the rest, so a clause
+   * whose field references cannot be extracted by position is refused rather than guessed at.
+   */
+  @Test
+  void queryStringEmbeddedFieldReferencesAreRefusedRatherThanValidated() {
+    Attack correctGuess = custodianEmailProbe("public-custodian@example.org");
+    Attack wrongGuess = custodianEmailProbe("no-such-custodian@example.org");
+
+    Outcome hit = executeWithoutRequestValidation(correctGuess, STRANGER);
+    Outcome miss = executeWithoutRequestValidation(wrongGuess, STRANGER);
+
+    assertNoLeak(hit, STRANGER, correctGuess, FALLBACK);
+    assertEquals(
+        1,
+        totalHits(hit.response()),
+        """
+        The query_string oracle did not resolve its embedded field reference, so this test no \
+        longer demonstrates finding 5 — check that accessPolicy.custodianEmails is still populated \
+        and still a keyword. """
+            + hit.summary());
+    assertEquals(
+        0,
+        totalHits(miss.response()),
+        "the control leg matched despite naming an email no document carries: " + miss.summary());
+
+    for (Attack probe : List.of(correctGuess, wrongGuess)) {
+      Outcome outcome = execute(probe, STRANGER, FALLBACK);
+      assertTrue(
+          outcome.rejected(),
+          """
+          The mediator accepted a query_string clause. Its field references live in the clause's \
+          own query text, where §F.1 rule 2 cannot reach them, so accepting the shape at all \
+          concedes the oracle above (§B.4). """
+              + outcome.summary());
+      assertTrue(
+          outcome.rejectionReason().startsWith("mediator:"),
+          "expected rejection by the mediator rather than by Elasticsearch: "
+              + outcome.rejectionReason());
+    }
+  }
+
+  /** A fielded {@code query_string} probe for one guessed custodian email. */
+  private static Attack custodianEmailProbe(String guess) {
+    return rejected(
+        "query_string probing accessPolicy.custodianEmails for " + guess,
+        "§B.4 / §F.1 rule 2 — a field reference the validator cannot see",
+        true,
+        """
+        {"query":{"query_string":{"query":"accessPolicy.custodianEmails:\\"%s\\""}},"size":50}
+        """
+            .formatted(guess));
+  }
+
+  /**
+   * FINDING 6 — §F.2's {@code buckets[*].key} row is not implementable on the response side, so the
+   * server's aggregation vocabulary has to be validated before it runs.
+   *
+   * <p>§F.2 requires {@code aggregations.**.buckets[*].key} to be "projected defensively" against
+   * RESPONSE-VISIBLE. A bucket key is a bare value. It arrives with no field name attached and is
+   * structurally identical to the {@code accessManagement} and {@code dataUse.primary.code} keys
+   * the filter panel is built from, so there is no property of the response a filter could use to
+   * tell one from the other — the same argument §F.2 already accepts for the sort channel, on a row
+   * where it did not draw the same conclusion. E-3 therefore passes internal bucket keys through,
+   * and the first half of this test measures that rather than assuming it.
+   *
+   * <p>This matters for exactly the reason the {@code top_hits} drift case matters (§B.5a, OPEN-9):
+   * the caller cannot reach the aggregation channel once §F.1 makes it server-owned, so the failure
+   * mode is a drifted vocabulary entry on our side of the boundary. The difference is that the
+   * {@code top_hits} form has a second control behind it — {@link
+   * #responseFilterCatchesAnInternalFieldTheServersOwnAggregationRequested} — and the bucket-key
+   * form has none. Since the vocabulary is server-owned, its field targets are known before
+   * execution, which is where the check belongs.
+   */
+  @Test
+  void driftedAggregationBucketKeysAreRefusedBeforeExecutionBecauseE3CannotFilterThem() {
+    Attack driftedTab = driftedBucketKeyTab();
+
+    Outcome unvalidated = executeWithoutRequestValidation(driftedTab, CUSTODIAN);
+    assertTrue(
+        unvalidated.contains("custodian@example.org"),
+        """
+        The drifted terms aggregation was expected to return accessPolicy.custodianEmails values as \
+        bucket keys, past E-3 — the case §F.2's bucket-key row names. It did not, so this test no \
+        longer demonstrates finding 6. """
+            + unvalidated.summary());
+    assertTrue(
+        unvalidated.contains(INTERNAL_MARKER_PREFIX),
+        "the response filter was expected to leave internal bucket keys untouched: "
+            + unvalidated.summary());
+
+    Outcome outcome = execute(driftedTab, CUSTODIAN, FALLBACK);
+    assertTrue(
+        outcome.rejected(),
+        """
+        A vocabulary entry aggregating on a RESPONSE-INTERNAL path was executed. Nothing downstream \
+        can filter its bucket keys (asserted above), so E-0 must refuse the entry rather than \
+        return it (§F.2, §B.5a, OPEN-9). """
+            + outcome.summary());
+    assertTrue(
+        outcome.rejectionReason().startsWith("mediator:"),
+        "expected the vocabulary check to refuse it: " + outcome.rejectionReason());
+  }
+
+  /** The drifted vocabulary entry whose {@code terms} facets target internal paths. */
+  private static Attack driftedBucketKeyTab() {
+    return legitimate(
+        "study-asset tab whose facet fields have drifted",
+        "§F.2 aggregations.**.buckets[*].key / OPEN-9",
+        CUSTODIAN,
+        ElasticSearchAccessContractModel.DRIFTED_BUCKET_KEY_TAB,
+        """
+        {"query":{"match_all":{}}}
+        """);
+  }
+
+  // =============================================================================================
+  // 8. Vectors from Elastic's own documentation and CVE history
+  // =============================================================================================
+
+  /**
+   * FINDING 7 — "QUERYABLE but RESPONSE-INTERNAL" (§B.0a) is obscurity, not confidentiality. The
+   * value of such a field can be recovered exactly, using only queries the mediator accepts.
+   *
+   * <p>§B.0a classifies {@code createUserId}, {@code study.dataSubmitterId} and {@code
+   * study.publicVisibility} as QUERYABLE and RESPONSE-INTERNAL: the caller may filter on them and
+   * may not be shown them. Everything in the contract is built to hold both halves at once — OPEN-8
+   * widens the FLS grant for it, and E-3 runs on the native path to strip them again (§B.5c). All
+   * of that works, and none of it matters: {@code range} is a supported clause on a QUERYABLE
+   * field, so a caller can binary-search the value and read the answer off {@code hits.total}. This
+   * test recovers a {@code createUserId} exactly, in ten accepted requests, from a caller who is
+   * never shown the field.
+   *
+   * <p>This is not a defect in the mediator, and no response-side control can address it — the
+   * disclosure is carried by the hit count of documents the caller is fully authorized to see. It
+   * is a property of the classification itself: <b>a field that is QUERYABLE is readable</b>, and
+   * §B's two axes are not independent for any field a caller can put in a predicate.
+   *
+   * <p>What follows for the contract is a choice, and §B should state which one it is taking:
+   *
+   * <ul>
+   *   <li><b>Accept it explicitly.</b> The three affected paths are two user ids and a boolean, all
+   *       of which the caller can largely infer anyway. This is defensible, but it has to be
+   *       written down, because §B.0a currently reads as though the two axes are separable in
+   *       general — and the next field classified this way may not be a user id.
+   *   <li><b>Remove them from QUERYABLE.</b> The queries that need them are "My Data Submissions"
+   *       and {@code restrictToPublicVisibility}, both of which are server-derivable from the
+   *       caller's own identity. Making them server-owned parameters rather than caller DSL closes
+   *       this completely — and is precisely §F.1a / plan item 4.2, the same increment §F.1 already
+   *       recommends promoting. This finding is a second, independent argument for it.
+   * </ul>
+   *
+   * <p>Recorded as an assertion rather than a note so that narrowing QUERYABLE later fails here and
+   * says so.
+   */
+  @Test
+  void aQueryableButResponseInternalFieldIsRecoverableByBinarySearch() {
+    int actualCreateUserId = 500; // DUOS-00001, per the fixtures — never returned to any caller.
+    int low = 0;
+    int high = 1023;
+    int requests = 0;
+
+    while (low < high) {
+      int midpoint = (low + high) / 2;
+      Outcome probe = execute(createUserIdProbe(midpoint), SUBMITTER, FALLBACK);
+      requests++;
+
+      assertFalse(
+          probe.rejected(),
+          """
+          The mediator refused a range probe on a QUERYABLE path. That would mean QUERYABLE has been \
+          narrowed or `range` dropped from the supported clauses — good news, and this test should \
+          be inverted along with §B.0a. """
+              + probe.rejectionReason());
+      assertFalse(
+          probe.contains("createUserId"),
+          "the field itself must never be returned, only inferred: " + probe.summary());
+
+      if (totalHits(probe.response()) > 0) {
+        high = midpoint;
+      } else {
+        low = midpoint + 1;
+      }
+    }
+
+    assertEquals(
+        actualCreateUserId,
+        low,
+        """
+        The binary search did not converge on the document's real createUserId, so this test no \
+        longer demonstrates finding 7 — check the fixtures rather than assuming the leak is closed.""");
+    assertTrue(
+        requests <= 10,
+        "recovering the value took %d requests; the point is that it is cheap".formatted(requests));
+  }
+
+  /** A mediated, accepted probe: "does DUOS-00001 have createUserId <= bound?" */
+  private static Attack createUserIdProbe(int bound) {
+    return legitimate(
+        "range probe on createUserId <= " + bound,
+        "§B.0a — QUERYABLE implies readable",
+        SUBMITTER,
+        null,
+        """
+        {"query":{"bool":{"must":[{"term":{"datasetIdentifier":"DUOS-00001"}},
+          {"range":{"createUserId":{"lte":%d}}}]}},"size":0}
+        """
+            .formatted(bound));
+  }
+
+  /**
+   * FINDING 8 — an API key carrying more than one role descriptor gets the <em>union</em> of their
+   * DLS queries and FLS grants, not the intersection.
+   *
+   * <p>Elastic documents this for FLS — "field level security takes into account each role the user
+   * has and combines all of the fields listed into a single set" — and the same holds for DLS role
+   * queries, which are OR-ed. Measured here on 9.5.1: a key carrying D-2's restrictive descriptor
+   * <em>plus</em> any second descriptor granting plain {@code read} on the same index returns every
+   * document and every field. The restrictive descriptor is not weakened; it is simply added to.
+   *
+   * <p>D-2 mints these descriptors, so this is a requirement on it and on whatever privileges the
+   * key's owning user holds: <b>exactly one role descriptor naming the dataset index, and an owner
+   * with no separate index privilege on it</b>. An API key's effective permissions are the
+   * intersection of its descriptors with the owner's, so a superuser owner narrows nothing — and
+   * the natural operational move of "give the search user a second role for the new dashboard"
+   * silently removes document filtering with no error anywhere.
+   *
+   * <p>The failure is invisible in exactly the way §1.1 warns about: every existing test in this
+   * class passes against a two-descriptor key, because they all mint single-descriptor keys.
+   */
+  @Test
+  void aSecondRoleDescriptorOnTheApiKeyUnionsAwayDocumentAndFieldSecurity() {
+    String restrictive =
+        ElasticSearchAccessContractModel.roleDescriptors(
+            INDEX, STRANGER, ElasticSearchAccessContractModel.flsGrant());
+    String withASecondRole =
+        restrictive.replaceFirst(
+            "^\\{",
+            "{\"analytics\":{\"indices\":[{\"names\":[\"%s\"],\"privileges\":[\"read\"]}]},"
+                .formatted(INDEX));
+
+    Attack matchAll = corpus().getFirst();
+    Outcome underOneRole = executeWithRoleDescriptors(matchAll, "one-role", restrictive);
+    Outcome underTwoRoles = executeWithRoleDescriptors(matchAll, "two-roles", withASecondRole);
+
+    assertEquals(
+        sorted(STRANGER.visibleIdentifiers()),
+        sorted(identifiersIn(underOneRole.response())),
+        "the control leg failed: the restrictive descriptor alone should filter documents. "
+            + underOneRole.summary());
+
+    assertEquals(
+        sorted(ALL_IDENTIFIERS),
+        sorted(identifiersIn(underTwoRoles.response())),
+        """
+        Adding a second, unrestricted role descriptor did NOT union away DLS on this cluster. That \
+        is the safe outcome and would mean D-2 need not constrain descriptor count; verify it \
+        deliberately before relaxing anything, then invert this assertion. """
+            + underTwoRoles.summary());
+    assertTrue(
+        underTwoRoles.contains(INTERNAL_MARKER_PREFIX),
+        "FLS was expected to union to an unrestricted grant as well: " + underTwoRoles.summary());
+  }
+
+  /** Runs on the native path under hand-built role descriptors, for the role-union finding. */
+  private static Outcome executeWithRoleDescriptors(
+      Attack attack, String keyName, String roleDescriptorsJson) {
+    String apiKey =
+        API_KEYS.computeIfAbsent(
+            "descriptors|" + keyName,
+            key -> {
+              try {
+                return createApiKey("poc-" + keyName, roleDescriptorsJson);
+              } catch (Exception e) {
+                throw new IllegalStateException("could not mint an API key for " + keyName, e);
+              }
+            });
+    // NATIVE_UNMEDIATED: the subject is what the key alone enforces, with nothing else in the way.
+    return executeWithKey(attack, STRANGER, NATIVE_UNMEDIATED, apiKey);
+  }
+
+  /**
+   * FINDING 9 — two ordinary mapping constructs make a non-granted field reachable under a granted
+   * name, and §B has no way to express either one.
+   *
+   * <p>§B classifies <em>fields</em>. It says nothing about the mapping's shape, and D-3 generates
+   * the FLS grant from §B's tables (or, after §B.5c, from the mapping's field names). Both readings
+   * miss these, because neither is a field-name question:
+   *
+   * <ul>
+   *   <li><b>{@code copy_to}</b> duplicates a field's content into another field's index at index
+   *       time, before any role is consulted. Granting the target grants the ability to search the
+   *       source's values. Measured below: a {@code match} on the granted {@code publicNote} finds
+   *       a document by the value of the non-granted {@code internalSecret}. The value is not
+   *       <em>returned</em> — {@code copy_to} does not alter {@code _source} — so E-3 sees nothing
+   *       to filter, and the leak is an exact-value oracle rather than a disclosure. Finding 7
+   *       shows what a caller does with an oracle.
+   *   <li><b>{@code alias}</b> is a second name for a concrete field, and Elastic states that field
+   *       level security must be applied to the concrete name rather than the alias. An alias whose
+   *       target is internal is a QUERYABLE-looking path onto a RESPONSE-INTERNAL field.
+   * </ul>
+   *
+   * <p>The mediator cannot close either. Its allowlist is a set of paths, and {@code publicNote} is
+   * a legitimately allowlisted path — the caller's query is exactly the one the product's search
+   * box issues. The alias is caught only because this contract's allowlist happens not to contain
+   * it, which is luck rather than a control: an alias added later to rename a visible field would
+   * be added to QUERYABLE as a matter of course, and could be repointed at an internal field by a
+   * mapping change no one reads as a security change.
+   *
+   * <p><b>So this is a new requirement on B-1/B-3 and D-3, not on the mediator</b>: the dataset
+   * index mapping must contain no {@code copy_to} into a RESPONSE-VISIBLE field, no {@code alias}
+   * fields, and no mapping-level {@code runtime} fields (whose scripts can read {@code
+   * params._source} wholesale). Assert it against the live mapping, not against the model classes —
+   * the mapping is what Elasticsearch enforces against.
+   */
+  @Test
+  void copyToAndFieldAliasBothReachAroundTheFlsGrant() throws Exception {
+    String apiKey =
+        API_KEYS.computeIfAbsent(
+            "mapping-hazards",
+            key -> {
+              try {
+                return createApiKey(
+                    "poc-" + key,
+                    ElasticSearchAccessContractModel.roleDescriptors(
+                        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_INDEX,
+                        ADMIN,
+                        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_GRANT));
+              } catch (Exception e) {
+                throw new IllegalStateException("could not mint the mapping-hazard key", e);
+              }
+            });
+
+    int viaCopyToTarget =
+        hitsInHazardIndex(
+            apiKey,
+            """
+            {"query":{"match":{"publicNote":"INTERNAL-COPIED-VALUE"}}}
+            """);
+    int viaConcreteName =
+        hitsInHazardIndex(
+            apiKey,
+            """
+            {"query":{"term":{"internalSecret":"INTERNAL-COPIED-VALUE"}}}
+            """);
+    int viaAliasWhenNeitherIsGranted =
+        hitsInHazardIndex(
+            apiKey,
+            """
+            {"query":{"term":{"internalSecretAlias":"INTERNAL-COPIED-VALUE"}}}
+            """);
+
+    String keyGrantingTheAlias =
+        API_KEYS.computeIfAbsent(
+            "mapping-hazards-alias-granted",
+            key -> {
+              try {
+                Set<String> grant =
+                    new LinkedHashSet<>(ElasticSearchAccessContractFixtures.MAPPING_HAZARD_GRANT);
+                grant.add("internalSecretAlias");
+                return createApiKey(
+                    "poc-" + key,
+                    ElasticSearchAccessContractModel.roleDescriptors(
+                        ElasticSearchAccessContractFixtures.MAPPING_HAZARD_INDEX, ADMIN, grant));
+              } catch (Exception e) {
+                throw new IllegalStateException("could not mint the alias-granted key", e);
+              }
+            });
+    int viaConcreteWhenOnlyTheAliasIsGranted =
+        hitsInHazardIndex(
+            keyGrantingTheAlias,
+            """
+            {"query":{"term":{"internalSecret":"INTERNAL-COPIED-VALUE"}}}
+            """);
+
+    assertEquals(
+        0,
+        viaConcreteName,
+        """
+        The control leg failed: the non-granted concrete field was directly queryable, so this key's \
+        FLS grant is not in force and the other legs prove nothing.""");
+    assertEquals(
+        1,
+        viaCopyToTarget,
+        """
+        A copy_to no longer carries a non-granted field's content into a granted field's index on \
+        this cluster. That would close the vector; verify deliberately, then relax B-1's mapping \
+        constraint and invert this assertion.""");
+
+    // The two alias legs are recorded as measurements rather than leaks: both resolve safely here.
+    assertEquals(
+        0,
+        viaAliasWhenNeitherIsGranted,
+        """
+        A field alias reached its non-granted concrete field. Measured closed on 9.5.1 — FLS \
+        resolves an alias to its concrete field and applies the grant there. If it is now open, \
+        B-1 must forbid alias fields outright rather than merely keep them out of the grant.""");
+    assertEquals(
+        0,
+        viaConcreteWhenOnlyTheAliasIsGranted,
+        """
+        Granting an alias unlocked its concrete field. This is the open reading of Elastic's \
+        "field level security should not be set on alias fields — to secure a concrete field, its \
+        field name must be used directly"; measured closed on 9.5.1, where granting the alias \
+        grants nothing and the concrete field simply stays hidden. If it is now open, D-3's grant \
+        generator must resolve aliases to concrete names before emitting a grant.""");
+  }
+
+  /** Runs one query against the mapping-hazard index under an explicit key, returning hit count. */
+  private static int hitsInHazardIndex(String apiKey, String body) throws Exception {
+    Request request =
+        ElasticSearchTestCluster.jsonRequest(
+            "POST",
+            "/" + ElasticSearchAccessContractFixtures.MAPPING_HAZARD_INDEX + "/_search",
+            body);
+    ElasticSearchTestCluster.asApiKey(request, apiKey);
+    try {
+      return totalHits(jsonResponse(request));
+    } catch (ResponseException e) {
+      // FLS makes some non-granted references unresolvable rather than merely empty; either way the
+      // caller learned nothing, which is what a zero here means.
+      return 0;
+    }
+  }
+
+  /**
+   * Every query clause in Elasticsearch's Query DSL reference that the mediator does not support is
+   * refused, by name, before anything else looks at it.
+   *
+   * <p>The corpus above attacks the clauses that are <em>interesting</em> — the ones with a
+   * demonstrable leak behind them. This is the complementary check, and it is the one that makes
+   * "closed allowlist" a claim rather than an aspiration: it walks the whole clause list from the
+   * DSL reference rather than the subset someone thought to attack. A clause added to Elasticsearch
+   * in a later version is still not covered here, which is exactly why the control is an allowlist
+   * — the point of this test is that the allowlist is small and the refused set is everything else,
+   * not that this list is complete forever.
+   *
+   * <p>Note what is deliberately <em>on</em> the refused list and looks harmless: {@code
+   * constant_score}, {@code dis_max} and {@code boosting} are ordinary compound clauses with no
+   * leak of their own, and the span family is inert. They are refused because supporting a compound
+   * clause means teaching the walk where its sub-queries live, and an unsupported compound clause
+   * whose children are never validated is precisely finding 5's shape.
+   */
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("unsupportedQueryClauses")
+  void everyUnsupportedQueryClauseIsRefusedByName(String clause) {
+    Attack probe =
+        rejected(
+            "bare " + clause + " clause",
+            "§F.1 rule 0 — closed clause allowlist",
+            false,
+            """
+            {"query":{"%s":{}},"size":50}
+            """
+                .formatted(clause));
+
+    Outcome outcome = execute(probe, STRANGER, FALLBACK);
+    assertTrue(
+        outcome.rejected() && outcome.rejectionReason().startsWith("mediator:"),
+        """
+        The mediator did not refuse a '%s' clause. Either it has been added to the supported set — \
+        in which case the question to answer first is where that clause can name a field, and \
+        whether every such position is a member name or a string in a fixed slot — or the shape \
+        allowlist is no longer being applied. %s"""
+            .formatted(clause, outcome.summary()));
+  }
+
+  /**
+   * The Query DSL reference's clause list, minus the ten the mediator supports.
+   *
+   * <p>Transcribed from Elasticsearch's Query DSL reference rather than from memory, and grouped
+   * the way that document groups them, so it can be diffed against the reference on a version bump.
+   */
+  static Stream<String> unsupportedQueryClauses() {
+    return Stream.of(
+        // Compound
+        "boosting",
+        "constant_score",
+        "dis_max",
+        "function_score",
+        // Full text
+        "combined_fields",
+        "intervals",
+        "match_bool_prefix",
+        "match_phrase_prefix",
+        "query_string",
+        "simple_query_string",
+        // Geo and shape
+        "geo_bounding_box",
+        "geo_distance",
+        "geo_grid",
+        "geo_polygon",
+        "geo_shape",
+        "shape",
+        // Joining
+        "has_child",
+        "has_parent",
+        "nested",
+        "parent_id",
+        // Span
+        "span_containing",
+        "span_field_masking",
+        "span_first",
+        "span_multi",
+        "span_near",
+        "span_not",
+        "span_or",
+        "span_term",
+        "span_within",
+        // Specialized
+        "distance_feature",
+        "knn",
+        "more_like_this",
+        "percolate",
+        "pinned",
+        "rank_feature",
+        "rule",
+        "script",
+        "script_score",
+        "semantic",
+        "sparse_vector",
+        "text_expansion",
+        "weighted_tokens",
+        "wrapper",
+        // Term level
+        "fuzzy",
+        "ids",
+        "prefix",
+        "regexp",
+        "terms_set",
+        "wildcard");
+  }
+
+  /**
+   * No caller-supplied request-body member reaches Elasticsearch except the seven the mediator
+   * supports — each is either stripped or the whole request is refused.
+   *
+   * <p>Walks the top-level member list from the Search API reference. This is the request-level
+   * counterpart to the clause sweep, and it is where the two layers' division of labour becomes
+   * visible: {@code _source} and {@code aggs} are <em>stripped</em>, because the product sends them
+   * today and the server owns them; {@code knn}, {@code retriever}, {@code pit}, {@code slice} and
+   * the rest are <em>refused</em>, because nothing should be sending them and a silent drop would
+   * change what the caller asked for. Either outcome is safe. What would not be safe is a third one
+   * — the member arriving at the index — and that is what this asserts against.
+   */
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("unsupportedRequestMembers")
+  void noUnsupportedRequestMemberReachesElasticsearch(String member) {
+    // A sentinel value rather than a plausible one: the server sets its own `_source` after
+    // stripping the caller's, so asserting on the member *name* would flag that as a survival.
+    // What must not survive is the caller's value.
+    String sentinel = "caller-supplied-sentinel";
+    String dsl =
+        """
+        {"query":{"match_all":{}},"size":50,"%s":"%s"}
+        """
+            .formatted(member, sentinel);
+
+    String sent;
+    try {
+      sent = ElasticSearchAccessContractModel.mediate(dsl, STRANGER, FALLBACK, null);
+    } catch (RejectedQueryException e) {
+      return; // Refused outright, which is the stronger of the two safe outcomes.
+    }
+    assertFalse(
+        sent.contains(sentinel),
+        """
+        The request member '%s' survived mediation and would reach Elasticsearch carrying the \
+        caller's value. It must be either stripped (if the product legitimately sends it and the \
+        server owns it) or refused (if it does not). Sent: %s"""
+            .formatted(member, sent));
+  }
+
+  /** Top-level search-body members from the Search API reference, minus the seven supported. */
+  static Stream<String> unsupportedRequestMembers() {
+    return Stream.of(
+        "aggregations",
+        "aggs",
+        "collapse",
+        "docvalue_fields",
+        "explain",
+        "ext",
+        "fields",
+        "indices_boost",
+        "knn",
+        "min_score",
+        "pit",
+        "post_filter",
+        "profile",
+        "rank",
+        "rescore",
+        "retriever",
+        "runtime_mappings",
+        "script_fields",
+        "seq_no_primary_term",
+        "slice",
+        "stats",
+        "stored_fields",
+        "sub_searches",
+        "suggest",
+        "terminate_after",
+        "timeout",
+        "track_scores",
+        "version",
+        "_source");
   }
 
   // =============================================================================================
@@ -1206,25 +2077,45 @@ class ElasticSearchLeakDefensePocTest extends ElasticSearchContainerTests {
     return executeWithKey(attack, caller, NATIVE, apiKeyWithGrant(caller, grant));
   }
 
+  /** {@link #executeWithoutRequestValidation(Attack, Caller, boolean)} with E-3 left on. */
+  private static Outcome executeWithoutRequestValidation(Attack attack, Caller caller) {
+    return executeWithoutRequestValidation(attack, caller, true);
+  }
+
   /**
-   * The fallback path with E-3 switched off: mediation and E-2's filter still apply, but the
-   * response is returned as Elasticsearch produced it.
+   * The fallback path with the mediator's request-side validation switched off: the strip list
+   * still runs, E-2's filter is still injected, and the server still owns the projection and the
+   * aggregations. Only the request-shape walk and the aggregation-vocabulary check are removed.
    *
-   * <p>Exists so a test can show what the response filter removed, rather than only that the
-   * filtered response is clean — which is the difference between demonstrating a control works and
-   * asserting it exists.
+   * <p>Needed because findings 5 and 6 are the two leaks in this class that {@link #assertNoLeak}
+   * cannot see — one discloses through a hit count, the other through a value indistinguishable
+   * from a legitimate facet key — so "the defended configuration is clean" says nothing about
+   * either. Showing what the removed control was holding is the only way to keep them from passing
+   * vacuously.
+   *
+   * @param responseFiltered whether E-3 runs on the result. Passing {@code false} shows what
+   *     Elasticsearch returned before any response-side filtering, which is how a test tells "the
+   *     filter removed it" apart from "it was never there".
    */
-  private static Outcome executeWithoutResponseFilter(Attack attack, Caller caller) {
-    Outcome filtered = executeWithKey(attack, caller, FALLBACK, null);
-    if (filtered.rejected()) {
-      return filtered;
-    }
-    Request request =
-        ElasticSearchTestCluster.jsonRequest("POST", "/" + INDEX + "/_search", filtered.sentBody());
+  private static Outcome executeWithoutRequestValidation(
+      Attack attack, Caller caller, boolean responseFiltered) {
+    String body =
+        ElasticSearchAccessContractModel.mediateWithoutRequestValidation(
+            attack.dsl(), caller, FALLBACK, attack.tab());
+    Request request = ElasticSearchTestCluster.jsonRequest("POST", "/" + INDEX + "/_search", body);
     try {
-      return new Outcome(false, null, jsonResponse(request), filtered.sentBody());
+      JsonObject response = jsonResponse(request);
+      return new Outcome(
+          false,
+          null,
+          responseFiltered ? ElasticSearchAccessContractModel.filterResponse(response) : response,
+          body);
+    } catch (ResponseException e) {
+      return Outcome.refused(
+          "elasticsearch: HTTP %d".formatted(e.getResponse().getStatusLine().getStatusCode()),
+          body);
     } catch (Exception e) {
-      throw new IllegalStateException("unfiltered re-run failed for " + attack, e);
+      throw new IllegalStateException("unvalidated run failed for " + attack, e);
     }
   }
 

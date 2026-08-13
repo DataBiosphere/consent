@@ -117,7 +117,7 @@ to "a shared prerequisite of the contract." See §F and the revised D-3/E-1/E-3 
 
 Every Elasticsearch behavior this contract relies on is now exercised by
 `ElasticSearchLeakDefensePocTest` (`src/test/java/org/broadinstitute/consent/integration/`), an
-end-to-end proof of concept that runs a corpus of 26 exfiltration attempts and 7 legitimate requests
+end-to-end proof of concept that runs a corpus of 45 exfiltration attempts and 7 legitimate requests
 against a real cluster on a trial license, under four configurations:
 
 | Mode | What it is | Measured result |
@@ -149,8 +149,23 @@ evidence here:
   **the last two were not**, and the assertions that close them were added as a result. That is also
   how §F.2's `aggregations.**` requirement came to be understood as defending against our own drift
   rather than against a caller — see §F.2.
+- **Two of its findings are invisible to the marker scan**, and needed their own construction.
+  Findings 5 and 6 below leak nothing a scan can see: one discloses through a *hit count* over
+  documents the caller is authorized for, the other through a bucket key indistinguishable from a
+  legitimate facet. For those, the test runs the mediator with the relevant control switched off and
+  asserts what the control was holding, rather than asserting that the defended configuration is
+  clean — which it is either way. Any control whose absence the corpus cannot detect needs the same
+  treatment, and that is the general lesson: "the fixed configuration passes" is evidence only where
+  the corpus can tell the two configurations apart.
 
-Four measurements changed this document. §1.1 above is the first. The others are folded into the
+- **Its coverage of the DSL is enumerated, not anecdotal.** Two table-driven sweeps walk *every*
+  clause in Elasticsearch's Query DSL reference and *every* top-level member in the Search API
+  reference, asserting that each unsupported clause is refused by name and each unsupported member is
+  either stripped or refused. The hand-written corpus attacks the shapes with a demonstrable leak
+  behind them; the sweeps are what make "closed allowlist" a checkable claim rather than a statement
+  about how many examples someone thought of.
+
+Nine measurements changed this document. §1.1 above is the first. The others are folded into the
 sections they affect, and are collected here so a reader can find them:
 
 | Finding | Lands in |
@@ -159,6 +174,27 @@ sections they affect, and are collected here so a reader can find them:
 | **OPEN-8 resolves restrictively**, and affects three paths rather than two | §B.0a, §B.5c, §D, OPEN-8 |
 | A granted multi-field does not carry its `.keyword` subfield, and the failure is silent | §B.5c, §F.1, OPEN-9 |
 | E-1's `fields` strip rule and §F.2's `sort` rule are not implementable as written | §F.1, §F.2 |
+| **A field-reference validator cannot be trusted over an open grammar** — `query_string`, `terms` lookup, `more_like_this`, `wrapper`, `retriever`, `_script` sort, `knn` and `pit` all pass it untouched. The mediator needs a closed shape allowlist | §F.1 rule 0, §D E-1 |
+| **§F.2's `buckets[*].key` row is not implementable** — a bucket key carries no field name. E-0 must validate its own vocabulary before executing it | §F.2, §D E-0 |
+| **QUERYABLE implies readable.** A `range` binary search recovers a RESPONSE-INTERNAL field's exact value from `hits.total` in ten accepted requests | §B.0b, OPEN-12 |
+| **A second role descriptor on the API key unions away both DLS and FLS** | §B.7a, §D D-2 |
+| **`copy_to` reaches around the FLS grant**, and no request-side control can close it | §B.5d, §D B-1/B-3 |
+
+Two further gaps are architectural rather than measured, and are recorded where they belong: the
+request surface outside the JSON body (§F.2a), and the fact that `ElasticSearchService.validateQuery`
+sends **unmediated** caller DSL to `_validate/query` before the search runs.
+
+**A note on Elastic's own limitations documentation, and on the CVE history.** Several protections
+this design might otherwise lean on are properties of DLS specifically — suggesters ignored, remote-
+call queries refused, wildcard `multi_match` fields rejected — and therefore do not exist on the
+fallback path at all (§F.1 rule 0). Beyond that, document level security has had repeated CVEs in
+which the native mechanism itself failed to hold: CVE-2021-22135 (suggester and profile API
+disclosing document existence under DLS/FLS), the pre-7.11.2 cross-cluster search disclosure, and
+CVE-2024-12539 (a DLS bypass in 8.16.0–8.16.1). That history is the strongest available argument for
+the position §1.1 already reaches on other grounds: **the mediator and the response filter are not
+the fallback path's compensating controls, they are the controls, and the native path runs them
+too.** A design in which Epic D's correctness depends on DLS being bug-free is a design with a
+single point of failure that has failed before.
 
 ## DECISION 2 — Search serves one field bundle to every caller
 
@@ -362,6 +398,118 @@ without any special handling; normalization would be the thing requiring extra w
 
 ---
 
+### §A.3 — Which rows could be separated physically, and which never can
+
+Physical index separation — putting differently-visible documents in different indices rather than
+filtering one index — comes up as a remedy for OPEN-10, because term statistics are computed per
+index and per shard rather than globally. It is worth recording how it interacts with this matrix,
+because the answer is stable and it forbids a design someone will otherwise propose.
+
+**The rule: split only on a clause that does not mention the caller.** A physical split is a property
+of a *document*, decided at index time. A rule that depends on who is asking cannot be one, because
+the same document is visible to one caller and not another and it cannot live in two indices.
+
+Applied to the DLS disjunction, that line falls in exactly one place. Of its five clauses, two never
+mention the caller and three are nothing but the caller:
+
+| Row | Clause | Mentions the caller? | Separable |
+| --- | --- | --- | --- |
+| 2 | `accessPolicy.publicVisibility: true` | No | **Yes** |
+| 5 | `accessPolicy.hasStudy: false` | No | **Yes** |
+| 6 | `accessPolicy.datasetCreatorUserId` | Yes | No |
+| 7 | `accessPolicy.studyCreatorUserId` | Yes | No |
+| 8 | `accessPolicy.custodianEmails` | Yes | No |
+| 1 | ADMIN (`match_all`) | Yes (a role) | No — but it reads both sides |
+
+So the only split §A supports is **two indices**: everything satisfying rows 2 or 5, which every
+authenticated caller may read; and everything else, which still needs the per-caller predicate. Rows
+6–8 stay as filter clauses on the restricted side. Nothing else is on offer.
+
+#### It is stable under the forecast, and that is the useful part
+
+Rows 9–14 are DEFERred, and the direction of travel is toward finer per-document rules — DAC,
+institution, policy tags, explicit principal allowlists. **Every one of them mentions the caller**:
+DAC membership, institution membership, tag holding and principal identity are all properties of who
+is asking. By the rule above, none of them can be a split, and all of them become additional `should`
+clauses on the restricted side.
+
+That is the answer to "does the split survive finer rules": **yes, because the split line is drawn at
+caller-independence and every forecast rule is caller-dependent.** The index count does not grow with
+the rules. What grows is the predicate on one side of a boundary that stays where it is.
+
+#### What it forbids
+
+The tempting generalisation — an index per DAC, per institution, per group — is the thing to refuse,
+and it fails on the rule rather than on taste. Group membership is caller state, so "index per DAC"
+is a split on a caller-dependent clause. Attempting it produces one index per *distinct set of
+authorised principals*, which for row 12 or row 14 approaches one index per document: thousands of
+tiny indices, per-shard memory costs Lucene punishes hard, and every ACL change becoming a
+cross-index delete-and-reindex instead of an update.
+
+Note that even the sanctioned two-index split moves documents when `publicVisibility` or the study
+link changes. That is not new work — §C and B-4 already require a reindex on those changes for the
+same reason — but it becomes a delete-and-index rather than an update, and B-5's migration strategy
+would have to cover the move.
+
+#### What it actually buys — only OPEN-10
+
+Worth being precise, because the split is easy to oversell. Once E-2's injected filter and E-0's
+server-owned aggregations are in place, the result set and every aggregation are **already** bounded
+to documents the caller may read. The split adds nothing there. Its one unique contribution is that
+the public index's term statistics are computed over public documents only, so the scoring inference
+of OPEN-10 has nothing to infer *about* for a caller who reads only that index.
+
+That makes this a straight comparison against OPEN-10's other remedy:
+
+| Option | Closes OPEN-10 | Cost |
+| --- | --- | --- |
+| Accept the residual | No | None — current default |
+| Constant scoring (`filter` context) | Yes | Loses relevance ranking on the library search box |
+| Two-index split | Yes — **measured**: statistics stay per-index under the default search type | Reindex-on-move, B-5 migration scope, and a **measured 13.6× score distortion** between tiers for identical content |
+
+#### Measured: the security property holds, the search experience does not
+
+Both open questions have been measured, by `ElasticSearchIndexSeparationTest`, against two
+single-shard indices with deliberately opposite document frequencies for one term and a
+**byte-identical document present in both**. The twin is what makes the result unambiguous: same
+text, same query, so any difference in its score is a difference in the statistics it was scored
+against and nothing else.
+
+| # | Question | Result |
+| --- | --- | --- |
+| 1 | Does a multi-index search keep term statistics per index? | **Yes.** The twin scores *identically* — to exact equality, not to a tolerance — whether the search targets the public index alone or both indices. Restricted documents do not feed into a public document's score. |
+| 1a | Control: does `dfs_query_then_fetch` pool them? | **Yes**, and it scores both copies of the twin identically. So result 1 is a real property of the default search type, not a corpus in which the two indices happen to agree. |
+| 2 | Is the merged ranking usable? | **No.** The identical twin scored **1.99 in the public tier and 0.15 in the restricted tier — a 13.6× difference** on content that is the same byte for byte. |
+| 2a | What does that do to a page? | The public tier's *single* matching document outranks **all nine** equally-relevant restricted matches. The first page is ordered by tier, not by content. |
+
+**So the split works as a security control and fails as a catalog.** Result 1 is the good news and it
+is what the design needed: separation is real, and a caller reading only the public index can infer
+nothing about the restricted one from scores. Result 2 is the price, and it is worse than the
+"comparability" caveat this section previously recorded — a 13.6× swing means the two tiers are not
+one ranked list that happens to be slightly uneven, they are two result lists interleaved by a number
+that measures which index a document is in.
+
+Two qualifications on result 2, both honest limits on the number rather than reasons to discount it.
+The **magnitude is corpus-specific** — it follows from how much rarer the term is in one tier than
+the other, so a realistic catalog should be measured before any decision rests on 13.6× in
+particular. The **direction is structural**: documents in whichever tier makes a term rarer will
+always score higher for it, so any two-tier split distorts ranking in favour of the smaller tier for
+its characteristic vocabulary.
+
+Result 1a earns its own note. `search_type` is a **URL parameter**, so a caller who could set
+`dfs_query_then_fetch` would pool the statistics and collapse the entire benefit of the split with
+one query string. That upgrades §F.2a's "forward no caller URL parameter" from hygiene to a control
+with a demonstrated consequence — and it means the split would *depend* on §F.2a rather than merely
+coexisting with it.
+
+**Recommendation: not now, and for a firmer reason than before.** OPEN-10's default is to accept the
+residual. If that changes, constant scoring is both the cheaper experiment and the one that does not
+break ranking across the catalog — it flattens scores deliberately, where the split flattens them
+accidentally and unevenly. Record the split as the structural option, with the rule that bounds it,
+so that a future finer-grained rule is not met with an index-per-group proposal. Revisit only if
+Decision 1's invisibility guarantee is ever strengthened to cover statistical inference, in which
+case result 2 becomes a product decision about whether the catalog needs one ranked list at all.
+
 ## §B — Field classification
 
 Classification runs on **two independent axes**, because a field can be needed by a caller without
@@ -464,6 +612,46 @@ Two structural lessons, both now rules:
    `restrictToPublicVisibility` clause matches nothing and the library silently returns an empty
    catalog. §B.5c states the rule over the whole set rather than per path, so a fourth member cannot
    be missed the same way.
+
+#### §B.0b — QUERYABLE implies readable, so the two axes are not independent
+
+Measured, and it changes what the paragraphs above are promising. A caller can recover the exact
+value of a QUERYABLE-but-RESPONSE-INTERNAL field with a **binary search over `range` clauses**,
+reading the answer off `hits.total`. The proof of concept recovers a document's `createUserId` in ten
+requests, every one of them accepted by the mediator, from a caller who is never shown the field:
+
+```json
+{"query":{"bool":{"must":[{"term":{"datasetIdentifier":"DUOS-00001"}},
+                          {"range":{"createUserId":{"lte":511}}}]}},"size":0}
+```
+
+Nothing here is a defect in any control. The mediator accepts it because both paths are QUERYABLE and
+`range` is a supported clause; E-3 strips `createUserId` from the response and always did; the
+document is one the caller is fully authorized to read. The disclosure rides on the **hit count**,
+and no response-side filter can touch it — this is the same shape as finding 5's `query_string`
+oracle, arriving through a query the contract intends to allow.
+
+So **"QUERYABLE but RESPONSE-INTERNAL" delivers obscurity, not confidentiality**, and §B should say
+which of the two it is buying. The contract is not wrong to have the axis — a field the caller cannot
+filter on is genuinely harder to reach — but lesson 1 above, and §B.5c and OPEN-8 behind it, are
+written as though hiding the field from the response hides its value. It does not.
+
+Two ways to resolve it, and the second is already on the roadmap:
+
+- **Accept it, explicitly.** The three affected paths are two user IDs and a boolean; a caller who
+  can already see the document learns who submitted it and whether it is public. That is defensible.
+  It has to be *written down*, because §B.0a currently reads as a general technique, and the next
+  field classified this way may not be a user ID.
+- **Take them out of QUERYABLE.** Both queries that need them — "My Data Submissions" and
+  `restrictToPublicVisibility` — are derivable from the caller's own identity, so the server can
+  build them from a business parameter instead of accepting them as caller DSL. That is §F.1a and
+  plan item 4.2, and this is a **second independent argument for promoting it** (the first being
+  OPEN-11). It would also retire OPEN-8, §B.5c's widened grant, and E-3's presence on the native
+  path, all of which exist only to hold a distinction this section shows is not holdable.
+
+**Recommendation: accept for `createUserId` and `study.dataSubmitterId`, and let G-1 remove
+`study.publicVisibility` from the set as already planned** — then revisit when 4.2 lands. Recorded as
+**OPEN-12**.
 
 Two directions of movement, with different costs:
 
@@ -685,6 +873,41 @@ Decision 2 is unaffected: there is still exactly one grant and one response bund
 callers, including admins. What changes is that the grant is wider than the bundle, and the response
 filter — not FLS — is what closes the gap.
 
+### §B.5d — The mapping can defeat the grant, and §B cannot express that
+
+Everything above classifies **fields**. Nothing constrains the **shape of the mapping**, and two
+ordinary mapping constructs make a non-granted field reachable under a granted name. Both measured
+against a real FLS grant:
+
+| Construct | What it does | Measured on 9.5.1 |
+| --- | --- | --- |
+| **`copy_to`** | Duplicates a field's content into another field's index **at index time**, before any role is consulted | **Open.** A `match` on the granted target finds documents by the value of the non-granted source. The value is not *returned* — `copy_to` does not alter `_source`, so E-3 sees nothing to filter — so the leak is an exact-value oracle. §B.0b shows what a caller does with an oracle. |
+| **`alias`** | A second name for a concrete field. Elastic: *"field level security should not be set on alias fields. To secure a concrete field, its field name must be used directly."* | **Closed**, in both directions: FLS resolves the alias to its concrete field and applies the grant there, and granting the alias grants nothing. Recorded so a version bump that changes it is caught. |
+
+**The mediator cannot close the `copy_to` case, and this is the important part.** Its allowlist is a
+set of paths, and the `copy_to` *target* is a legitimately allowlisted path — the caller's query is
+exactly the one the product's search box issues. There is no request to refuse. The only place the
+control can live is the mapping.
+
+A third construct belongs with them: a **mapping-level `runtime` field**, whose script can read
+`params._source` wholesale and expose any field under a name of its own. E-1 strips caller-supplied
+`runtime_mappings`; a runtime field defined in the *index mapping* is not caller-supplied and is not
+stripped.
+
+**Requirement on B-1/B-3, and on D-3's grant generator:** the dataset index mapping must contain no
+`copy_to` targeting a RESPONSE-VISIBLE field, no `alias` fields, and no mapping-level `runtime`
+fields. Assert it **against the live mapping**, not against the model classes — the mapping is what
+Elasticsearch enforces against, and §B.5c already established that §B's tables are not a sufficient
+source for anything the grant depends on. This is the mapping-shape counterpart to §B.6's
+field-level rule.
+
+A related item that §B also does not cover: FLS **always** permits the metadata fields `_id`,
+`_index`, `_routing`, `_type`, `_parent`, `_timestamp`, `_ttl` and `_size`, whatever the grant says.
+`_id` is the dataset ID here, which is RESPONSE-VISIBLE anyway, so nothing leaks today — but that is
+a fact about the current indexing scheme rather than a control, and E-3's retained-key set is what
+actually decides which of them reach the caller. **Classify the metadata fields explicitly**, and do
+not route anything sensitive through `_routing`.
+
 ### §B.6 — Keep this list in step with the model classes
 
 §B is enumerated from `DatasetTerm.java`, `StudyTerm.java`, `UserTerm.java`, `DacTerm.java`,
@@ -709,6 +932,30 @@ A wildcard admin grant would serve `accessPolicy.*` and both dynamic maps to adm
 contradicting §B.4 and §B.5 — and it would do so through the same UI, which has no use for them.
 Admin tooling that genuinely needs internal fields should use the admin endpoints, which are outside
 this contract. "Admin" is a document-visibility bypass, not a projection bypass.
+
+### §B.7a — One role descriptor, or there is no security
+
+Measured, and it is the cheapest way to lose everything Epic D builds. **An API key carrying more
+than one role descriptor gets the union of their DLS queries and FLS grants, not the intersection.**
+Elastic documents this for FLS — *"field level security takes into account each role the user has and
+combines all of the fields listed into a single set"* — and the same holds for DLS role queries,
+which are OR-ed. Confirmed on 9.5.1: a key carrying D-3's restrictive descriptor **plus any second
+descriptor granting plain `read` on the same index** returns every document and every field. The
+restrictive descriptor is not weakened or overridden; it is simply added to.
+
+Two requirements follow, both on **D-2**:
+
+- The minted key names the dataset index in **exactly one** role descriptor. A second descriptor that
+  mentions the index at all — for a dashboard, a health check, an export job — removes document
+  filtering entirely.
+- The **key's owning user** holds no separate index privilege on the dataset index. An API key's
+  effective permissions are the intersection of its descriptors with the owner's, so a superuser or
+  broadly-privileged owner narrows nothing and the key's own restriction is the only thing acting.
+
+The failure mode is the one §1.1 warns about throughout: it is silent. There is no error, the
+response looks ordinary, and every test written against a single-descriptor key still passes. **D-5
+must assert the descriptor count on the key the service actually mints**, not on the descriptor the
+builder returns.
 
 ---
 
@@ -759,15 +1006,18 @@ what A-2 requires is that A-3 stop describing it as a solved case.
 
 | Ticket | Required change |
 | --- | --- |
-| **B-1** | Drop `fieldAccessProfile` (Decision 2). Omit `allowedInstitutionIds`, `allowedPrincipalIds`, `policyTags` until OPEN-5 says they are requirements. Comment on the class that every field is INTERNAL (§B.4). Custodian emails are trimmed on the stored side but preserve case (§A.2); do not lowercase or otherwise normalize them. |
+| **B-1** | **Mapping-shape constraints (§B.5d):** the dataset index mapping must contain no `copy_to` targeting a RESPONSE-VISIBLE field, no `alias` fields, and no mapping-level `runtime` fields — `copy_to` is measured to reach around the FLS grant and no request-side control can close it. Assert against the live mapping, not the model classes. Drop `fieldAccessProfile` (Decision 2). Omit `allowedInstitutionIds`, `allowedPrincipalIds`, `policyTags` until OPEN-5 says they are requirements. Comment on the class that every field is INTERNAL (§B.4). Custodian emails are trimmed on the stored side but preserve case (§A.2); do not lowercase or otherwise normalize them. |
 | **B-2** | **Cancelled.** It specifies a per-document FLS marker, which Elasticsearch cannot honour, and the per-caller repair leaks across documents. Deriving a bundle is no longer needed at all: there is one bundle (Decision 2). |
-| **B-3** | Populate rows 1–3 and 5–8. Write an explicit **no-study marker** (`accessPolicy.hasStudy`, §A.1) so row 5 does not depend on a null meaning "visible." Do not normalize custodian emails. |
+| **B-3** | Same mapping-shape constraints as B-1 (§B.5d), since B-3 is what writes the mapping. Populate rows 1–3 and 5–8. Write an explicit **no-study marker** (`accessPolicy.hasStudy`, §A.1) so row 5 does not depend on a null meaning "visible." Do not normalize custodian emails. |
 | **B-4** | Custodian changes must trigger reindex — see §C; the index is now the authorization source for search. |
 | **C-1** | Carry only caller-side inputs: the caller's user ID, email **unnormalized** for exact matching, and global roles. Dataset/study creator IDs remain distinct document-side `accessPolicy` fields (rows 6/7); the filter compares the one caller ID with both. Do **not** resolve DAC, institution, allowlist, or policy-tag context while rows 9–14 are DEFERred. **No field-bundle field**: the bundle is constant (Decision 2). |
 | **C-2** | Normalize the two `verifyPublicVisibilityAccess` overloads so their null handling cannot diverge if the `NOT NULL` constraint is ever relaxed (§A.1). |
+| **D-2** | **New requirement from measurement (§B.7a).** The minted API key must name the dataset index in **exactly one** role descriptor, and the key's owning user must hold no separate index privilege on it — multiple descriptors **union** their DLS queries and FLS grants, so a second descriptor granting plain `read` removes document filtering silently. Assert the descriptor count on the key the service actually mints. |
 | **D-3** | DLS filter from rows 1–3, 5–8 — plus the no-study clause. **No DAC clause** (row 9 is DEFERred). FLS grant is literal paths, no wildcards, **the same for admins** (§B.7), **with `study.assets.*` leaves enumerated** (§B.5a). **Revised twice by measurement (§1.1a):** (a) DLS/FLS alone does not deliver Decision 1, so D-3 depends on E-0 and E-1 and must not ship without them (§1.1); (b) the grant is **not** the RESPONSE-VISIBLE list — OPEN-8 is resolved restrictively, so the grant is RESPONSE-VISIBLE ∪ QUERYABLE ∪ the `.keyword` subfields of granted multi-fields, **and E-3 runs on this path too** (§B.5c). Generate the grant from the mapping, not from §B's tables: they do not contain the subfields. |
-| **E-1** | **Revised.** Strip the unsafe keys at **every depth**, not just the root — a nested `_source` inside `aggs.*.top_hits` currently survives (§B.5b). Add `runtime_mappings`, `collapse`, `inner_hits`, `rescore`, `suggest`, `docvalue_fields` and `stored_fields` to the strip list. Do not simply "preserve `aggs`/`sort`/`highlight`" — pass each through the §F.1 field-reference validator. **Correction:** `fields` may **not** be stripped unconditionally at every depth. It is a response channel at request level but the clause's own field list inside `multi_match`/`query_string`/`highlight`; stripping it there silently widens the search to all fields, silently disables highlighting, and hides the `["*"]` reference the validator needs to refuse (§F.1 rule 1). Strip it as a channel, keep and validate it as a field list. |
-| **E-2 / E-3** | Same filter, same allowlist, same source document. **E-3 revised:** filtering `hits.hits[*]._source` is not sufficient. It must handle **every response channel** (§F.2) — `aggregations.**` including `top_hits` `_source`, `hit.fields`, `hit.highlight`, `hit.sort`, and `inner_hits` — for every caller including admins, by allowlist rather than denylist. As specified, nine data-library tabs receive whole unfiltered `study` objects through the aggregation channel. **Two further revisions:** `hit.sort` must be **dropped**, not filtered — it carries values with no field names, so no allowlist applies (§F.2); and **E-3 is required on the native path as well**, because §B.5c widens the FLS grant beyond RESPONSE-VISIBLE and the response filter is what closes the difference. E-3 is therefore not fallback-only. |
+| **E-0** | **New requirement from measurement (§1.1a).** The vocabulary must be **validated before it is executed**, not merely built server-side: every `terms` `field` and every `top_hits` `_source` leaf against **RESPONSE-VISIBLE**, every aggregation type and parameter against the vocabulary's own shapes, and a `top_hits` with no explicit `_source` refused. This is the only control that reaches `buckets[*].key`, which §F.2 asked E-3 to project and which E-3 cannot — a bucket key carries no field name (§F.2). Validate at build time over every entry as well as on the request path. |
+| **E-1** | **Revised twice.** (1) Strip the unsafe keys at **every depth**, not just the root — a nested `_source` inside `aggs.*.top_hits` currently survives (§B.5b). Add `runtime_mappings`, `collapse`, `inner_hits`, `rescore`, `suggest`, `docvalue_fields` and `stored_fields` to the strip list. **Correction:** `fields` may **not** be stripped unconditionally at every depth. It is a response channel at request level but the clause's own field list inside `multi_match`/`highlight`; stripping it there silently widens the search to all fields, silently disables highlighting, and hides the `["*"]` reference the validator needs to refuse (§F.1 rule 1). Strip it as a channel, keep and validate it as a field list. (2) **"Structurally permits `query`/`sort`/`size`/`from`/`search_after`/`pit`/`highlight` and validates the field references inside them" is not sufficient, and `pit` must not be on that list.** Several clauses carry field references the validator cannot see — measured, all six passing untouched: `query_string` (fielded terms in query text), a `terms` **lookup** (reads a field out of another document), `more_like_this` (searches by document id), `_script` sort, `knn` (a request-level `field`) and `pit` (replaces the index searched). E-1 must accept a **closed allowlist of request members, query clause types, and per-clause members and value shapes**, and refuse the rest (§F.1 rule 0). An omitted `fields` on `multi_match`/`simple_query_string`/`combined_fields` must be refused too: it falls back to `index.query.default_field` (`*`). (3) **Mediation must run before anything else that carries caller input reaches Elasticsearch** (§F.2a). Today `ElasticSearchService.searchDatasets` calls `validateQuery` on the **raw** caller DSL — regex-mangled, then sent to `_validate/query` — before building the search request, so whatever the mediator would refuse has already been sent once. Run validation on the mediated body or delete it; a server-built query does not need caller-DSL validation. The endpoint must also forward no caller-supplied URL parameter, index name or path. |
+| **E-2 / E-3** | Same filter, same allowlist, same source document. **E-3 revised:** filtering `hits.hits[*]._source` is not sufficient. It must handle **every response channel** (§F.2) — `aggregations.**` including `top_hits` `_source`, `hit.fields`, `hit.highlight`, `hit.sort`, and `inner_hits` — for every caller including admins, by allowlist rather than denylist. As specified, nine data-library tabs receive whole unfiltered `study` objects through the aggregation channel. **Two further revisions:** `hit.sort` must be **dropped**, not filtered — it carries values with no field names, so no allowlist applies (§F.2); and **E-3 is required on the native path as well**, because §B.5c widens the FLS grant beyond RESPONSE-VISIBLE and the response filter is what closes the difference. E-3 is therefore not fallback-only. **Fourth revision:** E-3 must also apply to `searchDatasetsStream`, the v2 endpoint, which returns Elasticsearch's response body verbatim as an `InputStream` — a streaming response filter is a different piece of work from one that parses a response object (§F.2a). **Third revision:** `buckets[*].key` is **not** in E-3's scope — it cannot be filtered, for the same reason `hit.sort` cannot, and it moves to E-0 (§F.2). E-3's `aggregations.**` walk stays as the backstop behind E-0's check, not as the control. |
+| **D-5 / E-5** *(added scope)* | Assert the **role-descriptor count on the key the service actually mints** (§B.7a) and the **mapping-shape constraints against the live mapping** (§B.5d). Both failures are silent and neither is visible to a test written against a builder's return value. |
 | **D-5 / E-5 / B-6** | The end-to-end proof of concept (§1.1a) already exists as `ElasticSearchLeakDefensePocTest`, with the enforcement modeled in `ElasticSearchAccessContractModel`. These tickets should replace the model with the real components rather than write a new corpus: the attack corpus, the marker scheme, the caller fixtures and the parity assertion are all reusable as-is, and the mutation results in §1.1a record which assertions are load-bearing. Keep the `NATIVE_UNMEDIATED` configuration — it is what proves the corpus can still detect a leak. |
 | **G-1** | Client-side `publicVisibility`/`dacApproval` filtering is removed once the server filter implements rows 2–5 identically. `study.publicVisibility` is RESPONSE-INTERNAL (§B.2), so the client stops receiving it — sequence the two changes together. **Also:** `useLibraryData.ts:44` sends it as a `term` clause, so G-1 must land before `study.publicVisibility` becomes NON-QUERYABLE (§B.0a). |
 | **G-2 / G-4** | Verify no duos-ui consumer reads a RESPONSE-INTERNAL field or filters on a NON-QUERYABLE one. §B.0's caller table is the scope; §B.0a is a record of what a partial audit cost. The audit must cover `data_library/**` and the eleven `AssetDefinition`s, not only `data_search/**`. |
@@ -795,7 +1045,9 @@ sign-off, and it is the one item on this list that has grown rather than shrunk.
 | **OPEN-7** | Should the catalog **stop** publishing `study.piName`, `study.dataCustodianEmail`, `study.dataSubmitterEmail`, and `dac.dacEmail` to all authenticated callers? They are on screen today (§B.0), so this contract keeps them SEARCH-VISIBLE. Restricting them is a product decision, and needs a duos-ui change in the same release — the table's `dataCustodianEmail.join(', ')` throws if the field is absent. | Nothing — this is a proposed tightening, not a gap | Keep publishing. Changing it is product scope, not enforcement scope. |
 | **OPEN-8** | **RESOLVED by measurement — restrictively. No longer blocks D-3.** The question was whether a path outside the FLS `grant` remains usable as a `term` query target. It does not: a `term` query on a non-granted path matches **zero documents, with no error**, which is indistinguishable from a legitimately empty result. Measured on 9.4.4 by `ElasticSearchLeakDefensePocTest.open8_aPathOutsideTheFlsGrantIsNotQueryable`, with a wider-grant control leg proving the result is FLS and not a faulty probe. Consequences: the two §B axes cannot both be honoured by native FLS alone; the remedy is the one this item already named as its fallback — **grant the QUERYABLE paths and strip them in the response filter on the native path too** (§B.5c); and the affected set is **three** paths, not two — `study.publicVisibility` is in the same position and §B.0a had missed it. | Nothing — D-3 is unblocked, with §B.5c's grant | n/a — settled by measurement. |
 | **OPEN-9** | How is the `study.assets.*` leaf enumeration (§B.5a) kept in sync between the backend allowlist and duos-ui's eleven `AssetDefinition`s? A hand-maintained copy will drift, and drift is invisible in whichever environment runs the other path. Options: generate both from a shared schema, or add a contract test that fails when an `AssetDefinition` references an unenumerated path. **Strengthened by two findings.** First, drift is now the *primary* justification for §F.2's `aggregations.**` walk: with server-owned aggregations a caller cannot reach that channel, so what the walk defends against is a drifted server-side enumeration asking Elasticsearch for an internal leaf (§F.2). Second, §B.5c adds a second thing that cannot be generated from §B's tables — the `.keyword` subfields of granted multi-fields — which makes "generate from a shared schema/mapping" the answer for the FLS grant as a whole, not just for the asset subtrees. | Nothing — but the drift is a live defect risk for D-3/E-3 | Add the contract test in B-6; treat generation from the mapping as the durable fix, now for the whole grant. |
-| **OPEN-10** | Accept the residual scoring-statistics leak (§F.1)? Relevance scores derive from index-wide term frequencies, so a caller can infer weakly about documents DLS hides even with server-owned aggregations. Closing it means running the text search in `filter` context with constant scoring, which costs relevance ranking on the library search box. **Now measured, and the direct reads are worse than "weak inference" suggested:** `_explanation` reports index-wide `N` and `docFreq` verbatim, and `significant_terms`' `bg_count` reports the whole index's document count — both straight past DLS (§1.1). Those are closed by §F.1 (strip `explain`, server-own `aggs`), not by DLS, which is what makes stripping them load-bearing rather than tidy. What remains genuinely residual after §F.1 is only the inference from `_score` values. | Nothing | Accept and document the residual — but the residual is now specifically "inference from score values", not the direct reads, which are closed. Revisit only if the threat model changes. |
+| **OPEN-10** | Accept the residual scoring-statistics leak (§F.1)? **§A.3 records a third option** — a two-index split on the caller-independent rows — and recommends against it for now: constant scoring is the cheaper experiment if the default changes. Relevance scores derive from index-wide term frequencies, so a caller can infer weakly about documents DLS hides even with server-owned aggregations. Closing it means running the text search in `filter` context with constant scoring, which costs relevance ranking on the library search box. **Now measured, and the direct reads are worse than "weak inference" suggested:** `_explanation` reports index-wide `N` and `docFreq` verbatim, and `significant_terms`' `bg_count` reports the whole index's document count — both straight past DLS (§1.1). Those are closed by §F.1 (strip `explain`, server-own `aggs`), not by DLS, which is what makes stripping them load-bearing rather than tidy. What remains genuinely residual after §F.1 is only the inference from `_score` values. | Nothing | Accept and document the residual — but the residual is now specifically "inference from score values", not the direct reads, which are closed. Revisit only if the threat model changes. |
+| **OPEN-12** | **Is "QUERYABLE but RESPONSE-INTERNAL" (§B.0a) buying confidentiality or obscurity?** Measured: it is obscurity. A `range` binary search recovers such a field's exact value from `hits.total` in ten mediator-accepted requests, and no response-side control can touch it because the disclosure rides on the hit count of documents the caller is authorized to read (§B.0b). The three affected paths are two user IDs and a boolean, so accepting this is defensible — but it must be a decision rather than an assumption, because §B.0a reads as a general technique. The alternative is to take them out of QUERYABLE by deriving both queries server-side from the caller's identity, which is plan item 4.2 and would also retire OPEN-8, §B.5c's widened grant, and E-3's presence on the native path. | Nothing — enforcement is unchanged either way | **Accept** for `createUserId` and `study.dataSubmitterId`; let G-1 remove `study.publicVisibility` from the set as already planned. Revisit when 4.2 lands. This is a second independent argument for OPEN-11. |
+| **OPEN-13** | **Does Epic D (native DLS/FLS) still earn its place?** After every A-2 correction, D-1…D-5 uniquely provides one thing — document filtering enforced by the cluster rather than by E-2's injected clause — and both express the *same* predicate. Deferring it removes five tickets, the `securityMode` switch, the two-path parity burden, §B.5c's widened grant, §B.7a's descriptor constraint and the Platinum dependency, while E-0/E-1/E-2/E-3 ship regardless. **The question to answer first is §G.3 point 2**: DLS binds to the credential, E-2 binds to our endpoint, so if anything other than this endpoint will ever query the index with the service's credentials, Epic D is not redundant. Full comparison in §G. | Nothing — E ships either way; this decides whether D is additionally built | **Defer D-1…D-5 pending a deliberate answer**, rather than cancel. Nothing depends on them, D-3's predicate builder is shared and stays, and the deferral is cheap to reverse. |
 | **OPEN-11** | Promote plan item 4.2 (server-owned search API taking business parameters) from "deferrable" to the roadmap? §F.1a argues the aggregation half should be done now regardless, and that finishing the `query` half retires §F entirely. | Nothing — §F.1 is implementable without an answer | Do the `aggs` half now as E-0; schedule the `query` half deliberately rather than leaving it indefinitely deferred. |
 
 ---
@@ -851,7 +1103,65 @@ author aggregation DSL, and none of the three admits a caller-chosen `min_doc_co
 `background_filter`, or aggregation type. The leak is closed **by construction** rather than by
 detection: there is no caller-supplied shape left to inspect.
 
-What remains for the mediator is genuinely small, and is field-level only:
+What remains for the mediator is genuinely small — but it is **not** field-level only, and an earlier
+version of this section said it was. That correction is rule 0.
+
+0. **Accept a closed set of request shapes and refuse the rest.** Rule 2 below says to validate "the
+   remaining field references", which presumes every field reference can be *found*. That is true
+   only of the shapes somebody enumerated, and the DSL has several where it is false. Measured, each
+   one passing the field-reference validator untouched:
+
+   | Shape | Where its field reference hides |
+   | --- | --- |
+   | `query_string` | inside the clause's own query text — `{"query":"accessPolicy.custodianEmails:x@example.org"}` is a fielded term in a Lucene mini-language, not a JSON member |
+   | `simple_query_string`, `combined_fields`, `multi_match` **with `fields` omitted** | nowhere — the clause falls back to `index.query.default_field`, which defaults to `*`, and searches every field in the mapping |
+   | `terms` **lookup** — `{"terms":{"p":{"index":…,"id":…,"path":…}}}` | in `path`, naming a field read out of *another document*, which neither DLS nor the injected filter bounds |
+   | `more_like_this` | nowhere — `like` takes document **ids**, so the clause searches by the term vectors of documents the caller cannot read |
+   | `_script` sort, `highlight_query`, `matched_fields`, `function_score` | inside a nested script or a second query, in positions rule 2's walk does not visit |
+   | `knn`, `pit`, `retriever`, `sub_searches`, `rank` | at *request* level — `knn` carries a `field`, `retriever` and `sub_searches` carry entire queries without being named `query`, and `pit` replaces the index being searched altogether |
+   | **`wrapper`** | nowhere a validator can look — the clause's entire content is a **base64-encoded query**, so no JSON-level inspection of any depth sees it |
+   | `post_filter`, `min_score`, `ids`, `version`, `seq_no_primary_term` | request members that filter, threshold or annotate without naming a mapped field at all |
+
+   Four of these are **Elastic's own documented DLS limitations**, which sharpens the point rather
+   than softening it. Elastic states that queries making remote calls are unsupported under DLS —
+   naming `terms` lookup, `geo_shape` with indexed shapes, and `percolate` — that "if suggesters are
+   specified and document level security is enabled, the specified suggesters are ignored", and that
+   `multi_match` "does not support specifying fields using wildcards". **Every one of those
+   protections is a property of DLS, and the fallback path has no DLS**: it runs with privileged
+   credentials and an injected `filter` clause, so a suggester is *not* ignored, a terms lookup is
+   *not* refused, and a wildcard field list is *not* rejected. Reading "Elasticsearch does not allow
+   this" as "we are covered" is true on one of the two paths the contract is obliged to make
+   identical. `suggest` on the fallback path is the sharpest of them — CVE-2021-22135 was exactly a
+   suggester disclosing the existence of documents past DLS — and it is on the strip list for that
+   reason, not for tidiness.
+
+   Verified exhaustively rather than by example: the proof of concept walks **every clause in the
+   Query DSL reference** and **every top-level member in the Search API reference**, asserting that
+   each unsupported clause is refused by name and each unsupported member is either stripped or
+   refused. That is what makes "closed allowlist" checkable. A clause added in a later Elasticsearch
+   version is still not on either list — which is the argument for the allowlist, not against it.
+
+   A validator that walks known positions returns an empty reference set for every one of these and
+   reports success, which is indistinguishable from correctly finding nothing to check. So the
+   mediator states what it **supports** rather than what it forbids, on three axes: request members,
+   query clause types, and the members and value shapes each clause may carry. `terms` is the case
+   that shows why the value shape matters as much as the clause name: the clause is supported, its
+   field reference is validated, and the *lookup* form of its value still reads a field out of a
+   document the caller has no authorization for.
+
+   This is the same allowlist principle §B.5 applies to fields and §F.2 applies to response channels,
+   applied to request grammar — and the same reasoning §F.1 already used to reject an
+   aggregation-shape denylist, which was accepted for `aggs` and not carried across to `query`.
+   **It also changes what the strip list is for.** Every request-level key on the strip list is
+   outside the supported set and would be refused anyway; stripping runs first so that a client
+   sending today's `_source` and `aggs` keeps working rather than being rejected on its first call.
+   Stripping is the compatibility layer, the allowlist is the security layer, and the strip list goes
+   on doing work the allowlist cannot at *depth* (§B.5b).
+
+   The cost is that adding a query clause becomes a security decision rather than a convenience one.
+   That is the intended price, and it is small in practice: the product's whole query surface is
+   `match_all`, `bool`, `term`, `terms`, `match`, `match_phrase`, `range`, `exists` and
+   `multi_match`.
 
 1. **Strip at every depth, but context-aware**: `aggs`/`aggregations`, `_source`, and the rest of §D's
    E-1 list. The nested-`_source` hole of §B.5b disappears with them — the server emits `top_hits` and
@@ -917,11 +1227,36 @@ handling is not the same for all of them, because not every channel names the fi
 | --- | --- | --- | --- |
 | Hit source | `hits.hits[*]._source` | **Project** against RESPONSE-VISIBLE | The channel E-3 already covers. |
 | **Aggregation `top_hits`** | `aggregations.**.hits.hits[*]._source` | **Project** | Whole documents, at arbitrary nesting depth. **The primary channel for nine data-library tabs** (§B.5b). |
-| **Aggregation buckets** | `aggregations.**.buckets[*].key` | Project defensively | A `terms` bucket key *is* the field value — an agg on `accessPolicy.custodianEmails` returns the emails as keys. Prevented in §F.1; filter here too. |
+| **Aggregation buckets** | `aggregations.**.buckets[*].key` | **Not filterable — validate the vocabulary instead**, see below | A `terms` bucket key *is* the field value — an agg on `accessPolicy.custodianEmails` returns the emails as keys. |
 | **Sort values** | `hits.hits[*].sort` | **Drop entirely** — see below | Sorting on a RESPONSE-INTERNAL path echoes its value per hit. |
 | **Highlight** | `hits.hits[*].highlight` | **Project** (keyed by field path) | Returns matched snippets of the highlighted field's content. |
 | **`fields`** | `hits.hits[*].fields` | **Project** (keyed by field path) | The `fields` request parameter — not in E-1's original strip list. |
 | **Inner hits** | `hits.hits[*].inner_hits.**._source` | **Project** | Same exposure as `top_hits`, different path. |
+
+**The bucket-key channel cannot be filtered either, and this section previously said it could.** The
+row above used to read "project defensively", which is not implementable for the same reason the sort
+row is not: a bucket key is a bare *value* arriving with no field name attached, structurally
+identical to the `accessManagement` and `dataUse.primary.code` keys the filter panel is built from.
+Nothing in the response distinguishes a legitimate facet key from `custodian@example.org`. Measured:
+with E-3 running, a `terms` aggregation on `accessPolicy.custodianEmails` returns the emails as keys
+and a `terms` aggregation on `study.throughBioId` returns its values, both untouched.
+
+The channel is therefore closed on the **request** side, and it can be, because §F.1 already made
+aggregations server-owned — so their field targets are known before execution:
+
+> **E-0 validates its own vocabulary before running it.** Every `terms` `field` and every `top_hits`
+> `_source` leaf must be **RESPONSE-VISIBLE** (not merely QUERYABLE — both become response content),
+> every aggregation type must be one of the vocabulary's own shapes, and every parameter must be one
+> the shape is allowed to set. A `top_hits` with no explicit `_source` is refused, since it returns
+> whole documents. The vocabulary is a constant, so this belongs in a build-time test over every
+> entry *as well as* on the request path: the runtime check fails closed, but a build-time failure
+> catches a drifted enumeration before it reaches an environment.
+
+This subsumes the `top_hits` drift case that §F.2's `aggregations.**` walk was written for, and
+covers the bucket-key case the walk cannot reach. **Keep the walk anyway** — it is the only control
+left if a future vocabulary entry is ever built somewhere the check does not run, and it is cheap.
+The honest statement of the layering is that the vocabulary check is the control and the response
+walk is the backstop, which is the reverse of what this section previously implied.
 
 **The sort channel cannot be filtered against an allowlist, and must be dropped.** This section
 previously said to filter it "against the RESPONSE-VISIBLE allowlist" like every other channel, which
@@ -956,9 +1291,56 @@ any caller-supplied attack (§1.1a, mutation 3). That is not an argument for dro
 defends against is *us*: §B.5a puts the `study.assets.*` leaf enumeration in duos-ui's asset
 definitions, and OPEN-9 warns the backend copy will drift. A drifted enumeration makes the **server**
 ask Elasticsearch for an internal leaf, where neither the strip list nor the field validator is
-involved and the caller has done nothing wrong. The response-side projection is the only control left.
-Keep the walk, and understand it as protecting the boundary against our own mistake rather than
-against an attacker.
+involved and the caller has done nothing wrong. Keep the walk, and understand it as protecting the
+boundary against our own mistake rather than against an attacker.
+
+That was the whole argument for the walk until the bucket-key measurement above, and it is now the
+*second* argument. The first is the vocabulary check, which catches the same drift before it runs and
+is the only control that reaches the bucket-key form of it. Both are kept: the check is what stops
+the request, the walk is what remains if a vocabulary entry is ever built on a path the check does
+not cover.
+
+### §F.2a — The request surface is larger than the request body
+
+§F.1 and §F.2 both assume the caller's influence arrives as a JSON body sent to `_search`. That is
+true of `DatasetResource.searchDatasetIndex` today — it takes a body, and `ElasticSearchService`
+builds the path and index name itself from configuration — but it is an **unstated invariant that
+every control in §F rests on**, and nothing currently prevents it changing. Three ways it could:
+
+1. **URL query parameters.** `_search` accepts `q` (a full Lucene query string), `_source_includes`,
+   `_source_excludes`, `docvalue_fields`, `stored_fields`, `explain`, `version`,
+   `seq_no_primary_term`, `sort`, `search_type=dfs_query_then_fetch`, `scroll`, `routing` and
+   `preference` — every one of them a surface the mediator never sees, because the mediator reads the
+   body. A change that forwarded even one caller parameter would reopen a channel §F closes.
+   **`search_type` is measured rather than theoretical** (§A.3): `dfs_query_then_fetch` pools term
+   statistics across every index targeted, so a caller able to set it widens the statistical
+   population its scores are drawn from — and would collapse a two-index split entirely, were one
+   ever built.
+2. **The index or path.** The target index is server-built from configuration. A caller-supplied
+   index, alias, or wildcard would make the DLS query and injected filter apply to the wrong data.
+3. **Other endpoints on the same privileged credentials.** `_count`, `_msearch`, `_field_caps`,
+   `_terms_enum`, `_mget`, `_termvectors`, `_explain`, `_validate/query`, `_async_search`, `_pit`,
+   `_scroll`, `_sql` and `_esql` all read the same index. None is mediated, and on the fallback path
+   all of them would run unrestricted.
+
+**Requirement:** the search endpoint forwards **no caller-supplied URL parameter, index name, or
+path** to Elasticsearch, and the mediator is the only route by which caller input reaches the
+cluster. State it as an acceptance criterion with a regression test rather than leaving it as a
+property of the current code.
+
+**One live instance of (3) already exists in `ElasticSearchService`.** `searchDatasets` calls
+`validateQuery(query)` *before* it builds the search request, and `validateQuery` sends the caller's
+**unmediated** DSL to `_validate/query` — after mangling it with three regular expressions that strip
+`sort`, `size` and `from`. So on today's code path, whatever the mediator would refuse has already
+been sent to the cluster once. E-1's wiring (plan task 3B.4) must therefore be explicit that
+**mediation happens first and everything downstream sees only the mediated body** — including
+validation, which should either run on the mediated DSL or be deleted, since a server-built query
+does not need caller-DSL validation.
+
+**And `searchDatasetsStream` — the v2 endpoint — returns Elasticsearch's response body verbatim**, as
+an `InputStream`, with no `hits` extraction and no `validateQuery`. E-3 has to apply to that path
+too, which is a real constraint on its implementation: a streaming response filter is a different
+piece of work from one that parses a response object.
 
 ### §F.3 — What this costs
 
@@ -966,13 +1348,16 @@ Stating it plainly, because the estimates in the plan predate all of this. Note 
 vocabulary makes E-1 *smaller* than the validator design it replaced — the aggregation-shape validator
 disappears, and with it the recursive walk over caller `aggs`:
 
-- **E-1** loses the arbitrary-`aggs` validator and gains a depth-aware strip list plus a
-  field-reference check over `query`/`sort`/`highlight` only. **M, unchanged** — the security
-  improvement is free relative to the original estimate.
+- **E-1** loses the arbitrary-`aggs` validator and gains a depth-aware strip list, a closed shape
+  allowlist, and a field-reference check over `query`/`sort`/`highlight`. **M, unchanged.** The
+  shape allowlist (§F.1 rule 0) is the only part added by measurement and it is *smaller* than the
+  walk it protects — three tables and a switch — because the product's whole query surface is nine
+  clauses. Its real cost is not code but policy: adding a tenth clause becomes a review question.
 - **New ticket E-0 — server-owned aggregation vocabulary.** The three shapes of §F.1, built server-side
-  and selected by `(tab, filters, page, size, sort)`. **L.** This is net new work and the real cost of
-  the section, but it is the first increment of plan item 4.2 rather than throwaway scaffolding
-  (§F.1a).
+  and selected by `(tab, filters, page, size, sort)`, **plus a validator over the vocabulary itself**
+  (§F.2). **L.** This is net new work and the real cost of the section, but it is the first increment
+  of plan item 4.2 rather than throwaway scaffolding (§F.1a). The validator is a small addition to it
+  and replaces work that was scoped into E-3.
 - **E-3 grows** from a single-path `_source` filter to a multi-channel recursive response filter.
   **M → L.** Its `aggregations.**` channel stays in scope even with server-owned aggs — not as defence
   in depth against callers, who can no longer reach it, but because a drifted server-side enumeration
@@ -991,9 +1376,106 @@ disappears, and with it the recursive walk over caller `aggs`:
   is only E-2 and E-4.
 - **The proof of concept is already written** (§1.1a), so D-5/E-5's cost is replacing a model with real
   components rather than authoring a corpus. Net **reduction** against the plan's estimate for both.
+- **Three controls are net new and sit outside §F entirely**, added by the findings in §B.0b, §B.5d,
+  §B.7a and §F.2a. All three are small as code and easy to omit as thinking:
+  - **D-2** constrains the minted key to one role descriptor and its owner to no separate index
+    privilege (§B.7a). **S** — but the failure is silent and no single-descriptor test detects it.
+  - **B-1/B-3** constrain the *mapping*: no `copy_to` into a visible field, no `alias` fields, no
+    mapping-level `runtime` fields, asserted against the live mapping (§B.5d). **S.** This is the only
+    place the `copy_to` vector can be closed; no request-side control reaches it.
+  - **E-4/D-4** must mediate before anything else touches the caller's string, and forward no URL
+    parameter, index or path (§F.2a). **S → M**, and it includes deleting or re-ordering
+    `validateQuery`, which today sends unmediated DSL to `_validate/query` before every search.
+  - **E-3 additionally** needs a streaming form for the v2 endpoint, which returns Elasticsearch's
+    body verbatim (§F.2a). That is the one genuine size increase here.
 - **duos-ui** stops sending `aggs` and instead names a tab and filters. Nine of eleven tabs share
   shape 2, so the change is concentrated in `definition.ts` and `useLibraryData.ts` rather than spread
   across all eleven asset files.
+
+---
+
+## §G — Does Epic D still earn its place? (OPEN-13)
+
+§1.1 established that native DLS/FLS does not deliver Decision 1 on its own, and §D records the
+consequence: Epic D depends on E-0, E-1 and E-3. That correction was made one ticket at a time, and
+it left a question nobody has been asked directly. **Once E-0/E-1/E-2/E-3 ship — and they must, on
+any path — what does D-1…D-5 still buy?**
+
+This section states the comparison. It does not decide it: dropping a defence-in-depth layer is a
+security-posture call that should be signed off deliberately rather than inherited from a cost
+argument. **OPEN-13.**
+
+### §G.1 — What Epic D uniquely provides, after every correction
+
+One thing: **document filtering enforced by the cluster rather than by a server-injected clause.**
+
+Everything else it was originally expected to provide has been reassigned by measurement:
+
+| Originally Epic D's job | Where it actually lands now | Established in |
+| --- | --- | --- |
+| Isolate the caller from other documents' *statistics* | E-0 (server-owned aggregations) and E-1 (strip `explain`) — DLS does not do this | §1.1 |
+| Serve the right field bundle | **E-3.** OPEN-8 resolved restrictively, so the FLS grant must be *wider* than the response bundle and something else must narrow it | §B.5c, OPEN-8 |
+| Keep RESPONSE-INTERNAL values from the caller | Nothing does, for QUERYABLE paths — recoverable by binary search regardless of grant or filter | §B.0b, OPEN-12 |
+| Constrain the query surface | E-1's closed shape allowlist | §F.1 rule 0 |
+
+So Epic D's remaining contribution overlaps E-2 exactly. Both express the *same predicate* — the PoC
+model writes `dlsQuery` once and feeds both paths from it, which is what makes the parity assertion
+meaningful rather than two hand-written expectations agreeing by construction.
+
+### §G.2 — Cost comparison
+
+Sizes are this plan's own, after the A-2 revisions.
+
+| | Native path (Epic D) | Injected filter (E-2) |
+| --- | --- | --- |
+| **Build** | D-1 **S**, D-2 **L**, D-3 **L/XL**, D-4 **M**, D-5 **M** | E-2 **L** — and it is required anyway |
+| **Runtime** | Mint a per-request API key carrying an inline role descriptor | Add one `bool.filter` clause to a query the server already rebuilds |
+| **Licensing** | Platinum/Enterprise. This is the *sole* reason two paths exist | None |
+| **Enforcement point** | The credential — protects **any** traffic using it | The endpoint — protects traffic through our mediator only |
+| **Non-removability** | Role descriptor. **Unions away** if a second descriptor names the index (§B.7a) | Server rebuilds the root `query`; no caller DSL can reach outside it |
+| **Grant complexity** | Must be generated from the live mapping, enumerate `.keyword` subfields, resolve aliases (§B.5c, §B.5d) | None — E-3 owns projection |
+| **Failure history** | CVE-2021-22135, pre-7.11.2 CCS disclosure, CVE-2024-12539 | n/a (new code, unproven — cuts both ways) |
+| **Scaling with finer rules** | Predicate grows → inline role descriptor grows, minted **per request** | Predicate grows → `bool` grows. No per-request cost |
+
+**Deferring D-1…D-5 removes**: the five tickets; the `securityMode` switch; dual-mode wiring in
+D-4/E-4; the two-path parity burden §1.1 warns about; §B.5c's widened FLS grant; E-3's obligation to
+run on a second path; OPEN-8's consequences; §B.7a's role-descriptor constraint; §B.5d's alias
+resolution; and the Platinum dependency.
+
+**It retains, unchanged**: Epics B and C in full, and E-0 through E-5.
+
+### §G.3 — The argument against deferring, stated fairly
+
+Three points, and the second is the strongest:
+
+1. **Defence in depth is real.** If E-2 has a bug, DLS still filters. Against this: the contract
+   already declines to treat DLS as *the* control, and the CVE record above is a poor basis for a
+   second layer. E-2's filter is arguably the more robust of the two — a rebuilt root query cannot be
+   escaped by caller DSL, whereas a role descriptor unions away silently.
+2. **The enforcement point differs, and this is not a matter of degree.** DLS binds to the
+   *credential*; E-2 binds to *our endpoint*. Anything else that ever queries the index with the
+   service's credentials — a BI tool, a notebook, a support engineer, a future service — is protected
+   by DLS and not at all by E-2. **If direct cluster access by anything other than this endpoint is
+   foreseeable, Epic D is not redundant and this section's conclusion is wrong.** That is the
+   question to answer first.
+3. **Compliance posture.** Some regimes prefer engine-level enforcement to application-level, whatever
+   the engineering merits.
+
+### §G.4 — Why the forecast sharpens this
+
+Rows 9–14 are DEFERred today, but the direction of travel is toward *finer* per-document rules — DAC,
+institution, explicit principal allowlists, policy tags. Every one of them narrows access to documents
+that are already restricted, and every one of them makes the visibility predicate larger: more
+clauses, and `terms` arrays carrying a caller's group memberships.
+
+That growth is asymmetric. On the injected-filter path a larger predicate is a larger `bool`, built
+once per request in memory. On the native path it is a larger inline role descriptor, minted per
+request, with the union hazard of §B.7a growing alongside it. **Epic D gets more expensive as the
+rules the roadmap forecasts arrive; Epic E does not.**
+
+Note also that D-3's predicate builder is the part worth keeping either way — it is already shared,
+and it is what a `bool.filter` needs too. Deferring Epic D is therefore cheap to reverse: what is
+deferred is the credential machinery, not the visibility logic.
 
 ---
 

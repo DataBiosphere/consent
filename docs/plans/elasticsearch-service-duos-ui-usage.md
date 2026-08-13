@@ -442,12 +442,14 @@ Config and docs references:
 ## Access Controls Implementation Plan
 
 Implement server-enforced dataset search authorization by making Elasticsearch aware of
-caller-specific access policy, not just query syntax. The recommended path is native Elasticsearch
-document-level security (DLS) and field-level security (FLS) with backend-generated per-request
-search credentials or impersonation context, backed by explicit access metadata in indexed dataset
-documents. Because the current API accepts arbitrary raw Elasticsearch DSL through a shared service
-credential, the plan also includes server-owned query mediation and response shaping while preserving
-current endpoints.
+caller-specific access policy, not just query syntax. **The path originally recommended** was native
+Elasticsearch document-level security (DLS) and field-level security (FLS) with backend-generated
+per-request search credentials or impersonation context, backed by explicit access metadata in indexed
+dataset documents. Because the current API accepts arbitrary raw Elasticsearch DSL through a shared
+service credential, the plan also included server-owned query mediation and response shaping while
+preserving current endpoints. **A-2's proof of concept reversed the emphasis** — the mediation is the
+enforcement and the native path is a layer over it — and left open whether that layer is built at all.
+Read the two paragraphs below before the epics; the tickets themselves are written for either outcome.
 
 **Revised after A-2's proof of concept.** Query mediation and response shaping were originally scoped
 as a *fallback* for clusters without DLS/FLS. Measurement showed they are required on the native path
@@ -455,6 +457,14 @@ too: DLS does not isolate every index-wide statistic the query surface exposes, 
 FLS grant is not queryable, so the native grant must be wider than the response bundle and something
 else must narrow the response. Epic E's E-0, E-1 and E-3 therefore ship in **both** configurations;
 only E-2 and E-4 are fallback-specific. See the A-2 outcome.
+
+**And that raises a question about the recommended path itself — OPEN-13.** If E-0/E-1/E-2/E-3 ship
+on any path, what D-1…D-5 still uniquely buys is one thing: document filtering enforced by the
+*cluster* rather than by E-2's server-injected clause, with both expressing the same predicate.
+Contract §G works the comparison and recommends **deferring D-1…D-5 pending a deliberate answer**,
+not cancelling them. The question to answer first is whether anything other than this endpoint will
+ever query the index with the service's credentials — if so, Epic D is not redundant. Nothing below
+assumes that answer: Epic D's tickets are written out in full, and the deferral is cheap to reverse.
 
 Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** ≈ 1 week+
 
@@ -465,7 +475,7 @@ Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** �
 | A | Discovery & Contract | Infra + Backend | — | B, C, D, E |
 | B | Index Schema & Indexing Pipeline | Backend | A-2, A-3 (not A-1) | D, E, F |
 | C | Auth Context Service | Backend | A-2 (not A-1) | D, E |
-| D | Native DLS/FLS Path | Backend + Infra | A-1, B, C, **E-0/E-1/E-3** | F |
+| D | Native DLS/FLS Path *(**deferral proposed** — OPEN-13)* | Backend + Infra | A-1, B, C, **E-0/E-1/E-3**, **OPEN-13** | F, *only where built* |
 | E | Query Mediation & Response Shaping | Backend | B, C | D, F |
 | F | API Hardening | Backend | E, and D where licensed | G |
 | G | Frontend Alignment | Frontend | F | — |
@@ -474,6 +484,11 @@ Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** �
 Epic D no longer stands alone, and Epic E is no longer conditional. The old "D **or** E" framing is
 replaced throughout by "**E-0/E-1/E-3 always; D-1…D-5 additionally where licensed**" — see the A-2
 outcome for the two measurements that force it.
+
+**Epic D additionally carries an open question about whether to build it at all (OPEN-13).** It is
+blocked on that answer as much as on the license, which is why the row above lists both. Read the
+callout at the head of Epic D, and contract §G, before estimating or starting any D ticket. Every
+other epic is unaffected either way.
 
 ---
 
@@ -484,8 +499,10 @@ local developer configuration changes needed, and define the formal access contr
 epics are built on.
 
 **Status**: A-0 closed. A-1 has local, control-cluster, and production measurements recorded in
-[`es-security-capability-record.md`](es-security-capability-record.md); dev and staging remain, and
-they decide Epic D vs. E. A-2 is delivered and complete as
+[`es-security-capability-record.md`](es-security-capability-record.md); dev and staging remain. **A-1
+no longer decides Epic D vs. E on its own** — it settles whether Epic D is *possible*, while OPEN-13
+asks whether it is *wanted* given that E-0/E-1/E-2/E-3 ship regardless (contract §G). A licensed
+cluster is now a necessary rather than a sufficient reason to build D. A-2 is delivered and complete as
 [`es-access-contract.md`](es-access-contract.md) — every dimension and field is decided, and its
 remaining OPEN items are proposed *changes* to current behavior, each with a preserve-today default,
 so none of them blocks Epics B or C.
@@ -493,7 +510,8 @@ so none of them blocks Epics B or C.
 **Note on the blocking relationships**: only the *enforcement mechanism* (Epic D vs. E) is blocked on
 A-1. The access contract is not, and was deliberately written to be mechanism-neutral — the rules
 must be identical under native DLS/FLS and under the mediated fallback, or the fallback becomes a
-hole. Epics B and C are blocked on A-2, not A-1.
+hole. Epics B and C are blocked on A-2, not A-1. Nor is Epic E: it ships in every configuration, so
+neither A-1's remaining measurements nor OPEN-13 gates the start of implementation work.
 
 ---
 
@@ -798,7 +816,7 @@ record what it settled and what it deliberately did not.
 ##### A-2 Outcome — proof of concept, and what measuring the design changed
 
 The contract was written as an argument. It is now also exercised: `ElasticSearchLeakDefensePocTest`
-runs a corpus of 26 exfiltration attempts and 7 legitimate requests against a real security-enabled
+runs a corpus of 45 exfiltration attempts and 7 legitimate requests against a real security-enabled
 cluster on a trial license, under four configurations — today's endpoint, Epic D as originally
 specified, Epic D with §F mediation, and Epic E. Enforcement is modeled in the test tree
 (`ElasticSearchAccessContractModel`) because E-0/E-1/E-2/E-3 do not exist yet and D-3 was blocked;
@@ -809,8 +827,14 @@ describes it in full.
 still leaks; the enforcement the contract now describes closes all of it, on both paths, with
 identical results between them, while every legitimate request the product makes still returns data.
 
-**Six statements in the contract were wrong, and are corrected there.** They are listed here because
-four of them change tickets in this document:
+**Twelve statements in the contract were wrong or incomplete, and are corrected there.** Every one
+of them changes a ticket in this document, so they are listed in full. Findings 1–6 came from
+building and mutation-testing the proof of concept. **Findings 7–12 came from a systematic sweep** of
+Elasticsearch's Query DSL and Search API references, Elastic's documented DLS/FLS limitations, and
+the DLS CVE history — rather than from attacking the shapes someone happened to think of. Findings 9,
+10 and 11 are not defects in any control this plan specifies; they are controls the plan was missing.
+**Row 13 is not a correction at all**: it is a measured answer to the structural option OPEN-10 had
+left open, and it is listed with the rest because it changes three tickets the same way they do.
 
 | # | Finding | Tickets affected |
 | --- | --- | --- |
@@ -820,11 +844,30 @@ four of them change tickets in this document:
 | 4 | E-1's "add `fields` to the strip list" + "strip at every depth" **breaks the library search box and every highlighted column**: `fields` is a legitimate member of `multi_match`/`query_string`/`highlight`. | E-1 |
 | 5 | §F.2's "filter the sort channel against the allowlist" is not implementable — sort values carry no field names. The channel must be **dropped**. | E-3 |
 | 6 | Two enforcement controls could be deleted without any test noticing, found by deliberately weakening the model. Both now have assertions. One consequence is structural: §F.2's `aggregations.**` walk defends against *our own* enumeration drift (OPEN-9), not against callers. | E-3, B-6 |
+| 7 | **A field-reference validator cannot be trusted over an open grammar.** Six shapes pass it untouched because their references are not where it looks: `query_string` (fielded terms in query *text*), a `terms` **lookup** (reads a field out of another document), `more_like_this` (searches by document **id**), `_script` sort, `knn`, and `pit` (replaces the index searched). The first of these is a working oracle over RESPONSE-INTERNAL values on the fallback path. E-1 needs a **closed shape allowlist**, and `pit` comes off its permitted list. | **E-1** |
+| 8 | **§F.2's `buckets[*].key` row is not implementable.** A bucket key carries no field name, so E-3 cannot tell an internal value from a legitimate facet key and passes both through — measured. The check moves to **E-0**, which knows the field targets before it runs. | **E-0**, E-3 |
+| 9 | **QUERYABLE implies readable.** A `range` binary search recovers a RESPONSE-INTERNAL field's exact value from `hits.total` in ten mediator-accepted requests. "QUERYABLE but RESPONSE-INTERNAL" is obscurity, not confidentiality — a decision to take rather than assume (contract §B.0b, OPEN-12), and a second argument for item 4.2. | **G-1**, 4.2 |
+| 10 | **A second role descriptor on the API key unions away both DLS and FLS** — measured. D-2 must mint exactly one descriptor naming the index, and the key's owner must hold no separate privilege on it. Silent failure: every single-descriptor test still passes. | **D-2**, D-5 |
+| 11 | **`copy_to` reaches around the FLS grant** and no request-side control can close it — the target is a legitimately allowlisted path. New mapping-shape constraints for B-1/B-3: no `copy_to` into a visible field, no `alias` fields, no mapping-level `runtime` fields. (Both alias directions measured **closed** on 9.5.1, and pinned so a version bump is caught.) | **B-1**, **B-3**, D-3 |
+| 12 | **The request surface is larger than the request body.** `searchDatasets` sends **unmediated** caller DSL to `_validate/query` before the search runs; `searchDatasetsStream` returns Elasticsearch's body verbatim; and URL parameters (`q`, `_source_includes`, `search_type=dfs_query_then_fetch`, `scroll`, `routing`) are a channel the mediator never sees. All unstated invariants today. | **E-1 (3B.4)**, E-3 |
+| 13 | **Physical index separation works as a security control and fails as a catalog** — measured by `ElasticSearchIndexSeparationTest` (contract §A.3). Term statistics stay **per index** under the default search type, so OPEN-10's residual really is closed by a split; but a byte-identical document scored **13.6× higher** in the small tier, so the merged ranking orders by tier rather than by content. Recommendation is unchanged — accept the residual, and prefer constant scoring if that ever changes — so this adds **no** implementation scope. What it adds is two version-bump probes, a migration caveat, and a *measured* consequence for `search_type`: `dfs_query_then_fetch` pools statistics across indices, which makes §F.2a's "forward no URL parameter" a control rather than hygiene. | **D-5**, B-5, **F-1**/E-4 |
 
 **The structural consequence is the important one.** Findings 1 and 2 each independently make Epic D
 depend on Epic E's components: on E-0/E-1 because DLS does not isolate index-wide statistics, and on
 E-3 because the native path's FLS grant must be wider than the response bundle. Epic E is therefore
 not a fallback that Epic D replaces — see the revised Epic E goal and Phase 3A/3B.
+
+**Two further reasons the native path cannot be trusted alone, both from outside this project.**
+First, several protections a DLS-based design would lean on are properties of DLS *specifically* —
+Elastic documents that suggesters are ignored under DLS, that remote-call queries (`terms` lookup,
+`geo_shape` indexed shapes, `percolate`) are refused, and that `multi_match` wildcard field lists are
+rejected. **None of that exists on the fallback path**, which runs with privileged credentials and an
+injected filter clause, so each is a hole there unless the mediator closes it. Second, document level
+security has had repeated CVEs in which the native mechanism itself failed: CVE-2021-22135 (suggester
+and profile API disclosing document existence under DLS/FLS), the pre-7.11.2 cross-cluster search
+disclosure, and CVE-2024-12539 (a DLS bypass in 8.16.0–8.16.1). A design whose correctness depends on
+DLS being bug-free has a single point of failure that has failed before — which is the same
+conclusion findings 1 and 2 reach on independent grounds.
 
 **Implementation notes**:
 - `dataCustodianEmail` is parsed from the study property bag in `DatasetService.isCreatorOrCustodian`
@@ -928,6 +971,33 @@ This ticket adds the schema without populating it yet (population is B-3).
 - `DatasetTerm` gains an `accessPolicy: AccessPolicyTerm` field.
 - Elasticsearch index mapping updated with `accessPolicy` as a `nested` (or `object`) type —
   confirm with A-1 outcome which is required for the DLS query approach.
+- **Mapping-shape constraints** (A-2 finding 11, contract §B.5d). The mapping must contain:
+  - **no `copy_to` targeting a RESPONSE-VISIBLE field.** `copy_to` duplicates a field's content into
+    another field's index *at index time*, before any role is consulted, so granting the target
+    grants the ability to search the source's values — measured open on 9.5.1. E-3 sees nothing to
+    filter, because `copy_to` does not alter `_source`; the leak is an exact-value oracle, and
+    A-2 finding 9 shows what a caller does with one. **No request-side control can close it** — the
+    target is a legitimately allowlisted path and the caller's query is the one the search box
+    issues. The mapping is the only place the control fits.
+  - **no `alias` fields.** Both directions measured *closed* on 9.5.1 (FLS resolves an alias to its
+    concrete field and applies the grant there, and granting an alias grants nothing), so this is a
+    forward-looking constraint rather than a live hole — but Elastic documents that FLS "should not
+    be set on alias fields", and an alias is a second QUERYABLE-looking name for a concrete field.
+  - **no mapping-level `runtime` fields.** E-1 strips caller-supplied `runtime_mappings`; a runtime
+    field defined in the *mapping* is not caller-supplied, is not stripped, and its script can read
+    `params._source` wholesale.
+- **The Elasticsearch metadata fields are classified explicitly, not left implicit** (contract §B.5d).
+  FLS **always** permits `_id`, `_index`, `_routing`, `_type`, `_parent`, `_timestamp`, `_ttl` and
+  `_size`, whatever the grant says — so no FLS grant this plan writes can restrict them, and they are
+  outside §B's field tables entirely. Today nothing leaks: `_id` is the dataset ID, which is
+  RESPONSE-VISIBLE anyway. **That is a fact about the current indexing scheme, not a control.** Record
+  each metadata field's classification alongside the `accessPolicy` schema so the next indexing change
+  is made against a stated position, and note that E-3's retained-key set — not FLS — is what decides
+  which of them reach the caller.
+- **Nothing sensitive is routed through `_routing`** (contract §B.5d). A custom routing key is
+  readable at the hit level and unrestrictable by any grant, so routing on, say, a creator ID or a
+  custodian email would publish it. The current scheme uses the default (`_id`-derived) routing;
+  keep it, and treat any future custom routing key as a §B classification decision.
 - Existing `DatasetTerm` serialization tests still pass.
 
 **Implementation notes**:
@@ -982,6 +1052,22 @@ the mapping.
 - `accessPolicy.hasStudy` ← `dataset.getStudyId() != null`. This is what carries contract §A row 5
   — a dataset with no study is readable by everyone today, and that must not be expressed as a null
   `publicVisibility`.
+- **Mapping-shape constraints** (A-2 finding 11, contract §B.5d): the dataset index mapping must
+  contain **no `copy_to` targeting a RESPONSE-VISIBLE field, no `alias` fields, and no mapping-level
+  `runtime` fields**. `copy_to` duplicates a field's content into another field's index at index
+  time, before any role is consulted, so granting the target grants the ability to *search* the
+  source's values — measured on 9.5.1. E-3 sees nothing to filter, because `copy_to` does not alter
+  `_source`; the leak is an exact-value oracle, and finding 9 shows what a caller does with one.
+  **The mediator cannot close this**: the `copy_to` target is a legitimately allowlisted path and the
+  caller's query is the one the search box issues. The mapping is the only place the control fits.
+- **The index request carries no custom `_routing` key** (contract §B.5d). FLS always permits
+  `_routing` whatever the grant says, so a routing key derived from a creator ID or custodian email
+  would be readable at the hit level with no grant able to restrict it. Keep the default `_id`-derived
+  routing; B-1 classifies the metadata fields, and E-3's retained-key set is what keeps them out of
+  responses.
+- Contract test: assert the constraints above **against the live index mapping**, not against
+  `DatasetTerm` — the mapping is what Elasticsearch enforces against, and contract §B.5c already
+  established that §B's field tables are not a sufficient source for anything the grant depends on.
 - `accessPolicy.datasetCreatorUserId` ← `dataset.getCreateUserId()`.
 - `accessPolicy.studyCreatorUserId` ← `dataset.getStudy().getCreateUserId()` — a separate privileged
   path from the dataset creator (contract §A rows 6/7), not a duplicate of it.
@@ -1070,6 +1156,11 @@ cannot add nested types to a live index. The active index is identified by
   idempotent.
 - Decide whether the reindex script lives as a one-off admin script, a Flyway migration, or a new
   `POST /api/dataset/index/migrate` admin endpoint.
+- **If the two-index split of contract §A.3 is ever adopted, this ticket grows** (A-2 finding 13). It
+  is *not* in scope now — §A.3 recommends against it, and the runbook above assumes one index — but
+  the split moves a document between indices whenever `publicVisibility` or the study link changes,
+  which makes those updates a delete-and-index rather than an update. That is the same trigger set
+  B-4 already reindexes on, so the cost is in this migration strategy rather than in the pipeline.
 
 **Dependencies**: B-3.
 **Size**: M
@@ -1094,9 +1185,16 @@ and `toStudyTerm` before any auth enforcement code is written against them.
 - `dacId`, `datasetCreatorUserId`, `studyCreatorUserId` flow through — with a case where the dataset
   creator and study creator are **different users**, since conflating them is the likely bug.
 - No `accessPolicy` field is present in the SEARCH-VISIBLE projection (contract §B.4).
+- **Contract test over the live index mapping**, not the model classes (A-2 finding 11, contract
+  §B.5d): assert no `copy_to` into a RESPONSE-VISIBLE field, no `alias` fields, and no mapping-level
+  `runtime` fields. The mapping is what Elasticsearch enforces against, and contract §B.5c already
+  established that §B's field tables are not a sufficient source for anything the grant depends on.
+  This is the mapping-shape counterpart to the field-level drift test OPEN-9 asks for.
 
 **Implementation notes**:
 - Mirror the existing mock-heavy pattern in `ElasticSearchServiceTest` — mock all DAO calls.
+- The mapping assertion needs the real mapping, so it belongs with the integration tests rather than
+  in the mock-based class — fetch `GET /<index>/_mapping` and walk it.
 
 **Dependencies**: B-3.
 **Size**: M
@@ -1232,6 +1330,29 @@ statistics, and FLS makes a non-granted path unqueryable so the grant has to inc
 not be returned. Shipping D-1…D-5 without E-0/E-1/E-3 produces a system that filters documents and
 still leaks, and whose "My Data Submissions" and library visibility filters silently return nothing.
 
+> ### ⚠ Do not start this epic without reading contract §G / **OPEN-13**
+>
+> Those corrections were made one ticket at a time and left an unasked question: **once
+> E-0/E-1/E-2/E-3 ship — and they must, on any path — what does D-1…D-5 still buy?** Contract §G
+> works the comparison. The short version: one thing, document filtering enforced by the *cluster*
+> rather than by E-2's server-injected clause — and both express the **same predicate**, written once
+> in the PoC model and fed to both paths.
+>
+> Deferring D-1…D-5 would remove the five tickets below, the `securityMode` switch, dual-mode wiring
+> in D-4/E-4, the two-path parity burden, contract §B.5c's widened FLS grant, §B.7a's
+> role-descriptor constraint, §B.5d's alias resolution, and the Platinum/Enterprise dependency —
+> while Epics B, C and E ship unchanged. The forecast of finer per-document rules (rows 9–14)
+> sharpens it: a growing predicate costs a bigger `bool` on the E-2 path and a bigger inline role
+> descriptor **minted per request** on this one.
+>
+> **The question to answer first** (contract §G.3): DLS binds to the *credential*, E-2 binds to *our
+> endpoint*. If anything other than this endpoint will ever query the index with the service's
+> credentials — a BI tool, a notebook, a support engineer, a future service — then Epic D is **not**
+> redundant and the deferral is wrong. Answer that before estimating any ticket below.
+>
+> **Recommended default: defer, do not cancel.** Nothing depends on D, D-3's predicate builder is
+> shared and stays either way, and the deferral is cheap to reverse.
+
 ---
 
 #### Ticket D-1 — Extend `ElasticSearchConfiguration` with security-mode settings
@@ -1288,6 +1409,16 @@ using the existing low-level `RestClient` — no new client instance is needed p
 - Unit test: given `isAdmin=true`, generated credential grants unrestricted **document** access but
   uses the same SEARCH-VISIBLE FLS grant as every other caller.
 - Unit test: given non-admin context, credential includes DLS query and FLS field list.
+- **The minted key names the dataset index in exactly one role descriptor** (A-2 finding 10, contract
+  §B.7a). Multiple descriptors **union** their DLS queries and FLS grants rather than intersecting
+  them, so a second descriptor granting plain `read` on the same index removes document filtering
+  entirely — measured on 9.5.1, silently, with no error and an ordinary-looking response.
+- **The key's owning user holds no separate index privilege on the dataset index.** An API key's
+  effective permissions are the intersection of its descriptors with the owner's, so a superuser or
+  broadly-privileged owner narrows nothing and the key's own restriction is all that acts.
+- Unit test: a key minted with a second, unrestricted descriptor returns **every** document — asserted
+  on the key the service actually mints, not on the descriptor the builder returns. Every existing
+  single-descriptor test passes against a two-descriptor key, which is why this needs its own case.
 
 **Implementation notes**:
 - API keys have a TTL — set to ≤ 5 minutes. Avoid generating one per document; one per request is
@@ -1335,9 +1466,24 @@ caller input at all beyond validating that it was asked for the one bundle that 
 - **E-3's response filter must run on this path**, since the grant now returns three paths that must
   not reach the caller. The grant governs what the *search* can resolve; the response filter governs
   what the *caller* receives. Native FLS cannot do both (contract §B.5c).
+  - **Generated from the live mapping, and resolving any `alias` to its concrete field name before
+    emitting it** (A-2 finding 11, contract §B.5d). Elastic documents that FLS "should not be set on
+    alias fields — to secure a concrete field, its field name must be used directly"; granting an
+    alias was measured to grant *nothing* on 9.5.1, so an alias in the grant fails closed and hides a
+    field the product needs. B-1 forbids alias fields outright, which makes this a second line of
+    defence rather than the control.
+  - **Depends on B-1's mapping-shape constraints holding.** A `copy_to` into any granted field makes
+    the grant meaningless for the copied field's content, and nothing in this builder can detect
+    that — measured open on 9.5.1 (contract §B.5d).
 - Unit tests per dimension, plus negative tests: a DAC member who is not creator/custodian does
   **not** match a non-public dataset; an admin grant contains no `accessPolicy` path; the grant
   contains a `.keyword` entry for every multi-field in the mapping that any sort target resolves to.
+- **Note what the grant cannot buy** (A-2 finding 9, contract §B.0b, OPEN-12): granting the three
+  QUERYABLE-but-RESPONSE-INTERNAL paths and stripping them in E-3 hides their *values from the
+  response*, not from the caller. A `range` binary search recovers such a value exactly from
+  `hits.total` in ten mediator-accepted requests. That is accepted for two user IDs and a boolean —
+  but it is a decision (OPEN-12), and this builder should not be described as making those fields
+  confidential.
 
 **Implementation notes**:
 - DLS query for a non-admin caller:
@@ -1392,6 +1538,16 @@ to use per-request DLS credentials when `securityMode` is `"native-dls"`.
   `DatasetSearchAuthContext`.
 - Integration test: non-admin cannot retrieve a `publicVisibility=false` dataset via the search
   endpoint.
+- **No caller-supplied URL parameter, index name or path reaches Elasticsearch** (A-2 finding 12,
+  contract §F.2a). `_search` accepts `q` (a full Lucene query string), `_source_includes`,
+  `docvalue_fields`, `explain`, `sort`, `search_type=dfs_query_then_fetch` (which scores from
+  *global* term statistics), `scroll`, `routing` and `preference` — none of which the mediator sees,
+  because the mediator reads the body. This holds in today's code by construction; make it an
+  asserted invariant rather than an accident.
+- **`validateQuery` must not see unmediated DSL.** `searchDatasets` calls it on the **raw** caller
+  string today — regex-mangled, then sent to `_validate/query` — before building the search request,
+  so whatever the mediator would refuse has already reached the cluster once. Run it on the mediated
+  body or delete it; a server-built query does not need caller-DSL validation.
 
 **Implementation notes**:
 - Both endpoint methods already have `@Auth DuosUser duosUser` as a parameter (L428, L442) — the
@@ -1429,9 +1585,34 @@ document filtering and field omission.
 - Seed test data via `ElasticSearchService.indexDataset` rather than the fixtures' literal documents,
   so the same code path as production populates `accessPolicy` (B-3) — this is the one substantive
   addition to the PoC, and it is what makes the suite a test of the pipeline rather than of the index.
-- Retain the four Elasticsearch-behavior probes as regression tests against a version bump:
-  `min_doc_count: 0` isolation, `significant_terms` `bg_count`, `explain` statistics, and FLS
-  queryability of a non-granted path.
+- Retain the Elasticsearch-behavior probes as regression tests against a version bump:
+  `min_doc_count: 0` isolation, `significant_terms` `bg_count`, `explain` statistics, FLS
+  queryability of a non-granted path, `copy_to` reaching around the grant, and both alias directions.
+- **Retain `ElasticSearchIndexSeparationTest`'s two scoring probes too** (A-2 finding 13, contract
+  §A.3), even though the split it measures is not being built: that term statistics stay **per index**
+  under the default `query_then_fetch`, and that `dfs_query_then_fetch` **pools** them. The second is
+  what makes F-1's "forward no caller URL parameter" a control rather than hygiene, so it is a
+  regression test for a shipping requirement, not only for a deferred option. It needs no license and
+  shares the same container. If the pooling control ever stops pooling, the separation probe starts
+  passing for the wrong reason — read that test's failure message before adjusting either.
+- **Assert the role-descriptor count on the key the service actually mints** (A-2 finding 10,
+  contract §B.7a), not on the descriptor `FlsGrantBuilder`/`DlsQueryBuilder` return. Descriptors
+  **union** rather than intersect, so a second descriptor naming the index removes document filtering
+  entirely — and every existing single-descriptor test passes against a two-descriptor key, which is
+  exactly why this needs its own case. Assert the key's owning user holds no separate index privilege
+  either.
+- **Assert B-1's mapping-shape constraints against the live mapping** (A-2 finding 11, contract
+  §B.5d). A `copy_to` into a granted field defeats the grant with no request to refuse and nothing in
+  the response to filter; there is no other place this can be caught.
+- **Keep the two "control removed" tests.** The closed shape allowlist and the aggregation-vocabulary
+  check leak nothing the marker scan can see — one discloses through a hit count over documents the
+  caller is authorized for, the other through a bucket key indistinguishable from a legitimate facet
+  — so they are asserted by running the mediator with the control switched off and checking what it
+  was holding. Any new control whose absence the corpus cannot detect needs the same treatment.
+- **Keep the two DSL-surface sweeps.** They walk every clause in the Query DSL reference and every
+  top-level member of the Search API reference, asserting each unsupported clause is refused by name
+  and each unsupported member is stripped or refused. On a version bump, diff both lists against the
+  references rather than trusting them.
 
 **Implementation notes**:
 - Extends `ElasticSearchContainerTests`; the image is pinned once, in `ElasticSearchTestCluster`.
@@ -1513,6 +1694,24 @@ shapes, all in `duos-ui/src/components/data_library/assets/`:
   reach the built aggregation by any input to `build(...)`.
 - Unit test: the studies tab's `composite` paging returns the same page boundaries as the current
   client-built query.
+- **`AggregationVocabulary.validate(aggs)`, run before every execution and over every entry at build
+  time** (A-2 finding 6, contract §F.2). Every `terms` `field` and every `top_hits` `_source` leaf
+  must be **RESPONSE-VISIBLE** — not merely QUERYABLE, since both become response content — every
+  aggregation type must be one of the three shapes, and every parameter must be one that shape may
+  set. A `top_hits` with no explicit `_source` is refused, because it returns whole documents.
+- Unit test: a vocabulary entry whose `terms` `field` is `accessPolicy.custodianEmails`, and one
+  whose `top_hits` `_source` names `study.assets.models.internalCheckpointUri`, are both refused
+  before execution. Both are what OPEN-9's predicted drift looks like at the point where it does
+  damage.
+
+> **Why this validator lives here rather than in E-3 (A-2 finding 6).** Contract §F.2 originally
+> assigned `aggregations.**.buckets[*].key` to E-3, to be "projected defensively" against
+> RESPONSE-VISIBLE. That is not implementable. A bucket key is a bare *value* arriving with no field
+> name attached and is structurally identical to the `accessManagement` keys the filter panel is
+> built from, so nothing in the response distinguishes a legitimate facet key from
+> `custodian@example.org` — the same argument §F.2 already accepts for the `sort` channel. Measured:
+> with E-3 running, a drifted `terms` aggregation on `accessPolicy.custodianEmails` returns the
+> emails as keys. The request side is where the field target is still known, and this ticket owns it.
 
 **Implementation notes**:
 - Nine of eleven tabs share shape 2, so the duos-ui side of this concentrates in `definition.ts` and
@@ -1562,10 +1761,32 @@ documents it should not see.
     `suggest`, `indices_boost`.
   - **`fields` is removed conditionally, not at every depth** — see the correction below. It is a
     response channel at request level and inside `top_hits`/`inner_hits`, but the clause's own field
-    list inside `multi_match`, `query_string`, `simple_query_string`, `combined_fields` and
-    `highlight`. Strip it in the first role; keep and validate it in the second.
-  - Structurally permits `query`, `sort`, `size`, `from`, `search_after`, `pit`, `highlight` — but
-    every **field reference** inside them is validated (below), not passed through unexamined.
+    list inside `multi_match` and `highlight`. Strip it in the first role; keep and validate it in
+    the second. (`query_string`, `simple_query_string` and `combined_fields` also carry a legitimate
+    `fields` member, but the shape allowlist below refuses all three outright, so their `fields`
+    never reaches validation. Keep the two lists separate anyway: stripping runs first and has to be
+    readable without the allowlist.)
+  - **Accepts a closed allowlist of shapes and refuses everything else** — request members, query
+    clause types, and the members and value shapes each clause may carry. An earlier version of this
+    criterion said "structurally permits `query`, `sort`, `size`, `from`, `search_after`, `pit`,
+    `highlight` — but every field reference inside them is validated", which is not sufficient and
+    which put `pit` on the permitted list. Measured (contract §F.1 rule 0), six shapes pass the
+    field-reference validator untouched because their references are not where it looks:
+    `query_string` (fielded terms inside the query *text*), a `terms` **lookup** (`path` names a
+    field read out of another document, which no filter bounds), `more_like_this` (`like` takes
+    document **ids**), `_script` sort, `knn` (a request-level `field`), and `pit` (replaces the index
+    being searched). `highlight_query`, `matched_fields` and `function_score` are the same problem in
+    a nested query.
+  - Supported request members are `query`, `sort`, `highlight`, `from`, `size`, `search_after`,
+    `track_total_hits`. Supported query clauses are `match_all`, `match_none`, `bool`, `term`,
+    `terms`, `match`, `match_phrase`, `range`, `exists`, `multi_match` — the product's entire query
+    surface. **Refuse a `multi_match`/`simple_query_string`/`combined_fields` with no `fields`
+    member**: it falls back to `index.query.default_field`, which defaults to `*`, so a clause with
+    no field reference at all searches every field in the mapping.
+  - Note the ordering with the strip list: **strip first, then refuse.** Stripping is the
+    compatibility layer, so duos-ui's current body (which sends `_source` and `aggs`) is accepted
+    rather than rejected on its first call; the allowlist is the security layer over whatever is
+    left.
   - Aggregations are **not** validated and forwarded; they are stripped here and rebuilt by E-0 from
     a closed server-owned vocabulary (contract §F.1).
   - Result is valid JSON.
@@ -1617,8 +1838,10 @@ documents it should not see.
 
 **Dependencies**: C-1, E-0 *(E-0 owns the aggregations this ticket strips)*.
 **Blocks**: D-3 (contract §1.1), E-2, E-4.
-**Size**: M *(unchanged — E-0 absorbs the aggregation work, so this ticket stays a strip list plus a
-field-reference check; contract §F.3)*
+**Size**: M *(unchanged — E-0 absorbs the aggregation work, so this ticket stays a strip list, a
+shape allowlist and a field-reference check; contract §F.3. The allowlist added by A-2 finding 7 is
+smaller than the walk it protects, since the product's whole query surface is nine clauses. Its cost
+is policy rather than code: adding a tenth clause becomes a review question.)*
 
 ---
 
@@ -1679,7 +1902,12 @@ response documents, for every caller.
   unrecognized paths, across **every** channel:
   - `hits.hits[*]._source`
   - `aggregations.**.hits.hits[*]._source` — `top_hits` at arbitrary nesting depth
-  - `aggregations.**.buckets[*].key` — a `terms` bucket key *is* a field value
+  - `aggregations.**.buckets[*].key` — **out of scope, moved to E-0** (A-2 finding 8). A `terms`
+    bucket key *is* a field value, but it arrives with no field name attached and is structurally
+    identical to the `accessManagement` keys the filter panel needs, so no allowlist can tell them
+    apart — the same reason `hits.hits[*].sort` must be dropped rather than filtered. Measured: with
+    this filter running, a drifted `terms` aggregation on `accessPolicy.custodianEmails` returns the
+    emails as keys. E-0 validates its own vocabulary's field targets before executing them instead.
   - `hits.hits[*].highlight` and `hits.hits[*].fields` — **projected**, not dropped: both are keyed by
     field path, so they can be filtered, and dropping them wholesale would disable highlighting on
     `datasetName`, which the catalog uses.
@@ -1691,6 +1919,11 @@ response documents, for every caller.
   - `hits.hits[*].inner_hits.**._source`
   - **ADMIN is filtered identically** — no bypass. Admins see every *document* (DLS `match_all`),
     not every *field*; contract §B.7.
+- **Applies to `searchDatasetsStream` as well** (A-2 finding 12, contract §F.2a). The v2 endpoint
+  returns Elasticsearch's response body **verbatim** as an `InputStream` — no `hits` extraction, and
+  not even the `validateQuery` call that v1 makes — so today it is the *less* protected of the two
+  endpoints, not the more. That makes this a streaming filter rather than a response-object filter,
+  which is a real difference in the work and the reason for the size bump below.
 - Unit test: `accessPolicy` is absent from the response for **every** caller, admin included
   (contract §B.4) — asserted on the `top_hits` channel as well as `hits._source`.
 - Unit test: `data` and `study.data` are absent for every caller (contract §B.5).
@@ -1734,6 +1967,12 @@ response documents, for every caller.
   `_source`, `highlight`, `fields`) and drop everything else, rather than enumerating channels to
   remove. That way a response channel added by a future Elasticsearch version is dropped by default —
   which is what contract §F.2 asks for and is not achievable with a removal list.
+- **That retained set is also the only control over the Elasticsearch metadata fields** (contract
+  §B.5d). FLS *always* permits `_id`, `_index`, `_routing`, `_type`, `_parent`, `_timestamp`, `_ttl`
+  and `_size` regardless of the grant, so D-3's grant cannot restrict them and B-1 classifies them
+  instead. Retaining only `_id` — which is the dataset ID and RESPONSE-VISIBLE — drops the rest,
+  including `_routing` and `_index`, and it does so on the native path as well as the fallback. Adding
+  a metadata field to the retained set is therefore an exposure decision, not a convenience one.
 - **What the `aggregations.**` walk is actually for (A-2 finding 6).** Once E-0 makes aggregations
   server-owned, callers cannot reach that channel, and removing the walk changes no result for any
   caller-supplied request — this was measured by deleting it and watching the PoC stay green. Keep it
@@ -1746,7 +1985,7 @@ response documents, for every caller.
 
 **Dependencies**: E-2, D-1.
 **Blocks**: **D-3** (contract §B.5c).
-**Size**: M → **L.** Multi-channel recursion, plus running on both paths rather than one.
+**Size**: M → **L.** Multi-channel recursion, plus running on both paths rather than one, plus a streaming variant for the v2 endpoint (A-2 finding 12). Partly offset: `buckets[*].key` moves out of scope to E-0 (A-2 finding 8).
 
 ---
 
@@ -1763,15 +2002,35 @@ response documents, for every caller.
 - Both `searchDatasets` (L212) and `searchDatasetsStream` (L230) updated.
 - `DatasetResource` callers at L425 and L439 updated to pass `duosUser` → resolved
   `DatasetSearchAuthContext`.
+- **Mediation is the first thing either method does, and nothing downstream sees the raw string**
+  (A-2 finding 12, contract §F.2a). `searchDatasets` currently calls `validateQuery(query)` on the
+  **unmediated** caller DSL — stripping `sort`/`size`/`from` with three regular expressions, then
+  sending the result to `_validate/query` — *before* it builds the search request. On that path,
+  whatever the mediator would refuse has already reached the cluster once. Run validation on the
+  mediated body or **delete it**: a server-built query does not need caller-DSL validation, and the
+  regex stripping is its own hazard.
+- **No caller-supplied URL parameter, index name or path is forwarded**, with a regression test.
+  `_search` accepts `q`, `_source_includes`, `docvalue_fields`, `explain`, `sort`,
+  `search_type=dfs_query_then_fetch`, `scroll`, `routing` and `preference` — a channel the mediator
+  never sees, because it reads the body. True by construction today; make it asserted. **`search_type`
+  is the measured one** (A-2 finding 13, contract §A.3): `dfs_query_then_fetch` pools term statistics
+  across every index targeted, so a caller who could set it widens the population its scores are drawn
+  from. That makes this criterion a control with a demonstrated consequence rather than hygiene.
+- **`searchDatasetsStream` gets the response filter too.** It currently returns Elasticsearch's body
+  **verbatim** as an `InputStream`, with no `hits` extraction and without even the `validateQuery`
+  call — so it is the *less* protected of the two endpoints today, not the more.
 
 **Implementation notes**:
 - `searchDatasetsStream` returns an `InputStream` — apply the field filter by reading the stream,
   filtering the JSON, then re-wrapping as an `InputStream` before returning; or convert to
-  `String` internally and stream the result.
+  `String` internally and stream the result. Note this makes E-3 a streaming filter rather than a
+  response-object filter, which is a real difference in the work (contract §F.2a).
 - Keep the `securityMode` switch as a simple if-else in `ElasticSearchService`.
+- The same ordering requirement applies to **D-4** on the native path: per-request credentials do not
+  help if unmediated DSL has already been sent under the service's own credentials.
 
 **Dependencies**: E-2, E-3.
-**Size**: S
+**Size**: S → M *(the ordering fix and the stream filter are both new scope from A-2 finding 12)*
 
 ---
 
@@ -1791,6 +2050,19 @@ mediator and response filter.
 - Negative test: a `fields` list inside `multi_match` survives sanitization while a root-level `fields`
   does not (E-1's context-dependent rule — A-2 finding 4).
 - Negative test: `hits.hits[*].sort` is absent from a filtered response (E-3 — A-2 finding 5).
+- Negative test: a `query_string` clause is **refused**, not validated — its field references live in
+  the clause's own query text where no walk reaches them (A-2 finding 7).
+- Negative test: a `terms` clause whose value is a **lookup** (`{"index":…,"id":…,"path":…}`) is
+  refused. The clause is supported and its field reference validates fine; only the *value shape* is
+  dangerous, so a test that checks field names alone passes while the hole is open.
+- Negative test: a `multi_match` with no `fields` member is refused — it falls back to
+  `index.query.default_field` (`*`) and searches every field in the mapping.
+- **Sweep tests**: every clause in Elasticsearch's Query DSL reference that is not on the supported
+  list is refused by name, and every top-level Search API body member that is not supported is either
+  stripped or refused. These are what make "closed allowlist" checkable rather than a count of the
+  examples someone thought of; keep them diffed against the references on a version bump.
+- Negative test: an aggregation vocabulary entry whose `terms` `field` is not RESPONSE-VISIBLE is
+  refused **before execution** (E-0 — A-2 finding 8). Bucket keys cannot be filtered afterwards.
 
 **Implementation notes**:
 - Use `JSONAssert` or Jackson-based assertions for comparing query structure.
@@ -1830,6 +2102,21 @@ currently forward it to the service call (L430, L444). This is the wiring ticket
 - Both endpoint methods pass `duosUser` → resolved `DatasetSearchAuthContext` to the service.
 - No remaining code path calls the ES service without caller context.
 - Regression tests: non-admin users see only authorized datasets; admin users see all.
+- **The request surface stays the JSON body, and that becomes an asserted invariant** (A-2 finding
+  12, contract §F.2a). Every control in contract §F assumes caller influence arrives as a body sent
+  to a server-built path. That is true today and nothing enforces it. Assert that the endpoints:
+  - accept **no caller-supplied URL query parameter** — `_search` takes `q` (a full Lucene query
+    string), `_source_includes`, `_source_excludes`, `docvalue_fields`, `stored_fields`, `explain`,
+    `version`, `seq_no_primary_term`, `sort`, `search_type=dfs_query_then_fetch`, `scroll`, `routing`
+    and `preference`; the mediator sees none of them. **`search_type` is measured, not theoretical**
+    (A-2 finding 13, contract §A.3): `dfs_query_then_fetch` pools term statistics across every index
+    targeted, so a caller able to set it scores from a wider population than the one it may read;
+  - accept **no caller-supplied index, alias or path** — a caller-chosen target would apply the DLS
+    query and injected filter to the wrong data;
+  - reach Elasticsearch **only** through the mediated search call. `_count`, `_msearch`,
+    `_field_caps`, `_terms_enum`, `_mget`, `_termvectors`, `_explain`, `_validate/query`,
+    `_async_search`, `_pit`, `_scroll`, `_sql` and `_esql` all read the same index and none is
+    mediated. `_validate/query` is not hypothetical — see E-4.
 
 **Implementation notes**:
 - Inject `DatasetSearchAuthContextResolver` into `DatasetResource` via Dropwizard constructor
@@ -1905,6 +2192,12 @@ a creator searching for their own `publicVisibility=false` study).
 - Cypress tests updated to not assert that these terms appear in outgoing request bodies.
 - Manual test: an admin user can see `publicVisibility=false` datasets that were previously hidden
   client-side; verify the server now controls visibility.
+- **Once this lands, `study.publicVisibility` leaves the QUERYABLE set**, which removes one of the
+  three paths OPEN-12 is about (A-2 finding 9, contract §B.0b). While a field is QUERYABLE its value
+  is recoverable by a `range` binary search over `hits.total` regardless of what the response filter
+  strips, so narrowing QUERYABLE is the *only* thing that actually closes it. Update the QUERYABLE
+  allowlist in the same change — leaving it in costs nothing operationally and keeps a live oracle
+  open.
 
 **Implementation notes**:
 - Grep for `publicVisibility` and `dacApproval` across `../duos-ui/src/` before making changes
@@ -2098,9 +2391,9 @@ A-1 → A-2 → A-3
                ↓                      ↓
     B-1→B-3→B-4→B-5→B-6         C-1→C-2→C-3
                  ↓                      ↓
-       E-0→E-1→E-3  (always; +E-2→E-4 where unlicensed)
+       E-0→E-1→E-2→E-3→E-4  (always; E-2/E-4 fallback-specific if D is built)
                  ↓
-       D-1→D-2→D-3→D-4→D-5  (additionally, where licensed)
+       D-1→D-2→D-3→D-4→D-5  (additionally, where licensed AND OPEN-13 says build)
                           ↓
                        F-1 → [F-2 → F-3 (deferrable)]
                           ↓
@@ -2112,6 +2405,12 @@ Rough total (native DLS/FLS path): ~14–18 backend-engineer weeks; ~3–4 front
 E-0, E-1 and E-3 are prerequisites of Epic D, not alternatives to it (see the A-2 outcome). What a
 supporting cluster defers is only **E-2** and **E-4**, plus F-2/F-3 as before. The native-path total is
 therefore closer to the combined figure than the original framing implied.
+
+**If OPEN-13 resolves as contract §G recommends, D-1…D-5 leave the critical path entirely** and the
+Epic E chain runs whole — E-2 and E-4 stop being fallback-specific, F-1 depends on E alone, and the
+backend total drops by Epic D's five tickets (S + L + L/XL + M + M) plus the two-path parity work
+folded into the estimates above. That is the larger of the two branches, so treat ~14–18 weeks as the
+build-D figure rather than the expected one until the question is answered.
 
 ### Phase 0 — Pre-requisites and Contract
 
@@ -2153,13 +2452,17 @@ vocabulary** — see the A-2 outcome. 3A is a superset of the shared mediation w
 it, so it can no longer run "parallel with 3B during evaluation": the shared parts land first either
 way.*
 
+***Do not start this phase before OPEN-13 is answered.** Contract §G recommends deferring D-1…D-5 —
+this whole phase — because 3B delivers the same predicate through E-2's injected filter. See the
+callout at the head of Epic D. Phase 3B is unaffected and should proceed regardless.*
+
 | Task | Size | Owner |
 | --- | --- | --- |
 | 3A.1 Extend `ElasticSearchConfiguration` with security-mode flag, impersonation/API-key settings, and the single SEARCH-VISIBLE field allowlist | S | Backend + Infra |
-| 3A.2 Update `ElasticSearchSupport` to support per-request credential construction: either generate API keys with inline role descriptors or set run-as headers from a privileged service account | L | Backend (depends on 2.1, 3A.1) |
-| 3A.3 Build role/query descriptor generator that translates `DatasetSearchAuthContext` into Elasticsearch DLS query (wrapping index's `accessPolicy` fields) and FLS field-grant list. **The grant is wider than the response allowlist** — it adds the QUERYABLE-but-internal paths and the `.keyword` subfields of sorted multi-fields, and must be generated from the index mapping rather than from the contract's field tables (contract §B.5c) | L | Backend (depends on 2.2, 3A.2, 3B.0, 3B.1, 3B.3) |
-| 3A.4 Wire per-request credentials into `ElasticSearchService.searchDatasets` and `searchDatasetsStream` so they use the secured client rather than the shared service credential | M | Backend (depends on 3A.3) |
-| 3A.5 Substitute the real components into the existing end-to-end harness (`ElasticSearchLeakDefensePocTest`) and seed through `indexDataset`; keep the unmediated configurations and the two-path parity assertion, and re-run the mutation exercise against production code | L → M | Backend + QA (depends on 3A.4) |
+| 3A.2 Update `ElasticSearchSupport` to support per-request credential construction: either generate API keys with inline role descriptors or set run-as headers from a privileged service account. **The key must name the dataset index in exactly one role descriptor, and its owning user must hold no separate index privilege on it** — descriptors *union* their DLS queries and FLS grants rather than intersecting, so a second one silently removes document filtering (contract §B.7a, A-2 finding 10) | L | Backend (depends on 2.1, 3A.1) |
+| 3A.3 Build role/query descriptor generator that translates `DatasetSearchAuthContext` into Elasticsearch DLS query (wrapping index's `accessPolicy` fields) and FLS field-grant list. **The grant is wider than the response allowlist** — it adds the QUERYABLE-but-internal paths and the `.keyword` subfields of sorted multi-fields, and must be generated from the index mapping rather than from the contract's field tables (contract §B.5c), resolving any `alias` to its concrete field name (contract §B.5d) | L | Backend (depends on 2.2, 3A.2, 3B.0, 3B.1, 3B.3) |
+| 3A.4 Wire per-request credentials into `ElasticSearchService.searchDatasets` and `searchDatasetsStream` so they use the secured client rather than the shared service credential. **Mediation runs first** — `searchDatasets` currently sends raw caller DSL to `_validate/query` before the search, so per-request credentials do not help if unmediated input has already gone out under the service's own credential (contract §F.2a, A-2 finding 12) | M | Backend (depends on 3A.3) |
+| 3A.5 Substitute the real components into the existing end-to-end harness (`ElasticSearchLeakDefensePocTest`) and seed through `indexDataset`; keep the unmediated configurations, the two-path parity assertion, the two "control removed" tests and the two DSL-surface sweeps, and re-run the mutation exercise against production code. **Add: role-descriptor count on the minted key, and B-1's mapping-shape constraints against the live mapping** — both failures are silent and neither is visible to a test written against a builder's return value (A-2 findings 10 and 11) | L → M | Backend + QA (depends on 3A.4) |
 
 ### Phase 3B — Query Mediation and Response Shaping
 
@@ -2169,11 +2472,12 @@ DLS/FLS is unavailable.*
 
 | Task | Size | Owner |
 | --- | --- | --- |
-| **3B.0 Build the server-owned aggregation vocabulary**: the three shapes the product actually issues, selected by `(tab, filters, page, size, sort)`, so callers never send `aggs`. Required on both paths — DLS does not isolate `significant_terms`' index-wide background count (contract §F.1) | L | Backend |
-| 3B.1 Build `SearchQueryMediator` that accepts client DSL, strips unsafe response-shaping surfaces at **every depth** (`_source`, `aggs`, `docvalue_fields`, `script_fields`, `explain`, `profile`, `runtime_mappings`, `collapse`, `inner_hits`), validates remaining field references against the QUERYABLE allowlist, and wraps the client query inside a server-built `bool` filter. Note `fields` is stripped as a response channel but **kept and validated** inside `multi_match`/`query_string`/`highlight` | M | Backend (depends on 3B.0) |
+| **3B.0 Build the server-owned aggregation vocabulary**: the three shapes the product actually issues, selected by `(tab, filters, page, size, sort)`, so callers never send `aggs`. Required on both paths — DLS does not isolate `significant_terms`' index-wide background count (contract §F.1). **Also validate the vocabulary itself before executing it** — `terms` field targets and `top_hits` `_source` leaves against RESPONSE-VISIBLE — since bucket keys cannot be filtered on the response side (A-2 finding 8, contract §F.2) | L | Backend |
+| 3B.1 Build `SearchQueryMediator` that accepts client DSL, strips unsafe response-shaping surfaces at **every depth** (`_source`, `aggs`, `docvalue_fields`, `script_fields`, `explain`, `profile`, `runtime_mappings`, `collapse`, `inner_hits`), then **refuses any request member, query clause or clause value shape outside a closed allowlist** (A-2 finding 7 — `query_string`, `terms` lookup, `more_like_this`, `_script` sort, `knn` and `pit` all defeat a field-reference walk), validates the remaining field references against the QUERYABLE allowlist, and wraps the client query inside a server-built `bool` filter. Note `fields` is stripped as a response channel but **kept and validated** inside `multi_match`/`highlight` | M | Backend (depends on 3B.0) |
 | 3B.2 Add mandatory authorization filter injection to `SearchQueryMediator` using `DatasetSearchAuthContext`: emit a `must` bool clause enforcing publicVisibility / no-study / dataset-creator / study-creator / custodian as terms queries against indexed `accessPolicy` fields. **No DAC or institution clause** — contract rows 9–12 are DEFERred and adding them expands authorization | L | Backend (depends on 2.1, 3B.1) |
-| 3B.3 Add the server-managed field allowlist (contract §B, one bundle for all callers) to **every response channel** — `hits._source`, `aggregations.**` `top_hits`, bucket keys, `highlight`, `fields`, `inner_hits` — dropping the `sort` array outright; strip internal fields server-side, not in the client, and apply it to admins too. **Required on the native path as well** (contract §B.5c) | M → L | Backend (depends on 3B.1) |
-| 3B.4 Wire `SearchQueryMediator` into both `searchDatasets` and `searchDatasetsStream` in `ElasticSearchService` | S | Backend (depends on 3B.2, 3B.3) |
+| 3B.3a Apply the response filter to `searchDatasetsStream` as well — the v2 endpoint returns Elasticsearch's body verbatim as an `InputStream`, so this is a streaming filter rather than a response-object filter (A-2 finding 12) | M | Backend (depends on 3B.3) |
+| 3B.3 Add the server-managed field allowlist (contract §B, one bundle for all callers) to **every response channel** — `hits._source`, `aggregations.**` `top_hits`, `highlight`, `fields`, `inner_hits` — dropping the `sort` array outright and leaving bucket keys to 3B.0, which is the only place they can be checked (A-2 finding 8); strip internal fields server-side, not in the client, and apply it to admins too. **Required on the native path as well** (contract §B.5c) | M → L | Backend (depends on 3B.1) |
+| 3B.4 Wire `SearchQueryMediator` into both `searchDatasets` and `searchDatasetsStream` in `ElasticSearchService`, **as the first thing either does** — today `searchDatasets` sends the raw caller DSL to `_validate/query` before building the search request, so unmediated input already reaches the cluster once (A-2 finding 12). Run validation on the mediated body or delete it. Forward no caller-supplied URL parameter, index name or path, and regression-test that | S → M | Backend (depends on 3B.2, 3B.3) |
 | 3B.5 Unit-test `SearchQueryMediator` for each enforced dimension, add negative DAC/institution cases, and confirm INTERNAL fields are absent from responses rather than blanked on the client side | M | Backend (depends on 3B.4) |
 
 ### Phase 4 — API Hardening and Long-term Contract
@@ -2183,7 +2487,7 @@ DLS/FLS is unavailable.*
 | Task | Size | Owner |
 | --- | --- | --- |
 | 4.1 Harden existing `/api/dataset/search/index` and `/api/dataset/search/index/v2` in `DatasetResource` to always pass `duosUser` into the mediated/secured search path; remove the current passthrough-to-raw-ES behavior | S | Backend (depends on 3B, and 3A where licensed) |
-| 4.2 Design server-owned search API that accepts business parameters instead of raw Elasticsearch DSL (filters, pagination, sort, text query) and returns shaped response; scope as v3 endpoint. **3B.0 is its first increment** — the `aggs` half is already being built, so this is finishing the `query` half, and doing so retires the mediator, the field validator and the response-channel walker entirely (contract §F.1a, OPEN-11) | L | Backend *(recommend promoting from deferrable)* |
+| 4.2 Design server-owned search API that accepts business parameters instead of raw Elasticsearch DSL (filters, pagination, sort, text query) and returns shaped response; scope as v3 endpoint. **3B.0 is its first increment** — the `aggs` half is already being built, so this is finishing the `query` half, and doing so retires the mediator, the field validator and the response-channel walker entirely (contract §F.1a, OPEN-11). **A-2 finding 9 is a second, independent argument**: while callers author DSL, a QUERYABLE field's value is recoverable by binary search over `hits.total`, so "QUERYABLE but RESPONSE-INTERNAL" cannot hold. Deriving "My Data Submissions" and `restrictToPublicVisibility` from the caller's identity server-side closes that, and retires OPEN-8, contract §B.5c's widened grant and E-3's presence on the native path with it (contract §B.0b, OPEN-12) | L | Backend *(recommend promoting from deferrable)* |
 | 4.3 Update `DatasetResource` to expose the v3 search endpoint and maintain backward compatibility for v1/v2 during migration | M | Backend (depends on 4.2) |
 
 ### Phase 5 — Frontend Alignment
@@ -2209,19 +2513,29 @@ DLS/FLS is unavailable.*
 ### Critical Path
 
 Phase 0.1 → Phase 0.2/0.3 → Phase 1.1–1.3 / Phase 2.1–2.2 (parallel) → Phase 3B.0/3B.1/3B.3 →
-Phase 3A (where licensed) → Phase 4.1 → Phase 5.1 → Phase 6.1–6.3
+Phase 3A (where licensed, **and only if OPEN-13 says build**) → Phase 4.1 → Phase 5.1 → Phase 6.1–6.3
 
 Rough total (native DLS/FLS path): ~14–18 backend-engineer weeks end-to-end across phases;
 ~3–4 frontend-engineer weeks; ~1–2 infra-engineer weeks for cluster security setup and rollout
 support. **Only 3B.2, 3B.4 and 4.3 can be deferred if the cluster unambiguously supports DLS/FLS** —
 3B.0, 3B.1 and 3B.3 cannot, and 4.2 is now recommended rather than deferred. The earlier claim that
 "Phases 3B and 4.2/4.3 can be deferred" was wrong, and it was the estimate most affected by the A-2
-proof of concept.
+proof of concept. **If OPEN-13 resolves toward deferring Epic D, nothing in 3B is deferrable at all**
+— 3B.2 and 3B.4 become the enforcement rather than the fallback, and Phase 3A drops out of the total.
 
 ### Decisions
 
-- **Recommended target architecture**: native Elasticsearch DLS/FLS now, backed by indexed
-  `accessPolicy` metadata and backend-generated per-request Elasticsearch auth context.
+- **Recommended target architecture**: server-owned aggregations, query mediation and response-channel
+  field allowlisting over indexed `accessPolicy` metadata, with the authorization predicate injected
+  into every query. Native Elasticsearch DLS/FLS — backend-generated per-request auth context carrying
+  that same predicate — sits **on top of** that as defence in depth where licensed.
+- **Whether to build the native layer at all is open (OPEN-13).** This bullet used to read "native
+  Elasticsearch DLS/FLS now", which A-2 overtook: measurement moved statistics isolation, field
+  projection and query-surface control off the native path, leaving Epic D with one unique
+  contribution — enforcement bound to the *credential* rather than to our endpoint. Contract §G
+  recommends **deferring D-1…D-5 pending a deliberate answer**, not cancelling them. The question that
+  settles it: will anything other than this endpoint ever query the index with the service's
+  credentials? If yes, Epic D is not redundant and the deferral is wrong.
 - **Required in every configuration**: server-owned aggregations, query mediation, and response-channel
   field allowlisting. Originally scoped as a fallback for clusters without DLS/FLS; A-2's proof of
   concept measured Epic D to be insufficient without them, on two independent grounds (contract §1.1,
@@ -2240,7 +2554,9 @@ proof of concept.
 - **Critical assumption**: the target Elasticsearch environment supports the native security
   features needed for DLS/FLS. If not, Epic D is skipped and Epic E ships whole — but E-0/E-1/E-3 are
   the first implementation milestone either way, so this assumption no longer gates the start of work,
-  only Epic D's inclusion.
+  only Epic D's inclusion. **And it is no longer the only thing that gates it**: OPEN-13 asks whether
+  Epic D is worth building even where the license allows it, so a "yes" on this assumption is a
+  necessary rather than a sufficient reason to proceed with Epic D.
 
 ### Further Considerations
 
