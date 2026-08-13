@@ -27,6 +27,9 @@ import static org.mockito.Mockito.when;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -162,6 +165,10 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     return makeDataset(1, "Test Dataset", 0);
   }
 
+  private static List<Dataset> datasetsWithIds(int... datasetIds) {
+    return Arrays.stream(datasetIds).mapToObj(id -> makeDataset(id, "Dataset " + id, 1)).toList();
+  }
+
   @BeforeEach
   void setUp() {
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
@@ -264,7 +271,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testToggleSoApprovalRuleReindexesAllDatasets() throws Exception {
+  void testToggleSoApprovalRuleReindexesTheDacsDatasets() throws Exception {
     when(ruleDAO.findAllDACAutomationRulesByDACId(1))
         .thenReturn(
             List.of(
@@ -278,13 +285,15 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null)));
     when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
-    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10, 11));
+    when(datasetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasetsWithIds(10, 11));
     when(elasticSearchService.indexDatasets(List.of(10, 11))).thenReturn(Response.ok().build());
 
     AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
 
     assertTrue(result.isRuleEnabled());
     verify(elasticSearchService).indexDatasets(List.of(10, 11));
+    // The rest of the corpus is external entries with no DAC, which no rule change can affect
+    verify(datasetDAO, never()).findAllDatasetIds();
   }
 
   @Test
@@ -303,7 +312,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null)));
     when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
-    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10, 11));
+    when(datasetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasetsWithIds(10, 11));
     when(elasticSearchService.indexDatasets(List.of(10, 11))).thenReturn(Response.ok().build());
 
     service.toggleRule(1, 1, user);
@@ -326,7 +335,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null)));
     when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
-    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of());
+    when(datasetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(List.of());
 
     service.toggleRule(1, 1, user);
 
@@ -352,7 +361,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null,
                     null)));
-    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10, 11));
+    when(datasetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasetsWithIds(10, 11));
     CountDownLatch firstPassStarted = new CountDownLatch(1);
     CountDownLatch releaseFirstPass = new CountDownLatch(1);
     AtomicInteger passes = new AtomicInteger();
@@ -379,6 +388,61 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
       // Then holds to catch a third: the two toggles must share one pass, not get one each
       verify(elasticSearchService, after(500).times(2)).indexDatasets(List.of(10, 11));
       assertEquals(2, passes.get());
+    } finally {
+      releaseFirstPass.countDown();
+      realExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  void testQueuedDacsAreReindexedInTheOrderTheyWereToggled() throws Exception {
+    ExecutorService realExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    service =
+        new DACAutomationRuleService(
+            jdbi, voteServiceDAO, voteService, elasticSearchService, realExecutor);
+    List<Integer> dacIds = List.of(7, 8, 9);
+    dacIds.forEach(
+        dacId -> {
+          when(ruleDAO.findAllDACAutomationRulesByDACId(dacId))
+              .thenReturn(
+                  List.of(
+                      new DACAutomationRule(
+                          1,
+                          DACAutomationRuleType.GRU_V1,
+                          "Test Rule",
+                          RuleState.AVAILABLE,
+                          null,
+                          null,
+                          null,
+                          null)));
+          when(datasetDAO.findDatasetsAssociatedWithDac(dacId))
+              .thenReturn(List.of(makeDataset(dacId * 10, "Dataset", dacId)));
+        });
+    CountDownLatch firstPassStarted = new CountDownLatch(1);
+    CountDownLatch releaseFirstPass = new CountDownLatch(1);
+    List<List<Integer>> indexedInOrder = Collections.synchronizedList(new ArrayList<>());
+    when(elasticSearchService.indexDatasets(any()))
+        .thenAnswer(
+            invocation -> {
+              List<Integer> ids = invocation.getArgument(0);
+              indexedInOrder.add(ids);
+              if (indexedInOrder.size() == 1) {
+                firstPassStarted.countDown();
+                releaseFirstPass.await(5, TimeUnit.SECONDS);
+              }
+              return Response.ok().build();
+            });
+
+    try {
+      // The first toggle holds the drain, so the other two queue behind it while it runs
+      service.toggleRule(7, 1, user);
+      assertTrue(firstPassStarted.await(5, TimeUnit.SECONDS));
+      service.toggleRule(8, 1, user);
+      service.toggleRule(9, 1, user);
+      releaseFirstPass.countDown();
+
+      verify(elasticSearchService, timeout(5000).times(3)).indexDatasets(any());
+      assertEquals(List.of(List.of(70), List.of(80), List.of(90)), indexedInOrder);
     } finally {
       releaseFirstPass.countDown();
       realExecutor.shutdownNow();
@@ -434,9 +498,9 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     null,
                     null)));
     when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
-    when(datasetDAO.findAllDatasetIds())
+    when(datasetDAO.findDatasetsAssociatedWithDac(1))
         .thenThrow(new StackOverflowError("boom"))
-        .thenReturn(List.of(10));
+        .thenReturn(datasetsWithIds(10));
     when(elasticSearchService.indexDatasets(List.of(10))).thenReturn(Response.ok().build());
 
     service.toggleRule(1, 1, user);
@@ -460,7 +524,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                     "alice",
                     "alice@fake.org")));
     doNothing().when(ruleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
-    when(datasetDAO.findAllDatasetIds()).thenReturn(List.of(10));
+    when(datasetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasetsWithIds(10));
     when(elasticSearchService.indexDatasets(List.of(10))).thenThrow(new IOException("es down"));
 
     // The rule change is already committed and audited, so a failed reindex must not surface

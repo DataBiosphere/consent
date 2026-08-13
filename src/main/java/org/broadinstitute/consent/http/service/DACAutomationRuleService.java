@@ -8,9 +8,12 @@ import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -54,11 +57,13 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final ElasticSearchService elasticSearchService;
   private final ExecutorService executorService;
 
-  /** Guards both reindex flags; see {@link #reindexDatasetsForRuleChange}. */
+  /** Guards the queue and the running flag; see {@link #reindexDatasetsForRuleChange}. */
   private final Object reindexLock = new Object();
 
+  /** DACs awaiting a reindex, in toggle order. A Set so a DAC queued twice is reindexed once. */
+  private final Set<Integer> pendingDacIds = new LinkedHashSet<>();
+
   private boolean reindexRunning = false;
-  private boolean reindexPending = false;
 
   @Inject
   public DACAutomationRuleService(
@@ -109,28 +114,28 @@ public class DACAutomationRuleService implements ConsentLogger {
             .orElseThrow(() -> new UnprocessableEntityException("Rule ID not found."));
     if (!isNull(ruleBeingToggled.enabledByUserId())) {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
-      reindexDatasetsForRuleChange();
+      reindexDatasetsForRuleChange(dacId);
       return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
-    reindexDatasetsForRuleChange();
+    reindexDatasetsForRuleChange(dacId);
     return new AutomationRuleToggleResponse(
         ruleId, true, insertTime.toEpochMilli(), user.getDisplayName(), user.getEmail());
   }
 
   /**
-   * Indexed datasets carry state derived from their DAC's automation rules, so a toggle leaves
-   * those documents stale. Reindexes the whole corpus, matching {@code POST /api/dataset/index},
-   * off the request thread so toggle latency does not track corpus size.
+   * Indexed datasets carry state derived from their DAC's automation rules, so a toggle leaves that
+   * DAC's documents stale. Only they are reindexed — most of the corpus is external entries with no
+   * DAC, which no rule change can affect. It runs off the request thread so toggle latency does not
+   * track DAC size.
    *
-   * <p>A toggle arriving mid-pass marks another pass pending rather than starting a second one, so
-   * concurrent toggles cannot stack two whole-corpus reindexes. Coalesced rather than dropped: the
-   * toggle that arrives last carries the newest state.
+   * <p>Queued FIFO, so DACs are reindexed in the order they were toggled. A DAC already queued is
+   * not queued twice: the pending pass has not started and will read the newest state when it does.
    */
-  private void reindexDatasetsForRuleChange() {
+  private void reindexDatasetsForRuleChange(Integer dacId) {
     synchronized (reindexLock) {
-      reindexPending = true;
+      pendingDacIds.add(dacId);
       if (reindexRunning) {
         return;
       }
@@ -139,8 +144,8 @@ public class DACAutomationRuleService implements ConsentLogger {
     try {
       executorService.submit(this::drainPendingReindexes);
     } catch (RuntimeException e) {
-      // Released so a rejected submission does not leave every later toggle coalescing into a
-      // pass that never runs. reindexPending stays true, so the next toggle picks this one up.
+      // Released so a rejected submission does not leave every later toggle queueing behind a drain
+      // that never runs. The queue keeps its entries, so the next toggle picks this one up.
       synchronized (reindexLock) {
         reindexRunning = false;
       }
@@ -149,26 +154,30 @@ public class DACAutomationRuleService implements ConsentLogger {
   }
 
   /**
-   * Runs reindex passes until none is pending. Both flags are read and written under {@code
-   * reindexLock}, so a toggle cannot have its request dropped by clearing {@code reindexRunning}.
+   * Reindexes queued DACs until the queue is empty. The queue and {@code reindexRunning} are read
+   * and written under {@code reindexLock}, so a toggle cannot have its DAC dropped by clearing it.
    */
   private void drainPendingReindexes() {
     boolean released = false;
     try {
       while (true) {
+        Integer dacId;
         synchronized (reindexLock) {
-          if (!reindexPending) {
+          Iterator<Integer> queued = pendingDacIds.iterator();
+          if (!queued.hasNext()) {
             reindexRunning = false;
             released = true;
             return;
           }
-          reindexPending = false;
+          dacId = queued.next();
+          queued.remove();
         }
-        reindexAllDatasets();
+        reindexDatasetsForDac(dacId);
       }
     } finally {
-      // Reached only when an Error escapes reindexAllDatasets, which catches every Exception. The
-      // guard must still be released; the flag is local because another drain may own it by now.
+      // Reached only when an Error escapes reindexDatasetsForDac, which catches every Exception.
+      // The guard must still be released; the flag is local because another drain may own it by
+      // now.
       if (!released) {
         synchronized (reindexLock) {
           reindexRunning = false;
@@ -182,21 +191,26 @@ public class DACAutomationRuleService implements ConsentLogger {
    * Failures are logged rather than raised: the toggle that triggered this is already committed and
    * audited, so nothing here may fail it, and the next reindex corrects the documents either way.
    */
-  private void reindexAllDatasets() {
+  private void reindexDatasetsForDac(Integer dacId) {
     try {
-      List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
+      // Covers datasets carrying the DAC as a property as well as those assigned to it directly
+      List<Integer> datasetIds =
+          datasetDAO.findDatasetsAssociatedWithDac(dacId).stream()
+              .map(Dataset::getDatasetId)
+              .distinct()
+              .toList();
       if (datasetIds.isEmpty()) {
         return;
       }
       try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
         if (response.getStatus() >= 400) {
           logWarn(
-              "Error reindexing datasets after DAC rule toggle: status %d"
-                  .formatted(response.getStatus()));
+              "Error reindexing datasets for DAC %d after rule toggle: status %d"
+                  .formatted(dacId, response.getStatus()));
         }
       }
     } catch (Exception e) {
-      logException("Unable to reindex datasets after DAC rule toggle", e);
+      logException("Unable to reindex datasets for DAC %d after rule toggle".formatted(dacId), e);
     }
   }
 
