@@ -75,6 +75,35 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindEnabledRuleAssignmentsIgnoresIncompleteSettingsRows() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    DACAutomationRule gruRule = findRule(DACAutomationRuleType.GRU_V1);
+    // dac_id and user_id are both nullable. A row naming no user is what
+    // findAllDACAutomationRulesByDACId reports as disabled, and a null dac_id has no pairing to key
+    jdbi.useHandle(
+        handle -> {
+          handle
+              .createUpdate(
+                  "INSERT INTO dac_rule_settings (dac_id, rule_id, user_id) VALUES (:dacId, :ruleId, NULL)")
+              .bind("dacId", dacId)
+              .bind("ruleId", gruRule.id())
+              .execute();
+          handle
+              .createUpdate(
+                  "INSERT INTO dac_rule_settings (dac_id, rule_id, user_id) VALUES (NULL, :ruleId, :userId)")
+              .bind("ruleId", gruRule.id())
+              .bind("userId", user.getUserId())
+              .execute();
+        });
+
+    List<DACRuleAssignment> assignments = dacAutomationRuleDAO.findEnabledRuleAssignments();
+
+    Assertions.assertFalse(assignments.stream().anyMatch(a -> Objects.equals(a.dacId(), dacId)));
+    Assertions.assertTrue(assignments.stream().allMatch(a -> Objects.nonNull(a.dacId())));
+  }
+
+  @Test
   void testInsertDACRuleSetting() {
     User user = createUser();
     Integer dacId = createRandomDAC();

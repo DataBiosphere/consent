@@ -161,6 +161,9 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
    * Every enabled DAC-to-rule pairing, in one pass. Keyed by DAC rather than by dataset — unlike
    * {@code DatasetDAO.filterDatasetIdsByAutomationRuleType} — so indexing the whole corpus does not
    * need an unbounded IN list.
+   *
+   * <p>Both columns are nullable, so both are checked: a settings row naming no user is what
+   * findAllDACAutomationRulesByDACId reports as disabled, and a null dac_id has no pairing to key.
    */
   @RegisterRowMapper(DACRuleAssignmentMapper.class)
   @SqlQuery(
@@ -169,6 +172,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       FROM dac_rule_settings settings
       INNER JOIN dac_automation_rules rules ON rules.id = settings.rule_id
       WHERE rules.state = 'AVAILABLE'
+        AND settings.dac_id IS NOT NULL
+        AND settings.user_id IS NOT NULL
       """)
   List<DACRuleAssignment> findEnabledRuleAssignments();
 
