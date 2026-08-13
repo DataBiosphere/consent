@@ -598,6 +598,44 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateElectionsForDarCollectionAsChairOfAnotherDacIsForbidden() {
+    User user = new User();
+    user.setUserId(1);
+    user.setChairpersonRole();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10, 11));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(user.getUserId())).thenReturn(List.of(20));
+
+    assertThrows(
+        ForbiddenException.class, () -> service.createElectionsForDarCollection(user, collection));
+    verifyNoInteractions(darCollectionServiceDAO);
+  }
+
+  @Test
+  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() throws Exception {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("email");
+    user.setChairpersonRole();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10, 11));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(user.getUserId())).thenReturn(List.of(11, 20));
+    when(darCollectionServiceDAO.createElectionsForDarByUser(user, dar))
+        .thenReturn(List.of("electionId"));
+    when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(collection);
+
+    assertDoesNotThrow(() -> service.createElectionsForDarCollection(user, collection));
+    verify(darCollectionServiceDAO).createElectionsForDarByUser(user, dar);
+  }
+
+  @Test
   void testCreateElectionsForDarCollectionAsAdminIsForbidden() {
     User user = new User();
     user.setAdminRole();

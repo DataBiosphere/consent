@@ -70,6 +70,12 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DarCollectionService implements ConsentLogger {
 
+  private static final String CANCEL_ROLE_ERROR =
+      "Only chairpersons and researchers can cancel a collection";
+  private static final String CREATE_ELECTION_ROLE_ERROR = "Only chairpersons can create elections";
+  private static final String CREATE_ELECTION_DAC_ERROR =
+      "User is not a chairperson for any dataset in this collection";
+
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DacDAO dacDAO;
   private final DaaDAO daaDAO;
@@ -141,20 +147,14 @@ public class DarCollectionService implements ConsentLogger {
   private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
     summaries.forEach(
         s -> {
-          // Admins have read-only access to DAR collection summaries.
+          // Admins are read-only.
           s.getActions().clear();
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
           if (elections.isEmpty()) {
             s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
           } else {
-            elections
-                .values()
-                .forEach(
-                    e -> {
-                      String status = e.getStatus();
-                      updateStatusCount(statusCount, status);
-                    });
+            elections.values().forEach(e -> updateStatusCount(statusCount, e.getStatus()));
             determineCollectionStatus(s, statusCount);
           }
         });
@@ -658,7 +658,7 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection cancelDarCollectionByRole(
       User user, DarCollection collection, UserRoles role) {
     if (role != UserRoles.CHAIRPERSON && role != UserRoles.RESEARCHER) {
-      throw new ForbiddenException("Only chairpersons and researchers can cancel a collection");
+      throw new ForbiddenException(CANCEL_ROLE_ERROR);
     }
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
@@ -669,13 +669,9 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     DarCollection cancelledCollection =
-        switch (role) {
-          case CHAIRPERSON -> cancelDarCollectionElectionsAsChair(collection, user);
-          case RESEARCHER -> cancelDarCollectionAsResearcher(collection, user);
-          default ->
-              throw new ForbiddenException(
-                  "Only chairpersons and researchers can cancel a collection");
-        };
+        role == UserRoles.CHAIRPERSON
+            ? cancelDarCollectionElectionsAsChair(collection, user)
+            : cancelDarCollectionAsResearcher(collection, user);
     return getByCollectionId(user, cancelledCollection.getDarCollectionId());
   }
 
@@ -789,9 +785,16 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
     if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      throw new ForbiddenException("Only chairpersons can create elections");
+      throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
     }
     DataAccessRequest dar = collection.getMostRecentDar();
+    List<Integer> darDatasetIds = dar.getDatasetIds();
+    if (!darDatasetIds.isEmpty()) {
+      List<Integer> governedDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
+      if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
+        throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
+      }
+    }
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =

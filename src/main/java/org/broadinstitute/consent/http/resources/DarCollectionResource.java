@@ -37,6 +37,12 @@ import org.glassfish.jersey.server.ContainerRequest;
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
 
+  private static final String CANCEL_ROLE_ERROR =
+      "Only chairpersons and researchers can cancel a collection";
+  private static final String CHAIR_ROLE_REQUIRED_ERROR =
+      "roleName=" + CHAIRPERSON + " is required to cancel the elections for a collection";
+  private static final String CREATE_ELECTION_ROLE_ERROR = "Only chairpersons can create elections";
+
   private final DarCollectionService darCollectionService;
 
   @Inject
@@ -202,17 +208,21 @@ public class DarCollectionResource extends Resource {
       @QueryParam("roleName") String roleName) {
     try {
       User user = duosUser.getUser();
-      // Default to the least impactful role the user has if none is provided.
-      String actingRoleName = roleName;
-      if (actingRoleName == null) {
-        actingRoleName =
-            user.hasUserRole(UserRoles.RESEARCHER)
-                ? UserRoles.RESEARCHER.getRoleName()
-                : UserRoles.CHAIRPERSON.getRoleName();
-      }
-      UserRoles actingRole = validateUserHasRoleName(user, actingRoleName);
-      if (actingRole != UserRoles.CHAIRPERSON && actingRole != UserRoles.RESEARCHER) {
-        throw new ForbiddenException("Only chairpersons and researchers can cancel a collection");
+      UserRoles actingRole;
+      if (roleName == null) {
+        // Only the least impactful role is implied.
+        if (user.hasUserRole(UserRoles.RESEARCHER)) {
+          actingRole = UserRoles.RESEARCHER;
+        } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+          throw new BadRequestException(CHAIR_ROLE_REQUIRED_ERROR);
+        } else {
+          throw new ForbiddenException(CANCEL_ROLE_ERROR);
+        }
+      } else {
+        actingRole = validateUserHasRoleName(user, roleName);
+        if (actingRole != UserRoles.CHAIRPERSON && actingRole != UserRoles.RESEARCHER) {
+          throw new ForbiddenException(CANCEL_ROLE_ERROR);
+        }
       }
 
       DarCollection collection = darCollectionService.getByCollectionId(user, collectionId);
@@ -261,7 +271,7 @@ public class DarCollectionResource extends Resource {
     try {
       User user = duosUser.getUser();
       if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
-        throw new ForbiddenException("Only chairpersons can create elections");
+        throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
       }
       DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);

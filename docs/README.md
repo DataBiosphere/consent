@@ -18,7 +18,6 @@ If you are new to the repository, read in this order:
 | `ONBOARDING.md` | New contributors | Local setup, run commands, and first tasks |
 | `ARCHITECTURE.md` | Contributors and reviewers | High-level system design and request flow |
 | `API_GUIDELINES.md` | API authors and reviewers | API conventions, validation, and compatibility rules |
-| `ELECTION_OPERATIONS.md` | Support and operations | Ownership and escalation path for exceptional DAR election cleanup |
 | `plans/README.md` | Contributors and reviewers | Index of active implementation plans and design notes |
 | `ai/README.md` | Developers using AI tooling | Prompt usage model and best practices |
 | `ai/prompts/*.md` | Developers using AI tooling | Task-specific prompt templates and examples |

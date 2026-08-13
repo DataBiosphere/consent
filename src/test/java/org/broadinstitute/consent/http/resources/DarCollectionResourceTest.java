@@ -439,6 +439,14 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCancelDarCollection_asAdminWithoutRoleName() {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(duosAdmin, request, randomInt(1, 100), null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
   void testCancelDarCollection_asChair() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(chairperson.getUserId());
@@ -459,15 +467,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testCancelDarCollection_asChairWithoutRoleName() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(chairperson.getUserId());
-    int collectionId = collection.getDarCollectionId();
-    when(darCollectionService.getByCollectionId(chairperson, collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionByRole(
-            chairperson, collection, UserRoles.CHAIRPERSON))
-        .thenReturn(collection);
 
     try (var response =
-        resource.cancelDarCollectionByCollectionId(duosChairperson, request, collectionId, null)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+        resource.cancelDarCollectionByCollectionId(
+            duosChairperson, request, collection.getDarCollectionId(), null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
