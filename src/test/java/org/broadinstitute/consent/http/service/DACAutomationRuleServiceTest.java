@@ -19,6 +19,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -373,9 +374,10 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
       service.toggleRule(1, 1, user);
       releaseFirstPass.countDown();
 
-      // after() waits the full window before verifying, so an uncoalesced third pass fails this;
-      // timeout().times(2) would return as soon as it saw the second and never notice
-      verify(elasticSearchService, after(1000).times(2)).indexDatasets(List.of(10, 11));
+      // Waits for the follow-up pass rather than assuming a fixed window is long enough for it
+      verify(elasticSearchService, timeout(5000).times(2)).indexDatasets(List.of(10, 11));
+      // Then holds to catch a third: the two toggles must share one pass, not get one each
+      verify(elasticSearchService, after(500).times(2)).indexDatasets(List.of(10, 11));
       assertEquals(2, passes.get());
     } finally {
       releaseFirstPass.countDown();
