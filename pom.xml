@@ -29,6 +29,11 @@
     <netty.override.version>4.2.17.Final</netty.override.version>
     <spotless.version>3.9.0</spotless.version>
     <jetty.version>12.1.12</jetty.version>
+    <!-- Declared here rather than inline on the dependency so properties-maven-plugin writes it to
+         mvn.properties, which is how ElasticSearchCapabilityService reports the client version in a
+         deployed build: the shade plugin strips dependency manifests, so the client's own
+         Package.getImplementationVersion() is null in the uber jar. -->
+    <elasticsearch.rest.client.version>9.5.1</elasticsearch.rest.client.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -933,7 +938,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.5.0</version>
+      <version>${elasticsearch.rest.client.version}</version>
     </dependency>
 
     <dependency>

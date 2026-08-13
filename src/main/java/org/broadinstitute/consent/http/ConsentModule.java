@@ -384,6 +384,17 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
    * ElasticSearchHealthCheck} — takes this instance by injection rather than calling {@code
    * ElasticSearchSupport.createRestClient} itself. Closed on shutdown, since nothing else releases
    * those connections.
+   *
+   * <p><b>Ordering dependency:</b> the shutdown hook is registered here, inside the provider, so it
+   * is registered only when this client is first provisioned. That is safe today because every
+   * consumer is reached from {@code ConsentApplication.run}, which resolves the resources and
+   * health checks before the server starts — so provisioning always happens while the lifecycle is
+   * still accepting registrations. It stops being safe if this client ever becomes reachable only
+   * from a path that first runs after startup: Dropwizard will not call {@code start()} on a {@link
+   * Managed} added after the lifecycle has started, and depending on when it was added it may not
+   * be stopped either, which would leak the connection pool and its threads. If that day comes,
+   * register the hook eagerly from {@code configure()} rather than moving the client's construction
+   * around.
    */
   @Provides
   @Singleton
