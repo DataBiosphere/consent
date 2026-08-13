@@ -790,7 +790,8 @@ public class DarCollectionService implements ConsentLogger {
     DataAccessRequest dar = collection.getMostRecentDar();
     List<Integer> darDatasetIds = dar.getDatasetIds();
     if (!darDatasetIds.isEmpty()) {
-      List<Integer> governedDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
+      Set<Integer> governedDatasetIds =
+          Set.copyOf(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
       if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
         throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
       }

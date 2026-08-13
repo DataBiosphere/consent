@@ -28,7 +28,7 @@ put:
     400:
       description: Bad Request (result of elections present on DARs, or a role name that is missing or invalid for this user)
     403:
-      description: Forbidden. Not a Chairperson or Researcher.
+      description: Forbidden. Not acting as a Chairperson or Researcher.
     404:
       description: Not Found
     429:
