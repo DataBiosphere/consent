@@ -11,12 +11,9 @@ public final class DataUsePrimaryClassifier {
 
   /**
    * Whether a Data Use has the single-primary shape DAC automation supports. {@code Shape.SINGLE}
-   * also covers an Other-only primary category, which is non-canonical and must be excluded here to
-   * match the abstention policy in {@code DataUseMatcherV5}.
-   *
-   * <p>Both the approval engine and dataset indexing gate on this before consulting a rule, so it
-   * lives here rather than in either caller — the two must not be able to disagree about which
-   * datasets automation can act on.
+   * also covers an Other-only primary category, which is non-canonical and excluded here to match
+   * the abstention policy in {@code DataUseMatcherV5}. Shared by the approval engine and dataset
+   * indexing, which both gate on it before consulting a rule.
    */
   public static boolean hasCanonicalSinglePrimary(DataUse dataUse) {
     if (dataUse == null) {

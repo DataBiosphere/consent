@@ -448,13 +448,11 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   /**
-   * The automation rules each DAC currently has enabled, keyed by DAC id.
-   *
-   * <p>{@code Optional.empty()} means the rules could not be resolved at all; an empty map inside
-   * the Optional means they resolved successfully and no DAC has any rule enabled. Indexing
-   * continues either way, but unresolved rules must not be reported as dataset state.
+   * The automation rules each DAC currently has enabled, keyed by DAC id. {@code Optional.empty()}
+   * means they could not be resolved at all, unlike an empty map, which means no DAC has any rule
+   * enabled. Indexing continues either way, but unresolved rules are not reported as dataset state.
    */
-  private Optional<Map<Integer, Set<DACAutomationRuleType>>> resolveEnabledRulesByDacId() {
+  Optional<Map<Integer, Set<DACAutomationRuleType>>> resolveEnabledRulesByDacId() {
     try {
       List<DACRuleAssignment> assignments =
           Objects.requireNonNullElse(dacAutomationRuleDAO.findEnabledRuleAssignments(), List.of());
@@ -473,12 +471,8 @@ public class ElasticSearchService implements ConsentLogger {
 
   /**
    * Whether the dataset's DAC has an enabled rule that would automatically approve a matching
-   * request for it. Evaluated with the rule implementations themselves rather than a re-derivation,
-   * so the indexed flag and the approval engine cannot disagree about which datasets qualify. Only
-   * the dataset half of each rule applies here; the request half is unknowable at indexing time.
-   *
-   * <p>Mirrors {@code DACAutomationRuleService.applyRule}: the shape gate comes first, because
-   * automation abstains on a non-canonical primary Data Use before any rule is consulted.
+   * request for it. Only the dataset half of each rule applies; the request half is unknowable at
+   * indexing time. Mirrors {@code DACAutomationRuleService.applyRule}, shape gate first.
    */
   private boolean isInstantApprovalEligible(Dataset dataset, Set<DACAutomationRuleType> dacRules) {
     if (!DataUsePrimaryClassifier.hasCanonicalSinglePrimary(dataset.getDataUse())) {
@@ -489,23 +483,12 @@ public class ElasticSearchService implements ConsentLogger {
         .anyMatch(rule -> rule.datasetQualifies(dataset));
   }
 
-  public DatasetTerm toDatasetTerm(Dataset dataset) {
-    if (Objects.isNull(dataset)) {
-      return null;
-    }
-    // A dataset with no DAC has no rules to resolve, so it does not need the query at all
-    if (Objects.isNull(dataset.getDacId())) {
-      return toDatasetTerm(dataset, Map.of());
-    }
-    return toDatasetTerm(dataset, resolveEnabledRulesByDacId().orElse(null));
-  }
-
   /**
    * @param enabledRulesByDacId resolved DAC rules, or {@code null} when they could not be resolved
    *     — the rule-derived fields are then left unset so clients render nothing rather than being
    *     told the wrong approval process
    */
-  private DatasetTerm toDatasetTerm(
+  DatasetTerm toDatasetTerm(
       Dataset dataset, Map<Integer, Set<DACAutomationRuleType>> enabledRulesByDacId) {
     if (Objects.isNull(dataset)) {
       return null;

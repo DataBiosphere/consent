@@ -120,19 +120,13 @@ public class DACAutomationRuleService implements ConsentLogger {
   }
 
   /**
-   * Indexed datasets carry state derived from their DAC's automation rules — the Signing Official
-   * approval model and instant-approval eligibility — so a toggle leaves those documents stale.
+   * Indexed datasets carry state derived from their DAC's automation rules, so a toggle leaves
+   * those documents stale. Reindexes the whole corpus, matching {@code POST /api/dataset/index},
+   * off the request thread so toggle latency does not track corpus size.
    *
-   * <p>Reindexes the whole corpus rather than just the toggling DAC's datasets, matching {@code
-   * POST /api/dataset/index}. Rule toggles are rare, and this keeps the reindex off the
-   * unbounded-IN-list path a DAC with many datasets would otherwise take. It runs off the request
-   * thread so toggle latency does not track corpus size.
-   *
-   * <p>Reindexes are coalesced: a toggle arriving while one is in flight does not start a second
-   * pass over the whole corpus, it marks another pass as pending so exactly one more runs once the
-   * current one finishes. Coalescing rather than skipping matters — the toggle that arrives last
-   * carries the newest state, so dropping it would leave the index behind until something else
-   * triggered a reindex.
+   * <p>A toggle arriving mid-pass marks another pass pending rather than starting a second one, so
+   * concurrent toggles cannot stack two whole-corpus reindexes. Coalesced rather than dropped: the
+   * toggle that arrives last carries the newest state.
    */
   private void reindexDatasetsForRuleChange() {
     synchronized (reindexLock) {
@@ -145,9 +139,8 @@ public class DACAutomationRuleService implements ConsentLogger {
     try {
       executorService.submit(this::drainPendingReindexes);
     } catch (RuntimeException e) {
-      // Rejected submission (an executor shutting down) would otherwise leave reindexRunning set
-      // with nothing draining it, so every later toggle would coalesce into a pass that never runs.
-      // reindexPending stays true, so the next toggle that does schedule picks this one up.
+      // Released so a rejected submission does not leave every later toggle coalescing into a
+      // pass that never runs. reindexPending stays true, so the next toggle picks this one up.
       synchronized (reindexLock) {
         reindexRunning = false;
       }
@@ -157,19 +150,27 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   /**
    * Runs reindex passes until none is pending. Both flags are read and written under {@code
-   * reindexLock}, so a toggle cannot observe {@code reindexRunning} as true moments before this
-   * clears it and have its request dropped.
+   * reindexLock}, so a toggle cannot have its request dropped by clearing {@code reindexRunning}.
    */
   private void drainPendingReindexes() {
-    while (true) {
-      synchronized (reindexLock) {
-        if (!reindexPending) {
-          reindexRunning = false;
-          return;
+    try {
+      while (true) {
+        synchronized (reindexLock) {
+          if (!reindexPending) {
+            reindexRunning = false;
+            return;
+          }
+          reindexPending = false;
         }
-        reindexPending = false;
+        reindexAllDatasets();
       }
-      reindexAllDatasets();
+    } catch (Throwable t) {
+      // An Error escaping the inner catch would otherwise leave reindexRunning stuck set
+      synchronized (reindexLock) {
+        reindexRunning = false;
+      }
+      logWarn("Dataset reindex after DAC rule toggle terminated unexpectedly", t);
+      throw t;
     }
   }
 

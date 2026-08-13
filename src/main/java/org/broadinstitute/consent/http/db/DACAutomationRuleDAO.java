@@ -158,17 +158,9 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
 
   /**
-   * Every DAC-to-rule pairing that is currently enabled. A rule counts as enabled for a DAC when a
-   * dac_rule_settings row exists for that pairing and the rule itself is still AVAILABLE, so a
-   * retired rule is not reported as enabled — matching findAllDACAutomationRulesByDACId.
-   *
-   * <p>Deliberately keyed by DAC rather than by dataset — unlike {@code
-   * DatasetDAO.filterDatasetIdsByAutomationRuleType}, which takes a dataset id list. Indexing walks
-   * the entire dataset corpus, so a dataset-keyed query would mean an unbounded IN list; the result
-   * here is bounded by the number of DACs no matter how many datasets are being indexed.
-   *
-   * <p>Returns all rule types in one pass rather than taking a rule type argument, so indexing
-   * resolves every rule it decorates datasets with in a single query.
+   * Every enabled DAC-to-rule pairing, in one pass. Keyed by DAC rather than by dataset — unlike
+   * {@code DatasetDAO.filterDatasetIdsByAutomationRuleType} — so indexing the whole corpus does not
+   * need an unbounded IN list.
    */
   @RegisterRowMapper(DACRuleAssignmentMapper.class)
   @SqlQuery(

@@ -416,6 +416,34 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testToggleRuleStaysSchedulableAfterAnErrorEscapesAReindexPass() throws Exception {
+    // An Error escapes the best-effort catch, which only handles Exception. The guard must still be
+    // released, or every later reindex would coalesce into a pass that never runs.
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+    when(datasetDAO.findAllDatasetIds())
+        .thenThrow(new StackOverflowError("boom"))
+        .thenReturn(List.of(10));
+    when(elasticSearchService.indexDatasets(List.of(10))).thenReturn(Response.ok().build());
+
+    service.toggleRule(1, 1, user);
+    service.toggleRule(1, 1, user);
+
+    verify(elasticSearchService).indexDatasets(List.of(10));
+  }
+
+  @Test
   void testToggleRuleSucceedsWhenReindexFails() throws Exception {
     when(ruleDAO.findAllDACAutomationRulesByDACId(1))
         .thenReturn(
