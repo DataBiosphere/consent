@@ -37,8 +37,6 @@ import org.glassfish.jersey.server.ContainerRequest;
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
 
-  private static final String CANCEL_ROLE_ERROR =
-      "Only chairpersons and researchers can cancel a collection";
   private static final String CHAIR_ROLE_REQUIRED_ERROR =
       "roleName=" + CHAIRPERSON + " is required to cancel the elections for a collection";
 
@@ -215,12 +213,12 @@ public class DarCollectionResource extends Resource {
         } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
           throw new BadRequestException(CHAIR_ROLE_REQUIRED_ERROR);
         } else {
-          throw new ForbiddenException(CANCEL_ROLE_ERROR);
+          throw new ForbiddenException(DarCollectionService.CANCEL_ROLE_ERROR);
         }
       } else {
         actingRole = validateUserHasRoleName(user, roleName);
         if (actingRole != UserRoles.CHAIRPERSON && actingRole != UserRoles.RESEARCHER) {
-          throw new ForbiddenException(CANCEL_ROLE_ERROR);
+          throw new ForbiddenException(DarCollectionService.CANCEL_ROLE_ERROR);
         }
       }
 

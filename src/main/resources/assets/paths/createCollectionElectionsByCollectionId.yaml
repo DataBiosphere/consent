@@ -20,7 +20,7 @@ post:
           schema:
             $ref: '../schemas/DarCollection.yaml'
     400:
-      description: Bad Request.  Check error details
+      description: Bad Request (collection has no DAR, or the DAR has no datasets)
     401:
       description: Authentication required.
     403:

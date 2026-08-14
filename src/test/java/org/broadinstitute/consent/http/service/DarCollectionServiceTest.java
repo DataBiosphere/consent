@@ -582,8 +582,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setChairpersonRole();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
     when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any()))
         .thenReturn(List.of("electionId"));
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
@@ -603,6 +605,22 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setUserId(1);
     user.setChairpersonRole();
     DarCollection collection = createMockCollections().getFirst();
+
+    assertThrows(
+        BadRequestException.class, () -> service.createElectionsForDarCollection(user, collection));
+    verifyNoInteractions(darCollectionServiceDAO);
+  }
+
+  @Test
+  void testCreateElectionsForDarCollectionWithoutDatasetsIsBadRequest() {
+    User user = new User();
+    user.setUserId(1);
+    user.setChairpersonRole();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
 
     assertThrows(
         BadRequestException.class, () -> service.createElectionsForDarCollection(user, collection));
@@ -886,6 +904,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     chairperson.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(false);
     DataAccessRequestData darData = new DataAccessRequestData();
@@ -893,6 +912,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setData(darData);
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
 
     when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any()))
         .thenReturn(List.of(UUID.randomUUID().toString()));
@@ -914,6 +934,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     chairperson.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(true);
     DataAccessRequestData darData = new DataAccessRequestData();
@@ -921,6 +942,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setData(darData);
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
 
     assertThrows(
         ForbiddenException.class,
@@ -938,6 +960,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     chairperson.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(true);
     dar.setApprovingSigningOfficialUserId(5);
@@ -946,6 +969,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setData(darData);
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
 
     when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any()))
         .thenReturn(List.of(UUID.randomUUID().toString()));
@@ -969,9 +993,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     progressReport.setReferenceId(UUID.randomUUID().toString());
     progressReport.setParentId(dar.getId());
     progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setDatasetIds(List.of(10));
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     collection.addDar(progressReport);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
 
     User voteUser = new User();
     String electionId = "electionId";
@@ -995,8 +1021,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setChairpersonRole();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
 
     assertThrows(
         IllegalStateException.class,
@@ -1010,8 +1038,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setChairpersonRole();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDACUserId(any())).thenReturn(List.of(10));
     List<String> electionIds = List.of("electionId");
     when(darCollectionServiceDAO.createElectionsForDarByUser(user, dar)).thenReturn(electionIds);
     when(voteDAO.findVoteUsersByElectionReferenceIdList(electionIds))

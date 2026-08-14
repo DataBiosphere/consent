@@ -70,11 +70,12 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DarCollectionService implements ConsentLogger {
 
-  private static final String CANCEL_ROLE_ERROR =
+  public static final String CANCEL_ROLE_ERROR =
       "Only chairpersons and researchers can cancel a collection";
   private static final String CREATE_ELECTION_ROLE_ERROR = "Only chairpersons can create elections";
   private static final String CREATE_ELECTION_DAC_ERROR =
       "User is not a chairperson for any dataset in this collection";
+  private static final String CREATE_ELECTION_DATASET_ERROR = "At least one dataset is required";
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DacDAO dacDAO;
@@ -792,12 +793,13 @@ public class DarCollectionService implements ConsentLogger {
               .formatted(collection.getDarCollectionId()));
     }
     List<Integer> darDatasetIds = dar.getDatasetIds();
-    if (!darDatasetIds.isEmpty()) {
-      Set<Integer> governedDatasetIds =
-          Set.copyOf(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
-      if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
-        throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
-      }
+    if (darDatasetIds.isEmpty()) {
+      throw new BadRequestException(CREATE_ELECTION_DATASET_ERROR);
+    }
+    Set<Integer> governedDatasetIds =
+        Set.copyOf(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
+    if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
+      throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
     }
     return dar;
   }
