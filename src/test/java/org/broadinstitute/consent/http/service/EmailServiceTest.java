@@ -69,6 +69,7 @@ class EmailServiceTest extends AbstractTestHelper {
 
   private static final String SERVER_URL = "http://localhost:8000/#/";
   private static final String FROM = "from@duos";
+  private static final String FROM_NAME = "DUOS";
   private EmailService service;
   @Mock private ElectionDAO electionDAO;
   @Mock private UserDAO userDAO;
@@ -137,6 +138,7 @@ class EmailServiceTest extends AbstractTestHelper {
     verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
     var mail = captor.getValue();
     assertEquals(FROM, mail.getFrom().getEmail());
+    assertEquals(FROM_NAME, mail.getFrom().getName());
     assertEquals(
         user.getEmail(), mail.getPersonalization().getFirst().getTos().getFirst().getEmail());
     assertEquals(subject, mail.getSubject());
