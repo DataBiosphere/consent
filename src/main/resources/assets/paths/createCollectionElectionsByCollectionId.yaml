@@ -1,7 +1,7 @@
 post:
   summary: Create Elections for Collection By ID
   operationId: apiCollectionsCollectionIdElectionPost
-  description: Returns created Elections for Dars in Collection
+  description: Returns created Elections for Dars in Collection, for the datasets the Chairperson governs. Limited to Chairpersons; Admins have no access and escalate to the governing DAC Chairperson.
   tags:
     - DAR Collection
     - Election
@@ -20,9 +20,11 @@ post:
           schema:
             $ref: '../schemas/DarCollection.yaml'
     400:
-      description: Bad Request.  Check error details
+      description: Bad Request (collection has no DAR, or the DAR has no datasets)
     401:
-      description: Not authorized to perform this action.
+      description: Authentication required.
+    403:
+      description: Forbidden. Not a Chairperson for any dataset in the collection.
     404:
       description: Not Found
     409:

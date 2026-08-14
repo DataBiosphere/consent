@@ -70,6 +70,13 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DarCollectionService implements ConsentLogger {
 
+  public static final String CANCEL_ROLE_ERROR =
+      "Only chairpersons and researchers can cancel a collection";
+  private static final String CREATE_ELECTION_ROLE_ERROR = "Only chairpersons can create elections";
+  private static final String CREATE_ELECTION_DAC_ERROR =
+      "User is not a chairperson for any dataset in this collection";
+  private static final String CREATE_ELECTION_DATASET_ERROR = "At least one dataset is required";
+
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DacDAO dacDAO;
   private final DaaDAO daaDAO;
@@ -139,29 +146,17 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private void processDarCollectionSummariesForAdmin(List<DarCollectionSummary> summaries) {
-    // if at least one election is open, show cancel
-    // if at least one non-open/absent election, show open
     summaries.forEach(
         s -> {
+          // Admins are read-only.
+          s.getActions().clear();
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
           if (elections.isEmpty()) {
             s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
           } else {
-            elections
-                .values()
-                .forEach(
-                    e -> {
-                      String status = e.getStatus();
-                      updateStatusCount(statusCount, status);
-                      if (status.equals(ElectionStatus.OPEN.getValue())) {
-                        s.addAction(DarCollectionActions.CANCEL);
-                      }
-                    });
+            elections.values().forEach(e -> updateStatusCount(statusCount, e.getStatus()));
             determineCollectionStatus(s, statusCount);
-          }
-          if (s.getCloseoutSupplement() != null) {
-            s.getActions().clear();
           }
         });
   }
@@ -654,15 +649,18 @@ public class DarCollectionService implements ConsentLogger {
 
   /**
    * Cancel Elections or a dar for a DarCollection, given a user and a role. If the user is a chair,
-   * or admin, cancel elections. If the user is a researcher, cancel the dar.
+   * cancel elections. If the user is a researcher, cancel the dar.
    *
    * @param user The User initiating the cancel
    * @param collection The DarCollection
-   * @param role The role of the user, must be one of ADMIN, CHAIRPERSON, or RESEARCHER
+   * @param role The role of the user, must be CHAIRPERSON or RESEARCHER
    * @return The DarCollection that has been canceled
    */
   public DarCollection cancelDarCollectionByRole(
       User user, DarCollection collection, UserRoles role) {
+    if (role != UserRoles.CHAIRPERSON && role != UserRoles.RESEARCHER) {
+      throw new ForbiddenException(CANCEL_ROLE_ERROR);
+    }
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn(
@@ -672,11 +670,9 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     DarCollection cancelledCollection =
-        switch (role) {
-          case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection, user);
-          case CHAIRPERSON -> cancelDarCollectionElectionsAsChair(collection, user);
-          default -> cancelDarCollectionAsResearcher(collection, user);
-        };
+        role == UserRoles.CHAIRPERSON
+            ? cancelDarCollectionElectionsAsChair(collection, user)
+            : cancelDarCollectionAsResearcher(collection, user);
     return getByCollectionId(user, cancelledCollection.getDarCollectionId());
   }
 
@@ -684,8 +680,8 @@ public class DarCollectionService implements ConsentLogger {
    * Cancel a DarCollection as a researcher.
    *
    * <p>If an election exists for a DAR within the collection, that DAR cannot be cancelled by the
-   * researcher. Since it's now under DAC review, it's up to the DAC Chair (or admin) to ultimately
-   * decline or cancel the elections for the collection.
+   * researcher. Since it's now under DAC review, it's up to the DAC Chair to ultimately decline or
+   * cancel the elections for the collection.
    *
    * @param collection The DarCollection
    * @param user the researcher requesting the cancel
@@ -719,24 +715,6 @@ public class DarCollectionService implements ConsentLogger {
     if (!activeDarIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
-
-    return getByCollectionId(user, collection.getDarCollectionId());
-  }
-
-  /**
-   * Cancel Elections for a DarCollection as an admin.
-   *
-   * <p>Admins can cancel all elections in a DarCollection
-   *
-   * @param collection The DarCollection
-   * @return The DarCollection whose elections have been canceled
-   */
-  private DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection, User user) {
-    Collection<DataAccessRequest> dars = collection.getDars().values();
-    List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
-
-    // Cancel all DAR elections
-    cancelElectionsForReferenceIds(referenceIds);
 
     return getByCollectionId(user, collection.getDarCollectionId());
   }
@@ -797,6 +775,36 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
+   * Validate that the user can create elections for the collection and return the DAR they will be
+   * created for.
+   *
+   * @param user The User initiating new elections
+   * @param collection The DarCollection
+   * @return The most recent DAR in the collection
+   */
+  private DataAccessRequest validateElectionCreation(User user, DarCollection collection) {
+    if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
+      throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
+    }
+    DataAccessRequest dar = collection.getMostRecentDar();
+    if (Objects.isNull(dar)) {
+      throw new BadRequestException(
+          "DAR Collection ID: [%s] does not have any associated DAR ids"
+              .formatted(collection.getDarCollectionId()));
+    }
+    List<Integer> darDatasetIds = dar.getDatasetIds();
+    if (darDatasetIds.isEmpty()) {
+      throw new BadRequestException(CREATE_ELECTION_DATASET_ERROR);
+    }
+    Set<Integer> governedDatasetIds =
+        Set.copyOf(getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId()));
+    if (darDatasetIds.stream().noneMatch(governedDatasetIds::contains)) {
+      throw new ForbiddenException(CREATE_ELECTION_DAC_ERROR);
+    }
+    return dar;
+  }
+
+  /**
    * DarCollections with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Elections in open, closed, pending, or final states are not
    * valid.
@@ -807,7 +815,7 @@ public class DarCollectionService implements ConsentLogger {
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
-    DataAccessRequest dar = collection.getMostRecentDar();
+    DataAccessRequest dar = validateElectionCreation(user, collection);
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =

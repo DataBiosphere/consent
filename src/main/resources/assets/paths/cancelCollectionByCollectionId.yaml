@@ -1,7 +1,7 @@
 put:
   summary: Cancel DAR Collection By ID
   operationId: apiCollectionsCollectionIdCancelPut
-  description: Returns DAR Collection after canceling associated dars
+  description: Returns DAR Collection after a Researcher cancels their dars or a Chairperson cancels the elections they govern. Admins have no access and escalate to the governing DAC Chairperson.
   tags:
     - DAR Collection
   parameters:
@@ -13,14 +13,11 @@ put:
         type: integer
     - name: roleName
       in: query
-      description: | 
-        String value that represents the role name to act as. If not provided,
-        the system will cancel the collection and associated elections as the 
-        least permissioned role the user has (researcher) for safety.
+      description: Role name to act as. Defaults to Researcher; Chairperson must be requested explicitly.
       required: false
       schema:
         type: string
-        enum: [Admin, Chairperson, Researcher]
+        enum: [Chairperson, Researcher]
   responses:
     200:
       description: Returns target dar collection with DARs canceled
@@ -29,7 +26,9 @@ put:
           schema:
             $ref: '../schemas/DarCollection.yaml'
     400:
-      description: Bad Request (result of elections present on DARs or the user not having the provided role name)
+      description: Bad Request (result of elections present on DARs, or a role name that is missing or invalid for this user)
+    403:
+      description: Forbidden. Not acting as a Chairperson or Researcher.
     404:
       description: Not Found
     429:
