@@ -43,6 +43,14 @@ import org.jdbi.v3.core.result.ResultIterable;
 public class EmailService implements ConsentLogger {
 
   private static final int LOOKBACK_DELAY_HOURS = 24;
+
+  /**
+   * Friendly name shown as the sender of all outgoing SendGrid messages. Without it, the From
+   * header carries a bare address and mail clients typically display the local part instead -
+   * 'duos', for the production account.
+   */
+  private static final String FROM_NAME = "DUOS";
+
   @VisibleForTesting protected static int sendgridThrottleMessageCount = 500;
   @VisibleForTesting protected static int sendgridThrottleResetTime = 60;
   private final UserDAO userDAO;
@@ -80,7 +88,7 @@ public class EmailService implements ConsentLogger {
     String content = out.toString();
     Mail message =
         new Mail(
-            new Email(fromAccount),
+            new Email(fromAccount, FROM_NAME),
             mailMessage.createSubject(),
             new Email(mailMessage.toUser.getEmail()),
             new Content("text/html", content));
