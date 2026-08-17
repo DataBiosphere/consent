@@ -899,10 +899,7 @@ paths:
     get:
       summary: Find currently authenticated user
       operationId: apiUserMeGet
-      description: >-
-        Find currently authenticated user. A caller that presents a valid token but has no DUOS
-        account receives 404, not 401, so that "not registered yet" (start registration via
-        POST /api/user) stays distinguishable from a rejected token.
+      description: Find currently authenticated user
       tags:
         - User
       responses:
@@ -913,9 +910,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         401:
-          description: No token was supplied, or the token carries no usable identity
+          description: Unauthorized - no token, or no identity in the token
         404:
-          description: The token is valid, but no DUOS account exists for it
+          description: Authenticated, but no DUOS account exists for this user
         429:
           description: Too Many Requests - rate limit exceeded
           content:

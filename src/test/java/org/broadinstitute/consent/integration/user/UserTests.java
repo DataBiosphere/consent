@@ -116,7 +116,7 @@ class UserTests extends ContainerTests {
    * unreachable.
    */
   @Test
-  void testGetMeForAuthenticatedUnregisteredUser() {
+  void testGetMeForAuthenticatedUnregisteredUserReturnsNotFound() {
     String bearer = UUID.randomUUID().toString();
     String email = "ci-unregistered-%s@example.com".formatted(UUID.randomUUID());
     try (Response response =
@@ -133,9 +133,13 @@ class UserTests extends ContainerTests {
     }
   }
 
-  /** A token carrying no usable identity is still rejected as unauthenticated. */
+  /**
+   * The 404 above must not come at the cost of the 401. Consent never sees a raw token — the proxy
+   * validates it upstream — so the two ways a request reaches here unauthenticated are a token the
+   * proxy could not resolve to an identity, and no token at all. Both still answer 401.
+   */
   @Test
-  void testGetMeWithUnusableTokenIsUnauthorized() {
+  void testGetMeWithoutIdentityReturnsUnauthorized() {
     String bearer = UUID.randomUUID().toString();
     try (Response response =
         getClient()
@@ -146,6 +150,13 @@ class UserTests extends ContainerTests {
             .header("OAUTH2_CLAIM_access_token", bearer)
             .header("OAUTH2_CLAIM_aud", "test-aud")
             .get()) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetMeWithoutTokenReturnsUnauthorized() {
+    try (Response response = getClient().target(serviceUrl("/api/user/me")).request().get()) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
     }
   }
