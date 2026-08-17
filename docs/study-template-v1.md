@@ -284,6 +284,7 @@ preserving aggregation across otherwise independent fields.
 | Empty or record-free file | Reject; no draft is created. |
 | File larger than 5 MiB | Reject before parsing; no draft is created. |
 | Malformed CSV or invalid UTF-8 | Reject with location when known. |
+| NUL (U+0000) in any cell | Reject with row and column; it decodes as valid UTF-8 but cannot be stored in a JSON document. |
 | Missing, unknown, reordered, or duplicate header | Reject. |
 | Non-comma delimiter detected in the header | Reject, naming the detected character and asking for a comma-delimited re-export. |
 | Missing, unsupported, or mixed version | Reject affected rows; only major version `1` is supported. |

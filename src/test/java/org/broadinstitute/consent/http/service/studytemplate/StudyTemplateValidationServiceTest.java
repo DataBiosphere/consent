@@ -48,6 +48,9 @@ class StudyTemplateValidationServiceTest {
   /** The row an appended perturbation lands on, given the ten rows of {@link #minimalTemplate}. */
   private static final int APPENDED_ROW = 11;
 
+  /** Survives a strict UTF-8 decode and is not whitespace, so only an explicit check catches it. */
+  private static final String NUL = "\u0000";
+
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final StudyTemplateValidationService service = new StudyTemplateValidationService();
@@ -268,6 +271,39 @@ class StudyTemplateValidationServiceTest {
 
     assertEquals(
         List.of(TemplateValidationError.of("Template file is not valid CSV")), result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsANulCharacterInAValue() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n").replace("Synthetic Minimal Study", "Synthetic" + NUL));
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(2, "value", "Template must not contain a NUL character")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsANulCharacterBeforeReportingTheHeaderItBroke() {
+    StudyTemplateValidationResult result =
+        validate(HEADER.replace("value", "val" + NUL + "ue") + "\n");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(1, "value", "Template must not contain a NUL character")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsANulCharacterBeyondTheDeclaredColumns() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,study,study,,species,Homo sapiens," + NUL);
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(APPENDED_ROW, "Template must not contain a NUL character")),
+        result.errors());
   }
 
   @Test

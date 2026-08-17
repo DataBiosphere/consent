@@ -38,6 +38,7 @@ public class StudyTemplateValidationService {
   static final int MAX_ERRORS = 100;
 
   private static final char BOM = '\uFEFF';
+  private static final char NUL = '\u0000';
   private static final CSVFormat CSV_FORMAT =
       CSVFormat.RFC4180.builder().setIgnoreEmptyLines(true).get();
 
@@ -70,6 +71,11 @@ public class StudyTemplateValidationService {
       // Whichever step produced no records already recorded why.
       return failed(errors);
     }
+    rejectNulCharacters(records, errors);
+    if (!errors.isEmpty()) {
+      return failed(errors);
+    }
+
     validateHeader(records.getFirst(), errors);
     if (!errors.isEmpty()) {
       return failed(errors);
@@ -134,6 +140,30 @@ public class StudyTemplateValidationService {
       errors.message("Template file is not valid CSV");
       return List.of();
     }
+  }
+
+  /**
+   * NUL passes both a strict UTF-8 decode and {@code isBlank}, so without this it would reach a
+   * registration string and only fail once the draft is written, where Postgres rejects it inside a
+   * {@code jsonb} value. Rejecting it here tells the producer which cell to fix instead of
+   * stripping bytes out of their study metadata downstream.
+   */
+  private static void rejectNulCharacters(List<CSVRecord> records, TemplateErrors errors) {
+    for (CSVRecord csvRecord : records) {
+      for (int column = 0; column < csvRecord.size(); column++) {
+        if (csvRecord.get(column).indexOf(NUL) >= 0) {
+          errors.at(
+              (int) csvRecord.getRecordNumber(),
+              columnName(column),
+              "Template must not contain a NUL character");
+        }
+      }
+    }
+  }
+
+  /** The header this column falls under, or null for a cell beyond the declared columns. */
+  private static String columnName(int column) {
+    return column < TemplateColumns.HEADERS.size() ? TemplateColumns.HEADERS.get(column) : null;
   }
 
   private static void validateHeader(CSVRecord header, TemplateErrors errors) {
