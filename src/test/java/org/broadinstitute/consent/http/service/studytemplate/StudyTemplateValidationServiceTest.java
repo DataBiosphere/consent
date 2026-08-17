@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -41,6 +42,8 @@ class StudyTemplateValidationServiceTest {
       "templateVersion,recordType,recordId,parentRecordId,field,value";
   private static final String NOT_NHGRI_FUNDED =
       "I am not NHGRI funded and do not plan to store data in AnVIL";
+  private static final String NHGRI_FUNDED_WITH_PHS_ID =
+      "I am NHGRI funded and I have a dbGaP PHS ID already";
 
   /** The row an appended perturbation lands on, given the ten rows of {@link #minimalTemplate}. */
   private static final int APPENDED_ROW = 11;
@@ -219,6 +222,19 @@ class StudyTemplateValidationServiceTest {
   }
 
   @Test
+  void testValidate_rejectsASingleColumnHeaderThatIsNotDelimitedAtAll() {
+    StudyTemplateValidationResult result = validate("templateVersion\n");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                1,
+                "Template header must be exactly:"
+                    + " templateVersion,recordType,recordId,parentRecordId,field,value")),
+        result.errors());
+  }
+
+  @Test
   void testValidate_rejectsReorderedHeader() {
     StudyTemplateValidationResult result =
         validate("recordType,templateVersion,recordId,parentRecordId,field,value\n");
@@ -309,6 +325,8 @@ class StudyTemplateValidationServiceTest {
     "url,example.org,url must be an absolute http or https URL",
     "url,ftp://example.org/data,url must be an absolute http or https URL",
     "requestLocation,/relative,requestLocation must be an absolute http or https URL",
+    "requestLocation,http:opaque,requestLocation must be an absolute http or https URL",
+    "url,http://exa mple.org,url must be an absolute http or https URL",
     "dataLocation,terra workspace,Unknown dataLocation value: terra workspace",
     "dataAccessCommitteeId,many,dataAccessCommitteeId must be a whole number",
     "mor,1,mor must be true or false"
@@ -610,6 +628,263 @@ class StudyTemplateValidationServiceTest {
     assertEquals(
         List.of(TemplateValidationError.at(5, "value", "publicVisibility must be true or false")),
         result.errors());
+  }
+
+  // ── File and header edge cases ───────────────────────────────────────────
+
+  @Test
+  void testValidate_rejectsAnUnreadableStream() {
+    InputStream failing =
+        new InputStream() {
+          @Override
+          public int read() throws IOException {
+            throw new IOException("synthetic read failure");
+          }
+        };
+
+    StudyTemplateValidationResult result = service.validate(failing);
+
+    assertEquals(
+        List.of(TemplateValidationError.of("Template file could not be read")), result.errors());
+  }
+
+  @Test
+  void testValidate_reportsADuplicatedUnknownHeaderWithoutAColumn() {
+    StudyTemplateValidationResult result = validate(HEADER + ",notes,notes\n");
+
+    assertEquals(
+        List.of(TemplateValidationError.at(1, "Duplicate header: notes")), result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsARowWithTheWrongColumnCount() {
+    StudyTemplateValidationResult result = validate(HEADER + "\n1,study,study,,studyName");
+
+    assertEquals(
+        List.of(TemplateValidationError.at(2, "Row must have 6 columns but has 5")),
+        result.errors());
+  }
+
+  // ── Version dispatch across parsers ──────────────────────────────────────
+
+  /**
+   * Stands in for a future major version so dispatch can be exercised with more than one parser.
+   */
+  private record FakeParser(String majorVersion) implements StudyTemplateParser {
+
+    @Override
+    public ParsedStudyTemplate parse(List<TemplateRow> rows, TemplateErrors errors) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public StudyRegistrationRequest validate(ParsedStudyTemplate template, TemplateErrors errors) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  @Test
+  void testValidate_rejectsARowNamingADifferentSupportedVersion() {
+    StudyTemplateValidationService multiVersion =
+        new StudyTemplateValidationService(
+            List.of(new StudyTemplateV1Parser(), new FakeParser("2")));
+    String csv = minimalTemplate("\n") + "\n2,study,study,,species,Homo sapiens";
+
+    StudyTemplateValidationResult result =
+        multiVersion.validate(new ByteArrayInputStream(csv.getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW,
+                "templateVersion",
+                "Template version 2 does not match version 1 used earlier in the file")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_keepsTheFirstParserRegisteredForAVersion() {
+    StudyTemplateValidationService duplicated =
+        new StudyTemplateValidationService(
+            List.of(new StudyTemplateV1Parser(), new FakeParser("1")));
+
+    StudyTemplateValidationResult result =
+        duplicated.validate(
+            new ByteArrayInputStream(minimalTemplate("\n").getBytes(StandardCharsets.UTF_8)));
+
+    assertEquals(List.of(), result.errors());
+  }
+
+  // ── Record-model edge cases ──────────────────────────────────────────────
+
+  @Test
+  void testValidate_rejectsATemplateWithNoStudyRecord() {
+    StudyTemplateValidationResult result =
+        validate(HEADER + "\n1,consentGroup,dataset-open,study,consentGroupName,Only A Dataset");
+
+    assertEquals(
+        List.of(TemplateValidationError.of("Template must contain a study record")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsAStudyRowWithAParentRecordId() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,study,study,somewhere,species,Homo sapiens");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW, "parentRecordId", "Study records must not set parentRecordId")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsAConsentGroupRowWithoutARecordId() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,consentGroup,,study,consentGroupName,Nameless");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW, "recordId", "consentGroup records require a recordId")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsAFileTypeRowWithoutARecordId() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,fileType,,dataset-open,fileType,Genome");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW, "recordId", "fileType records require a recordId")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsAFileTypeRowWithoutAParentRecordId() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,fileType,ft-one,,fileType,Genome");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW,
+                "parentRecordId",
+                "fileType record 'ft-one' must name its consentGroup in parentRecordId")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsConflictingParentRecordIdsForOneRecord() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n")
+                + "\n1,fileType,ft-one,dataset-open,fileType,Genome"
+                + "\n1,fileType,ft-one,dataset-other,functionalEquivalence,Synthetic build");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW + 1,
+                "parentRecordId",
+                "Conflicting parentRecordId for fileType record 'ft-one'")),
+        result.errors());
+  }
+
+  // ── Required-field errors suppressed by a conversion error ───────────────
+
+  @Test
+  void testValidate_doesNotAlsoDemandAccessManagementItCouldNotConvert() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n")
+                .replace(",accessManagement,open", ",accessManagement,Open Access"));
+
+    assertTrue(
+        result.errors().stream()
+            .anyMatch(
+                error -> error.message().equals("Unknown accessManagement value: Open Access")),
+        result.errors().toString());
+    assertFalse(
+        result.errors().stream()
+            .anyMatch(error -> error.message().startsWith("accessManagement is required")),
+        result.errors().toString());
+  }
+
+  @Test
+  void testValidate_doesNotAlsoDemandAFileTypeItCouldNotConvert() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,fileType,ft-one,dataset-open,fileType,Genomes");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(APPENDED_ROW, "value", "Unknown fileType value: Genomes")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_locatesARequiredFieldErrorOnItsEmptyCell() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n").replace(",accessManagement,open", ",accessManagement,"));
+
+    assertTrue(
+        result
+            .errors()
+            .contains(
+                TemplateValidationError.at(
+                    9,
+                    "field",
+                    "accessManagement is required for consentGroup record 'dataset-open'")),
+        result.errors().toString());
+  }
+
+  @Test
+  void testValidate_rejectsAnUnknownFileTypeField() {
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n") + "\n1,fileType,ft-one,dataset-open,bogusField,value");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW, "field", "Unknown fileType field: bogusField")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_attributesAConditionalViolationToTheChoiceThatRequiredIt() {
+    // Both the nihAnvilUse choice and the empty dbGaPPhsID cell would resolve "dbGaP phs ID is
+    // required", so it is attributed once, to the earlier row.
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n").replace(NOT_NHGRI_FUNDED, NHGRI_FUNDED_WITH_PHS_ID)
+                + "\n1,study,study,,dbGaPPhsID,");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(6, "value", "dbGaP phs ID is required"),
+            TemplateValidationError.at(
+                6, "value", "Principal Investigator Institution is required"),
+            TemplateValidationError.at(6, "value", "NIH Grant or Contract Number is required")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_mapsATemplateWithNoStudyRecordWithoutFailing() {
+    // parse() always reports a missing study record, so validate() never sees one in practice. The
+    // guard is exercised directly to prove it degrades to an empty registration rather than
+    // throwing.
+    TemplateErrors errors = new TemplateErrors();
+
+    StudyRegistrationRequest registration =
+        new StudyTemplateV1Parser()
+            .validate(new ParsedStudyTemplate(null, List.of(), Map.of()), errors);
+
+    assertNull(registration.getStudyName());
+    assertNull(registration.getConsentGroups());
+    assertFalse(errors.isEmpty());
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

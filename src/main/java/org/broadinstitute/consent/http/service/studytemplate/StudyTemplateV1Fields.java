@@ -522,10 +522,10 @@ final class StudyTemplateV1Fields {
   }
 
   private static List<String> strings(Object value) {
-    return value == null ? null : ((List<?>) value).stream().map(String::valueOf).toList();
+    return ((List<?>) value).stream().map(String::valueOf).toList();
   }
 
   private static <E> List<E> items(Object value, Class<E> type) {
-    return value == null ? null : ((List<?>) value).stream().map(type::cast).toList();
+    return ((List<?>) value).stream().map(type::cast).toList();
   }
 }

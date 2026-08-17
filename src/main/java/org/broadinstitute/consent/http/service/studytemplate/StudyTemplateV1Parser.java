@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.registration.ConsentGroupRequest;
@@ -35,13 +36,15 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
   public ParsedStudyTemplate parse(List<TemplateRow> rows, TemplateErrors errors) {
     Map<RecordKey, RecordBuilder> builders = new LinkedHashMap<>();
     for (TemplateRow row : rows) {
-      if (isUsableRow(row, errors)) {
-        RecordBuilder builder =
-            builders.computeIfAbsent(
-                new RecordKey(row.recordType(), row.recordId()),
-                key -> new RecordBuilder(key.recordType(), key.recordId(), row));
-        assign(builder, row, errors);
-      }
+      catalogFor(row, errors)
+          .ifPresent(
+              catalog -> {
+                RecordBuilder builder =
+                    builders.computeIfAbsent(
+                        new RecordKey(row.recordType(), row.recordId()),
+                        key -> new RecordBuilder(key.recordType(), key.recordId(), row));
+                assign(builder, catalog, row, errors);
+              });
     }
 
     RecordBuilder study = builders.get(new RecordKey(STUDY, STUDY_RECORD_ID));
@@ -119,7 +122,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
               .formatted(templateRecord.recordId()));
     }
 
-    if (fileTypeRecords != null && !fileTypeRecords.isEmpty()) {
+    if (fileTypeRecords != null) {
       consentGroup.setFileTypes(fileTypes(fileTypeRecords, errors, probes));
     }
     return consentGroup;
@@ -167,13 +170,15 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
                       : writeValue(field, assignments.getFirst(), target, errors, probes);
               if (!converted) {
                 unconverted.add(name);
-                if (field.probeValue() != null) {
+                // Every multi-valued field carrying a probe value converts as plain text, so only a
+                // single-valued cell can both fail conversion and need its violation suppressed.
+                if (!field.multiValued() && field.probeValue() != null) {
                   addProbe(
                       field,
                       assignments.getFirst().row(),
                       target,
                       true,
-                      field.multiValued() ? List.of(field.probeValue()) : field.probeValue(),
+                      field.probeValue(),
                       probes);
                 }
               }
@@ -253,17 +258,29 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
             () -> field.writer().accept(target, assigned)));
   }
 
-  private boolean isUsableRow(TemplateRow row, TemplateErrors errors) {
+  /**
+   * The field catalogue for this row's record type, empty when the row cannot be used. This is the
+   * only place a record type is dispatched on, so an unknown one is reported exactly once.
+   */
+  private Optional<Map<String, ? extends TemplateField<?>>> catalogFor(
+      TemplateRow row, TemplateErrors errors) {
     return switch (row.recordType()) {
-      case STUDY -> isUsableStudyRow(row, errors);
-      case CONSENT_GROUP -> isUsableConsentGroupRow(row, errors);
-      case FILE_TYPE -> isUsableFileTypeRow(row, errors);
+      case STUDY -> catalogIf(isUsableStudyRow(row, errors), StudyTemplateV1Fields.STUDY);
+      case CONSENT_GROUP ->
+          catalogIf(isUsableConsentGroupRow(row, errors), StudyTemplateV1Fields.CONSENT_GROUP);
+      case FILE_TYPE ->
+          catalogIf(isUsableFileTypeRow(row, errors), StudyTemplateV1Fields.FILE_TYPES);
       default -> {
         errors.at(
             row.row(), TemplateColumns.RECORD_TYPE, "Unknown record type: " + row.recordType());
-        yield false;
+        yield Optional.empty();
       }
     };
+  }
+
+  private static Optional<Map<String, ? extends TemplateField<?>>> catalogIf(
+      boolean usable, Map<String, ? extends TemplateField<?>> catalog) {
+    return usable ? Optional.of(catalog) : Optional.empty();
   }
 
   private boolean isUsableStudyRow(TemplateRow row, TemplateErrors errors) {
@@ -314,7 +331,11 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
     return true;
   }
 
-  private void assign(RecordBuilder builder, TemplateRow row, TemplateErrors errors) {
+  private void assign(
+      RecordBuilder builder,
+      Map<String, ? extends TemplateField<?>> catalog,
+      TemplateRow row,
+      TemplateErrors errors) {
     if (!builder.parentRecordId.equals(row.parentRecordId())) {
       errors.at(
           row.row(),
@@ -323,7 +344,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
               .formatted(builder.recordType, builder.recordId));
       return;
     }
-    TemplateField<?> field = fieldFor(builder.recordType, row.field());
+    TemplateField<?> field = catalog.get(row.field());
     if (field == null) {
       errors.at(row.row(), TemplateColumns.FIELD, unusableFieldMessage(builder.recordType, row));
       return;
@@ -383,20 +404,9 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
         : "Unknown %s field: %s".formatted(recordType, row.field());
   }
 
-  private static TemplateField<?> fieldFor(String recordType, String field) {
-    return switch (recordType) {
-      case STUDY -> StudyTemplateV1Fields.STUDY.get(field);
-      case CONSENT_GROUP -> StudyTemplateV1Fields.CONSENT_GROUP.get(field);
-      case FILE_TYPE -> StudyTemplateV1Fields.FILE_TYPES.get(field);
-      default -> null;
-    };
-  }
-
   private static int rowOf(TemplateRecord templateRecord, String field) {
     List<TemplateAssignment> assignments = templateRecord.assignments().get(field);
-    return assignments == null || assignments.isEmpty()
-        ? templateRecord.firstRow()
-        : assignments.getFirst().row();
+    return assignments == null ? templateRecord.firstRow() : assignments.getFirst().row();
   }
 
   private static List<RecordBuilder> buildersOfType(
