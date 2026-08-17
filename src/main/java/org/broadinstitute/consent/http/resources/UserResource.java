@@ -119,8 +119,9 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Timed
-  public Response getUser(@Auth DuosUser duosUser) {
+  public Response getUser(@Auth AuthUser authUser) {
     try {
+      DuosUser duosUser = new DuosUser(authUser, findRegisteredUser(authUser));
       UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
       if (userStatusInfo == null) {
         samService.asyncPostRegistrationInfo(duosUser);
@@ -134,6 +135,20 @@ public class UserResource extends Resource {
       return Response.ok(gson.toJson(user)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * Resolve the DUOS account for an authenticated caller. Unlike the {@code @Auth DuosUser}
+   * endpoints, /me does its own lookup so that a valid token with no account answers 404 instead of
+   * the 401 an unresolved principal produces — callers need those distinguishable to know whether
+   * to start registration or drop the session.
+   */
+  private User findRegisteredUser(AuthUser authUser) {
+    try {
+      return userService.findUserByEmail(authUser.getEmail());
+    } catch (NotFoundException e) {
+      throw new NotFoundException("Authenticated user is not registered");
     }
   }
 

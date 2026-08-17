@@ -129,10 +129,10 @@ class AuthorizationHelperTest extends AbstractTestHelper {
 
     AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
     assertEquals(bearerToken, authUser.getAuthToken());
-    // A DuosUser is not created if the user is not found; the 404 surfaces instead of a 401 so
-    // callers can tell an unregistered user apart from a rejected token.
+    // A DuosUser is not created if the user is not found
     doThrow(NotFoundException.class).when(userService).findUserByEmail(anyString());
-    assertThrows(NotFoundException.class, () -> duosUserAuthenticator.authenticate(bearerToken));
+    Optional<DuosUser> duosUser = duosUserAuthenticator.authenticate(bearerToken);
+    assertFalse(duosUser.isPresent());
   }
 
   /** Test that in the case of a Sam user lookup failure, we then try to register the user */

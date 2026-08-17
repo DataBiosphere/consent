@@ -127,46 +127,69 @@ class UserResourceTest extends AbstractTestHelper {
   @Test
   void testGetMe() throws Exception {
     User user = createUserWithRole();
-    DuosUser du = new DuosUser(authUser, user);
+    when(userService.findUserByEmail(TEST_EMAIL)).thenReturn(user);
 
-    Response response = userResource.getUser(du);
-    verify(samService).asyncPostRegistrationInfo(du);
-    verify(samService).getCombinedUserStatusInfo(du);
-    verify(nihService).syncAccount(du);
+    Response response = userResource.getUser(authUser);
+    verify(samService).asyncPostRegistrationInfo(any(DuosUser.class));
+    verify(samService).getCombinedUserStatusInfo(any(DuosUser.class));
+    verify(nihService).syncAccount(any(DuosUser.class));
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  /**
+   * A caller whose token authenticates but who has no DUOS account gets 404, not the 401 the
+   * DuosUser auth filter would give, and the response must not echo the service's lookup message.
+   */
+  @Test
+  void testGetMeUnregisteredUserReturnsNotFound() throws Exception {
+    when(userService.findUserByEmail(TEST_EMAIL))
+        .thenThrow(new NotFoundException("Unable to find user with email: " + TEST_EMAIL));
+
+    Response response = userResource.getUser(authUser);
+
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertFalse(response.getEntity().toString().contains("Unable to find user with email"));
+    verify(samService, never()).asyncPostRegistrationInfo(any());
+    verify(nihService, never()).syncAccount(any());
   }
 
   @Test
   void testGetMeWithUserStatusInfo() throws Exception {
     User user = createUserWithRole();
-    DuosUser du = new DuosUser(authUser, user);
     UserStatusInfo info =
         new UserStatusInfo()
             .setUserEmail(user.getEmail())
             .setUserSubjectId("test-subject-id")
             .setEnabled(true)
             .setTosAccepted(true);
-    du.setUserStatusInfo(info);
-    when(nihService.syncAccount(du)).thenReturn(user);
+    AuthUser withStatus =
+        new AuthUser()
+            .setAuthToken("auth-token")
+            .setName("Test User")
+            .setEmail(TEST_EMAIL)
+            .setUserStatusInfo(info);
+    when(userService.findUserByEmail(TEST_EMAIL)).thenReturn(user);
+    when(nihService.syncAccount(any(DuosUser.class))).thenReturn(user);
 
-    Response response = userResource.getUser(du);
+    Response response = userResource.getUser(withStatus);
     User responseUser = gson.fromJson(response.getEntity().toString(), User.class);
     assertEquals(user.getEmail(), responseUser.getEmail());
     assertNotNull(responseUser.getUserStatusInfo());
     assertEquals(info.getUserSubjectId(), responseUser.getUserStatusInfo().getUserSubjectId());
     assertTrue(responseUser.getUserStatusInfo().getEnabled());
     assertTrue(responseUser.getUserStatusInfo().getTosAccepted());
-    verify(samService, never()).asyncPostRegistrationInfo(du);
+    verify(samService, never()).asyncPostRegistrationInfo(any(DuosUser.class));
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
   void testGetMeSamFailure() throws Exception {
     User user = createUserWithRole();
-    DuosUser du = new DuosUser(authUser, user);
-    when(samService.getCombinedUserStatusInfo(du)).thenThrow(new RuntimeException("Sam failure"));
+    when(userService.findUserByEmail(TEST_EMAIL)).thenReturn(user);
+    when(samService.getCombinedUserStatusInfo(any(DuosUser.class)))
+        .thenThrow(new RuntimeException("Sam failure"));
 
-    Response response = userResource.getUser(du);
+    Response response = userResource.getUser(authUser);
     // Ensure that even if Sam fails, we still return the user information.
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
@@ -175,11 +198,11 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetMe_SamAzureB2CException_Returns500() throws Exception {
     // SamAzureB2CException should NOT be silently swallowed - it propagates and returns a 500
     User user = createUserWithRole();
-    DuosUser du = new DuosUser(authUser, user);
-    when(samService.getCombinedUserStatusInfo(du))
+    when(userService.findUserByEmail(TEST_EMAIL)).thenReturn(user);
+    when(samService.getCombinedUserStatusInfo(any(DuosUser.class)))
         .thenThrow(new SamAzureB2CException("AzureB2C error for user test@test.org"));
 
-    Response response = userResource.getUser(du);
+    Response response = userResource.getUser(authUser);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
@@ -187,13 +210,13 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetMe_SamAzureB2CException_ErrorMessageContainsDetails() throws Exception {
     // The error message from SamAzureB2CException should be returned in the response
     User user = createUserWithRole();
-    DuosUser du = new DuosUser(authUser, user);
     String errorMessage =
         "AzureB2C authentication Error for user test@test.org: Please contact support.";
-    when(samService.getCombinedUserStatusInfo(du))
+    when(userService.findUserByEmail(TEST_EMAIL)).thenReturn(user);
+    when(samService.getCombinedUserStatusInfo(any(DuosUser.class)))
         .thenThrow(new SamAzureB2CException(errorMessage));
 
-    Response response = userResource.getUser(du);
+    Response response = userResource.getUser(authUser);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
     assertNotNull(response.getEntity());
     assertTrue(response.getEntity().toString().contains(errorMessage));

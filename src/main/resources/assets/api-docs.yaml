@@ -910,7 +910,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         401:
-          description: Unauthorized - no token, or no identity in the token
+          description: Unauthorized - missing or unusable credentials
         404:
           description: Authenticated, but no DUOS account exists for this user
         429:

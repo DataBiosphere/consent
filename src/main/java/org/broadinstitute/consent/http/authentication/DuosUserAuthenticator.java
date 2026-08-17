@@ -29,10 +29,7 @@ public class DuosUserAuthenticator implements Authenticator<String, DuosUser>, C
           User duosUser = authorizationHelper.userService.findUserByEmail(authUser.getEmail());
           return Optional.of(new DuosUser(authUser, duosUser));
         } catch (NotFoundException e) {
-          // Rethrow rather than return empty: an empty Optional becomes a 401, which a caller
-          // cannot tell apart from a rejected token. The token here is good, only the account.
           logWarn("User not found, authentication incomplete: %s".formatted(authUser.getEmail()));
-          throw e;
         }
       }
       return Optional.empty();

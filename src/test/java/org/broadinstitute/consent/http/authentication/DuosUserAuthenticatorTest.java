@@ -74,10 +74,7 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
     assertNotNull(result.get().getEmail());
   }
 
-  /**
-   * When the token is valid but the local store has no matching user, the NotFoundException
-   * propagates so the request answers 404 rather than the 401 an empty Optional would produce.
-   */
+  /** When the user is not found in the local store, authenticate returns empty. */
   @Test
   void testAuthenticateUserNotFound() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("unknown@example.com"));
@@ -85,7 +82,9 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
 
     doThrow(NotFoundException.class).when(userService).findUserByEmail(anyString());
 
-    assertThrows(NotFoundException.class, () -> authenticator.authenticate(bearerToken));
+    Optional<DuosUser> result = authenticator.authenticate(bearerToken);
+
+    assertFalse(result.isPresent());
   }
 
   /**
