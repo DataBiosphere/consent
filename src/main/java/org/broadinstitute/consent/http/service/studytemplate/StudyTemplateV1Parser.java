@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dto.registration.ConsentGroupRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
@@ -36,14 +37,14 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
   public ParsedStudyTemplate parse(List<TemplateRow> rows, TemplateErrors errors) {
     Map<RecordKey, RecordBuilder> builders = new LinkedHashMap<>();
     for (TemplateRow row : rows) {
-      catalogFor(row, errors)
+      fieldsFor(row, errors)
           .ifPresent(
-              catalog -> {
+              fields -> {
                 RecordBuilder builder =
                     builders.computeIfAbsent(
                         new RecordKey(row.recordType(), row.recordId()),
                         key -> new RecordBuilder(key.recordType(), key.recordId(), row));
-                assign(builder, catalog, row, errors);
+                assign(builder, fields, row, errors);
               });
     }
 
@@ -259,17 +260,18 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
   }
 
   /**
-   * The field catalogue for this row's record type, empty when the row cannot be used. This is the
-   * only place a record type is dispatched on, so an unknown one is reported exactly once.
+   * Resolves a field name against the catalogue for this row's record type, empty when the row
+   * cannot be used. This is the only place a record type is dispatched on, so an unknown one is
+   * reported exactly once.
    */
-  private Optional<Map<String, ? extends TemplateField<?>>> catalogFor(
+  private Optional<Function<String, TemplateField<?>>> fieldsFor(
       TemplateRow row, TemplateErrors errors) {
     return switch (row.recordType()) {
-      case STUDY -> catalogIf(isUsableStudyRow(row, errors), StudyTemplateV1Fields.STUDY);
+      case STUDY -> fieldsIf(isUsableStudyRow(row, errors), StudyTemplateV1Fields.STUDY::get);
       case CONSENT_GROUP ->
-          catalogIf(isUsableConsentGroupRow(row, errors), StudyTemplateV1Fields.CONSENT_GROUP);
+          fieldsIf(isUsableConsentGroupRow(row, errors), StudyTemplateV1Fields.CONSENT_GROUP::get);
       case FILE_TYPE ->
-          catalogIf(isUsableFileTypeRow(row, errors), StudyTemplateV1Fields.FILE_TYPES);
+          fieldsIf(isUsableFileTypeRow(row, errors), StudyTemplateV1Fields.FILE_TYPES::get);
       default -> {
         errors.at(
             row.row(), TemplateColumns.RECORD_TYPE, "Unknown record type: " + row.recordType());
@@ -278,9 +280,9 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
     };
   }
 
-  private static Optional<Map<String, ? extends TemplateField<?>>> catalogIf(
-      boolean usable, Map<String, ? extends TemplateField<?>> catalog) {
-    return usable ? Optional.of(catalog) : Optional.empty();
+  private static Optional<Function<String, TemplateField<?>>> fieldsIf(
+      boolean usable, Function<String, TemplateField<?>> fields) {
+    return usable ? Optional.of(fields) : Optional.empty();
   }
 
   private boolean isUsableStudyRow(TemplateRow row, TemplateErrors errors) {
@@ -333,7 +335,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
 
   private void assign(
       RecordBuilder builder,
-      Map<String, ? extends TemplateField<?>> catalog,
+      Function<String, TemplateField<?>> fields,
       TemplateRow row,
       TemplateErrors errors) {
     if (!builder.parentRecordId.equals(row.parentRecordId())) {
@@ -344,7 +346,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
               .formatted(builder.recordType, builder.recordId));
       return;
     }
-    TemplateField<?> field = catalog.get(row.field());
+    TemplateField<?> field = fields.apply(row.field());
     if (field == null) {
       errors.at(row.row(), TemplateColumns.FIELD, unusableFieldMessage(builder.recordType, row));
       return;

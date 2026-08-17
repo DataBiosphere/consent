@@ -67,9 +67,7 @@ public class StudyTemplateValidationService {
     String csv = readTemplate(content, errors);
     List<CSVRecord> records = csv == null ? List.of() : parseCsv(csv, errors);
     if (records.isEmpty()) {
-      if (errors.isEmpty()) {
-        errors.message("Template file is empty");
-      }
+      // Whichever step produced no records already recorded why.
       return failed(errors);
     }
     validateHeader(records.getFirst(), errors);

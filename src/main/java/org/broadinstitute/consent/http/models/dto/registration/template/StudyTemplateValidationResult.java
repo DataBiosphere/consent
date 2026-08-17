@@ -26,7 +26,12 @@ public record StudyTemplateValidationResult(
     return new StudyTemplateValidationResult(errors, truncated, null);
   }
 
+  /**
+   * A template is valid only when it produced a registration. Deriving this from the registration
+   * rather than from an empty error list means a result can never report itself valid with nothing
+   * to hand back.
+   */
   public boolean valid() {
-    return errors.isEmpty();
+    return registration != null;
   }
 }
