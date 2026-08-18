@@ -60,3 +60,8 @@ properties:
   requiresSOApproval:
     type: boolean
     description: True if the most recent DAR in the collection requires Signing Official Approval
+  dataUseGroups:
+    type: array
+    description: The collection's datasets grouped by the data use they share, as rendered by the Data Access Requests table. Votes are populated only for Chairperson and Member.
+    items:
+      $ref: './DataUseGroup.yaml'

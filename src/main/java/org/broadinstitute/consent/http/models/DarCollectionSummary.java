@@ -38,6 +38,7 @@ public class DarCollectionSummary {
   @Expose private boolean requiresSOApproval;
   @Expose private Integer soApproverId;
   @Expose private Timestamp soApproverTimestamp;
+  @Expose private List<DataUseGroup> dataUseGroups;
   private String signingOfficialEmail;
 
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
@@ -292,6 +293,14 @@ public class DarCollectionSummary {
 
   public void setCloseoutSupplement(CloseoutSupplement closeoutSupplement) {
     this.closeoutSupplement = closeoutSupplement;
+  }
+
+  public List<DataUseGroup> getDataUseGroups() {
+    return dataUseGroups;
+  }
+
+  public void setDataUseGroups(List<DataUseGroup> dataUseGroups) {
+    this.dataUseGroups = dataUseGroups;
   }
 
   public void setSigningOfficialEmail(String signingOfficialEmail) {

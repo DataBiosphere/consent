@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -112,6 +113,41 @@ class VoteDAOTest extends DAOTestHelper {
     assertNotNull(foundVotes);
     assertFalse(foundVotes.isEmpty());
     assertEquals(2, foundVotes.size());
+  }
+
+  @Test
+  void testFindDacVotesWithNamesByElectionIds() {
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    User member = createUserWithRole(UserRoles.MEMBER.getRoleId());
+    Dataset dataset = createDataset();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection("DAR-24680", chair.getUserId(), new Date());
+    DataAccessRequest dar =
+        createDataAccessRequestWithDatasetAndCollectionInfo(
+            collectionId, dataset.getDatasetId(), chair.getUserId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    createDacVote(chair.getUserId(), election.getElectionId());
+    createDacVote(member.getUserId(), election.getElectionId());
+    // Final votes belong to the collection's outcome, not to the members' tallies.
+    createFinalVote(chair.getUserId(), election.getElectionId());
+
+    List<Vote> votes =
+        voteDAO.findDacVotesWithNamesByElectionIds(List.of(election.getElectionId()));
+
+    assertEquals(2, votes.size());
+    assertTrue(votes.stream().allMatch(v -> VoteType.DAC.getValue().equalsIgnoreCase(v.getType())));
+    assertTrue(votes.stream().allMatch(v -> Objects.nonNull(v.getDisplayName())));
+    assertTrue(
+        votes.stream().anyMatch(v -> chair.getDisplayName().equals(v.getDisplayName())),
+        "the voting member's name is needed for the table's vote tooltip");
+    assertTrue(votes.stream().anyMatch(v -> member.getDisplayName().equals(v.getDisplayName())));
+    // A member who has not voted yet still has a vote row, with no value.
+    assertTrue(votes.stream().allMatch(v -> Objects.isNull(v.getVote())));
+  }
+
+  @Test
+  void testFindDacVotesWithNamesByElectionIdsWithNoElections() {
+    assertTrue(voteDAO.findDacVotesWithNamesByElectionIds(List.of()).isEmpty());
   }
 
   @Test

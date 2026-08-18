@@ -1,0 +1,38 @@
+type: object
+properties:
+  key:
+    type: string
+    description: Stable identifier for the group within its collection
+  label:
+    type: string
+    description: Comma separated data use codes shared by the group's datasets
+  datasets:
+    type: array
+    description: The datasets in this group
+    items:
+      type: object
+      properties:
+        datasetId:
+          type: integer
+          description: Dataset ID
+        name:
+          type: string
+          description: Dataset name
+        datasetIdentifier:
+          type: string
+          description: Dataset identifier, e.g. DUOS-000001
+  votes:
+    type: array
+    description: DAC member votes on this group. Empty unless the caller is a Chairperson or Member.
+    items:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: The voting member's user ID
+        vote:
+          type: boolean
+          description: The member's vote. Null when the member has not yet voted.
+        displayName:
+          type: string
+          description: The voting member's name
