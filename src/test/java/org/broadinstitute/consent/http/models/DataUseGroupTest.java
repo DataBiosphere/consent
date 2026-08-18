@@ -7,6 +7,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.List;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +22,7 @@ class DataUseGroupTest {
   private DataUseGroup group() {
     return new DataUseGroup(
         "bucket-1-2",
-        "GRU",
+        new DataUseSummary(List.of(new DataUseTerm("GRU", "General research use")), List.of()),
         List.of(new DataUseGroup.GroupDataset(1, "Set A", "DUOS-000001")),
         List.of(new DataUseGroup.GroupVote(7, true, "Alice")));
   }
@@ -30,7 +32,11 @@ class DataUseGroupTest {
     JsonObject json = JsonParser.parseString(listContextGson().toJson(group())).getAsJsonObject();
 
     assertEquals("bucket-1-2", json.get("key").getAsString());
-    assertEquals("GRU", json.get("label").getAsString());
+    // The ontology models must survive @Expose filtering too, or the pill renders empty.
+    JsonObject primary =
+        json.getAsJsonObject("dataUse").getAsJsonArray("primary").get(0).getAsJsonObject();
+    assertEquals("GRU", primary.get("code").getAsString());
+    assertEquals("General research use", primary.get("description").getAsString());
 
     JsonObject dataset = json.getAsJsonArray("datasets").get(0).getAsJsonObject();
     assertEquals(1, dataset.get("datasetId").getAsInt());
@@ -54,14 +60,22 @@ class DataUseGroupTest {
     assertEquals(1, json.getAsJsonArray("dataUseGroups").size());
     assertEquals(
         "GRU",
-        json.getAsJsonArray("dataUseGroups").get(0).getAsJsonObject().get("label").getAsString());
+        json.getAsJsonArray("dataUseGroups")
+            .get(0)
+            .getAsJsonObject()
+            .getAsJsonObject("dataUse")
+            .getAsJsonArray("primary")
+            .get(0)
+            .getAsJsonObject()
+            .get("code")
+            .getAsString());
   }
 
   @Test
   void testPendingVoteIsAbsentRatherThanFalse() {
     DataUseGroup pending =
         new DataUseGroup(
-            "bucket-1", "GRU", List.of(), List.of(new DataUseGroup.GroupVote(7, null, "Alice")));
+            "bucket-1", null, List.of(), List.of(new DataUseGroup.GroupVote(7, null, "Alice")));
 
     JsonObject vote =
         JsonParser.parseString(listContextGson().toJson(pending))

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.google.gson.annotations.Expose;
 import java.util.List;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 
 /**
  * A collection's datasets grouped by the data use they share, as rendered by the Data Access
@@ -9,7 +10,7 @@ import java.util.List;
  */
 public record DataUseGroup(
     @Expose String key,
-    @Expose String label,
+    @Expose DataUseSummary dataUse,
     @Expose List<GroupDataset> datasets,
     @Expose List<GroupVote> votes) {
 

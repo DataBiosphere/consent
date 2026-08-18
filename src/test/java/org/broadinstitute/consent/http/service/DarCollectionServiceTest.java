@@ -1230,6 +1230,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     return dataset;
   }
 
+  private List<String> codesOf(DataUseGroup group) {
+    return group.dataUse().getPrimary().stream().map(DataUseTerm::getCode).toList();
+  }
+
   private DataUseSummary summaryOfCodes(String... codes) {
     return new DataUseSummary(
         Arrays.stream(codes).map(c -> new DataUseTerm(c, c)).toList(), List.of());
@@ -1261,12 +1265,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertEquals(2, groups.size());
     DataUseGroup gruGroup =
-        groups.stream().filter(g -> g.label().equals("GRU")).findFirst().orElseThrow();
+        groups.stream().filter(g -> codesOf(g).equals(List.of("GRU"))).findFirst().orElseThrow();
     assertEquals(2, gruGroup.datasets().size());
     assertEquals("bucket-1-2", gruGroup.key());
     assertEquals("DUOS-000001", gruGroup.datasets().getFirst().datasetIdentifier());
     assertEquals("One", gruGroup.datasets().getFirst().name());
-    assertEquals(1, groups.stream().filter(g -> g.label().equals("HMB")).count());
+    assertEquals(1, groups.stream().filter(g -> codesOf(g).equals(List.of("HMB"))).count());
   }
 
   @Test
@@ -1333,7 +1337,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         service.getSummariesForRole(user, UserRoles.ADMIN).getFirst().getDataUseGroups();
 
     assertEquals(1, groups.size());
-    assertEquals("Undefined Data Use", groups.getFirst().label());
+    assertNull(groups.getFirst().dataUse());
   }
 
   @Test

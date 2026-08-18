@@ -65,7 +65,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
-import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
@@ -97,8 +96,6 @@ public class DarCollectionService implements ConsentLogger {
   private final EmailService emailService;
   private final DACAutomationRuleService dacAutomationRuleService;
   private final OntologyService ontologyService;
-
-  private static final String UNDEFINED_DATA_USE = "Undefined Data Use";
 
   @Inject
   public DarCollectionService(
@@ -462,11 +459,11 @@ public class DarCollectionService implements ConsentLogger {
     Map<Integer, List<Vote>> votesByElectionId =
         includeVotes ? findDacVotesByElectionId(summaries) : Map.of();
 
-    Map<String, String> labelsByDataUse = new HashMap<>();
+    Map<String, DataUseSummary> summariesByDataUse = new HashMap<>();
     summaries.forEach(
         summary ->
             summary.setDataUseGroups(
-                buildDataUseGroups(summary, datasetsById, votesByElectionId, labelsByDataUse)));
+                buildDataUseGroups(summary, datasetsById, votesByElectionId, summariesByDataUse)));
   }
 
   private Map<Integer, List<Vote>> findDacVotesByElectionId(List<DarCollectionSummary> summaries) {
@@ -491,7 +488,7 @@ public class DarCollectionService implements ConsentLogger {
       DarCollectionSummary summary,
       Map<Integer, Dataset> datasetsById,
       Map<Integer, List<Vote>> votesByElectionId,
-      Map<String, String> labelsByDataUse) {
+      Map<String, DataUseSummary> summariesByDataUse) {
     Map<String, List<Dataset>> datasetsByDataUse = new LinkedHashMap<>();
     summary.getDatasetIds().stream()
         .map(datasetsById::get)
@@ -512,9 +509,12 @@ public class DarCollectionService implements ConsentLogger {
                       + datasets.stream()
                           .map(d -> String.valueOf(d.getDatasetId()))
                           .collect(Collectors.joining("-"));
-              String label =
-                  labelsByDataUse.computeIfAbsent(
-                      entry.getKey(), k -> translateDataUseLabel(datasets.getFirst()));
+              DataUseSummary dataUse =
+                  summariesByDataUse.computeIfAbsent(
+                      entry.getKey(),
+                      k ->
+                          ontologyService.translateDataUseSummary(
+                              datasets.getFirst().getDataUse()));
               List<DataUseGroup.GroupDataset> groupDatasets =
                   datasets.stream()
                       .map(
@@ -523,7 +523,7 @@ public class DarCollectionService implements ConsentLogger {
                                   d.getDatasetId(), d.getName(), d.getDatasetIdentifier()))
                       .toList();
               return new DataUseGroup(
-                  key, label, groupDatasets, collapseVotes(summary, datasets, votesByElectionId));
+                  key, dataUse, groupDatasets, collapseVotes(summary, datasets, votesByElectionId));
             })
         .toList();
   }
@@ -532,21 +532,6 @@ public class DarCollectionService implements ConsentLogger {
     return Objects.isNull(dataset.getDataUse())
         ? "none"
         : GsonUtil.getInstance().toJson(dataset.getDataUse());
-  }
-
-  private String translateDataUseLabel(Dataset dataset) {
-    DataUseSummary summary = ontologyService.translateDataUseSummary(dataset.getDataUse());
-    if (Objects.isNull(summary)) {
-      return UNDEFINED_DATA_USE;
-    }
-    String label =
-        Stream.concat(
-                Optional.ofNullable(summary.getPrimary()).orElse(List.of()).stream(),
-                Optional.ofNullable(summary.getSecondary()).orElse(List.of()).stream())
-            .map(DataUseTerm::getCode)
-            .filter(Objects::nonNull)
-            .collect(Collectors.joining(", "));
-    return label.isBlank() ? UNDEFINED_DATA_USE : label;
   }
 
   /**

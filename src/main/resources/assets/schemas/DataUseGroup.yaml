@@ -3,9 +3,28 @@ properties:
   key:
     type: string
     description: Stable identifier for the group within its collection
-  label:
-    type: string
-    description: Comma separated data use codes shared by the group's datasets
+  dataUse:
+    type: object
+    description: Translated data use terms shared by the group's datasets, in the same shape the dataset search index returns
+    properties:
+      primary:
+        type: array
+        items:
+          type: object
+          properties:
+            code:
+              type: string
+            description:
+              type: string
+      secondary:
+        type: array
+        items:
+          type: object
+          properties:
+            code:
+              type: string
+            description:
+              type: string
   datasets:
     type: array
     description: The datasets in this group

@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.models.ontology;
 
+import com.google.gson.annotations.Expose;
 import java.util.List;
 
 public class DataUseSummary {
 
-  private List<DataUseTerm> primary;
-  private List<DataUseTerm> secondary;
+  @Expose private List<DataUseTerm> primary;
+  @Expose private List<DataUseTerm> secondary;
 
   public DataUseSummary() {}
 
