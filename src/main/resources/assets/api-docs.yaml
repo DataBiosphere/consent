@@ -909,8 +909,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized - missing or unusable credentials
         404:
-          description: User not found
+          description: Authenticated, but no DUOS account exists for this user
         429:
           description: Too Many Requests - rate limit exceeded
           content:

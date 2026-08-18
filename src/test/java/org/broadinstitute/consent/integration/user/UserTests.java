@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.integration.ContainerTests;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -105,6 +106,58 @@ class UserTests extends ContainerTests {
       assertTrue(
           body.contains(user.email()),
           "Response body should contain %s; got: %s".formatted(user.email(), body));
+    }
+  }
+
+  /**
+   * A token that authenticates correctly but belongs to someone with no DUOS account must answer
+   * 404, not 401. Callers use the difference to decide between starting registration and tearing
+   * down the session, so an unregistered user reported as unauthenticated makes registration
+   * unreachable.
+   */
+  @Test
+  void testGetMeForAuthenticatedUnregisteredUserReturnsNotFound() {
+    String bearer = UUID.randomUUID().toString();
+    String email = "ci-unregistered-%s@example.com".formatted(UUID.randomUUID());
+    try (Response response =
+        getClient()
+            .target(serviceUrl("/api/user/me"))
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer)
+            .header("OAUTH2_CLAIM_email", email)
+            .header("OAUTH2_CLAIM_name", "CI Unregistered User")
+            .header("OAUTH2_CLAIM_access_token", bearer)
+            .header("OAUTH2_CLAIM_aud", "test-aud")
+            .get()) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  /**
+   * The 404 above must not come at the cost of the 401. Consent never sees a raw token — the proxy
+   * validates it upstream — so the two ways a request reaches here unauthenticated are a token the
+   * proxy could not resolve to an identity, and no token at all. Both still answer 401.
+   */
+  @Test
+  void testGetMeWithoutIdentityReturnsUnauthorized() {
+    String bearer = UUID.randomUUID().toString();
+    try (Response response =
+        getClient()
+            .target(serviceUrl("/api/user/me"))
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer)
+            // No OAUTH2_CLAIM_email — the proxy could not resolve an identity for this token.
+            .header("OAUTH2_CLAIM_access_token", bearer)
+            .header("OAUTH2_CLAIM_aud", "test-aud")
+            .get()) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetMeWithoutTokenReturnsUnauthorized() {
+    try (Response response = getClient().target(serviceUrl("/api/user/me")).request().get()) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
     }
   }
 }
