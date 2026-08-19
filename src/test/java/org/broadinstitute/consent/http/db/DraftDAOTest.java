@@ -160,8 +160,7 @@ class DraftDAOTest extends DAOTestHelper {
 
   @Test
   void testInsertStripsTheUnsupportedUnicodeEscape() {
-    // The six-character escape a JSON document carries, which jsonb rejects. The character itself
-    // cannot reach a bound parameter, and the template parser rejects one before it gets here.
+    // The escape a JSON document carries; the character itself never reaches a bound parameter.
     String jsonText = "{\"name\": \"Greg\\u0000\"}";
     User user = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user);
@@ -181,7 +180,6 @@ class DraftDAOTest extends DAOTestHelper {
 
   @Test
   void testUpdateStripsTheUnsupportedUnicodeEscape() {
-    // A draft is meant to be edited and saved, so the update path is as exposed as the insert.
     User user = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("{\"name\": \"Greg\"}", user);
     draftDAO.insert(

@@ -8,10 +8,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
 /**
- * The wire shape of the validation response, serialized the way the application serializes it:
- * every JSON entity goes through {@code JerseyGsonProvider}. A client distinguishes an error with
- * no location from one at row 1 by the absence of the field, so the omissions are the contract as
- * much as the values are.
+ * The wire shape, serialized the way the application serializes it: every JSON entity goes through
+ * {@code JerseyGsonProvider}. What is omitted is as much the contract as what is present.
  */
 class TemplateValidationResponseTest {
 

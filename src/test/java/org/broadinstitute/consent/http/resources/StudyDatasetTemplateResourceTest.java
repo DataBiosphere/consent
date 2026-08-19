@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.models.dto.registration.template.StudyDat
 import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationResponse;
 import org.broadinstitute.consent.http.service.studytemplate.StudyDatasetTemplateService;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.junit.jupiter.api.Test;
@@ -107,8 +106,7 @@ class StudyDatasetTemplateResourceTest {
 
   @Test
   void testValidateTemplateRejectsAnOversizedFile() throws Exception {
-    // A request failure rather than a validation result: the browser reports it the same way it
-    // reports its own pre-check, and the producer has no cell to fix.
+    // A request failure rather than a validation result: there is no cell for the producer to fix.
     byte[] oversized = new byte[StudyTemplateValidationService.MAX_TEMPLATE_BYTES + 1];
     FormDataBodyPart part = filePart(oversized);
     when(multipart.getFields("file")).thenReturn(List.of(part));
@@ -160,9 +158,6 @@ class StudyDatasetTemplateResourceTest {
 
   private static FormDataBodyPart filePart(byte[] content) {
     FormDataBodyPart part = mock(FormDataBodyPart.class);
-    ContentDisposition disposition =
-        ContentDisposition.type("form-data").fileName("template.csv").build();
-    when(part.getContentDisposition()).thenReturn(disposition);
     when(part.getValueAs(InputStream.class)).thenReturn(new ByteArrayInputStream(content));
     return part;
   }

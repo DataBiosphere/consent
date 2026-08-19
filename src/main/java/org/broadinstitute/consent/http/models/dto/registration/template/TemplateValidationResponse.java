@@ -4,14 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
 /**
- * The wire response of the template-validation endpoint, discriminated by {@code valid}: a valid
- * template carries the draft it created and no errors, an invalid one carries its errors and no
- * draft. Both branches carry an error list so a caller can read it without checking which branch it
- * has.
- *
- * <p>A field with no value is absent rather than null, which is how a client tells an error with no
- * location from one on row 1. Responses are written by {@code JerseyGsonProvider}, which omits
- * nulls; the Jackson annotation says the same for any caller that maps this with an ObjectMapper.
+ * The wire response of the template-validation endpoint, discriminated by {@code valid}. Both
+ * branches carry an error list, so a caller can read it without checking which branch it has, and
+ * an absent field means no value: that is how a client tells an unlocated error from one on row 1.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record TemplateValidationResponse(

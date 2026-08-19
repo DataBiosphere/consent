@@ -59,8 +59,8 @@ public class DraftService implements ConsentLogger {
   public StreamingOutput draftAsJson(DraftInterface draft) {
     Gson gson = GsonUtil.buildGson();
     JsonObject meta = gson.toJsonTree(draft).getAsJsonObject();
-    // Taken from the draft rather than left to whatever its class happens to serialize, so every
-    // draft type names itself and no client has to infer one from the UUID or the route.
+    // Taken from the draft rather than from whatever its class serializes, so every type reports
+    // itself and no client has to infer one from the UUID or the route.
     meta.addProperty("draftType", draft.getType().getValue());
     return output -> {
       output.write("{ \"document\":".getBytes(StandardCharsets.UTF_8));

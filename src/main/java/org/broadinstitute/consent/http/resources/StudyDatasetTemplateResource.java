@@ -39,9 +39,8 @@ public class StudyDatasetTemplateResource extends Resource {
   }
 
   /**
-   * A template that fails validation is a completed result rather than a failed request: it answers
-   * 200 with {@code valid: false} and the errors the producer has to fix. Only the request itself
-   * being unusable — no file, more than one, or one too large to read — is a failure.
+   * A template that fails validation is a completed result rather than a failed request. Only an
+   * unusable request — no file, more than one, or one too large to read — is a failure.
    */
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -73,9 +72,8 @@ public class StudyDatasetTemplateResource extends Resource {
     if (parts.size() > 1) {
       throw new BadRequestException("Only one template file may be uploaded at a time");
     }
-    FormDataBodyPart part = parts.getFirst();
-    validateFileDetails(part.getContentDisposition());
-    try (InputStream content = part.getValueAs(InputStream.class)) {
+    // The name is never used, so there is no stored name for a traversal check to protect.
+    try (InputStream content = parts.getFirst().getValueAs(InputStream.class)) {
       return content.readNBytes(StudyTemplateValidationService.MAX_TEMPLATE_BYTES + 1);
     }
   }

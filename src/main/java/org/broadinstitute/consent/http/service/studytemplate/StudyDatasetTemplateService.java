@@ -38,7 +38,7 @@ public class StudyDatasetTemplateService {
     }
 
     // Serialized with the mapper the registration endpoint reads, so the document the user edits
-    // and submits is the one this validated.
+    // there is the one validated here.
     DraftInterface draft =
         new DraftStudyDataset(objectMapper.writeValueAsString(result.registration()), user);
     draftService.insertDraft(draft);

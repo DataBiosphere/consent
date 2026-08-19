@@ -79,6 +79,7 @@ class StudyDatasetTemplateServiceTest {
     assertEquals(List.of(), response.errors());
     assertEquals(draft.getUUID().toString(), response.draft().id());
     assertEquals(DraftType.STUDY_DATASET_SUBMISSION_V1.getValue(), response.draft().draftType());
+    assertEquals(user, draft.getCreateUser());
   }
 
   @Test
@@ -91,8 +92,8 @@ class StudyDatasetTemplateServiceTest {
 
     ArgumentCaptor<DraftInterface> captor = ArgumentCaptor.forClass(DraftInterface.class);
     verify(draftService).insertDraft(captor.capture());
-    // The document a user edits and posts back is read the same way the registration endpoint
-    // reads its payload, so a draft cannot be structurally unusable there.
+    // Read the way the registration endpoint reads its payload, so a draft cannot be unusable
+    // there.
     StudyRegistrationRequest persisted =
         OBJECT_MAPPER.readValue(captor.getValue().getJson(), StudyRegistrationRequest.class);
     assertEquals(List.of(), new StudyRegistrationRequestValidator().collectViolations(persisted));

@@ -125,9 +125,8 @@ class DraftResourceTest {
 
   @Test
   void testEveryDraftEndpointAdmitsTheSameThreeRoles() {
-    // Chairpersons register studies, so they get the drafts that back one. Asserted over every
-    // endpoint rather than one at a time, so an endpoint added later cannot be left out or left
-    // unguarded; per-draft ownership is enforced separately, in DraftServiceDAO.
+    // Asserted over every endpoint rather than one at a time, so an endpoint added later cannot
+    // be left out or left unguarded. Per-draft ownership is enforced in DraftServiceDAO.
     Set<Class<? extends Annotation>> httpMethods =
         Set.of(GET.class, POST.class, PUT.class, PATCH.class, DELETE.class);
     List<Method> endpoints =
