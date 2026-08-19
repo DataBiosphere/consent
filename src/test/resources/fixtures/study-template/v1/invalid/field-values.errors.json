@@ -12,7 +12,7 @@
   {
     "row": 6,
     "column": "value",
-    "message": "Unknown nihAnvilUse value: Unknown AnVIL choice"
+    "message": "Unknown nihAnvilUse value"
   },
   {
     "row": 8,
@@ -25,6 +25,7 @@
     "message": "Embargo Release Date is not a valid date"
   },
   {
+    "row": 10,
     "message": "Data Access Committee is required unless Access Management is open or external"
   }
 ]

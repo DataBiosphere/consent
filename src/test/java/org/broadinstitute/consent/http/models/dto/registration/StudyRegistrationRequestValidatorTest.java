@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.dto.registration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -475,6 +476,38 @@ class StudyRegistrationRequestValidatorTest {
     assertTrue(
         violations.contains(
             "Data Custodian Email is not a valid email address: also-not-an-email"));
+  }
+
+  // ── Scoped collection (each scope attributable on its own) ───────────────
+
+  @Test
+  void testCollectStudyViolations_leavesConsentGroupViolationsToTheScopedCall() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setStudyName(null);
+    registration.getConsentGroups().getFirst().setNumberOfParticipants(null);
+
+    assertEquals(List.of("Study Name is required"), validator.collectStudyViolations(registration));
+  }
+
+  @Test
+  void testCollectStudyViolations_reportsAStudyWithNoDataset() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setConsentGroups(null);
+
+    assertEquals(
+        List.of("At least one Dataset is required"),
+        validator.collectStudyViolations(registration));
+  }
+
+  @Test
+  void testCollectConsentGroupViolations_reportsOneGroupWithoutItsSiblings() {
+    ConsentGroupRequest cg = createValidConsentGroup();
+    cg.setConsentGroupName(null);
+    cg.setNumberOfParticipants(null);
+
+    assertEquals(
+        List.of("Dataset Name is required", "Number of Participants is required"),
+        validator.collectConsentGroupViolations(cg));
   }
 
   // ── Individual check* methods (@VisibleForTesting) ────────────────────────

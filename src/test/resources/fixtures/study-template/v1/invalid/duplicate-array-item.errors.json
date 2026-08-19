@@ -2,7 +2,7 @@
   {
     "row": 4,
     "column": "value",
-    "message": "Duplicate item 'Genomic' for study field 'dataTypes'"
+    "message": "Duplicate item for study field 'dataTypes'"
   },
   {
     "row": 5,
