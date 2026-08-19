@@ -31,10 +31,12 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -69,12 +71,16 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataManagementIncident;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.DataUseGroup;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.DarCollectionService.DacUserClassification;
@@ -109,6 +115,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock private DaaDAO daaDAO;
   @Mock private Jdbi jdbi;
   @Mock private DACAutomationRuleService dacAutomationRuleService;
+  @Mock private OntologyService ontologyService;
   @Mock private ContainerRequest request;
 
   @BeforeEach
@@ -124,7 +131,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
     service =
         new DarCollectionService(
-            jdbi, darCollectionServiceDAO, emailService, dacAutomationRuleService);
+            jdbi, darCollectionServiceDAO, emailService, dacAutomationRuleService, ontologyService);
   }
 
   @Test
@@ -1212,6 +1219,193 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertTrue(s.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
     assertTrue(s.requiresSOApproval());
     assertFalse(s.getActions().contains(DarCollectionActions.APPROVE.getValue()));
+  }
+
+  private Dataset datasetWithDataUse(Integer datasetId, String name, DataUse dataUse) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    dataset.setName(name);
+    dataset.setAlias(datasetId);
+    dataset.setDataUse(dataUse);
+    return dataset;
+  }
+
+  private List<String> codesOf(DataUseGroup group) {
+    return group.dataUse().getPrimary().stream().map(DataUseTerm::getCode).toList();
+  }
+
+  private DataUseSummary summaryOfCodes(String... codes) {
+    return new DataUseSummary(
+        Arrays.stream(codes).map(c -> new DataUseTerm(c, c)).toList(), List.of());
+  }
+
+  @Test
+  void testDataUseGroupsGroupDatasetsBySharedDataUse() {
+    User user = new User();
+    user.setUserId(1);
+    DataUse gru = new DataUseBuilder().setGeneralUse(true).build();
+    DataUse hmb = new DataUseBuilder().setHmbResearch(true).build();
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addDatasetId(1);
+    summary.addDatasetId(2);
+    summary.addDatasetId(3);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByIdList(any()))
+        .thenReturn(
+            List.of(
+                datasetWithDataUse(1, "One", gru),
+                datasetWithDataUse(2, "Two", gru),
+                datasetWithDataUse(3, "Three", hmb)));
+    when(ontologyService.translateDataUseSummary(gru)).thenReturn(summaryOfCodes("GRU"));
+    when(ontologyService.translateDataUseSummary(hmb)).thenReturn(summaryOfCodes("HMB"));
+
+    List<DataUseGroup> groups =
+        service.getSummariesForRole(user, UserRoles.ADMIN).getFirst().getDataUseGroups();
+
+    assertEquals(2, groups.size());
+    DataUseGroup gruGroup =
+        groups.stream().filter(g -> codesOf(g).equals(List.of("GRU"))).findFirst().orElseThrow();
+    assertEquals(2, gruGroup.datasets().size());
+    assertEquals(List.of(1, 2), gruGroup.key());
+    assertEquals("DUOS-000001", gruGroup.datasets().getFirst().datasetIdentifier());
+    assertEquals("One", gruGroup.datasets().getFirst().name());
+    assertEquals(1, groups.stream().filter(g -> codesOf(g).equals(List.of("HMB"))).count());
+  }
+
+  @Test
+  void testDataUseGroupsTranslateOncePerDistinctDataUseNotPerDataset() {
+    User user = new User();
+    user.setUserId(1);
+    DataUse gru = new DataUseBuilder().setGeneralUse(true).build();
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addDatasetId(1);
+    summary.addDatasetId(2);
+    summary.addDatasetId(3);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByIdList(any()))
+        .thenReturn(
+            List.of(
+                datasetWithDataUse(1, "One", gru),
+                datasetWithDataUse(2, "Two", gru),
+                datasetWithDataUse(3, "Three", gru)));
+    when(ontologyService.translateDataUseSummary(any())).thenReturn(summaryOfCodes("GRU"));
+
+    service.getSummariesForRole(user, UserRoles.ADMIN);
+
+    // Translation reads the ontology store, so it must not run per dataset.
+    verify(ontologyService, times(1)).translateDataUseSummary(any());
+  }
+
+  @Test
+  void testDataUseGroupsFetchDatasetsOnceForThePage() {
+    User user = new User();
+    user.setUserId(1);
+    DataUse gru = new DataUseBuilder().setGeneralUse(true).build();
+    DarCollectionSummary first = new DarCollectionSummary();
+    first.setLatestReferenceId(UUID.randomUUID().toString());
+    first.addDatasetId(1);
+    DarCollectionSummary second = new DarCollectionSummary();
+    second.setLatestReferenceId(UUID.randomUUID().toString());
+    second.addDatasetId(2);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin())
+        .thenReturn(List.of(first, second));
+    when(datasetDAO.findDatasetsByIdList(any()))
+        .thenReturn(List.of(datasetWithDataUse(1, "One", gru), datasetWithDataUse(2, "Two", gru)));
+    when(ontologyService.translateDataUseSummary(any())).thenReturn(summaryOfCodes("GRU"));
+
+    service.getSummariesForRole(user, UserRoles.ADMIN);
+
+    // One dataset query for every collection on the page, not one per collection.
+    verify(datasetDAO, times(1)).findDatasetsByIdList(any());
+  }
+
+  @Test
+  void testDataUseGroupsLabelDatasetsWithNoDataUse() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addDatasetId(1);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByIdList(any()))
+        .thenReturn(List.of(datasetWithDataUse(1, "One", null)));
+    when(ontologyService.translateDataUseSummary(null)).thenReturn(null);
+
+    List<DataUseGroup> groups =
+        service.getSummariesForRole(user, UserRoles.ADMIN).getFirst().getDataUseGroups();
+
+    assertEquals(1, groups.size());
+    assertNull(groups.getFirst().dataUse());
+  }
+
+  @Test
+  void testDataUseGroupsIncludeDacMemberVotesForChair() {
+    User user = new User();
+    user.setUserId(1);
+    DataUse gru = new DataUseBuilder().setGeneralUse(true).build();
+    Election election = new Election();
+    election.setElectionId(10);
+    election.setDatasetId(1);
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addDatasetId(1);
+    summary.addElection(election);
+    Vote approve = new Vote();
+    approve.setVoteId(1);
+    approve.setUserId(7);
+    approve.setElectionId(10);
+    approve.setVote(true);
+    approve.setDisplayName("Alice");
+    Vote pending = new Vote();
+    pending.setVoteId(2);
+    pending.setUserId(8);
+    pending.setElectionId(10);
+    pending.setDisplayName("Bob");
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(any(), any()))
+        .thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByIdList(any()))
+        .thenReturn(List.of(datasetWithDataUse(1, "One", gru)));
+    when(ontologyService.translateDataUseSummary(any())).thenReturn(summaryOfCodes("GRU"));
+    when(voteDAO.findDacVotesWithNamesByElectionIds(any())).thenReturn(List.of(approve, pending));
+
+    List<DataUseGroup> groups =
+        service.getSummariesForRole(user, UserRoles.CHAIRPERSON).getFirst().getDataUseGroups();
+
+    List<DataUseGroup.GroupVote> votes = groups.getFirst().votes();
+    assertEquals(2, votes.size());
+    assertEquals(1, votes.stream().filter(v -> Boolean.TRUE.equals(v.vote())).count());
+    assertEquals(1, votes.stream().filter(v -> Objects.isNull(v.vote())).count());
+    assertEquals(
+        "Alice",
+        votes.stream()
+            .filter(v -> Boolean.TRUE.equals(v.vote()))
+            .findFirst()
+            .orElseThrow()
+            .displayName());
+  }
+
+  @Test
+  void testDataUseGroupsWithholdVotesFromNonDacRoles() {
+    User user = new User();
+    user.setUserId(1);
+    DataUse gru = new DataUseBuilder().setGeneralUse(true).build();
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addDatasetId(1);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(List.of(summary));
+    when(datasetDAO.findDatasetsByIdList(any()))
+        .thenReturn(List.of(datasetWithDataUse(1, "One", gru)));
+    when(ontologyService.translateDataUseSummary(any())).thenReturn(summaryOfCodes("GRU"));
+
+    List<DataUseGroup> groups =
+        service.getSummariesForRole(user, UserRoles.ADMIN).getFirst().getDataUseGroups();
+
+    // DAC member votes are only ever shown to the DAC that casts them.
+    assertTrue(groups.getFirst().votes().isEmpty());
+    verify(voteDAO, never()).findDacVotesWithNamesByElectionIds(any());
   }
 
   @Test

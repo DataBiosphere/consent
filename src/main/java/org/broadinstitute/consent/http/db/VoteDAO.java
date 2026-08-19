@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.VoteMapper;
+import org.broadinstitute.consent.http.db.mapper.VoteWithDisplayNameMapper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -27,6 +28,23 @@ public interface VoteDAO extends Transactional<VoteDAO> {
 
   @SqlQuery("select * from vote v where v.election_id IN (<electionIds>)")
   List<Vote> findVotesByElectionIds(
+      @BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> electionIds);
+
+  /**
+   * DAC member votes for the given elections, with the voting member's name. One query for a whole
+   * page of collections, rather than one per collection.
+   */
+  @RegisterRowMapper(VoteWithDisplayNameMapper.class)
+  @SqlQuery(
+      """
+      SELECT v.*, u.display_name
+      FROM vote v
+      INNER JOIN users u ON u.user_id = v.user_id
+      WHERE LOWER(v.type) = 'dac'
+      AND v.election_id IN (<electionIds>)
+      """)
+  List<Vote> findDacVotesWithNamesByElectionIds(
       @BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING)
           List<Integer> electionIds);
 

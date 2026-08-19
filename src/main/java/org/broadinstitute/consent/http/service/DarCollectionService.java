@@ -17,9 +17,11 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,15 +58,18 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseGroup;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 
@@ -90,13 +95,15 @@ public class DarCollectionService implements ConsentLogger {
   private final DarCollectionServiceDAO collectionServiceDAO;
   private final EmailService emailService;
   private final DACAutomationRuleService dacAutomationRuleService;
+  private final OntologyService ontologyService;
 
   @Inject
   public DarCollectionService(
       Jdbi jdbi,
       DarCollectionServiceDAO darCollectionServiceDAO,
       EmailService emailService,
-      DACAutomationRuleService dacAutomationRuleService) {
+      DACAutomationRuleService dacAutomationRuleService,
+      OntologyService ontologyService) {
     this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
@@ -108,6 +115,7 @@ public class DarCollectionService implements ConsentLogger {
     this.voteDAO = jdbi.onDemand(VoteDAO.class);
     this.collectionServiceDAO = darCollectionServiceDAO;
     this.emailService = emailService;
+    this.ontologyService = ontologyService;
     this.dacAutomationRuleService = dacAutomationRuleService;
   }
 
@@ -424,7 +432,125 @@ public class DarCollectionService implements ConsentLogger {
         summaries = List.of();
         break;
     }
+    // Votes are only ever shown to the DAC that casts them.
+    attachDataUseGroups(summaries, role == UserRoles.CHAIRPERSON || role == UserRoles.MEMBER);
     return summaries;
+  }
+
+  /**
+   * Group each summary's datasets by the data use they share. Everything is fetched for the whole
+   * page at once, and translation runs per distinct data use rather than per dataset: it reads the
+   * ontology store, so per-dataset translation would trade one N+1 for another.
+   */
+  private void attachDataUseGroups(List<DarCollectionSummary> summaries, boolean includeVotes) {
+    Set<Integer> allDatasetIds =
+        summaries.stream()
+            .map(DarCollectionSummary::getDatasetIds)
+            .flatMap(Set::stream)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    if (allDatasetIds.isEmpty()) {
+      return;
+    }
+    Map<Integer, Dataset> datasetsById =
+        datasetDAO.findDatasetsByIdList(List.copyOf(allDatasetIds)).stream()
+            .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity(), (a, b) -> a));
+
+    Map<Integer, List<Vote>> votesByElectionId =
+        includeVotes ? findDacVotesByElectionId(summaries) : Map.of();
+
+    Map<String, DataUseSummary> summariesByDataUse = new HashMap<>();
+    summaries.forEach(
+        summary ->
+            summary.setDataUseGroups(
+                buildDataUseGroups(summary, datasetsById, votesByElectionId, summariesByDataUse)));
+  }
+
+  private Map<Integer, List<Vote>> findDacVotesByElectionId(List<DarCollectionSummary> summaries) {
+    List<Integer> electionIds =
+        summaries.stream()
+            .map(DarCollectionSummary::getElections)
+            .map(Map::values)
+            .flatMap(Collection::stream)
+            .map(Election::getElectionId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    if (electionIds.isEmpty()) {
+      return Map.of();
+    }
+    return voteDAO.findDacVotesWithNamesByElectionIds(electionIds).stream()
+        .filter(v -> Objects.nonNull(v.getElectionId()))
+        .collect(Collectors.groupingBy(Vote::getElectionId));
+  }
+
+  private List<DataUseGroup> buildDataUseGroups(
+      DarCollectionSummary summary,
+      Map<Integer, Dataset> datasetsById,
+      Map<Integer, List<Vote>> votesByElectionId,
+      Map<String, DataUseSummary> summariesByDataUse) {
+    Map<String, List<Dataset>> datasetsByDataUse = new LinkedHashMap<>();
+    summary.getDatasetIds().stream()
+        .map(datasetsById::get)
+        .filter(Objects::nonNull)
+        .sorted(Comparator.comparing(Dataset::getDatasetId))
+        .forEach(
+            dataset ->
+                datasetsByDataUse
+                    .computeIfAbsent(dataUseKey(dataset), k -> new ArrayList<>())
+                    .add(dataset));
+
+    return datasetsByDataUse.entrySet().stream()
+        .map(
+            entry -> {
+              List<Dataset> datasets = entry.getValue();
+              List<Integer> key = datasets.stream().map(Dataset::getDatasetId).toList();
+              DataUseSummary dataUse =
+                  summariesByDataUse.computeIfAbsent(
+                      entry.getKey(),
+                      k ->
+                          ontologyService.translateDataUseSummary(
+                              datasets.getFirst().getDataUse()));
+              List<DataUseGroup.GroupDataset> groupDatasets =
+                  datasets.stream()
+                      .map(
+                          d ->
+                              new DataUseGroup.GroupDataset(
+                                  d.getDatasetId(), d.getName(), d.getDatasetIdentifier()))
+                      .toList();
+              return new DataUseGroup(
+                  key, dataUse, groupDatasets, collapseVotes(summary, datasets, votesByElectionId));
+            })
+        .toList();
+  }
+
+  private String dataUseKey(Dataset dataset) {
+    return Objects.isNull(dataset.getDataUse())
+        ? "none"
+        : GsonUtil.getInstance().toJson(dataset.getDataUse());
+  }
+
+  /**
+   * One entry per member per distinct vote value: a member who has voted on one of the group's
+   * elections but not another counts as both an Approve and a Pending, as the tallies always have.
+   */
+  private List<DataUseGroup.GroupVote> collapseVotes(
+      DarCollectionSummary summary,
+      List<Dataset> datasets,
+      Map<Integer, List<Vote>> votesByElectionId) {
+    Set<Integer> datasetIds =
+        datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toSet());
+    Map<String, DataUseGroup.GroupVote> byUserAndVote = new LinkedHashMap<>();
+    summary.getElections().values().stream()
+        .filter(e -> datasetIds.contains(e.getDatasetId()))
+        .map(Election::getElectionId)
+        .flatMap(id -> votesByElectionId.getOrDefault(id, List.of()).stream())
+        .forEach(
+            v ->
+                byUserAndVote.putIfAbsent(
+                    v.getUserId() + "|" + v.getVote(),
+                    new DataUseGroup.GroupVote(v.getUserId(), v.getVote(), v.getDisplayName())));
+    return List.copyOf(byUserAndVote.values());
   }
 
   private List<Integer> getDatasetIdsForUserAndRoleId(User user, Integer roleId) {

@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.models.ontology;
 
+import com.google.gson.annotations.Expose;
+
 public class DataUseTerm {
 
-  private String code;
-  private String description;
+  @Expose private String code;
+  @Expose private String description;
 
   public DataUseTerm() {}
 

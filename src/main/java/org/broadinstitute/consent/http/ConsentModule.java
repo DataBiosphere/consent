@@ -757,8 +757,10 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       Jdbi jdbi,
       DarCollectionServiceDAO darCollectionServiceDAO,
       EmailService emailService,
-      DACAutomationRuleService ruleService) {
-    return new DarCollectionService(jdbi, darCollectionServiceDAO, emailService, ruleService);
+      DACAutomationRuleService ruleService,
+      OntologyService ontologyService) {
+    return new DarCollectionService(
+        jdbi, darCollectionServiceDAO, emailService, ruleService, ontologyService);
   }
 
   @Provides
