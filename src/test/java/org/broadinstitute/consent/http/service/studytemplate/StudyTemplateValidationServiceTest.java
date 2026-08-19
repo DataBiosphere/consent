@@ -213,6 +213,58 @@ class StudyTemplateValidationServiceTest {
   }
 
   @Test
+  void testValidate_ignoresARowOfEmptyCells() {
+    // What a spreadsheet writes for a blank line inside its used range.
+    StudyTemplateValidationResult result =
+        validate(minimalTemplate("\n").replace("\n1,consentGroup", "\n,,,,,\n1,consentGroup"));
+
+    assertEquals(List.of(), result.errors());
+  }
+
+  @Test
+  void testValidate_reportsThePhysicalLineOfARow() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n")
+                    .replace("\n1,study,study,,piName", "\n\n,,,,,\n1,study,study,,piName")
+                + "\n1,study,study,,piInstitution,one");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW + 2, "value", "piInstitution must be a whole number")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_reportsTheFirstLineOfAMultiLineValue() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n")
+                + "\n1,study,study,,species,\"Homo\nsapiens\""
+                + "\n1,study,study,,piInstitution,one");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(
+                APPENDED_ROW + 2, "value", "piInstitution must be a whole number")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_rejectsAFileWithTooManyDataRows() {
+    StringBuilder template = new StringBuilder(HEADER);
+    IntStream.range(0, StudyTemplateValidationService.MAX_DATA_ROWS + 1)
+        .forEach(_ -> template.append("\n1,study,study,,species,x"));
+
+    StudyTemplateValidationResult result = validate(template.toString());
+
+    assertEquals(
+        List.of(TemplateValidationError.of("Template must have no more than 50,000 data rows")),
+        result.errors());
+  }
+
+  @Test
   void testValidate_rejectsTabDelimitedHeader() {
     StudyTemplateValidationResult result = validate(HEADER.replace(',', '\t') + "\n");
 
@@ -318,6 +370,13 @@ class StudyTemplateValidationServiceTest {
   }
 
   @Test
+  void testValidate_rejectsAFileOfEmptyCellsAsEmpty() {
+    StudyTemplateValidationResult result = validate(",,,,,\n,,,,,\n");
+
+    assertEquals(List.of(TemplateValidationError.of("Template file is empty")), result.errors());
+  }
+
+  @Test
   void testValidate_rejectsHeaderOnlyFile() {
     StudyTemplateValidationResult result = validate(HEADER + "\n");
 
@@ -344,8 +403,10 @@ class StudyTemplateValidationServiceTest {
     "submittingToAnvil,TRUE,submittingToAnvil must be true or false",
     "piInstitution,1.5,piInstitution must be a whole number",
     "piInstitution,one,piInstitution must be a whole number",
-    "studyType,observational,Unknown studyType value: observational",
-    "nihICsSupportingStudy,NOPE,Unknown nihICsSupportingStudy value: NOPE"
+    "studyType,observational,Unknown studyType value",
+    "nihICsSupportingStudy,NOPE,Unknown nihICsSupportingStudy value",
+    "piInstitution,+10,piInstitution must be a whole number",
+    "piInstitution,99999999999,piInstitution must be a whole number"
   })
   void testValidate_rejectsInvalidStudyScalar(String field, String value, String message) {
     StudyTemplateValidationResult result =
@@ -363,7 +424,7 @@ class StudyTemplateValidationServiceTest {
     "requestLocation,/relative,requestLocation must be an absolute http or https URL",
     "requestLocation,http:opaque,requestLocation must be an absolute http or https URL",
     "url,http://exa mple.org,url must be an absolute http or https URL",
-    "dataLocation,terra workspace,Unknown dataLocation value: terra workspace",
+    "dataLocation,terra workspace,Unknown dataLocation value",
     "dataAccessCommitteeId,many,dataAccessCommitteeId must be a whole number",
     "mor,1,mor must be true or false"
   })
@@ -375,6 +436,26 @@ class StudyTemplateValidationServiceTest {
     assertTrue(
         result.errors().contains(TemplateValidationError.at(APPENDED_ROW, "value", message)),
         result.errors().toString());
+  }
+
+  @ParameterizedTest
+  @CsvSource({"url,HTTPS://example.org/data", "requestLocation,Http://example.org/request"})
+  void testValidate_acceptsAnUppercasedUriScheme(String field, String value) {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n") + "\n1,consentGroup,dataset-open,study," + field + ',' + value);
+
+    assertEquals(List.of(), result.errors());
+  }
+
+  @Test
+  void testValidate_acceptsAWholeNumberWithLeadingZeros() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n").replace(",numberOfParticipants,10", ",numberOfParticipants,007"));
+
+    assertEquals(List.of(), result.errors());
+    assertEquals(7, result.registration().getConsentGroups().getFirst().getNumberOfParticipants());
   }
 
   @Test
@@ -589,6 +670,27 @@ class StudyTemplateValidationServiceTest {
     assertEquals(StudyTemplateValidationService.MAX_ERRORS + 1, result.errors().size());
     assertEquals(
         "Only the first 100 errors are reported; 5 further errors were omitted",
+        result.errors().getLast().message());
+  }
+
+  @Test
+  void testValidate_countsErrorsItDidNotKeep() {
+    // Far more errors than the collector retains, so the omitted count comes from the count of
+    // everything reported rather than from the list that was kept.
+    int rows = 5_000;
+    StringBuilder template = new StringBuilder(HEADER);
+    IntStream.range(0, rows)
+        .forEach(
+            index ->
+                template.append("\n1,study,study,,unknownField").append(index).append(",value"));
+
+    StudyTemplateValidationResult result = validate(template.toString());
+
+    assertTrue(result.truncated());
+    assertEquals(StudyTemplateValidationService.MAX_ERRORS + 1, result.errors().size());
+    assertEquals(
+        "Only the first 100 errors are reported; %d further errors were omitted"
+            .formatted(rows - StudyTemplateValidationService.MAX_ERRORS),
         result.errors().getLast().message());
   }
 
@@ -846,7 +948,7 @@ class StudyTemplateValidationServiceTest {
   }
 
   @Test
-  void testValidate_rejectsConflictingParentRecordIdsForOneRecord() {
+  void testValidate_rejectsARecordIdUsedByTwoRecords() {
     StudyTemplateValidationResult result =
         validate(
             minimalTemplate("\n")
@@ -857,8 +959,9 @@ class StudyTemplateValidationServiceTest {
         List.of(
             TemplateValidationError.at(
                 APPENDED_ROW + 1,
-                "parentRecordId",
-                "Conflicting parentRecordId for fileType record 'ft-one'")),
+                "recordId",
+                "Duplicate fileType recordId 'ft-one': each recordId identifies one record and must"
+                    + " name one parentRecordId")),
         result.errors());
   }
 
@@ -873,8 +976,7 @@ class StudyTemplateValidationServiceTest {
 
     assertTrue(
         result.errors().stream()
-            .anyMatch(
-                error -> error.message().equals("Unknown accessManagement value: Open Access")),
+            .anyMatch(error -> error.message().equals("Unknown accessManagement value")),
         result.errors().toString());
     assertFalse(
         result.errors().stream()
@@ -888,8 +990,7 @@ class StudyTemplateValidationServiceTest {
         validate(minimalTemplate("\n") + "\n1,fileType,ft-one,dataset-open,fileType,Genomes");
 
     assertEquals(
-        List.of(
-            TemplateValidationError.at(APPENDED_ROW, "value", "Unknown fileType value: Genomes")),
+        List.of(TemplateValidationError.at(APPENDED_ROW, "value", "Unknown fileType value")),
         result.errors());
   }
 
@@ -922,9 +1023,10 @@ class StudyTemplateValidationServiceTest {
   }
 
   @Test
-  void testValidate_attributesAConditionalViolationToTheChoiceThatRequiredIt() {
-    // Both the nihAnvilUse choice and the empty dbGaPPhsID cell would resolve "dbGaP phs ID is
-    // required", so it is attributed once, to the earlier row.
+  void testValidate_locatesAConditionalViolationOnTheCellItAsksFor() {
+    // The nihAnvilUse choice on row 6 is what makes all three fields required, and changing it
+    // would resolve all three, but it is a valid cell. Only dbGaPPhsID has a cell of its own here,
+    // and that is the one error with somewhere to point.
     StudyTemplateValidationResult result =
         validate(
             minimalTemplate("\n").replace(NOT_NHGRI_FUNDED, NHGRI_FUNDED_WITH_PHS_ID)
@@ -932,10 +1034,9 @@ class StudyTemplateValidationServiceTest {
 
     assertEquals(
         List.of(
-            TemplateValidationError.at(6, "value", "dbGaP phs ID is required"),
-            TemplateValidationError.at(
-                6, "value", "Principal Investigator Institution is required"),
-            TemplateValidationError.at(6, "value", "NIH Grant or Contract Number is required")),
+            TemplateValidationError.at(APPENDED_ROW, "value", "dbGaP phs ID is required"),
+            TemplateValidationError.of("Principal Investigator Institution is required"),
+            TemplateValidationError.of("NIH Grant or Contract Number is required")),
         result.errors());
   }
 

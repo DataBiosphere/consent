@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.studytemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * Converts one non-empty template cell into the wire value for its field. Rejection messages name
@@ -40,10 +41,15 @@ interface CellConverter {
             default -> CellValue.rejected(field + " must be true or false");
           };
 
+  /** Base-10 digits with an optional leading minus sign, per the v1 contract. */
+  Pattern WHOLE_NUMBER = Pattern.compile("-?\\d+");
+
   CellConverter INTEGER =
       (field, value) -> {
         try {
-          return CellValue.of(Integer.valueOf(value));
+          return WHOLE_NUMBER.matcher(value).matches()
+              ? CellValue.of(Integer.valueOf(value))
+              : CellValue.rejected(field + " must be a whole number");
         } catch (NumberFormatException _) {
           return CellValue.rejected(field + " must be a whole number");
         }
@@ -54,9 +60,11 @@ interface CellConverter {
         String rejection = field + " must be an absolute http or https URL";
         try {
           URI uri = new URI(value);
+          // A URI scheme is case-insensitive, so an uppercased export is the same URL.
           boolean absoluteHttp =
               uri.isAbsolute()
-                  && (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
+                  && (uri.getScheme().equalsIgnoreCase("http")
+                      || uri.getScheme().equalsIgnoreCase("https"))
                   && uri.getHost() != null;
           return absoluteHttp ? CellValue.of(uri) : CellValue.rejected(rejection);
         } catch (URISyntaxException _) {
@@ -70,7 +78,8 @@ interface CellConverter {
       try {
         return CellValue.of(fromValue.apply(value));
       } catch (IllegalArgumentException _) {
-        return CellValue.rejected("Unknown " + field + " value: " + value);
+        // The cell itself is not echoed: a value cell may hold an email or free text.
+        return CellValue.rejected("Unknown " + field + " value");
       }
     };
   }

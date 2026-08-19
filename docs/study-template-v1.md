@@ -33,8 +33,10 @@ templateVersion,recordType,recordId,parentRecordId,field,value
 
 - `templateVersion` is required on every data row and must be major version `1`. Mixed or
   unsupported versions are errors.
-- Blank physical lines may be ignored. A zero-byte, BOM-only, header-only, or otherwise record-free
-  file is invalid.
+- Maximum data rows: 50,000. Bounding the file size alone does not bound the row model built from
+  it, and 50,000 is twenty times the largest study this contract sizes for.
+- Blank physical lines are ignored, as is a row whose cells are all empty. A zero-byte, BOM-only,
+  header-only, or otherwise record-free file is invalid.
 - Leading and trailing whitespace is significant in string values. Producers should not add
   whitespace around unquoted values.
 
@@ -61,6 +63,7 @@ emit by default:
 | UTF-8 BOM (Excel "CSV UTF-8 (Comma delimited)") | Accepted at the beginning of the file only. |
 | Quoting only cells that need it | Accepted; quoting is per RFC 4180 and never required for cells without commas, quotes, or line breaks. |
 | Trailing blank lines at end of file | Ignored. |
+| A row of delimiters (`,,,,,`) for a blank line inside the used range | Ignored, the same as a blank line. |
 | Google Sheets "Download → Comma-separated values" | Accepted; it is comma-delimited UTF-8 without a BOM. |
 
 Excel is not strictly RFC 4180-conformant, and two of its deviations are rejected rather than
@@ -106,9 +109,9 @@ ignored.
 | --- | --- |
 | String or enum | Exact wire value; enum matching is case-sensitive. Use normal CSV quoting for commas, quotes, or line breaks. |
 | Boolean | Exactly lowercase `true` or `false`. |
-| Integer | Base-10 digits with an optional leading minus sign; no decimal point or separator. Domain validation may reject negative values. |
+| Integer | Base-10 digits with an optional leading minus sign; no plus sign, decimal point, or separator. Domain validation may reject negative values. |
 | Date | ISO local date `YYYY-MM-DD`; calendar-invalid dates are rejected. |
-| URI | Absolute `http` or `https` URI. |
+| URI | Absolute `http` or `https` URI; the scheme is matched case-insensitively, as URI syntax defines it. |
 | Scalar array | One row per item, repeating the same `(recordType, recordId, field)` tuple. Each `value` cell holds one plain string or enum item, encoded exactly as a single value of that kind. |
 | Empty value | An empty `value` cell means absent (`null`), not an empty string or empty array. Omit optional fields; empty required values fail validation. |
 
@@ -268,9 +271,11 @@ users to add them, and no file-storage object or file-content asset is supported
 
 ## Invalid-input behavior
 
-Validation collects independently actionable errors in deterministic order: file/structure errors,
-then row conversion errors in file order, then existing DTO/domain violations in validator order.
-Return at most 100 errors and report explicitly if additional errors were omitted.
+Validation collects independently actionable errors in deterministic order: everything carrying a
+row in row order, then the violations that belong to the request as a whole, in validator order. A
+conversion error and a DTO/domain violation on the same row are both reported, and violations that
+carry a row interleave with conversion errors rather than following them. Return at most 100 errors
+and report explicitly if additional errors were omitted.
 
 File and structural errors stop validation before DTO construction because the record model is not
 trustworthy. Once structure is valid, conversion and DTO/domain validation may both report errors.
@@ -284,6 +289,11 @@ missing the same field produce two errors rather than one. Each carries the row 
 caused it, or the consent group's first row when the rule spans several fields and no single cell is
 at fault. Study-scoped violations may still carry no row.
 
+A violation is located on the cell it asks the producer to change, which for a conditional
+requirement is the field being required rather than the choice that required it: an empty cell
+outranks a filled one, and a violation asking for a field the file never mentions carries no row at
+all rather than pointing at the valid cell that triggered it.
+
 | Condition | Behavior |
 | --- | --- |
 | Empty or record-free file | Reject; no draft is created. |
@@ -295,12 +305,17 @@ at fault. Study-scoped violations may still carry no row.
 | Missing, unsupported, or mixed version | Reject affected rows; only major version `1` is supported. |
 | Unknown record type or field | Reject the row. |
 | Duplicate `(recordType, recordId, field)` on a single-valued field | Reject the later assignment. |
+| One `recordId` used by two records of the same type | Reject the row that names a different parent; a `recordId` identifies one record. |
+| More than 50,000 data rows | Reject before mapping any record. |
 | Repeated item value within one scalar array field | Reject the later row. |
 | Missing parent, multiple study records, or orphan record | Reject the affected record. |
 | Empty required value, empty scalar array item, or invalid scalar | Reject with row and column context. |
 | Existing registration-rule violation | Reject with the existing validator message; row and column may be absent. |
 
-Errors and general logs must not echo raw rows or sensitive free-text values.
+Errors and general logs must not echo raw rows or sensitive free-text values. A `value` cell is
+never quoted back, since it may hold an email address or free text; the structural columns
+(`templateVersion`, `recordType`, `recordId`, `parentRecordId`, `field`) are named in messages
+because the producer needs to know which token was rejected.
 
 ## Canonical fixtures
 
@@ -346,9 +361,11 @@ type TemplateValidationResponse =
     }
 ```
 
-`row` is one-based and counts the CSV header as row 1. Parser and conversion errors include row and
-column when known. Violations from the existing registration validator may contain only a message;
-the UI must not infer locations by parsing that message.
+`row` is the one-based physical line the record starts on, counting the CSV header as row 1, so it
+matches the line the producer sees in their editor or spreadsheet: ignored blank lines still occupy
+their line, and a value containing line breaks is reported on the line its record begins. Parser and
+conversion errors include row and column when known. Violations from the existing registration
+validator may contain only a message; the UI must not infer locations by parsing that message.
 
 Authentication, authorization, multipart, size-limit, network, and unexpected server failures are
 request failures and must be rendered separately from `valid: false` results.

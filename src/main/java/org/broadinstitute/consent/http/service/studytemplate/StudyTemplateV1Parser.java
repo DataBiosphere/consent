@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeOb
 import org.broadinstitute.consent.http.models.dto.registration.ConsentGroupRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
 import org.broadinstitute.consent.http.service.studytemplate.CellConverter.CellValue;
+import org.broadinstitute.consent.http.service.studytemplate.ViolationProbe.Kind;
 
 /** Parses and maps the v1 study template described in {@code docs/study-template-v1.md}. */
 final class StudyTemplateV1Parser implements StudyTemplateParser {
@@ -25,6 +26,9 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
 
   /** The v1 contract allows exactly one study record and fixes its {@code recordId}. */
   private static final String STUDY_RECORD_ID = "study";
+
+  /** The row of a probe that has no cell to report; see {@link ViolationProbe.Kind#ABSENT}. */
+  private static final int NO_ROW = 0;
 
   private final RegistrationViolationAttributor attributor = new RegistrationViolationAttributor();
 
@@ -183,13 +187,34 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
                       field,
                       assignments.getFirst().row(),
                       target,
-                      true,
+                      Kind.SUPPRESSED,
                       field.probeValue(),
                       probes);
                 }
               }
             });
+    addAbsentProbes(catalog, templateRecord, target, probes);
     return unconverted;
+  }
+
+  /**
+   * Probes for the fields this record never mentions. They have no row to report, and exist only so
+   * that a violation asking for a field the file left out is not attributed to the cell that made
+   * the field required; see {@link ViolationProbe.Kind#ABSENT}.
+   */
+  private <T> void addAbsentProbes(
+      Map<String, TemplateField<T>> catalog,
+      TemplateRecord templateRecord,
+      T target,
+      List<ViolationProbe> probes) {
+    catalog.forEach(
+        (name, field) -> {
+          if (field.probeValue() != null && !templateRecord.assignments().containsKey(name)) {
+            Object substitute =
+                field.multiValued() ? List.of(field.probeValue()) : field.probeValue();
+            addProbe(field, NO_ROW, target, Kind.ABSENT, substitute, probes);
+          }
+        });
   }
 
   private <T> boolean writeItems(
@@ -219,7 +244,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
       for (int index = 0; index < items.size(); index++) {
         List<Object> substituted = new ArrayList<>(items);
         substituted.set(index, field.probeValue());
-        addProbe(field, itemRows.get(index), target, false, substituted, probes);
+        addProbe(field, itemRows.get(index), target, Kind.SET, substituted, probes);
       }
     }
     return true;
@@ -241,7 +266,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
       }
       field.writer().accept(target, cell.value());
     }
-    addProbe(field, assignment.row(), target, false, field.probeValue(), probes);
+    addProbe(field, assignment.row(), target, kindOf(field, target), field.probeValue(), probes);
     return true;
   }
 
@@ -249,7 +274,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
       TemplateField<T> field,
       int row,
       T target,
-      boolean suppress,
+      Kind kind,
       Object substitute,
       List<ViolationProbe> probes) {
     if (field.probeValue() == null) {
@@ -259,9 +284,14 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
     probes.add(
         new ViolationProbe(
             row,
-            suppress,
+            kind,
             () -> field.writer().accept(target, substitute),
             () -> field.writer().accept(target, assigned)));
+  }
+
+  /** An empty cell leaves its field unset, which is what makes its own violation locatable. */
+  private static <T> Kind kindOf(TemplateField<T> field, T target) {
+    return field.reader().apply(target) == null ? Kind.UNSET : Kind.SET;
   }
 
   /**
@@ -346,8 +376,9 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
     if (!builder.parentRecordId.equals(row.parentRecordId())) {
       errors.at(
           row.row(),
-          TemplateColumns.PARENT_RECORD_ID,
-          "Conflicting parentRecordId for %s record '%s'"
+          TemplateColumns.RECORD_ID,
+          ("Duplicate %s recordId '%s': each recordId identifies one record and must name one"
+                  + " parentRecordId")
               .formatted(builder.recordType, builder.recordId));
       return;
     }
@@ -381,8 +412,7 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
       errors.at(
           row.row(),
           TemplateColumns.VALUE,
-          "Duplicate item '%s' for %s field '%s'"
-              .formatted(row.value(), builder.recordType, row.field()));
+          "Duplicate item for %s field '%s'".formatted(builder.recordType, row.field()));
       return false;
     }
     return true;

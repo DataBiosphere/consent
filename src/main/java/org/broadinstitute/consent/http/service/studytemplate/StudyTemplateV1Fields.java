@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
@@ -127,7 +128,7 @@ final class StudyTemplateV1Fields {
         "dataTypes",
         CellConverter.TEXT,
         StudyRegistrationRequest::getDataTypes,
-        (r, v) -> r.setDataTypes(strings(v)),
+        (r, v) -> r.setDataTypes(items(v, String.class)),
         PROBE_TEXT);
     add(
         fields,
@@ -180,7 +181,7 @@ final class StudyTemplateV1Fields {
         "dataCustodianEmail",
         CellConverter.TEXT,
         StudyRegistrationRequest::getDataCustodianEmail,
-        (r, v) -> r.setDataCustodianEmail(strings(v)),
+        (r, v) -> r.setDataCustodianEmail(items(v, String.class)),
         PROBE_EMAIL);
     add(
         fields,
@@ -288,7 +289,7 @@ final class StudyTemplateV1Fields {
         "collaboratingSites",
         CellConverter.TEXT,
         StudyRegistrationRequest::getCollaboratingSites,
-        (r, v) -> r.setCollaboratingSites(strings(v)),
+        (r, v) -> r.setCollaboratingSites(items(v, String.class)),
         null);
     add(
         fields,
@@ -337,7 +338,7 @@ final class StudyTemplateV1Fields {
         "diseaseSpecificUse",
         CellConverter.TEXT,
         ConsentGroupRequest::getDiseaseSpecificUse,
-        (c, v) -> c.setDiseaseSpecificUse(strings(v)),
+        (c, v) -> c.setDiseaseSpecificUse(items(v, String.class)),
         null);
     add(
         fields,
@@ -521,11 +522,9 @@ final class StudyTemplateV1Fields {
     fields.put(name, new TemplateField<>(name, true, converter, reader, writer, probeValue));
   }
 
-  private static List<String> strings(Object value) {
-    return ((List<?>) value).stream().map(String::valueOf).toList();
-  }
-
+  /** Null restores a field a probe found absent, so every writer must accept it. */
+  @Nullable
   private static <E> List<E> items(Object value, Class<E> type) {
-    return ((List<?>) value).stream().map(type::cast).toList();
+    return value == null ? null : ((List<?>) value).stream().map(type::cast).toList();
   }
 }

@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,10 +38,22 @@ public class StudyTemplateValidationService {
   static final int MAX_TEMPLATE_BYTES = 5 * 1024 * 1024;
   static final int MAX_ERRORS = 100;
 
+  /**
+   * Twenty times the largest study the contract sizes for, and far below what 5 MiB of the shortest
+   * possible rows holds. Bounding the file alone does not bound the row model built from it.
+   */
+  static final int MAX_DATA_ROWS = 50_000;
+
   private static final char BOM = '\uFEFF';
   private static final char NUL = '\u0000';
+
+  /**
+   * Blank lines are kept rather than skipped so that a reported row is the physical line it came
+   * from; {@link #isBlank} drops them, along with the row of delimiters a spreadsheet writes for a
+   * blank line inside its used range.
+   */
   private static final CSVFormat CSV_FORMAT =
-      CSVFormat.RFC4180.builder().setIgnoreEmptyLines(true).get();
+      CSVFormat.RFC4180.builder().setIgnoreEmptyLines(false).get();
 
   /** What a spreadsheet writes under a non-US locale, reported by name rather than guessed at. */
   private static final List<Character> FOREIGN_DELIMITERS = List.of(';', '\t');
@@ -66,22 +79,15 @@ public class StudyTemplateValidationService {
     TemplateErrors errors = new TemplateErrors();
 
     String csv = readTemplate(content, errors);
-    List<CSVRecord> records = csv == null ? List.of() : parseCsv(csv, errors);
-    if (records.isEmpty()) {
-      // Whichever step produced no records already recorded why.
+    if (csv == null) {
       return failed(errors);
     }
-    rejectNulCharacters(records, errors);
+
+    List<TemplateRow> rows = readRows(csv, errors);
     if (!errors.isEmpty()) {
       return failed(errors);
     }
 
-    validateHeader(records.getFirst(), errors);
-    if (!errors.isEmpty()) {
-      return failed(errors);
-    }
-
-    List<TemplateRow> rows = dataRows(records, errors);
     StudyTemplateParser parser = parserFor(rows, errors);
     if (!errors.isEmpty()) {
       return failed(errors);
@@ -132,14 +138,93 @@ public class StudyTemplateValidationService {
     return csv;
   }
 
-  private static List<CSVRecord> parseCsv(String csv, TemplateErrors errors) {
+  /**
+   * Reads the data rows of a template. The file is streamed rather than collected, so a large one
+   * costs a row list rather than a parsed copy of itself as well.
+   */
+  private static List<TemplateRow> readRows(String csv, TemplateErrors errors) {
+    ScannedTemplate scanned;
     try (CSVParser parser = CSVParser.parse(csv, CSV_FORMAT)) {
-      return parser.getRecords();
+      scanned = scan(parser);
     } catch (IOException | UncheckedIOException | IllegalStateException _) {
       // The parser's own message quotes the offending content, which must not be echoed back.
       errors.message("Template file is not valid CSV");
       return List.of();
     }
+    return report(scanned, errors);
+  }
+
+  /** One pass over the records: their lines, their NUL cells, the header, and the data rows. */
+  private static ScannedTemplate scan(CSVParser parser) {
+    TemplateErrors nulErrors = new TemplateErrors();
+    TemplateErrors shapeErrors = new TemplateErrors();
+    List<TemplateRow> rows = new ArrayList<>();
+    CSVRecord header = null;
+    int headerRow = 0;
+    boolean overRowLimit = false;
+
+    long lastLine = 0;
+    for (CSVRecord csvRecord : parser) {
+      // The record's own start line, so a reported row is the line the producer sees in their
+      // spreadsheet even when blank lines or multi-line quoted values precede it.
+      int row = (int) lastLine + 1;
+      lastLine = parser.getCurrentLineNumber();
+      if (isBlank(csvRecord)) {
+        continue;
+      }
+      rejectNulCharacters(csvRecord, row, nulErrors);
+      if (header == null) {
+        header = csvRecord;
+        headerRow = row;
+      } else if (rows.size() < MAX_DATA_ROWS) {
+        dataRow(csvRecord, row, shapeErrors).ifPresent(rows::add);
+      } else {
+        overRowLimit = true;
+        break;
+      }
+    }
+    return new ScannedTemplate(header, headerRow, rows, nulErrors, shapeErrors, overRowLimit);
+  }
+
+  /**
+   * Reports the first stage of the scan that found anything — the row limit, then NUL characters,
+   * then the header, then row shape — and returns the rows only when none did.
+   */
+  private static List<TemplateRow> report(ScannedTemplate scanned, TemplateErrors errors) {
+    if (scanned.overRowLimit()) {
+      errors.message("Template must have no more than %,d data rows".formatted(MAX_DATA_ROWS));
+      return List.of();
+    }
+    if (!scanned.nulErrors().isEmpty()) {
+      errors.merge(scanned.nulErrors());
+      return List.of();
+    }
+    if (scanned.header() == null) {
+      errors.message("Template file is empty");
+      return List.of();
+    }
+    validateHeader(scanned.header(), scanned.headerRow(), errors);
+    if (!errors.isEmpty()) {
+      return List.of();
+    }
+    errors.merge(scanned.shapeErrors());
+    if (scanned.rows().isEmpty() && errors.isEmpty()) {
+      errors.message("Template file has no data rows");
+    }
+    return scanned.rows();
+  }
+
+  /**
+   * Whether every cell of the record is empty. Spreadsheets write a row of delimiters for a blank
+   * line inside their used range, which the contract ignores the same way it ignores a blank line.
+   */
+  private static boolean isBlank(CSVRecord csvRecord) {
+    for (int column = 0; column < csvRecord.size(); column++) {
+      if (!csvRecord.get(column).isEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -148,15 +233,10 @@ public class StudyTemplateValidationService {
    * {@code jsonb} value. Rejecting it here tells the producer which cell to fix instead of
    * stripping bytes out of their study metadata downstream.
    */
-  private static void rejectNulCharacters(List<CSVRecord> records, TemplateErrors errors) {
-    for (CSVRecord csvRecord : records) {
-      for (int column = 0; column < csvRecord.size(); column++) {
-        if (csvRecord.get(column).indexOf(NUL) >= 0) {
-          errors.at(
-              (int) csvRecord.getRecordNumber(),
-              columnName(column),
-              "Template must not contain a NUL character");
-        }
+  private static void rejectNulCharacters(CSVRecord csvRecord, int row, TemplateErrors errors) {
+    for (int column = 0; column < csvRecord.size(); column++) {
+      if (csvRecord.get(column).indexOf(NUL) >= 0) {
+        errors.at(row, columnName(column), "Template must not contain a NUL character");
       }
     }
   }
@@ -166,7 +246,7 @@ public class StudyTemplateValidationService {
     return column < TemplateColumns.HEADERS.size() ? TemplateColumns.HEADERS.get(column) : null;
   }
 
-  private static void validateHeader(CSVRecord header, TemplateErrors errors) {
+  private static void validateHeader(CSVRecord header, int row, TemplateErrors errors) {
     List<String> columns = header.toList();
     if (columns.size() == 1) {
       Character delimiter =
@@ -176,7 +256,7 @@ public class StudyTemplateValidationService {
               .orElse(null);
       if (delimiter != null) {
         errors.at(
-            (int) header.getRecordNumber(),
+            row,
             ("Template must be comma-delimited. Detected '%s' as the column separator. Re-export the"
                     + " file as comma-separated values.")
                 .formatted(delimiter));
@@ -196,7 +276,7 @@ public class StudyTemplateValidationService {
       duplicates.forEach(
           column ->
               errors.at(
-                  (int) header.getRecordNumber(),
+                  row,
                   TemplateColumns.HEADERS.contains(column) ? column : null,
                   "Duplicate header: " + column));
       return;
@@ -204,36 +284,28 @@ public class StudyTemplateValidationService {
 
     if (!TemplateColumns.HEADERS.equals(columns)) {
       errors.at(
-          (int) header.getRecordNumber(),
-          "Template header must be exactly: " + String.join(",", TemplateColumns.HEADERS));
+          row, "Template header must be exactly: " + String.join(",", TemplateColumns.HEADERS));
     }
   }
 
-  private static List<TemplateRow> dataRows(List<CSVRecord> records, TemplateErrors errors) {
-    List<TemplateRow> rows = new ArrayList<>();
-    for (CSVRecord csvRecord : records.subList(1, records.size())) {
-      int row = (int) csvRecord.getRecordNumber();
-      if (csvRecord.size() != TemplateColumns.HEADERS.size()) {
-        errors.at(
+  private static Optional<TemplateRow> dataRow(
+      CSVRecord csvRecord, int row, TemplateErrors errors) {
+    if (csvRecord.size() != TemplateColumns.HEADERS.size()) {
+      errors.at(
+          row,
+          "Row must have %d columns but has %d"
+              .formatted(TemplateColumns.HEADERS.size(), csvRecord.size()));
+      return Optional.empty();
+    }
+    return Optional.of(
+        new TemplateRow(
             row,
-            "Row must have %d columns but has %d"
-                .formatted(TemplateColumns.HEADERS.size(), csvRecord.size()));
-        continue;
-      }
-      rows.add(
-          new TemplateRow(
-              row,
-              csvRecord.get(0),
-              csvRecord.get(1),
-              csvRecord.get(2),
-              csvRecord.get(3),
-              csvRecord.get(4),
-              csvRecord.get(5)));
-    }
-    if (rows.isEmpty() && errors.isEmpty()) {
-      errors.message("Template file has no data rows");
-    }
-    return rows;
+            csvRecord.get(0),
+            csvRecord.get(1),
+            csvRecord.get(2),
+            csvRecord.get(3),
+            csvRecord.get(4),
+            csvRecord.get(5)));
   }
 
   /**
@@ -268,16 +340,25 @@ public class StudyTemplateValidationService {
     return dispatched;
   }
 
+  /** What one pass over the records collected, before any stage decides what to report. */
+  private record ScannedTemplate(
+      CSVRecord header,
+      int headerRow,
+      List<TemplateRow> rows,
+      TemplateErrors nulErrors,
+      TemplateErrors shapeErrors,
+      boolean overRowLimit) {}
+
   private static StudyTemplateValidationResult failed(TemplateErrors errors) {
     List<TemplateValidationError> all = errors.toList();
-    if (all.size() <= MAX_ERRORS) {
+    if (errors.count() <= MAX_ERRORS) {
       return StudyTemplateValidationResult.invalid(all, false);
     }
     List<TemplateValidationError> capped = new ArrayList<>(all.subList(0, MAX_ERRORS));
     capped.add(
         TemplateValidationError.of(
             "Only the first %d errors are reported; %d further errors were omitted"
-                .formatted(MAX_ERRORS, all.size() - MAX_ERRORS)));
+                .formatted(MAX_ERRORS, errors.count() - MAX_ERRORS)));
     return StudyTemplateValidationResult.invalid(capped, true);
   }
 }
