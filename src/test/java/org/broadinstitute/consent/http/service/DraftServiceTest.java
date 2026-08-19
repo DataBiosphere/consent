@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
@@ -179,6 +180,21 @@ class DraftServiceTest {
         gson.fromJson(byteArrayOutputStream.toString(), StreamingDeserializer.class);
     assertEquals(draft.getCreateDate().getTime(), streamedData.meta.getCreateDate().getTime());
     assertEquals("{}", streamedData.document.toString());
+  }
+
+  @Test
+  void testStreamingOutputNamesTheDraftType() throws Exception {
+    StreamingOutput output = draftService.draftAsJson(draft);
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    output.write(byteArrayOutputStream);
+    byteArrayOutputStream.close();
+
+    JsonObject streamed =
+        GsonUtil.buildGson()
+            .fromJson(byteArrayOutputStream.toString(StandardCharsets.UTF_8), JsonObject.class);
+    assertEquals(
+        DraftType.STUDY_DATASET_SUBMISSION_V1.getValue(),
+        streamed.getAsJsonObject("meta").get("draftType").getAsString());
   }
 
   @Test

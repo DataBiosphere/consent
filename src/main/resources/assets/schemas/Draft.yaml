@@ -1,5 +1,12 @@
 type: object
 properties:
+  name:
+    type: string
+    description: A friendly name to describe the saved draft.
+  draftType:
+    type: string
+    enum: [StudyDatasetSubmissionV1]
+    description: The document type of the draft, which a client must use rather than inferring one from the UUID or the route that loaded it.
   storedFiles:
     type: array
     description: Uploaded files associated with the draft.
