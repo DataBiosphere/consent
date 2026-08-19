@@ -9,7 +9,7 @@ import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
  * Requests table. Votes are populated only for the DAC that casts them.
  */
 public record DataUseGroup(
-    @Expose String key,
+    @Expose List<Integer> key,
     @Expose DataUseSummary dataUse,
     @Expose List<GroupDataset> datasets,
     @Expose List<GroupVote> votes) {

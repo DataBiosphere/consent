@@ -21,7 +21,7 @@ class DataUseGroupTest {
 
   private DataUseGroup group() {
     return new DataUseGroup(
-        "bucket-1-2",
+        List.of(1, 2),
         new DataUseSummary(List.of(new DataUseTerm("GRU", "General research use")), List.of()),
         List.of(new DataUseGroup.GroupDataset(1, "Set A", "DUOS-000001")),
         List.of(new DataUseGroup.GroupVote(7, true, "Alice")));
@@ -31,7 +31,8 @@ class DataUseGroupTest {
   void testNestedGroupFieldsSurviveExposeFiltering() {
     JsonObject json = JsonParser.parseString(listContextGson().toJson(group())).getAsJsonObject();
 
-    assertEquals("bucket-1-2", json.get("key").getAsString());
+    assertEquals(2, json.getAsJsonArray("key").size());
+    assertEquals(1, json.getAsJsonArray("key").get(0).getAsInt());
     // The ontology models must survive @Expose filtering too, or the pill renders empty.
     JsonObject primary =
         json.getAsJsonObject("dataUse").getAsJsonArray("primary").get(0).getAsJsonObject();
@@ -75,7 +76,7 @@ class DataUseGroupTest {
   void testPendingVoteIsAbsentRatherThanFalse() {
     DataUseGroup pending =
         new DataUseGroup(
-            "bucket-1", null, List.of(), List.of(new DataUseGroup.GroupVote(7, null, "Alice")));
+            List.of(1), null, List.of(), List.of(new DataUseGroup.GroupVote(7, null, "Alice")));
 
     JsonObject vote =
         JsonParser.parseString(listContextGson().toJson(pending))

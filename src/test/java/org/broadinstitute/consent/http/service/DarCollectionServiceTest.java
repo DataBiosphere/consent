@@ -1267,7 +1267,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataUseGroup gruGroup =
         groups.stream().filter(g -> codesOf(g).equals(List.of("GRU"))).findFirst().orElseThrow();
     assertEquals(2, gruGroup.datasets().size());
-    assertEquals("bucket-1-2", gruGroup.key());
+    assertEquals(List.of(1, 2), gruGroup.key());
     assertEquals("DUOS-000001", gruGroup.datasets().getFirst().datasetIdentifier());
     assertEquals("One", gruGroup.datasets().getFirst().name());
     assertEquals(1, groups.stream().filter(g -> codesOf(g).equals(List.of("HMB"))).count());

@@ -504,11 +504,7 @@ public class DarCollectionService implements ConsentLogger {
         .map(
             entry -> {
               List<Dataset> datasets = entry.getValue();
-              String key =
-                  "bucket-"
-                      + datasets.stream()
-                          .map(d -> String.valueOf(d.getDatasetId()))
-                          .collect(Collectors.joining("-"));
+              List<Integer> key = datasets.stream().map(Dataset::getDatasetId).toList();
               DataUseSummary dataUse =
                   summariesByDataUse.computeIfAbsent(
                       entry.getKey(),

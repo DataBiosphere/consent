@@ -1,8 +1,10 @@
 type: object
 properties:
   key:
-    type: string
-    description: Stable identifier for the group within its collection
+    type: array
+    description: IDs of the datasets sharing this data use, ascending
+    items:
+      type: integer
   dataUse:
     type: object
     description: Translated data use terms shared by the group's datasets, in the same shape the dataset search index returns
