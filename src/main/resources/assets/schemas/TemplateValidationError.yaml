@@ -1,0 +1,17 @@
+type: object
+description: One independently actionable study-template validation error.
+properties:
+  row:
+    type: integer
+    description: >-
+      The one-based physical line the record starts on, counting the CSV header as row 1, so it
+      matches the line the producer sees in their editor. Absent when no row is at fault.
+  column:
+    type: string
+    enum: [templateVersion, recordType, recordId, parentRecordId, field, value]
+    description: The header the offending cell falls under. Absent when no single cell is at fault.
+  message:
+    type: string
+    description: What to fix. Never quotes the contents of a value cell.
+required:
+  - message

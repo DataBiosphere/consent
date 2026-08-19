@@ -1,0 +1,25 @@
+type: object
+description: >-
+  The outcome of validating one uploaded study template, discriminated by valid. A template that
+  fails validation is a completed result rather than a failed request, so it is returned with HTTP
+  200 and rendered separately from request failures.
+properties:
+  valid:
+    type: boolean
+    description: Whether the template produced a draft.
+  errors:
+    type: array
+    description: Every independently actionable error found, empty when the template is valid.
+    items:
+      $ref: './TemplateValidationError.yaml'
+  truncated:
+    type: boolean
+    description: >-
+      Whether the error cap was reached and the file has further problems beyond those reported. The
+      final error says so as well, so a client that ignores this field still tells the producer.
+  draft:
+    $ref: './StudyDatasetDraftReference.yaml'
+required:
+  - valid
+  - errors
+  - truncated

@@ -1,0 +1,71 @@
+post:
+  summary: Validate a study/dataset template
+  operationId: apiDraftV1StudyDatasetTemplateValidationPost
+  description: >-
+    Validates one filled-in v1 study template and, when it is valid, creates a
+    StudyDatasetSubmissionV1 draft owned by the caller holding the registration-shaped document.
+    An invalid template creates nothing and is reported as a completed result with HTTP 200 and
+    valid false, including an empty file, one that is not UTF-8, and one that is not valid CSV.
+    Only an unusable request fails: no file part, more than one, or a file over the 5 MiB limit.
+  tags:
+    - Draft
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              description: The filled-in template, a UTF-8 CSV of no more than 5 MiB.
+              type: string
+              contentMediaType: text/csv
+          required:
+            - file
+  responses:
+    200:
+      description: The template was validated. A valid one carries the draft it created.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/TemplateValidationResponse.yaml'
+          examples:
+            valid:
+              summary: A valid template
+              value:
+                valid: true
+                errors: []
+                truncated: false
+                draft:
+                  id: c2e4583a-20b9-4705-8280-e6a5753f10c9
+                  draftType: StudyDatasetSubmissionV1
+            invalid:
+              summary: A template with errors
+              value:
+                valid: false
+                truncated: false
+                errors:
+                  - row: 3
+                    column: value
+                    message: Study Name is required
+                  - message: At least one Dataset is required
+    400:
+      description: No file part was supplied, or more than one was.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    401:
+      description: User not authorized to validate a template
+    413:
+      description: The file is larger than the 5 MiB template limit.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

@@ -35,7 +35,11 @@ import org.broadinstitute.consent.http.models.dto.registration.template.Template
  */
 public class StudyTemplateValidationService {
 
-  static final int MAX_TEMPLATE_BYTES = 5 * 1024 * 1024;
+  public static final int MAX_TEMPLATE_BYTES = 5 * 1024 * 1024;
+
+  /** Shared with the resource, which rejects an oversized upload before this service reads it. */
+  public static final String TOO_LARGE_MESSAGE = "Template file must be no larger than 5 MiB";
+
   static final int MAX_ERRORS = 100;
 
   /**
@@ -112,7 +116,7 @@ public class StudyTemplateValidationService {
       return null;
     }
     if (bytes.length > MAX_TEMPLATE_BYTES) {
-      errors.message("Template file must be no larger than 5 MiB");
+      errors.message(TOO_LARGE_MESSAGE);
       return null;
     }
     String csv;

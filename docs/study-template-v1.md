@@ -350,16 +350,20 @@ interface TemplateValidationError {
 }
 
 type TemplateValidationResponse =
-  | { valid: false, errors: TemplateValidationError[] }
+  | { valid: false, errors: TemplateValidationError[], truncated: boolean }
   | {
       valid: true
       errors: []
+      truncated: false
       draft: {
         id: string
         draftType: 'StudyDatasetSubmissionV1'
       }
     }
 ```
+
+`truncated` reports that the 100-error cap was reached. The last error says so as well, so a client
+that ignores the flag still tells the producer that errors were omitted.
 
 `row` is the one-based physical line the record starts on, counting the CSV header as row 1, so it
 matches the line the producer sees in their editor or spreadsheet: ignored blank lines still occupy
