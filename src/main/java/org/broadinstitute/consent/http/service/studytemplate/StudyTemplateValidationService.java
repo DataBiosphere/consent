@@ -169,18 +169,17 @@ public class StudyTemplateValidationService {
       // spreadsheet even when blank lines or multi-line quoted values precede it.
       int row = (int) lastLine + 1;
       lastLine = parser.getCurrentLineNumber();
-      if (isBlank(csvRecord)) {
-        continue;
-      }
-      rejectNulCharacters(csvRecord, row, nulErrors);
-      if (header == null) {
-        header = csvRecord;
-        headerRow = row;
-      } else if (rows.size() < MAX_DATA_ROWS) {
-        dataRow(csvRecord, row, shapeErrors).ifPresent(rows::add);
-      } else {
-        overRowLimit = true;
-        break;
+      if (!isBlank(csvRecord)) {
+        rejectNulCharacters(csvRecord, row, nulErrors);
+        if (header == null) {
+          header = csvRecord;
+          headerRow = row;
+        } else if (rows.size() < MAX_DATA_ROWS) {
+          dataRow(csvRecord, row, shapeErrors).ifPresent(rows::add);
+        } else {
+          overRowLimit = true;
+          break;
+        }
       }
     }
     return new ScannedTemplate(header, headerRow, rows, nulErrors, shapeErrors, overRowLimit);
