@@ -678,12 +678,12 @@ public class DataAccessRequestService implements ConsentLogger {
 
     if (piEmail.equalsIgnoreCase(soEmail)) {
       throw new IllegalArgumentException(
-          "Principal Investigator email cannot be the same as Signing Official email");
+          "You cannot be both the requester and Principal Investigator and the Signing Official on the same Data Access Request.");
     }
 
     if (piEmail.equalsIgnoreCase(itEmail)) {
       throw new IllegalArgumentException(
-          "Principal Investigator email cannot be the same as IT Director email");
+          "You cannot be both the requester and Principal Investigator and the IT Director on the same Data Access Request.");
     }
   }
 
