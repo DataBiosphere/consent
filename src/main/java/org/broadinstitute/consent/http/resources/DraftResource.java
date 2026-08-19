@@ -51,7 +51,7 @@ public class DraftResource extends Resource {
   @GET
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response getDrafts(@Auth DuosUser duosUser) {
     try {
       User user = duosUser.getUser();
@@ -66,7 +66,7 @@ public class DraftResource extends Resource {
   @Consumes({MediaType.APPLICATION_JSON})
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response createDraftRegistration(@Auth DuosUser duosUser, String json) {
     try {
       User user = duosUser.getUser();
@@ -82,7 +82,7 @@ public class DraftResource extends Resource {
   @GET
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1/{draftUUID}")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response getDraftDocument(
       @Auth DuosUser duosUser, @PathParam("draftUUID") String draftUUID) {
     try {
@@ -99,7 +99,7 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Consumes({MediaType.APPLICATION_JSON})
   @Path("/v1/{draftUUID}")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response updateDraft(
       @Auth DuosUser duosUser, @PathParam("draftUUID") String draftUUID, String json) {
     try {
@@ -117,7 +117,7 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Consumes({MediaType.TEXT_PLAIN})
   @Path("/v1/{draftUUID}")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response patchDraftName(
       @Auth DuosUser duosUser, @PathParam("draftUUID") String draftUUID, String name) {
     try {
@@ -134,7 +134,7 @@ public class DraftResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/v1/{draftUUID}")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response deleteDraft(@Auth DuosUser duosUser, @PathParam("draftUUID") String draftUUID) {
     try {
       User user = duosUser.getUser();
@@ -149,7 +149,7 @@ public class DraftResource extends Resource {
   @GET
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1/{draftUUID}/attachments")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response getAttachments(
       @Auth DuosUser duosUser, @PathParam("draftUUID") String draftUUID) {
     try {
@@ -165,7 +165,7 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Consumes({MediaType.MULTIPART_FORM_DATA})
   @Path("/v1/{draftUUID}/attachments")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response addAttachments(
       @Auth DuosUser duosUser,
       @PathParam("draftUUID") String draftUUID,
@@ -184,7 +184,7 @@ public class DraftResource extends Resource {
   @GET
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Path("/v1/{draftUUID}/attachments/{fileId}")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response getAttachment(
       @Auth DuosUser duosUser,
       @PathParam("draftUUID") String draftUUID,
@@ -223,7 +223,7 @@ public class DraftResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/v1/{draftUUID}/attachments/{fileId}")
-  @RolesAllowed({ADMIN, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response deleteDraftAttachment(
       @Auth DuosUser duosUser,
       @PathParam("draftUUID") String draftUUID,

@@ -113,6 +113,29 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testChairpersonCannotReadAnotherUsersDraft() throws SQLException {
+    // Chairpersons reach the draft endpoints, which does not make one an owner: only the creator
+    // and an admin may read a draft.
+    User owner = createUser();
+    User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    DraftInterface draft = createDraft(owner, 1);
+
+    assertThrows(
+        NotAuthorizedException.class,
+        () -> draftServiceDAO.getAuthorizedDraft(draft.getUUID(), chairperson));
+  }
+
+  @Test
+  void testChairpersonCanReadTheirOwnDraft() throws SQLException {
+    User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    DraftInterface draft = createDraft(chairperson, 1);
+
+    assertEquals(
+        draft.getUUID(),
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), chairperson).getUUID());
+  }
+
+  @Test
   void testDeleteDraft() throws Exception {
     User user = createUser();
     createDraft(user, 3);
