@@ -117,11 +117,11 @@ class DraftServiceDAOTest extends DAOTestHelper {
     // Reaching the draft endpoints does not make a chairperson an owner.
     User owner = createUser();
     User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-    DraftInterface draft = createDraft(owner, 1);
+    UUID draftUUID = createDraft(owner, 1).getUUID();
 
     assertThrows(
         NotAuthorizedException.class,
-        () -> draftServiceDAO.getAuthorizedDraft(draft.getUUID(), chairperson));
+        () -> draftServiceDAO.getAuthorizedDraft(draftUUID, chairperson));
   }
 
   @Test
