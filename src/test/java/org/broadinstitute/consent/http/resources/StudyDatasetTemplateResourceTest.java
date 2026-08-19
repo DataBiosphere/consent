@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -135,6 +136,20 @@ class StudyDatasetTemplateResourceTest {
     Response response = resource.validateTemplate(duosUser, multipart);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testTemplateValidationKeepsTheTypedPathItsClientCallsAgainst() throws NoSuchMethodException {
+    // duos-ui calls this URL literally, so a rename would compile, pass, and 404 the page.
+    assertEquals(
+        "api/draft/v1/study-dataset",
+        StudyDatasetTemplateResource.class.getAnnotation(Path.class).value());
+    assertEquals(
+        "/template-validation",
+        StudyDatasetTemplateResource.class
+            .getDeclaredMethod("validateTemplate", DuosUser.class, FormDataMultiPart.class)
+            .getAnnotation(Path.class)
+            .value());
   }
 
   @Test

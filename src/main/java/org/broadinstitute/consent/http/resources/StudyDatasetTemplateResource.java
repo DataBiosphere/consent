@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
@@ -47,6 +48,7 @@ public class StudyDatasetTemplateResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/template-validation")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @Timed
   public Response validateTemplate(@Auth DuosUser duosUser, FormDataMultiPart multipart) {
     try {
       byte[] template = readTemplate(multipart);
