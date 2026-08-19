@@ -279,6 +279,11 @@ DTO violation is suppressed; the conversion error is the actionable error for th
 DTO/domain violations are still reported. This prevents duplicate or misleading errors while
 preserving aggregation across otherwise independent fields.
 
+Consent-group DTO/domain violations are collected per group rather than per request, so two datasets
+missing the same field produce two errors rather than one. Each carries the row of the cell that
+caused it, or the consent group's first row when the rule spans several fields and no single cell is
+at fault. Study-scoped violations may still carry no row.
+
 | Condition | Behavior |
 | --- | --- |
 | Empty or record-free file | Reject; no draft is created. |

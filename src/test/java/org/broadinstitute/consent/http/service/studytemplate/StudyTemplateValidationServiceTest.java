@@ -15,7 +15,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
@@ -23,6 +22,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.broadinstitute.consent.http.models.dto.registration.ConsentGroupRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequestValidator;
@@ -542,16 +542,20 @@ class StudyTemplateValidationServiceTest {
   // ── Error aggregation, ordering, and the cap ─────────────────────────────
 
   @Test
-  void testValidate_ordersLocatedErrorsByRowThenUnlocatedViolations() throws IOException {
-    StudyTemplateValidationResult result = validateFixture("invalid/field-values.csv");
+  void testValidate_ordersLocatedErrorsByRowThenUnlocatedViolations() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n")
+                    .replace("1,study,study,,piName,Synthetic Investigator\n", "")
+                    .replace(",publicVisibility,true", ",publicVisibility,yes")
+                + "\n1,study,study,,embargoReleaseDate,2026-02-30");
 
     assertEquals(
-        List.of(2, 5, 6, 8, 9),
-        result.errors().stream()
-            .map(TemplateValidationError::row)
-            .filter(Objects::nonNull)
-            .toList());
-    assertNull(result.errors().getLast().row());
+        List.of(
+            TemplateValidationError.at(5, "value", "publicVisibility must be true or false"),
+            TemplateValidationError.at(10, "value", "Embargo Release Date is not a valid date"),
+            TemplateValidationError.of("Principal Investigator Name is required")),
+        result.errors());
   }
 
   @Test
@@ -653,6 +657,34 @@ class StudyTemplateValidationServiceTest {
 
     assertEquals(
         List.of(TemplateValidationError.of("Principal Investigator Name is required")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_attributesEachConsentGroupsViolationToItsOwnRow() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n").replace(",numberOfParticipants,10", ",numberOfParticipants,")
+                + "\n1,consentGroup,dataset-two,study,consentGroupName,Synthetic Second Dataset"
+                + "\n1,consentGroup,dataset-two,study,accessManagement,open"
+                + "\n1,consentGroup,dataset-two,study,numberOfParticipants,");
+
+    assertEquals(
+        List.of(
+            TemplateValidationError.at(10, "value", "Number of Participants is required"),
+            TemplateValidationError.at(13, "value", "Number of Participants is required")),
+        result.errors());
+  }
+
+  @Test
+  void testValidate_locatesACrossFieldConsentGroupViolationOnItsRecord() {
+    StudyTemplateValidationResult result =
+        validate(
+            minimalTemplate("\n").replace(",accessManagement,open", ",accessManagement,controlled")
+                + "\n1,consentGroup,dataset-open,study,dataAccessCommitteeId,1");
+
+    assertEquals(
+        List.of(TemplateValidationError.at(8, DataUsePrimaryValidator.VALIDATION_MESSAGE)),
         result.errors());
   }
 

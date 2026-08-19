@@ -22,13 +22,44 @@ public class StudyRegistrationRequestValidator {
    * which must report all problems in a single response.
    */
   public List<String> collectViolations(StudyRegistrationRequest registration) {
+    Set<String> errors = new LinkedHashSet<>(collectStudyViolations(registration));
+    consentGroups(registration).forEach(cg -> errors.addAll(collectConsentGroupViolations(cg)));
+    return new ArrayList<>(errors);
+  }
+
+  /**
+   * The study-scoped violations, including the requirement that the study have a dataset at all.
+   * Offered separately from {@link #collectConsentGroupViolations} so a caller that needs to say
+   * where a violation came from can attribute each scope on its own; consent groups otherwise share
+   * a message set, and two datasets missing the same field are indistinguishable.
+   */
+  public List<String> collectStudyViolations(StudyRegistrationRequest registration) {
     Set<String> errors = new LinkedHashSet<>();
     collectRequiredStudyFieldViolations(registration, errors);
     collectConditionalFieldViolations(registration, errors);
     collectEmailFieldViolations(registration, errors);
     collectDateFieldViolations(registration, errors);
-    collectConsentGroupViolations(registration.getConsentGroups(), errors);
+    if (consentGroups(registration).isEmpty()) {
+      errors.add("At least one Dataset is required");
+    }
     return new ArrayList<>(errors);
+  }
+
+  /** The violations of one consent group, independent of its siblings. */
+  public List<String> collectConsentGroupViolations(ConsentGroupRequest cg) {
+    Set<String> errors = new LinkedHashSet<>();
+    collectTry(errors, () -> checkConsentGroupNameRequired(cg));
+    collectTry(errors, () -> checkNumberOfParticipantsRequired(cg));
+    collectTry(errors, () -> validateDataUseConsistency(cg));
+    collectTry(errors, () -> validateDacRequirement(cg));
+    collectTry(errors, () -> validateDateString(cg.getMorDate(), "Moratorium Date"));
+    return new ArrayList<>(errors);
+  }
+
+  private static List<ConsentGroupRequest> consentGroups(StudyRegistrationRequest registration) {
+    return Objects.isNull(registration.getConsentGroups())
+        ? List.of()
+        : registration.getConsentGroups();
   }
 
   private static void collectTry(Set<String> errors, Runnable check) {
@@ -251,22 +282,6 @@ public class StudyRegistrationRequestValidator {
             validateDateString(
                 r.getAlternativeDataSharingPlanTargetPublicReleaseDate(),
                 "Alternative Data Sharing Plan Target Public Release Date"));
-  }
-
-  private void collectConsentGroupViolations(
-      List<ConsentGroupRequest> consentGroups, Set<String> errors) {
-    if (Objects.isNull(consentGroups) || consentGroups.isEmpty()) {
-      errors.add("At least one Dataset is required");
-      return;
-    }
-    consentGroups.forEach(
-        cg -> {
-          collectTry(errors, () -> checkConsentGroupNameRequired(cg));
-          collectTry(errors, () -> checkNumberOfParticipantsRequired(cg));
-          collectTry(errors, () -> validateDataUseConsistency(cg));
-          collectTry(errors, () -> validateDacRequirement(cg));
-          collectTry(errors, () -> validateDateString(cg.getMorDate(), "Moratorium Date"));
-        });
   }
 
   protected void validateNewConsentGroup(ConsentGroupRequest cg) {

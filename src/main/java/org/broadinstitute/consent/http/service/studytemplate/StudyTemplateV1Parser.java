@@ -80,26 +80,31 @@ final class StudyTemplateV1Parser implements StudyTemplateParser {
 
   @Override
   public StudyRegistrationRequest validate(ParsedStudyTemplate template, TemplateErrors errors) {
-    List<ViolationProbe> probes = new ArrayList<>();
+    List<ViolationProbe> studyProbes = new ArrayList<>();
     StudyRegistrationRequest request = new StudyRegistrationRequest();
     if (template.study() != null) {
-      apply(StudyTemplateV1Fields.STUDY, template.study(), request, errors, probes);
+      apply(StudyTemplateV1Fields.STUDY, template.study(), request, errors, studyProbes);
     }
 
     List<ConsentGroupRequest> consentGroups = new ArrayList<>();
     for (TemplateRecord consentGroupRecord : template.consentGroups()) {
-      consentGroups.add(
+      // A fresh probe list per group, so each group's violations attribute against its own scope.
+      List<ViolationProbe> probes = new ArrayList<>();
+      ConsentGroupRequest consentGroup =
           consentGroup(
               consentGroupRecord,
               template.fileTypes().get(consentGroupRecord.recordId()),
               errors,
-              probes));
+              probes);
+      consentGroups.add(consentGroup);
+      attributor.collectConsentGroup(consentGroup, consentGroupRecord.firstRow(), probes, errors);
     }
     if (!consentGroups.isEmpty()) {
       request.setConsentGroups(consentGroups);
     }
 
-    attributor.collect(request, probes, errors);
+    // After the consent groups are attached, so the study scope sees whether it has a dataset.
+    attributor.collectStudy(request, studyProbes, errors);
     return request;
   }
 
