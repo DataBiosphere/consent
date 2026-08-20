@@ -19,6 +19,10 @@ public interface PersistedDataUseDAO {
    * Raw {@code data_use} text rather than a parsed value, so a null, an empty string, and malformed
    * JSON stay distinguishable. The canonical access-management property wins over the legacy
    * consent-group-prefixed one, matching {@code Dataset#getAccessManagement}.
+   *
+   * <p>Reads every dataset because classification parses the JSON in Java, which SQL cannot do.
+   * Four projected columns, read once per admin-invoked run; revisit if the dataset count grows by
+   * an order of magnitude.
    */
   @RegisterConstructorMapper(PersistedDataUseRow.class)
   @SqlQuery(
