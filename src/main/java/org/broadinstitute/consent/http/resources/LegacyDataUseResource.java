@@ -39,6 +39,19 @@ public class LegacyDataUseResource extends Resource {
     }
   }
 
+  /** Identifies the noncanonical datasets so one can be corrected; no Other free text. */
+  @GET
+  @Path("/noncanonical")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({Resource.ADMIN})
+  public Response getNoncanonicalDatasets(@Auth DuosUser duosUser) {
+    try {
+      return Response.ok().entity(service.findNoncanonicalViews()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   /** Rewrites only match rows and rationales; no stored Data Use, no elections, no votes. */
   @POST
   @Path("/recomputeMatches")

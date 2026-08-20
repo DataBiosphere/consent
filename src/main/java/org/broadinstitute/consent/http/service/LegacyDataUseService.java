@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseDisposition;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
+import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseClassifier;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseRow;
@@ -61,6 +62,11 @@ public class LegacyDataUseService implements ConsentLogger {
     return persistedDataUseDAO.findAllPersistedDataUse().stream()
         .filter(row -> !row.isCanonical())
         .toList();
+  }
+
+  /** Identified so an admin can act on them; classification labels only. */
+  public List<NoncanonicalDataUseView> findNoncanonicalViews() {
+    return findNoncanonicalRows().stream().map(NoncanonicalDataUseView::from).toList();
   }
 
   /** Abstaining datasets reachable through a DAR, which is the unit recompute works by. */

@@ -855,6 +855,8 @@ paths:
     $ref: './paths/libraryCardHistoryByUserId.yaml'
   /api/datause/legacy/report:
     $ref: './paths/legacyDataUseReport.yaml'
+  /api/datause/legacy/noncanonical:
+    $ref: './paths/legacyDataUseNoncanonical.yaml'
   /api/datause/legacy/recomputeMatches:
     $ref: './paths/legacyDataUseRecomputeMatches.yaml'
   /api/match/reprocess/purpose/{purposeId}:

@@ -308,6 +308,31 @@ class LegacyDataUseServiceTest {
   }
 
   @Test
+  void identifiesNoncanonicalDatasetsWithoutExposingTheStoredValue() {
+    when(persistedDataUseDAO.findAllPersistedDataUse())
+        .thenReturn(
+            List.of(
+                new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1),
+                new PersistedDataUseRow(2, HMB_AND_OTHER, "controlled", 2),
+                new PersistedDataUseRow(3, "{}", "CONTROLLED", null)));
+
+    var views = service.findNoncanonicalViews();
+
+    assertEquals(2, views.size());
+    var multiple = views.getFirst();
+    assertEquals(2, multiple.datasetId());
+    assertEquals("MULTIPLE(HMB,OTHER)", multiple.classification());
+    assertEquals("controlled", multiple.accessManagement());
+    assertEquals(2, multiple.darCount());
+    assertTrue(multiple.needsMatchRecompute());
+    // A null DAR count reports as zero and is not reachable by the recompute
+    var none = views.get(1);
+    assertEquals("NONE", none.classification());
+    assertEquals(0, none.darCount());
+    assertFalse(none.needsMatchRecompute());
+  }
+
+  @Test
   void selectsOnlyAbstainingShapesThatADarCanReach() {
     when(persistedDataUseDAO.findAllPersistedDataUse())
         .thenReturn(

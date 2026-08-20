@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
+import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
 import org.broadinstitute.consent.http.service.LegacyDataUseService;
 import org.junit.jupiter.api.Test;
@@ -77,6 +78,29 @@ class LegacyDataUseResourceTest {
     var entity = assertInstanceOf(PersistedDataUseReport.class, response.getEntity());
     assertFalse(entity.countsByClassification().keySet().toString().contains("bespoke"));
     assertEquals(Map.of("SINGLE(OTHER)", 1), entity.countsByClassification());
+  }
+
+  @Test
+  void testGetNoncanonicalDatasets() {
+    var views =
+        List.of(new NoncanonicalDataUseView(7, "MULTIPLE(HMB,OTHER)", "controlled", 2, true));
+    when(service.findNoncanonicalViews()).thenReturn(views);
+    initResource();
+
+    Response response = resource.getNoncanonicalDatasets(duosUser);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(views, response.getEntity());
+  }
+
+  @Test
+  void testGetNoncanonicalDatasetsServiceFailure() {
+    when(service.findNoncanonicalViews()).thenThrow(new RuntimeException("db down"));
+    initResource();
+
+    Response response = resource.getNoncanonicalDatasets(duosUser);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   @Test
