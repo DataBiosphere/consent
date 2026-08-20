@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
+import java.util.Map;
 import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -74,28 +75,6 @@ class LegacyDataUseServiceTest {
 
     // 3 is MULTIPLE, 4 has no primary under controlled, 6 has a primary under open
     assertEquals(List.of(3, 4, 6), noncanonical);
-  }
-
-  @Test
-  void reportCountsEveryClassification() {
-    when(persistedDataUseDAO.findAllPersistedDataUse())
-        .thenReturn(
-            List.of(
-                row(1, "{\"generalUse\":true}", "controlled"),
-                row(2, "{\"generalUse\":true}", "controlled"),
-                row(3, HMB_AND_OTHER, "controlled"),
-                row(4, null, "controlled")));
-
-    var report = service.report();
-
-    assertEquals(4, report.totalDatasets());
-    assertEquals(2, report.countsByClassification().get("SINGLE(GRU)"));
-    assertEquals(1, report.countsByClassification().get("MULTIPLE(HMB,OTHER)"));
-    assertEquals(1, report.countsByClassification().get("NULL"));
-    assertEquals(50d, report.percentage("SINGLE(GRU)"));
-    // MULTIPLE, plus the null value under controlled access
-    assertEquals(2, report.noncanonicalDatasets());
-    assertEquals(2, report.noncanonicalDatasetsWithDars());
   }
 
   @Test
@@ -365,13 +344,18 @@ class LegacyDataUseServiceTest {
                 new PersistedDataUseRow(2, OTHER_ONLY, "controlled", 1)));
     when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(2)).thenReturn(List.of("ref-a"));
 
-    var report = service.recomputeAbstainingMatches(admin);
+    var result = service.recomputeAbstainingMatches(admin);
 
     verifyNoInteractions(datasetService);
     verify(matchService).reprocessMatchesForPurpose("ref-a");
-    assertEquals(1, report.processed());
-    assertEquals(1, report.matchesRecomputed());
-    assertEquals(0, report.failed());
+    assertEquals(1, result.run().processed());
+    assertEquals(1, result.run().matchesRecomputed());
+    assertEquals(0, result.run().failed());
+    // A recompute-only run must not move any record between classifications
+    assertTrue(result.leftClassificationsUnchanged());
+    assertEquals(2, result.before().totalDatasets());
+    assertEquals(
+        Map.of("SINGLE(GRU)", 1, "SINGLE(OTHER)", 1), result.before().countsByClassification());
   }
 
   @Test
@@ -379,11 +363,12 @@ class LegacyDataUseServiceTest {
     when(persistedDataUseDAO.findAllPersistedDataUse())
         .thenReturn(List.of(new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1)));
 
-    var report = service.recomputeAbstainingMatches(admin);
+    var result = service.recomputeAbstainingMatches(admin);
 
     verifyNoInteractions(matchService);
-    assertEquals(0, report.processed());
-    assertTrue(report.isComplete(0));
+    assertEquals(0, result.run().processed());
+    assertTrue(result.run().isComplete(0));
+    assertTrue(result.leftClassificationsUnchanged());
   }
 
   @Test

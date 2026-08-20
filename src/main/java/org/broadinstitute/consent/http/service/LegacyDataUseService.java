@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseDisposition;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
+import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunResult;
 import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseClassifier;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
@@ -52,8 +53,7 @@ public class LegacyDataUseService implements ConsentLogger {
     this.matchService = matchService;
   }
 
-  /** Redacted classification counts over every persisted Data Use, for pre/post reconciliation. */
-  public PersistedDataUseReport report() {
+  private PersistedDataUseReport report() {
     return PersistedDataUseReport.from(persistedDataUseDAO.findAllPersistedDataUse());
   }
 
@@ -77,7 +77,8 @@ public class LegacyDataUseService implements ConsentLogger {
   }
 
   /** Changes no stored Data Use, so it needs no approved disposition. */
-  public LegacyDataUseRunReport recomputeAbstainingMatches(User admin) {
+  public LegacyDataUseRunResult recomputeAbstainingMatches(User admin) {
+    PersistedDataUseReport before = report();
     List<PersistedDataUseRow> abstaining =
         persistedDataUseDAO.findAllPersistedDataUse().stream()
             .filter(row -> row.classification().abstainsWhenMatched())
@@ -88,7 +89,9 @@ public class LegacyDataUseService implements ConsentLogger {
     logInfo(
         "Recomputing matches for %d abstaining datasets; %d have no DAR relation and are left alone"
             .formatted(candidates.size(), abstaining.size() - candidates.size()));
-    return run(admin, candidates, _ -> new LegacyDataUseDisposition.RecomputeMatchesOnly());
+    LegacyDataUseRunReport run =
+        run(admin, candidates, _ -> new LegacyDataUseDisposition.RecomputeMatchesOnly());
+    return new LegacyDataUseRunResult(before, report(), run);
   }
 
   /**

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +15,7 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
+import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunResult;
 import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
 import org.broadinstitute.consent.http.service.LegacyDataUseService;
@@ -36,50 +36,16 @@ class LegacyDataUseResourceTest {
 
   private LegacyDataUseResource resource;
 
+  private static LegacyDataUseRunResult runResult(LegacyDataUseRunReport run) {
+    var counts = new PersistedDataUseReport(1, Map.of("SINGLE(GRU)", 1), Map.of(), 0, 0, 0);
+    return new LegacyDataUseRunResult(counts, counts, run);
+  }
+
   private void initResource() {
     resource = new LegacyDataUseResource(service);
   }
 
-  @Test
-  void testGetReport() {
-    var report =
-        new PersistedDataUseReport(
-            4,
-            Map.of("SINGLE(GRU)", 3, "MULTIPLE(HMB,OTHER)", 1),
-            Map.of("controlled", Map.of("SINGLE(GRU)", 3, "MULTIPLE(HMB,OTHER)", 1)),
-            1,
-            1,
-            2);
-    when(service.report()).thenReturn(report);
-    initResource();
-
-    Response response = resource.getReport(duosUser);
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(report, response.getEntity());
-  }
-
   /** The report reaches a ticket or a log, so the payload must stay free of Other text. */
-  @Test
-  void testGetReportEntityCarriesCountsOnly() {
-    when(service.report())
-        .thenReturn(
-            new PersistedDataUseReport(
-                1,
-                Map.of("SINGLE(OTHER)", 1),
-                Map.of("controlled", Map.of("SINGLE(OTHER)", 1)),
-                0,
-                0,
-                0));
-    initResource();
-
-    Response response = resource.getReport(duosUser);
-
-    var entity = assertInstanceOf(PersistedDataUseReport.class, response.getEntity());
-    assertFalse(entity.countsByClassification().keySet().toString().contains("bespoke"));
-    assertEquals(Map.of("SINGLE(OTHER)", 1), entity.countsByClassification());
-  }
-
   @Test
   void testGetNoncanonicalDatasets() {
     var views =
@@ -105,27 +71,28 @@ class LegacyDataUseResourceTest {
 
   @Test
   void testRecomputeMatches() {
-    var runReport = new LegacyDataUseRunReport(3, 1, 0, 0, 5, Map.of(), List.of());
-    when(service.recomputeAbstainingMatches(user)).thenReturn(runReport);
+    var result = runResult(new LegacyDataUseRunReport(3, 1, 0, 0, 5, Map.of(), List.of()));
+    when(service.recomputeAbstainingMatches(user)).thenReturn(result);
     initResource();
 
     Response response = resource.recomputeAbstainingMatches(duosUser);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(runReport, response.getEntity());
+    assertEquals(result, response.getEntity());
   }
 
   @Test
   void testRecomputeMatchesReportsFailedDatasetsForRerun() {
     when(service.recomputeAbstainingMatches(user))
         .thenReturn(
-            new LegacyDataUseRunReport(1, 0, 1, 1, 1, Map.of("unexpected", 1), List.of(42)));
+            runResult(
+                new LegacyDataUseRunReport(1, 0, 1, 1, 1, Map.of("unexpected", 1), List.of(42))));
     initResource();
 
     Response response = resource.recomputeAbstainingMatches(duosUser);
 
-    var entity = assertInstanceOf(LegacyDataUseRunReport.class, response.getEntity());
-    assertEquals(List.of(42), entity.failedDatasetIds());
+    var entity = assertInstanceOf(LegacyDataUseRunResult.class, response.getEntity());
+    assertEquals(List.of(42), entity.run().failedDatasetIds());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -135,16 +102,6 @@ class LegacyDataUseResourceTest {
     initResource();
 
     Response response = resource.recomputeAbstainingMatches(duosUser);
-
-    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
-  void testGetReportServiceFailure() {
-    when(service.report()).thenThrow(new RuntimeException("database unavailable"));
-    initResource();
-
-    Response response = resource.getReport(duosUser);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }

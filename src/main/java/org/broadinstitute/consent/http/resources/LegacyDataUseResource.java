@@ -26,19 +26,6 @@ public class LegacyDataUseResource extends Resource {
     this.service = service;
   }
 
-  /** Classification counts only; the response carries no dataset identifier or Other free text. */
-  @GET
-  @Path("/report")
-  @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({Resource.ADMIN})
-  public Response getReport(@Auth DuosUser duosUser) {
-    try {
-      return Response.ok().entity(service.report()).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   /** Identifies the noncanonical datasets so one can be corrected; no Other free text. */
   @GET
   @Path("/noncanonical")
