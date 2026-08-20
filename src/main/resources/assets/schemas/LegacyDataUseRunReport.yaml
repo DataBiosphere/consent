@@ -1,0 +1,32 @@
+type: object
+description: |
+  Outcome of one legacy Data Use run. Redacted: failures carry a dataset id and a reason category,
+  never an exception message, which can quote the Other free text.
+properties:
+  processed:
+    type: integer
+    description: Records changed, whether normalized or match-recomputed.
+  skipped:
+    type: integer
+    description: Records already holding their approved value, or deferred to the curator process.
+  failed:
+    type: integer
+    description: Records left unchanged because every attempt failed.
+  retried:
+    type: integer
+    description: Records that failed once and were attempted again, whether or not that succeeded.
+  matchesRecomputed:
+    type: integer
+    description: Data Access Requests whose matches were recomputed.
+  failuresByReason:
+    type: object
+    description: |
+      Failure count per reason category: validation, not-found, or unexpected. Validation and
+      not-found are permanent; anything else is retried once.
+    additionalProperties:
+      type: integer
+  failedDatasetIds:
+    type: array
+    description: Datasets needing follow-up, so a rerun can be scoped to them.
+    items:
+      type: integer

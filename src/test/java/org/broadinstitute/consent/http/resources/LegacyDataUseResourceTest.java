@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
 import org.broadinstitute.consent.http.service.LegacyDataUseService;
 import org.junit.jupiter.api.Test;
@@ -76,6 +77,42 @@ class LegacyDataUseResourceTest {
     var entity = assertInstanceOf(PersistedDataUseReport.class, response.getEntity());
     assertFalse(entity.countsByClassification().keySet().toString().contains("bespoke"));
     assertEquals(Map.of("SINGLE(OTHER)", 1), entity.countsByClassification());
+  }
+
+  @Test
+  void testRecomputeMatches() {
+    var runReport = new LegacyDataUseRunReport(3, 1, 0, 0, 5, Map.of(), List.of());
+    when(service.recomputeAbstainingMatches(user)).thenReturn(runReport);
+    initResource();
+
+    Response response = resource.recomputeAbstainingMatches(duosUser);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(runReport, response.getEntity());
+  }
+
+  @Test
+  void testRecomputeMatchesReportsFailedDatasetsForRerun() {
+    when(service.recomputeAbstainingMatches(user))
+        .thenReturn(
+            new LegacyDataUseRunReport(1, 0, 1, 1, 1, Map.of("unexpected", 1), List.of(42)));
+    initResource();
+
+    Response response = resource.recomputeAbstainingMatches(duosUser);
+
+    var entity = assertInstanceOf(LegacyDataUseRunReport.class, response.getEntity());
+    assertEquals(List.of(42), entity.failedDatasetIds());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testRecomputeMatchesServiceFailure() {
+    when(service.recomputeAbstainingMatches(user)).thenThrow(new RuntimeException("db down"));
+    initResource();
+
+    Response response = resource.recomputeAbstainingMatches(duosUser);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   @Test

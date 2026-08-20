@@ -63,6 +63,28 @@ public class LegacyDataUseService implements ConsentLogger {
         .toList();
   }
 
+  /** Abstaining datasets reachable through a DAR, which is the unit recompute works by. */
+  public List<PersistedDataUseRow> findRowsNeedingMatchRecompute() {
+    return persistedDataUseDAO.findAllPersistedDataUse().stream()
+        .filter(PersistedDataUseRow::needsMatchRecompute)
+        .toList();
+  }
+
+  /** Changes no stored Data Use, so it needs no approved disposition. */
+  public LegacyDataUseRunReport recomputeAbstainingMatches(User admin) {
+    List<PersistedDataUseRow> abstaining =
+        persistedDataUseDAO.findAllPersistedDataUse().stream()
+            .filter(row -> row.classification().abstainsWhenMatched())
+            .toList();
+    List<PersistedDataUseRow> candidates =
+        abstaining.stream().filter(PersistedDataUseRow::needsMatchRecompute).toList();
+    // Unreachable rows are named rather than folded into "skipped", which would read as done
+    logInfo(
+        "Recomputing matches for %d abstaining datasets; %d have no DAR relation and are left alone"
+            .formatted(candidates.size(), abstaining.size() - candidates.size()));
+    return run(admin, candidates, _ -> new LegacyDataUseDisposition.RecomputeMatchesOnly());
+  }
+
   /**
    * @param dispositions the approved decision per record; nothing is inferred, so a record without
    *     an approved disposition must be given {@link LegacyDataUseDisposition.Defer}

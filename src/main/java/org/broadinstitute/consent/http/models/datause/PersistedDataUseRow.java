@@ -30,4 +30,9 @@ public record PersistedDataUseRow(
   public boolean isCanonical() {
     return classification().isCanonicalFor(isOpenAccess());
   }
+
+  /** Has a stored match V5 would now abstain on, and a DAR the recompute can reach it through. */
+  public boolean needsMatchRecompute() {
+    return classification().abstainsWhenMatched() && darCount != null && darCount > 0;
+  }
 }

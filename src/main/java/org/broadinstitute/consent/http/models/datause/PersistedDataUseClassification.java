@@ -33,6 +33,11 @@ public record PersistedDataUseClassification(State state, List<DataUsePrimaryCat
     return openAccess ? state == State.NONE : state == State.SINGLE;
   }
 
+  /** Whether V5 abstains rather than delegating to V4, per hasCanonicalSinglePrimary. */
+  public boolean abstainsWhenMatched() {
+    return state != State.SINGLE || categories.contains(DataUsePrimaryCategory.OTHER);
+  }
+
   /** Redacted, stable label for reconciliation reporting, e.g. {@code MULTIPLE(HMB,OTHER)}. */
   public String label() {
     return categories.isEmpty()

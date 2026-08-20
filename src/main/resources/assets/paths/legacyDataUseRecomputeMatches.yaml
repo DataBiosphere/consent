@@ -1,0 +1,33 @@
+post:
+  description: |
+    Recomputes stored matches for datasets the current algorithm abstains on: no primary, an
+    Other-only primary, or more than one primary.
+    Changes no stored Data Use, and rewrites only match rows and their rationales - never
+    elections, final votes, or historical automation votes.
+    Restartable. A dataset with no Data Access Request relation is unreachable and left alone;
+    the run logs how many.
+  tags:
+    - Dataset
+    - Match
+    - Admin
+  responses:
+    200:
+      description: Returns the run totals, including any datasets needing follow-up.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/LegacyDataUseRunReport.yaml'
+    401:
+      description: Unauthorized - The requester is not authenticated.
+    403:
+      description: Forbidden - Admin use only.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error - An error occurred while processing the request.
+
+  operationId: apiDatauseLegacyRecomputeMatchesPost

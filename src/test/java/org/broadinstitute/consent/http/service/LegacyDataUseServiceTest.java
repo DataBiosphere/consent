@@ -308,6 +308,60 @@ class LegacyDataUseServiceTest {
   }
 
   @Test
+  void selectsOnlyAbstainingShapesThatADarCanReach() {
+    when(persistedDataUseDAO.findAllPersistedDataUse())
+        .thenReturn(
+            List.of(
+                // Canonical single primaries: V5 delegates to V4
+                new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1),
+                new PersistedDataUseRow(2, "{\"diseaseRestrictions\":[\"DOID:1\"]}", "external", 3),
+                // Abstaining, with a DAR to reach them through
+                new PersistedDataUseRow(3, OTHER_ONLY, "controlled", 1),
+                new PersistedDataUseRow(4, HMB_AND_OTHER, "controlled", 2),
+                new PersistedDataUseRow(5, "{}", "open", 1),
+                new PersistedDataUseRow(6, null, "controlled", 1),
+                // Abstaining but unreachable
+                new PersistedDataUseRow(7, OTHER_ONLY, "controlled", 0)));
+
+    List<Integer> selected =
+        service.findRowsNeedingMatchRecompute().stream()
+            .map(PersistedDataUseRow::datasetId)
+            .toList();
+
+    assertEquals(List.of(3, 4, 5, 6), selected);
+  }
+
+  @Test
+  void recomputeChangesNoStoredDataUse() {
+    when(persistedDataUseDAO.findAllPersistedDataUse())
+        .thenReturn(
+            List.of(
+                new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1),
+                new PersistedDataUseRow(2, OTHER_ONLY, "controlled", 1)));
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(2)).thenReturn(List.of("ref-a"));
+
+    var report = service.recomputeAbstainingMatches(admin);
+
+    verifyNoInteractions(datasetService);
+    verify(matchService).reprocessMatchesForPurpose("ref-a");
+    assertEquals(1, report.processed());
+    assertEquals(1, report.matchesRecomputed());
+    assertEquals(0, report.failed());
+  }
+
+  @Test
+  void recomputeReportsCompleteWhenNothingAbstains() {
+    when(persistedDataUseDAO.findAllPersistedDataUse())
+        .thenReturn(List.of(new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1)));
+
+    var report = service.recomputeAbstainingMatches(admin);
+
+    verifyNoInteractions(matchService);
+    assertEquals(0, report.processed());
+    assertTrue(report.isComplete(0));
+  }
+
+  @Test
   void emptyCandidateListIsComplete() {
     var report = service.run(admin, List.of(), _ -> new LegacyDataUseDisposition.Defer("unused"));
 
