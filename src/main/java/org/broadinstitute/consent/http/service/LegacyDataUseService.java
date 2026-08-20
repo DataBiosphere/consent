@@ -102,25 +102,20 @@ public class LegacyDataUseService implements ConsentLogger {
 
     for (PersistedDataUseRow candidate : candidates) {
       LegacyDataUseDisposition disposition = dispositions.apply(candidate);
-      if (disposition == null || disposition instanceof LegacyDataUseDisposition.Defer) {
+      if (hasNothingToApply(candidate, disposition)) {
         skipped++;
-        continue;
-      }
-      if (isAlreadyApplied(candidate, disposition)) {
-        skipped++;
-        continue;
-      }
-
-      Outcome outcome = applyWithOneRetry(admin, candidate, disposition);
-      if (outcome.retried()) {
-        retried++;
-      }
-      if (outcome.reason() == null) {
-        processed++;
-        matchesRecomputed += outcome.matchesRecomputed();
       } else {
-        failuresByReason.merge(outcome.reason(), 1, Integer::sum);
-        failedDatasetIds.add(candidate.datasetId());
+        Outcome outcome = applyWithOneRetry(admin, candidate, disposition);
+        if (outcome.retried()) {
+          retried++;
+        }
+        if (outcome.reason() == null) {
+          processed++;
+          matchesRecomputed += outcome.matchesRecomputed();
+        } else {
+          failuresByReason.merge(outcome.reason(), 1, Integer::sum);
+          failedDatasetIds.add(candidate.datasetId());
+        }
       }
     }
 
@@ -132,6 +127,14 @@ public class LegacyDataUseService implements ConsentLogger {
         matchesRecomputed,
         failuresByReason,
         failedDatasetIds);
+  }
+
+  /** Deferred, undecided, or already holding the approved value. */
+  private boolean hasNothingToApply(
+      PersistedDataUseRow candidate, LegacyDataUseDisposition disposition) {
+    return disposition == null
+        || disposition instanceof LegacyDataUseDisposition.Defer
+        || isAlreadyApplied(candidate, disposition);
   }
 
   /**

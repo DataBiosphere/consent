@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.datause;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,8 @@ public record PersistedDataUseReport(
   }
 
   private static Map<String, Integer> countByLabelDescending(List<PersistedDataUseRow> rows) {
-    return rows.stream()
+    Map<String, Integer> ordered = new LinkedHashMap<>();
+    rows.stream()
         .collect(Collectors.groupingBy(row -> row.classification().label(), Collectors.counting()))
         .entrySet()
         .stream()
@@ -59,12 +61,9 @@ public record PersistedDataUseReport(
             Map.Entry.<String, Long>comparingByValue()
                 .reversed()
                 .thenComparing(Map.Entry.comparingByKey()))
-        .collect(
-            Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> entry.getValue().intValue(),
-                (a, _) -> a,
-                LinkedHashMap::new));
+        .forEachOrdered(entry -> ordered.put(entry.getKey(), entry.getValue().intValue()));
+    // Not Map.copyOf, which would discard the ordering just established
+    return Collections.unmodifiableMap(ordered);
   }
 
   /** Percentage of all datasets carrying a classification. */

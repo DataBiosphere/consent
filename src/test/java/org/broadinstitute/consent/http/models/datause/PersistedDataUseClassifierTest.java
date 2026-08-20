@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class PersistedDataUseClassifierTest {
@@ -119,6 +120,21 @@ class PersistedDataUseClassifierTest {
 
     assertEquals("SINGLE(OTHER)", label);
     assertFalse(label.contains(secret));
+  }
+
+  @Test
+  void parseReturnsTheStoredValue() {
+    var parsed = PersistedDataUseClassifier.parse("{\"hmbResearch\":true}");
+
+    assertTrue(parsed.isPresent());
+    assertEquals(new DataUseBuilder().setHmbResearch(true).build(), parsed.orElseThrow());
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {" ", "{", "not json", "null"})
+  void parseIsEmptyForAnythingUnusable(String rawDataUse) {
+    assertTrue(PersistedDataUseClassifier.parse(rawDataUse).isEmpty());
   }
 
   @ParameterizedTest
