@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
  * Classification of a persisted {@code dataset.data_use} value, covering the raw states a parsed
  * {@link DataUsePrimaryClassification} cannot express.
  *
- * <p>{@link #label()} is the only representation safe to report or log: it names categories, never
- * the Other free text or the raw JSON that produced them.
+ * <p>{@link #label()} is the only form safe to report or log: it names categories, never the Other
+ * free text or the raw JSON behind them.
  */
 public record PersistedDataUseClassification(State state, List<DataUsePrimaryCategory> categories) {
 
@@ -26,9 +26,8 @@ public record PersistedDataUseClassification(State state, List<DataUsePrimaryCat
   }
 
   /**
-   * Whether the shape is one {@code DataUsePrimaryValidator} would accept for this dataset. OPEN
-   * requires no primary and every other access management requires exactly one, so the answer
-   * depends on the dataset rather than on the value alone.
+   * Whether {@code DataUsePrimaryValidator} would accept this shape. OPEN requires no primary and
+   * everything else exactly one, so the answer depends on the dataset, not the value alone.
    */
   public boolean isCanonicalFor(boolean openAccess) {
     return openAccess ? state == State.NONE : state == State.SINGLE;

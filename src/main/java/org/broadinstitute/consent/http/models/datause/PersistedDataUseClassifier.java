@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.datause;
 
 import com.google.gson.Gson;
+import java.util.Optional;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseClassification.State;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -9,14 +10,25 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
  * Classifies a raw persisted {@code dataset.data_use} value.
  *
  * <p>Distinct from {@link DataUsePrimaryClassifier}, which starts from a parsed {@link DataUse} and
- * so cannot tell a missing value from an unparseable one. Reconciliation has to count those
- * separately, and the row-mapping parser collapses both to null.
+ * so cannot tell a missing value from an unparseable one. Reconciliation counts those separately.
  */
 public final class PersistedDataUseClassifier {
 
   private static final Gson GSON = GsonUtil.gsonBuilderWithAdapters().create();
 
   private PersistedDataUseClassifier() {}
+
+  /** The stored value as a {@link DataUse}, or empty when it is absent or unparseable. */
+  public static Optional<DataUse> parse(String rawDataUse) {
+    if (rawDataUse == null || rawDataUse.isBlank()) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.ofNullable(GSON.fromJson(rawDataUse, DataUse.class));
+    } catch (Exception _) {
+      return Optional.empty();
+    }
+  }
 
   public static PersistedDataUseClassification classify(String rawDataUse) {
     if (rawDataUse == null) {
