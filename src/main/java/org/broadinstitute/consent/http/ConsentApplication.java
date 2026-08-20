@@ -67,6 +67,7 @@ import org.broadinstitute.consent.http.resources.ElasticSearchCapabilityResource
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.FeatureFlagResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
+import org.broadinstitute.consent.http.resources.LegacyDataUseResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
 import org.broadinstitute.consent.http.resources.LivenessResource;
 import org.broadinstitute.consent.http.resources.MailResource;
@@ -186,6 +187,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(LibraryCardResource.class));
     env.jersey().register(injector.getInstance(LivenessResource.class));
     env.jersey().register(injector.getInstance(MailResource.class));
+    env.jersey().register(injector.getInstance(LegacyDataUseResource.class));
     env.jersey().register(injector.getInstance(MatchResource.class));
     env.jersey().register(injector.getInstance(MetricsResource.class));
     env.jersey().register(injector.getInstance(NihAccountResource.class));

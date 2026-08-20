@@ -853,6 +853,8 @@ paths:
           description: Internal server error
   /api/libraryCards/history/{userId}:
     $ref: './paths/libraryCardHistoryByUserId.yaml'
+  /api/datause/legacy/report:
+    $ref: './paths/legacyDataUseReport.yaml'
   /api/match/reprocess/purpose/{purposeId}:
     post:
       summary: Process all matches for this research purpose (DAR) id

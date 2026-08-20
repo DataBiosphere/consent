@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.datause.PersistedDataUseClassifier
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseRow;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 /**
  * Applies approved dispositions to legacy Data Use records and recomputes the matches they affect.
@@ -37,7 +38,11 @@ public class LegacyDataUseService implements ConsentLogger {
   private final MatchService matchService;
 
   @Inject
-  public LegacyDataUseService(
+  public LegacyDataUseService(Jdbi jdbi, DatasetService datasetService, MatchService matchService) {
+    this(jdbi.onDemand(PersistedDataUseDAO.class), datasetService, matchService);
+  }
+
+  LegacyDataUseService(
       PersistedDataUseDAO persistedDataUseDAO,
       DatasetService datasetService,
       MatchService matchService) {

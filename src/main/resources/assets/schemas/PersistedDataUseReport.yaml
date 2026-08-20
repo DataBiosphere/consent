@@ -1,0 +1,35 @@
+type: object
+description: |
+  Redacted reconciliation report over persisted dataset Data Use shapes. Every key is a
+  classification label or an access-management value, so the report is safe to attach to a ticket.
+properties:
+  totalDatasets:
+    type: integer
+    description: Every dataset counted, so percentages can be recomputed by a reader.
+  countsByClassification:
+    type: object
+    description: |
+      Dataset count per classification label, highest count first. A label names the shape and its
+      primary categories, for example NULL, EMPTY, UNPARSEABLE, NONE, SINGLE(GRU), or
+      MULTIPLE(HMB,OTHER). Categories appear in the canonical order GRU, HMB, POA, DS, OTHER.
+    additionalProperties:
+      type: integer
+  countsByAccessManagement:
+    type: object
+    description: |
+      Per access management (open, controlled, external, or missing), the count per classification
+      label. Which shape is canonical depends on this value: open requires no primary, and every
+      other value requires exactly one.
+    additionalProperties:
+      type: object
+      additionalProperties:
+        type: integer
+  noncanonicalDatasets:
+    type: integer
+    description: Datasets whose shape the canonical Data Use validator would now reject.
+  noncanonicalDatasetsWithDars:
+    type: integer
+    description: The subset of those datasets referenced by at least one Data Access Request.
+  noncanonicalDarReferences:
+    type: integer
+    description: Data Access Request references across those datasets.
