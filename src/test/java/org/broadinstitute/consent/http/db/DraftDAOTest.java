@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.google.cloud.storage.BlobId;
@@ -33,9 +32,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftDAOTest extends DAOTestHelper {
-
-  /** What a JSON document holds where a U+0000 was; Postgres rejects it inside a jsonb value. */
-  private static final String UNSUPPORTED_UNICODE_ESCAPE = "\\u0000";
 
   @Test
   void testInsertOperation() {
@@ -156,70 +152,6 @@ class DraftDAOTest extends DAOTestHelper {
 
     returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(user2.getUserId(), returnedDraft.getUpdateUser().getUserId());
-  }
-
-  @Test
-  void testInsertStripsTheUnsupportedUnicodeEscape() {
-    // The escape a JSON document carries; the character itself never reaches a bound parameter.
-    String jsonText = "{\"name\": \"Greg\\u0000\"}";
-    User user = createUser();
-    DraftStudyDataset draft = new DraftStudyDataset(jsonText, user);
-    draftDAO.insert(
-        draft.getName(),
-        draft.getCreateDate().toInstant(),
-        user.getUserId(),
-        jsonText,
-        draft.getUUID(),
-        draft.getType().getValue());
-
-    DraftInterface returnedDraft = draftDAO.findDraftById(draft.getUUID());
-    assertFalse(Objects.isNull(returnedDraft));
-    assertFalse(returnedDraft.getJson().contains(UNSUPPORTED_UNICODE_ESCAPE));
-    assertTrue(returnedDraft.getJson().contains("Greg"));
-  }
-
-  @Test
-  void testUpdateStripsTheUnsupportedUnicodeEscape() {
-    User user = createUser();
-    DraftStudyDataset draft = new DraftStudyDataset("{\"name\": \"Greg\"}", user);
-    draftDAO.insert(
-        draft.getName(),
-        draft.getCreateDate().toInstant(),
-        user.getUserId(),
-        draft.getJson(),
-        draft.getUUID(),
-        draft.getType().getValue());
-
-    draftDAO.updateDraftByDraftUUID(
-        draft.getName(),
-        new Date().toInstant(),
-        user.getUserId(),
-        "{\"name\": \"Bob\\u0000\"}",
-        draft.getUUID(),
-        draft.getType().getValue());
-
-    DraftInterface returnedDraft = draftDAO.findDraftById(draft.getUUID());
-    assertFalse(Objects.isNull(returnedDraft));
-    assertFalse(returnedDraft.getJson().contains(UNSUPPORTED_UNICODE_ESCAPE));
-    assertTrue(returnedDraft.getJson().contains("Bob"));
-  }
-
-  @Test
-  void testInsertKeepsAnEscapedBackslashBeforeTheEscape() {
-    // Stripping from the second backslash of an escaped one leaves JSON the cast rejects.
-    String jsonText = "{\"name\": \"Greg\\\\u0000\"}";
-    User user = createUser();
-    DraftStudyDataset draft = new DraftStudyDataset(jsonText, user);
-    draftDAO.insert(
-        draft.getName(),
-        draft.getCreateDate().toInstant(),
-        user.getUserId(),
-        jsonText,
-        draft.getUUID(),
-        draft.getType().getValue());
-
-    DraftInterface returnedDraft = draftDAO.findDraftById(draft.getUUID());
-    assertEquals(jsonText, returnedDraft.getJson());
   }
 
   @Test

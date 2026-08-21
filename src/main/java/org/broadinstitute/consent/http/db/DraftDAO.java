@@ -53,15 +53,15 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           LEFT JOIN file_storage_object fso ON fso.entity_id = ds.uuid::text AND fso.deleted = false
           """;
 
-  // jsonb rejects a U+0000 escape, so it is stripped here as it is for data access requests. The
-  // lookbehind spares an already-escaped backslash, whose second one would otherwise start a match.
+  // Both the name and the document reach here free of the U+0000 neither column accepts:
+  // NulCharacters strips it for the draft writes, which SQL cannot do for either value.
   @SqlUpdate(
       """
           INSERT into draft
               (name, create_date, create_user_id, update_date,
               update_user_id, json, uuid, draft_type)
           (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId,
-              regexp_replace(:json, '(?<!\\\\)\\\\u0000', '', 'g')::jsonb, :uuid, :draftType)
+              :json::jsonb, :uuid, :draftType)
           """)
   @GetGeneratedKeys
   Integer insert(
@@ -72,14 +72,15 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("uuid") UUID uuid,
       @Bind("draftType") String draftType);
 
-  // Same strip as insert: a draft is meant to be edited and saved, so this path is as exposed.
+  // Stripped before binding as insert's values are: a draft is meant to be edited and saved,
+  // and the rename this serves carries a name of its own.
   @SqlUpdate(
       """
       UPDATE draft
       SET name = :name,
           update_date = :updateDate,
           update_user_id = :updateUserId,
-          json = regexp_replace(:json, '(?<!\\\\)\\\\u0000', '', 'g')::jsonb,
+          json = :json::jsonb,
           draft_type = :draftType
       WHERE uuid = :uuid
       """)

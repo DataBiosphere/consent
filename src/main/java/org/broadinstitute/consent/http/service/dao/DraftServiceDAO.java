@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.NulCharacters;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
@@ -37,10 +38,10 @@ public class DraftServiceDAO {
           handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.insert(
-                draft.getName(),
+                NulCharacters.stripFrom(draft.getName()),
                 draft.getCreateDate().toInstant(),
                 draft.getCreateUser().getUserId(),
-                draft.getJson(),
+                NulCharacters.stripFromJsonText(draft.getJson()),
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
@@ -60,10 +61,10 @@ public class DraftServiceDAO {
           handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.updateDraftByDraftUUID(
-                draft.getName(),
+                NulCharacters.stripFrom(draft.getName()),
                 draft.getUpdateDate().toInstant(),
                 draft.getUpdateUser().getUserId(),
-                draft.getJson(),
+                NulCharacters.stripFromJsonText(draft.getJson()),
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
