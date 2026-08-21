@@ -21,13 +21,16 @@ public class StudyDatasetTemplateService {
 
   private final StudyTemplateValidationService validationService;
   private final DraftService draftService;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
 
   @Inject
   public StudyDatasetTemplateService(
-      StudyTemplateValidationService validationService, DraftService draftService) {
+      StudyTemplateValidationService validationService,
+      DraftService draftService,
+      ObjectMapper objectMapper) {
     this.validationService = validationService;
     this.draftService = draftService;
+    this.objectMapper = objectMapper;
   }
 
   public TemplateValidationResponse validateAndCreateDraft(InputStream content, User user)
@@ -37,8 +40,8 @@ public class StudyDatasetTemplateService {
       return TemplateValidationResponse.invalid(result.errors(), result.truncated());
     }
 
-    // Serialized with the mapper the registration endpoint reads, so the document the user edits
-    // there is the one validated here.
+    // The injected mapper is the one the registration endpoint reads with, so the document the user
+    // edits there is the one validated here.
     DraftInterface draft =
         new DraftStudyDataset(objectMapper.writeValueAsString(result.registration()), user);
     draftService.insertDraft(draft);

@@ -51,7 +51,8 @@ class StudyDatasetTemplateServiceDAOTest extends DAOTestHelper {
         new DraftServiceDAO(jdbi, new DraftFileStorageServiceDAO(jdbi, gcsService));
     draftService = new DraftService(jdbi, draftServiceDAO, gcsService);
     templateService =
-        new StudyDatasetTemplateService(new StudyTemplateValidationService(), draftService);
+        new StudyDatasetTemplateService(
+            new StudyTemplateValidationService(), draftService, new ObjectMapper());
   }
 
   @Test

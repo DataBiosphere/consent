@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
@@ -53,8 +54,12 @@ class StudyDatasetTemplateRegistrationContractTest {
 
   @Test
   void testAValidatedTemplateDocumentIsAcceptedByTheRegistrationEndpoint() throws Exception {
+    // One mapper for both sides, as the injector supplies: two of its own could not catch the
+    // drift between them this contract exists to rule out.
+    ObjectMapper objectMapper = new ObjectMapper();
     StudyDatasetTemplateService templateService =
-        new StudyDatasetTemplateService(new StudyTemplateValidationService(), draftService);
+        new StudyDatasetTemplateService(
+            new StudyTemplateValidationService(), draftService, objectMapper);
     templateService.validateAndCreateDraft(fixture(), user);
 
     ArgumentCaptor<DraftInterface> captor = ArgumentCaptor.forClass(DraftInterface.class);
@@ -75,7 +80,8 @@ class StudyDatasetTemplateRegistrationContractTest {
             datasetRegistrationService,
             elasticSearchService,
             tdrService,
-            gcsService);
+            gcsService,
+            objectMapper);
 
     try (Response response =
         registrationResource.createDatasetRegistration(duosUser, null, document)) {

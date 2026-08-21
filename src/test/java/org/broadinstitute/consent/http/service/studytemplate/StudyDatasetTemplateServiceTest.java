@@ -46,7 +46,7 @@ class StudyDatasetTemplateServiceTest {
   private final User user = new User();
 
   private StudyDatasetTemplateService service() {
-    return new StudyDatasetTemplateService(validationService, draftService);
+    return new StudyDatasetTemplateService(validationService, draftService, new ObjectMapper());
   }
 
   @Test
