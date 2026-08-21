@@ -75,6 +75,12 @@ class NulCharactersTest {
   }
 
   @Test
+  void testStripFromJsonTextKeepsABackslashRunTheTextEndsOn() {
+    // The scan leaves the run because the text ran out, not because a non-backslash stopped it.
+    assertEquals(BACKSLASH, NulCharacters.stripFromJsonText("\0" + BACKSLASH));
+  }
+
+  @Test
   void testStripFromJsonTextLeavesADocumentWithoutOneAlone() {
     String json = "{\"n\": \"Greg\"}";
     assertSame(json, NulCharacters.stripFromJsonText(json));
