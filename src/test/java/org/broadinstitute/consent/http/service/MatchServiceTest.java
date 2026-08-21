@@ -10,6 +10,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,9 +35,11 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.sqlobject.transaction.TransactionalConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -184,11 +189,62 @@ class MatchServiceTest extends AbstractTestHelper {
     when(useRestrictionConverter.parseDataUsePurpose(dar))
         .thenReturn(new DataUseBuilder().setHmbResearch(true).build());
 
+    runTransactionsInline();
+
     service.reprocessMatchesForPurpose(dar.getReferenceId());
     verify(matchDAO).deleteRationalesByPurposeIds(List.of(dar.getReferenceId()));
     verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
     verify(matchDAO)
         .insertMatch(any(), any(), any(), any(), any(), eq(MatchAlgorithm.V5.getVersion()), any());
+  }
+
+  /** The rebuild is computed first, so a purpose is never left with its matches deleted. */
+  @Test
+  void testReprocessMatchesComputesTheRebuildBeforeDeletingAnything() {
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of());
+    dar.setData(new DataAccessRequestData());
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    service.reprocessMatchesForPurpose(dar.getReferenceId());
+
+    // Read before the transaction opens: nothing is deleted until the replacement is in hand
+    InOrder inOrder = inOrder(dataAccessRequestDAO, matchDAO);
+    inOrder.verify(dataAccessRequestDAO).findByReferenceId(dar.getReferenceId());
+    inOrder.verify(matchDAO).useTransaction(any());
+    verify(matchDAO, never()).deleteMatchesByPurposeId(any());
+  }
+
+  /** Delete and insert share one transaction, so a failed rebuild rolls the delete back. */
+  @Test
+  void testReprocessMatchesDeletesAndInsertsInOneTransaction() {
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of());
+    dar.setData(new DataAccessRequestData());
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    runTransactionsInline();
+
+    service.reprocessMatchesForPurpose(dar.getReferenceId());
+
+    verify(matchDAO).useTransaction(any());
+    verify(matchDAO).deleteRationalesByPurposeIds(List.of(dar.getReferenceId()));
+    verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
+  }
+
+  /** Runs the transaction body against the mock, which otherwise never invokes the callback. */
+  private void runTransactionsInline() {
+    try {
+      doAnswer(
+              invocation -> {
+                TransactionalConsumer<MatchDAO, Exception> consumer = invocation.getArgument(0);
+                consumer.useTransaction(matchDAO);
+                return null;
+              })
+          .when(matchDAO)
+          .useTransaction(any());
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Test
