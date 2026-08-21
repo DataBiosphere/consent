@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -11,24 +9,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -125,25 +114,9 @@ class DraftResourceTest {
 
   @Test
   void testEveryDraftEndpointAdmitsTheSameThreeRoles() {
-    // Asserted over every endpoint rather than one at a time, so an endpoint added later cannot
-    // be left out or left unguarded. Per-draft ownership is enforced in DraftServiceDAO.
-    Set<Class<? extends Annotation>> httpMethods =
-        Set.of(GET.class, POST.class, PUT.class, PATCH.class, DELETE.class);
-    List<Method> endpoints =
-        Arrays.stream(DraftResource.class.getDeclaredMethods())
-            .filter(method -> httpMethods.stream().anyMatch(method::isAnnotationPresent))
-            .toList();
-
-    assertFalse(endpoints.isEmpty());
-    endpoints.forEach(
-        endpoint -> {
-          RolesAllowed roles = endpoint.getAnnotation(RolesAllowed.class);
-          assertNotNull(roles, endpoint.getName());
-          assertEquals(
-              Set.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.DATASUBMITTER),
-              Set.of(roles.value()),
-              endpoint.getName());
-        });
+    // Per-draft ownership is enforced in DraftServiceDAO.
+    EndpointRoles.assertEveryEndpointAdmits(
+        DraftResource.class, Set.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.DATASUBMITTER));
   }
 
   @Test
