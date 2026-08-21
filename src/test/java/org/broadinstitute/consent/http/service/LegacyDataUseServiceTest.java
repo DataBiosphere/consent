@@ -290,6 +290,22 @@ class LegacyDataUseServiceTest {
         Map.of("SINGLE(GRU)", 1, "SINGLE(OTHER)", 1), result.before().countsByClassification());
   }
 
+  /** The run writes no Data Use, so a change between its two reads came from outside it. */
+  @Test
+  void aClassificationChangedByAnotherWriterIsReported() {
+    when(persistedDataUseDAO.findAllPersistedDataUse())
+        .thenReturn(List.of(new PersistedDataUseRow(1, OTHER_ONLY, "controlled", 1)))
+        .thenReturn(List.of(new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1)));
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(1)).thenReturn(List.of("ref-a"));
+
+    var result = service.recomputeAbstainingMatches();
+
+    assertFalse(result.leftClassificationsUnchanged());
+    assertEquals(Map.of("SINGLE(OTHER)", 1), result.before().countsByClassification());
+    assertEquals(Map.of("SINGLE(GRU)", 1), result.after().countsByClassification());
+    assertEquals(1, result.run().matchesRecomputed());
+  }
+
   /** Abstaining rows with no DAR are left alone rather than counted as done. */
   @Test
   void recomputeLeavesUnreachableAbstainingRowsAlone() {

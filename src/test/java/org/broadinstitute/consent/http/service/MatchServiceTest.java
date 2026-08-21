@@ -231,6 +231,18 @@ class MatchServiceTest extends AbstractTestHelper {
     verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
   }
 
+  /** An archived or deleted purpose has no rebuild to insert; its stale rows still go. */
+  @Test
+  void testReprocessMatchesForAMissingPurposeRemovesWithoutInserting() {
+    runTransactionsInline();
+
+    service.reprocessMatchesForPurpose("DAR-gone");
+
+    verify(matchDAO).deleteRationalesByPurposeIds(List.of("DAR-gone"));
+    verify(matchDAO).deleteMatchesByPurposeId("DAR-gone");
+    verify(matchDAO, never()).insertMatch(any(), any(), any(), any(), any(), any(), any());
+  }
+
   /** Runs the transaction body against the mock, which otherwise never invokes the callback. */
   private void runTransactionsInline() {
     try {
