@@ -82,8 +82,11 @@ public class StudyDatasetTemplateResource extends Resource {
     return parts.getFirst().getValueAs(InputStream.class);
   }
 
-  /** The path DraftResource creates a draft at, so the two agree on where this one lives. */
+  /** Built from DraftResource's own annotations, so a path change there cannot strand this one. */
   private static URI draftUri(StudyDatasetDraftReference draft) {
-    return UriBuilder.fromPath("/api/draft/v1/%s".formatted(draft.id())).build();
+    return UriBuilder.fromPath("/")
+        .path(DraftResource.class)
+        .path(DraftResource.class, "getDraftDocument")
+        .build(draft.id());
   }
 }
