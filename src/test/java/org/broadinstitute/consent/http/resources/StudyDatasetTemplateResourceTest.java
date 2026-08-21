@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -23,6 +24,7 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.registration.template.StudyDatasetDraftReference;
+import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationError;
 import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationResponse;
 import org.broadinstitute.consent.http.service.studytemplate.StudyDatasetTemplateService;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
@@ -53,11 +55,13 @@ class StudyDatasetTemplateResourceTest {
   }
 
   @Test
-  void testValidateTemplateReturnsTheValidationResult() throws Exception {
+  void testValidateTemplateCreatesTheDraftItHandsBack() throws Exception {
+    // The location is the path DraftResource creates the same row at, so a client can follow it.
+    String draftId = UUID.randomUUID().toString();
     TemplateValidationResponse validated =
         TemplateValidationResponse.valid(
             new StudyDatasetDraftReference(
-                UUID.randomUUID().toString(), DraftType.STUDY_DATASET_SUBMISSION_V1.getValue()));
+                draftId, DraftType.STUDY_DATASET_SUBMISSION_V1.getValue()));
     FormDataBodyPart part = filePart("1,study".getBytes(StandardCharsets.UTF_8));
     when(duosUser.getUser()).thenReturn(user);
     when(multipart.getFields("file")).thenReturn(List.of(part));
@@ -66,8 +70,28 @@ class StudyDatasetTemplateResourceTest {
 
     Response response = resource.validateTemplate(duosUser, multipart);
 
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    assertEquals("/api/draft/v1/%s".formatted(draftId), response.getLocation().toString());
     assertEquals(validated, response.getEntity());
+  }
+
+  @Test
+  void testValidateTemplateReturnsAnInvalidTemplateAsACompletedResult() throws Exception {
+    // Nothing was created, so there is nothing to point at: the errors are the result.
+    TemplateValidationResponse invalid =
+        TemplateValidationResponse.invalid(
+            List.of(TemplateValidationError.of("Study Name is required")), false);
+    FormDataBodyPart part = filePart("1,study".getBytes(StandardCharsets.UTF_8));
+    when(duosUser.getUser()).thenReturn(user);
+    when(multipart.getFields("file")).thenReturn(List.of(part));
+    when(templateService.validateAndCreateDraft(any(), any())).thenReturn(invalid);
+    initResource();
+
+    Response response = resource.validateTemplate(duosUser, multipart);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertNull(response.getLocation());
+    assertEquals(invalid, response.getEntity());
   }
 
   @ParameterizedTest

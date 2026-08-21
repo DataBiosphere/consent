@@ -11,11 +11,15 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.dto.registration.template.StudyDatasetDraftReference;
+import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationResponse;
 import org.broadinstitute.consent.http.service.studytemplate.StudyDatasetTemplateService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -37,8 +41,9 @@ public class StudyDatasetTemplateResource extends Resource {
   }
 
   /**
-   * A template that fails validation is a completed result rather than a failed request. Only an
-   * unusable request — no file, more than one, or one too large to read — is a failure.
+   * A template that fails validation is a completed result rather than a failed request, answered
+   * 200 with the errors to fix; a valid one is a 201 at the draft it created. Only an unusable
+   * request — no file, more than one, or one too large to read — is a failure.
    */
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -49,9 +54,11 @@ public class StudyDatasetTemplateResource extends Resource {
   public Response validateTemplate(@Auth DuosUser duosUser, FormDataMultiPart multipart) {
     // Streamed rather than buffered here: the size limit has one owner, the validator.
     try (InputStream template = templatePart(multipart)) {
-      return Response.ok()
-          .entity(templateService.validateAndCreateDraft(template, duosUser.getUser()))
-          .build();
+      TemplateValidationResponse response =
+          templateService.validateAndCreateDraft(template, duosUser.getUser());
+      return response.valid()
+          ? Response.created(draftUri(response.draft())).entity(response).build()
+          : Response.ok().entity(response).build();
     } catch (TemplateTooLargeException e) {
       return tooLarge(e);
     } catch (Exception e) {
@@ -70,6 +77,11 @@ public class StudyDatasetTemplateResource extends Resource {
     }
     // The name is never used, so there is no stored name for a traversal check to protect.
     return parts.getFirst().getValueAs(InputStream.class);
+  }
+
+  /** The path DraftResource creates a draft at, so the two agree on where this one lives. */
+  private static URI draftUri(StudyDatasetDraftReference draft) {
+    return UriBuilder.fromPath("/api/draft/v1/%s".formatted(draft.id())).build();
   }
 
   private static Response tooLarge(TemplateTooLargeException e) {

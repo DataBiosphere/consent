@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /**
  * The OpenAPI examples are the only hand-written copy of the wire shape, so they are read back
@@ -22,16 +22,17 @@ class TemplateValidationResponseExamplesTest {
       Path.of("src/main/resources/assets/paths/draftStudyDatasetTemplateValidation.yaml");
 
   @ParameterizedTest
-  @ValueSource(strings = {"valid", "invalid"})
-  void testDocumentedExampleMatchesTheResponseModel(String example) throws IOException {
+  @CsvSource({"201,valid", "200,invalid"})
+  void testDocumentedExampleMatchesTheResponseModel(String status, String example)
+      throws IOException {
     JsonNode documented =
         new YAMLMapper()
             .readTree(SPEC.toFile())
             // requiredAt, not at: a missing pointer round-trips to JSON null through Gson, and
             // would pass the assertion below while documenting nothing.
             .requiredAt(
-                "/post/responses/200/content/application~1json/examples/%s/value"
-                    .formatted(example));
+                "/post/responses/%s/content/application~1json/examples/%s/value"
+                    .formatted(status, example));
 
     TemplateValidationResponse parsed =
         GsonUtil.getInstance().fromJson(documented.toString(), TemplateValidationResponse.class);

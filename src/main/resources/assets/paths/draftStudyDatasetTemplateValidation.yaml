@@ -3,10 +3,11 @@ post:
   operationId: apiDraftV1StudyDatasetTemplateValidationPost
   description: >-
     Validates one filled-in v1 study template and, when it is valid, creates a
-    StudyDatasetSubmissionV1 draft owned by the caller holding the registration-shaped document.
-    An invalid template creates nothing and is reported as a completed result with HTTP 200 and
-    valid false, including an empty file, one that is not UTF-8, and one that is not valid CSV.
-    Only an unusable request fails: no file part, more than one, or a file over the 5 MiB limit.
+    StudyDatasetSubmissionV1 draft owned by the caller holding the registration-shaped document,
+    answered 201 at the draft it created. An invalid template creates nothing and is reported as a
+    completed result with HTTP 200 and valid false, including an empty file, one that is not UTF-8,
+    and one that is not valid CSV. Only an unusable request fails: no file part, more than one, or a
+    file over the 5 MiB limit.
   tags:
     - Draft
   requestBody:
@@ -24,7 +25,31 @@ post:
             - file
   responses:
     200:
-      description: The template was validated. A valid one carries the draft it created.
+      description: The template was validated and has errors to fix. Nothing was created.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/TemplateValidationResponse.yaml'
+          examples:
+            invalid:
+              summary: A template with errors
+              value:
+                valid: false
+                truncated: false
+                errors:
+                  - row: 3
+                    column: value
+                    message: Study Name is required
+                  - message: At least one Dataset is required
+    201:
+      description: The template was valid and the draft it produced was created.
+      headers:
+        Location:
+          description: The created draft, at the path the draft endpoints serve it from.
+          schema:
+            type: string
+            format: uri-reference
+            example: /api/draft/v1/c2e4583a-20b9-4705-8280-e6a5753f10c9
       content:
         application/json:
           schema:
@@ -39,16 +64,6 @@ post:
                 draft:
                   id: c2e4583a-20b9-4705-8280-e6a5753f10c9
                   draftType: StudyDatasetSubmissionV1
-            invalid:
-              summary: A template with errors
-              value:
-                valid: false
-                truncated: false
-                errors:
-                  - row: 3
-                    column: value
-                    message: Study Name is required
-                  - message: At least one Dataset is required
     400:
       description: >-
         No file part was supplied, more than one was, or the draft the template produced could not
