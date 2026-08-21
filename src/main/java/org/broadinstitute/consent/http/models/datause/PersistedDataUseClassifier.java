@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models.datause;
 
 import com.google.gson.Gson;
-import java.util.Optional;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseClassification.State;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -17,18 +16,6 @@ public final class PersistedDataUseClassifier {
   private static final Gson GSON = GsonUtil.gsonBuilderWithAdapters().create();
 
   private PersistedDataUseClassifier() {}
-
-  /** The stored value as a {@link DataUse}, or empty when it is absent or unparseable. */
-  public static Optional<DataUse> parse(String rawDataUse) {
-    if (rawDataUse == null || rawDataUse.isBlank()) {
-      return Optional.empty();
-    }
-    try {
-      return Optional.ofNullable(GSON.fromJson(rawDataUse, DataUse.class));
-    } catch (Exception _) {
-      return Optional.empty();
-    }
-  }
 
   public static PersistedDataUseClassification classify(String rawDataUse) {
     if (rawDataUse == null) {

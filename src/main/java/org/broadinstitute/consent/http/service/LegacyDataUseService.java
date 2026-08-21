@@ -1,55 +1,36 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
 import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.datause.LegacyDataUseDisposition;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunResult;
 import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
-import org.broadinstitute.consent.http.models.datause.PersistedDataUseClassifier;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseReport;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseRow;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
 
 /**
- * Applies approved dispositions to legacy Data Use records and recomputes the matches they affect.
+ * Recomputes the matches the legacy Data Use population affects, and reports on its shapes.
  *
- * <p>Restartable by construction, not by checkpoint: a record already holding its approved value is
- * skipped, so a rerun only touches what is outstanding. Writes reuse {@link
- * DatasetService#updateDatasetDataUse} for validation, translation, audit, and search sync; matches
- * are recomputed per DAR, which never touches elections or votes.
+ * <p>Writes no stored Data Use, so a rerun is safe by construction rather than by checkpoint.
+ * Matches are recomputed per DAR, which never touches elections or votes. Correcting a noncanonical
+ * record is a domain decision, applied through {@code PUT /api/dataset/{id}/datause}.
  */
 public class LegacyDataUseService implements ConsentLogger {
 
-  private static final String REASON_VALIDATION = "validation";
-  private static final String REASON_NOT_FOUND = "not-found";
-  private static final String REASON_UNEXPECTED = "unexpected";
-
   private final PersistedDataUseDAO persistedDataUseDAO;
-  private final DatasetService datasetService;
   private final MatchService matchService;
 
   @Inject
-  public LegacyDataUseService(Jdbi jdbi, DatasetService datasetService, MatchService matchService) {
-    this(jdbi.onDemand(PersistedDataUseDAO.class), datasetService, matchService);
+  public LegacyDataUseService(Jdbi jdbi, MatchService matchService) {
+    this(jdbi.onDemand(PersistedDataUseDAO.class), matchService);
   }
 
-  LegacyDataUseService(
-      PersistedDataUseDAO persistedDataUseDAO,
-      DatasetService datasetService,
-      MatchService matchService) {
+  LegacyDataUseService(PersistedDataUseDAO persistedDataUseDAO, MatchService matchService) {
     this.persistedDataUseDAO = persistedDataUseDAO;
-    this.datasetService = datasetService;
     this.matchService = matchService;
   }
 
@@ -76,8 +57,8 @@ public class LegacyDataUseService implements ConsentLogger {
         .toList();
   }
 
-  /** Changes no stored Data Use, so it needs no approved disposition. */
-  public LegacyDataUseRunResult recomputeAbstainingMatches(User admin) {
+  /** Recomputes only what a DAR can reach, so an abstaining row without one is left alone. */
+  public LegacyDataUseRunResult recomputeAbstainingMatches() {
     PersistedDataUseReport before = report();
     List<PersistedDataUseRow> abstaining =
         persistedDataUseDAO.findAllPersistedDataUse().stream()
@@ -85,112 +66,49 @@ public class LegacyDataUseService implements ConsentLogger {
             .toList();
     List<PersistedDataUseRow> candidates =
         abstaining.stream().filter(PersistedDataUseRow::needsMatchRecompute).toList();
-    // Unreachable rows are named rather than folded into "skipped", which would read as done
+    // Counted in the log so unreachable rows are not mistaken for done
     logInfo(
         "Recomputing matches for %d abstaining datasets; %d have no DAR relation and are left alone"
             .formatted(candidates.size(), abstaining.size() - candidates.size()));
-    LegacyDataUseRunReport run =
-        run(admin, candidates, _ -> new LegacyDataUseDisposition.RecomputeMatchesOnly());
-    return new LegacyDataUseRunResult(before, report(), run);
+    return new LegacyDataUseRunResult(before, report(), run(candidates));
   }
 
-  /**
-   * @param dispositions the approved decision per record; nothing is inferred, so a record without
-   *     an approved disposition must be given {@link LegacyDataUseDisposition.Defer}
-   */
-  public LegacyDataUseRunReport run(
-      User admin,
-      List<PersistedDataUseRow> candidates,
-      Function<PersistedDataUseRow, LegacyDataUseDisposition> dispositions) {
+  LegacyDataUseRunReport run(List<PersistedDataUseRow> candidates) {
     int processed = 0;
-    int skipped = 0;
     int retried = 0;
     int matchesRecomputed = 0;
-    Map<String, Integer> failuresByReason = new HashMap<>();
     List<Integer> failedDatasetIds = new ArrayList<>();
 
     for (PersistedDataUseRow candidate : candidates) {
-      LegacyDataUseDisposition disposition = dispositions.apply(candidate);
-      if (hasNothingToApply(candidate, disposition)) {
-        skipped++;
+      Outcome outcome = recomputeWithOneRetry(candidate.datasetId());
+      if (outcome.retried()) {
+        retried++;
+      }
+      if (outcome.failed()) {
+        failedDatasetIds.add(candidate.datasetId());
       } else {
-        Outcome outcome = applyWithOneRetry(admin, candidate, disposition);
-        if (outcome.retried()) {
-          retried++;
-        }
-        if (outcome.reason() == null) {
-          processed++;
-          matchesRecomputed += outcome.matchesRecomputed();
-        } else {
-          failuresByReason.merge(outcome.reason(), 1, Integer::sum);
-          failedDatasetIds.add(candidate.datasetId());
-        }
+        processed++;
+        matchesRecomputed += outcome.matchesRecomputed();
       }
     }
 
     return new LegacyDataUseRunReport(
-        processed,
-        skipped,
-        failedDatasetIds.size(),
-        retried,
-        matchesRecomputed,
-        failuresByReason,
-        failedDatasetIds);
+        processed, failedDatasetIds.size(), retried, matchesRecomputed, failedDatasetIds);
   }
 
-  /** Deferred, undecided, or already holding the approved value. */
-  private boolean hasNothingToApply(
-      PersistedDataUseRow candidate, LegacyDataUseDisposition disposition) {
-    return disposition == null
-        || disposition instanceof LegacyDataUseDisposition.Defer
-        || isAlreadyApplied(candidate, disposition);
-  }
-
-  /**
-   * A normalization whose value is already stored has nothing to do; a recompute always runs.
-   * Compares the values, not their classifications, which two different disease lists would share.
-   */
-  private boolean isAlreadyApplied(
-      PersistedDataUseRow candidate, LegacyDataUseDisposition disposition) {
-    if (!(disposition instanceof LegacyDataUseDisposition.Normalize normalize)) {
-      return false;
-    }
-    return PersistedDataUseClassifier.parse(candidate.dataUse())
-        .filter(stored -> Objects.equals(stored, normalize.approvedDataUse()))
-        .isPresent();
-  }
-
-  private Outcome applyWithOneRetry(
-      User admin, PersistedDataUseRow candidate, LegacyDataUseDisposition disposition) {
+  private Outcome recomputeWithOneRetry(Integer datasetId) {
     try {
-      return new Outcome(null, apply(admin, candidate, disposition), false);
-    } catch (BadRequestException _) {
-      // A rejected approved value is a decision to correct, not a transient fault
-      return new Outcome(REASON_VALIDATION, 0, false);
-    } catch (NotFoundException _) {
-      return new Outcome(REASON_NOT_FOUND, 0, false);
+      return new Outcome(false, recomputeMatches(datasetId), false);
     } catch (Exception _) {
-      logWarn(
-          "Legacy Data Use action failed for dataset %d, retrying once"
-              .formatted(candidate.datasetId()));
+      // No message or cause: a failure raised while matching can quote the Other free text
+      logWarn("Legacy match recompute failed for dataset %d, retrying once".formatted(datasetId));
       try {
-        return new Outcome(null, apply(admin, candidate, disposition), true);
+        return new Outcome(false, recomputeMatches(datasetId), true);
       } catch (Exception _) {
-        // No message or cause: a failure raised while writing can quote the Other free text
-        logWarn(
-            "Legacy Data Use action failed again for dataset %d".formatted(candidate.datasetId()));
-        return new Outcome(REASON_UNEXPECTED, 0, true);
+        logWarn("Legacy match recompute failed again for dataset %d".formatted(datasetId));
+        return new Outcome(true, 0, true);
       }
     }
-  }
-
-  private int apply(
-      User admin, PersistedDataUseRow candidate, LegacyDataUseDisposition disposition) {
-    if (disposition instanceof LegacyDataUseDisposition.Normalize normalize) {
-      datasetService.updateDatasetDataUse(
-          admin, candidate.datasetId(), normalize.approvedDataUse());
-    }
-    return recomputeMatches(candidate.datasetId());
   }
 
   private int recomputeMatches(Integer datasetId) {
@@ -199,5 +117,5 @@ public class LegacyDataUseService implements ConsentLogger {
     return referenceIds.size();
   }
 
-  private record Outcome(String reason, int matchesRecomputed, boolean retried) {}
+  private record Outcome(boolean failed, int matchesRecomputed, boolean retried) {}
 }

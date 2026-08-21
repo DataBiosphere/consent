@@ -46,7 +46,7 @@ public class LegacyDataUseResource extends Resource {
   @RolesAllowed({Resource.ADMIN})
   public Response recomputeAbstainingMatches(@Auth DuosUser duosUser) {
     try {
-      return Response.ok().entity(service.recomputeAbstainingMatches(duosUser.getUser())).build();
+      return Response.ok().entity(service.recomputeAbstainingMatches()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

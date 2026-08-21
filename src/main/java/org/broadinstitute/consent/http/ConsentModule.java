@@ -808,9 +808,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  private LegacyDataUseService providesLegacyDataUseService(
-      Jdbi jdbi, DatasetService datasetService, MatchService matchService) {
-    return new LegacyDataUseService(jdbi, datasetService, matchService);
+  private LegacyDataUseService providesLegacyDataUseService(Jdbi jdbi, MatchService matchService) {
+    return new LegacyDataUseService(jdbi, matchService);
   }
 
   @Provides
