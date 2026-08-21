@@ -7,7 +7,12 @@ that found four unclassified Library Card gates, a scope boundary error, and sev
 mistakes in the draft.
 
 Revised a second time after an adversarial review of this plan found fifteen defects in it, all of
-which were confirmed against source and are now resolved in the body below. See
+which were confirmed against source and are now resolved in the body below.
+
+Revised a third time after a review found two further defects in the rollout mechanism: the
+single-flag-row cutover was not actually atomic across backend and already-loaded browser clients, and
+the Phase-3 reconciliation could not honestly reconstruct audit provenance for a hard-deleted Library
+Card. Both are resolved in [Rollout and Compatibility](#rollout-and-compatibility). See
 [Review-Driven Revisions](#review-driven-revisions) for the finding-to-section map.
 
 ## Changes from the Ticket
@@ -59,12 +64,13 @@ re-listed by line because the line numbers drift and the sweep is the guarantee 
 eligibility pool, "no renames in this change", and leaving the contractual Library Card Agreement
 text and PDF filenames alone all carry over exactly as the ticket specified.
 
-**Added after review — four items in neither the ticket nor the first revision.** Activation when
-registration links a pre-issued Library Card; a bidirectional status/card reconciliation run in the
-Phase-3 flip window; an admin researcher-status control on `AdminEditUser`, because after Phase 3
-deleting a Library Card no longer deactivates anyone; and alignment of the status endpoint's Signing
-Official scoping and failure code with the sibling SO-scoped endpoint on the same resource. Each is
-marked as a decision in its own section so a reviewer can veto it.
+**Added after review — five items in neither the ticket nor the first revision.** Activation when
+registration links a pre-issued Library Card; flag-gated dual-write of researcher status on every
+Library Card mutation path through Phases 1-2, plus a flag echo that makes stale browser clients fail
+loudly instead of skewing silently; an admin researcher-status control on `AdminEditUser`, because
+after Phase 3 deleting a Library Card no longer deactivates anyone; and alignment of the status
+endpoint's Signing Official scoping and failure code with the sibling SO-scoped endpoint on the same
+resource. Each is marked as a decision in its own section so a reviewer can veto it.
 
 ## Review-Driven Revisions
 
@@ -88,6 +94,8 @@ revision only need this table plus the sections it points at.
 | 13 | The endpoint's SO scoping and 403 contradicted `signingOfficialMeetsRequirements` on the same resource, which requires the SO's own institution and returns 400 | [Status endpoint, exception, and service](#status-endpoint-exception-and-service) |
 | 14 | The rollout invented a "release coordinator" and never named the DB-backed feature-flag mechanism consent already ships, so no ticket defined the flag key | [Rollout and Compatibility](#rollout-and-compatibility) |
 | 15 | `SigningOfficialDashboardDAO` has a second, independent `library_card` gate (`researchers_approved`) that no table classified, and the cited line number was wrong | [Current Behavior](#current-behavior) |
+| 16 | "Because both sides read the same database row, the flip is already atomic" — it is not: duos-ui memoises the flag for the tab's lifetime, so a stale tab's legacy arm deletes a card post-flip and leaves the researcher active, and card CRUD keeps writing in the gap between reconciliation and the flag `UPDATE` | [Rollout and Compatibility](#rollout-and-compatibility) |
+| 17 | Reconciliation attributed a card-deletion-derived deactivation to `SIGNING_OFFICIAL`, but `library_card` rows are hard-deleted, so there is no actor and no action time to attribute — and the deleter may have been an admin or the enforcement sweep | [Rollout and Compatibility](#rollout-and-compatibility), [Migration, model, and audit](#migration-model-and-audit) |
 
 ## Objective
 
@@ -147,8 +155,8 @@ stateDiagram-v2
   note right of Inactive
     Manual deactivation retains
     Library Card and DAA assignments.
-    The one-time Phase-3 reconciliation
-    is the only other writer.
+    Through Phases 1-2 only, Library Card
+    mutations also write status (dual-write).
   end note
 ```
 
@@ -227,10 +235,32 @@ Create a registered date-named Liquibase changeset with strictly ordered change 
 The table must exist before any audit seed. Audit rows are transition-only.
 
 Audit `source` keeps exactly the three values `SIGNING_OFFICIAL`, `ADMIN`, and
-`INSTITUTION_ENFORCEMENT`. Rows written by the backfill seed, by registration-time card linkage, and
-by the Phase-3 reconciliation all use `SIGNING_OFFICIAL`, because each records an action a Signing
-Official actually took through the Library Card UI. Do not add a fourth source value; do not let the
-check constraint be discovered by a failing insert.
+`INSTITUTION_ENFORCEMENT`. The general rule: every row is written by the transactional status
+transition helper as part of the transaction that performs the transition, with `source` derived from
+the **actual authenticated actor** of that transaction — the `checkIsAdmin` distinction the Library
+Card delete endpoint already makes (`LibraryCardResource:118`) for SO versus admin, and
+`INSTITUTION_ENFORCEMENT` for the sweep. No source is guessed, which is why three values remain
+sufficient: do not add a fourth, and do not let the check constraint be discovered by a failing insert.
+
+Two cases take their actor and timestamp from the Library Card instead of from a live request, and both
+are sound only because the card is still present to read them from:
+
+- **The backfill seed** uses the Library Card's own `create_date` and `create_user_id`, and `source`
+  `SIGNING_OFFICIAL`. Admin-created cards are seeded `SIGNING_OFFICIAL` too. That is deliberate and not
+  a guess: it exactly reproduces today's Passport behavior, where `ResearcherStatus.by():46` hardcodes
+  `VisaBy.SO` for every carded user regardless of who issued the card. The seed therefore changes no
+  visa, and the creator column still records who actually issued the card.
+- **Registration-time card linkage** (`UserServiceDAO.createUser`) uses `SIGNING_OFFICIAL`, the linked
+  card's creator, and the card's `create_date` as the action date — the moment the SO actually vouched,
+  which is what Passport `asserted()` needs. Same justification: the card exists, so its issuer and
+  issue time are known.
+
+By contrast, a *deactivation* inferred from a **missing** card has no recoverable actor and no
+recoverable action time — `library_card` rows are hard-deleted
+(`LibraryCardDAO:59`, `LibraryCardDAO:190`) — and the deletion may have come from an admin
+(`LibraryCardResource:105` permits `ADMIN` and `SIGNINGOFFICIAL`) or from the enforcement sweep. Such a
+row must never be attributed to `SIGNING_OFFICIAL`. The rollout removes the need to write one at all;
+see [Rollout and Compatibility](#rollout-and-compatibility).
 
 Add `researcherStatus` to `User`, `User.yaml`, all relevant User/DAR projections, and
 `UserWithRolesMapper` — the mapper sets fields explicitly (`setEmailPreference`, `setEraCommonsId`)
@@ -338,14 +368,21 @@ revision got wrong or left open:
   transactional transition helper.
 
 Audit rows here use source `INSTITUTION_ENFORCEMENT` and remain transition-only. Existing Library
-Card-removal behavior is otherwise unchanged.
+Card-removal behavior is otherwise unchanged. These branches also need the Phase-1 dual-write, which
+ships with Phase 1 rather than with this ticket; and `deleteAllLibraryCardsByUser`'s collateral deletion
+of cards the user *issued for others* is classified in
+[Flag-gated dual-write](#flag-gated-dual-write-phase-1-required).
 
 ### Library Card creation, DAA assignment, and registration
 
 `LibraryCardService.createLibraryCard`, `DaaServiceDAO` bulk assignment, and the DAA resource retain
-their current Library Card creation behavior. They must not write `researcher_status` or create a
-researcher-status audit row. Assignment can therefore create a card for an inactive user without
-reactivating that user.
+their current Library Card creation behavior. **With `RESEARCHER_STATUS_GATING` on**, they must not
+write `researcher_status` or create a researcher-status audit row, so assignment can create a card for
+an inactive user without reactivating that user. That is the end-state rule, not the Phase-1-2 rule:
+while the flag is off these cards still gate access under the old semantics, so they must activate
+through the dual-write described in
+[Flag-gated dual-write](#flag-gated-dual-write-phase-1-required). The distinction is the flag, read
+inside the same transaction as the card write.
 
 **Registration is the one carve-out — decision.** `UserServiceDAO.createUser:56-66` looks up a
 Library Card previously issued against the user's email (`user_id` NULL) and links it to the new
@@ -367,14 +404,15 @@ Every existing Library Card reference must be classified before implementation:
 | DAR draft/update, ERA, shared DAR/progress-report validator | Switch to status in Phase 3; the shared validator keeps `NIHComplianceRuleException`. |
 | `DatasetDAO`, researcher and SO dashboards, `ElectionDAO`, TDR, Passport, institution enforcement | Apply the status changes described above, behind the backend Phase-3 flag. |
 | Collaborator validation and DAA bulk assignment eligibility | Unchanged Library Card behavior. |
-| DAA assignment, acknowledgement, `LibraryCardService`, resource, DAO, models, API, entity, and table | Unchanged DAA-container behavior. |
+| `LibraryCardDAO.deleteAllLibraryCardsByUser` (`:190`) | Dual-writes deactivation for the named user while the flag is off; its collateral deletion of cards that user issued for others is deliberately not chased and the `OR` clause is not narrowed. |
+| DAA assignment, acknowledgement, `LibraryCardService`, resource, DAO, models, API, entity, and table | Unchanged DAA-container behavior, plus flag-gated dual-write of researcher status while `RESEARCHER_STATUS_GATING` is off, and the flag-echo 409 on card create/delete — see [Rollout and Compatibility](#rollout-and-compatibility). |
 | `isUserPreAuthorizedForAllDaas` | Retain the DAA comparison and add only a null-card guard. |
 | User and DAR projections | Continue hydrating Library Card data and add `researcherStatus`. |
-| `service/dao/UserServiceDAO.createUser` | Card linkage is retained **and** activates the user with an audit row — the single card-to-status coupling that remains. |
+| `service/dao/UserServiceDAO.createUser` | Card linkage is retained **and** activates the user with an audit row — the single card-to-status coupling that remains *after* the flip. |
 | `SigningOfficialDashboardDAO.researchers_approved` (lines 117-121) | Unchanged DAA pre-authorization counting; keep the `lc` alias the aggregate depends on. |
 | `SigningOfficialDashboardService`, `SigningOfficialDashboardSummary` | In scope for the `active` / `inactive` source change; record name and shape unchanged. |
 | `UserUpdateFields` | Unchanged, deliberately. `researcherStatus` must never be added to it. |
-| `AdminManageLC.tsx`, `LibraryCardTable.tsx:137` | Stays Library Card management (DAA pre-authorization). Copy must stop reading as deactivation, and admins get a status control on `AdminEditUser` instead. |
+| `AdminManageLC.tsx`, `LibraryCardTable.tsx:137` | Stays Library Card management (DAA pre-authorization). Copy must stop reading as deactivation, admins get a status control on `AdminEditUser` instead, and the delete call sends the flag echo header and handles 409. |
 | `service/passport/ResearcherStatus.by()`, `AffiliationAndRole.by()` | Switch from card presence to audit-derived provenance; `source()` unchanged. |
 | `LibraryCardRequiredException` | All three throw sites move to `ResearcherStatusRequiredException`, leaving the class unused. Keep it and its 422 registration through Phases 1-2 so a flag rollback still returns 422, then delete the class, its import, and its registration in the Phase 3 cleanup. |
 
@@ -404,7 +442,9 @@ route the Definition of Done requires proving unchanged.
 
 - Add `researcherStatus` to `DuosUser`, and add `User.setResearcherStatus(userId, researcherStatus)`
   for `PUT /api/user/{userId}/researcherStatus`. Do not add the field to any generic user-update
-  payload type; the backend allowlist already drops it, and the status endpoint is the only writer.
+  payload type; the backend allowlist already drops it, and the status endpoint is the only writer the
+  UI may call. (Server-side, enforcement, registration, and the Phase-1-2 dual-write also write status;
+  none of them is client-driven.)
 - The existing Signing Official `library_cards` route, page file, component, action identifiers, and
   Library Card implementation names remain unchanged. Its displayed switch state and copy use
   `researcherStatus`.
@@ -444,11 +484,97 @@ backend gates reload persisted status.
 Use the feature-flag mechanism consent already ships: `FeatureFlagService` / `FeatureFlagDAO` /
 `FeatureFlag`, exposed by `PublicFeatureFlagResource` at `GET /feature/{key}` and consumed by duos-ui
 through `libs/ajax/FeatureFlag.ts getFeatureFlag` (precedent: `NHGRI_RESTRICTED_DAC`). Use a single
-key, `RESEARCHER_STATUS_GATING`. Because both sides read the same database row, the flip is already
-atomic and no release-coordination machinery is needed. Note that `/feature` is `@PermitAll`, so the
-key and its value are publicly readable; that leaks only the existence of the feature, which is
-acceptable here. No deployment window may expose a Library Card operation as a researcher-status
-operation:
+key, `RESEARCHER_STATUS_GATING`. Note that `/feature` is `@PermitAll`, so the key and its value are
+publicly readable; that leaks only the existence of the feature, which is acceptable here. No
+deployment window may expose a Library Card operation as a researcher-status operation.
+
+**One database row is not a synchronized cutover.** The previous revision claimed that because both
+sides read the same flag row the flip "is already atomic". That is false, and it was load-bearing. A
+shared row makes the *intent* single-sourced; it does not make the *transition* atomic. Two gaps
+follow:
+
+- **Stale browser clients.** duos-ui reads the flag over HTTP and holds the value for the life of the
+  tab — the very precedent this plan cites is memoised at module scope
+  (`FeatureFlag.ts`, `nhgriDacIdPromise ??= getFeatureFlag('NHGRI_RESTRICTED_DAC')`). An SO whose tab
+  loaded before the flip still believes `flag = false`, so its legacy toggle arm calls
+  `LibraryCard.deleteLibraryCard` (`SigningOfficialTable.tsx:396`; the admin table does the same at
+  `LibraryCardTable.tsx:137`) while the backend has already switched to status gating. The card is hard
+  deleted, the row leaves the SO's list, the SO believes the researcher is deactivated — and
+  `researcher_status` is still `true`, so that researcher keeps DAR submission, approved-dataset, and
+  Passport access. Silent, and in the more dangerous direction.
+- **The window around reconciliation.** A reconciliation script and a flag-row `UPDATE` are two
+  statements, not one. Library Card CRUD keeps serving traffic between them, so any card written in that
+  interval reintroduces exactly the skew reconciliation just removed. "Runs in the same window" is not
+  a synchronization mechanism.
+
+The mechanism below closes both. It has two halves: **flag-gated dual-write**, so no card mutation can
+leave status behind; and a **flag echo**, so a client acting on a stale flag value fails loudly instead
+of skewing silently.
+
+### Flag-gated dual-write (Phase 1, required)
+
+This supersedes the previous revision's "card paths must never write status" invariant, which was the
+root cause of the accumulated skew. From Phase 1, while the flag is **off**, every Library Card
+mutation path performs its card write and the corresponding researcher-status transition **in the same
+transaction**:
+
+| Path | Flag off (Phases 1-2) | Flag on (Phase 3+) |
+| --- | --- | --- |
+| `LibraryCardService.createLibraryCard` | card write **and** activation + audit row | card write only |
+| `LibraryCardService.deleteLibraryCardById` | card delete **and** deactivation + audit row | card delete only |
+| `DaaServiceDAO` bulk assignment and the DAA resource | card write **and** activation + audit row | card write only; an inactive user stays inactive |
+| Institution/domain enforcement card removal | card delete **and** deactivation + audit row | same — this one is permanent behavior |
+| `UserServiceDAO.createUser` pre-issued card linkage | card link **and** activation + audit row | same — this one is permanent behavior |
+
+Three points make this work:
+
+- **Provenance is honest by construction.** Each transition is written by the transactional status
+  transition helper at the moment it happens, with the real authenticated actor, the real transaction
+  timestamp, and `source` from that actor: `SIGNING_OFFICIAL` or `ADMIN` per the `checkIsAdmin`
+  distinction `LibraryCardResource:118` already makes, `INSTITUTION_ENFORCEMENT` on the sweep. Nothing
+  is reconstructed after the card is gone, so the three-value source constraint holds unchanged.
+- **The flag must be read inside the mutation transaction**, uncached — a `SELECT … FOR SHARE` on the
+  flag row is sufficient — and the Phase-3 flip must be an `UPDATE` of that row. The database then
+  serialises the cutover: every card mutation that commits before the flip dual-wrote, every one that
+  commits after it did not, and there is no interleaving. This is the transactional cutover the previous
+  revision assumed it already had. Do not read the flag through a cached service value on these paths.
+- **The enforcement dual-write cannot wait for the enforcement ticket.** Ticket 9 changes enforcement's
+  permanent behavior; the Phase-1 dual-write for those same paths is part of the Phase-1 deliverable and
+  ships with it.
+
+**`deleteAllLibraryCardsByUser` — newly classified.** `LibraryCardDAO:190` deletes
+`WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId`, so it also
+hard-deletes cards the named user *issued for other users*. Its only callers are the two enforcement
+paths (`UserServiceDAO.updateInstitutionAndClearLibraryCardForUser:32`,
+`InstitutionAndLibraryCardEnforcement:158`). **Decision:** dual-write deactivation for the named user
+only; do not chase the collaterally-deleted researchers, and do not narrow the `OR` clause (out of
+scope — narrowing it changes enforcement semantics that predate this plan). Cover the collateral
+deletion with a test that records today's behavior, so the Phase-3 change is visible: after the flip
+those other researchers keep active status while losing their DAA cards, which is the intended new
+model rather than a regression.
+
+### Flag echo (Phase 2, required)
+
+Dual-write removes durable skew, but a stale tab can still express "deactivate" as a card deletion
+*after* the flip — the card write no longer carries a status write, so the operator's intent is
+silently dropped. So the client's **believed flag value** travels with every Library Card
+create/delete request as a header, `X-Researcher-Status-Gating: true|false`. The backend compares it
+with the flag value it read in the same transaction and returns **409** with a reload instruction on
+mismatch; an absent header is read as `false`.
+
+- Scope the check to the two endpoints the toggle uses, `POST /api/libraryCards` and
+  `DELETE /api/libraryCards/{id}`, not to DAA assignment — a stale client assigning a DAA still gets
+  the DAA assigned correctly.
+- It must be a flag **echo**, not a "new client" marker. A marker meaning *I am new code* would pass
+  exactly the client that needs rejecting: a Phase-2 client holding a cached `false`. The echo rejects
+  both stale populations — pre-Phase-2 clients (no header) and Phase-2 clients with a stale value.
+- duos-ui sends it from `SigningOfficialTable.tsx:396` and `LibraryCardTable.tsx:137`, and surfaces the
+  409 as a reload prompt rather than a generic failure.
+- **Lifetime — decision.** The echo is temporary, not a permanent API guard. It exists only to catch
+  clients that still read a card mutation as a status action, and once the flip has settled there is no
+  status intent left to protect: card CRUD is pure DAA management. Remove the header check, and the
+  header itself, in the same Phase-3 cleanup that deletes `LibraryCardRequiredException`. Leaving it in
+  would 409 every header-less caller — scripts, Swagger, future clients — forever.
 
 ```mermaid
 sequenceDiagram
@@ -456,54 +582,62 @@ sequenceDiagram
   participant U as duos-ui
   participant F as Feature flag
 
-  C->>C: Deploy schema, endpoint, projections, audit support
-  Note over C: Existing Library Card gates remain active
-  U->>U: Deploy status-capable UI with toggle disabled
-  F->>C: Enable researcher-status backend gates
-  F->>U: Enable status toggle and status-based UI gates
+  C->>C: Deploy schema, endpoint, projections, audit, flag-gated dual-write
+  Note over C: Library Card gates authoritative; every card write also writes status
+  U->>U: Deploy status-capable UI, toggle disabled, sending the flag echo
+  C->>C: Verify zero skew (both queries return no rows)
+  F->>C: Flip flag row: status gates on, dual-write off
+  F->>U: Newly loaded clients enable the status toggle
+  Note over U,C: Stale tabs get 409 on card mutations, not silent skew
 ```
 
 1. **Phase 1 — compatibility backend.** Deploy the audit table then status column/backfill/audit seed,
-   endpoint, projections, Passport support, and compatibility fields. The current Library Card
-   eligibility gates remain authoritative. The new endpoint is available but no UI exposes a
-   status-changing action.
-2. **Phase 2 — disabled UI.** Deploy duos-ui status-capable code behind a disabled feature flag.
-   The existing Library Card CRUD toggle remains authoritative while disabled.
-3. **Phase 3 — coordinated enablement.** Reconcile status against card presence, then flip
-   `RESEARCHER_STATUS_GATING` on, enabling the backend gates and the UI status toggle together. The old
-   UI must no longer be able to call Library Card deletion as a status action.
+   endpoint, projections, Passport support, compatibility fields, and flag-gated dual-write on every card
+   mutation path. The current Library Card eligibility gates remain authoritative. The new endpoint is
+   available but no UI exposes a status-changing action.
+2. **Phase 2 — disabled UI.** Deploy duos-ui status-capable code behind a disabled feature flag,
+   sending the flag echo on Library Card create/delete. The existing Library Card CRUD toggle remains
+   authoritative while disabled, and its writes carry status with them through the backend dual-write.
+3. **Phase 3 — coordinated enablement.** Verify zero skew, then flip `RESEARCHER_STATUS_GATING`. The
+   one `UPDATE` turns the backend status gates on, turns dual-write off, enables the status toggle for
+   newly loaded clients, and starts 409-ing stale ones. The old UI can still call Library Card deletion,
+   but it can no longer do so *as a status action*: it is either dual-written or rejected.
 
-**Bidirectional reconciliation at the flip (required).** The Phase-1 backfill is a point-in-time
-snapshot, and Library Card CRUD stays authoritative through Phases 1-2 while card paths are forbidden
-from writing status. Every card issued in that window leaves status `false`, and every card deleted in
-that window leaves status `true` — the first silently strips access at the flip, the second silently
-preserves access for someone an SO already deactivated. So the flip window must run a reconciliation
-that sets status **in both directions**. The two populations to reconcile are:
+### Skew verification at the flip (replaces bidirectional reconciliation)
+
+With dual-write in place from Phase 1 there is no accumulated skew to repair, so the previous revision's
+reconciliation becomes a **verification gate**. Both queries must return zero rows immediately before
+the flip:
 
 ```sql
--- to activate: status false but a card exists (card issued during Phases 1-2)
+-- must be empty: status false but a card exists
 SELECT u.user_id FROM users u
 WHERE u.researcher_status = false
   AND EXISTS (SELECT 1 FROM library_card lc WHERE lc.user_id = u.user_id);
 
--- to deactivate: status true but no card (card deleted during Phases 1-2)
+-- must be empty: status true but no card
 SELECT u.user_id FROM users u
 WHERE u.researcher_status = true
   AND NOT EXISTS (SELECT 1 FROM library_card lc WHERE lc.user_id = u.user_id);
 ```
 
-These are selection queries, not the write. Reconciliation **must not** `UPDATE users` directly, or it
-produces unaudited transitions in violation of the audit invariant: apply each flip through the same
-transactional status transition helper the endpoint uses, so the status write and its transition-only
-audit row (source `SIGNING_OFFICIAL` — each records a card action an SO took through the old UI) commit
-together. Alternatively, do it in SQL with `WITH flipped AS (UPDATE users … RETURNING user_id) INSERT
-INTO researcher_status_audit …` in a single transaction. Either way it is idempotent, re-runnable, and
-runs in the same window as the flag flip so nothing lands between reconciliation and enablement.
+Any row is a **dual-write defect**, not expected drift: stop, log the users, and fix the path that
+missed. If the decision is nonetheless to proceed, each repair goes through the same transactional
+status transition helper — never a direct `UPDATE users`, which produces an unaudited transition — with
+the cutover operator as the actor and source `ADMIN`, an honest record of who actually made the change.
+Do **not** attribute a repair to `SIGNING_OFFICIAL`: for the second population the card is already hard
+deleted, so there is no actor and no action time to attribute, and the deletion may have come from an
+admin or the enforcement sweep. Repairs are idempotent and re-runnable, and the first query's population
+must be repaired before the flip rather than after, because after the flip it silently strips access.
 
-**Phase 1-2 writes through the endpoint are provisional.** The endpoint is live from Phase 1 with no UI
-exposing it, and the deactivating half of the reconciliation will revert any card-less activation made
-in that window. Treat manual endpoint use before Phase 3 as testing only, and have the reconciliation
-log every user it flips so an unexpected revert is visible rather than silent.
+The second query is expected to be non-empty **by design** after Phase 3 — active researchers whose DAA
+cards were removed are the whole point of this change — so it is a pre-flip gate only and must not be
+left running as an alert.
+
+**Phase 1-2 writes through the status endpoint.** The endpoint is live from Phase 1 with no UI exposing
+it. Under dual-write a card-less activation made through it shows up in the pre-flip verification as
+apparent skew; treat manual endpoint use before Phase 3 as testing only, and expect to clear it before
+the flip rather than having it silently reverted.
 
 ## Jira-Ready Tickets
 
@@ -512,12 +646,13 @@ log every user it flips so an unexpected revert is visible rather than silent.
 | 1 | Audit table first, then status column, card backfill, and audit seed | — |
 | 2 | Model, projections, JSON write guard, schema | 1 |
 | 3 | Transactional status transition helper and status endpoint/OpenAPI | 1, 2 |
-| 4 | Status-gate flag, Java/SQL gates, Passport, TDR, and institution enforcement | 2, 3 |
+| 4 | Java/SQL gates, Passport, TDR, and institution enforcement reading `RESEARCHER_STATUS_GATING` (the flag row itself is seeded by 5a) | 2, 3, 5a |
 | 5 | Preserve collaborator and DAA-bulk Library Card behavior; add null-card preauthorization guard | 2 |
-| 6 | duos-ui status transport and feature-flagged status UI, including the `AdminEditUser` status control and `AdminManageLC` copy | 2, 3 released |
-| 7 | Bidirectional reconciliation script, `RESEARCHER_STATUS_GATING` flag row, coordinated Phase-3 enablement, and regression verification | 4, 6 |
+| 5a | `RESEARCHER_STATUS_GATING` flag row seeded off; flag-gated dual-write on every Library Card mutation path (create, delete, DAA bulk, both enforcement branches — registration linkage is ticket 8, whose activation is unconditional), reading the flag transactionally; flag-echo 409 on the Library Card create/delete endpoints | 3 |
+| 6 | duos-ui status transport and feature-flagged status UI, including the `AdminEditUser` status control, `AdminManageLC` copy, the `X-Researcher-Status-Gating` echo header on Library Card create/delete, and the 409 reload prompt | 2, 3, 5a released |
+| 7 | Pre-flip skew verification queries, the transactional `RESEARCHER_STATUS_GATING` flip, and regression verification | 4, 5a, 6 |
 | 8 | Registration-time activation in `UserServiceDAO.createUser` | 1, 2 |
-| 9 | Transactional enforcement branches (new `UserServiceDAO` method) and card-independent status deactivation | 3 |
+| 9 | Transactional enforcement branches (new `UserServiceDAO` method) and card-independent status deactivation | 3; the Phase-1 dual-write for these paths lands in 5a, not here |
 | 10 | Passport `by()` / `asserted()` provenance from the audit table, including the inactive-user fallback | 1, 2 |
 
 ## Test Matrix
@@ -529,9 +664,21 @@ Migration and audit:
 - prove carded users backfill active, card-less users remain inactive, and seeds are correct;
 - prove Passport selects the latest `new_status = true` audit row, including tied timestamps, and
   applies the specified `by` value and no-audit fallback;
-- prove the reconciliation is bidirectional and idempotent: a card issued during Phases 1-2 ends
-  active, a card deleted during Phases 1-2 ends inactive, re-running writes no further audit rows,
-  and every row it writes satisfies the `source` check constraint;
+- prove dual-write while the flag is off: creating a Library Card activates and deleting one
+  deactivates, each in one transaction, with the audit row carrying the acting user, the transaction
+  timestamp, and `source` from the actor — `SIGNING_OFFICIAL` for an SO, `ADMIN` for an admin,
+  `INSTITUTION_ENFORCEMENT` for the sweep — and every row satisfying the `source` check constraint;
+- prove dual-write is flag-gated: with the flag on, the same card create/delete leaves status and the
+  audit table untouched, and a DAA bulk assignment does not reactivate an inactive user;
+- prove the dual-write flag read is transactional: a card mutation that commits before the flip
+  dual-wrote and one that commits after did not, with no interleaved case;
+- prove a rollback in the card transaction leaves neither the card nor the status change applied;
+- prove the flag echo: a mismatched or absent `X-Researcher-Status-Gating` header on
+  `POST /api/libraryCards` or `DELETE /api/libraryCards/{id}` returns 409 and writes nothing, a matching
+  header succeeds, and DAA assignment is unaffected by the header;
+- prove both pre-flip skew-verification queries return zero rows after a Phases 1-2 workload of card
+  creates and deletes, and that a repair applied through the transition helper is audited with the
+  cutover operator and source `ADMIN`;
 - prove registration with a pre-issued card ends with the card linked, status active, and one
   `false → true` audit row, all committed in the same transaction — and that registration with no
   pre-issued card leaves the user inactive.
@@ -551,10 +698,11 @@ Status and authorization:
 
 DAA and Library Card regression:
 
-- creating a Library Card or assigning a DAA does not activate an inactive researcher and creates no
-  activation audit row;
-- status toggle is the only manual activation/deactivation path; toggling preserves Library Cards and
-  DAA assignments;
+- **with `RESEARCHER_STATUS_GATING` on**, creating a Library Card or assigning a DAA does not activate
+  an inactive researcher and creates no activation audit row (with the flag off, the dual-write cases
+  above are the expected behavior instead);
+- **after the flip**, the status toggle is the only manual activation/deactivation path; toggling
+  preserves Library Cards and DAA assignments;
 - collaborator checks remain Library Card-based and the existing DAA bulk-assignment eligibility
   behavior remains unchanged;
 - an active card-less user falls back to SO approval without a null-pointer failure;
@@ -564,14 +712,18 @@ DAA and Library Card regression:
   write leaves neither applied;
 - `SigningOfficialDashboardSummary.daaAssociations.researchersApproved` is unchanged by the `active` /
   `inactive` source change;
-- an admin deleting a Library Card does not change researcher status, and the `AdminEditUser` control
-  does.
+- **with the flag on**, an admin deleting a Library Card does not change researcher status, and the
+  `AdminEditUser` control does; with the flag off, that same delete dual-writes a deactivation with
+  source `ADMIN`.
 
 Rollout and UI:
 
 - Phase 1 preserves old UI Library Card behavior while backend Library Card gates remain authoritative;
 - Phase 2 hides/disables status changes; Phase 3 enables backend and UI status gates together and
   verifies neither toggle arm creates or deletes a Library Card;
+- a stale client simulation: a duos-ui instance holding `flag = false` after the flip receives 409 on
+  its legacy deactivate arm, shows a reload prompt, and leaves neither the card nor status changed —
+  the researcher is never left card-less and still active;
 - UI status surfaces use `researcherStatus`, while Library Card/DAA surfaces remain pre-authorization
   behavior;
 - prove no route, component, frontend type, Library Card API, entity, table, or identifier rename is
@@ -595,16 +747,24 @@ smoke test covering Phase 1, Phase 3 deactivation/reactivation, and DAA assignme
 - Researcher eligibility gates use persisted status only after coordinated Phase 3 enablement; Phase 1
   retains the existing Library Card gates.
 - Collaborator checks and DAA bulk-assignment eligibility retain their existing Library Card behavior.
-- DAA assignment never changes researcher status; explicit status endpoint actions are the manual
-  activation/deactivation path.
+- After the flip, DAA assignment never changes researcher status and explicit status endpoint actions
+  are the manual activation/deactivation path. Before it, card mutations change status only through the
+  flag-gated dual-write, never incidentally.
 - Passport uses the precise latest-activation audit query and preserves only Affiliation-and-Role for
   inactive researchers.
 - Phase 3 toggles preserve Library Cards and DAAs, and no status action calls the Library Card deletion
   flow.
-- Registration with a pre-issued Library Card yields an active researcher; no other card path writes
-  status.
-- The Phase-3 flip is preceded by a bidirectional reconciliation, and `RESEARCHER_STATUS_GATING` is the
-  single flag both repositories read.
+- Registration with a pre-issued Library Card yields an active researcher; after the flip, no other
+  card path writes status.
+- Every Library Card mutation path dual-writes researcher status while `RESEARCHER_STATUS_GATING` is
+  off, reading the flag inside its own transaction, so the flip is a transactional cutover rather than
+  a coordinated pair of deploys.
+- Both pre-flip skew-verification queries return zero rows before the flip, and any repair is audited
+  through the transition helper with a real actor — no status transition is ever attributed to an actor
+  the system cannot name.
+- Library Card create/delete rejects a stale flag echo with 409, so no client can express deactivation
+  as a card deletion the backend no longer honors; `RESEARCHER_STATUS_GATING` is the single flag both
+  repositories read.
 - Enforcement branches write status and their audit row transactionally, and no code path dereferences
   a Library Card that may be absent.
 - Admins retain a deactivation path (`AdminEditUser`), and `AdminManageLC` no longer reads as
