@@ -21,6 +21,9 @@ public interface PersistedDataUseDAO {
    * consent-group-prefixed one, but only where its value parses as an {@code AccessManagement}, so
    * an unusable one falls back as {@code Dataset#getAccessManagement} does.
    *
+   * <p>The property key is matched case-insensitively, as {@code Dataset#getAccessManagement} does;
+   * an exact match would hide a differently-cased row the running application still resolves.
+   *
    * <p>Reads every dataset because classification parses the JSON in Java, which SQL cannot do.
    * Four projected columns, read twice per admin-invoked run to reconcile it; revisit if the
    * dataset count grows by an order of magnitude.
@@ -32,12 +35,12 @@ public interface PersistedDataUseDAO {
         SELECT dp.dataset_id,
                COALESCE(
                  MAX(LOWER(TRIM(dp.property_value)))
-                   FILTER (WHERE dp.schema_property = 'accessManagement'),
+                   FILTER (WHERE LOWER(dp.schema_property) = 'accessmanagement'),
                  MAX(LOWER(TRIM(dp.property_value)))
-                   FILTER (WHERE dp.schema_property = 'consentGroup.accessManagement')
+                   FILTER (WHERE LOWER(dp.schema_property) = 'consentgroup.accessmanagement')
                ) AS access_management
         FROM dataset_property dp
-        WHERE dp.schema_property IN ('accessManagement', 'consentGroup.accessManagement')
+        WHERE LOWER(dp.schema_property) IN ('accessmanagement', 'consentgroup.accessmanagement')
           AND LOWER(TRIM(dp.property_value)) IN ('open', 'controlled', 'external')
         GROUP BY dp.dataset_id
       ),

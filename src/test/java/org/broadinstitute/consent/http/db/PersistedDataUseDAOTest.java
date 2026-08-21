@@ -99,6 +99,19 @@ class PersistedDataUseDAOTest extends DAOTestHelper {
     assertEquals("controlled", rowFor(datasetId).accessManagement());
   }
 
+  /** Dataset#getAccessManagement matches the key with equalsIgnoreCase, so this must too. */
+  @Test
+  void findsTheAccessManagementPropertyWhateverTheKeyCasing() {
+    Integer datasetId = insertDatasetWithDataUse("{}");
+    setAccessManagement(datasetId, "AccessManagement", "open");
+
+    PersistedDataUseRow row = rowFor(datasetId);
+
+    assertEquals("open", row.accessManagement());
+    // Read as missing, this would be graded against the controlled shape and reported noncanonical
+    assertTrue(row.isCanonical());
+  }
+
   @Test
   void normalizesStoredCasingAndWhitespace() {
     Integer datasetId = insertDatasetWithDataUse("{}");
