@@ -35,27 +35,40 @@ public final class NulCharacters {
     int index = 0;
     while (index < json.length()) {
       char character = json.charAt(index);
-      if (character != '\\') {
-        if (character != '\0') {
-          stripped.append(character);
-        }
-        index++;
-        continue;
-      }
-      int runStart = index;
-      while (index < json.length() && json.charAt(index) == '\\') {
-        index++;
-      }
-      int run = index - runStart;
-      stripped.repeat('\\', run - run % 2);
-      if (run % 2 == 1) {
-        if (json.startsWith(ESCAPE_BODY, index)) {
-          index += ESCAPE_BODY.length();
-        } else {
-          stripped.append('\\');
-        }
-      }
+      index =
+          character == '\\'
+              ? appendBackslashRun(json, index, stripped)
+              : appendPlainCharacter(character, index, stripped);
     }
     return stripped.toString();
+  }
+
+  /**
+   * Appends what a run of backslashes keeps and returns where it left off. An even run is escaped
+   * backslashes and nothing more; the odd one out escapes whatever follows, so it goes only when
+   * what follows is the escape.
+   */
+  private static int appendBackslashRun(String json, int start, StringBuilder stripped) {
+    int index = start;
+    while (index < json.length() && json.charAt(index) == '\\') {
+      index++;
+    }
+    int run = index - start;
+    stripped.repeat('\\', run - run % 2);
+    if (run % 2 == 0) {
+      return index;
+    }
+    if (json.startsWith(ESCAPE_BODY, index)) {
+      return index + ESCAPE_BODY.length();
+    }
+    stripped.append('\\');
+    return index;
+  }
+
+  private static int appendPlainCharacter(char character, int index, StringBuilder stripped) {
+    if (character != '\0') {
+      stripped.append(character);
+    }
+    return index + 1;
   }
 }
