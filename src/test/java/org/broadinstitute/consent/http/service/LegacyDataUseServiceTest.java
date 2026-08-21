@@ -13,16 +13,21 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
 import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseRow;
+import org.broadinstitute.consent.http.util.TestAppender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class LegacyDataUseServiceTest {
@@ -38,6 +43,10 @@ class LegacyDataUseServiceTest {
   @BeforeEach
   void setUp() {
     service = new LegacyDataUseService(persistedDataUseDAO, matchService);
+  }
+
+  private static String line(List<String> messages, String containing) {
+    return messages.stream().filter(message -> message.contains(containing)).findFirst().orElse("");
   }
 
   private static PersistedDataUseRow row(int datasetId, String dataUse, String accessManagement) {
@@ -192,6 +201,37 @@ class LegacyDataUseServiceTest {
     assertEquals(1, report.failed());
     assertEquals(1, report.retried());
     assertEquals(List.of(16), report.failedDatasetIds());
+  }
+
+  /** Names the failure's type so a programming error cannot read as infrastructure flakiness. */
+  @Test
+  void aFailureIsLoggedByClassAndNeverByMessage() {
+    String otherFreeText = "not for profit consortium only";
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(26))
+        .thenThrow(new IllegalStateException(otherFreeText));
+
+    Logger logger = (Logger) LoggerFactory.getLogger(LegacyDataUseService.class);
+    TestAppender appender = new TestAppender();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    logger.addAppender(appender);
+    appender.start();
+    try {
+      service.run(List.of(row(26, HMB_AND_OTHER, "controlled")));
+
+      List<String> messages =
+          appender.getLoggedEvents().stream().map(ILoggingEvent::getFormattedMessage).toList();
+      // Each attempt's line is checked on its own: one naming the class cannot cover for the other
+      assertTrue(
+          line(messages, "retrying once").contains(IllegalStateException.class.getName()),
+          messages.toString());
+      assertTrue(
+          line(messages, "failed again").contains(IllegalStateException.class.getName()),
+          messages.toString());
+      assertTrue(messages.stream().noneMatch(message -> message.contains(otherFreeText)));
+    } finally {
+      appender.stop();
+      logger.detachAppender(appender);
+    }
   }
 
   /** One record failing must not stop the rest, and the report must scope the rerun. */

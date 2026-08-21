@@ -126,14 +126,19 @@ public class LegacyDataUseService implements ConsentLogger {
     try {
       recomputeMatches(datasetId, recomputed);
       return new Outcome(false, recomputed.size() - before, false);
-    } catch (Exception _) {
-      // No message or cause: a failure raised while matching can quote the Other free text
-      logWarn("Legacy match recompute failed for dataset %d, retrying once".formatted(datasetId));
+    } catch (Exception firstFailure) {
+      // The class, never the message: a failure raised while matching can quote the Other free
+      // text. Naming it keeps a programming error from reading as infrastructure worth retrying.
+      logWarn(
+          "Legacy match recompute failed for dataset %d with %s, retrying once"
+              .formatted(datasetId, firstFailure.getClass().getName()));
       try {
         recomputeMatches(datasetId, recomputed);
         return new Outcome(false, recomputed.size() - before, true);
-      } catch (Exception _) {
-        logWarn("Legacy match recompute failed again for dataset %d".formatted(datasetId));
+      } catch (Exception retryFailure) {
+        logWarn(
+            "Legacy match recompute failed again for dataset %d with %s"
+                .formatted(datasetId, retryFailure.getClass().getName()));
         return new Outcome(true, recomputed.size() - before, true);
       }
     }
