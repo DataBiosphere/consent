@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
 import org.broadinstitute.consent.http.models.dto.registration.template.StudyTemplateValidationResult;
 import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationError;
@@ -37,7 +38,7 @@ public class StudyTemplateValidationService {
 
   public static final int MAX_TEMPLATE_BYTES = 5 * 1024 * 1024;
 
-  /** Shared with the resource, which rejects an oversized upload before this service reads it. */
+  /** The limit is enforced here alone; the resource turns this into a 413. */
   public static final String TOO_LARGE_MESSAGE = "Template file must be no larger than 5 MiB";
 
   static final int MAX_ERRORS = 100;
@@ -106,7 +107,10 @@ public class StudyTemplateValidationService {
     return errors.isEmpty() ? StudyTemplateValidationResult.valid(registration) : failed(errors);
   }
 
-  /** Returns the template text with any leading BOM removed, or {@code null} when unusable. */
+  /**
+   * Returns the template text with any leading BOM removed, or {@code null} when unusable. Reads
+   * one byte beyond the limit, which is all it takes to know the file exceeds it.
+   */
   private static String readTemplate(InputStream content, TemplateErrors errors) {
     byte[] bytes;
     try {
@@ -116,8 +120,7 @@ public class StudyTemplateValidationService {
       return null;
     }
     if (bytes.length > MAX_TEMPLATE_BYTES) {
-      errors.message(TOO_LARGE_MESSAGE);
-      return null;
+      throw new TemplateTooLargeException(TOO_LARGE_MESSAGE);
     }
     String csv;
     try {

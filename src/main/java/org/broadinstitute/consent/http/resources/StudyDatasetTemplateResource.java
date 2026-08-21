@@ -11,15 +11,12 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationResponse;
 import org.broadinstitute.consent.http.service.studytemplate.StudyDatasetTemplateService;
-import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
@@ -50,22 +47,19 @@ public class StudyDatasetTemplateResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   @Timed
   public Response validateTemplate(@Auth DuosUser duosUser, FormDataMultiPart multipart) {
-    try {
-      byte[] template = readTemplate(multipart);
-      if (template.length > StudyTemplateValidationService.MAX_TEMPLATE_BYTES) {
-        return tooLarge();
-      }
-      TemplateValidationResponse response =
-          templateService.validateAndCreateDraft(
-              new ByteArrayInputStream(template), duosUser.getUser());
-      return Response.ok().entity(response).build();
+    // Streamed rather than buffered here: the size limit has one owner, the validator.
+    try (InputStream template = templatePart(multipart)) {
+      return Response.ok()
+          .entity(templateService.validateAndCreateDraft(template, duosUser.getUser()))
+          .build();
+    } catch (TemplateTooLargeException e) {
+      return tooLarge(e);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
   }
 
-  /** Reads one byte beyond the limit, which is all it takes to know the file exceeds it. */
-  private byte[] readTemplate(FormDataMultiPart multipart) throws IOException {
+  private InputStream templatePart(FormDataMultiPart multipart) {
     List<FormDataBodyPart> parts = multipart == null ? List.of() : multipart.getFields(FILE_PART);
     if (parts == null || parts.isEmpty()) {
       throw new BadRequestException(
@@ -75,18 +69,13 @@ public class StudyDatasetTemplateResource extends Resource {
       throw new BadRequestException("Only one template file may be uploaded at a time");
     }
     // The name is never used, so there is no stored name for a traversal check to protect.
-    try (InputStream content = parts.getFirst().getValueAs(InputStream.class)) {
-      return content.readNBytes(StudyTemplateValidationService.MAX_TEMPLATE_BYTES + 1);
-    }
+    return parts.getFirst().getValueAs(InputStream.class);
   }
 
-  private static Response tooLarge() {
+  private static Response tooLarge(TemplateTooLargeException e) {
     return Response.status(Response.Status.REQUEST_ENTITY_TOO_LARGE)
         .type(MediaType.APPLICATION_JSON)
-        .entity(
-            new Error(
-                StudyTemplateValidationService.TOO_LARGE_MESSAGE,
-                Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()))
+        .entity(new Error(e.getMessage(), Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()))
         .build();
   }
 }

@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -10,20 +8,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import jakarta.annotation.security.RolesAllowed;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.DraftType;
+import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
@@ -106,11 +101,13 @@ class StudyDatasetTemplateResourceTest {
   }
 
   @Test
-  void testValidateTemplateRejectsAnOversizedFile() throws Exception {
-    // A request failure rather than a validation result: there is no cell for the producer to fix.
-    byte[] oversized = new byte[StudyTemplateValidationService.MAX_TEMPLATE_BYTES + 1];
-    FormDataBodyPart part = filePart(oversized);
+  void testValidateTemplateReportsAnOversizedFileAsTooLarge() throws Exception {
+    // The validator owns the limit; this pins that its refusal reaches the client as a 413.
+    FormDataBodyPart part = filePart("1,study".getBytes(StandardCharsets.UTF_8));
+    when(duosUser.getUser()).thenReturn(user);
     when(multipart.getFields("file")).thenReturn(List.of(part));
+    when(templateService.validateAndCreateDraft(any(), any()))
+        .thenThrow(new TemplateTooLargeException(StudyTemplateValidationService.TOO_LARGE_MESSAGE));
     initResource();
 
     Response response = resource.validateTemplate(duosUser, multipart);
@@ -121,7 +118,6 @@ class StudyDatasetTemplateResourceTest {
             StudyTemplateValidationService.TOO_LARGE_MESSAGE,
             Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()),
         response.getEntity());
-    verify(templateService, never()).validateAndCreateDraft(any(), any());
   }
 
   @Test
@@ -154,21 +150,9 @@ class StudyDatasetTemplateResourceTest {
 
   @Test
   void testEveryEndpointAdmitsTheRolesTheDraftEndpointsDo() {
-    List<Method> endpoints =
-        Arrays.stream(StudyDatasetTemplateResource.class.getDeclaredMethods())
-            .filter(method -> method.isAnnotationPresent(POST.class))
-            .toList();
-
-    assertFalse(endpoints.isEmpty());
-    endpoints.forEach(
-        endpoint -> {
-          RolesAllowed roles = endpoint.getAnnotation(RolesAllowed.class);
-          assertNotNull(roles, endpoint.getName());
-          assertEquals(
-              Set.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.DATASUBMITTER),
-              Set.of(roles.value()),
-              endpoint.getName());
-        });
+    EndpointRoles.assertEveryEndpointAdmits(
+        StudyDatasetTemplateResource.class,
+        Set.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.DATASUBMITTER));
   }
 
   private static FormDataBodyPart filePart(byte[] content) {
