@@ -5,16 +5,24 @@ description: |
 properties:
   processed:
     type: integer
-    description: Datasets whose matches were recomputed.
+    description: Datasets that completed without a failure.
+  unchanged:
+    type: integer
+    description: |
+      The subset of processed datasets that rebuilt nothing, every Data Access Request on them
+      having been rebuilt already by an earlier dataset in the same run.
   failed:
     type: integer
-    description: Datasets left unchanged because every attempt failed.
+    description: |
+      Datasets whose every attempt failed. A dataset here may still have had earlier Data Access
+      Requests rebuilt, which matchesRecomputed counts.
   retried:
     type: integer
     description: Datasets that failed once and were attempted again, whether or not that succeeded.
   matchesRecomputed:
     type: integer
-    description: Distinct Data Access Requests whose matches were recomputed.
+    description: |
+      Distinct Data Access Requests rebuilt, counted whether or not their dataset went on to fail.
   failedDatasetIds:
     type: array
     description: Datasets needing follow-up, so a rerun can be scoped to them.

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -15,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
+import org.broadinstitute.consent.http.models.datause.NoncanonicalDataUseView;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseRow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +45,7 @@ class LegacyDataUseServiceTest {
   }
 
   @Test
-  void findNoncanonicalRowsExcludesValidShapes() {
+  void noncanonicalViewsExcludeValidShapes() {
     when(persistedDataUseDAO.findAllPersistedDataUse())
         .thenReturn(
             List.of(
@@ -55,7 +57,7 @@ class LegacyDataUseServiceTest {
                 row(6, "{\"generalUse\":true}", "open")));
 
     List<Integer> noncanonical =
-        service.findNoncanonicalRows().stream().map(PersistedDataUseRow::datasetId).toList();
+        service.findNoncanonicalViews().stream().map(NoncanonicalDataUseView::datasetId).toList();
 
     // 3 is MULTIPLE, 4 has no primary under controlled, 6 has a primary under open
     assertEquals(List.of(3, 4, 6), noncanonical);
@@ -102,12 +104,20 @@ class LegacyDataUseServiceTest {
                 // Abstaining but unreachable
                 new PersistedDataUseRow(7, OTHER_ONLY, "controlled", 0)));
 
-    List<Integer> selected =
-        service.findRowsNeedingMatchRecompute().stream()
-            .map(PersistedDataUseRow::datasetId)
-            .toList();
+    // 7 is deliberately not stubbed: an unreachable row must never be queried for its DARs
+    List.of(3, 4, 5, 6)
+        .forEach(
+            id ->
+                when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(id))
+                    .thenReturn(List.of("ref-%d".formatted(id))));
 
-    assertEquals(List.of(3, 4, 5, 6), selected);
+    var report = service.recomputeAbstainingMatches().run();
+
+    List.of(3, 4, 5, 6)
+        .forEach(id -> verify(matchService).reprocessMatchesForPurpose("ref-%d".formatted(id)));
+    // 1 and 2 are canonical single primaries, 7 abstains but no DAR reaches it
+    verifyNoMoreInteractions(matchService);
+    assertEquals(4, report.processed());
   }
 
   @Test
@@ -122,7 +132,6 @@ class LegacyDataUseServiceTest {
     assertEquals(1, report.processed());
     assertEquals(2, report.matchesRecomputed());
     assertEquals(0, report.failed());
-    assertTrue(report.isComplete(1));
   }
 
   /** Reprocessing a DAR covers every dataset on it, so a shared DAR must be rebuilt once. */
@@ -152,6 +161,8 @@ class LegacyDataUseServiceTest {
     verify(matchService, never()).reprocessMatchesForPurpose(any());
     assertEquals(1, report.processed());
     assertEquals(0, report.matchesRecomputed());
+    // Reported apart from the datasets that rebuilt something, which processed alone cannot tell
+    assertEquals(1, report.unchanged());
   }
 
   @Test
@@ -198,7 +209,61 @@ class LegacyDataUseServiceTest {
     assertEquals(1, report.processed());
     assertEquals(1, report.failed());
     assertEquals(List.of(17), report.failedDatasetIds());
-    assertTrue(report.isComplete(2));
+  }
+
+  /** A retry skips what the first attempt rebuilt, so the count cannot come from one attempt. */
+  @Test
+  void aRetryStillCreditsWhatTheFirstAttemptRebuilt() {
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(22))
+        .thenReturn(List.of("ref-a", "ref-b"));
+    // Stubbed explicitly: strict stubbing raises on an unstubbed arg, which the retry would eat
+    doNothing().when(matchService).reprocessMatchesForPurpose("ref-a");
+    doThrow(new RuntimeException("connection reset"))
+        .doNothing()
+        .when(matchService)
+        .reprocessMatchesForPurpose("ref-b");
+
+    var report = service.run(List.of(row(22, HMB_AND_OTHER, "controlled")));
+
+    verify(matchService).reprocessMatchesForPurpose("ref-a");
+    verify(matchService, times(2)).reprocessMatchesForPurpose("ref-b");
+    assertEquals(1, report.processed());
+    assertEquals(1, report.retried());
+    assertEquals(2, report.matchesRecomputed());
+    assertEquals(0, report.unchanged());
+  }
+
+  /** A dataset can fail having already rebuilt some of its DARs; the report must not deny it. */
+  @Test
+  void aFailedDatasetStillCreditsTheDarsItRebuilt() {
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(23))
+        .thenReturn(List.of("ref-a", "ref-b"));
+    doNothing().when(matchService).reprocessMatchesForPurpose("ref-a");
+    doThrow(new RuntimeException("still unavailable"))
+        .when(matchService)
+        .reprocessMatchesForPurpose("ref-b");
+
+    var report = service.run(List.of(row(23, HMB_AND_OTHER, "controlled")));
+
+    assertEquals(1, report.failed());
+    assertEquals(List.of(23), report.failedDatasetIds());
+    assertEquals(1, report.matchesRecomputed());
+  }
+
+  /** Every DAR already rebuilt by an earlier candidate: completed, but it changed nothing. */
+  @Test
+  void aCandidateWhoseDarsWereAlreadyRebuiltIsReportedUnchanged() {
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(24)).thenReturn(List.of("ref-a"));
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(25)).thenReturn(List.of("ref-a"));
+
+    var report =
+        service.run(List.of(row(24, OTHER_ONLY, "controlled"), row(25, OTHER_ONLY, "controlled")));
+
+    verify(matchService).reprocessMatchesForPurpose("ref-a");
+    verifyNoMoreInteractions(matchService);
+    assertEquals(2, report.processed());
+    assertEquals(1, report.unchanged());
+    assertEquals(1, report.matchesRecomputed());
   }
 
   @Test
@@ -235,11 +300,10 @@ class LegacyDataUseServiceTest {
 
     verifyNoInteractions(matchService);
     assertEquals(0, result.run().processed());
-    assertTrue(result.run().isComplete(0));
   }
 
   @Test
-  void recomputeReportsCompleteWhenNothingAbstains() {
+  void recomputeTouchesNothingWhenNothingAbstains() {
     when(persistedDataUseDAO.findAllPersistedDataUse())
         .thenReturn(List.of(new PersistedDataUseRow(1, "{\"generalUse\":true}", "controlled", 1)));
 
@@ -247,16 +311,16 @@ class LegacyDataUseServiceTest {
 
     verifyNoInteractions(matchService);
     assertEquals(0, result.run().processed());
-    assertTrue(result.run().isComplete(0));
     assertTrue(result.leftClassificationsUnchanged());
   }
 
   @Test
-  void emptyCandidateListIsComplete() {
+  void emptyCandidateListReportsZeros() {
     var report = service.run(List.of());
 
     assertEquals(0, report.processed());
-    assertTrue(report.isComplete(0));
-    assertFalse(report.isComplete(1));
+    assertEquals(0, report.unchanged());
+    assertEquals(0, report.failed());
+    assertEquals(0, report.matchesRecomputed());
   }
 }

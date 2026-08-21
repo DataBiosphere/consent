@@ -28,30 +28,46 @@ public record PersistedDataUseReport(
     int noncanonicalDatasetsWithDars,
     int noncanonicalDarReferences) {
 
+  /**
+   * Copied so a caller's map cannot mutate a report the pre/post comparison holds by value. Not
+   * {@code Map.copyOf}, which would discard the ordering {@link #from} establishes.
+   */
+  public PersistedDataUseReport {
+    countsByClassification =
+        Collections.unmodifiableMap(new LinkedHashMap<>(countsByClassification));
+    Map<String, Map<String, Integer>> copiedRows = new TreeMap<>();
+    countsByAccessManagement.forEach(
+        (key, counts) ->
+            copiedRows.put(key, Collections.unmodifiableMap(new LinkedHashMap<>(counts))));
+    countsByAccessManagement = Collections.unmodifiableMap(copiedRows);
+  }
+
   public static PersistedDataUseReport from(List<PersistedDataUseRow> rows) {
-    List<PersistedDataUseRow> noncanonical =
-        rows.stream().filter(row -> !row.isCanonical()).toList();
+    // Classified once: every count below asks the same parse a different question
+    List<Classified> classified = rows.stream().map(Classified::of).toList();
+    List<Classified> noncanonical = classified.stream().filter(row -> !row.isCanonical()).toList();
 
     return new PersistedDataUseReport(
         rows.size(),
-        countByLabelDescending(rows),
-        rows.stream()
+        countByLabelDescending(classified),
+        classified.stream()
             .collect(
                 Collectors.groupingBy(
-                    PersistedDataUseRow::accessManagementLabel,
+                    row -> row.row().accessManagementLabel(),
                     // Sorted so the cross-tabulation reads the same way on every run
                     TreeMap::new,
                     Collectors.collectingAndThen(
                         Collectors.toList(), PersistedDataUseReport::countByLabelDescending))),
         noncanonical.size(),
-        (int)
-            noncanonical.stream()
-                .filter(row -> row.darCount() != null && row.darCount() > 0)
-                .count(),
-        noncanonical.stream().mapToInt(row -> row.darCount() == null ? 0 : row.darCount()).sum());
+        (int) noncanonical.stream().filter(row -> darCount(row) > 0).count(),
+        noncanonical.stream().mapToInt(PersistedDataUseReport::darCount).sum());
   }
 
-  private static Map<String, Integer> countByLabelDescending(List<PersistedDataUseRow> rows) {
+  private static int darCount(Classified classified) {
+    return classified.row().darCount() == null ? 0 : classified.row().darCount();
+  }
+
+  private static Map<String, Integer> countByLabelDescending(List<Classified> rows) {
     Map<String, Integer> ordered = new LinkedHashMap<>();
     rows.stream()
         .collect(Collectors.groupingBy(row -> row.classification().label(), Collectors.counting()))
@@ -62,20 +78,19 @@ public record PersistedDataUseReport(
                 .reversed()
                 .thenComparing(Map.Entry.comparingByKey()))
         .forEachOrdered(entry -> ordered.put(entry.getKey(), entry.getValue().intValue()));
-    // Not Map.copyOf, which would discard the ordering just established
-    return Collections.unmodifiableMap(ordered);
+    return ordered;
   }
 
-  /** Percentage of all datasets carrying a classification. */
-  public double percentage(String classificationLabel) {
-    if (totalDatasets == 0) {
-      return 0d;
+  /** One row and its single parse, so canonicality and the label come from the same one. */
+  private record Classified(
+      PersistedDataUseRow row, PersistedDataUseClassification classification) {
+
+    static Classified of(PersistedDataUseRow row) {
+      return new Classified(row, row.classification());
     }
-    return countsByClassification.getOrDefault(classificationLabel, 0) * 100d / totalDatasets;
-  }
 
-  /** Whether two reports describe the same population, which is how pre/post states reconcile. */
-  public boolean reconcilesWith(PersistedDataUseReport other) {
-    return other != null && totalDatasets == other.totalDatasets;
+    boolean isCanonical() {
+      return row.isCanonical(classification);
+    }
   }
 }

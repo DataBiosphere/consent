@@ -71,7 +71,7 @@ class LegacyDataUseResourceTest {
 
   @Test
   void testRecomputeMatches() {
-    var result = runResult(new LegacyDataUseRunReport(3, 0, 0, 5, List.of()));
+    var result = runResult(new LegacyDataUseRunReport(3, 0, 0, 0, 5, List.of()));
     when(service.recomputeAbstainingMatches()).thenReturn(result);
     initResource();
 
@@ -84,7 +84,7 @@ class LegacyDataUseResourceTest {
   @Test
   void testRecomputeMatchesReportsFailedDatasetsForRerun() {
     when(service.recomputeAbstainingMatches())
-        .thenReturn(runResult(new LegacyDataUseRunReport(1, 1, 1, 1, List.of(42))));
+        .thenReturn(runResult(new LegacyDataUseRunReport(1, 0, 1, 1, 1, List.of(42))));
     initResource();
 
     Response response = resource.recomputeAbstainingMatches(duosUser);

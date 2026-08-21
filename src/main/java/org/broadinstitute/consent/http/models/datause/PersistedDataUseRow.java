@@ -29,11 +29,21 @@ public record PersistedDataUseRow(
   }
 
   public boolean isCanonical() {
-    return classification().isCanonicalFor(isOpenAccess());
+    return isCanonical(classification());
   }
 
   /** Has a stored match V5 would now abstain on, and a DAR the recompute can reach it through. */
   public boolean needsMatchRecompute() {
-    return classification().abstainsWhenMatched() && darCount != null && darCount > 0;
+    return needsMatchRecompute(classification());
+  }
+
+  // Overloads taking an already-parsed classification, so the report and the run can ask both
+  // questions of one parse rather than reparsing the JSON per question.
+  public boolean isCanonical(PersistedDataUseClassification classification) {
+    return classification.isCanonicalFor(isOpenAccess());
+  }
+
+  public boolean needsMatchRecompute(PersistedDataUseClassification classification) {
+    return classification.abstainsWhenMatched() && darCount != null && darCount > 0;
   }
 }

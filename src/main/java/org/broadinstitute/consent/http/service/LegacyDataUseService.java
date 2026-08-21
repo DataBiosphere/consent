@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.PersistedDataUseDAO;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunReport;
 import org.broadinstitute.consent.http.models.datause.LegacyDataUseRunResult;
@@ -31,6 +34,7 @@ public class LegacyDataUseService implements ConsentLogger {
     this(jdbi.onDemand(PersistedDataUseDAO.class), matchService);
   }
 
+  @VisibleForTesting
   LegacyDataUseService(PersistedDataUseDAO persistedDataUseDAO, MatchService matchService) {
     this.persistedDataUseDAO = persistedDataUseDAO;
     this.matchService = matchService;
@@ -40,22 +44,14 @@ public class LegacyDataUseService implements ConsentLogger {
     return PersistedDataUseReport.from(persistedDataUseDAO.findAllPersistedDataUse());
   }
 
-  /** Datasets whose shape the canonical validator would now reject. */
-  public List<PersistedDataUseRow> findNoncanonicalRows() {
+  /**
+   * Identified so an admin can act on them; classification labels only. The rows themselves stay
+   * inside the service, since they carry the raw value and it can hold Other free text.
+   */
+  public List<NoncanonicalDataUseView> findNoncanonicalViews() {
     return persistedDataUseDAO.findAllPersistedDataUse().stream()
         .filter(row -> !row.isCanonical())
-        .toList();
-  }
-
-  /** Identified so an admin can act on them; classification labels only. */
-  public List<NoncanonicalDataUseView> findNoncanonicalViews() {
-    return findNoncanonicalRows().stream().map(NoncanonicalDataUseView::from).toList();
-  }
-
-  /** Abstaining datasets reachable through a DAR, which is the unit recompute works by. */
-  public List<PersistedDataUseRow> findRowsNeedingMatchRecompute() {
-    return persistedDataUseDAO.findAllPersistedDataUse().stream()
-        .filter(PersistedDataUseRow::needsMatchRecompute)
+        .map(NoncanonicalDataUseView::from)
         .toList();
   }
 
@@ -63,20 +59,32 @@ public class LegacyDataUseService implements ConsentLogger {
   public LegacyDataUseRunResult recomputeAbstainingMatches() {
     List<PersistedDataUseRow> rows = persistedDataUseDAO.findAllPersistedDataUse();
     PersistedDataUseReport before = PersistedDataUseReport.from(rows);
-    List<PersistedDataUseRow> abstaining =
-        rows.stream().filter(row -> row.classification().abstainsWhenMatched()).toList();
-    List<PersistedDataUseRow> candidates =
-        abstaining.stream().filter(PersistedDataUseRow::needsMatchRecompute).toList();
+    // Partitioned from one parse per row, and by the same predicate the run works by
+    Map<Boolean, List<PersistedDataUseRow>> abstaining =
+        rows.stream()
+            .map(row -> Map.entry(row, row.classification()))
+            .filter(entry -> entry.getValue().abstainsWhenMatched())
+            .collect(
+                Collectors.partitioningBy(
+                    entry -> entry.getKey().needsMatchRecompute(entry.getValue()),
+                    Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
+    List<PersistedDataUseRow> candidates = abstaining.get(true);
     // Counted in the log so unreachable rows are not mistaken for done
     logInfo(
         "Recomputing matches for %d abstaining datasets; %d have no DAR relation and are left alone"
-            .formatted(candidates.size(), abstaining.size() - candidates.size()));
+            .formatted(candidates.size(), abstaining.get(false).size()));
     LegacyDataUseRunReport run = run(candidates);
-    return new LegacyDataUseRunResult(before, report(), run);
+    LegacyDataUseRunResult result = new LegacyDataUseRunResult(before, report(), run);
+    if (!result.leftClassificationsUnchanged()) {
+      // A recompute writes no stored Data Use, so a change here came from outside this run
+      logWarn("Legacy Data Use classifications changed during a recompute-only run");
+    }
+    return result;
   }
 
   LegacyDataUseRunReport run(List<PersistedDataUseRow> candidates) {
     int processed = 0;
+    int unchanged = 0;
     int retried = 0;
     int matchesRecomputed = 0;
     List<Integer> failedDatasetIds = new ArrayList<>();
@@ -88,35 +96,50 @@ public class LegacyDataUseService implements ConsentLogger {
       if (outcome.retried()) {
         retried++;
       }
+      // Counted either way: a dataset that failed on its last DAR still rebuilt the earlier ones
+      matchesRecomputed += outcome.matchesRecomputed();
       if (outcome.failed()) {
         failedDatasetIds.add(candidate.datasetId());
       } else {
         processed++;
-        matchesRecomputed += outcome.matchesRecomputed();
+        if (outcome.matchesRecomputed() == 0) {
+          unchanged++;
+        }
       }
     }
 
     return new LegacyDataUseRunReport(
-        processed, failedDatasetIds.size(), retried, matchesRecomputed, failedDatasetIds);
+        processed,
+        unchanged,
+        failedDatasetIds.size(),
+        retried,
+        matchesRecomputed,
+        failedDatasetIds);
   }
 
+  /**
+   * Counts by how much the run's rebuilt set grew rather than by what an attempt returned, so a
+   * retry that skips the DARs the first attempt already rebuilt still credits them.
+   */
   private Outcome recomputeWithOneRetry(Integer datasetId, Set<String> recomputed) {
+    int before = recomputed.size();
     try {
-      return new Outcome(false, recomputeMatches(datasetId, recomputed), false);
+      recomputeMatches(datasetId, recomputed);
+      return new Outcome(false, recomputed.size() - before, false);
     } catch (Exception _) {
       // No message or cause: a failure raised while matching can quote the Other free text
       logWarn("Legacy match recompute failed for dataset %d, retrying once".formatted(datasetId));
       try {
-        return new Outcome(false, recomputeMatches(datasetId, recomputed), true);
+        recomputeMatches(datasetId, recomputed);
+        return new Outcome(false, recomputed.size() - before, true);
       } catch (Exception _) {
         logWarn("Legacy match recompute failed again for dataset %d".formatted(datasetId));
-        return new Outcome(true, 0, true);
+        return new Outcome(true, recomputed.size() - before, true);
       }
     }
   }
 
-  private int recomputeMatches(Integer datasetId, Set<String> recomputed) {
-    int count = 0;
+  private void recomputeMatches(Integer datasetId, Set<String> recomputed) {
     for (String referenceId : persistedDataUseDAO.findDarReferenceIdsByDatasetId(datasetId)) {
       if (recomputed.contains(referenceId)) {
         continue;
@@ -124,9 +147,7 @@ public class LegacyDataUseService implements ConsentLogger {
       matchService.reprocessMatchesForPurpose(referenceId);
       // Recorded after the call so a retry picks up only what is still outstanding
       recomputed.add(referenceId);
-      count++;
     }
-    return count;
   }
 
   private record Outcome(boolean failed, int matchesRecomputed, boolean retried) {}

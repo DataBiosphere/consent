@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -28,16 +29,6 @@ class PersistedDataUseReportTest {
     assertEquals(Map.of(), report.countsByClassification());
     assertEquals(0, report.noncanonicalDatasets());
     assertEquals(0, report.noncanonicalDarReferences());
-    // Guards the divide rather than throwing
-    assertEquals(0d, report.percentage("SINGLE(GRU)"));
-  }
-
-  @Test
-  void percentageIsZeroForAnAbsentClassification() {
-    var report = PersistedDataUseReport.from(List.of(row(1, GRU, "controlled", 0)));
-
-    assertEquals(100d, report.percentage("SINGLE(GRU)"));
-    assertEquals(0d, report.percentage("SINGLE(POA)"));
   }
 
   @Test
@@ -102,17 +93,32 @@ class PersistedDataUseReportTest {
   }
 
   @Test
-  void reconcilesWithAReportOverTheSamePopulation() {
-    var before = PersistedDataUseReport.from(List.of(row(1, HMB_AND_OTHER, "controlled", 1)));
-    var after =
-        PersistedDataUseReport.from(List.of(row(1, "{\"hmbResearch\":true}", "controlled", 1)));
-    var different =
-        PersistedDataUseReport.from(
-            List.of(row(1, GRU, "controlled", 1), row(2, GRU, "controlled", 1)));
+  void aDirectlyConstructedReportCopiesTheMapsItIsGiven() {
+    // The pre/post comparison holds reports by value, so a caller's map must not reach inside one
+    Map<String, Integer> counts = new LinkedHashMap<>(Map.of("SINGLE(GRU)", 1));
+    Map<String, Map<String, Integer>> byAccessManagement = new LinkedHashMap<>();
+    byAccessManagement.put("controlled", counts);
+    var report = new PersistedDataUseReport(1, counts, byAccessManagement, 0, 0, 0);
 
-    assertTrue(before.reconcilesWith(after));
-    assertFalse(before.reconcilesWith(different));
-    assertFalse(before.reconcilesWith(null));
+    counts.put("NONE", 7);
+    byAccessManagement.put("open", Map.of("NONE", 7));
+
+    assertEquals(Map.of("SINGLE(GRU)", 1), report.countsByClassification());
+    assertEquals(Map.of("controlled", Map.of("SINGLE(GRU)", 1)), report.countsByAccessManagement());
+  }
+
+  @Test
+  void aReportKeepsItsCountsOrderedAfterTheCopy() {
+    var report =
+        PersistedDataUseReport.from(
+            List.of(
+                row(1, GRU, "controlled", 0),
+                row(2, GRU, "controlled", 0),
+                row(3, HMB_AND_OTHER, "controlled", 1)));
+
+    assertEquals(
+        List.of("SINGLE(GRU)", "MULTIPLE(HMB,OTHER)"),
+        List.copyOf(report.countsByClassification().keySet()));
   }
 
   @ParameterizedTest
