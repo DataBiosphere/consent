@@ -400,8 +400,7 @@ class StudyTemplateValidationServiceTest {
 
   @Test
   void testValidate_readsAFileAtExactlyTheSizeLimit() {
-    // The boundary the read-one-byte-extra trick exists to get right: a file this size is read and
-    // validated rather than rejected or truncated to fit.
+    // The boundary the read-one-byte-extra trick exists to get right: read, not rejected.
     byte[] atTheLimit = new byte[StudyTemplateValidationService.MAX_TEMPLATE_BYTES];
 
     StudyTemplateValidationResult result = service.validate(new ByteArrayInputStream(atTheLimit));

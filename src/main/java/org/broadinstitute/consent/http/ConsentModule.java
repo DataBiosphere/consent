@@ -199,10 +199,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     return executorService;
   }
 
-  /**
-   * One mapper for the registration document, so the draft written from a template is serialized by
-   * the same configuration the registration endpoint reads it back with.
-   */
+  /** One mapper, so a draft written from a template is serialized as the registration reads it. */
   @Provides
   @Singleton
   private ObjectMapper providesObjectMapper() {

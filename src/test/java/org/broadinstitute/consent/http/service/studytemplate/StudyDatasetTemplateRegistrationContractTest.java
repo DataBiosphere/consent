@@ -54,8 +54,7 @@ class StudyDatasetTemplateRegistrationContractTest {
 
   @Test
   void testAValidatedTemplateDocumentIsAcceptedByTheRegistrationEndpoint() throws Exception {
-    // One mapper for both sides, as the injector supplies: two of its own could not catch the
-    // drift between them this contract exists to rule out.
+    // One mapper for both sides, as the injector supplies: two would hide the drift between them.
     ObjectMapper objectMapper = new ObjectMapper();
     StudyDatasetTemplateService templateService =
         new StudyDatasetTemplateService(

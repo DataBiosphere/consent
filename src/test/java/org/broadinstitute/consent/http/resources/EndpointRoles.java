@@ -16,10 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Shared so the set of HTTP methods scanned cannot drift between resources: a copy filtering fewer
- * of them would stop covering an endpoint added with another verb.
- */
+/** Shared so a copy filtering fewer verbs cannot quietly stop covering an endpoint. */
 final class EndpointRoles {
 
   private static final Set<Class<? extends Annotation>> HTTP_METHODS =

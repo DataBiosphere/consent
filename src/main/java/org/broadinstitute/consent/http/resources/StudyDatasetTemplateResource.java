@@ -41,9 +41,9 @@ public class StudyDatasetTemplateResource extends Resource {
   }
 
   /**
-   * A template that fails validation is a completed result rather than a failed request, answered
-   * 200 with the errors to fix; a valid one is a 201 at the draft it created. Only an unusable
-   * request — no file, more than one, or one too large to read — is a failure.
+   * A failed validation is a completed result, answered 200 with the errors to fix; a valid one is
+   * a 201 at the draft it created. Only an unusable request — no file, more than one, or one too
+   * large to read — is a failure.
    */
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)

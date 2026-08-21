@@ -40,8 +40,7 @@ public class StudyDatasetTemplateService {
       return TemplateValidationResponse.invalid(result.errors(), result.truncated());
     }
 
-    // The injected mapper is the one the registration endpoint reads with, so the document the user
-    // edits there is the one validated here.
+    // The injected mapper is the registration endpoint's, so the user edits what was validated.
     DraftInterface draft =
         new DraftStudyDataset(objectMapper.writeValueAsString(result.registration()), user);
     draftService.insertDraft(draft);

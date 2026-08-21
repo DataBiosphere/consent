@@ -28,8 +28,7 @@ class TemplateValidationResponseExamplesTest {
     JsonNode documented =
         new YAMLMapper()
             .readTree(SPEC.toFile())
-            // requiredAt, not at: a missing pointer round-trips to JSON null through Gson, and
-            // would pass the assertion below while documenting nothing.
+            // requiredAt, not at: a missing pointer round-trips to JSON null through Gson.
             .requiredAt(
                 "/post/responses/%s/content/application~1json/examples/%s/value"
                     .formatted(status, example));
