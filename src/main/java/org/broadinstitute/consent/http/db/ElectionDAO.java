@@ -109,6 +109,25 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds,
       @Bind("electionType") String electionType);
 
+  /**
+   * Find the most recent election for each reference id and election type.
+   *
+   * <p><b>Caution: this returns one election per (reference id, election type), NOT one per
+   * dataset.</b> The partition key omits {@code dataset_id}, so a DAR spanning several datasets
+   * collapses to a single election and the elections on its other datasets are dropped. This is
+   * safe for the current caller only because {@code
+   * DarCollectionService#cancelDarCollectionAsResearcher} uses the result as an existence check
+   * ("are there any elections on this collection?"), and dropping rows cannot change whether the
+   * list is empty.
+   *
+   * <p>Any caller that iterates these results, counts them, or needs the latest election for each
+   * dataset on a DAR must add {@code e.dataset_id} to the partition key first. Compare {@link
+   * DarCollectionDAO} and {@link MatchDAO}, which partition by reference id and dataset id for
+   * exactly that reason.
+   *
+   * @param referenceIds The DAR reference UUIDs
+   * @return The latest election per reference id and election type
+   */
   @SqlQuery(
       """
       SELECT * FROM (
@@ -118,6 +137,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                ELSE v.update_date
                END as final_vote_date,
            v.rationale final_rationale, MAX(e.election_id)
+           -- Note that `dataset_id` is intentionally absent from the partition key: this yields
+           -- one election per DAR and type, not one per dataset. Only valid for existence checks.
+           -- See the javadoc before reusing this query.
            OVER (PARTITION BY e.reference_id, e.election_type) AS latest
            FROM election e
            LEFT JOIN vote v ON e.election_id = v.election_id AND

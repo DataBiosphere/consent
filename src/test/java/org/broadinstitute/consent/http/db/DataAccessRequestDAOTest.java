@@ -717,6 +717,162 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   /**
+   * The final-vote window is partitioned by reference id AND dataset id. Partitioning by dataset id
+   * alone lets the most recent final vote anywhere in the system decide every DAR that touches that
+   * dataset, so an unrelated denial silently revokes approvals that were granted correctly.
+   */
+  @Test
+  void testFindDatasetApprovalsByDar_OtherDarDenialDoesNotRevokeApproval() {
+    Dataset dataset = createDARDAOTestDataset();
+    User user = createUserWithInstitution();
+    Date earlier = new Date(Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli());
+    Date later = new Date();
+
+    DataAccessRequest approvedDar = createDAR(user, dataset, "DAR-" + randomInt(100, 1000000));
+    Election approvedElection =
+        createDataAccessElection(approvedDar.getReferenceId(), dataset.getDatasetId());
+    Vote approvedVote =
+        createFinalVote(dataset.getCreateUserId(), approvedElection.getElectionId());
+    updateVote(
+        true,
+        "",
+        earlier,
+        approvedVote.getVoteId(),
+        false,
+        approvedElection.getElectionId(),
+        earlier,
+        false);
+
+    assertTrue(
+        dataAccessRequestDAO
+            .findDatasetApprovalsByDar(approvedDar.getReferenceId())
+            .contains(dataset.getDatasetId()));
+
+    // A separate DAR on the same dataset is denied more recently.
+    DataAccessRequest deniedDar = createDAR(user, dataset, "DAR-" + randomInt(100, 1000000));
+    Election deniedElection =
+        createDataAccessElection(deniedDar.getReferenceId(), dataset.getDatasetId());
+    Vote deniedVote = createFinalVote(dataset.getCreateUserId(), deniedElection.getElectionId());
+    updateVote(
+        false,
+        "",
+        later,
+        deniedVote.getVoteId(),
+        false,
+        deniedElection.getElectionId(),
+        later,
+        false);
+
+    assertTrue(
+        dataAccessRequestDAO
+            .findDatasetApprovalsByDar(approvedDar.getReferenceId())
+            .contains(dataset.getDatasetId()),
+        "A denial on a different DAR must not revoke this DAR's approval");
+    assertTrue(
+        dataAccessRequestDAO.findDatasetApprovalsByDar(deniedDar.getReferenceId()).isEmpty(),
+        "The denied DAR must have no approved datasets");
+  }
+
+  /**
+   * The inverse of {@link #testFindDatasetApprovalsByDar_OtherDarDenialDoesNotRevokeApproval()}: an
+   * approval granted to someone else must not confer access on a DAR that was denied.
+   */
+  @Test
+  void testFindDatasetApprovalsByDar_OtherDarApprovalDoesNotGrantApproval() {
+    Dataset dataset = createDARDAOTestDataset();
+    User user = createUserWithInstitution();
+    Date earlier = new Date(Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli());
+    Date later = new Date();
+
+    DataAccessRequest deniedDar = createDAR(user, dataset, "DAR-" + randomInt(100, 1000000));
+    Election deniedElection =
+        createDataAccessElection(deniedDar.getReferenceId(), dataset.getDatasetId());
+    Vote deniedVote = createFinalVote(dataset.getCreateUserId(), deniedElection.getElectionId());
+    updateVote(
+        false,
+        "",
+        earlier,
+        deniedVote.getVoteId(),
+        false,
+        deniedElection.getElectionId(),
+        earlier,
+        false);
+
+    // A separate DAR on the same dataset is approved more recently.
+    DataAccessRequest approvedDar = createDAR(user, dataset, "DAR-" + randomInt(100, 1000000));
+    Election approvedElection =
+        createDataAccessElection(approvedDar.getReferenceId(), dataset.getDatasetId());
+    Vote approvedVote =
+        createFinalVote(dataset.getCreateUserId(), approvedElection.getElectionId());
+    updateVote(
+        true,
+        "",
+        later,
+        approvedVote.getVoteId(),
+        false,
+        approvedElection.getElectionId(),
+        later,
+        false);
+
+    assertTrue(
+        dataAccessRequestDAO.findDatasetApprovalsByDar(deniedDar.getReferenceId()).isEmpty(),
+        "An approval on a different DAR must not grant this DAR access");
+    assertTrue(
+        dataAccessRequestDAO
+            .findDatasetApprovalsByDar(approvedDar.getReferenceId())
+            .contains(dataset.getDatasetId()));
+  }
+
+  /**
+   * Reproduces the production shape: a DAR approved on two datasets loses only the dataset that
+   * some other DAR later had denied, so the call returns one id instead of two.
+   */
+  @Test
+  void testFindDatasetApprovalsByDar_MultipleDatasetsSurviveOtherDarDenial() {
+    Dataset sharedDataset = createDARDAOTestDataset();
+    Dataset otherDataset = createDARDAOTestDataset();
+    User user = createUserWithInstitution();
+    Date earlier = new Date(Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli());
+    Date later = new Date();
+
+    DataAccessRequest dar = createDAR(user, sharedDataset, "DAR-" + randomInt(100, 1000000));
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        dar.getReferenceId(), otherDataset.getDatasetId());
+
+    for (Dataset dataset : List.of(sharedDataset, otherDataset)) {
+      Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+      Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+      updateVote(
+          true, "", earlier, vote.getVoteId(), false, election.getElectionId(), earlier, false);
+    }
+
+    assertEquals(2, dataAccessRequestDAO.findDatasetApprovalsByDar(dar.getReferenceId()).size());
+
+    // An unrelated DAR is denied on just one of the two datasets, more recently.
+    DataAccessRequest unrelatedDar =
+        createDAR(user, sharedDataset, "DAR-" + randomInt(100, 1000000));
+    Election unrelatedElection =
+        createDataAccessElection(unrelatedDar.getReferenceId(), sharedDataset.getDatasetId());
+    Vote unrelatedVote =
+        createFinalVote(sharedDataset.getCreateUserId(), unrelatedElection.getElectionId());
+    updateVote(
+        false,
+        "",
+        later,
+        unrelatedVote.getVoteId(),
+        false,
+        unrelatedElection.getElectionId(),
+        later,
+        false);
+
+    Set<Integer> approvals = dataAccessRequestDAO.findDatasetApprovalsByDar(dar.getReferenceId());
+    assertEquals(
+        2, approvals.size(), "Both approved datasets must survive an unrelated DAR's denial");
+    assertTrue(approvals.contains(sharedDataset.getDatasetId()));
+    assertTrue(approvals.contains(otherDataset.getDatasetId()));
+  }
+
+  /**
    * Tests the case where a user has been approved for access, then denied access, and that the user
    * does not show up as an approved user for the dataset.
    */

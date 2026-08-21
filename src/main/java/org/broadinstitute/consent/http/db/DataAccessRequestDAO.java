@@ -193,7 +193,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * LAST vote in the group of final votes for all data access elections. We need to group them due
    * to the case of multiple elections on a dar-dataset request. Election 1 may have been denied.
    * Election 2 may have been approved. Election 3 may have been denied again. When we partition
-   * over the election reference id, we'll get all final votes. The `LAST_VALUE` function selects
+   * over the election reference ID and dataset ID, we'll get all final votes for that one
+   * DAR-dataset pair; the reference ID must be part of the partition key so votes cast on other
+   * DARs for the same dataset cannot influence this DAR's result. The `LAST_VALUE` function selects
    * the last result in the partition, which would be `FALSE` in the example above. Outside the
    * JOIN, we filter on groupings where the final vote value is `TRUE` so the denied election in the
    * example would be filtered out.
@@ -209,7 +211,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       INNER JOIN (
         SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
         OVER(
-          PARTITION BY e.dataset_id
+          PARTITION BY e.reference_id, e.dataset_id
             ORDER BY v.create_date
             RANGE BETWEEN
               UNBOUNDED PRECEDING AND
