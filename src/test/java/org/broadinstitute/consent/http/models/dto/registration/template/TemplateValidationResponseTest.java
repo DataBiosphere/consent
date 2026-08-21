@@ -34,6 +34,16 @@ class TemplateValidationResponseTest {
   }
 
   @Test
+  void testAResponseWithoutAnErrorListReadsAsHavingNone() {
+    // A body omitting errors deserializes with a null list, which List.copyOf would NPE on.
+    TemplateValidationResponse response =
+        GsonUtil.getInstance()
+            .fromJson("{\"valid\":true,\"truncated\":false}", TemplateValidationResponse.class);
+
+    assertEquals(List.of(), response.errors());
+  }
+
+  @Test
   void testValidResponseCarriesAnEmptyErrorListAndTheTypedDraft() {
     TemplateValidationResponse response =
         TemplateValidationResponse.valid(
