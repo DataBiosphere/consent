@@ -73,7 +73,13 @@ post:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
     401:
-      description: User not authorized to validate a template
+      description: Caller is unauthenticated.
+    403:
+      description: Caller holds no role permitted to validate a template.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     413:
       description: >-
         The file is larger than the 5 MiB template limit, or the request declares more
