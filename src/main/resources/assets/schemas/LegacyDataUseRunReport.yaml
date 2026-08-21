@@ -14,7 +14,7 @@ properties:
     description: Datasets that failed once and were attempted again, whether or not that succeeded.
   matchesRecomputed:
     type: integer
-    description: Data Access Requests whose matches were recomputed.
+    description: Distinct Data Access Requests whose matches were recomputed.
   failedDatasetIds:
     type: array
     description: Datasets needing follow-up, so a rerun can be scoped to them.

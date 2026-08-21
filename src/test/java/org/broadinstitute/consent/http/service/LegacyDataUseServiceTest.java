@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -124,6 +125,24 @@ class LegacyDataUseServiceTest {
     assertTrue(report.isComplete(1));
   }
 
+  /** Reprocessing a DAR covers every dataset on it, so a shared DAR must be rebuilt once. */
+  @Test
+  void aDarSharedByCandidatesIsRebuiltOnce() {
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(20)).thenReturn(List.of("ref-a"));
+    when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(21))
+        .thenReturn(List.of("ref-a", "ref-b"));
+
+    var report =
+        service.run(List.of(row(20, OTHER_ONLY, "controlled"), row(21, OTHER_ONLY, "controlled")));
+
+    verify(matchService).reprocessMatchesForPurpose("ref-a");
+    verify(matchService).reprocessMatchesForPurpose("ref-b");
+    verifyNoMoreInteractions(matchService);
+    assertEquals(2, report.processed());
+    // Distinct DARs, not one count per dataset
+    assertEquals(2, report.matchesRecomputed());
+  }
+
   @Test
   void datasetWithNoDarsChangesNoMatches() {
     when(persistedDataUseDAO.findDarReferenceIdsByDatasetId(19)).thenReturn(List.of());
@@ -194,6 +213,8 @@ class LegacyDataUseServiceTest {
     var result = service.recomputeAbstainingMatches();
 
     verify(matchService).reprocessMatchesForPurpose("ref-a");
+    // Read once for the candidates and the before report, once more to reconcile
+    verify(persistedDataUseDAO, times(2)).findAllPersistedDataUse();
     assertEquals(1, result.run().processed());
     assertEquals(1, result.run().matchesRecomputed());
     assertEquals(0, result.run().failed());
