@@ -205,6 +205,25 @@ class DraftDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testInsertKeepsAnEscapedBackslashBeforeTheEscape() {
+    // The value is a backslash followed by the literal text u0000; stripping from the second
+    // backslash leaves JSON the cast rejects.
+    String jsonText = "{\"name\": \"Greg\\\\u0000\"}";
+    User user = createUser();
+    DraftStudyDataset draft = new DraftStudyDataset(jsonText, user);
+    draftDAO.insert(
+        draft.getName(),
+        draft.getCreateDate().toInstant(),
+        user.getUserId(),
+        jsonText,
+        draft.getUUID(),
+        draft.getType().getValue());
+
+    DraftInterface returnedDraft = draftDAO.findDraftById(draft.getUUID());
+    assertEquals(jsonText, returnedDraft.getJson());
+  }
+
+  @Test
   void testFindByUserOperations() {
     User user1 = createUser();
     User user2 = createUser();
