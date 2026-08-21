@@ -112,7 +112,7 @@ After this change:
 
 ## Scope and Repository Boundary
 
-This change spans two repositories, both present in this dev container:
+This change spans two repositories:
 
 | Repository | Path | Stack |
 | --- | --- | --- |
