@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.exceptions;
 
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.core.Response.Status;
-
-/** An upload too large to validate: a failed request rather than a validation result. */
-public class TemplateTooLargeException extends ClientErrorException {
+/**
+ * An upload too large to validate: a failed request rather than a validation result. Deliberately
+ * not a JAX-RS exception — the validator that raises it has no HTTP to answer with, and the
+ * resource that catches it decides the status.
+ */
+public class TemplateTooLargeException extends RuntimeException {
   public TemplateTooLargeException(String message) {
-    super(message, Status.REQUEST_ENTITY_TOO_LARGE);
+    super(message);
   }
 }
