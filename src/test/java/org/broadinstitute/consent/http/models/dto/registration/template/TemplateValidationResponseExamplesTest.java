@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.models.dto.registration.template;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -28,10 +27,11 @@ class TemplateValidationResponseExamplesTest {
     JsonNode documented =
         new YAMLMapper()
             .readTree(SPEC.toFile())
-            .at(
+            // requiredAt, not at: a missing pointer round-trips to JSON null through Gson, and
+            // would pass the assertion below while documenting nothing.
+            .requiredAt(
                 "/post/responses/200/content/application~1json/examples/%s/value"
                     .formatted(example));
-    assertNotNull(documented);
 
     TemplateValidationResponse parsed =
         GsonUtil.getInstance().fromJson(documented.toString(), TemplateValidationResponse.class);

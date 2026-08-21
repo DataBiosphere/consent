@@ -50,7 +50,9 @@ post:
                     message: Study Name is required
                   - message: At least one Dataset is required
     400:
-      description: No file part was supplied, or more than one was.
+      description: >-
+        No file part was supplied, more than one was, or the draft the template produced could not
+        be written.
       content:
         application/json:
           schema:
@@ -65,6 +67,12 @@ post:
             $ref: '../schemas/ErrorResponse.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: The template could not be validated.
       content:
         application/json:
           schema:
