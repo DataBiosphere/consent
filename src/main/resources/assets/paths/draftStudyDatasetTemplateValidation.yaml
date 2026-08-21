@@ -75,7 +75,9 @@ post:
     401:
       description: User not authorized to validate a template
     413:
-      description: The file is larger than the 5 MiB template limit.
+      description: >-
+        The file is larger than the 5 MiB template limit, or the request declares more
+        than the limit plus its multipart envelope and is refused before the body is read.
       content:
         application/json:
           schema:

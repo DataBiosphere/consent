@@ -16,8 +16,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
+import org.broadinstitute.consent.http.filters.TemplateSizeLimited;
+import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.models.DuosUser;
-import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.dto.registration.template.StudyDatasetDraftReference;
 import org.broadinstitute.consent.http.models.dto.registration.template.TemplateValidationResponse;
 import org.broadinstitute.consent.http.service.studytemplate.StudyDatasetTemplateService;
@@ -50,9 +51,11 @@ public class StudyDatasetTemplateResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/template-validation")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @TemplateSizeLimited
   @Timed
   public Response validateTemplate(@Auth DuosUser duosUser, FormDataMultiPart multipart) {
-    // Streamed rather than buffered here: the size limit has one owner, the validator.
+    // Streamed rather than buffered here: the validator owns the limit on the file, and the
+    // request it arrived in was bounded before this was called.
     try (InputStream template = templatePart(multipart)) {
       TemplateValidationResponse response =
           templateService.validateAndCreateDraft(template, duosUser.getUser());
@@ -60,7 +63,7 @@ public class StudyDatasetTemplateResource extends Resource {
           ? Response.created(draftUri(response.draft())).entity(response).build()
           : Response.ok().entity(response).build();
     } catch (TemplateTooLargeException e) {
-      return tooLarge(e);
+      return TemplateTooLargeExceptionMapper.tooLarge(e.getMessage());
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -82,12 +85,5 @@ public class StudyDatasetTemplateResource extends Resource {
   /** The path DraftResource creates a draft at, so the two agree on where this one lives. */
   private static URI draftUri(StudyDatasetDraftReference draft) {
     return UriBuilder.fromPath("/api/draft/v1/%s".formatted(draft.id())).build();
-  }
-
-  private static Response tooLarge(TemplateTooLargeException e) {
-    return Response.status(Response.Status.REQUEST_ENTITY_TOO_LARGE)
-        .type(MediaType.APPLICATION_JSON)
-        .entity(new Error(e.getMessage(), Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()))
-        .build();
   }
 }

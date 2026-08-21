@@ -126,7 +126,8 @@ class StudyDatasetTemplateResourceTest {
 
   @Test
   void testValidateTemplateReportsAnOversizedFileAsTooLarge() throws Exception {
-    // The validator owns the limit; this pins that its refusal reaches the client as a 413.
+    // The validator owns the limit on the file; this pins that its refusal reaches the client
+    // as a 413, as the request guard's refusal does.
     FormDataBodyPart part = filePart("1,study".getBytes(StandardCharsets.UTF_8));
     when(duosUser.getUser()).thenReturn(user);
     when(multipart.getFields("file")).thenReturn(List.of(part));
