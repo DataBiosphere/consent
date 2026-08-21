@@ -19,9 +19,9 @@ properties:
       - missing
   darCount:
     type: integer
-    description: Distinct Data Access Requests referencing the dataset.
+    description: Distinct submitted, unarchived Data Access Requests referencing the dataset.
   needsMatchRecompute:
     type: boolean
     description: |
-      Whether a Data Access Request reaches this dataset, and so whether the recompute endpoint
-      covers its stored matches.
+      Whether a submitted, unarchived Data Access Request reaches this dataset, and so whether the
+      recompute endpoint covers its stored matches.

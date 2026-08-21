@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.datause.PersistedDataUseRow;
@@ -46,6 +48,15 @@ class PersistedDataUseDAOTest extends DAOTestHelper {
     property.setPropertyType(PropertyType.String);
     property.setCreateDate(new Date());
     datasetDAO.insertDatasetProperties(List.of(property));
+  }
+
+  private String createDraftDarFor(Integer datasetId) {
+    User user = createUser();
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        referenceId, user.getUserId(), new Date(), new Date(), new DataAccessRequestData());
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return referenceId;
   }
 
   @Test
@@ -112,6 +123,28 @@ class PersistedDataUseDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void fallsBackToTheLegacyPropertyWhenTheCanonicalValueIsUnusable() {
+    Integer blankValue = insertDatasetWithDataUse("{\"generalUse\":true}");
+    setAccessManagement(blankValue, "consentGroup.accessManagement", "external");
+    setAccessManagement(blankValue, "accessManagement", "   ");
+    Integer nonEnumValue = insertDatasetWithDataUse("{\"generalUse\":true}");
+    setAccessManagement(nonEnumValue, "consentGroup.accessManagement", "external");
+    setAccessManagement(nonEnumValue, "accessManagement", "restricted");
+
+    assertEquals("external", rowFor(blankValue).accessManagement());
+    assertEquals("external", rowFor(nonEnumValue).accessManagement());
+  }
+
+  /** An unusable value on its own leaves the dataset reported as missing, never as that value. */
+  @Test
+  void reportsAnUnusableAccessManagementValueAsMissing() {
+    Integer datasetId = insertDatasetWithDataUse("{\"generalUse\":true}");
+    setAccessManagement(datasetId, "accessManagement", "restricted");
+
+    assertNull(rowFor(datasetId).accessManagement());
+  }
+
+  @Test
   void countsZeroDarsForAnUnreferencedDataset() {
     Integer datasetId = insertDatasetWithDataUse("{\"generalUse\":true}");
 
@@ -138,6 +171,28 @@ class PersistedDataUseDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(reference, datasetId);
 
     assertEquals(1, rowFor(datasetId).darCount());
+  }
+
+  /** A draft has no submitted purpose to match against, so it must not make a dataset reachable. */
+  @Test
+  void ignoresDraftDars() {
+    Integer datasetId = insertDatasetWithDataUse("{\"other\":\"text\"}");
+    createDraftDarFor(datasetId);
+
+    assertEquals(0, rowFor(datasetId).darCount());
+    assertTrue(dao().findDarReferenceIdsByDatasetId(datasetId).isEmpty());
+  }
+
+  /** Recomputing an archived DAR would delete match rows nothing can rebuild. */
+  @Test
+  void ignoresArchivedDars() {
+    Integer datasetId = insertDatasetWithDataUse("{\"other\":\"text\"}");
+    String reference = createDataAccessRequestV3().getReferenceId();
+    dataAccessRequestDAO.insertDARDatasetRelation(reference, datasetId);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(reference));
+
+    assertEquals(0, rowFor(datasetId).darCount());
+    assertTrue(dao().findDarReferenceIdsByDatasetId(datasetId).isEmpty());
   }
 
   @Test

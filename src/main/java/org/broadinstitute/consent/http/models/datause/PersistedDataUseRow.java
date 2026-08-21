@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.datause;
 
+import java.util.Locale;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 
 /**
@@ -16,7 +17,7 @@ public record PersistedDataUseRow(
   public String accessManagementLabel() {
     return accessManagement == null || accessManagement.isBlank()
         ? "missing"
-        : accessManagement.toLowerCase();
+        : accessManagement.toLowerCase(Locale.ROOT);
   }
 
   public boolean isOpenAccess() {

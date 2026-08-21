@@ -18,11 +18,12 @@ public interface PersistedDataUseDAO {
   /**
    * Raw {@code data_use} text rather than a parsed value, so a null, an empty string, and malformed
    * JSON stay distinguishable. The canonical access-management property wins over the legacy
-   * consent-group-prefixed one, matching {@code Dataset#getAccessManagement}.
+   * consent-group-prefixed one, but only where its value parses as an {@code AccessManagement}, so
+   * an unusable one falls back as {@code Dataset#getAccessManagement} does.
    *
    * <p>Reads every dataset because classification parses the JSON in Java, which SQL cannot do.
-   * Four projected columns, read once per admin-invoked run; revisit if the dataset count grows by
-   * an order of magnitude.
+   * Four projected columns, read twice per admin-invoked run to reconcile it; revisit if the
+   * dataset count grows by an order of magnitude.
    */
   @RegisterConstructorMapper(PersistedDataUseRow.class)
   @SqlQuery(
@@ -37,12 +38,16 @@ public interface PersistedDataUseDAO {
                ) AS access_management
         FROM dataset_property dp
         WHERE dp.schema_property IN ('accessManagement', 'consentGroup.accessManagement')
+          AND LOWER(TRIM(dp.property_value)) IN ('open', 'controlled', 'external')
         GROUP BY dp.dataset_id
       ),
       dar_usage AS (
-        SELECT dataset_id, COUNT(DISTINCT reference_id) AS dar_count
-        FROM dar_dataset
-        GROUP BY dataset_id
+        SELECT dd.dataset_id, COUNT(DISTINCT dd.reference_id) AS dar_count
+        FROM dar_dataset dd
+        JOIN data_access_request dar ON dar.reference_id = dd.reference_id
+        WHERE dar.submission_date IS NOT NULL
+          AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+        GROUP BY dd.dataset_id
       )
       SELECT d.dataset_id,
              d.data_use,
@@ -55,7 +60,19 @@ public interface PersistedDataUseDAO {
       """)
   List<PersistedDataUseRow> findAllPersistedDataUse();
 
-  /** Every DAR referencing a dataset, which is the unit matches are recomputed by. */
-  @SqlQuery("SELECT DISTINCT reference_id FROM dar_dataset WHERE dataset_id = :datasetId")
+  /**
+   * The submitted, unarchived DARs referencing a dataset, the unit matches are recomputed by. An
+   * archived DAR is excluded because {@code reprocessMatchesForPurpose} would delete its historical
+   * match rows and find no DAR to rebuild them from.
+   */
+  @SqlQuery(
+      """
+      SELECT DISTINCT dd.reference_id
+      FROM dar_dataset dd
+      JOIN data_access_request dar ON dar.reference_id = dd.reference_id
+      WHERE dd.dataset_id = :datasetId
+        AND dar.submission_date IS NOT NULL
+        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      """)
   List<String> findDarReferenceIdsByDatasetId(@Bind("datasetId") Integer datasetId);
 }

@@ -4,8 +4,8 @@ post:
     Other-only primary, or more than one primary.
     Changes no stored Data Use, and rewrites only match rows and their rationales - never
     elections, final votes, or historical automation votes.
-    Restartable. A dataset with no Data Access Request relation is unreachable and left alone;
-    the run logs how many.
+    Restartable. A dataset reached by no submitted, unarchived Data Access Request is unreachable
+    and left alone; the run logs how many. Archived requests keep their historical match rows.
     Returns the classification counts either side of the run, so a recompute-only run can be seen
     to have left them unchanged.
   tags:
