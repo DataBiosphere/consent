@@ -38,7 +38,7 @@ public class TemplateSizeLimitFilter implements ContainerRequestFilter {
    * epilogue. Generous, since the file limit is what a client is told about and this only has to
    * leave a template of the largest allowed size room to arrive.
    */
-  private static final long ENVELOPE_ALLOWANCE = 8 * 1024;
+  private static final long ENVELOPE_ALLOWANCE = 8L * 1024;
 
   static final long MAX_REQUEST_BYTES =
       StudyTemplateValidationService.MAX_TEMPLATE_BYTES + ENVELOPE_ALLOWANCE;
