@@ -23,9 +23,11 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -44,9 +46,27 @@ public class HttpClientUtil implements ConsentLogger {
 
   private final HttpClient httpClient;
 
+  private final ScheduledExecutorService timeoutExecutor;
+
   public HttpClientUtil(ServicesConfiguration configuration) {
     this.configuration = configuration;
     httpClient = HttpClients.createDefault();
+    // Shared pool of daemon threads for request timeouts. A per-request pool leaks
+    // threads because ScheduledThreadPoolExecutor core threads never terminate.
+    AtomicInteger threadNumber = new AtomicInteger(1);
+    ScheduledThreadPoolExecutor executor =
+        new ScheduledThreadPoolExecutor(
+            configuration.getPoolSize(),
+            runnable -> {
+              Thread thread =
+                  new Thread(runnable, "http-client-timeout-" + threadNumber.getAndIncrement());
+              thread.setDaemon(true);
+              return thread;
+            });
+    // Remove canceled timeout tasks from the queue at once. Without this policy, each
+    // canceled task holds its request reference until the full timeout delay elapses.
+    executor.setRemoveOnCancelPolicy(true);
+    timeoutExecutor = executor;
     CacheLoader<URI, SimpleResponse> loader =
         new CacheLoader<>() {
           @Override
@@ -87,15 +107,20 @@ public class HttpClientUtil implements ConsentLogger {
    * @throws IOException The exception
    */
   public SimpleResponse getHttpResponse(HttpGet request) throws IOException {
-    final ScheduledExecutorService executor =
-        Executors.newScheduledThreadPool(configuration.getPoolSize());
-    executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
-    return httpClient.execute(
-        request,
-        httpResponse ->
-            new SimpleResponse(
-                httpResponse.getCode(),
-                IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset())));
+    ScheduledFuture<?> cancelTask =
+        timeoutExecutor.schedule(
+            request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
+    try {
+      return httpClient.execute(
+          request,
+          httpResponse ->
+              new SimpleResponse(
+                  httpResponse.getCode(),
+                  IOUtils.toString(
+                      httpResponse.getEntity().getContent(), Charset.defaultCharset())));
+    } finally {
+      cancelTask.cancel(false);
+    }
   }
 
   public HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
