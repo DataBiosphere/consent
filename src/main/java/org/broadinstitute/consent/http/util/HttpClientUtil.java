@@ -23,10 +23,11 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -52,14 +53,20 @@ public class HttpClientUtil implements ConsentLogger {
     httpClient = HttpClients.createDefault();
     // Shared pool of daemon threads for request timeouts. A per-request pool leaks
     // threads because ScheduledThreadPoolExecutor core threads never terminate.
-    timeoutExecutor =
-        Executors.newScheduledThreadPool(
+    AtomicInteger threadNumber = new AtomicInteger(1);
+    ScheduledThreadPoolExecutor executor =
+        new ScheduledThreadPoolExecutor(
             configuration.getPoolSize(),
             runnable -> {
-              Thread thread = new Thread(runnable, "http-client-timeout");
+              Thread thread =
+                  new Thread(runnable, "http-client-timeout-" + threadNumber.getAndIncrement());
               thread.setDaemon(true);
               return thread;
             });
+    // Remove canceled timeout tasks from the queue at once. Without this policy, each
+    // canceled task holds its request reference until the full timeout delay elapses.
+    executor.setRemoveOnCancelPolicy(true);
+    timeoutExecutor = executor;
     CacheLoader<URI, SimpleResponse> loader =
         new CacheLoader<>() {
           @Override
