@@ -33,15 +33,16 @@ public class DraftServiceDAO {
   }
 
   public void insertDraft(DraftInterface draft) throws SQLException, BadRequestException {
+    strip(draft);
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.insert(
-                NulCharacters.stripFrom(draft.getName()),
+                draft.getName(),
                 draft.getCreateDate().toInstant(),
                 draft.getCreateUser().getUserId(),
-                NulCharacters.stripFromJsonText(draft.getJson()),
+                draft.getJson(),
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
@@ -56,15 +57,16 @@ public class DraftServiceDAO {
   public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
+    strip(draft);
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.updateDraftByDraftUUID(
-                NulCharacters.stripFrom(draft.getName()),
+                draft.getName(),
                 draft.getUpdateDate().toInstant(),
                 draft.getUpdateUser().getUserId(),
-                NulCharacters.stripFromJsonText(draft.getJson()),
+                draft.getJson(),
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
@@ -75,6 +77,12 @@ public class DraftServiceDAO {
           handle.commit();
         });
     return getAuthorizedDraft(draft.getUUID(), user);
+  }
+
+  /** Drops what Postgres will not store, so the draft a caller holds matches the row written. */
+  private static void strip(DraftInterface draft) {
+    draft.setName(NulCharacters.stripFrom(draft.getName()));
+    draft.setJson(NulCharacters.stripFromJsonText(draft.getJson()));
   }
 
   public DraftInterface getAuthorizedDraft(UUID draftUUID, User user)

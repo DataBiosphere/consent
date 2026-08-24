@@ -102,6 +102,9 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertThat(storedDraft.getJson(), not(containsString(NUL_ESCAPE)));
     assertThat(storedDraft.getJson(), containsString("Greg"));
     assertEquals("Greg", storedDraft.getName());
+    // The draft matches the row, so the response the resource builds from it does too.
+    assertEquals(storedDraft.getJson(), draft.getJson());
+    assertEquals(storedDraft.getName(), draft.getName());
   }
 
   @Test

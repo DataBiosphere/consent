@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -90,6 +91,24 @@ class DraftResourceTest {
     Response response = resource.createDraftRegistration(duosUser, draft);
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     assertEquals(draft, response.getEntity().toString());
+  }
+
+  @Test
+  void testCreateDraftRegistrationReturnsTheDocumentAsStored() throws SQLException {
+    String stored = "{\"studyName\": \"Greg\"}";
+    // In two pieces so the compiler leaves the escape as the text a document carries.
+    String posted = "{\"studyName\": \"Greg" + "\\" + "u0000\"}";
+    doAnswer(
+            invocation -> {
+              invocation.getArgument(0, DraftInterface.class).setJson(stored);
+              return null;
+            })
+        .when(draftService)
+        .insertDraft(any());
+    initResource();
+    Response response = resource.createDraftRegistration(duosUser, posted);
+    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    assertEquals(stored, response.getEntity().toString());
   }
 
   @Test

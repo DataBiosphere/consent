@@ -73,7 +73,8 @@ public class DraftResource extends Resource {
       DraftInterface draft = new DraftStudyDataset(json, user);
       draftService.insertDraft(draft);
       URI uri = getDraftURI(draft);
-      return Response.created(uri).entity(json).build();
+      // The stored document, not the posted one: the write drops what Postgres cannot hold.
+      return Response.created(uri).entity(draft.getJson()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

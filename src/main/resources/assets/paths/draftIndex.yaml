@@ -38,7 +38,7 @@ post:
     - Draft
   responses:
     201:
-      description: Successfully created draft instance
+      description: Successfully created draft instance.  The body is the document as stored, less any U+0000 it carried.
       content:
         application/json:
           schema:
