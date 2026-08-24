@@ -7,6 +7,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -79,6 +80,25 @@ class HttpClientUtilTest extends WireMockTestHelper {
     wireMockServer.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(200)));
     SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
+  }
+
+  /** Test that repeated requests do not leak timeout threads. */
+  @Test
+  void testGetHttpResponseDoesNotLeakThreads() throws Exception {
+    wireMockServer.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(200)));
+    long before = countTimeoutThreads();
+    for (int i = 0; i < 25; i++) {
+      clientUtil.getHttpResponse(new HttpGet(statusUrl));
+    }
+    long growth = countTimeoutThreads() - before;
+    // The shared pool holds at most the default pool size of 10 threads.
+    assertTrue(growth <= 10, "Timeout thread count grew by " + growth);
+  }
+
+  private long countTimeoutThreads() {
+    return Thread.getAllStackTraces().keySet().stream()
+        .filter(t -> t.getName().startsWith("http-client-timeout"))
+        .count();
   }
 
   @Test

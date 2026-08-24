@@ -25,6 +25,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -44,9 +45,21 @@ public class HttpClientUtil implements ConsentLogger {
 
   private final HttpClient httpClient;
 
+  private final ScheduledExecutorService timeoutExecutor;
+
   public HttpClientUtil(ServicesConfiguration configuration) {
     this.configuration = configuration;
     httpClient = HttpClients.createDefault();
+    // Shared pool of daemon threads for request timeouts. A per-request pool leaks
+    // threads because ScheduledThreadPoolExecutor core threads never terminate.
+    timeoutExecutor =
+        Executors.newScheduledThreadPool(
+            configuration.getPoolSize(),
+            runnable -> {
+              Thread thread = new Thread(runnable, "http-client-timeout");
+              thread.setDaemon(true);
+              return thread;
+            });
     CacheLoader<URI, SimpleResponse> loader =
         new CacheLoader<>() {
           @Override
@@ -87,15 +100,20 @@ public class HttpClientUtil implements ConsentLogger {
    * @throws IOException The exception
    */
   public SimpleResponse getHttpResponse(HttpGet request) throws IOException {
-    final ScheduledExecutorService executor =
-        Executors.newScheduledThreadPool(configuration.getPoolSize());
-    executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
-    return httpClient.execute(
-        request,
-        httpResponse ->
-            new SimpleResponse(
-                httpResponse.getCode(),
-                IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset())));
+    ScheduledFuture<?> cancelTask =
+        timeoutExecutor.schedule(
+            request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
+    try {
+      return httpClient.execute(
+          request,
+          httpResponse ->
+              new SimpleResponse(
+                  httpResponse.getCode(),
+                  IOUtils.toString(
+                      httpResponse.getEntity().getContent(), Charset.defaultCharset())));
+    } finally {
+      cancelTask.cancel(false);
+    }
   }
 
   public HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
