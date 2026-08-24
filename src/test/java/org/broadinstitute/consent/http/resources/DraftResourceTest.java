@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -93,6 +94,24 @@ class DraftResourceTest {
   }
 
   @Test
+  void testCreateDraftRegistrationReturnsTheDocumentAsStored() throws SQLException {
+    String stored = "{\"studyName\": \"Greg\"}";
+    // In two pieces so the compiler leaves the escape as the text a document carries.
+    String posted = "{\"studyName\": \"Greg" + "\\" + "u0000\"}";
+    doAnswer(
+            invocation -> {
+              invocation.getArgument(0, DraftInterface.class).setJson(stored);
+              return null;
+            })
+        .when(draftService)
+        .insertDraft(any());
+    initResource();
+    Response response = resource.createDraftRegistration(duosUser, posted);
+    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+    assertEquals(stored, response.getEntity().toString());
+  }
+
+  @Test
   void tesCreateDraftRegistrationWithoutJSON() throws SQLException {
     doThrow(new BadRequestException("Error submitting draft"))
         .when(draftService)
@@ -110,6 +129,13 @@ class DraftResourceTest {
     initResource();
     Response response = resource.getDraftDocument(duosUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testEveryDraftEndpointAdmitsTheSameThreeRoles() {
+    // Per-draft ownership is enforced in DraftServiceDAO.
+    EndpointRoles.assertEveryEndpointAdmits(
+        DraftResource.class, Set.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.DATASUBMITTER));
   }
 
   @Test

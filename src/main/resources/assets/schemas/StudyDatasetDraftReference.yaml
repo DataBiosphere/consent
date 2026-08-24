@@ -1,0 +1,14 @@
+type: object
+description: The draft a valid template created.
+properties:
+  id:
+    type: string
+    format: uuid
+    description: The draft UUID, to be loaded through /api/draft/v1/{draftUUID}.
+  draftType:
+    type: string
+    enum: [StudyDatasetSubmissionV1]
+    description: The document type of the draft. A client must not infer it from the id or route.
+required:
+  - id
+  - draftType

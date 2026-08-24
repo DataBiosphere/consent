@@ -17,6 +17,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
@@ -108,7 +109,8 @@ class DatasetResourceTest extends AbstractTestHelper {
             datasetRegistrationService,
             elasticSearchService,
             tdrService,
-            gcsService);
+            gcsService,
+            new ObjectMapper());
   }
 
   @Test

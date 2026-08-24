@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
+import org.broadinstitute.consent.http.filters.TemplateSizeLimitFilter;
 import org.broadinstitute.consent.http.health.EcmHealthCheck;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
@@ -52,6 +53,7 @@ import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.mappers.ForbiddenExceptionMapper;
 import org.broadinstitute.consent.http.mappers.JsonErrorHandler;
 import org.broadinstitute.consent.http.mappers.NotFoundExceptionMapper;
+import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
@@ -81,6 +83,7 @@ import org.broadinstitute.consent.http.resources.ResearcherDashboardResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SigningOfficialDashboardResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
+import org.broadinstitute.consent.http.resources.StudyDatasetTemplateResource;
 import org.broadinstitute.consent.http.resources.StudyResource;
 import org.broadinstitute.consent.http.resources.SupportResource;
 import org.broadinstitute.consent.http.resources.SwaggerResource;
@@ -163,6 +166,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // response body. Expand to include other codes when necessary.
     env.jersey().register(NotFoundExceptionMapper.class);
     env.jersey().register(ForbiddenExceptionMapper.class);
+    env.jersey().register(TemplateTooLargeExceptionMapper.class);
     // Last-resort net for requests that never reach Jersey's dispatch at all (e.g. a path that
     // matches no @Path template), which the ExceptionMappers above cannot intercept.
     env.getApplicationContext().setErrorHandler(new JsonErrorHandler());
@@ -197,6 +201,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(SigningOfficialDashboardResource.class));
     env.jersey().register(injector.getInstance(SwaggerResource.class));
     env.jersey().register(injector.getInstance(StatusResource.class));
+    env.jersey().register(injector.getInstance(StudyDatasetTemplateResource.class));
     env.jersey().register(injector.getInstance(StudyResource.class));
     env.jersey().register(injector.getInstance(SupportResource.class));
     env.jersey().register(injector.getInstance(TDRResource.class));
@@ -235,6 +240,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(RequestHeaderCacheFilter.class));
     env.jersey().register(injector.getInstance(RateLimitFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
+    env.jersey().register(TemplateSizeLimitFilter.class);
   }
 
   @Override

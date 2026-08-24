@@ -1,0 +1,102 @@
+post:
+  summary: Validate a study/dataset template
+  operationId: apiDraftV1StudyDatasetTemplateValidationPost
+  description: >-
+    Validates one filled-in v1 study template and, when it is valid, creates a
+    StudyDatasetSubmissionV1 draft owned by the caller holding the registration-shaped document,
+    answered 201 at the draft it created. An invalid template creates nothing and is reported as a
+    completed result with HTTP 200 and valid false, including an empty file, one that is not UTF-8,
+    and one that is not valid CSV. Only an unusable request fails: no file part, more than one, or a
+    file over the 5 MiB limit.
+  tags:
+    - Draft
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              description: The filled-in template, a UTF-8 CSV of no more than 5 MiB.
+              type: string
+              contentMediaType: text/csv
+          required:
+            - file
+  responses:
+    200:
+      description: The template was validated and has errors to fix. Nothing was created.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/TemplateValidationResponse.yaml'
+          examples:
+            invalid:
+              summary: A template with errors
+              value:
+                valid: false
+                truncated: false
+                errors:
+                  - row: 3
+                    column: value
+                    message: Study Name is required
+                  - message: At least one Dataset is required
+    201:
+      description: The template was valid and the draft it produced was created.
+      headers:
+        Location:
+          description: The created draft, at the path the draft endpoints serve it from.
+          schema:
+            type: string
+            format: uri-reference
+            example: /api/draft/v1/c2e4583a-20b9-4705-8280-e6a5753f10c9
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/TemplateValidationResponse.yaml'
+          examples:
+            valid:
+              summary: A valid template
+              value:
+                valid: true
+                errors: []
+                truncated: false
+                draft:
+                  id: c2e4583a-20b9-4705-8280-e6a5753f10c9
+                  draftType: StudyDatasetSubmissionV1
+    400:
+      description: >-
+        No file part was supplied, more than one was, or the draft the template produced could not
+        be written.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    401:
+      description: Caller is unauthenticated.
+    403:
+      description: Caller holds no role permitted to validate a template.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    413:
+      description: >-
+        The file is larger than the 5 MiB template limit, or the request declares more
+        than the limit plus its multipart envelope and is refused before the body is read.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: The template could not be validated.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

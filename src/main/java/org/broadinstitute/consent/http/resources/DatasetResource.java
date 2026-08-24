@@ -75,7 +75,7 @@ public class DatasetResource extends Resource {
   private final ElasticSearchService elasticSearchService;
 
   private final GCSService gcsService;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
   private final StudyRegistrationRequestValidator createValidator =
       new StudyRegistrationRequestValidator();
 
@@ -86,13 +86,15 @@ public class DatasetResource extends Resource {
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService,
       TDRService tdrService,
-      GCSService gcsService) {
+      GCSService gcsService,
+      ObjectMapper objectMapper) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.tdrService = tdrService;
+    this.objectMapper = objectMapper;
   }
 
   @POST

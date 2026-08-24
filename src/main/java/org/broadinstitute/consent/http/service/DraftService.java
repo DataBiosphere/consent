@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -56,12 +58,16 @@ public class DraftService implements ConsentLogger {
 
   public StreamingOutput draftAsJson(DraftInterface draft) {
     Gson gson = GsonUtil.buildGson();
+    JsonObject meta = gson.toJsonTree(draft).getAsJsonObject();
+    // Taken from the draft rather than from whatever its class serializes, so every type reports
+    // itself and no client has to infer one from the UUID or the route.
+    meta.addProperty("draftType", draft.getType().getValue());
     return output -> {
-      output.write("{ \"document\":".getBytes());
-      output.write(draft.getJson().getBytes());
-      output.write(", \"meta\":".getBytes());
-      output.write(gson.toJson(draft).getBytes());
-      output.write("}".getBytes());
+      output.write("{ \"document\":".getBytes(StandardCharsets.UTF_8));
+      output.write(draft.getJson().getBytes(StandardCharsets.UTF_8));
+      output.write(", \"meta\":".getBytes(StandardCharsets.UTF_8));
+      output.write(gson.toJson(meta).getBytes(StandardCharsets.UTF_8));
+      output.write("}".getBytes(StandardCharsets.UTF_8));
     };
   }
 

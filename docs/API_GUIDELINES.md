@@ -26,6 +26,7 @@ Use these rules when adding or changing endpoints in the Consent service.
 - `403 Forbidden`: caller lacks required permissions.
 - `404 Not Found`: resource does not exist.
 - `409 Conflict`: version/state conflict.
+- `413 Content Too Large`: the request body exceeds an endpoint-specific size limit.
 - `500 Internal Server Error`: unhandled server-side error.
 
 ## Security and Authorization

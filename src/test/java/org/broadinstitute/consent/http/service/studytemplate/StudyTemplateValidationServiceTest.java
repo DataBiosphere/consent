@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
@@ -386,13 +388,29 @@ class StudyTemplateValidationServiceTest {
 
   @Test
   void testValidate_rejectsFileOverTheSizeLimit() {
+    // A failed request rather than a validation result: there is no cell for the producer to fix.
     byte[] oversized = new byte[StudyTemplateValidationService.MAX_TEMPLATE_BYTES + 1];
+    InputStream content = new ByteArrayInputStream(oversized);
 
-    StudyTemplateValidationResult result = service.validate(new ByteArrayInputStream(oversized));
+    TemplateTooLargeException thrown =
+        assertThrows(TemplateTooLargeException.class, () -> service.validate(content));
 
-    assertEquals(
-        List.of(TemplateValidationError.of("Template file must be no larger than 5 MiB")),
-        result.errors());
+    assertEquals(StudyTemplateValidationService.TOO_LARGE_MESSAGE, thrown.getMessage());
+  }
+
+  @Test
+  void testValidate_readsAFileAtExactlyTheSizeLimit() {
+    // The boundary the read-one-byte-extra trick exists to get right: read, not rejected.
+    byte[] atTheLimit = new byte[StudyTemplateValidationService.MAX_TEMPLATE_BYTES];
+
+    StudyTemplateValidationResult result = service.validate(new ByteArrayInputStream(atTheLimit));
+
+    assertFalse(result.errors().isEmpty());
+    assertFalse(
+        result
+            .errors()
+            .contains(
+                TemplateValidationError.of(StudyTemplateValidationService.TOO_LARGE_MESSAGE)));
   }
 
   // ── Scalar conversion ────────────────────────────────────────────────────

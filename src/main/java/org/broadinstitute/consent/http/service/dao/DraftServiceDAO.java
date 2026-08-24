@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.NulCharacters;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
@@ -32,6 +33,7 @@ public class DraftServiceDAO {
   }
 
   public void insertDraft(DraftInterface draft) throws SQLException, BadRequestException {
+    strip(draft);
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
@@ -55,6 +57,7 @@ public class DraftServiceDAO {
   public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
+    strip(draft);
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
@@ -74,6 +77,12 @@ public class DraftServiceDAO {
           handle.commit();
         });
     return getAuthorizedDraft(draft.getUUID(), user);
+  }
+
+  /** Drops what Postgres will not store, so the draft a caller holds matches the row written. */
+  private static void strip(DraftInterface draft) {
+    draft.setName(NulCharacters.stripFrom(draft.getName()));
+    draft.setJson(NulCharacters.stripFromJsonText(draft.getJson()));
   }
 
   public DraftInterface getAuthorizedDraft(UUID draftUUID, User user)

@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,6 +54,11 @@ class DraftServiceDAOTest extends DAOTestHelper {
   private static GCSService gcsService;
   private static DraftServiceDAO draftServiceDAO;
 
+  /** The escape a JSON document carries where a U+0000 was, built so the compiler leaves it be. */
+  private static final String NUL_ESCAPE = "\\" + "u0000";
+
+  private static final String BACKSLASH = "\\";
+
   @BeforeEach
   void beforeEachTestSetup() throws IOException {
     gcsService = Mockito.mock(GCSService.class);
@@ -82,6 +90,61 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testCreateDraftStripsTheEscapeFromTheDocumentAndFromTheNameItYields() {
+    // The name is decoded from this same document, so it arrives holding the character itself.
+    Mockito.reset(gcsService);
+    String json = "{\"studyName\": \"Greg" + NUL_ESCAPE + "\"}";
+    User user = createUser();
+    DraftStudyDataset draft = new DraftStudyDataset(json, user);
+    assertDoesNotThrow(() -> draftServiceDAO.insertDraft(draft));
+
+    DraftInterface storedDraft = draftDAO.findDraftById(draft.getUUID());
+    assertThat(storedDraft.getJson(), not(containsString(NUL_ESCAPE)));
+    assertThat(storedDraft.getJson(), containsString("Greg"));
+    assertEquals("Greg", storedDraft.getName());
+    // The draft matches the row, so the response the resource builds from it does too.
+    assertEquals(storedDraft.getJson(), draft.getJson());
+    assertEquals(storedDraft.getName(), draft.getName());
+  }
+
+  @Test
+  void testCreateDraftKeepsAnEscapedBackslashBeforeTheEscape() {
+    // Two backslashes are an escaped one, so u0000 after them is text and stays as written.
+    Mockito.reset(gcsService);
+    String json = "{\"studyName\": \"Greg" + BACKSLASH.repeat(2) + "u0000\"}";
+    User user = createUser();
+    DraftStudyDataset draft = new DraftStudyDataset(json, user);
+    assertDoesNotThrow(() -> draftServiceDAO.insertDraft(draft));
+
+    assertEquals(json, draftDAO.findDraftById(draft.getUUID()).getJson());
+  }
+
+  @Test
+  void testCreateDraftStripsTheEscapeAnOddBackslashRunEnds() {
+    // Three: an escaped backslash, then the escape. Only the escape and its own backslash go.
+    Mockito.reset(gcsService);
+    String json = "{\"studyName\": \"Greg" + BACKSLASH.repeat(3) + "u0000\"}";
+    User user = createUser();
+    DraftStudyDataset draft = new DraftStudyDataset(json, user);
+    assertDoesNotThrow(() -> draftServiceDAO.insertDraft(draft));
+
+    DraftInterface storedDraft = draftDAO.findDraftById(draft.getUUID());
+    assertEquals("{\"studyName\": \"Greg" + BACKSLASH.repeat(2) + "\"}", storedDraft.getJson());
+    assertEquals("Greg" + BACKSLASH, storedDraft.getName());
+  }
+
+  @Test
+  void testUpdateDraftStripsTheCharacterFromARenamedDraft() throws SQLException {
+    // The rename endpoint takes its body as text, which can carry the character with no escaping.
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 1);
+    draft.setName("Renamed\0");
+
+    DraftInterface updatedDraft = draftServiceDAO.updateDraft(draft, user);
+    assertEquals("Renamed", updatedDraft.getName());
+  }
+
+  @Test
   void testThinUserIsReturnedFromDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
@@ -110,6 +173,28 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertEquals(adminVisibleDraft.getUUID(), draft.getUUID());
     assertEquals(adminVisibleDraft.getName(), draft.getName());
     assertThat(adminVisibleDraft.getStoredFiles(), hasSize(4));
+  }
+
+  @Test
+  void testChairpersonCannotReadAnotherUsersDraft() throws SQLException {
+    // Reaching the draft endpoints does not make a chairperson an owner.
+    User owner = createUser();
+    User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    UUID draftUUID = createDraft(owner, 1).getUUID();
+
+    assertThrows(
+        NotAuthorizedException.class,
+        () -> draftServiceDAO.getAuthorizedDraft(draftUUID, chairperson));
+  }
+
+  @Test
+  void testChairpersonCanReadTheirOwnDraft() throws SQLException {
+    User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    DraftInterface draft = createDraft(chairperson, 1);
+
+    assertEquals(
+        draft.getUUID(),
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), chairperson).getUUID());
   }
 
   @Test

@@ -631,6 +631,8 @@ paths:
     $ref: './paths/documentFileById.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
+  /api/draft/v1/study-dataset/template-validation:
+    $ref: './paths/draftStudyDatasetTemplateValidation.yaml'
   /api/draft/v1/{draftUUID}:
     $ref: './paths/draftDocumentIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments:

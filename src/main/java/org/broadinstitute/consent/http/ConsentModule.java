@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -196,6 +197,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private ExecutorService providesExecutorService() {
     return executorService;
+  }
+
+  /** One mapper, so a draft written from a template is serialized as the registration reads it. */
+  @Provides
+  @Singleton
+  private ObjectMapper providesObjectMapper() {
+    return new ObjectMapper();
   }
 
   @Provides

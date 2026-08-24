@@ -53,12 +53,15 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           LEFT JOIN file_storage_object fso ON fso.entity_id = ds.uuid::text AND fso.deleted = false
           """;
 
+  // Both the name and the document reach here free of the U+0000 neither column accepts:
+  // NulCharacters strips it for the draft writes, which SQL cannot do for either value.
   @SqlUpdate(
       """
           INSERT into draft
               (name, create_date, create_user_id, update_date,
               update_user_id, json, uuid, draft_type)
-          (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId, :json::jsonb, :uuid, :draftType)
+          (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId,
+              :json::jsonb, :uuid, :draftType)
           """)
   @GetGeneratedKeys
   Integer insert(
@@ -69,6 +72,8 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("uuid") UUID uuid,
       @Bind("draftType") String draftType);
 
+  // Stripped before binding as insert's values are: a draft is meant to be edited and saved,
+  // and the rename this serves carries a name of its own.
   @SqlUpdate(
       """
       UPDATE draft
