@@ -343,6 +343,8 @@ class SamDAOTest extends WireMockTestHelper {
         assertThrows(SamAzureB2CException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
     assertNotNull(ex.getMessage());
     assertTrue(ex.getMessage().contains("test@test.org"));
+    assertTrue(ex.getMessage().contains("different authentication provider"));
+    assertTrue(ex.getMessage().contains("https://support.terra.bio"));
   }
 
   @Test

@@ -124,9 +124,13 @@ public class UserResource extends Resource {
       DuosUser duosUser = new DuosUser(authUser, findRegisteredUser(authUser));
       UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
       if (userStatusInfo == null) {
-        samService.asyncPostRegistrationInfo(duosUser);
-        // Refresh the user status info after posting registration info to Sam
+        // Query Sam before the registration post: a B2C identity conflict throws a
+        // mapped exception here, and the registration post always answers 409 for
+        // those users, so we must not send it.
         userStatusInfo = getUserStatusInfo(duosUser);
+        if (userStatusInfo == null) {
+          samService.asyncPostRegistrationInfo(duosUser);
+        }
       }
       User user = nihService.syncAccount(duosUser);
       if (userStatusInfo != null) {
@@ -142,23 +146,28 @@ public class UserResource extends Resource {
    * Resolve the DUOS account for an authenticated caller. Unlike the {@code @Auth DuosUser}
    * endpoints, /me does its own lookup so that a valid token with no account answers 404 instead of
    * the 401 an unresolved principal produces — callers need those distinguishable to know whether
-   * to start registration or drop the session.
+   * to start registration or drop the session. A 404 sends the client into registration, which
+   * cannot succeed for a user whose Sam record has a B2C identity conflict, so when the auth filter
+   * got no Sam status we ask Sam again and let a B2C conflict answer 409 instead of 404.
    */
-  private User findRegisteredUser(AuthUser authUser) {
+  private User findRegisteredUser(AuthUser authUser) throws SamAzureB2CException {
     try {
       return userService.findUserByEmail(authUser.getEmail());
-    } catch (NotFoundException e) {
+    } catch (NotFoundException _) {
+      if (authUser.getUserStatusInfo() == null) {
+        getUserStatusInfo(authUser);
+      }
       throw new NotFoundException("Authenticated user is not registered");
     }
   }
 
-  private UserStatusInfo getUserStatusInfo(DuosUser duosUser) throws SamAzureB2CException {
+  private UserStatusInfo getUserStatusInfo(AuthUser authUser) throws SamAzureB2CException {
     try {
-      return samService.getCombinedUserStatusInfo(duosUser);
+      return samService.getCombinedUserStatusInfo(authUser);
     } catch (SamAzureB2CException e) {
       logWarn(
           "Sam azure b2c exception: %s for user: %s"
-              .formatted(e.getMessage(), duosUser.getEmail()));
+              .formatted(e.getMessage(), authUser.getEmail()));
       throw e;
     } catch (Exception ex) {
       logWarn("Unable to retrieve user status info from Sam: " + ex.getMessage());

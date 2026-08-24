@@ -153,6 +153,45 @@ class UserResourceTest extends AbstractTestHelper {
     verify(nihService, never()).syncAccount(any());
   }
 
+  /**
+   * A caller with no DUOS account whose Sam record has a B2C identity conflict gets 409, not 404. A
+   * 404 would send them into registration, which cannot succeed for them.
+   */
+  @Test
+  void testGetMeUnregisteredUserWithB2CConflictReturns409() throws Exception {
+    when(userService.findUserByEmail(TEST_EMAIL))
+        .thenThrow(new NotFoundException("Unable to find user with email: " + TEST_EMAIL));
+    when(samService.getCombinedUserStatusInfo(any(AuthUser.class)))
+        .thenThrow(new SamAzureB2CException("AzureB2C error for user " + TEST_EMAIL));
+
+    Response response = userResource.getUser(authUser);
+
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
+    verify(samService, never()).asyncPostRegistrationInfo(any());
+    verify(nihService, never()).syncAccount(any());
+  }
+
+  /**
+   * When the auth filter already has a Sam status, an unregistered caller gets 404 with no second
+   * Sam query.
+   */
+  @Test
+  void testGetMeUnregisteredUserWithStatusSkipsSamQuery() throws Exception {
+    AuthUser withStatus =
+        new AuthUser()
+            .setAuthToken("auth-token")
+            .setName("Test User")
+            .setEmail(TEST_EMAIL)
+            .setUserStatusInfo(new UserStatusInfo().setUserEmail(TEST_EMAIL));
+    when(userService.findUserByEmail(TEST_EMAIL))
+        .thenThrow(new NotFoundException("Unable to find user with email: " + TEST_EMAIL));
+
+    Response response = userResource.getUser(withStatus);
+
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    verify(samService, never()).getCombinedUserStatusInfo(any(AuthUser.class));
+  }
+
   @Test
   void testGetMeWithUserStatusInfo() throws Exception {
     User user = createUserWithRole();
@@ -195,15 +234,17 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetMe_SamAzureB2CException_Returns500() throws Exception {
-    // SamAzureB2CException should NOT be silently swallowed - it propagates and returns a 500
+  void testGetMe_SamAzureB2CException_Returns409() throws Exception {
+    // SamAzureB2CException is not swallowed - it propagates and maps to a 409 Conflict
     User user = createUserWithRole();
     when(userService.findUserByEmail(TEST_EMAIL)).thenReturn(user);
     when(samService.getCombinedUserStatusInfo(any(DuosUser.class)))
         .thenThrow(new SamAzureB2CException("AzureB2C error for user test@test.org"));
 
     Response response = userResource.getUser(authUser);
-    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
+    // The registration post always answers 409 for these users - it must not fire
+    verify(samService, never()).asyncPostRegistrationInfo(any(DuosUser.class));
   }
 
   @Test
@@ -217,7 +258,7 @@ class UserResourceTest extends AbstractTestHelper {
         .thenThrow(new SamAzureB2CException(errorMessage));
 
     Response response = userResource.getUser(authUser);
-    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+    assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
     assertNotNull(response.getEntity());
     assertTrue(response.getEntity().toString().contains(errorMessage));
   }
