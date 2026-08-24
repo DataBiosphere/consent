@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.health;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -89,6 +90,35 @@ class SendGridHealthCheckTest {
 
     HealthCheck.Result result = healthCheck.check();
     assertFalse(result.isHealthy());
+  }
+
+  @Test
+  void testCheckDegradedServiceRealPayload() throws Exception {
+    String statusJson =
+        """
+        {
+          "page": {
+            "id": "test-id",
+            "name": "EmailsRUs",
+            "url": "https://status.example.com",
+            "time_zone": "America/Los_Angeles",
+            "updated_at": "2026-08-24T10:38:01.801-07:00"
+          },
+          "status": {
+            "indicator": "minor",
+            "description": "Partially Degraded Service"
+          }
+        }
+        """;
+    when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
+    when(response.entity()).thenReturn(statusJson);
+    when(clientUtil.getCachedResponse(any())).thenReturn(response);
+    when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
+    healthCheck = new SendGridHealthCheck(clientUtil, mailConfiguration);
+
+    HealthCheck.Result result = healthCheck.check();
+    assertFalse(result.isHealthy());
+    assertEquals("SendGrid status is unhealthy: Partially Degraded Service", result.getMessage());
   }
 
   @Test
