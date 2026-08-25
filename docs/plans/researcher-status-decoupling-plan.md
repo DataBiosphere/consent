@@ -445,6 +445,62 @@ Implement persistence-backed `UserService.isActiveResearcher` and `requireActive
 transactional status transition helper that writes the audit row with the appropriate source. Add the
 OpenAPI path to `api-docs.yaml`, including the flag-off 409.
 
+**The helper serializes every transition on the user row — decision, and the locking site is the
+helper, not its callers.** An earlier revision put row locking only in the reconciliation composite,
+which is the one caller that obviously needs it. But the helper is also reached from the status
+endpoint, [redaction](#user-redaction), and every
+[Library Card dual-write](#flag-gated-dual-write-phase-1-required) path, and those callers do not
+serialize anything. Two concurrent transitions on one user therefore read the same stale status and
+both act on it. That is not a benign duplicate: it breaks the transition-only invariant this plan
+enforces everywhere else, since two concurrent `false → true` transitions each observe `false`, each
+believe they are transitioning, and each write an audit row — producing a duplicate row, or an
+out-of-order pair, in the table whose whole purpose is an honest transition history. Worse, an
+activation racing a redaction can leave a **redacted user active**, the failure mode
+[User redaction](#user-redaction) exists to prevent.
+
+So the helper itself takes the lock, and every caller inherits serialization by construction:
+
+1. **Its first action is `SELECT … FROM users WHERE user_id = :userId FOR UPDATE`**, which doubles as
+   the existence check.
+2. **Every subsequent decision reads from that locked row** — the current status, the redaction guard
+   below, and the SO institution scope — in statements issued *after* the lock is held. Callers never
+   pass a current status in, and the helper never trusts one it was handed.
+3. **It returns whether a transition actually occurred**, which is what feeds the existing
+   idempotent-200-without-an-audit-row rule and redaction's "only when status actually changes"
+   condition.
+4. **It remains the sole writer of `researcher_status_audit`.** Serialization is what makes that
+   invariant enforceable rather than aspirational.
+
+**Why not the atomic conditional update.** `UPDATE users SET researcher_status = :new WHERE user_id =
+:userId AND researcher_status IS DISTINCT FROM :new RETURNING …` is a genuinely correct answer for two
+of the four races — duplicate activations and competing activate/deactivate — because Postgres
+re-evaluates the `WHERE` clause against the updated row after the blocking transaction commits. It
+cannot carry the redaction guard. A `NOT EXISTS (SELECT … FROM user_redaction_audit …)` folded into
+that statement is evaluated under the statement's own snapshot, which was taken *before* the
+concurrent redaction committed, so the guard passes and the redacted user is activated anyway. Lock
+first and read in subsequent statements, and READ COMMITTED gives each of those statements a fresh
+snapshot that includes whatever commit released the lock. `FOR UPDATE` is therefore the mechanism, and
+a reviewer proposing the conditional update should be shown this paragraph rather than this decision
+being relitigated in code review.
+
+**Activation is refused for a redacted user — a guard, not only a race fix.** Under the lock, the
+helper checks for a `user_redaction_audit` row on the target and refuses any transition **to `true`**;
+transitions to `false` stay permitted, or the redaction composite could not deactivate through the
+helper at all. This closes the race above, and it independently closes a **sequential** hole that
+needs no concurrency: an ADMIN is unrestricted by institution scope, so today's design would let one
+`PUT /api/user/<redacted id>/researcherStatus {"researcherStatus": true}` at any time after the
+redaction and get a `true` status with an `ADMIN` audit row. (An SO cannot: redaction NULLs
+`institution_id`, so the scope check already refuses.) The endpoint maps the refusal to **400**, the
+same code every other scope failure on this resource returns; server-side callers see the
+no-transition outcome.
+
+**Lock ordering.** Any transaction that touches both the flag row and a user row takes the flag
+`FOR SHARE` **before** the user `FOR UPDATE` — the order the status endpoint's service method and the
+dual-write composites already follow, since both read the flag first. Any path that locks **multiple**
+user rows — [reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) and the
+enforcement collateral deactivation — locks them in ascending `user_id`. Two paths locking the same
+pair in opposite orders is the one way this design deadlocks, and it is cheap to prevent.
+
 ### Authorization Gate Changes
 
 **How a static `@SqlQuery` is flag-gated — decision, previously unspecified.** Four of the gates are
@@ -769,7 +825,11 @@ the sole writer everywhere else, and would emit a `false → false` row whenever
 already inactive — violating the transition-only invariant. Instead the new composite method opens one
 transaction and calls the redaction DAO, the card delete, and the transition helper within it; the
 helper writes a row only if status actually changes. Atomicity comes from the transaction, not from one
-statement. The method belongs on `UserServiceDAO`, not on `UserService`: `docs/ai/CLAUDE.md` places
+statement. Ordering is safe by construction: `redactUser`'s `original` CTE already takes
+`SELECT … FOR UPDATE` on the `users` row, so the composite is holding that row lock by the time the
+helper runs and the helper's own `FOR UPDATE` is a same-transaction no-op rather than a deadlock. A
+concurrent activation is blocked at the helper's lock until the redaction commits, and is then refused
+by the helper's [redaction guard](#status-endpoint-exception-and-service). The method belongs on `UserServiceDAO`, not on `UserService`: `docs/ai/CLAUDE.md` places
 transactional orchestration in a `service/dao` composite, the same convention that forbids bolting a
 transaction inside `LibraryCardService`. `UserServiceDAO` already exists and is already injected into
 `UserService` (`UserService:58,67,74`), so unlike the Library Card case no new composite is needed.
@@ -1494,7 +1554,10 @@ therefore *drain, reconcile, verify*, in that order, and each step is a prerequi
    documented in `api-docs.yaml`, not exposed in duos-ui. It copies the redaction remediation's shape
    exactly — resource delegating through `UserService` to a transactional `UserServiceDAO` composite,
    never DAO calls in the resource — and adds no new semantics: in one transaction it selects both
-   query populations, locks the target rows, and invokes the same status transition helper for each,
+   query populations, locks its target rows **in ascending `user_id`** — the lock itself is the
+   helper's, per [the helper contract](#status-endpoint-exception-and-service); what this composite
+   owns is the *ordering* discipline that keeps a multi-row repair from deadlocking against another
+   multi-row path — and invokes the same status transition helper for each,
    with the authenticated ADMIN as actor and source `ADMIN`. It returns 200 with `usersMatched`,
    `usersActivated`, and `usersDeactivated`; a failure rolls everything back; a second invocation after
    success returns all zeroes and writes no audit rows. It is idempotent by state, not by a "has run"
@@ -1584,7 +1647,7 @@ specification. Where a mechanism appears in two places, the section is authorita
 | --- | --- | --- |
 | 1 | Audit table first (actor column nullable, `user_id` not), then status column, card backfill, and audit seed; `RESEARCHER_STATUS_GATING` flag row seeded off (moved here from 5a — ticket 3's endpoint reads the flag, so the row must exist before it). **The backfill excludes users with a `user_redaction_audit` row and seeds them no activation, and a one-time remediation deletes any surviving `library_card` / `lc_daa` rows for redacted users** — without both, previously-redacted accounts backfill *active* into a state both verification queries are blind to | — |
 | 2 | Model, projections, JSON write guard, schema. Projections per [Migration, model, and audit](#migration-model-and-audit): add the alias to `User.QUERY_FIELDS_WITH_U_PREFIX` first (this covers the `DacDAO` and `DarCollectionDAO` queries that compose it and are invisible to a `u_user_id` sweep), then edit only the queries that spell their select list out, found with `rg -n "u_user_id|QUERY_FIELDS_WITH_U_PREFIX" src/main`; the `UserWithRolesMapper` set is `hasColumn`-guarded | 1 |
-| 3 | Transactional status transition helper; dedicated client-facing `UserService` method that reads `RESEARCHER_STATUS_GATING` and performs the permitted transition in one transaction; status endpoint mapping the flag-off outcome to 409; `api-docs.yaml` path including that 409 | 1, 2 |
+| 3 | Transactional status transition helper — **it takes `SELECT … FOR UPDATE` on the target `users` row as its first action, reads current status and the redaction guard only under that lock, refuses activation of a user with a `user_redaction_audit` row, and reports whether a transition occurred**, so every caller (endpoint, redaction, dual-write, reconciliation) inherits serialization rather than re-implementing it; dedicated client-facing `UserService` method that reads `RESEARCHER_STATUS_GATING` and performs the permitted transition in one transaction; status endpoint mapping the flag-off outcome to 409 and the redaction refusal to 400; `api-docs.yaml` path including that 409. **Ships the concurrency tests** enumerated in the Test Matrix | 1, 2 |
 | 4 | Java/SQL gates and TDR reading `RESEARCHER_STATUS_GATING`, plus the request-scoped status resolution the gates share (the flag row itself is seeded by ticket 1). **Passport and `InstitutionAndLibraryCardEnforcement` are carved out** — they belong to 10 and 9, which edit the same files | 1, 2, 3 |
 | 5 | Preserve collaborator and DAA-bulk Library Card behavior; add null-card preauthorization guard | 2 |
 | 5a | Flag-gated dual-write on **every** Library Card mutation path (create, delete, DAA bulk, both enforcement branches, and registration linkage — the last delivered by ticket 8, which is why it is a dependency rather than scope here), reading the flag transactionally. The enforcement paths' *transactional plumbing* comes from ticket 9, which owns those files; 5a supplies only the dual-write that rides on it. Requires two pieces of plumbing of its own: a new `LibraryCardServiceDAO` composite — which also means a `ConsentModule` provider and a `LibraryCardService` constructor change (`ConsentModule:649-653` currently builds it with three arguments), following the `docs/ai/CLAUDE.md` conventions for `@Provides` singletons and for composite ordering in the parameter list — so `createLibraryCard` / `deleteLibraryCardById` have a transaction at all (with the issuance email moved after commit), and `deleteAllLibraryCardsByUser` converted to a `DELETE … RETURNING user_id` with a shared `targets` CTE that also clears `lc_daa`, updating `LibraryCardDAOTest:294` and `InstitutionAndLibraryCardEnforcementTest:230` for the `@SqlUpdate`→`@SqlQuery` change, and every returned researcher deactivated in the same transaction. `deleteLibraryCardById` also gains an actor parameter so its audit `source` is not guessed — **five call sites**: `LibraryCardResource:122`, `LibraryCardResourceTest:206`, `:219`, `:227`, and `LibraryCardServiceTest:298`. Plus the flag-echo 409, thrown as `ConsentConflictException` with the `RESEARCHER_STATUS_GATING_MISMATCH` sentinel, compared against the same in-transaction flag read the dual-write uses and evaluated before the card lookup; the rejection counter split by browser/non-browser user agent, **plus the pre-flip observation counter** that tallies every card mutation by header-present/absent and browser/non-browser and records the calling identity for the non-browser header-absent bucket — the consumer inventory ticket 7's breaking-change notice is built from, per [Flag echo](#flag-echo-phase-2-required); **`x-researcher-status-gating` added to `Access-Control-Allow-Headers` in both blocks of `config/site.conf`, without which the browser preflight blocks every card mutation from Phase 2**; and `src/main/resources/assets/api-docs.yaml` updated to document the `X-Researcher-Status-Gating` header and the 409 on `POST /api/libraryCards` and `DELETE /api/libraryCards/{id}` — the POST 409 description must enumerate both the existing payload conflict and the echo mismatch | 1, 3, **8, 9** |
@@ -1893,6 +1956,46 @@ Status and authorization:
 - prove Passport activation provenance never selects an `INSTITUTION_ENFORCEMENT` row: a user
   deactivated by the sweep and later reactivated by an SO asserts `by = so` with the SO's timestamp.
 
+Status transition concurrency — every bullet below is a required deliverable of ticket 3, not an
+optional hardening pass. All of them run against `DAOTestHelper`'s Testcontainers Postgres at its
+default `READ COMMITTED` isolation, using two latch-orchestrated threads on separate Jdbi handles so
+the interleaving is deterministic rather than timing-dependent; the pool is already sized at 100
+connections, so no test infrastructure change is needed. A test that drives both transitions on one
+thread proves nothing here — it cannot produce the stale read these bullets exist to catch:
+
+- prove **competing activation and deactivation** serialize: two transactions transition the same user
+  in opposite directions concurrently, both commit, and the final `researcher_status` equals the last
+  committer's value. The audit chain must strictly alternate — assert that no two consecutive rows,
+  ordered by `(action_date, researcher_status_audit_id)`, carry the same `new_status`, which is the
+  assertion that actually fails against an unserialized helper;
+- prove **concurrent duplicate activations** write exactly one audit row: two transactions activate the
+  same inactive user at once, both return success, exactly one `false → true` row exists, and the
+  losing transaction reports **no transition** — so the endpoint's idempotent path returns 200 without
+  an audit row rather than a second one;
+- prove **activation racing redaction** ends inactive in **both interleavings**. With the activation
+  committing first, redaction blocks on the user-row lock, then deactivates and removes the card, so
+  the user ends `researcher_status = false` with no card. With redaction committing first, the
+  activation blocks on that same lock and is then **refused by the redaction guard**: no activation
+  audit row is written and the status stays `false`. A redacted-but-active outcome fails the test in
+  either ordering, and both verification queries must be empty afterwards;
+- prove the **sequential** case the guard also closes, with no concurrency at all: redact a user, then
+  `PUT /api/user/{id}/researcherStatus {"researcherStatus": true}` as an unrestricted ADMIN. It returns
+  **400**, status stays `false`, and no audit row is written — and a deactivation of an already-redacted
+  user is still permitted, or redaction itself could not transition through the helper;
+- prove **a Library Card dual-write racing a concurrent transition** on the same user. Race the
+  dual-write against a **direct transition-helper call** — the pre-flip repair path — or against a
+  second dual-write, e.g. a card create racing the enforcement collateral delete for the same
+  researcher. Do **not** write this as the status endpoint racing a dual-write: that pairing is
+  structurally impossible, because the endpoint writes only while the flag is on and the dual-write
+  only while it is off, and both read the flag `FOR SHARE` inside their own transaction, so the flip
+  `UPDATE` strictly orders them. In the valid pairings, assert both transactions commit, the audit rows
+  are correctly ordered with no duplicate-direction pair, the surviving status matches the last
+  committer, and both verification queries return zero rows;
+- prove the **lock ordering** rule holds where it matters: two reconciliation-shaped transactions
+  repairing overlapping user sets concurrently both complete without a deadlock, because each locks in
+  ascending `user_id`. A fixture whose two sets overlap in only one user cannot detect an ordering
+  defect — the sets must overlap in at least two, in opposite input order.
+
 DAA and Library Card regression:
 
 - **with `RESEARCHER_STATUS_GATING` on**, creating a Library Card or assigning a DAA does not activate
@@ -1960,7 +2063,7 @@ smoke test covering Phase 1, Phase 3 deactivation/reactivation, and DAA assignme
 ## Where to Look Hardest
 
 This plan has been through a verification pass and twelve review rounds, and it has been consolidated
-since. Four areas took the most revision to get right and are where a reviewer's attention is worth
+since. Five areas took the most revision to get right and are where a reviewer's attention is worth
 most:
 
 - **[User redaction](#user-redaction)** — the interaction between redaction, the backfill, and the
@@ -1972,6 +2075,10 @@ most:
 - **The [registration carve-out](#library-card-creation-daa-assignment-and-registration)** — the one
   card-to-status coupling that survives the flip, including the drain-window re-pointing residue that
   redaction remediation must remove before ordinary reconciliation.
+- **The [transition helper's serialization](#status-endpoint-exception-and-service)** — the helper is
+  reached from four unrelated callers, and locking it in only the one that obviously needed it left the
+  other three reading stale status. The redaction guard in particular has to be checked *under the
+  lock* and in a statement after it, which is exactly what the atomic conditional update cannot do.
 - **The [cutover runbook](#post-drain-reconciliation-then-skew-verification-at-the-flip)** — the
   dual-write bounds the skew a rolling deploy can create but does not prevent it, and an earlier
   revision drew the wrong conclusion from that twice: once by calling the verification queries a pure
@@ -2007,6 +2114,13 @@ else. All three are worth checking against any change made from here.
   flag-gated dual-write, never incidentally.
 - Passport uses the precise latest-activation audit query and preserves only Affiliation-and-Role for
   inactive researchers.
+- **Every status transition is serialized on the target `users` row by the transition helper itself**,
+  which locks with `SELECT … FOR UPDATE` before reading current status, so the endpoint, redaction, the
+  dual-write, and reconciliation all inherit serialization rather than each re-implementing it. No
+  activation is permitted for a user with a `user_redaction_audit` row, whether it arrives concurrently
+  with the redaction or long after it. The concurrency tests enumerated in the Test Matrix — competing
+  activation and deactivation, duplicate activations, activation racing redaction in both
+  interleavings, and a dual-write racing a concurrent transition — all pass.
 - Phase 3 toggles preserve Library Cards and DAAs, and no status action calls the Library Card deletion
   flow.
 - Registration that links a legacy unlinked Library Card yields an active researcher; after the flip,
