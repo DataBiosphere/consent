@@ -124,10 +124,7 @@ public class SamDAO implements ConsentLogger {
       String body = response.parseAsString();
       if (!response.isSuccessStatusCode()) {
         if (body.toLowerCase().contains("cannot update azureb2cid for user")) {
-          throw new SamAzureB2CException(
-              String.format(
-                  "AzureB2C authentication Error for user %s. Please contact support for help with this error.",
-                  authUser.getEmail()));
+          throw new SamAzureB2CException(getAzureB2CErrorMessage(authUser.getEmail()));
         }
         String errorMsg =
             String.format(
@@ -170,14 +167,18 @@ public class SamDAO implements ConsentLogger {
       JsonElement messageElement = JsonParser.parseString(body).getAsJsonObject().get("message");
       String message = messageElement != null ? messageElement.getAsString() : body;
       if (message.contains("Cannot update azureB2cId")) {
-        return String.format(
-            "Email: %s. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
-            duosUser.getEmail());
+        return getAzureB2CErrorMessage(duosUser.getEmail());
       }
-      return String.format(errorMsg + " %s.", message);
-    } catch (JsonSyntaxException e) { // If the body is not a valid JSON
-      return String.format(errorMsg + " %s.", body);
+      return String.format("%s %s.", errorMsg, message);
+    } catch (JsonSyntaxException _) { // If the body is not a valid JSON
+      return String.format("%s %s.", errorMsg, body);
     }
+  }
+
+  public static String getAzureB2CErrorMessage(String email) {
+    return String.format(
+        "Email: %s. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
+        email);
   }
 
   public void asyncPostRegistrationInfo(DuosUser duosUser) {

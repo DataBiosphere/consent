@@ -915,6 +915,14 @@ paths:
           description: Unauthorized - missing or unusable credentials
         404:
           description: Authenticated, but no DUOS account exists for this user
+        409:
+          description: The Sam record for this user has an azureB2cId conflict. The user
+            may have previously signed in with a different authentication provider. The
+            message explains how to resolve the conflict; registration cannot succeed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         429:
           description: Too Many Requests - rate limit exceeded
           content:

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.sam;
 import com.google.inject.Inject;
 import java.util.List;
 import org.broadinstitute.consent.http.db.SamDAO;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
@@ -40,8 +41,8 @@ public class SamService implements ConsentLogger {
     samDAO.asyncPostRegistrationInfo(duosUser);
   }
 
-  public UserStatusInfo getCombinedUserStatusInfo(DuosUser duosUser) throws Exception {
-    return samDAO.getCombinedUserStatusInfo(duosUser);
+  public UserStatusInfo getCombinedUserStatusInfo(AuthUser authUser) throws Exception {
+    return samDAO.getCombinedUserStatusInfo(authUser);
   }
 
   public String getToSText() throws Exception {

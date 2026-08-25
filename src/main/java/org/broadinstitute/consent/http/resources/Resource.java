@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.exceptions.SamAzureB2CException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
@@ -101,6 +102,13 @@ public abstract class Resource implements ConsentLogger {
                 .build());
     DISPATCH.put(
         ConsentConflictException.class,
+        e ->
+            Response.status(Response.Status.CONFLICT)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(new Error(e.getMessage(), Response.Status.CONFLICT.getStatusCode()))
+                .build());
+    DISPATCH.put(
+        SamAzureB2CException.class,
         e ->
             Response.status(Response.Status.CONFLICT)
                 .type(MediaType.APPLICATION_JSON)
