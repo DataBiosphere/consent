@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. The design has been through a repository-wide verification pass and eleven rounds of
+Proposed. The design has been through a repository-wide verification pass and twelve rounds of
 adversarial review; every code reference below was confirmed against `consent` `develop` at
 `e20fe76c2` and `duos-ui` at `09f51d51`.
 
@@ -668,26 +668,27 @@ or that were written directly. It is cheap and correct when it fires, and droppi
 such row permanently inactive after Phase 3 with no signal to anyone — but it is **not** load-bearing
 for current onboarding and must not be cited as the reason any other decision holds.
 
-**The non-activating branch is the one exception to the zero-skew guarantee, and must be declared
-rather than discovered at the gate.** Re-pointing an already-linked card leaves the new account
+**The non-activating branch is a rolling-deployment residue, not an exception the operator must
+classify by hand.** Re-pointing an already-linked card leaves the new account
 `researcher_status = false` **with a card present** (verification query 1's population), and the
 previous owner card-less, which puts them in query 2's population if they were active. Both gates call
-that "a dual-write defect: stop". Two things resolve it, in order of preference:
+that "a dual-write defect: stop". Ticket 11 prevents this once its live-redaction code is serving, but
+the same rolling window that necessitates redaction remediation can still produce it: an old instance
+redacts a carded user without deleting the card, then registration re-points that still-linked card
+before old instances drain.
 
-- **The branch should be unreachable once ticket 11 ships**, because redaction then deletes the card,
-  and redaction is the only identified way a live card retains an email its owner no longer uses. If it
-  is genuinely unreachable, the gates stay absolute and this paragraph documents why.
-- **If a row does appear**, it is the one query 1 row the
-  [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) must
-  **not** blanket-activate, because the new account's owner was never vouched for: deactivate the
-  re-pointed account's predecessor if still active, and leave the new account inactive, repairing
-  through the transition helper as that section prescribes. Recognise it *by cause* — log the `user_id`
-  pair and confirm it came from a re-pointed linkage — rather than either waving it through or sweeping
-  it up with the drain-window residue.
+The state **is distinguishable after the fact**. `user_redaction_audit` preserves the predecessor's
+`original_email` and `action_date`; registration is the only caller of `updateLibraryCardById`, and it
+sets the card's `update_user_id` to the new `user_id` and `update_date` to the linkage time. Ticket 11's
+[redaction remediation](#user-redaction) therefore detects and removes these re-pointed residues before
+ordinary status reconciliation. The new owner stays inactive and the redacted predecessor is
+deactivated. The ordinary reconciliation endpoint never sees this query-1 row and cannot accidentally
+activate someone no SO vouched for.
 
-Test the activating branch directly. **The non-activating branch cannot be driven through "redact a
-carded user, then re-register"**, because ticket 11 removes the card and ships in the same release;
-construct the already-linked card state directly in the fixture.
+Test the activating and non-activating registration branches directly by constructing the linked
+state in the fixture. Separately, the remediation test must drive the real rolling-deployment sequence:
+old redaction preserves the card, registration re-points it, and post-drain redaction remediation
+removes it before ordinary reconciliation.
 
 **After the flip, issuing a card no longer activates anyone — decision.** Since no SO can pre-issue a
 card to an unregistered researcher, the real flow is the reverse: the researcher registers first, and
@@ -810,15 +811,26 @@ endpoint before the Phase-3 flag flip.
 
 The resource delegates through `UserService` to a `UserServiceDAO` composite method; it does not issue
 DAO calls itself. In one transaction, the composite selects every user with a
-`user_redaction_audit` row who still has `researcher_status = true` or a linked Library Card, locks the
-target user and card rows, deletes each target card's `lc_daa` rows and then the card, and invokes the
-status transition helper with the authenticated ADMIN as actor and source `ADMIN`. It uses the same
-scalar-card-id deletion rule as live redaction — never `deleteAllLibraryCardsByUser` — so remediating a
-redacted Signing Official cannot delete cards they issued for other researchers. The helper writes an
-audit row only for a true-to-false transition; an inactive target whose only residue is a card gets
-cleanup but no false-to-false audit row.
+`user_redaction_audit` row who still has `researcher_status = true` or a directly linked Library Card,
+plus any card re-pointed from that redacted identity during the drain window. A re-pointed residue is
+identified from persisted provenance, not operator inference: the card's `user_email` matches the
+audit row's `original_email` case-insensitively, the card predates the redaction, the card now belongs
+to a different user, and `update_user_id = user_id` with `update_date >= action_date`. Registration is
+the only caller of `updateLibraryCardById`, so the update fields distinguish a registration linkage
+from a newly issued post-redaction card that merely reused the email.
 
-The operation returns 200 with JSON counts for `usersMatched`, `usersDeactivated`, and `cardsDeleted`.
+The composite locks the target user and card rows, deletes each direct or re-pointed target card's
+`lc_daa` rows and then the card, deactivates the redacted predecessor, and invokes the status transition
+helper with the authenticated ADMIN as actor and source `ADMIN`. It does **not** activate or otherwise
+change the re-pointed card's new owner. It uses the same scalar-card-id deletion rule as live
+redaction — never `deleteAllLibraryCardsByUser` — so remediating a redacted Signing Official cannot
+delete unrelated cards they issued or updated for other researchers. The helper writes an audit row
+only for a true-to-false transition; an inactive target whose only residue is a card gets cleanup but
+no false-to-false audit row.
+
+The operation returns 200 with JSON counts for `usersMatched`, `usersDeactivated`, `cardsDeleted`, and
+`repointedCardsDeleted`; the last count makes this security-sensitive rolling-window repair visible to
+the operator rather than hiding it inside the aggregate deletion count.
 It is idempotent by state, not by a separate "has run" marker: after a successful run, invoking it again
 returns all zeroes, writes no status audit rows, and deletes nothing. A transaction failure rolls back
 all changes and returns 500 through the standard exception path; the operator must not flip the flag
@@ -1425,8 +1437,9 @@ sequenceDiagram
 After the Phase-1 rollout, but before Phase 3, the operator must verify that every pre-Phase-1
 application instance has drained, and then run **two** remediation steps in order. First, invoke
 `POST /api/user/redaction-remediations` as an ADMIN; the invocation must succeed, and an immediate
-second invocation must report zero matched users and zero changes. This one comes first because the
-ordinary skew queries below cannot detect a redacted user who is both active and carded. Second, run
+second invocation must report zero matched users and zero changes. This one comes first because it
+owns both redacted users invisible to the ordinary queries and re-pointed redaction residues that those
+queries would otherwise misclassify. Second, run
 the [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) over
 ordinary card mutations — `POST /api/user/researcher-status-reconciliations`, which repairs the skew
 that old instances created by serving Library Card creates and deletes without dual-writing — and
@@ -1447,6 +1460,7 @@ ordinary Library Card traffic until they drain, and those instances dual-write n
 | SO or admin deletes a Library Card | no card, `researcher_status = true` | query 2 |
 | Enforcement sweep removes a card | no card, `researcher_status = true` | query 2 |
 | DAA bulk assignment creates a card | card present, `researcher_status = false` | query 1 |
+| Old redaction leaves a card, then registration re-points it | new owner card-present/inactive; predecessor card-less/active | both; redaction remediation owns this pair |
 
 This is the **same gap** the plan already recognises for redaction, on the far more frequent ordinary
 paths — and unlike the redaction case it is *visible* to the queries, which is worse rather than
@@ -1460,13 +1474,16 @@ therefore *drain, reconcile, verify*, in that order, and each step is a prerequi
 1. **Drain.** Confirm no pre-Phase-1 application instance can still receive traffic — the same
    condition [redaction remediation](#user-redaction) already requires, checked once and satisfying
    both gates.
-2. **Reconcile.** Run [redaction remediation](#user-redaction) first — its population is invisible to
-   the queries below, and once it has run those users are card-less and inactive, so they fall out of
-   both populations rather than being reconciled twice. Then repair every row the two queries return.
-   Pre-flip there is **no legitimate divergence** — the status endpoint 409s while the flag is off, and
-   the dual-write covers every card path — so each row is unambiguously an un-dual-written legacy
-   mutation, and the repair is exactly the status transition the old instance would have performed:
-   query 1's population is **activated**, query 2's is **deactivated**.
+2. **Reconcile.** Run [redaction remediation](#user-redaction) first. It removes both directly linked
+   redaction residue and the re-pointed-card residue identified from
+   `user_redaction_audit.original_email` plus the card's registration update fields; it deactivates the
+   predecessor and leaves the new owner inactive. Once it has run, both members of that pair fall out of
+   the verification populations rather than being misclassified by ordinary reconciliation. Then repair
+   every remaining row the two queries return. Pre-flip there is **no other legitimate divergence** —
+   the status endpoint 409s while the flag is off, and the dual-write covers every card path — so each
+   remaining row is an un-dual-written legacy mutation, and the repair is exactly the status transition
+   the old instance would have performed: query 1's population is **activated**, query 2's is
+   **deactivated**.
 
    **The repair needs a mechanism, not a runbook instruction — new scope.** "Goes through the
    transition helper" names a Java internal with no invocable surface: the status endpoint 409s while
@@ -1483,15 +1500,14 @@ therefore *drain, reconcile, verify*, in that order, and each step is a prerequi
    success returns all zeroes and writes no audit rows. It is idempotent by state, not by a "has run"
    marker.
 
-   **One operator pre-check, because the endpoint deliberately cannot make this judgement.** The
-   [registration carve-out](#library-card-creation-daa-assignment-and-registration)'s non-activating
-   branch — a card re-pointed to a new account whose owner was never vouched for — also lands
-   card-present and inactive, and activating it would vouch for someone no SO ever vouched for. Nothing
-   in the persisted state distinguishes it from a drain-window create, so the operator runs both queries
-   *before* invoking the endpoint and confirms no row came from a re-pointed linkage. That branch
-   should be unreachable once ticket 11 ships, so the expected finding is none; if a row does appear,
-   resolve it by hand first — leave the new account inactive and deactivate the predecessor — and
-   confirm the endpoint's `usersMatched` then matches the remaining row count.
+   **Fail closed on re-pointed redaction residue.** Both remediation endpoints use one shared DAO
+   selector for the persisted-provenance predicate above. Before activating any query-1 user, ordinary
+   reconciliation checks that selector in its transaction. If even one matching card remains, the
+   endpoint rolls back without changing any status and returns a documented 409 whose message opens
+   `REPOINTED_REDACTION_RESIDUE`; the operator reruns or fixes redaction remediation rather than
+   deciding by inspection that the activation is safe. This guard is defence in depth—the ordered
+   runbook should make the population empty—but it makes blanket activation structurally incapable of
+   vouching for the re-registered owner.
 3. **Verify.** Re-run both queries. **They must return zero rows, and a rerun immediately after the
    reconciliation must repair nothing** — the same zero-on-immediate-rerun proof the redaction
    remediation gate uses. Only then may ticket 7 flip the flag.
@@ -1577,7 +1593,7 @@ specification. Where a mechanism appears in two places, the section is authorita
 | 8 | Registration-time activation in `UserServiceDAO.createUser`. Ordered **before** 5a: the dual-write table lists this path, so leaving it unshipped guarantees the first pre-flip verification query returns rows and the gate reports a "dual-write defect" that is really an unshipped ticket | 1, 2 |
 | 9 | Enforcement's status behavior end to end. Adds the **separate per-user status evaluation step** described in [Institution and domain enforcement](#institution-and-domain-enforcement) — not a rider on the existing branches, which cannot cover a card-less, institution-less user — and makes every branch it touches transactional, including the bare `:158` call and the two bare `userDAO.updateInstitutionId` branches at `:156` and `:191`. **Owns `InstitutionAndLibraryCardEnforcement` and its test outright**: tickets 4 and 5a do not touch either. The new evaluation is flag-gated and runs on post-reassignment state — see the section | 3, 8 |
 | 10 | Passport `by()` / `asserted()` provenance from the audit table, including the inactive-user fallback. **Owns `ResearcherStatus.java` and `AffiliationAndRole.java` outright**, so ticket 4 does not touch them | 1, 2 |
-| 11 | Redaction deactivates: per [User redaction](#user-redaction), `UserService.redactUser` deletes the user's `lc_daa` and `library_card` rows, sets `researcher_status = false`, and writes an `ADMIN` transition row **through the transition helper** (not hand-rolled SQL, and only when status actually changes) — all in one transaction. The same ticket adds the ADMIN-only, explicitly invoked, idempotent `POST /api/user/redaction-remediations` resource, its result model, `UserService` delegation, transactional `UserServiceDAO` implementation, resource/service/DAO tests, and `api-docs.yaml` contract. It ships in the Phase-1 release with ticket 1; after all old instances drain, the endpoint cleans any redactions created in the rolling-deployment window and must report zero changes on an immediate rerun before ticket 7 may flip the flag. Both live redaction and remediation use scalar card ids, never the issuer-wide bulk delete. **The same ticket ships its sibling, `POST /api/user/researcher-status-reconciliations`** — ADMIN-only, explicitly invoked, idempotent, `usersMatched` / `usersActivated` / `usersDeactivated` counts, same resource → `UserService` → transactional `UserServiceDAO` layering, same `api-docs.yaml` obligation, no duos-ui exposure — which is the mechanism the required [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) invokes; without it that gate is a runbook instruction with nothing to run. It is grouped here rather than in ticket 7 because it is the same endpoint shape, the same composite, and the same tests, and because ticket 7 must be able to *invoke* it, not build it | 1, 3, 8 |
+| 11 | Redaction deactivates: per [User redaction](#user-redaction), `UserService.redactUser` deletes the user's `lc_daa` and `library_card` rows, sets `researcher_status = false`, and writes an `ADMIN` transition row **through the transition helper** (not hand-rolled SQL, and only when status actually changes) — all in one transaction. The same ticket adds the ADMIN-only, explicitly invoked, idempotent `POST /api/user/redaction-remediations` resource, its result model, `UserService` delegation, transactional `UserServiceDAO` implementation, resource/service/DAO tests, and `api-docs.yaml` contract. It ships in the Phase-1 release with ticket 1; after all old instances drain, the endpoint cleans both directly linked redaction residue and cards re-pointed after an old-instance redaction, reports `repointedCardsDeleted`, and must report zero changes on an immediate rerun before ticket 7 may flip the flag. Both live redaction and remediation use scalar card ids, never the issuer-wide bulk delete. **The same ticket ships its sibling, `POST /api/user/researcher-status-reconciliations`** — ADMIN-only, explicitly invoked, idempotent, `usersMatched` / `usersActivated` / `usersDeactivated` counts, same resource → `UserService` → transactional `UserServiceDAO` layering, same `api-docs.yaml` obligation, no duos-ui exposure — which is the mechanism the required [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) invokes; without it that gate is a runbook instruction with nothing to run. It shares the re-pointed-residue selector and fails closed with `REPOINTED_REDACTION_RESIDUE` rather than activating a match. It is grouped here rather than in ticket 7 because it is the same endpoint shape, the same composite, and the same tests, and because ticket 7 must be able to *invoke* it, not build it | 1, 3, 8 |
 
 **Three ordering constraints are load-bearing.**
 
@@ -1780,22 +1796,32 @@ Migration and audit:
   queries return zero rows afterwards. A test that only covers never-redacted users cannot detect this
   state, because it is consistent under both queries;
 - prove `POST /api/user/redaction-remediations` is ADMIN-only: an ADMIN receives 200 and the documented
-  `usersMatched`, `usersDeactivated`, and `cardsDeleted` counts, while every other role receives 403 and
-  no state changes;
+  `usersMatched`, `usersDeactivated`, `cardsDeleted`, and `repointedCardsDeleted` counts, while every
+  other role receives 403 and no state changes;
 - simulate the rolling-deployment gap: run ticket 1, create a redaction through the old status/card-
   preserving behavior, invoke the endpoint as an ADMIN, and assert the target becomes inactive, its
   `lc_daa` rows and card are removed, and its transition audit names the invoking ADMIN with source
   `ADMIN`;
-- prove remediation is idempotent by invoking it again after success: all three counts are zero, no
+- simulate the reviewed re-pointing sequence end to end: after that old-instance redaction but before
+  drain, register a new account with the audit row's `original_email` so `createUser` re-points the
+  still-linked card. Assert the new owner is card-present/inactive and the predecessor card-less/active,
+  then invoke redaction remediation. It must identify the card from persisted provenance, delete its
+  `lc_daa` and card rows by scalar id, deactivate only the predecessor, leave the new owner inactive,
+  and return `repointedCardsDeleted = 1`. Both verification queries must then be empty, and ordinary
+  reconciliation must report zero matches rather than activating the new owner;
+- prove remediation is idempotent by invoking it again after success: all four counts are zero, no
   audit row is added, and no delete is attempted; also cover an already-inactive redacted user whose
   only residue is a card, which increments `usersMatched` and `cardsDeleted` but not
   `usersDeactivated` and writes no false-to-false audit row;
 - prove remediation is atomic: a forced failure after at least one target has been processed rolls back
   every status, audit, `lc_daa`, and card change, and a retry processes the same targets successfully;
-- prove remediating a redacted Signing Official preserves every card they issued or updated for other
-  researchers, because the endpoint deletes only cards selected by the redacted owner's `user_id`;
-- prove a redacted user re-registering with their original email is not reactivated, now that no card
-  survives to be matched;
+- prove remediating a redacted Signing Official preserves every unrelated card they issued or updated
+  for other researchers: the endpoint deletes only a card directly owned by the redacted user or the
+  specific registration-repointed residue selected by audit email, ordering timestamps, and
+  `update_user_id = user_id`;
+- prove a redacted user re-registering with their original email is not reactivated in both deployment
+  shapes: live ticket-11 redaction leaves no card to match, while old-instance redaction followed by
+  registration re-pointing is repaired post-drain;
 - prove redaction succeeds for a user whose card carries DAAs — the `lc_daa` rows are deleted first, no
   FK violation occurs, and the redaction is not rolled back. A fixture with a DAA-less card cannot
   detect this;
@@ -1817,10 +1843,13 @@ Migration and audit:
   status), and atomic (a forced failure after at least one target has been processed rolls back every
   status and audit change, and a retry processes the same targets successfully) — the same three
   properties proven for the redaction remediation, on the sibling endpoint;
+- prove ordinary reconciliation fails closed if a re-pointed redaction residue is deliberately left
+  behind: it returns 409 with `REPOINTED_REDACTION_RESIDUE`, activates nobody, writes no audit row, and
+  leaves every status unchanged; `api-docs.yaml` documents this response;
 - prove the reconciliation endpoint's populations are disjoint from redaction's when the runbook order
   is followed: after `POST /api/user/redaction-remediations` has run, a previously-redacted user is
-  card-less and inactive, so the reconciliation reports them in neither count and writes them no audit
-  row;
+  card-less and inactive and any re-registered owner is also card-less and inactive, so reconciliation
+  reports neither in its counts and writes neither an audit row;
 - prove `api-docs.yaml` documents `POST /api/user/researcher-status-reconciliations` and its 200
   response counts;
 - prove Passport's reading of a reconciliation-activated user: the `ADMIN` activation row yields
@@ -1930,8 +1959,8 @@ smoke test covering Phase 1, Phase 3 deactivation/reactivation, and DAA assignme
 
 ## Where to Look Hardest
 
-This plan has been through a verification pass and eleven review rounds, and it has been consolidated
-since. Three areas took the most revision to get right and are where a reviewer's attention is worth
+This plan has been through a verification pass and twelve review rounds, and it has been consolidated
+since. Four areas took the most revision to get right and are where a reviewer's attention is worth
 most:
 
 - **[User redaction](#user-redaction)** — the interaction between redaction, the backfill, and the
@@ -1941,8 +1970,8 @@ most:
   is read per request, and what else moves when the card lookup moves, are both load-bearing and easy
   to get subtly wrong.
 - **The [registration carve-out](#library-card-creation-daa-assignment-and-registration)** — the one
-  card-to-status coupling that survives the flip, and the one declared exception to the zero-skew
-  guarantee.
+  card-to-status coupling that survives the flip, including the drain-window re-pointing residue that
+  redaction remediation must remove before ordinary reconciliation.
 - **The [cutover runbook](#post-drain-reconciliation-then-skew-verification-at-the-flip)** — the
   dual-write bounds the skew a rolling deploy can create but does not prevent it, and an earlier
   revision drew the wrong conclusion from that twice: once by calling the verification queries a pure
@@ -2003,9 +2032,10 @@ else. All three are worth checking against any change made from here.
 - **The reconciliation has an invocable mechanism, not a runbook instruction.** Ticket 11 ships
   `POST /api/user/researcher-status-reconciliations` alongside the redaction endpoint, with the same
   ADMIN-only, explicitly-invoked, idempotent, transactional, `api-docs`-documented shape, so no required
-  repair depends on someone reaching a Java internal by hand. The operator runs both queries before
-  invoking it to confirm no row is a re-pointed registration linkage, which is the one judgement the
-  endpoint deliberately does not make.
+  repair depends on someone reaching a Java internal by hand. Redaction remediation identifies and
+  removes re-pointed registration residue from persisted audit/card provenance first; ordinary
+  reconciliation shares that selector and fails closed with `REPOINTED_REDACTION_RESIDUE` if any match
+  remains, so the operator never decides manually whether blanket activation is safe.
 - The plan's rolling-deployment coverage is complete on **both** halves: redaction *and* ordinary
   Library Card creates, deletes, enforcement sweeps, and DAA bulk assignments served by old instances
   after the backfill. Skew rows found before the drain is confirmed are treated as expected drain-window
@@ -2033,7 +2063,8 @@ else. All three are worth checking against any change made from here.
   the flip release with identified callers contacted directly, and the PO has signed off. Documenting
   the header in Swagger is a precondition for these steps, not a substitute for them.
 - `api-docs.yaml` also documents the ADMIN-only redaction-remediation and researcher-status-
-  reconciliation operations and their 200 response counts; both resources delegate through
+  reconciliation operations, their 200 response counts, and reconciliation's
+  `REPOINTED_REDACTION_RESIDUE` 409; both resources delegate through
   `UserService` and `UserServiceDAO` rather than accessing persistence directly.
 - `RESEARCHER_STATUS_GATING` is the single flag both repositories read.
 - Enforcement branches write status and their audit row transactionally, and no code path dereferences
@@ -2059,11 +2090,14 @@ else. All three are worth checking against any change made from here.
   unmapped domain reaches none of them.
 - Redaction deactivates and removes the card, per [User redaction](#user-redaction), without depending
   on the enforcement sweep.
-- Redaction remediation is atomic and idempotent, deletes only the redacted users' own cards, attributes
-  true-to-false transitions to the invoking ADMIN, and writes no audit row for an already-inactive user.
+- Redaction remediation is atomic and idempotent; it deletes directly linked cards plus only those
+  re-pointed cards identified by redaction audit provenance and registration update fields, reports the
+  latter separately, attributes predecessor true-to-false transitions to the invoking ADMIN, never
+  activates or changes the re-registered owner, and writes no audit row for an already-inactive user.
 - Researcher-status reconciliation is atomic and idempotent, attributes every transition to the invoking
   ADMIN with source `ADMIN`, and reports zero counts on an immediate rerun; a user already cleaned by
-  redaction remediation falls into neither of its populations.
+  redaction remediation falls into neither of its populations, and any surviving re-pointed residue
+  aborts reconciliation with no status changes.
 - Registration activates only on a card whose `user_id` was NULL, so a redacted user re-registering
   with their original email is not silently reactivated with back-dated Signing Official provenance.
 - A Signing Official cannot set their own researcher status; only an admin can, and that transition
