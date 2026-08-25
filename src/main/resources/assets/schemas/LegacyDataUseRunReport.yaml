@@ -1,0 +1,30 @@
+type: object
+description: |
+  Outcome of one legacy Data Use run. Redacted: failures carry a dataset id, never an exception
+  message, which can quote the Other free text.
+properties:
+  processed:
+    type: integer
+    description: Datasets that completed without a failure.
+  unchanged:
+    type: integer
+    description: |
+      The subset of processed datasets that rebuilt nothing, every Data Access Request on them
+      having been rebuilt already by an earlier dataset in the same run.
+  failed:
+    type: integer
+    description: |
+      Datasets whose every attempt failed. A dataset here may still have had earlier Data Access
+      Requests rebuilt, which matchesRecomputed counts.
+  retried:
+    type: integer
+    description: Datasets that failed once and were attempted again, whether or not that succeeded.
+  matchesRecomputed:
+    type: integer
+    description: |
+      Distinct Data Access Requests rebuilt, counted whether or not their dataset went on to fail.
+  failedDatasetIds:
+    type: array
+    description: Datasets needing follow-up, so a rerun can be scoped to them.
+    items:
+      type: integer

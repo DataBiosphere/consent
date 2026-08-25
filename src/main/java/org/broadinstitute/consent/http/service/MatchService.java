@@ -42,10 +42,14 @@ public class MatchService implements ConsentLogger {
   }
 
   public void insertMatches(List<Match> match) {
+    insertMatches(matchDAO, match);
+  }
+
+  private static void insertMatches(MatchDAO dao, List<Match> match) {
     match.forEach(
         m -> {
           Integer id =
-              matchDAO.insertMatch(
+              dao.insertMatch(
                   m.getConsent(),
                   m.getPurpose(),
                   m.getMatch(),
@@ -54,7 +58,7 @@ public class MatchService implements ConsentLogger {
                   m.getAlgorithmVersion(),
                   m.getAbstain());
           if (!m.getRationales().isEmpty()) {
-            m.getRationales().forEach(f -> matchDAO.insertRationale(id, f));
+            m.getRationales().forEach(f -> dao.insertRationale(id, f));
           }
         });
   }
@@ -63,18 +67,27 @@ public class MatchService implements ConsentLogger {
     return matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIds);
   }
 
+  /**
+   * The rebuild is computed before anything is deleted and both halves share one transaction, so a
+   * failure cannot leave the purpose with its matches removed and nothing put back.
+   */
   public void reprocessMatchesForPurpose(String purposeId) {
-    removeMatchesForPurpose(purposeId);
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(purposeId);
-    if (Objects.nonNull(dar)) {
-      List<Match> matches = createMatchesForDataAccessRequest(dar);
-      insertMatches(matches);
-    }
+    List<Match> matches = Objects.nonNull(dar) ? createMatchesForDataAccessRequest(dar) : List.of();
+    matchDAO.useTransaction(
+        dao -> {
+          removeMatchesForPurpose(dao, purposeId);
+          insertMatches(dao, matches);
+        });
   }
 
   public void removeMatchesForPurpose(String purposeId) {
-    matchDAO.deleteRationalesByPurposeIds(List.of(purposeId));
-    matchDAO.deleteMatchesByPurposeId(purposeId);
+    removeMatchesForPurpose(matchDAO, purposeId);
+  }
+
+  private static void removeMatchesForPurpose(MatchDAO dao, String purposeId) {
+    dao.deleteRationalesByPurposeIds(List.of(purposeId));
+    dao.deleteMatchesByPurposeId(purposeId);
   }
 
   protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {

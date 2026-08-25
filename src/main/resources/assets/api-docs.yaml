@@ -855,6 +855,10 @@ paths:
           description: Internal server error
   /api/libraryCards/history/{userId}:
     $ref: './paths/libraryCardHistoryByUserId.yaml'
+  /api/datause/legacy/noncanonical:
+    $ref: './paths/legacyDataUseNoncanonical.yaml'
+  /api/datause/legacy/recomputeMatches:
+    $ref: './paths/legacyDataUseRecomputeMatches.yaml'
   /api/match/reprocess/purpose/{purposeId}:
     post:
       summary: Process all matches for this research purpose (DAR) id
