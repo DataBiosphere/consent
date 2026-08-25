@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. The design has been through a repository-wide verification pass and ten rounds of
+Proposed. The design has been through a repository-wide verification pass and eleven rounds of
 adversarial review; every code reference below was confirmed against `consent` `develop` at
 `e20fe76c2` and `duos-ui` at `09f51d51`.
 
@@ -48,10 +48,21 @@ the gates do not yet honor, institution scoping, idempotency, and two self-activ
 **Added — writers and surfaces the ticket did not reach.** Activation when registration links a legacy
 unlinked Library Card; `redactUser`, which must deactivate and remove the card or a redacted identity
 keeps full access after the flip; an ADMIN-only, explicitly invoked, idempotent post-deployment
-redaction-remediation endpoint that closes the rolling-deployment gap after old instances drain; the
+redaction-remediation endpoint that closes the *redaction* half of the rolling-deployment gap after old
+instances drain — the ordinary-card-mutation half is closed by the required post-drain reconciliation
+in [Post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip), and both
+are prerequisites for the flip; the
 CORS allowlist, without which the new echo header is blocked by the browser before it reaches consent;
 and an admin researcher-status control on `AdminEditUser`,
 because after Phase 3 deleting a Library Card no longer deactivates anyone.
+
+**Added — the permanent echo header is a breaking API change, with the process that implies.** The
+ticket did not contemplate a required request header. `CONTRIBUTING.md` requires Comms review, written
+migration instructions, and advance notice to `api-users@firecloud.org` for breaking API changes, and
+the flip makes `X-Researcher-Status-Gating` mandatory on both Library Card mutation operations. Those
+obligations, plus the pre-flip telemetry that measures the affected caller population, are rollout
+prerequisites on ticket 7 rather than documentation. See
+[Flag echo](#flag-echo-phase-2-required).
 
 **Corrected — mapper change is required, and must be guarded.** The ticket asserted no mapper work was
 needed because JDBI bean-mapping would pass the column through. `UserWithRolesMapper` sets fields
@@ -427,7 +438,7 @@ so the gate costs no coverage.
 
 This gate is on the **client-facing service method only**. The lower-level transactional status
 transition helper stays callable while the flag is off — the Phase 1-2 dual-write and the
-[pre-flip repairs](#skew-verification-at-the-flip-replaces-bidirectional-reconciliation) both go
+[pre-flip repairs](#post-drain-reconciliation-then-skew-verification-at-the-flip) both go
 through it, and neither is a client-driven status change.
 
 Implement persistence-backed `UserService.isActiveResearcher` and `requireActiveResearcher`, plus a
@@ -666,10 +677,13 @@ that "a dual-write defect: stop". Two things resolve it, in order of preference:
 - **The branch should be unreachable once ticket 11 ships**, because redaction then deletes the card,
   and redaction is the only identified way a live card retains an email its owner no longer uses. If it
   is genuinely unreachable, the gates stay absolute and this paragraph documents why.
-- **If a row does appear**, it is the one population an operator may clear rather than treat as a
-  dual-write defect: deactivate the re-pointed account's predecessor if still active, or repair through
-  the transition helper as the gate section prescribes. Recognise it *by cause* — log the `user_id` pair
-  and confirm it came from a re-pointed linkage — rather than waving it through.
+- **If a row does appear**, it is the one query 1 row the
+  [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) must
+  **not** blanket-activate, because the new account's owner was never vouched for: deactivate the
+  re-pointed account's predecessor if still active, and leave the new account inactive, repairing
+  through the transition helper as that section prescribes. Recognise it *by cause* — log the `user_id`
+  pair and confirm it came from a re-pointed linkage — rather than either waving it through or sweeping
+  it up with the drain-window residue.
 
 Test the activating branch directly. **The non-activating branch cannot be driven through "redact a
 carded user, then re-register"**, because ticket 11 removes the card and ships in the same release;
@@ -780,6 +794,12 @@ instance can create a new redacted, carded user after the changeset's one-time r
 but before ticket 11's transactional redaction code is serving everywhere. That user is
 `researcher_status = true` with a card present, so both skew-verification queries remain empty. Bundling
 the migration and application change in one release narrows this window but does not make it atomic.
+
+**The same window exists for ordinary card mutations**, where it is far more frequent and, unlike this
+one, *visible* to the skew queries; it is closed by the required post-drain reconciliation in
+[Post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip). The two
+remediations are separate because the populations are different: redaction's is invisible to the
+queries and needs its own endpoint, which is why redaction remediation runs **first**.
 
 **Decision — an ADMIN explicitly runs an idempotent post-deployment remediation after every old
 instance has drained.** Add `POST /api/user/redaction-remediations`, authenticated and
@@ -1302,11 +1322,45 @@ mismatch; an absent header is read as `false`.
   not a drain condition, and the day after removal a surviving tab can delete a card and leave the
   researcher active. The header check and the header stay. The Phase-3 cleanup that
   deletes `LibraryCardRequiredException` proceeds as planned; only the echo is excluded from it.
-- **The cost of keeping it is documentation, not breakage.** A permanent guard 409s header-less callers,
-  which is tolerable only if they can discover the header: ticket 5a adds
-  `X-Researcher-Status-Gating` and the 409 to `api-docs.yaml` on both operations, so a script or Swagger
-  caller sends `true` (post-flip truth) and passes. That is a one-line change for them and a permanent
-  guarantee for us.
+- **The cost of keeping it is a breaking API change — corrected.** An earlier revision called this
+  "documentation, not breakage". That is wrong. At the flip, every existing script, Swagger caller,
+  service account, and integration that calls `POST /api/libraryCards` or
+  `DELETE /api/libraryCards/{id}` without the header starts receiving 409. Their code stops working on
+  a date we choose, which is the definition of a breaking change under
+  `CONTRIBUTING.md` § *Breaking API changes* — documenting the header makes the break *discoverable*,
+  not absent. The remedy for a caller is genuinely one line (send
+  `X-Researcher-Status-Gating: true`), but a one-line remedy is still a remedy someone has to ship, and
+  they cannot ship it if nobody tells them.
+
+  **The breaking event is the flip, not the Phase-1 release.** While the flag is off, an absent header
+  matches `false` and succeeds, so Phases 1-2 break nobody. Every obligation below therefore attaches to
+  **ticket 7** and its dates are measured against the flip release, not against Phase 1.
+
+  **Rollout prerequisites, blocking the flip:**
+
+  1. **Consumer inventory, measured rather than assumed.** Ticket 5a's rejection counter only counts
+     *rejections*, which is post-flip and too late to plan with. 5a additionally ships a **pre-flip
+     observation counter** on both card-mutation operations: every request is tallied by
+     header-present/absent and by browser vs. non-browser user agent, with the non-browser,
+     header-absent bucket also recording the calling identity, so the affected population is a list of
+     accounts rather than a number. Review that bucket over a window long enough to catch weekly and
+     monthly jobs before scheduling the flip; a bucket that is non-empty at flip time is a list of
+     integrations about to break, and each one is either migrated or knowingly accepted.
+  2. **Written migration instructions.** The `api-docs.yaml` entries ticket 5a adds are the reference;
+     the notice must additionally state the header name, that the value is the current
+     `RESEARCHER_STATUS_GATING` value readable at `GET /feature/RESEARCHER_STATUS_GATING`, that
+     post-flip the correct value is `true`, and that a mismatch returns 409 with
+     `RESEARCHER_STATUS_GATING_MISMATCH` opening `ErrorResponse.message`.
+  3. **Comms check-in and sign-off**, per `CONTRIBUTING.md` step 2 — on the fact of the change, its
+     user impact, and the wording of the notice.
+  4. **Advance notification.** Someone Suitable emails `api-users@firecloud.org` at least several days
+     **before the flip release**, with Comms sign-off on the wording. Identified non-browser callers from
+     (1) are notified directly as well; a broadcast to a list is not evidence a specific integration
+     was reached.
+  5. **PO sign-off**, since the change is user-facing (`CONTRIBUTING.md` PR checklist item 2).
+
+  Ticket 7 does not flip the flag until 1 through 5 are done. These are the same class of gate as the
+  post-drain reconciliation: operational prerequisites, not documentation tasks.
 - **Phase-2 clients must self-drain**, per [Flag freshness](#session-freshness), which owns that
   mechanism. The consequence that matters here: stale Phase-2 clients drain within the poll interval
   instead of never, so the echo is a backstop rather than the only defence.
@@ -1339,7 +1393,10 @@ sequenceDiagram
   C->>C: Deploy schema, endpoint, projections, audit, flag-gated dual-write
   Note over C: Library Card gates authoritative; card writes also write status; status endpoint 409s
   U->>U: Deploy status-capable UI, toggle disabled, flag echo sent, flag re-fetched not memoised
-  C->>C: Verify zero skew (both queries return no rows)
+  C->>C: Confirm every pre-Phase-1 instance has drained
+  C->>C: Remediate redactions, then reconcile drain-window card skew (ADMIN endpoints)
+  C->>C: Verify zero skew (both queries return no rows) and rerun repairs nothing
+  Note over C: Breaking-change process complete before this line: telemetry, Comms, api-users notice
   F->>C: Flip flag row: status gates on, dual-write off
   F->>U: Newly loaded clients enable the status toggle
   Note over U,C: Stale tabs get 409 on card mutations, not silent skew
@@ -1355,7 +1412,10 @@ sequenceDiagram
    sending the flag echo on Library Card create/delete and re-fetching the flag rather than memoising it,
    so a tab that survives the flip reloads itself. The existing Library Card CRUD toggle remains
    authoritative while disabled, and its writes carry status with them through the backend dual-write.
-3. **Phase 3 — coordinated enablement.** Verify zero skew, then flip `RESEARCHER_STATUS_GATING`. The
+3. **Phase 3 — coordinated enablement.** Drain, reconcile, and verify zero skew — the three-step
+   runbook below, both remediation endpoints included — and complete the
+   [breaking-change process](#flag-echo-phase-2-required) for the now-mandatory echo header, then flip
+   `RESEARCHER_STATUS_GATING`. The
    one `UPDATE` turns the backend status gates on, turns dual-write off, opens the status endpoint,
    enables the status toggle for newly loaded clients, and starts 409-ing stale ones. The old UI can
    still call Library Card deletion, but it can no longer do so *as a status action*: it is either
@@ -1363,17 +1423,109 @@ sequenceDiagram
    [lifetime decision](#flag-echo-phase-2-required).
 
 After the Phase-1 rollout, but before Phase 3, the operator must verify that every pre-Phase-1
-application instance has drained and then invoke `POST /api/user/redaction-remediations` as an ADMIN.
-The invocation must succeed, and an immediate second invocation must report zero matched users and zero
-changes. This ordering is a cutover prerequisite: the ordinary skew queries below cannot detect a
-redacted user who is both active and carded.
+application instance has drained, and then run **two** remediation steps in order. First, invoke
+`POST /api/user/redaction-remediations` as an ADMIN; the invocation must succeed, and an immediate
+second invocation must report zero matched users and zero changes. This one comes first because the
+ordinary skew queries below cannot detect a redacted user who is both active and carded. Second, run
+the [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) over
+ordinary card mutations — `POST /api/user/researcher-status-reconciliations`, which repairs the skew
+that old instances created by serving Library Card creates and deletes without dual-writing — and
+re-verify both queries to zero, with a second invocation reporting zero changes. Both are cutover
+prerequisites; neither is optional.
 
-### Skew verification at the flip (replaces bidirectional reconciliation)
+### Post-drain reconciliation, then skew verification at the flip
 
-With dual-write in place from Phase 1 there is no accumulated skew to repair, so what would otherwise
-be a reconciliation step is instead a **verification gate**. Both queries must return zero rows
-immediately before
-the flip:
+**The dual-write does not eliminate reconciliation; it bounds it.** An earlier revision claimed that
+"with dual-write in place from Phase 1 there is no accumulated skew to repair", so this step could be a
+pure verification gate. That is true only of instances *running the Phase-1 code*. Ticket 1's backfill
+completes when the changeset runs, but a rolling deployment keeps pre-Phase-1 instances serving
+ordinary Library Card traffic until they drain, and those instances dual-write nothing:
+
+| Old-instance action in the drain window | Resulting state | Verification query |
+| --- | --- | --- |
+| SO or admin issues a Library Card | card present, `researcher_status = false` | query 1 |
+| SO or admin deletes a Library Card | no card, `researcher_status = true` | query 2 |
+| Enforcement sweep removes a card | no card, `researcher_status = true` | query 2 |
+| DAA bulk assignment creates a card | card present, `researcher_status = false` | query 1 |
+
+This is the **same gap** the plan already recognises for redaction, on the far more frequent ordinary
+paths — and unlike the redaction case it is *visible* to the queries, which is worse rather than
+better, because the gate then reports a "dual-write defect: stop" for states that are the expected
+arithmetic of a rolling deploy. A gate that is expected to fail is not a gate, by this plan's own
+standard.
+
+**Decision — a required post-drain reconciliation, not an optional repair.** The cutover runbook is
+therefore *drain, reconcile, verify*, in that order, and each step is a prerequisite for the next:
+
+1. **Drain.** Confirm no pre-Phase-1 application instance can still receive traffic — the same
+   condition [redaction remediation](#user-redaction) already requires, checked once and satisfying
+   both gates.
+2. **Reconcile.** Run [redaction remediation](#user-redaction) first — its population is invisible to
+   the queries below, and once it has run those users are card-less and inactive, so they fall out of
+   both populations rather than being reconciled twice. Then repair every row the two queries return.
+   Pre-flip there is **no legitimate divergence** — the status endpoint 409s while the flag is off, and
+   the dual-write covers every card path — so each row is unambiguously an un-dual-written legacy
+   mutation, and the repair is exactly the status transition the old instance would have performed:
+   query 1's population is **activated**, query 2's is **deactivated**.
+
+   **The repair needs a mechanism, not a runbook instruction — new scope.** "Goes through the
+   transition helper" names a Java internal with no invocable surface: the status endpoint 409s while
+   the flag is off by design, so no client can drive these repairs, and a required repair with no
+   interface is the same reliance on operator discipline this section refuses one paragraph above.
+   **Ticket 11 ships a sibling to its redaction endpoint:**
+   `POST /api/user/researcher-status-reconciliations`, ADMIN-only, explicitly invoked, idempotent,
+   documented in `api-docs.yaml`, not exposed in duos-ui. It copies the redaction remediation's shape
+   exactly — resource delegating through `UserService` to a transactional `UserServiceDAO` composite,
+   never DAO calls in the resource — and adds no new semantics: in one transaction it selects both
+   query populations, locks the target rows, and invokes the same status transition helper for each,
+   with the authenticated ADMIN as actor and source `ADMIN`. It returns 200 with `usersMatched`,
+   `usersActivated`, and `usersDeactivated`; a failure rolls everything back; a second invocation after
+   success returns all zeroes and writes no audit rows. It is idempotent by state, not by a "has run"
+   marker.
+
+   **One operator pre-check, because the endpoint deliberately cannot make this judgement.** The
+   [registration carve-out](#library-card-creation-daa-assignment-and-registration)'s non-activating
+   branch — a card re-pointed to a new account whose owner was never vouched for — also lands
+   card-present and inactive, and activating it would vouch for someone no SO ever vouched for. Nothing
+   in the persisted state distinguishes it from a drain-window create, so the operator runs both queries
+   *before* invoking the endpoint and confirms no row came from a re-pointed linkage. That branch
+   should be unreachable once ticket 11 ships, so the expected finding is none; if a row does appear,
+   resolve it by hand first — leave the new account inactive and deactivate the predecessor — and
+   confirm the endpoint's `usersMatched` then matches the remaining row count.
+3. **Verify.** Re-run both queries. **They must return zero rows, and a rerun immediately after the
+   reconciliation must repair nothing** — the same zero-on-immediate-rerun proof the redaction
+   remediation gate uses. Only then may ticket 7 flip the flag.
+
+Because reconciliation runs only after the drain is confirmed, no instance capable of reintroducing
+skew is still serving when it runs, and any row appearing *after* step 3 is a genuine dual-write
+defect in Phase-1 code: stop, log the users, and fix the path that missed. The hazard this section's
+predecessor named — [a reconciliation script and a flag-row `UPDATE` are two
+statements](#rollout-and-compatibility) — does not reopen here, because every path that could write a
+card between reconciliation and flip is now Phase-1 code that dual-writes, so a card written in that
+interval carries its status with it.
+
+**Attribution is `ADMIN`, never `SIGNING_OFFICIAL`.** The reconciliation is the cutover operator's act,
+not the original actor's. Even where an original actor is recoverable — query 1's cards carry
+`library_card.create_user_id` and `create_date`, which is exactly the provenance
+[Passport](#passport) reads today — writing a `SIGNING_OFFICIAL` audit row would assert that an SO
+performed a status transition they never performed, and back-date it. For query 2's population there is
+nothing to recover at all: the card is hard deleted, and the deletion may have come from an SO, an
+admin, or the enforcement sweep. An honest `ADMIN` row naming the operator who really made the change
+beats a plausible one naming someone who did not.
+
+**Accepted consequence on the visa.** A user activated by reconciliation has an `ADMIN` activation row,
+which [Passport](#passport) maps to `by = system` with the reconciliation timestamp — not `by = so` at
+card issuance. That is identical to what any admin activation through the status endpoint produces, so
+it is the already-accepted repair semantics rather than a new loss, and it is the truthful claim: the
+system, at cutover, is what vouched for that row. Operators who want SO provenance on a specific
+researcher can have the SO re-assert through the status endpoint after the flip.
+
+**Query 1 before query 2 if they must be split.** Query 1's population is card-present and inactive;
+after the flip that state silently *strips* access from a researcher an SO believes they vouched for,
+so it must be repaired before the flip rather than after. Query 2's population keeps access it already
+had, which is the pre-flip status quo.
+
+The two queries must both return zero rows immediately before the flip:
 
 ```sql
 -- must be empty: status false but a card exists
@@ -1387,14 +1539,10 @@ WHERE u.researcher_status = true
   AND NOT EXISTS (SELECT 1 FROM library_card lc WHERE lc.user_id = u.user_id);
 ```
 
-Any row is a **dual-write defect**, not expected drift: stop, log the users, and fix the path that
-missed. If the decision is nonetheless to proceed, each repair goes through the same transactional
-status transition helper — never a direct `UPDATE users`, which produces an unaudited transition — with
-the cutover operator as the actor and source `ADMIN`, an honest record of who actually made the change.
-Do **not** attribute a repair to `SIGNING_OFFICIAL`: for the second population the card is already hard
-deleted, so there is no actor and no action time to attribute, and the deletion may have come from an
-admin or the enforcement sweep. Repairs are idempotent and re-runnable, and the first query's population
-must be repaired before the flip rather than after, because after the flip it silently strips access.
+Before the drain is confirmed these queries are **not** a defect signal — they are the drain window's
+expected residue, and reading them early will teach the operator to wave them through. Run them for the
+first time as step 2's work list, and for the second time as step 3's gate. After step 3, any row is a
+**dual-write defect**: stop, log the users, and fix the path that missed.
 
 The second query is expected to be non-empty **by design** after Phase 3 — active researchers whose DAA
 cards were removed are the whole point of this change — so it is a pre-flip gate only and must not be
@@ -1404,9 +1552,11 @@ left running as an alert.
 writable and asking operators to clear any resulting skew before the flip would put the burden of the
 guarantee on discipline. The endpoint instead
 [409s while the flag is off](#status-endpoint-exception-and-service), so no caller — UI, script, or
-Swagger — can introduce apparent skew through it, and any row either query returns is unambiguously a
-dual-write defect. Pre-flip repairs still run through the transition helper directly; the client-facing
-service gate does not block them.
+Swagger — can introduce apparent skew through it. That is what makes the reconciliation above safe to
+automate: with the endpoint sealed and the status gates not yet reading status, every row the queries
+return has exactly one cause — a card mutation served by an instance that did not dual-write — and
+"realign status to card presence" is therefore a correct repair rather than a guess. Pre-flip repairs
+still run through the transition helper directly; the client-facing service gate does not block them.
 
 ## Jira-Ready Tickets
 
@@ -1421,13 +1571,13 @@ specification. Where a mechanism appears in two places, the section is authorita
 | 3 | Transactional status transition helper; dedicated client-facing `UserService` method that reads `RESEARCHER_STATUS_GATING` and performs the permitted transition in one transaction; status endpoint mapping the flag-off outcome to 409; `api-docs.yaml` path including that 409 | 1, 2 |
 | 4 | Java/SQL gates and TDR reading `RESEARCHER_STATUS_GATING`, plus the request-scoped status resolution the gates share (the flag row itself is seeded by ticket 1). **Passport and `InstitutionAndLibraryCardEnforcement` are carved out** — they belong to 10 and 9, which edit the same files | 1, 2, 3 |
 | 5 | Preserve collaborator and DAA-bulk Library Card behavior; add null-card preauthorization guard | 2 |
-| 5a | Flag-gated dual-write on **every** Library Card mutation path (create, delete, DAA bulk, both enforcement branches, and registration linkage — the last delivered by ticket 8, which is why it is a dependency rather than scope here), reading the flag transactionally. The enforcement paths' *transactional plumbing* comes from ticket 9, which owns those files; 5a supplies only the dual-write that rides on it. Requires two pieces of plumbing of its own: a new `LibraryCardServiceDAO` composite — which also means a `ConsentModule` provider and a `LibraryCardService` constructor change (`ConsentModule:649-653` currently builds it with three arguments), following the `docs/ai/CLAUDE.md` conventions for `@Provides` singletons and for composite ordering in the parameter list — so `createLibraryCard` / `deleteLibraryCardById` have a transaction at all (with the issuance email moved after commit), and `deleteAllLibraryCardsByUser` converted to a `DELETE … RETURNING user_id` with a shared `targets` CTE that also clears `lc_daa`, updating `LibraryCardDAOTest:294` and `InstitutionAndLibraryCardEnforcementTest:230` for the `@SqlUpdate`→`@SqlQuery` change, and every returned researcher deactivated in the same transaction. `deleteLibraryCardById` also gains an actor parameter so its audit `source` is not guessed — **five call sites**: `LibraryCardResource:122`, `LibraryCardResourceTest:206`, `:219`, `:227`, and `LibraryCardServiceTest:298`. Plus the flag-echo 409, thrown as `ConsentConflictException` with the `RESEARCHER_STATUS_GATING_MISMATCH` sentinel, compared against the same in-transaction flag read the dual-write uses and evaluated before the card lookup; the rejection counter split by browser/non-browser user agent; **`x-researcher-status-gating` added to `Access-Control-Allow-Headers` in both blocks of `config/site.conf`, without which the browser preflight blocks every card mutation from Phase 2**; and `src/main/resources/assets/api-docs.yaml` updated to document the `X-Researcher-Status-Gating` header and the 409 on `POST /api/libraryCards` and `DELETE /api/libraryCards/{id}` — the POST 409 description must enumerate both the existing payload conflict and the echo mismatch | 1, 3, **8, 9** |
+| 5a | Flag-gated dual-write on **every** Library Card mutation path (create, delete, DAA bulk, both enforcement branches, and registration linkage — the last delivered by ticket 8, which is why it is a dependency rather than scope here), reading the flag transactionally. The enforcement paths' *transactional plumbing* comes from ticket 9, which owns those files; 5a supplies only the dual-write that rides on it. Requires two pieces of plumbing of its own: a new `LibraryCardServiceDAO` composite — which also means a `ConsentModule` provider and a `LibraryCardService` constructor change (`ConsentModule:649-653` currently builds it with three arguments), following the `docs/ai/CLAUDE.md` conventions for `@Provides` singletons and for composite ordering in the parameter list — so `createLibraryCard` / `deleteLibraryCardById` have a transaction at all (with the issuance email moved after commit), and `deleteAllLibraryCardsByUser` converted to a `DELETE … RETURNING user_id` with a shared `targets` CTE that also clears `lc_daa`, updating `LibraryCardDAOTest:294` and `InstitutionAndLibraryCardEnforcementTest:230` for the `@SqlUpdate`→`@SqlQuery` change, and every returned researcher deactivated in the same transaction. `deleteLibraryCardById` also gains an actor parameter so its audit `source` is not guessed — **five call sites**: `LibraryCardResource:122`, `LibraryCardResourceTest:206`, `:219`, `:227`, and `LibraryCardServiceTest:298`. Plus the flag-echo 409, thrown as `ConsentConflictException` with the `RESEARCHER_STATUS_GATING_MISMATCH` sentinel, compared against the same in-transaction flag read the dual-write uses and evaluated before the card lookup; the rejection counter split by browser/non-browser user agent, **plus the pre-flip observation counter** that tallies every card mutation by header-present/absent and browser/non-browser and records the calling identity for the non-browser header-absent bucket — the consumer inventory ticket 7's breaking-change notice is built from, per [Flag echo](#flag-echo-phase-2-required); **`x-researcher-status-gating` added to `Access-Control-Allow-Headers` in both blocks of `config/site.conf`, without which the browser preflight blocks every card mutation from Phase 2**; and `src/main/resources/assets/api-docs.yaml` updated to document the `X-Researcher-Status-Gating` header and the 409 on `POST /api/libraryCards` and `DELETE /api/libraryCards/{id}` — the POST 409 description must enumerate both the existing payload conflict and the echo mismatch | 1, 3, **8, 9** |
 | 6 | duos-ui status transport and feature-flagged status UI, including the `AdminEditUser` status control, `AdminManageLC` copy, the `X-Researcher-Status-Gating` echo header on Library Card create/delete, the reload prompt keyed on the 409 sentinel, and non-memoised flag re-fetch with a forced reload before the next card mutation when the value changes | 2, 3, 5a released |
-| 7 | Pre-flip skew verification queries, the transactional `RESEARCHER_STATUS_GATING` flip, and regression verification | 4, 5a, 6, **9, 10, 11** |
+| 7 | The post-drain reconciliation and skew-verification gate, the transactional `RESEARCHER_STATUS_GATING` flip, and regression verification. **Three operational prerequisites block the flip and are part of this ticket's Definition of Done, not preamble to it:** (a) every pre-Phase-1 instance has drained; (b) `POST /api/user/redaction-remediations` has run to success with a zero-change idempotency rerun, and `POST /api/user/researcher-status-reconciliations` (built by ticket 11) has repaired every row both [verification queries](#post-drain-reconciliation-then-skew-verification-at-the-flip) returned, with a re-verification returning zero rows and a second invocation reporting zero changes; (c) the breaking-change process for the now-mandatory `X-Researcher-Status-Gating` header is complete — pre-flip observation telemetry reviewed and the non-browser header-absent bucket triaged, migration instructions written, Comms sign-off obtained, the notice sent to `api-users@firecloud.org` several days ahead of the flip release with identified callers contacted directly, and PO sign-off recorded. See [Flag echo](#flag-echo-phase-2-required) | 4, 5a, 6, **9, 10, 11** |
 | 8 | Registration-time activation in `UserServiceDAO.createUser`. Ordered **before** 5a: the dual-write table lists this path, so leaving it unshipped guarantees the first pre-flip verification query returns rows and the gate reports a "dual-write defect" that is really an unshipped ticket | 1, 2 |
 | 9 | Enforcement's status behavior end to end. Adds the **separate per-user status evaluation step** described in [Institution and domain enforcement](#institution-and-domain-enforcement) — not a rider on the existing branches, which cannot cover a card-less, institution-less user — and makes every branch it touches transactional, including the bare `:158` call and the two bare `userDAO.updateInstitutionId` branches at `:156` and `:191`. **Owns `InstitutionAndLibraryCardEnforcement` and its test outright**: tickets 4 and 5a do not touch either. The new evaluation is flag-gated and runs on post-reassignment state — see the section | 3, 8 |
 | 10 | Passport `by()` / `asserted()` provenance from the audit table, including the inactive-user fallback. **Owns `ResearcherStatus.java` and `AffiliationAndRole.java` outright**, so ticket 4 does not touch them | 1, 2 |
-| 11 | Redaction deactivates: per [User redaction](#user-redaction), `UserService.redactUser` deletes the user's `lc_daa` and `library_card` rows, sets `researcher_status = false`, and writes an `ADMIN` transition row **through the transition helper** (not hand-rolled SQL, and only when status actually changes) — all in one transaction. The same ticket adds the ADMIN-only, explicitly invoked, idempotent `POST /api/user/redaction-remediations` resource, its result model, `UserService` delegation, transactional `UserServiceDAO` implementation, resource/service/DAO tests, and `api-docs.yaml` contract. It ships in the Phase-1 release with ticket 1; after all old instances drain, the endpoint cleans any redactions created in the rolling-deployment window and must report zero changes on an immediate rerun before ticket 7 may flip the flag. Both live redaction and remediation use scalar card ids, never the issuer-wide bulk delete | 1, 3, 8 |
+| 11 | Redaction deactivates: per [User redaction](#user-redaction), `UserService.redactUser` deletes the user's `lc_daa` and `library_card` rows, sets `researcher_status = false`, and writes an `ADMIN` transition row **through the transition helper** (not hand-rolled SQL, and only when status actually changes) — all in one transaction. The same ticket adds the ADMIN-only, explicitly invoked, idempotent `POST /api/user/redaction-remediations` resource, its result model, `UserService` delegation, transactional `UserServiceDAO` implementation, resource/service/DAO tests, and `api-docs.yaml` contract. It ships in the Phase-1 release with ticket 1; after all old instances drain, the endpoint cleans any redactions created in the rolling-deployment window and must report zero changes on an immediate rerun before ticket 7 may flip the flag. Both live redaction and remediation use scalar card ids, never the issuer-wide bulk delete. **The same ticket ships its sibling, `POST /api/user/researcher-status-reconciliations`** — ADMIN-only, explicitly invoked, idempotent, `usersMatched` / `usersActivated` / `usersDeactivated` counts, same resource → `UserService` → transactional `UserServiceDAO` layering, same `api-docs.yaml` obligation, no duos-ui exposure — which is the mechanism the required [post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) invokes; without it that gate is a runbook instruction with nothing to run. It is grouped here rather than in ticket 7 because it is the same endpoint shape, the same composite, and the same tests, and because ticket 7 must be able to *invoke* it, not build it | 1, 3, 8 |
 
 **Three ordering constraints are load-bearing.**
 
@@ -1467,9 +1617,9 @@ nothing said they ship together — and the DAG permits 1 → 2 → 3 → {4, 5,
 deployments. Ticket 1 backfills status from card presence; **ticket 5a is what makes card mutations
 write status**. In any gap between them, every card issuance leaves `status = false` with a card and
 every deletion leaves `status = true` with none, so both verification queries fill up by shipping the
-tickets exactly as ordered. That directly contradicts "with dual-write in place from Phase 1 there is
-no accumulated skew to repair". This is the same reasoning that forces ticket 8 ahead of 5a, and it was
-never applied to ticket 1. **Phase 1 is a single release containing 1, 2, 3, 5, 8, 9, 5a, and 11**;
+tickets exactly as ordered — the same two populations the drain window produces, from a second cause,
+and at a volume a deploy sequence could sustain for days rather than minutes. This is the same
+reasoning that forces ticket 8 ahead of 5a, and it was never applied to ticket 1. **Phase 1 is a single release containing 1, 2, 3, 5, 8, 9, 5a, and 11**;
 ticket 4 may ship in it or
 later, since it changes nothing until the flag flips.
 
@@ -1479,11 +1629,29 @@ transactional plumbing the collateral dual-write rides on, so a release containi
 be built. (The DAG sketch above predates that edge; it is retained as the illustration of the hazard,
 not as a current ordering.) **Ticket 11 is in the release** because ticket 1's migration cleanup is
 one-time: any old instance that redacts a user after that cleanup creates exactly the `status = true` +
-card-present state [both verification queries are blind to](#user-redaction). One release minimizes
-the exposure but does not make a rolling deploy atomic. Ticket 11's post-deployment remediation closes
-the residual window: after old instances drain, an ADMIN runs it to success and confirms an immediate
-idempotency rerun reports zero changes. Ticket 7 depends on that operational gate, not merely on the
-ticket 11 code having been deployed.
+card-present state [both verification queries are blind to](#user-redaction).
+
+***One release is not a synchronized cutover either — and the gap is not confined to redaction.*** The
+paragraph above closes ordering gaps *between* tickets; it does not close the gap between the migration
+and the code, because a rolling deployment has no atomic boundary. Ticket 1's backfill completes as
+soon as the changeset runs, while pre-Phase-1 instances keep serving `POST /api/libraryCards`,
+`DELETE /api/libraryCards/{id}`, DAA bulk assignment, and the enforcement sweep without dual-writing
+any of them. An earlier revision recognised this window for redaction only and treated ordinary card
+mutations as covered by "one release". They are not: **every card created in the drain window lands
+`status = false` with a card present, and every card deleted in it lands `status = true` with none** —
+both populations of the pre-flip verification queries, accumulated after the backfill and by ordinary
+traffic, not by any defect in Phase-1 code.
+
+**Both gaps are therefore closed by the same post-drain step, and neither repair is optional.** After
+the Phase-1 release, the operator confirms every pre-Phase-1 instance has drained, then (a) invokes
+`POST /api/user/redaction-remediations` to success with a zero-change idempotency rerun, because that
+population is invisible to the queries, and (b) runs the
+[post-drain reconciliation](#post-drain-reconciliation-then-skew-verification-at-the-flip) that repairs
+every row the two queries return through the transition helper, and re-verifies both to zero. **Ticket
+7 depends on both operational gates**, not merely on the ticket 11 code having been deployed. Treating
+(b) as an "if the decision is nonetheless to proceed" repair — as an earlier revision did — would make
+the flip gate a check the operator is expected to fail and then override, which is the exact failure
+mode this plan invokes elsewhere to justify the collateral dual-write.
 
 *Registration activation must precede the dual-write, not trail it.* Ticket 8 is listed in the
 [dual-write table](#flag-gated-dual-write-phase-1-required) as a Phase-1-2 path. If it ships after 5a,
@@ -1592,9 +1760,13 @@ Migration and audit:
   an already-registered, card-less researcher does **not** activate them, and the status endpoint does;
 - prove the carve-out's `user_id IS NULL` condition on both branches: a matched card that was unlinked
   activates the new user, and a matched card **already linked to another `user_id`** is still
-  re-pointed but writes no status and no audit row. Drive the second case through the real sequence —
-  redact a carded user, then register a new user with the original email — and assert the new account
-  is inactive with no back-dated `SIGNING_OFFICIAL` row;
+  re-pointed but writes no status and no audit row. **Construct the already-linked state directly in
+  the fixture** — seed a `library_card` row whose `user_id` points at an existing user and whose email
+  is the one about to register — and assert the new account is inactive with no back-dated
+  `SIGNING_OFFICIAL` row. Do **not** drive this case by redacting a carded user and re-registering:
+  ticket 11 ships in the same release and deletes the card during redaction, so that sequence leaves no
+  card to re-point and would silently exercise the no-match path instead, per
+  [Library Card creation, DAA assignment, and registration](#library-card-creation-daa-assignment-and-registration);
 - prove `redactUser` deactivates **and** removes the card: after `POST /api/user/redact` the target has
   `researcher_status = false`, no `library_card` or `lc_daa` rows, and one `ADMIN` audit row, all in one
   transaction, without depending on the enforcement sweep; both verification queries stay empty after a
@@ -1630,6 +1802,34 @@ Migration and audit:
 - prove redacting a **Signing Official who has issued cards for other researchers** deletes only that
   SO's own card: every card they issued for someone else survives, and no other researcher's status
   changes. This is the destructive misreading the `targets` CTE would have produced;
+- simulate the rolling-deployment gap for **ordinary card mutations**: run ticket 1's backfill, then
+  produce the four drain-window states without dual-write — a card created leaving `status = false`, a
+  card deleted leaving `status = true`, an enforcement-sweep removal leaving `status = true`, and a DAA
+  bulk assignment leaving `status = false` — and assert that verification query 1 returns exactly the
+  two card-present-inactive users and query 2 exactly the two card-less-active users. Then run the
+  `POST /api/user/researcher-status-reconciliations` as an ADMIN and assert it returns
+  `usersMatched = 4`, `usersActivated = 2`, `usersDeactivated = 2`, that every repair went through the
+  transition helper with source `ADMIN` and the invoking ADMIN as actor, that **no** repair is
+  attributed to `SIGNING_OFFICIAL`, and that both queries return zero rows afterwards. A test that only
+  exercises Phase-1 code paths cannot detect this state, because dual-write never produces it;
+- prove the reconciliation endpoint is ADMIN-only (every other role receives 403 with no state change),
+  idempotent (an immediate second invocation returns all zeroes, writes no audit rows, and changes no
+  status), and atomic (a forced failure after at least one target has been processed rolls back every
+  status and audit change, and a retry processes the same targets successfully) — the same three
+  properties proven for the redaction remediation, on the sibling endpoint;
+- prove the reconciliation endpoint's populations are disjoint from redaction's when the runbook order
+  is followed: after `POST /api/user/redaction-remediations` has run, a previously-redacted user is
+  card-less and inactive, so the reconciliation reports them in neither count and writes them no audit
+  row;
+- prove `api-docs.yaml` documents `POST /api/user/researcher-status-reconciliations` and its 200
+  response counts;
+- prove Passport's reading of a reconciliation-activated user: the `ADMIN` activation row yields
+  `by = system` and the reconciliation timestamp rather than `by = so` and the card create date, and a
+  subsequent SO assertion through the status endpoint moves it back to `so`;
+- prove the pre-flip observation counter: a card mutation with the header and one without each
+  increment their bucket, browser and non-browser user agents are counted separately, and the
+  non-browser header-absent bucket records the calling identity — while the flag is off, the
+  header-absent request still **succeeds**, so the counter observes rather than rejects;
 - prove the `RESEARCHER_STATUS_GATING` row is seeded by the migration, since a missing row reads as
   `false` and would otherwise fail silently.
 
@@ -1730,7 +1930,7 @@ smoke test covering Phase 1, Phase 3 deactivation/reactivation, and DAA assignme
 
 ## Where to Look Hardest
 
-This plan has been through a verification pass and ten review rounds, and it has been consolidated
+This plan has been through a verification pass and eleven review rounds, and it has been consolidated
 since. Three areas took the most revision to get right and are where a reviewer's attention is worth
 most:
 
@@ -1743,11 +1943,20 @@ most:
 - **The [registration carve-out](#library-card-creation-daa-assignment-and-registration)** — the one
   card-to-status coupling that survives the flip, and the one declared exception to the zero-skew
   guarantee.
+- **The [cutover runbook](#post-drain-reconciliation-then-skew-verification-at-the-flip)** — the
+  dual-write bounds the skew a rolling deploy can create but does not prevent it, and an earlier
+  revision drew the wrong conclusion from that twice: once by calling the verification queries a pure
+  gate, and once by scoping the drain-window problem to redaction alone. The cutover is *drain,
+  reconcile, verify*; anything that turns the reconciliation back into an optional repair reintroduces
+  a gate the operator is expected to fail.
 
 A general note on this plan's failure mode: most defects found in review were not wrong decisions but
 **writers added without re-deriving their effect on the pre-flip verification gate**, and rules added
-without sweeping the tickets and Definition of Done for text they contradict. Both are worth checking
-against any change made from here.
+without sweeping the tickets and Definition of Done for text they contradict. A third has now appeared
+twice: **a mechanism reasoned about on one path and then assumed to hold on all of them** — the
+rolling-deployment window, argued for redaction and left unargued for ordinary card mutations; and the
+echo header, whose cost was assessed for browser clients and assumed to be documentation for everyone
+else. All three are worth checking against any change made from here.
 
 ## Explicitly Out of Scope
 
@@ -1782,9 +1991,25 @@ against any change made from here.
 - Every Library Card mutation path dual-writes researcher status while `RESEARCHER_STATUS_GATING` is
   off, reading the flag inside its own transaction, so the flip is a transactional cutover rather than
   a coordinated pair of deploys.
-- Both pre-flip skew-verification queries return zero rows before the flip, and any repair is audited
-  through the transition helper with a real actor — no status transition is ever attributed to an actor
-  the system cannot name.
+- The cutover runs **drain, reconcile, verify** in that order: after every pre-Phase-1 instance has
+  drained, the required post-drain reconciliation repairs every row both skew-verification queries
+  return — activating query 1's population and deactivating query 2's — and a re-verification returns
+  zero rows. The reconciliation is a prerequisite for the flip, not an optional repair "if proceeding",
+  and an immediate rerun repairs nothing. Every repair is audited through the transition helper with the
+  invoking ADMIN as actor and source `ADMIN`; no status transition is ever attributed to an actor the
+  system cannot name, and none is attributed to `SIGNING_OFFICIAL` — including query 1's population,
+  whose original SO *is* recoverable from `library_card.create_user_id` and is still not used, because
+  the repair is the operator's act and not that SO's.
+- **The reconciliation has an invocable mechanism, not a runbook instruction.** Ticket 11 ships
+  `POST /api/user/researcher-status-reconciliations` alongside the redaction endpoint, with the same
+  ADMIN-only, explicitly-invoked, idempotent, transactional, `api-docs`-documented shape, so no required
+  repair depends on someone reaching a Java internal by hand. The operator runs both queries before
+  invoking it to confirm no row is a re-pointed registration linkage, which is the one judgement the
+  endpoint deliberately does not make.
+- The plan's rolling-deployment coverage is complete on **both** halves: redaction *and* ordinary
+  Library Card creates, deletes, enforcement sweeps, and DAA bulk assignments served by old instances
+  after the backfill. Skew rows found before the drain is confirmed are treated as expected drain-window
+  residue and reconciled; rows found after step 3 are treated as dual-write defects and stop the flip.
 - After all pre-Phase-1 application instances drain, an ADMIN successfully invokes
   `POST /api/user/redaction-remediations`; an immediate rerun reports zero matched users and zero
   changes. The flag is not flipped before this operational gate passes.
@@ -1801,9 +2026,15 @@ against any change made from here.
 - `api-docs.yaml` documents the `X-Researcher-Status-Gating` header and the 409 on both Library Card
   create and delete — with the POST 409 naming both its causes — and the status endpoint's flag-off 409,
   so every non-browser caller can satisfy the guard from the published contract.
-- `api-docs.yaml` also documents the ADMIN-only redaction-remediation operation and its 200 response
-  counts; the resource delegates through `UserService` and `UserServiceDAO` rather than accessing
-  persistence directly.
+- The flip is treated as a **breaking API change** and clears `CONTRIBUTING.md` § *Breaking API changes*
+  before it happens: the pre-flip observation counter has measured the header-less non-browser caller
+  population and that bucket has been triaged, migration instructions are written, Comms has signed off
+  on the change and the wording, the notice has gone to `api-users@firecloud.org` several days ahead of
+  the flip release with identified callers contacted directly, and the PO has signed off. Documenting
+  the header in Swagger is a precondition for these steps, not a substitute for them.
+- `api-docs.yaml` also documents the ADMIN-only redaction-remediation and researcher-status-
+  reconciliation operations and their 200 response counts; both resources delegate through
+  `UserService` and `UserServiceDAO` rather than accessing persistence directly.
 - `RESEARCHER_STATUS_GATING` is the single flag both repositories read.
 - Enforcement branches write status and their audit row transactionally, and no code path dereferences
   a Library Card that may be absent.
@@ -1830,6 +2061,9 @@ against any change made from here.
   on the enforcement sweep.
 - Redaction remediation is atomic and idempotent, deletes only the redacted users' own cards, attributes
   true-to-false transitions to the invoking ADMIN, and writes no audit row for an already-inactive user.
+- Researcher-status reconciliation is atomic and idempotent, attributes every transition to the invoking
+  ADMIN with source `ADMIN`, and reports zero counts on an immediate rerun; a user already cleaned by
+  redaction remediation falls into neither of its populations.
 - Registration activates only on a card whose `user_id` was NULL, so a redacted user re-registering
   with their original email is not silently reactivated with back-dated Signing Official provenance.
 - A Signing Official cannot set their own researcher status; only an admin can, and that transition
@@ -1842,7 +2076,8 @@ against any change made from here.
 - `INSTITUTION_ENFORCEMENT` audit rows carry a NULL actor and are honest about it; `SIGNING_OFFICIAL`
   and `ADMIN` rows always name one.
 - Phase 1 ships as a single release containing the backfill and the dual-write, so no deploy boundary
-  falls between them; after old instances drain, the explicit remediation gate closes the remaining
+  falls between them; because one release is still not an atomic cutover, the two explicit post-drain
+  gates — redaction remediation and ordinary-mutation reconciliation — close the remaining
   migration-to-code window before the flag flip.
 - The 409 responses are produced by throwing the already-registered `ConsentConflictException`, not by
   hand-building `ErrorResponse` objects in the resource layer.
