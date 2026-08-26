@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.commons.text.StringEscapeUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.result.RowView;
@@ -105,25 +104,20 @@ public interface RowMapperHelper extends ConsentLogger {
     return false;
   }
 
-  static String unescapeJava(String value) {
-    return StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(value));
-  }
-
+  /**
+   * Parses the column as Postgres returns it: {@code data} is jsonb, so it is valid JSON already.
+   * Unescaping it first turned an escaped quote in free text into a bare one and broke the parse.
+   */
   default DataAccessRequestData translate(String darDataString) {
-    DataAccessRequestData data = null;
-    if (Objects.nonNull(darDataString)) {
-      // Handle nested quotes
-      String quoteFixedDataString = darDataString.replace("\\\\\"", "'");
-      // Inserted json data ends up double-escaped via standard jdbi insert.
-      String escapedDataString = unescapeJava(quoteFixedDataString);
-      try {
-        data = DataAccessRequestData.fromString(escapedDataString);
-      } catch (JsonSyntaxException | NullPointerException e) {
-        logDebug("Unable to parse Data Access Request; error: %s".formatted(e.getMessage()));
-        throw e;
-      }
+    if (Objects.isNull(darDataString)) {
+      return null;
     }
-    return data;
+    try {
+      return DataAccessRequestData.fromString(darDataString);
+    } catch (JsonSyntaxException e) {
+      logDebug("Unable to parse Data Access Request; error: %s".formatted(e.getMessage()));
+      throw e;
+    }
   }
 
   default void setStringFieldValue(

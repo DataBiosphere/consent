@@ -47,6 +47,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestDAOTest extends DAOTestHelper {
 
+  /** Free text the read path used to destroy: once unescaped, the quote ended the string early. */
+  private static final String QUOTED_FREE_TEXT =
+      "PI said \"no resale\" applies; see C:\\temp\\notes.";
+
   private static DataAccessRequestData createDataAccessRequestData() {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
@@ -1693,6 +1697,61 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         referenceId, user.getUserId(), now, now, data);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private String insertDarWithQuotedFreeText(Integer collectionId, Integer userId) {
+    DataAccessRequestData data = createDataAccessRequestData();
+    data.setRus(QUOTED_FREE_TEXT);
+    data.setNonTechRus(QUOTED_FREE_TEXT);
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+    return referenceId;
+  }
+
+  @Test
+  void testFindByReferenceIdKeepsQuotedFreeText() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 999999999), user.getUserId(), new Date());
+    String referenceId = insertDarWithQuotedFreeText(collectionId, user.getUserId());
+
+    DataAccessRequest found = dataAccessRequestDAO.findByReferenceId(referenceId);
+
+    assertNotNull(found);
+    assertEquals(QUOTED_FREE_TEXT, found.getData().getRus());
+    assertEquals(QUOTED_FREE_TEXT, found.getData().getNonTechRus());
+  }
+
+  @Test
+  void testFindByReferenceIdsKeepsQuotedFreeText() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 999999999), user.getUserId(), new Date());
+    String referenceId = insertDarWithQuotedFreeText(collectionId, user.getUserId());
+
+    List<DataAccessRequest> found = dataAccessRequestDAO.findByReferenceIds(List.of(referenceId));
+
+    assertEquals(1, found.size());
+    assertEquals(QUOTED_FREE_TEXT, found.getFirst().getData().getRus());
+  }
+
+  /** Covers the row reducer, which parses the same column on its own path. */
+  @Test
+  void testFindDARCollectionByCollectionIdKeepsQuotedFreeText() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 999999999), user.getUserId(), new Date());
+    String referenceId = insertDarWithQuotedFreeText(collectionId, user.getUserId());
+
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+
+    assertNotNull(collection);
+    assertEquals(QUOTED_FREE_TEXT, collection.getDars().get(referenceId).getData().getRus());
   }
 
   private Vote createFinalVote(Integer userId, Integer electionId) {
