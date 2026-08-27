@@ -23,6 +23,37 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery(
       """
+      -- The main query walks latest_dar -> dar_dataset -> dac_datasets as a chain. Joining the
+      -- DAC's datasets directly to the collections (with the dataset/DAR link left for the WHERE
+      -- clause) crossed every DAC dataset with every collection before that link applied - a
+      -- cartesian product the planner cannot avoid here, since this query joins more relations
+      -- than join_collapse_limit and its jsonb/LOWER() predicates defeat row estimation.
+      WITH dac_datasets AS (
+        -- Datasets overseen by the DACs where the user holds this role.
+        SELECT DISTINCT d.dataset_id, dac.name AS dac_name
+        FROM user_role ur
+        INNER JOIN users dacUser ON dacUser.user_id = ur.user_id
+        INNER JOIN dac ON dac.dac_id = ur.dac_id AND dac.deleted IS NOT TRUE
+        INNER JOIN dataset d ON d.dac_id = dac.dac_id
+        WHERE ur.user_id = :currentUserId AND ur.role_id = :roleId AND ur.dac_id IS NOT NULL
+      ),
+      -- The most recent non-archived submission per collection
+      latest_dar AS (
+        SELECT DISTINCT ON (collection_id) *
+        FROM data_access_request
+        WHERE submission_date IS NOT NULL
+        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+        ORDER BY collection_id, submission_date DESC
+      ),
+      -- All non-archived submitted DARs per collection, pre-aggregated so the main query
+      -- does not need to fan out per DAR and re-collapse with a GROUP BY.
+      collection_reference_ids AS (
+        SELECT collection_id, ARRAY_AGG(reference_id) AS reference_ids
+        FROM data_access_request
+        WHERE submission_date IS NOT NULL
+        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+        GROUP BY collection_id
+      )
       SELECT c.collection_id as dar_collection_id, c.dar_code,
         latest_dar.submission_date, latest_dar.reference_id as latest_dar_reference_id,
         latest_dar.parent_id as latest_dar_parent_id,
@@ -37,37 +68,23 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
-        dac.name AS dac_name,
-        ARRAY_AGG(dar_all.reference_id) AS reference_ids
-      FROM dar_collection c
+        d.dac_name AS dac_name,
+        cri.reference_ids AS reference_ids
+      FROM latest_dar
+      -- Restrict DARs to the datasets available to the DAC User
+      INNER JOIN dar_dataset dd
+        ON dd.reference_id = latest_dar.reference_id
+      INNER JOIN dac_datasets d
+        ON d.dataset_id = dd.dataset_id
+      INNER JOIN dar_collection c
+        ON c.collection_id = latest_dar.collection_id
       -- DAR Collection Researcher join
       INNER JOIN users researcher
         ON researcher.user_id = c.create_user_id
       LEFT JOIN institution i
         ON i.institution_id = researcher.institution_id
-      -- DAC User join
-      INNER JOIN users dacUser
-        ON dacUser.user_id = :currentUserId
-      INNER JOIN user_role ur
-        ON dacUser.user_id = ur.user_id AND ur.role_id = :roleId AND ur.dac_id IS NOT NULL
-      INNER JOIN dac dac
-        ON ur.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
-      -- Datasets available to DAC
-      INNER JOIN dataset d
-        ON d.dac_id = dac.dac_id
-      -- Restrict DARs to the most recent submission per collection
-      INNER JOIN (
-        SELECT DISTINCT ON (collection_id) *
-        FROM data_access_request
-        WHERE submission_date IS NOT NULL
-        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-        ORDER BY collection_id, submission_date DESC
-        ) latest_dar ON latest_dar.collection_id = c.collection_id
-      -- All DARs for the collection
-      INNER JOIN data_access_request dar_all
-        ON dar_all.collection_id = c.collection_id
-        AND dar_all.submission_date IS NOT NULL
-        AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
+      INNER JOIN collection_reference_ids cri
+        ON cri.collection_id = c.collection_id
       -- Most recent terminal or active Data Access Elections for DAC User datasets
       LEFT JOIN (
         SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
@@ -76,21 +93,12 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         AND LOWER(election.status) IN ('open', 'closed', 'canceled')
       ) AS e
         ON e.reference_id = latest_dar.reference_id
-        AND e.dataset_id = d.dataset_id
+        AND e.dataset_id = dd.dataset_id
+        AND e.latest = e.election_id
       -- Votes for DAC User
       LEFT JOIN vote v
         ON e.election_id = v.election_id
         AND (LOWER(v.type) IN ('final', 'radar_approve') OR v.user_id = :currentUserId)
-      -- Restrict DARs to the datasets available to the DAC User
-      INNER JOIN dar_dataset dd
-        ON latest_dar.reference_id = dd.reference_id
-      WHERE dd.dataset_id = d.dataset_id
-        AND (e.latest = e.election_id OR e.election_id IS NULL)
-      GROUP BY
-        c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
-        latest_dar.requires_so_approval, latest_dar.approving_so_id, latest_dar.approving_so_timestamp, researcher.display_name, i.institution_name,
-        e.election_id, e.status, e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
-        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDACRole(
       @Bind("currentUserId") Integer currentUserId, @Bind("roleId") Integer roleId);
