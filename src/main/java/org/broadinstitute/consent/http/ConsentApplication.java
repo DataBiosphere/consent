@@ -250,8 +250,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
   }
 
   private void initializeLiquibase(ConsentConfiguration config) throws LiquibaseException {
-    // Disable Liquibase's System.out logging.
-    // See https://github.com/liquibase/liquibase/issues/2396 for more info
+    // Route Liquibase UI output through LoggerUIService instead of writing to System.out.
+    // See https://github.com/liquibase/liquibase/issues/2396 for more info.
     try {
       Scope.child(
           Scope.Attr.ui,
