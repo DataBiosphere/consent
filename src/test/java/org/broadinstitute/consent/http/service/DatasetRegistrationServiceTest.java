@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -40,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -917,6 +919,47 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     verify(gcsService, times(4)).deleteDocument(any());
     verify(fileStorageObjectDAO, times(4)).deleteFileById(anyInt(), anyInt());
+  }
+
+  @Test
+  void testCleanupReadsDatasetsInBatches() {
+    User user = new User();
+    user.setUserId(1);
+    List<Integer> datasetIds = IntStream.rangeClosed(1, 1200).boxed().toList();
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of());
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.cleanupDatasetsAndStudiesWithEmptyFiles(user));
+
+    verify(datasetDAO).findDatasetsByIdList(datasetIds.subList(0, 500));
+    verify(datasetDAO).findDatasetsByIdList(datasetIds.subList(500, 1000));
+    verify(datasetDAO).findDatasetsByIdList(datasetIds.subList(1000, 1200));
+  }
+
+  @Test
+  void testCleanupDatasetsWithoutStudyOrFilesSkipsStudyProcessing() {
+    User user = new User();
+    user.setUserId(1);
+    // Enough datasets without files or a study to also cross the progress-logging threshold
+    List<Dataset> datasets =
+        IntStream.rangeClosed(1, 100)
+            .mapToObj(
+                id -> {
+                  Dataset dataset = new Dataset();
+                  dataset.setDatasetId(id);
+                  return dataset;
+                })
+            .toList();
+    List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).toList();
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
+    when(datasetDAO.findDatasetsByIdList(datasetIds)).thenReturn(datasets);
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.cleanupDatasetsAndStudiesWithEmptyFiles(user));
+
+    verify(studyDAO, never()).findStudyById(anyInt());
+    verify(gcsService, never()).hasBytes(any());
   }
 
   @Test

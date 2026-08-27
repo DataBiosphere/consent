@@ -942,6 +942,59 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testVerifyPublicVisibilitySummaries_StudyFetchedOncePerStudyId() {
+    User user = new User();
+    user.setUserId(1);
+    Study study = new Study();
+    study.setStudyId(10);
+    study.setCreateUserId(user.getUserId() + 1);
+    study.setPublicVisibility(false);
+    DatasetStudySummary summary1 =
+        new DatasetStudySummary(
+            1,
+            user.getUserId() + 1,
+            "Dataset 1",
+            "DUOS-123",
+            study.getStudyId(),
+            "Study Name",
+            study.getCreateUserId(),
+            false);
+    DatasetStudySummary summary2 =
+        new DatasetStudySummary(
+            2,
+            user.getUserId() + 1,
+            "Dataset 2",
+            "DUOS-124",
+            study.getStudyId(),
+            "Study Name",
+            study.getCreateUserId(),
+            false);
+    when(studyDAO.findStudyDetailsById(study.getStudyId())).thenReturn(study);
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary1, summary2), user);
+
+    assertEquals(0, authorizedSummaries.size());
+    // Both summaries reference the same study, so it is only looked up once
+    verify(studyDAO, times(1)).findStudyDetailsById(study.getStudyId());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_StudyLookupReturnsNull() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 10, "Study Name", 1000, false);
+    when(studyDAO.findStudyDetailsById(summary.study_id())).thenReturn(null);
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+
+    assertEquals(0, authorizedSummaries.size());
+  }
+
+  @Test
   void testVerifyPublicVisibilitySummaries_Study_DoesntExist() {
     User user = new User();
     user.setUserId(1);
@@ -1072,6 +1125,66 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
     assertNull(verfiedDataset);
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_FetchesStudyDetailsWithoutAttaching() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(2);
+    dataset.setStudyId(10);
+    Study study = new Study();
+    study.setStudyId(dataset.getStudyId());
+    study.setCreateUserId(3);
+    study.setPublicVisibility(Boolean.TRUE);
+    when(studyDAO.findStudyDetailsById(dataset.getStudyId())).thenReturn(study);
+
+    Dataset verifiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
+
+    assertEquals(dataset.getDatasetId(), verifiedDataset.getDatasetId());
+    // The study is fetched only for the visibility check, not attached to the response
+    assertNull(verifiedDataset.getStudy());
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_FetchedStudyNotVisible() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(2);
+    dataset.setStudyId(10);
+    Study study = new Study();
+    study.setStudyId(dataset.getStudyId());
+    study.setCreateUserId(3);
+    study.setPublicVisibility(Boolean.FALSE);
+    when(studyDAO.findStudyDetailsById(dataset.getStudyId())).thenReturn(study);
+
+    assertNull(datasetService.verifyPublicVisibilityAccess(dataset, user));
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_DatasetCreatorWithHiddenStudy() {
+    User datasetCreator = new User();
+    datasetCreator.setUserId(1);
+    datasetCreator.setEmail("dsCreator@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(datasetCreator.getUserId());
+    dataset.setStudyId(10);
+    Study study = new Study();
+    study.setStudyId(dataset.getStudyId());
+    study.setCreateUserId(datasetCreator.getUserId() + 1);
+    study.setPublicVisibility(Boolean.FALSE);
+    when(studyDAO.findStudyDetailsById(dataset.getStudyId())).thenReturn(study);
+
+    Dataset verifiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, datasetCreator);
+
+    assertEquals(dataset.getDatasetId(), verifiedDataset.getDatasetId());
   }
 
   @Test

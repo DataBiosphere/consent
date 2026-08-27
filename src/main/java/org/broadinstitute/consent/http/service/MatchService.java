@@ -95,8 +95,9 @@ public class MatchService implements ConsentLogger {
 
   protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {
     List<Match> matches = new ArrayList<>();
+    // getDatasetIds normalizes a null list to an empty one
     List<Integer> datasetIds = dar.getDatasetIds();
-    if (Objects.isNull(datasetIds) || datasetIds.isEmpty()) {
+    if (datasetIds.isEmpty()) {
       return matches;
     }
     // Fetch every dataset in a single query. Matching only needs the data use and the dataset

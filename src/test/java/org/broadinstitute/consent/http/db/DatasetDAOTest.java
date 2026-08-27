@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.jdbi.v3.core.statement.Update;
+import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -315,6 +316,95 @@ class DatasetDAOTest extends DAOTestHelper {
 
     assertNotNull(foundDataset.getStudy());
     assertEquals(updateUser.getUserId(), foundDataset.getStudy().getUpdateUserId());
+  }
+
+  @Test
+  void testFindDatasetLookupsReturnNullForUnknownDataset() {
+    assertNull(datasetDAO.findDatasetById(999999999));
+    assertNull(datasetDAO.findDatasetByAlias(999999999));
+    assertNull(datasetDAO.findDatasetWithoutFSOInformation(999999999));
+    assertNull(datasetDAO.findDatasetIdById(999999999));
+    assertNull(datasetDAO.findDatasetIdByAlias(999999999));
+  }
+
+  @Test
+  void testFindDatasetIdByIdAndAlias() {
+    Dataset dataset = insertDataset();
+    assertEquals(dataset.getDatasetId(), datasetDAO.findDatasetIdById(dataset.getDatasetId()));
+    assertEquals(dataset.getDatasetId(), datasetDAO.findDatasetIdByAlias(dataset.getAlias()));
+  }
+
+  @Test
+  void testFindDatasetJoinsCallerTransaction() {
+    // The assembling queries open their own REPEATABLE READ transaction, unless the caller already
+    // established one, in which case they must join it rather than fail on a nested transaction
+    // with a different isolation level.
+    Dataset dataset = insertDataset();
+    datasetDAO.useTransaction(
+        TransactionIsolationLevel.READ_COMMITTED,
+        dao -> {
+          assertNotNull(dao.findDatasetById(dataset.getDatasetId()));
+          assertNotNull(dao.findDatasetByAlias(dataset.getAlias()));
+          assertNotNull(dao.findDatasetWithoutFSOInformation(dataset.getDatasetId()));
+        });
+  }
+
+  @Test
+  void testFindLatestFileByDatasetIdAndCategory() {
+    Dataset dataset = insertDataset();
+    String entityId = dataset.getDatasetId().toString();
+    Instant now = Instant.now();
+    // The newer file is inserted first so that a correct result cannot come from the
+    // file_storage_object_id tiebreaker alone.
+    FileStorageObject newerNihFile =
+        createFileStorageObject(entityId, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, now);
+    createFileStorageObject(
+        entityId, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, now.minus(1, ChronoUnit.DAYS));
+    createFileStorageObject(
+        entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN, now.plus(1, ChronoUnit.DAYS));
+
+    FileStorageObject foundFile =
+        datasetDAO.findLatestFileByDatasetIdAndCategory(
+            dataset.getDatasetId(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue());
+
+    assertEquals(newerNihFile, foundFile);
+    assertNull(
+        datasetDAO.findLatestFileByDatasetIdAndCategory(
+            dataset.getDatasetId(), FileCategory.DATA_USE_LETTER.getValue()));
+  }
+
+  @Test
+  void testFindDatasetByIdWithoutStudyReturnsLatestNihFile() {
+    Dataset dataset = insertDataset();
+    String entityId = dataset.getDatasetId().toString();
+    Instant now = Instant.now();
+    FileStorageObject newerNihFile =
+        createFileStorageObject(entityId, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, now);
+    createFileStorageObject(
+        entityId, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, now.minus(1, ChronoUnit.DAYS));
+
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    assertNull(foundDataset.getStudy());
+    assertEquals(newerNihFile, foundDataset.getNihInstitutionalCertificationFile());
+  }
+
+  @Test
+  void testFindDatasetsByIdListReturnsLatestNihFile() {
+    Dataset dataset = insertDataset();
+    String entityId = dataset.getDatasetId().toString();
+    Instant now = Instant.now();
+    FileStorageObject newerNihFile =
+        createFileStorageObject(entityId, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, now);
+    createFileStorageObject(
+        entityId, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, now.minus(1, ChronoUnit.DAYS));
+    createFileStorageObject(
+        entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN, now.plus(1, ChronoUnit.DAYS));
+
+    List<Dataset> foundDatasets = datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()));
+
+    assertEquals(1, foundDatasets.size());
+    assertEquals(newerNihFile, foundDatasets.getFirst().getNihInstitutionalCertificationFile());
   }
 
   @Test
@@ -1614,11 +1704,15 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
+    return createFileStorageObject(entityId, category, Instant.now());
+  }
+
+  private FileStorageObject createFileStorageObject(
+      String entityId, FileCategory category, Instant createDate) {
     String fileName = randomAlphabetic(10);
     String bucketName = randomAlphabetic(10);
     String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
-    Instant createDate = Instant.now();
 
     Integer newFileStorageObjectId =
         fileStorageObjectDAO.insertNewFile(

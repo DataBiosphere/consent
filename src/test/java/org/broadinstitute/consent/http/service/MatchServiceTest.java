@@ -110,6 +110,50 @@ class MatchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateMatchesForDataAccessRequestNullDatasetIds() {
+    DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+    dar.setDatasetIds(null);
+
+    List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+
+    assertTrue(matches.isEmpty());
+    verify(datasetDAO, never()).findDatasetsByIdList(anyList());
+  }
+
+  @Test
+  void testCreateMatchesForDataAccessRequestEmptyDatasetIds() {
+    DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+    dar.setDatasetIds(List.of());
+
+    List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+
+    assertTrue(matches.isEmpty());
+    verify(datasetDAO, never()).findDatasetsByIdList(anyList());
+  }
+
+  @Test
+  void testCreateMatchesForDataAccessRequestSkipsDatasetIdsNotFound() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setName("Test Dataset 1");
+    dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dataset.setProperties(Collections.emptySet());
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId(), 2));
+    dar.setData(new DataAccessRequestData());
+    dar.getData().setHmb(true);
+    dar.getData().setDiseases(false);
+    // Only one of the two requested datasets exists
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(dataset));
+    when(useRestrictionConverter.parseDataUsePurpose(dar))
+        .thenThrow(new IllegalArgumentException());
+
+    List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+
+    assertEquals(1, matches.size());
+  }
+
+  @Test
   void testSingleEntitiesMatchEmptyDataset() {
     DataAccessRequest dar = new DataAccessRequest();
 
