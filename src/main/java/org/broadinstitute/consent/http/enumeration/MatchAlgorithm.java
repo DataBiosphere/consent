@@ -7,7 +7,7 @@ public enum MatchAlgorithm {
   V4("v4"),
   V5("v5");
 
-  String version;
+  private final String version;
 
   MatchAlgorithm(String version) {
     this.version = version;
@@ -15,9 +15,5 @@ public enum MatchAlgorithm {
 
   public String getVersion() {
     return version;
-  }
-
-  public void setVersion(String version) {
-    this.version = version;
   }
 }

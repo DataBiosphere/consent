@@ -153,18 +153,9 @@ public class Match {
     }
   }
 
-  public static Match matchFailure(String consentId, String purposeId, List<String> rationales) {
-    return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V4, rationales);
-  }
-
   public static Match matchFailure(
       String consentId, String purposeId, MatchAlgorithm algorithm, List<String> rationales) {
     return new Match(consentId, purposeId, false, false, true, algorithm, rationales);
-  }
-
-  public static Match matchSuccess(
-      String consentId, String purposeId, DataUseMatchResultType match, List<String> rationales) {
-    return matchSuccess(consentId, purposeId, match, MatchAlgorithm.V4, rationales);
   }
 
   public static Match matchSuccess(
