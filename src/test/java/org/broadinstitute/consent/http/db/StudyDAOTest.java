@@ -272,8 +272,10 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testIncludesDatasetIds() {
+  void testFindStudyByIdPopulatesAllChildCollections() {
     Study s = insertStudyWithProperties();
+    FileStorageObject altFile =
+        createFileStorageObject(s.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
     insertDataset();
     Dataset ds1 = insertDatasetForStudy(s.getStudyId());
@@ -283,9 +285,14 @@ class StudyDAOTest extends DAOTestHelper {
 
     s = studyDAO.findStudyById(s.getStudyId());
 
+    assertEquals(2, s.getProperties().size());
+    assertEquals(
+        Set.of("prop1", "prop2"),
+        s.getProperties().stream().map(StudyProperty::getKey).collect(Collectors.toSet()));
     assertEquals(2, s.getDatasetIds().size());
     assertTrue(s.getDatasetIds().contains(ds1.getDatasetId()));
     assertTrue(s.getDatasetIds().contains(ds2.getDatasetId()));
+    assertEquals(altFile, s.getAlternativeDataSharingPlan());
   }
 
   @Test

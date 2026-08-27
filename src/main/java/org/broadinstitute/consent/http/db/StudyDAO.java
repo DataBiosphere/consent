@@ -6,8 +6,11 @@ import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.db.mapper.StudyReducer;
+import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
+import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -24,6 +27,35 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface StudyDAO extends Transactional<StudyDAO> {
 
+  /**
+   * Finds a fully populated study without joining all child collections into one Cartesian product.
+   * The focused reads run in a single REPEATABLE READ transaction so that they all observe the same
+   * snapshot; under the default READ COMMITTED level each statement would take its own snapshot and
+   * the assembled study could mix pre- and post-commit state.
+   */
+  default Study findStudyById(Integer studyId) {
+    // A handle that is already in a transaction cannot open a nested one at a different isolation
+    // level, so reuse the transaction the caller established rather than failing.
+    if (isInTransaction()) {
+      return assembleStudy(this, studyId);
+    }
+    return inTransaction(
+        TransactionIsolationLevel.REPEATABLE_READ, dao -> assembleStudy(dao, studyId));
+  }
+
+  private Study assembleStudy(StudyDAO dao, Integer studyId) {
+    Study study = dao.findStudyDetailsById(studyId);
+    if (study == null) {
+      return null;
+    }
+
+    dao.findDatasetIdsByStudyId(studyId).forEach(study::addDatasetId);
+    study.setAlternativeDataSharingPlan(
+        dao.findLatestFileByStudyIdAndCategory(
+            studyId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue()));
+    return study;
+  }
+
   @UseRowReducer(StudyReducer.class)
   @SqlQuery(
       """
@@ -33,8 +65,20 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           sp.study_id AS sp_study_id,
           sp.key AS sp_key,
           sp.value AS sp_value,
-          sp.type AS sp_type,
-          d.dataset_id AS s_dataset_id,
+          sp.type AS sp_type
+      FROM
+          study s
+      LEFT JOIN study_property sp ON sp.study_id = s.study_id
+      WHERE s.study_id = :studyId
+      """)
+  Study findStudyDetailsById(@Bind("studyId") Integer studyId);
+
+  @SqlQuery("SELECT dataset_id FROM dataset WHERE study_id = :studyId")
+  List<Integer> findDatasetIdsByStudyId(@Bind("studyId") Integer studyId);
+
+  @SqlQuery(
+      """
+      SELECT
           fso.file_storage_object_id AS fso_file_storage_object_id,
           fso.entity_id AS fso_entity_id,
           fso.file_name AS fso_file_name,
@@ -46,15 +90,20 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           fso.update_date AS fso_update_date,
           fso.update_user_id AS fso_update_user_id,
           fso.deleted AS fso_deleted,
-          fso.delete_user_id AS fso_delete_user_id
-      FROM
-          study s
-      LEFT JOIN study_property sp ON sp.study_id = s.study_id
-      LEFT JOIN file_storage_object fso ON fso.entity_id = s.uuid::text AND fso.deleted = false
-      LEFT JOIN dataset d ON d.study_id = s.study_id
+          fso.delete_user_id AS fso_delete_user_id,
+          fso.delete_date AS fso_delete_date
+      FROM study s
+      INNER JOIN file_storage_object fso
+          ON fso.entity_id = s.uuid::text
+          AND fso.deleted = false
+          AND fso.category = :category
       WHERE s.study_id = :studyId
+      ORDER BY GREATEST(fso.create_date, fso.update_date, fso.delete_date) DESC,
+          fso.file_storage_object_id DESC
+      LIMIT 1
       """)
-  Study findStudyById(@Bind("studyId") Integer studyId);
+  FileStorageObject findLatestFileByStudyIdAndCategory(
+      @Bind("studyId") Integer studyId, @Bind("category") String category);
 
   @SqlUpdate(
       """

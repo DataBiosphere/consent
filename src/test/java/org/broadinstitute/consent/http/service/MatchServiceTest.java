@@ -13,7 +13,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,7 +78,7 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setDatasetIds(List.of(1, 2, 3));
 
     service.createMatchesForDataAccessRequest(dar);
-    verify(datasetDAO, times(dar.getDatasetIds().size())).findDatasetById(any());
+    verify(datasetDAO).findDatasetsByIdList(dar.getDatasetIds());
   }
 
   @Test
@@ -94,7 +93,7 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setData(new DataAccessRequestData());
     dar.getData().setHmb(true);
     dar.getData().setDiseases(false);
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(dataset));
     when(useRestrictionConverter.parseDataUsePurpose(dar))
         .thenThrow(new IllegalArgumentException());
 
@@ -184,7 +183,7 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setData(new DataAccessRequestData());
     dar.getData().setHmb(true);
     dar.getData().setDiseases(false);
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
     when(useRestrictionConverter.parseDataUsePurpose(dar))
         .thenReturn(new DataUseBuilder().setHmbResearch(true).build());

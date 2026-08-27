@@ -901,7 +901,7 @@ class DatasetServiceTest extends AbstractTestHelper {
             "Study Name",
             study.getCreateUserId(),
             false);
-    when(studyDAO.findStudyById(summary.study_id())).thenReturn(study);
+    when(studyDAO.findStudyDetailsById(summary.study_id())).thenReturn(study);
 
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
@@ -934,7 +934,7 @@ class DatasetServiceTest extends AbstractTestHelper {
             "Study Name",
             study.getCreateUserId(),
             false);
-    when(studyDAO.findStudyById(summary.study_id())).thenReturn(study);
+    when(studyDAO.findStudyDetailsById(summary.study_id())).thenReturn(study);
 
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);

@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -115,8 +116,10 @@ class DatasetDAOTest extends DAOTestHelper {
     // The query under test specifically excludes FSO information
     // and INCLUDES User, Study, and Properties information
     Dataset dataset = insertDataset();
+    Dataset siblingDataset = insertDataset();
     Study study = insertStudyWithProperties();
     datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    datasetDAO.updateStudyId(siblingDataset.getDatasetId(), study.getStudyId());
     createFileStorageObject(study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     createFileStorageObject(
         dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
@@ -125,10 +128,29 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(foundDataset.getProperties());
     assertNotNull(foundDataset.getStudy().getProperties());
     assertEquals(study.getStudyId(), foundDataset.getStudy().getStudyId());
+    assertEquals(
+        Set.of(dataset.getDatasetId(), siblingDataset.getDatasetId()),
+        foundDataset.getStudy().getDatasetIds());
     assertEquals(dataset.getCreateUserId(), foundDataset.getCreateUser().getUserId());
     // Explicitly check un-queried entities
     assertNull(foundDataset.getNihInstitutionalCertificationFile());
     assertNull(foundDataset.getStudy().getAlternativeDataSharingPlan());
+  }
+
+  @Test
+  void testFindDatasetWithoutFSOInformationReportsRealDeletableValue() {
+    User user = createUser();
+    Dataset deletableDataset = insertDataset();
+    Dataset inUseDataset = insertDataset();
+    Dac dac = insertDac();
+    createDarCollectionWithDatasets(dac.getDacId(), user, List.of(inUseDataset));
+
+    assertTrue(
+        datasetDAO
+            .findDatasetWithoutFSOInformation(deletableDataset.getDatasetId())
+            .getDeletable());
+    assertFalse(
+        datasetDAO.findDatasetWithoutFSOInformation(inUseDataset.getDatasetId()).getDeletable());
   }
 
   @Test
@@ -234,16 +256,92 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindDatasetByAliasAndIdPopulateAllChildCollections() {
+    Dataset dataset = insertDataset();
+    Dataset siblingDataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    datasetDAO.updateStudyId(siblingDataset.getDatasetId(), study.getStudyId());
+    FileStorageObject alternativeDataSharingPlan =
+        createFileStorageObject(
+            study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    FileStorageObject nihInstitutionalCertification =
+        createFileStorageObject(
+            dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+
+    List<Dataset> foundDatasets =
+        List.of(
+            datasetDAO.findDatasetByAlias(dataset.getAlias()),
+            datasetDAO.findDatasetById(dataset.getDatasetId()));
+
+    for (Dataset foundDataset : foundDatasets) {
+      assertNotNull(foundDataset);
+      assertEquals(dataset.getDatasetId(), foundDataset.getDatasetId());
+      assertFalse(foundDataset.getProperties().isEmpty());
+      assertEquals(dataset.getCreateUserId(), foundDataset.getCreateUser().getUserId());
+      assertTrue(foundDataset.getDeletable());
+      assertNotNull(foundDataset.getStudy());
+      assertEquals(study.getStudyId(), foundDataset.getStudy().getStudyId());
+      assertEquals(study.getUuid(), foundDataset.getStudy().getUuid());
+      assertEquals(study.getProperties(), foundDataset.getStudy().getProperties());
+      assertEquals(
+          Set.of(dataset.getDatasetId(), siblingDataset.getDatasetId()),
+          foundDataset.getStudy().getDatasetIds());
+      assertEquals(
+          alternativeDataSharingPlan, foundDataset.getStudy().getAlternativeDataSharingPlan());
+      assertEquals(
+          nihInstitutionalCertification, foundDataset.getNihInstitutionalCertificationFile());
+    }
+  }
+
+  @Test
+  void testFindDatasetByIdPopulatesStudyUpdateUser() {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    User updateUser = createUser();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        updateUser.getUserId(),
+        Instant.now());
+
+    Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    assertNotNull(foundDataset.getStudy());
+    assertEquals(updateUser.getUserId(), foundDataset.getStudy().getUpdateUserId());
+  }
+
+  @Test
   void testFindDatasetsByAlias() {
     Dataset dataset1 = insertDataset();
     Dataset dataset2 = insertDataset();
+    FileStorageObject dataset1NihFile =
+        createFileStorageObject(
+            dataset1.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    FileStorageObject dataset2NihFile =
+        createFileStorageObject(
+            dataset2.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     List<Dataset> foundDatasets =
         datasetDAO.findDatasetsByAlias(List.of(dataset1.getAlias(), dataset2.getAlias()));
-    List<Integer> foundDatasetIds = foundDatasets.stream().map(Dataset::getDatasetId).toList();
-    assertNotNull(foundDatasets);
-    assertTrue(
-        foundDatasetIds.containsAll(List.of(dataset1.getDatasetId(), dataset2.getDatasetId())));
+    Map<Integer, Dataset> foundById =
+        foundDatasets.stream().collect(Collectors.toMap(Dataset::getDatasetId, d -> d));
+
+    assertEquals(Set.of(dataset1.getDatasetId(), dataset2.getDatasetId()), foundById.keySet());
+    assertEquals(
+        dataset1NihFile,
+        foundById.get(dataset1.getDatasetId()).getNihInstitutionalCertificationFile());
+    assertEquals(
+        dataset2NihFile,
+        foundById.get(dataset2.getDatasetId()).getNihInstitutionalCertificationFile());
+    assertNull(foundById.get(dataset1.getDatasetId()).getStudy());
+    assertNull(foundById.get(dataset2.getDatasetId()).getStudy());
   }
 
   @Test
@@ -401,6 +499,9 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     Dac dac = insertDac();
     datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
+    FileStorageObject nihFile =
+        createFileStorageObject(
+            dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()));
     assertFalse(datasets.isEmpty());
@@ -408,6 +509,8 @@ class DatasetDAOTest extends DAOTestHelper {
     assertEquals(dac.getDacId(), datasets.getFirst().getDacId());
     assertFalse(datasets.getFirst().getProperties().isEmpty());
     assertNotNull(datasets.getFirst().getCreateUser());
+    assertEquals(nihFile, datasets.getFirst().getNihInstitutionalCertificationFile());
+    assertNull(datasets.getFirst().getStudy());
   }
 
   @Test

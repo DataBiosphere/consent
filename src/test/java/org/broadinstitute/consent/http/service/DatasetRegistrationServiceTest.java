@@ -847,13 +847,13 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     BlobId fso1BlobId = mock(BlobId.class);
     fso1.setBlobId(fso1BlobId);
     dataset1.setNihInstitutionalCertificationFile(fso1);
-    dataset1.setStudy(study1);
+    dataset1.setStudyId(study1.getStudyId());
 
     Dataset dataset2 = new Dataset();
     dataset2.setDatasetId(2);
     Study study7 = new Study();
     study7.setStudyId(8);
-    dataset2.setStudy(study7);
+    dataset2.setStudyId(study7.getStudyId());
 
     Study study3 = new Study();
     study3.setStudyId(9);
@@ -873,7 +873,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     fso3.setBlobId(fso3BlobId);
     String fso3Name = "FSO3";
     dataset3.setNihInstitutionalCertificationFile(fso3);
-    dataset3.setStudy(study3);
+    dataset3.setStudyId(study3.getStudyId());
 
     Dataset dataset4 = new Dataset();
     FileStorageObject fso4 = new FileStorageObject();
@@ -890,15 +890,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     alternateSharingPlan.setBlobId(asp1BlobId);
     alternateSharingPlan.setFileStorageObjectId(90);
     study2.setAlternativeDataSharingPlan(alternateSharingPlan);
-    dataset4.setStudy(study2);
+    dataset4.setStudyId(study2.getStudyId());
 
     List<Dataset> datasetList = List.of(dataset1, dataset2, dataset3, dataset4);
     List<Integer> datasetIds = datasetList.stream().map(Dataset::getDatasetId).toList();
     when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
-    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
-    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
-    when(datasetDAO.findDatasetById(dataset3.getDatasetId())).thenReturn(dataset3);
-    when(datasetDAO.findDatasetById(dataset4.getDatasetId())).thenReturn(dataset4);
+    when(datasetDAO.findDatasetsByIdList(datasetIds)).thenReturn(datasetList);
     when(studyDAO.findStudyById(study2.getStudyId())).thenReturn(study2);
     when(studyDAO.findStudyById(study1.getStudyId())).thenReturn(study1);
     when(studyDAO.findStudyById(study3.getStudyId())).thenReturn(study3);

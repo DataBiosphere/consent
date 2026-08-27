@@ -7,7 +7,10 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -92,26 +95,33 @@ public class MatchService implements ConsentLogger {
 
   protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {
     List<Match> matches = new ArrayList<>();
-    dar.getDatasetIds()
-        .forEach(
-            id -> {
-              Dataset dataset = datasetDAO.findDatasetById(id);
-              if (Objects.nonNull(dataset)) {
-                try {
-                  matches.add(singleEntitiesMatch(dataset, dar));
-                } catch (Exception _) {
-                  String message =
-                      "Error finding single match for purpose: " + dar.getReferenceId();
-                  logWarn(message);
-                  matches.add(
-                      matchFailure(
-                          dataset.getDatasetIdentifier(),
-                          dar.getReferenceId(),
-                          MatchAlgorithm.V5,
-                          List.of(message)));
-                }
-              }
-            });
+    List<Integer> datasetIds = dar.getDatasetIds();
+    if (Objects.isNull(datasetIds) || datasetIds.isEmpty()) {
+      return matches;
+    }
+    // Fetch every dataset in a single query. Matching only needs the data use and the dataset
+    // identifier, both of which this query populates.
+    Map<Integer, Dataset> datasetsById =
+        datasetDAO.findDatasetsByIdList(datasetIds).stream()
+            .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
+    datasetIds.forEach(
+        id -> {
+          Dataset dataset = datasetsById.get(id);
+          if (Objects.nonNull(dataset)) {
+            try {
+              matches.add(singleEntitiesMatch(dataset, dar));
+            } catch (Exception _) {
+              String message = "Error finding single match for purpose: " + dar.getReferenceId();
+              logWarn(message);
+              matches.add(
+                  matchFailure(
+                      dataset.getDatasetIdentifier(),
+                      dar.getReferenceId(),
+                      MatchAlgorithm.V5,
+                      List.of(message)));
+            }
+          }
+        });
     return matches;
   }
 
