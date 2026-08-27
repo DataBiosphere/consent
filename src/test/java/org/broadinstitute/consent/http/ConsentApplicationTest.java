@@ -79,7 +79,6 @@ class ConsentApplicationTest {
             mockConstruction(
                 Liquibase.class,
                 (mock, context) -> {
-                  context.arguments();
                   doThrow(liquibaseException)
                       .when(mock)
                       .update(any(Contexts.class), any(LabelExpression.class));

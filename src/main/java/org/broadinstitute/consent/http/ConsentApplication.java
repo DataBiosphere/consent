@@ -142,7 +142,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     try {
       initializeLiquibase(config);
     } catch (LiquibaseException e) {
-      LOGGER.error(MessageFormat.format("Exception initializing liquibase: {0}", e));
+      LOGGER.error("Exception initializing liquibase", e);
     }
 
     final Injector injector = Guice.createInjector(new ConsentModule(config, env));
