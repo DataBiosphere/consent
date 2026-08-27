@@ -198,6 +198,28 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDataSubmitterCannotReadAnotherUsersDraft() throws SQLException {
+    // The validation endpoint admits data submitters too, so this is asserted, not assumed.
+    User owner = createUser();
+    User dataSubmitter = createUserWithRole(UserRoles.DATASUBMITTER.getRoleId());
+    UUID draftUUID = createDraft(owner, 1).getUUID();
+
+    assertThrows(
+        NotAuthorizedException.class,
+        () -> draftServiceDAO.getAuthorizedDraft(draftUUID, dataSubmitter));
+  }
+
+  @Test
+  void testDataSubmitterCanReadTheirOwnDraft() throws SQLException {
+    User dataSubmitter = createUserWithRole(UserRoles.DATASUBMITTER.getRoleId());
+    DraftInterface draft = createDraft(dataSubmitter, 1);
+
+    assertEquals(
+        draft.getUUID(),
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), dataSubmitter).getUUID());
+  }
+
+  @Test
   void testDeleteDraft() throws Exception {
     User user = createUser();
     createDraft(user, 3);
