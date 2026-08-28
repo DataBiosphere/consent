@@ -65,14 +65,6 @@ class MatchServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testInsertMatches() {
-    when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
-
-    service.insertMatches(List.of(new Match()));
-    verify(matchDAO, atLeastOnce()).insertMatch(any(), any(), any(), any(), any(), any(), any());
-  }
-
-  @Test
   void testFindMatchForDataAccessRequest() {
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
@@ -300,13 +292,6 @@ class MatchServiceTest extends AbstractTestHelper {
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-  }
-
-  @Test
-  void testRemoveMatchesForPurpose() {
-    service.removeMatchesForPurpose("DAR-2");
-    verify(matchDAO, atLeastOnce()).deleteRationalesByPurposeIds(anyList());
-    verify(matchDAO, atLeastOnce()).deleteMatchesByPurposeId(any());
   }
 
   @Test

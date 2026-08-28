@@ -44,10 +44,6 @@ public class MatchService implements ConsentLogger {
     this.dataUseMatcherV5 = dataUseMatcherV5;
   }
 
-  public void insertMatches(List<Match> match) {
-    insertMatches(matchDAO, match);
-  }
-
   private static void insertMatches(MatchDAO dao, List<Match> match) {
     match.forEach(
         m -> {
@@ -82,10 +78,6 @@ public class MatchService implements ConsentLogger {
           removeMatchesForPurpose(dao, purposeId);
           insertMatches(dao, matches);
         });
-  }
-
-  public void removeMatchesForPurpose(String purposeId) {
-    removeMatchesForPurpose(matchDAO, purposeId);
   }
 
   private static void removeMatchesForPurpose(MatchDAO dao, String purposeId) {
