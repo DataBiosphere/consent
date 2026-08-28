@@ -16,10 +16,8 @@ import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +32,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.ui.LoggerUIService;
-import liquibase.util.SmartMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
@@ -144,8 +141,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     try {
       initializeLiquibase(config);
-    } catch (LiquibaseException | SQLException e) {
-      LOGGER.error(MessageFormat.format("Exception initializing liquibase: {0}", e));
+    } catch (LiquibaseException e) {
+      LOGGER.error("Exception initializing liquibase", e);
     }
 
     final Injector injector = Guice.createInjector(new ConsentModule(config, env));
@@ -252,28 +249,32 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     bootstrap.addBundle(new JdbiExceptionsBundle());
   }
 
-  private void initializeLiquibase(ConsentConfiguration config)
-      throws LiquibaseException, SQLException {
-    // Disable Liquibase's System.out logging.
-    // See https://github.com/liquibase/liquibase/issues/2396 for more info
+  private void initializeLiquibase(ConsentConfiguration config) throws LiquibaseException {
+    // Route Liquibase UI output through LoggerUIService instead of writing to System.out.
+    // See https://github.com/liquibase/liquibase/issues/2396 for more info.
     try {
-      Field field = Scope.getCurrentScope().getClass().getDeclaredField("values");
-      field.setAccessible(true);
-      SmartMap values = ((SmartMap) field.get(Scope.getCurrentScope()));
-      values.set("ui", new LoggerUIService());
-    } catch (IllegalAccessException | NoSuchFieldException ignored) {
+      Scope.child(
+          Scope.Attr.ui,
+          new LoggerUIService(),
+          () -> {
+            try (Connection connection =
+                DriverManager.getConnection(
+                    config.getDataSourceFactory().getUrl(),
+                    config.getDataSourceFactory().getUser(),
+                    config.getDataSourceFactory().getPassword())) {
+              Database database =
+                  DatabaseFactory.getInstance()
+                      .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+              Liquibase liquibase =
+                  new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(), database);
+              liquibase.update(new Contexts(), new LabelExpression());
+            }
+          });
+    } catch (LiquibaseException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new LiquibaseException("Unable to initialize Liquibase.", e);
     }
-    Connection connection =
-        DriverManager.getConnection(
-            config.getDataSourceFactory().getUrl(),
-            config.getDataSourceFactory().getUser(),
-            config.getDataSourceFactory().getPassword());
-    Database database =
-        DatabaseFactory.getInstance()
-            .findCorrectDatabaseImplementation(new JdbcConnection(connection));
-    Liquibase liquibase =
-        new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(), database);
-    liquibase.update(new Contexts(), new LabelExpression());
   }
 
   private String liquibaseFile() {
