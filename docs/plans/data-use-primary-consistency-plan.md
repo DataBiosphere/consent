@@ -2,7 +2,16 @@
 
 ## Status
 
-Proposed.
+In progress. Ticket-by-ticket state:
+
+| Ticket | Status |
+| --- | --- |
+| 1. Audit persisted dataset primary Data Use shapes | Done. The temporary audit surface has since been retired. |
+| 2. Canonical primary classification on Data Use writes | Done. `DataUsePrimaryClassifier`/`DataUsePrimaryValidator` back registration, admin Data Use replacement, and dataset-to-study conversion. |
+| 3. Explicit legacy and unsupported matcher behavior | Done. `DataUseMatcherV5` classifies before matching and abstains on Other-only, NONE/null, and MULTIPLE. |
+| 4. Normalize legacy records and reprocess affected matches | Done. |
+| 5. Replace alias-derived internal dataset references | Not started. `match_entity.consent` still holds the formatted alias. |
+| 6. Align duos-ui with the canonical classification | Done in duos-ui (DT-3866). The Data Use translation collapse is an owned follow-up (DT-4008). |
 
 ## Objective
 
