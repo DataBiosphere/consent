@@ -619,6 +619,8 @@ public class DatasetRegistrationService implements ConsentLogger {
     }
   }
 
+  private static final int CLEANUP_BATCH_SIZE = 500;
+
   public void asyncCleanupDatasetsAndStudiesWithEmptyFiles(User user) {
     executorService.submit(() -> cleanupDatasetsAndStudiesWithEmptyFiles(user));
   }
@@ -635,15 +637,28 @@ public class DatasetRegistrationService implements ConsentLogger {
     AtomicInteger studyProgress = new AtomicInteger();
     AtomicInteger studyDeleted = new AtomicInteger();
     AtomicInteger studyError = new AtomicInteger();
-    allDatasetIDs.forEach(
-        id -> {
-          processDataset(
-              id, user, datasetDeleted, datasetErrors, studyProgress, studyDeleted, studyError);
-          datasetProgress.getAndIncrement();
-          if (datasetProgress.get() % 100 == 0) {
-            logWarn(String.format("Cleaned %d entries.", datasetProgress.get()));
-          }
-        });
+    // Read the datasets in batches rather than one round trip per id.
+    for (int start = 0; start < allDatasetIDs.size(); start += CLEANUP_BATCH_SIZE) {
+      List<Integer> batch =
+          allDatasetIDs.subList(start, Math.min(start + CLEANUP_BATCH_SIZE, allDatasetIDs.size()));
+      datasetDAO
+          .findDatasetsByIdList(batch)
+          .forEach(
+              dataset -> {
+                processDataset(
+                    dataset,
+                    user,
+                    datasetDeleted,
+                    datasetErrors,
+                    studyProgress,
+                    studyDeleted,
+                    studyError);
+                datasetProgress.getAndIncrement();
+                if (datasetProgress.get() % 100 == 0) {
+                  logWarn(String.format("Cleaned %d entries.", datasetProgress.get()));
+                }
+              });
+    }
     logWarn(
         String.format(
             "Cleaning empty NIH Institutional and Alternative Sharing Plan files complete.  %d datasets, %d dataset files deleted, %d  dataset unexpected errors.  Study files deleted: %d, Study file errors: %d",
@@ -680,15 +695,15 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   private void processDataset(
-      Integer id,
+      Dataset dataset,
       User user,
       AtomicInteger deleted,
       AtomicInteger errors,
       AtomicInteger studyProgress,
       AtomicInteger studyDeleted,
       AtomicInteger studyError) {
-    Dataset dataset = datasetDAO.findDatasetById(id);
     if (dataset != null) {
+      Integer id = dataset.getDatasetId();
       FileStorageObject nihFile = dataset.getNihInstitutionalCertificationFile();
       try {
         if (nihFile != null && !gcsService.hasBytes(nihFile.getBlobId())) {
@@ -703,9 +718,9 @@ public class DatasetRegistrationService implements ConsentLogger {
             String.format("Error checking file for dataset id %d.  Error: %s", id, e.getMessage()));
         errors.getAndIncrement();
       } finally {
-        Study study = dataset.getStudy();
-        if (study != null) {
-          Study fullStudyObject = studyDAO.findStudyById(study.getStudyId());
+        Integer studyId = dataset.getStudyId();
+        if (studyId != null) {
+          Study fullStudyObject = studyDAO.findStudyById(studyId);
           processStudy(fullStudyObject, user, studyProgress, studyDeleted, studyError);
         }
       }

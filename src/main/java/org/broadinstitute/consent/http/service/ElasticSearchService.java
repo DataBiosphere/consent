@@ -593,8 +593,8 @@ public class ElasticSearchService implements ConsentLogger {
 
   protected void updateDatasetIndexDate(Integer datasetId, Integer userId, Instant indexDate) {
     // It is possible that a dataset has been deleted. If so, we don't want to try and update it.
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
-    if (dataset != null) {
+    // Only the dataset's existence matters here, so avoid assembling the full dataset.
+    if (datasetDAO.findDatasetIdById(datasetId) != null) {
       try {
         datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
       } catch (SQLException e) {

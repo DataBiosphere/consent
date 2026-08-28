@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -40,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -847,13 +849,13 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     BlobId fso1BlobId = mock(BlobId.class);
     fso1.setBlobId(fso1BlobId);
     dataset1.setNihInstitutionalCertificationFile(fso1);
-    dataset1.setStudy(study1);
+    dataset1.setStudyId(study1.getStudyId());
 
     Dataset dataset2 = new Dataset();
     dataset2.setDatasetId(2);
     Study study7 = new Study();
     study7.setStudyId(8);
-    dataset2.setStudy(study7);
+    dataset2.setStudyId(study7.getStudyId());
 
     Study study3 = new Study();
     study3.setStudyId(9);
@@ -873,7 +875,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     fso3.setBlobId(fso3BlobId);
     String fso3Name = "FSO3";
     dataset3.setNihInstitutionalCertificationFile(fso3);
-    dataset3.setStudy(study3);
+    dataset3.setStudyId(study3.getStudyId());
 
     Dataset dataset4 = new Dataset();
     FileStorageObject fso4 = new FileStorageObject();
@@ -890,15 +892,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     alternateSharingPlan.setBlobId(asp1BlobId);
     alternateSharingPlan.setFileStorageObjectId(90);
     study2.setAlternativeDataSharingPlan(alternateSharingPlan);
-    dataset4.setStudy(study2);
+    dataset4.setStudyId(study2.getStudyId());
 
     List<Dataset> datasetList = List.of(dataset1, dataset2, dataset3, dataset4);
     List<Integer> datasetIds = datasetList.stream().map(Dataset::getDatasetId).toList();
     when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
-    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
-    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
-    when(datasetDAO.findDatasetById(dataset3.getDatasetId())).thenReturn(dataset3);
-    when(datasetDAO.findDatasetById(dataset4.getDatasetId())).thenReturn(dataset4);
+    when(datasetDAO.findDatasetsByIdList(datasetIds)).thenReturn(datasetList);
     when(studyDAO.findStudyById(study2.getStudyId())).thenReturn(study2);
     when(studyDAO.findStudyById(study1.getStudyId())).thenReturn(study1);
     when(studyDAO.findStudyById(study3.getStudyId())).thenReturn(study3);
@@ -920,6 +919,47 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     verify(gcsService, times(4)).deleteDocument(any());
     verify(fileStorageObjectDAO, times(4)).deleteFileById(anyInt(), anyInt());
+  }
+
+  @Test
+  void testCleanupReadsDatasetsInBatches() {
+    User user = new User();
+    user.setUserId(1);
+    List<Integer> datasetIds = IntStream.rangeClosed(1, 1200).boxed().toList();
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of());
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.cleanupDatasetsAndStudiesWithEmptyFiles(user));
+
+    verify(datasetDAO).findDatasetsByIdList(datasetIds.subList(0, 500));
+    verify(datasetDAO).findDatasetsByIdList(datasetIds.subList(500, 1000));
+    verify(datasetDAO).findDatasetsByIdList(datasetIds.subList(1000, 1200));
+  }
+
+  @Test
+  void testCleanupDatasetsWithoutStudyOrFilesSkipsStudyProcessing() {
+    User user = new User();
+    user.setUserId(1);
+    // Enough datasets without files or a study to also cross the progress-logging threshold
+    List<Dataset> datasets =
+        IntStream.rangeClosed(1, 100)
+            .mapToObj(
+                id -> {
+                  Dataset dataset = new Dataset();
+                  dataset.setDatasetId(id);
+                  return dataset;
+                })
+            .toList();
+    List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).toList();
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
+    when(datasetDAO.findDatasetsByIdList(datasetIds)).thenReturn(datasets);
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.cleanupDatasetsAndStudiesWithEmptyFiles(user));
+
+    verify(studyDAO, never()).findStudyById(anyInt());
+    verify(gcsService, never()).hasBytes(any());
   }
 
   @Test

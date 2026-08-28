@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
-import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -21,10 +20,6 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
   }
 
   public void reduceStudy(Study study, RowView rowView) {
-
-    if (hasNonZeroColumn(rowView, "s_dataset_id")) {
-      study.addDatasetId(rowView.getColumn("s_dataset_id", Integer.class));
-    }
 
     if (hasNonZeroColumn(rowView, "sp_study_property_id")) {
       Integer studyPropertyId = rowView.getColumn("sp_study_property_id", Integer.class);
@@ -51,24 +46,5 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
         }
       }
     }
-
-    if (hasNonZeroColumn(rowView, "fso_file_storage_object_id")
-        && Objects.nonNull(rowView.getColumn("fso_file_storage_object_id", Integer.class))) {
-      FileStorageObject fileStorageObject = rowView.getRow(FileStorageObject.class);
-
-      switch (fileStorageObject.getCategory()) {
-        case ALTERNATIVE_DATA_SHARING_PLAN -> {
-          if (isFileNewer(fileStorageObject, study.getAlternativeDataSharingPlan())) {
-            study.setAlternativeDataSharingPlan(fileStorageObject);
-          }
-        }
-        default -> {}
-      }
-    }
-  }
-
-  private boolean isFileNewer(FileStorageObject incomingFile, FileStorageObject existingFile) {
-    return Objects.isNull(existingFile)
-        || incomingFile.getLatestUpdateDate().isAfter(existingFile.getLatestUpdateDate());
   }
 }

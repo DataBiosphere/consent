@@ -13,7 +13,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,7 +78,7 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setDatasetIds(List.of(1, 2, 3));
 
     service.createMatchesForDataAccessRequest(dar);
-    verify(datasetDAO, times(dar.getDatasetIds().size())).findDatasetById(any());
+    verify(datasetDAO).findDatasetsByIdList(dar.getDatasetIds());
   }
 
   @Test
@@ -94,7 +93,7 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setData(new DataAccessRequestData());
     dar.getData().setHmb(true);
     dar.getData().setDiseases(false);
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(dataset));
     when(useRestrictionConverter.parseDataUsePurpose(dar))
         .thenThrow(new IllegalArgumentException());
 
@@ -108,6 +107,50 @@ class MatchServiceTest extends AbstractTestHelper {
           "createMatchesForDataAccessRequest should not throw an exception even if singleEntitiesMatch fails: "
               + e.getMessage());
     }
+  }
+
+  @Test
+  void testCreateMatchesForDataAccessRequestNullDatasetIds() {
+    DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+    dar.setDatasetIds(null);
+
+    List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+
+    assertTrue(matches.isEmpty());
+    verify(datasetDAO, never()).findDatasetsByIdList(anyList());
+  }
+
+  @Test
+  void testCreateMatchesForDataAccessRequestEmptyDatasetIds() {
+    DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
+    dar.setDatasetIds(List.of());
+
+    List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+
+    assertTrue(matches.isEmpty());
+    verify(datasetDAO, never()).findDatasetsByIdList(anyList());
+  }
+
+  @Test
+  void testCreateMatchesForDataAccessRequestSkipsDatasetIdsNotFound() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setName("Test Dataset 1");
+    dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dataset.setProperties(Collections.emptySet());
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId(), 2));
+    dar.setData(new DataAccessRequestData());
+    dar.getData().setHmb(true);
+    dar.getData().setDiseases(false);
+    // Only one of the two requested datasets exists
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(dataset));
+    when(useRestrictionConverter.parseDataUsePurpose(dar))
+        .thenThrow(new IllegalArgumentException());
+
+    List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+
+    assertEquals(1, matches.size());
   }
 
   @Test
@@ -184,7 +227,7 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setData(new DataAccessRequestData());
     dar.getData().setHmb(true);
     dar.getData().setDiseases(false);
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(dataset));
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
     when(useRestrictionConverter.parseDataUsePurpose(dar))
         .thenReturn(new DataUseBuilder().setHmbResearch(true).build());

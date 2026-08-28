@@ -17,8 +17,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -150,6 +152,9 @@ public class DatasetService implements ConsentLogger {
       return summaries;
     }
     List<DatasetStudySummary> authorizedSummaries = new ArrayList<>();
+    // Summaries frequently repeat study ids, and the custodian check only reads the study's
+    // creator and properties, so look each study up once with the details-only query.
+    Map<Integer, Study> studyCache = new HashMap<>();
     for (DatasetStudySummary summary : summaries) {
       if (Boolean.TRUE.equals(summary.public_visibility())) {
         authorizedSummaries.add(summary);
@@ -159,7 +164,11 @@ public class DatasetService implements ConsentLogger {
         authorizedSummaries.add(summary);
       } else if (summary.study_id() != null) {
         // fetch study and see if the user is a custodian
-        Study study = studyDAO.findStudyById(summary.study_id());
+        Integer studyId = summary.study_id();
+        if (!studyCache.containsKey(studyId)) {
+          studyCache.put(studyId, studyDAO.findStudyDetailsById(studyId));
+        }
+        Study study = studyCache.get(studyId);
         if (study != null && isCreatorOrCustodian(user, study)) {
           authorizedSummaries.add(summary);
         }
@@ -179,12 +188,14 @@ public class DatasetService implements ConsentLogger {
     if (dataset.getStudyId() == null) {
       return dataset;
     }
-    // Study isn't always populated, so fetch it if necessary
-    if (dataset.getStudy() == null) {
-      dataset.setStudy(studyDAO.findStudyById(dataset.getStudyId()));
-    }
-    if (canReadStudy(user, dataset.getStudy())
-        || Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
+    // Reuse the study when the caller already populated it for the response. Otherwise read only
+    // the details canReadStudy needs, and do not attach it - callers decide what the response
+    // carries.
+    Study study =
+        dataset.getStudy() != null
+            ? dataset.getStudy()
+            : studyDAO.findStudyDetailsById(dataset.getStudyId());
+    if (canReadStudy(user, study) || Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
       return dataset;
     }
     return null;

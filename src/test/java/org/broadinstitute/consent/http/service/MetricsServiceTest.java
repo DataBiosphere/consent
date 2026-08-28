@@ -44,7 +44,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     DarMetricsSummary summary = generateDarMetricsSummary();
     Dataset dataset = generateDataset();
 
-    when(dataSetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(dataSetDAO.findDatasetIdById(dataset.getDatasetId())).thenReturn(dataset.getDatasetId());
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
         .thenReturn(List.of(summary));
 
@@ -52,13 +52,13 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     assertEquals(summary.projectTitle(), metrics.getFirst().projectTitle());
     assertEquals(summary.darCode(), metrics.getFirst().darCode());
-    verify(dataSetDAO).findDatasetById(dataset.getDatasetId());
+    verify(dataSetDAO).findDatasetIdById(dataset.getDatasetId());
     verify(darDAO).findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId());
   }
 
   @Test
   void testGenerateDarSummariesNotFound() {
-    when(dataSetDAO.findDatasetById(any())).thenReturn(null);
+    when(dataSetDAO.findDatasetIdById(any())).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> service.generateDarSummaries(1));
   }
