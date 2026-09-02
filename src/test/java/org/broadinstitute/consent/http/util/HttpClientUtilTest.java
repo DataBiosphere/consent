@@ -10,7 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import jakarta.ws.rs.NotAuthorizedException;
+import java.io.IOException;
 import java.util.stream.IntStream;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
@@ -110,5 +117,38 @@ class HttpClientUtilTest extends WireMockTestHelper {
         () -> {
           clientUtil.getHttpResponse(new HttpGet(statusUrl));
         });
+  }
+
+  /**
+   * A downstream server can answer 401 without an HTTP reason phrase. Tomcat omits the phrase by
+   * default, and an ingress that forwards the status line unchanged delivers it that way. The
+   * status message is then null. A null must not reach the NotAuthorizedException challenge
+   * parameter, because that constructor answers with a NullPointerException, which callers that
+   * catch NotAuthorizedException cannot handle.
+   */
+  @Test
+  void testHandleHttpRequestUnauthorizedWithoutReasonPhrase() throws Exception {
+    HttpRequest request = requestReturning(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+
+    assertThrows(NotAuthorizedException.class, () -> clientUtil.handleHttpRequest(request));
+  }
+
+  /** A 401 that does carry a reason phrase keeps that phrase in the exception message. */
+  @Test
+  void testHandleHttpRequestUnauthorizedKeepsReasonPhrase() throws Exception {
+    HttpRequest request =
+        requestReturning(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, "Token expired");
+
+    NotAuthorizedException e =
+        assertThrows(NotAuthorizedException.class, () -> clientUtil.handleHttpRequest(request));
+    assertTrue(e.getMessage().contains("Token expired"), e.getMessage());
+  }
+
+  private HttpRequest requestReturning(int statusCode, String reasonPhrase) throws IOException {
+    MockLowLevelHttpResponse response =
+        new MockLowLevelHttpResponse().setStatusCode(statusCode).setReasonPhrase(reasonPhrase);
+    HttpTransport transport =
+        new MockHttpTransport.Builder().setLowLevelHttpResponse(response).build();
+    return transport.createRequestFactory().buildGetRequest(new GenericUrl(statusUrl));
   }
 }
