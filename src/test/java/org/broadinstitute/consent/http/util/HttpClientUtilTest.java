@@ -5,10 +5,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -18,7 +18,6 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import jakarta.ws.rs.NotAuthorizedException;
 import java.io.IOException;
-import java.util.stream.IntStream;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
 import org.broadinstitute.consent.http.WireMockTestHelper;
@@ -47,15 +46,9 @@ class HttpClientUtilTest extends WireMockTestHelper {
   @Test
   void testGetCachedResponse_case1() {
     wireMockServer.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(200)));
-    IntStream.range(3, 10)
-        .forEach(
-            i -> {
-              try {
-                clientUtil.getCachedResponse(new HttpGet(statusUrl));
-              } catch (Exception e) {
-                fail(e.getMessage());
-              }
-            });
+    for (int i = 3; i < 10; i++) {
+      assertDoesNotThrow(() -> clientUtil.getCachedResponse(new HttpGet(statusUrl)));
+    }
     wireMockServer.verify(exactly(1), anyRequestedFor(anyUrl()));
   }
 
@@ -70,15 +63,9 @@ class HttpClientUtilTest extends WireMockTestHelper {
     wireMockServer.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(200)));
 
     int count = randomInt(5, 10);
-    IntStream.range(0, count)
-        .forEach(
-            i -> {
-              try {
-                clientUtil.getCachedResponse(new HttpGet(statusUrl));
-              } catch (Exception e) {
-                fail(e.getMessage());
-              }
-            });
+    for (int i = 0; i < count; i++) {
+      assertDoesNotThrow(() -> clientUtil.getCachedResponse(new HttpGet(statusUrl)));
+    }
     wireMockServer.verify(exactly(count), anyRequestedFor(anyUrl()));
   }
 
@@ -113,10 +100,7 @@ class HttpClientUtilTest extends WireMockTestHelper {
     wireMockServer.stubFor(
         any(anyUrl()).willReturn(aResponse().withStatus(200).withFixedDelay(3000)));
     assertThrows(
-        RequestFailedException.class,
-        () -> {
-          clientUtil.getHttpResponse(new HttpGet(statusUrl));
-        });
+        RequestFailedException.class, () -> clientUtil.getHttpResponse(new HttpGet(statusUrl)));
   }
 
   /**
@@ -128,7 +112,7 @@ class HttpClientUtilTest extends WireMockTestHelper {
    */
   @Test
   void testHandleHttpRequestUnauthorizedWithoutReasonPhrase() throws Exception {
-    HttpRequest request = requestReturning(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+    HttpRequest request = requestReturning(null);
 
     assertThrows(NotAuthorizedException.class, () -> clientUtil.handleHttpRequest(request));
   }
@@ -136,17 +120,18 @@ class HttpClientUtilTest extends WireMockTestHelper {
   /** A 401 that does carry a reason phrase keeps that phrase in the exception message. */
   @Test
   void testHandleHttpRequestUnauthorizedKeepsReasonPhrase() throws Exception {
-    HttpRequest request =
-        requestReturning(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, "Token expired");
+    HttpRequest request = requestReturning("Token expired");
 
     NotAuthorizedException e =
         assertThrows(NotAuthorizedException.class, () -> clientUtil.handleHttpRequest(request));
     assertTrue(e.getMessage().contains("Token expired"), e.getMessage());
   }
 
-  private HttpRequest requestReturning(int statusCode, String reasonPhrase) throws IOException {
+  private HttpRequest requestReturning(String reasonPhrase) throws IOException {
     MockLowLevelHttpResponse response =
-        new MockLowLevelHttpResponse().setStatusCode(statusCode).setReasonPhrase(reasonPhrase);
+        new MockLowLevelHttpResponse()
+            .setStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED)
+            .setReasonPhrase(reasonPhrase);
     HttpTransport transport =
         new MockHttpTransport.Builder().setLowLevelHttpResponse(response).build();
     return transport.createRequestFactory().buildGetRequest(new GenericUrl(statusUrl));
