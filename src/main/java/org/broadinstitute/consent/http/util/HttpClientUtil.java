@@ -23,6 +23,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -193,7 +194,8 @@ public class HttpClientUtil implements ConsentLogger {
           }
           case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
             logErrorResponse(request, response);
-            throw new NotAuthorizedException(response.getStatusMessage());
+            throw new NotAuthorizedException(
+                Objects.requireNonNullElse(response.getStatusMessage(), "Unauthorized"), "Bearer");
           }
           case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
             logErrorResponse(request, response);
