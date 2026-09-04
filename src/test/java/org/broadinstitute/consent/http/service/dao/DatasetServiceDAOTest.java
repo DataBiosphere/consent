@@ -41,6 +41,7 @@ import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -227,6 +228,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             randomAlphabetic(10),
             randomAlphabetic(10),
+            null,
             true,
             user.getUserId(),
             List.of(),
@@ -271,6 +273,47 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(studyInsert.uuid(), studyDAO.findStudyById(s.getStudyId()).getUuid());
   }
 
+  /**
+   * Registration collects the PI institution, but the study page reads study.pi_institution_id, so
+   * the create path has to record the column and not only the `piInstitution` study property.
+   */
+  @Test
+  void testInsertStudyRecordsThePiInstitution() throws Exception {
+    Dac dac = createDac();
+    User user = createUserWithInstitution();
+    Institution institution = getUserInstitution(user);
+
+    StudyInsert studyInsert =
+        new StudyInsert(
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of(randomAlphabetic(10)),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            institution.getId(),
+            true,
+            user.getUserId(),
+            List.of(),
+            List.of(),
+            UUID.randomUUID());
+
+    DatasetInsert datasetInsert =
+        new DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(),
+            List.of());
+
+    List<Integer> createdIds =
+        serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
+    Study study = datasetDAO.findDatasetById(createdIds.getFirst()).getStudy();
+
+    assertEquals(
+        institution.getId(), studyDAO.findStudyById(study.getStudyId()).getPiInstitution().getId());
+  }
+
   @Test
   void testInsertStudyWithProps() throws Exception {
     Dac dac = createDac();
@@ -293,6 +336,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             randomAlphabetic(10),
             randomAlphabetic(10),
+            null,
             true,
             user.getUserId(),
             List.of(prop1, prop2),
@@ -377,6 +421,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             randomAlphabetic(10),
             randomAlphabetic(10),
+            null,
             true,
             user.getUserId(),
             List.of(prop1, prop2),
@@ -562,6 +607,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             newDataTypes,
             newPIName,
             null,
+            null,
             !study.getPublicVisibility(),
             study.getCreateUserId(),
             List.copyOf(study.getProperties()),
@@ -609,6 +655,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             study.getDataTypes(),
             study.getPiName(),
             study.getPiEmail(),
+            null,
             !study.getPublicVisibility(),
             study.getCreateUserId(),
             List.of(newProp, prop1),
@@ -656,6 +703,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             study.getDataTypes(),
             study.getPiName(),
             study.getPiEmail(),
+            null,
             !study.getPublicVisibility(),
             study.getCreateUserId(),
             List.copyOf(study.getProperties()),
@@ -747,6 +795,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             study.getDataTypes(),
             study.getPiName(),
             study.getPiEmail(),
+            null,
             !study.getPublicVisibility(),
             study.getCreateUserId(),
             List.copyOf(study.getProperties()),
@@ -845,6 +894,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             study.getDataTypes(),
             study.getPiName(),
             study.getPiEmail(),
+            null,
             !study.getPublicVisibility(),
             study.getCreateUserId(),
             List.copyOf(study.getProperties()),
@@ -1177,6 +1227,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             randomAlphabetic(10),
             randomAlphabetic(10),
             null,
+            null,
+            null,
+            null,
+            null,
             List.of("email1", "email2"),
             randomAlphabetic(10),
             randomAlphabetic(10),
@@ -1241,7 +1295,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
     assertEquals(study.getDescription(), patched.getDescription());
@@ -1264,12 +1319,181 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testPatchStudyPiDetails() throws Exception {
+    Study study = createStudy(null, null, null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    User institutionUser = createUserWithInstitution();
+    Integer institutionId = institutionUser.getInstitutionId();
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            institutionId,
+            "0000-0001-2345-6789",
+            "https://linkedin.com/in/pi",
+            "https://pi.example.com",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+
+    assertEquals(institutionId, patched.getPiInstitution().getId());
+    assertEquals("0000-0001-2345-6789", patched.getPiOrcid());
+    assertEquals("https://linkedin.com/in/pi", patched.getPiLinkedinUrl());
+    assertEquals("https://pi.example.com", patched.getPiWebsiteUrl());
+    // Unpatched fields are untouched
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getPiName(), patched.getPiName());
+  }
+
+  @Test
+  void testPatchStudyPreservesExistingPiDetails() throws Exception {
+    Study study = createStudy(null, null, null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    User institutionUser = createUserWithInstitution();
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        institutionUser.getInstitutionId(),
+        "0000-0001-2345-6789",
+        "https://linkedin.com/in/pi",
+        "https://pi.example.com",
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+    Study studyWithPiDetails = studyDAO.findStudyById(study.getStudyId());
+
+    // A patch that does not touch PI details must keep them intact
+    StudyPatch patch =
+        new StudyPatch(
+            randomAlphabetic(10),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+    Study patched = serviceDAO.patchStudy(studyWithPiDetails, user, patch);
+
+    assertEquals(patch.name(), patched.getName());
+    assertEquals(institutionUser.getInstitutionId(), patched.getPiInstitution().getId());
+    assertEquals("0000-0001-2345-6789", patched.getPiOrcid());
+    assertEquals("https://linkedin.com/in/pi", patched.getPiLinkedinUrl());
+    assertEquals("https://pi.example.com", patched.getPiWebsiteUrl());
+  }
+
+  /**
+   * The PI columns follow the repo's blank-clears convention, and a patch that names none of them
+   * must leave them untouched.
+   */
+  @Test
+  void testPatchStudyClearsPiDetails() throws Exception {
+    Study study = createStudy(null, null, null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    User institutionUser = createUserWithInstitution();
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        institutionUser.getInstitutionId(),
+        "0000-0001-2345-6789",
+        "https://linkedin.com/in/pi",
+        "https://pi.example.com",
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+    Study studyWithPiDetails = studyDAO.findStudyById(study.getStudyId());
+
+    // Go through the wire path, since explicit JSON nulls are what signal a clear
+    Study patched =
+        serviceDAO.patchStudy(
+            studyWithPiDetails,
+            user,
+            StudyPatch.fromJson(
+                """
+                {"piInstitutionId": null, "piOrcid": null,
+                 "piLinkedinUrl": null, "piWebsiteUrl": ""}
+                """));
+
+    // Explicit nulls, and a blank, persist as NULL rather than as empty strings
+    assertNull(patched.getPiInstitution());
+    assertNull(patched.getPiOrcid());
+    assertNull(patched.getPiLinkedinUrl());
+    assertNull(patched.getPiWebsiteUrl());
+  }
+
+  // A patch that names none of the PI fields must leave every one of them untouched.
+  @Test
+  void testPatchStudyPreservesPiDetailsWhenAbsentFromPatch() throws Exception {
+    Study study = createStudy(null, null, null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    User institutionUser = createUserWithInstitution();
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        institutionUser.getInstitutionId(),
+        "0000-0001-2345-6789",
+        "https://linkedin.com/in/pi",
+        "https://pi.example.com",
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+    Study studyWithPiDetails = studyDAO.findStudyById(study.getStudyId());
+
+    Study patched =
+        serviceDAO.patchStudy(
+            studyWithPiDetails, user, StudyPatch.fromJson("{\"name\": \"A new name\"}"));
+
+    assertEquals("A new name", patched.getName());
+    assertEquals(institutionUser.getInstitutionId(), patched.getPiInstitution().getId());
+    assertEquals("0000-0001-2345-6789", patched.getPiOrcid());
+    assertEquals("https://linkedin.com/in/pi", patched.getPiLinkedinUrl());
+    assertEquals("https://pi.example.com", patched.getPiWebsiteUrl());
+  }
+
+  @Test
   void testPatchStudyName() throws Exception {
     Study study = createStudy(null, null, null);
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
             randomAlphabetic(10),
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -1323,6 +1547,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
@@ -1355,6 +1583,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             List.of("tag1", "tag2"),
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -1405,6 +1637,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
@@ -1433,7 +1669,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, false, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, false, null, null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
     assertEquals(study.getDescription(), patched.getDescription());
@@ -1463,6 +1700,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         new StudyPatch(
             null,
             StudyType.COHORT_STUDY,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -1521,6 +1762,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
@@ -1567,6 +1812,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
@@ -1601,6 +1850,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -1657,6 +1910,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             randomAlphabetic(10),
             null,
             null,
@@ -1693,6 +1950,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -1750,6 +2011,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             randomAlphabetic(10),
             null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
@@ -1782,6 +2047,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             randomAlphabetic(10));
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
@@ -1801,7 +2070,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, blank, null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertTrue(
         patched.getProperties().stream().noneMatch(p -> p.getKey().equals(EXTERNAL_IDENTIFIER)));
@@ -1814,7 +2084,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, blank);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertTrue(
         patched.getProperties().stream()
@@ -1840,13 +2111,18 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             randomAlphabetic(10),
             null);
     serviceDAO.patchStudy(study, user, setPatch);
     // Then remove it with a blank string
     StudyPatch removePatch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, "", null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, "", null);
     Study patched = serviceDAO.patchStudy(study, user, removePatch);
     assertTrue(
         patched.getProperties().stream().noneMatch(p -> p.getKey().equals(EXTERNAL_IDENTIFIER)));
@@ -1872,12 +2148,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             randomAlphabetic(10));
     serviceDAO.patchStudy(study, user, setPatch);
     // Then remove it with a blank string
     StudyPatch removePatch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, "");
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, "");
     Study patched = serviceDAO.patchStudy(study, user, removePatch);
     assertTrue(
         patched.getProperties().stream()
@@ -1903,11 +2184,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     serviceDAO.patchStudy(study, user, setPatch);
     StudyPatch removePatch =
         new StudyPatch(
-            null, null, null, null, "", null, null, null, null, null, null, null, null, null);
+            null, null, null, null, "", null, null, null, null, null, null, null, null, null, null,
+            null, null, null);
     Study patched = serviceDAO.patchStudy(study, user, removePatch);
     assertTrue(
         patched.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
@@ -1971,6 +2257,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             randomAlphabetic(10),
             List.of(randomAlphabetic(10)),
             randomAlphabetic(10),
+            null,
             null,
             true,
             user.getUserId(),

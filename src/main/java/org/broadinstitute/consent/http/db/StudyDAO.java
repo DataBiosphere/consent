@@ -61,6 +61,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       """
       SELECT
           s.*,
+          i.institution_name AS pi_institution_name,
           sp.study_property_id AS sp_study_property_id,
           sp.study_id AS sp_study_id,
           sp.key AS sp_key,
@@ -68,6 +69,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           sp.type AS sp_type
       FROM
           study s
+      LEFT JOIN institution i ON i.institution_id = s.pi_institution_id
       LEFT JOIN study_property sp ON sp.study_id = s.study_id
       WHERE s.study_id = :studyId
       """)
@@ -133,6 +135,16 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("createDate") Instant createDate,
       @Bind("uuid") UUID uuid);
 
+  /**
+   * Sets the PI institution on a newly registered study. Registration collects the PI institution
+   * as the numeric `piInstitution` field, but the study page reads the column, so the create path
+   * records both. Separate from {@link #insertStudy} so the many callers that register a study
+   * without one are unaffected.
+   */
+  @SqlUpdate("UPDATE study SET pi_institution_id = :piInstitutionId WHERE study_id = :studyId")
+  void updateStudyPiInstitutionId(
+      @Bind("studyId") Integer studyId, @Bind("piInstitutionId") Integer piInstitutionId);
+
   @SqlUpdate(
       """
           UPDATE study
@@ -140,6 +152,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
               description = :description,
               pi_name = :piName,
               pi_email = :piEmail,
+              pi_institution_id = :piInstitutionId,
+              pi_orcid = :piOrcid,
+              pi_linkedin_url = :piLinkedinUrl,
+              pi_website_url = :piWebsiteUrl,
               data_types = :dataTypes,
               public_visibility = :publicVisibility,
               update_user_id = :updateUserId,
@@ -152,6 +168,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("description") String description,
       @Bind("piName") String piName,
       @Bind("piEmail") String piEmail,
+      @Bind("piInstitutionId") Integer piInstitutionId,
+      @Bind("piOrcid") String piOrcid,
+      @Bind("piLinkedinUrl") String piLinkedinUrl,
+      @Bind("piWebsiteUrl") String piWebsiteUrl,
       @Bind("dataTypes") List<String> dataTypes,
       @Bind("publicVisibility") Boolean publicVisibility,
       @Bind("updateUserId") Integer updateUserId,
@@ -212,7 +232,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
   @UseRowReducer(StudyReducer.class)
   @SqlQuery(
       """
-      SELECT * FROM study WHERE name = :name
+      SELECT s.*, i.institution_name AS pi_institution_name
+      FROM study s
+      LEFT JOIN institution i ON i.institution_id = s.pi_institution_id
+      WHERE s.name = :name
       """)
   Study findStudyByName(@Bind("name") String name);
 

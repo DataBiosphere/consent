@@ -251,6 +251,28 @@ public class DatasetService implements ConsentLogger {
     return user.hasUserRole(UserRoles.ADMIN) || isCreatorOrCustodian(user, study);
   }
 
+  /**
+   * Enforces read access to a study and everything derived from it. A study that is not publicly
+   * visible is readable only by its creator, its custodians, and admins. Mirrors {@link
+   * #verifyPublicVisibilityAccess(Dataset, User)} for datasets.
+   *
+   * @param study The study to check. Must be populated with creator and properties.
+   * @param user The requesting user
+   * @return The same study, when the user may read it
+   * @throws NotFoundException if the study is not visible to the user
+   */
+  public Study verifyStudyVisibilityAccess(Study study, User user) {
+    if (study == null) {
+      throw new NotFoundException("Study not found");
+    }
+    // If approved role or publicly visible, the user can see the study, otherwise throw
+    if (!isCreatorCustodianOrAdmin(user, study)
+        && !Boolean.TRUE.equals(study.getPublicVisibility())) {
+      throw new NotFoundException("Study not found");
+    }
+    return study;
+  }
+
   public Dataset getDatasetByName(String name) {
     String lowercaseName = name.toLowerCase();
     return datasetDAO.getDatasetByName(lowercaseName);
@@ -728,12 +750,17 @@ public class DatasetService implements ConsentLogger {
       study.setStudyId(studyId);
     } else {
       studyId = study.getStudyId();
+      // A study conversion carries no PI detail columns, so keep the stored ones.
       studyDAO.updateStudy(
           study.getStudyId(),
           studyConversion.getName(),
           studyConversion.getDescription(),
           studyConversion.getPiName(),
           studyConversion.getPiEmail(),
+          study.getPiInstitution() == null ? null : study.getPiInstitution().getId(),
+          study.getPiOrcid(),
+          study.getPiLinkedinUrl(),
+          study.getPiWebsiteUrl(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
           userId,

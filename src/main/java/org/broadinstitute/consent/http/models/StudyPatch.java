@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.reflect.TypeToken;
@@ -13,7 +15,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -27,12 +32,68 @@ public record StudyPatch(
     String species,
     String piName,
     String piEmail,
+    Integer piInstitutionId,
+    String piOrcid,
+    String piLinkedinUrl,
+    String piWebsiteUrl,
     List<String> dataCustodianEmail,
     String alternativeDataSharingPlanTargetDeliveryDate,
     String alternativeDataSharingPlanTargetPublicReleaseDate,
     Boolean publicVisibility,
     String externalIdentifier,
-    String externalIdentifierType) {
+    String externalIdentifierType,
+    // Field names the client sent as an explicit JSON null. Jackson cannot tell an absent field
+    // from an explicit null, so fromJson records them here; see the PI column convention below.
+    @JsonIgnore Set<String> explicitNulls) {
+
+  /**
+   * Convenience constructor for callers that build a patch directly rather than from a request
+   * body. Such a patch has no wire representation, so no field was explicitly nulled.
+   */
+  public StudyPatch(
+      String name,
+      StudyType studyType,
+      String description,
+      List<String> dataTypes,
+      String phenotypeIndication,
+      String species,
+      String piName,
+      String piEmail,
+      Integer piInstitutionId,
+      String piOrcid,
+      String piLinkedinUrl,
+      String piWebsiteUrl,
+      List<String> dataCustodianEmail,
+      String alternativeDataSharingPlanTargetDeliveryDate,
+      String alternativeDataSharingPlanTargetPublicReleaseDate,
+      Boolean publicVisibility,
+      String externalIdentifier,
+      String externalIdentifierType) {
+    this(
+        name,
+        studyType,
+        description,
+        dataTypes,
+        phenotypeIndication,
+        species,
+        piName,
+        piEmail,
+        piInstitutionId,
+        piOrcid,
+        piLinkedinUrl,
+        piWebsiteUrl,
+        dataCustodianEmail,
+        alternativeDataSharingPlanTargetDeliveryDate,
+        alternativeDataSharingPlanTargetPublicReleaseDate,
+        publicVisibility,
+        externalIdentifier,
+        externalIdentifierType,
+        Set.of());
+  }
+
+  public StudyPatch {
+    explicitNulls = explicitNulls == null ? Set.of() : Set.copyOf(explicitNulls);
+  }
 
   public static final String STUDY_TYPE = "studyType";
   public static final String PHENOTYPE_INDICATION = "phenotypeIndication";
@@ -46,6 +107,19 @@ public record StudyPatch(
   public static final String EXTERNAL_IDENTIFIER = "externalIdentifier";
   public static final String EXTERNAL_IDENTIFIER_TYPE = "externalIdentifierType";
 
+  /**
+   * The PI detail columns. Unlike the patchable study properties — where a blank string signals a
+   * delete — these are columns on the study row, so they follow the JSON convention: an absent
+   * field is a no-op, an explicit {@code null} clears the column, and a value sets it. A blank
+   * string is normalized to a clear rather than stored, since an empty ORCID or URL is never
+   * meaningful.
+   */
+  public static final String PI_INSTITUTION_ID = "piInstitutionId";
+
+  public static final String PI_ORCID = "piOrcid";
+  public static final String PI_LINKEDIN_URL = "piLinkedinUrl";
+  public static final String PI_WEBSITE_URL = "piWebsiteUrl";
+
   public static StudyPatch fromJson(String json) {
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
@@ -55,10 +129,50 @@ public record StudyPatch(
     module.addDeserializer(Boolean.class, new ForceBooleanDeserializer());
     mapper.registerModule(module);
     try {
-      return mapper.readValue(json, StudyPatch.class);
+      StudyPatch patch = mapper.readValue(json, StudyPatch.class);
+      return patch.withExplicitNulls(explicitNullFields(mapper, json));
     } catch (Exception e) {
       throw new IllegalArgumentException(e.getMessage());
     }
+  }
+
+  /**
+   * The names of the fields the body set to a literal JSON null. Binding alone cannot report these,
+   * because Jackson leaves both an absent field and an explicit null as a null component.
+   */
+  private static Set<String> explicitNullFields(ObjectMapper mapper, String json)
+      throws IOException {
+    JsonNode root = mapper.readTree(json);
+    if (root == null || !root.isObject()) {
+      return Set.of();
+    }
+    return root.properties().stream()
+        .filter(entry -> entry.getValue().isNull())
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toUnmodifiableSet());
+  }
+
+  private StudyPatch withExplicitNulls(Set<String> fields) {
+    return new StudyPatch(
+        name,
+        studyType,
+        description,
+        dataTypes,
+        phenotypeIndication,
+        species,
+        piName,
+        piEmail,
+        piInstitutionId,
+        piOrcid,
+        piLinkedinUrl,
+        piWebsiteUrl,
+        dataCustodianEmail,
+        alternativeDataSharingPlanTargetDeliveryDate,
+        alternativeDataSharingPlanTargetPublicReleaseDate,
+        publicVisibility,
+        externalIdentifier,
+        externalIdentifierType,
+        fields);
   }
 
   // Jackson, by default, allows coercion from numbers to strings.
@@ -106,6 +220,10 @@ public record StudyPatch(
     checks.add(checkSpecies(study));
     checks.add(checkPiName(study));
     checks.add(checkPiEmail(study));
+    checks.add(checkPiInstitutionId(study));
+    checks.add(checkNullableColumn(PI_ORCID, piOrcid(), study.getPiOrcid()));
+    checks.add(checkNullableColumn(PI_LINKEDIN_URL, piLinkedinUrl(), study.getPiLinkedinUrl()));
+    checks.add(checkNullableColumn(PI_WEBSITE_URL, piWebsiteUrl(), study.getPiWebsiteUrl()));
     checks.add(checkDataCustodians(study));
     checks.add(checkTargetDate(study));
     checks.add(checkTargetReleaseDate(study));
@@ -155,6 +273,49 @@ public record StudyPatch(
 
   private boolean checkPiEmail(Study study) {
     return piEmail() != null && !piEmail().equals(study.getPiEmail()) && !piEmail().isBlank();
+  }
+
+  private boolean checkPiInstitutionId(Study study) {
+    Integer existing = study.getPiInstitution() == null ? null : study.getPiInstitution().getId();
+    return !Objects.equals(resolvePiInstitutionId(existing), existing);
+  }
+
+  private boolean checkNullableColumn(String field, String patchValue, String existing) {
+    return !Objects.equals(resolveColumn(field, patchValue, existing), existing);
+  }
+
+  /**
+   * Resolves the PI institution id against its stored value: absent=keep existing, explicit
+   * null=clear, a value=set.
+   */
+  public Integer resolvePiInstitutionId(Integer existing) {
+    if (piInstitutionId() != null) {
+      return piInstitutionId();
+    }
+    return explicitNulls().contains(PI_INSTITUTION_ID) ? null : existing;
+  }
+
+  public String resolvePiOrcid(String existing) {
+    return resolveColumn(PI_ORCID, piOrcid(), existing);
+  }
+
+  public String resolvePiLinkedinUrl(String existing) {
+    return resolveColumn(PI_LINKEDIN_URL, piLinkedinUrl(), existing);
+  }
+
+  public String resolvePiWebsiteUrl(String existing) {
+    return resolveColumn(PI_WEBSITE_URL, piWebsiteUrl(), existing);
+  }
+
+  /**
+   * Resolves a nullable string column against its stored value: absent=keep existing, explicit
+   * null=clear, blank=clear (an empty value is never stored), any other value=set.
+   */
+  private String resolveColumn(String field, String patchValue, String existing) {
+    if (patchValue == null) {
+      return explicitNulls().contains(field) ? null : existing;
+    }
+    return patchValue.isBlank() ? null : patchValue;
   }
 
   private boolean checkDataCustodians(Study study) {

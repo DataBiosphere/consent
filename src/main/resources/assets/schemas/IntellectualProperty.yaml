@@ -17,8 +17,8 @@ properties:
     type: string
     description: The patent number.
   filingDate:
-    type: boolean
-    description: The filing date indicator.
+    type: string
+    description: The date the intellectual property was filed.
   status:
     type: string
     description: The status of the intellectual property.

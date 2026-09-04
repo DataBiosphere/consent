@@ -165,7 +165,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
-              latest_dar.data ->> 'nonTechRus' AS non_tech_rus
+              latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
+              -- Prefer the PI recorded on the DAR itself so the metric stays a stable record of
+              -- what was granted; fall back to the submitter for DARs predating that field.
+              COALESCE(latest_dar.data ->> 'piName', u.display_name) AS pi_name,
+              -- The DAR's own 'institution' field is deprecated and no longer written
+              -- (DataAccessRequestData.DEPRECATED_PROPS), so the submitter's current
+              -- institution is the only available source.
+              i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that is
@@ -181,10 +188,134 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               AND dd.dataset_id = :datasetId
               ORDER BY dar.collection_id, dar.submission_date DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = latest_dar.user_id
+          LEFT JOIN institution i ON i.institution_id = u.institution_id
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
       @Bind("datasetId") Integer datasetId);
+
+  /**
+   * The study-scoped counterpart of {@link
+   * #findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(Integer)}. A DAR qualifies when it was
+   * approved on at least one of the study's datasets, or is a closeout against one of them; each
+   * summary is sourced from the most recently submitted qualifying DAR in the collection. Doing the
+   * whole study in one round trip avoids re-running this query once per dataset.
+   *
+   * <p>The display record has to come from a qualifying DAR rather than from whatever the
+   * collection's newest submission happens to be. This section presents each row as a granted
+   * request, and {@link DarMetricsSummaryMapper} derives the current/expired chip from the sourced
+   * DAR's submission date; a pending progress report (a submitted child DAR with no election of its
+   * own) would otherwise overwrite the grant's title, RUS, and date and reset it to "current".
+   *
+   * @param studyId the study to filter by
+   * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest first
+   */
+  @RegisterRowMapper(DarMetricsSummaryMapper.class)
+  @SqlQuery(
+      """
+          WITH study_datasets AS (
+              SELECT dataset_id FROM dataset WHERE study_id = :studyId
+          ), qualifying_dars AS (
+              SELECT DISTINCT dar.reference_id, dar.collection_id
+              FROM data_access_request dar
+              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+              INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
+              INNER JOIN (
+                  SELECT DISTINCT e.reference_id, e.dataset_id,
+                      LAST_VALUE(v.vote) OVER(
+                          PARTITION BY e.reference_id, e.dataset_id
+                          ORDER BY v.create_date
+                          RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                      ) last_vote
+                  FROM election e
+                  INNER JOIN vote v ON e.election_id = v.election_id
+                      AND v.vote IS NOT NULL
+                      AND LOWER(e.election_type) = 'dataaccess'
+                      AND LOWER(v.type) IN ('final', 'radar_approve')
+              ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
+                  AND final_access_vote.dataset_id = dd.dataset_id
+              WHERE dar.submission_date IS NOT NULL
+                  AND final_access_vote.last_vote = TRUE
+                  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              -- Pull in all closeouts for this study. Closeouts do not have elections,
+              -- but we want to include them in the study usage metrics.
+              UNION
+              SELECT DISTINCT dar.reference_id, dar.collection_id
+              FROM data_access_request dar
+              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+              INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
+              WHERE dar.submission_date IS NOT NULL
+                  AND dar.data ->> 'closeoutSupplement' IS NOT NULL
+          ), approved_collections AS (
+              SELECT DISTINCT collection_id FROM qualifying_dars
+          )
+          SELECT
+              c.dar_code,
+              latest_dar.submission_date,
+              latest_dar.reference_id,
+              latest_dar.update_date,
+              latest_dar.data ->> 'projectTitle' AS project_title,
+              latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
+              COALESCE(latest_dar.data ->> 'piName', u.display_name) AS pi_name,
+              i.institution_name
+          FROM dar_collection c
+          INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
+          -- Source the summary from the most recently submitted DAR in the collection that itself
+          -- qualified. Constraining to the study's datasets and to a grant/closeout here, rather
+          -- than filtering after picking the collection-wide latest, keeps a collection whose
+          -- newest DAR targets a different study from being dropped and keeps a pending
+          -- submission from standing in for the grant.
+          INNER JOIN (
+              SELECT DISTINCT ON (dar.collection_id) dar.*
+              FROM data_access_request dar
+              INNER JOIN qualifying_dars q ON q.reference_id = dar.reference_id
+              WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
+          ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = latest_dar.user_id
+          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          ORDER BY latest_dar.submission_date DESC, c.dar_code
+      """)
+  List<DarMetricsSummary> findSummaryMetricApprovedDARsByStudyIdIncludesExpired(
+      @Bind("studyId") Integer studyId);
+
+  @UseRowReducer(DataAccessRequestReducer.class)
+  @SqlQuery(
+      """
+      SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id,
+        dar.create_date, dar.submission_date, dar.update_date, dar.data, dd.dataset_id,
+        collection.dar_code, dar.era_commons_id, dar.admin_dar_notes,
+        dar.approving_so_id, dar.approving_so_timestamp, dar.requires_so_approval
+      FROM data_access_request dar
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+      INNER JOIN dataset d ON d.dataset_id = dd.dataset_id
+      LEFT JOIN dar_collection collection ON collection.collection_id = dar.collection_id
+      WHERE d.study_id = :studyId
+        AND dar.parent_id IS NOT NULL
+        AND dar.submission_date IS NOT NULL
+        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      ORDER BY dar.submission_date DESC, dar.id DESC
+      """)
+  List<DataAccessRequest> findProgressReportsByStudyId(@Bind("studyId") Integer studyId);
+
+  @UseRowReducer(DataAccessRequestReducer.class)
+  @SqlQuery(
+      """
+      SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id,
+        dar.create_date, dar.submission_date, dar.update_date, dar.data, dd.dataset_id,
+        collection.dar_code, dar.era_commons_id, dar.admin_dar_notes,
+        dar.approving_so_id, dar.approving_so_timestamp, dar.requires_so_approval
+      FROM data_access_request dar
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+      LEFT JOIN dar_collection collection ON collection.collection_id = dar.collection_id
+      WHERE dd.dataset_id = :datasetId
+        AND dar.parent_id IS NOT NULL
+        AND dar.submission_date IS NOT NULL
+        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      ORDER BY dar.submission_date DESC, dar.id DESC
+      """)
+  List<DataAccessRequest> findProgressReportsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
    * This query finds dataset ids on dar-dataset combinations where the most recent vote is true.

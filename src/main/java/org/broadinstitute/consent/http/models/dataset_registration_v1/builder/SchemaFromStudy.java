@@ -8,7 +8,6 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanReasons;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.collaboratingSites;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSR;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation;
@@ -41,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -52,6 +52,8 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupp
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class SchemaFromStudy {
+
+  private final StudyAssets studyAssets = new StudyAssets();
 
   public DatasetRegistrationSchemaV1 build(Study study) {
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
@@ -139,7 +141,23 @@ public class SchemaFromStudy {
             AlternativeDataSharingPlanAccessManagement.fromValue(
                 alternativeDataSharingPlanAccessManagementVal));
       }
-      schemaV1.setAssets(findMapPropValue(study.getProperties(), assets));
+      schemaV1.setModels(studyAssets.findAssetList(study.getProperties(), StudyAssets.MODELS));
+      schemaV1.setWorkspaces(
+          studyAssets.findAssetList(study.getProperties(), StudyAssets.WORKSPACES));
+      schemaV1.setPresentations(
+          studyAssets.findAssetList(study.getProperties(), StudyAssets.PRESENTATIONS));
+      schemaV1.setPublications(
+          studyAssets.findAssetList(study.getProperties(), StudyAssets.PUBLICATIONS));
+      schemaV1.setClinicalTrials(
+          studyAssets.findAssetList(study.getProperties(), StudyAssets.CLINICAL_TRIALS));
+      schemaV1.setIntellectualProperties(
+          studyAssets.findAssetList(study.getProperties(), StudyAssets.INTELLECTUAL_PROPERTIES));
+      schemaV1.setBiospecimens(
+          studyAssets.findAssetList(study.getProperties(), StudyAssets.BIOSPECIMENS));
+      schemaV1.setFunding(studyAssets.findAssetList(study.getProperties(), StudyAssets.FUNDING));
+      // The deprecated assets object still round-trips every promoted list alongside whatever
+      // unpromoted keys remain, so a client editing this payload does not lose them.
+      schemaV1.setAssets(studyAssets.assemble(study.getProperties()));
       schemaV1.setData(findMapPropValue(study.getProperties(), data));
       schemaV1.setExternalIdentifier(
           findStringPropValue(study.getProperties(), externalIdentifier));

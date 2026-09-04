@@ -427,6 +427,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     StudyUpdateRequest schema =
         createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
     Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
     Set<Dataset> datasets = Set.of(new Dataset());
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
@@ -1061,6 +1062,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     StudyUpdateRequest schema =
         createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
     Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
     ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
@@ -1075,11 +1077,46 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(schema.getPiEmail(), studyUpdateCaptor.getValue().piEmail());
   }
 
+  /**
+   * Registration carries piInstitution but not the PI's profile links, which are PATCH-only, so an
+   * update takes the institution from the payload and carries the stored links forward. Without
+   * this the study page's PI Institution row stays blank until someone PATCHes it.
+   */
+  @Test
+  void testUpdateStudyFromRegistrationSetsThePiInstitutionAndKeepsTheProfileLinks()
+      throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    schema.setPiInstitution(7);
+    Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+    when(study.getPiOrcid()).thenReturn("0000-0002-1825-0097");
+    when(study.getPiLinkedinUrl()).thenReturn("https://linkedin.com/in/example");
+    when(study.getPiWebsiteUrl()).thenReturn("https://example.org");
+
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
+        ArgumentCaptor.forClass(DatasetServiceDAO.StudyUpdate.class);
+    when(datasetServiceDAO.updateStudy(studyUpdateCaptor.capture(), any(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    DatasetServiceDAO.StudyPiDetails piDetails = studyUpdateCaptor.getValue().piDetails();
+    assertEquals(7, piDetails.piInstitutionId());
+    assertEquals("0000-0002-1825-0097", piDetails.piOrcid());
+    assertEquals("https://linkedin.com/in/example", piDetails.piLinkedinUrl());
+    assertEquals("https://example.org", piDetails.piWebsiteUrl());
+  }
+
   @Test
   void testUpdateStudyFromRegistrationExcludesAccessManagementForExistingConsentGroup()
       throws Exception {
     User user = mock();
     Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
     StudyUpdateRequest schema = new StudyUpdateRequest();
     schema.setStudyName(randomAlphabetic(10));
     schema.setStudyDescription(randomAlphabetic(10));
@@ -1117,6 +1154,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
       throws Exception {
     User user = mock();
     Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
     StudyUpdateRequest schema = new StudyUpdateRequest();
     schema.setStudyName(randomAlphabetic(10));
     schema.setStudyDescription(randomAlphabetic(10));
@@ -1154,6 +1192,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   void testUpdateStudyFromRegistrationPreservesNameWhenConsentGroupNameOmitted() throws Exception {
     User user = mock();
     Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
     StudyUpdateRequest schema = new StudyUpdateRequest();
     schema.setStudyName(randomAlphabetic(10));
     schema.setStudyDescription(randomAlphabetic(10));
@@ -1191,6 +1230,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     // (see StudyUpdateRequestValidator#validateConsentGroupRemoval, which allows this).
     User user = mock();
     Study study = mock();
+    when(studyDAO.findStudyById(1)).thenReturn(study);
     StudyUpdateRequest schema = new StudyUpdateRequest();
     schema.setStudyName(randomAlphabetic(10));
     schema.setStudyDescription(randomAlphabetic(10));
