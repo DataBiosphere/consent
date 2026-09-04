@@ -1,0 +1,54 @@
+get:
+  summary: Comments and ratings on a study
+  operationId: apiStudyCommentsGet
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+  tags: [Study]
+  responses:
+    200:
+      description: The study's comments and their average rating
+      content:
+        application/json:
+          schema: { $ref: '../schemas/StudyCommentsSummary.yaml' }
+    404: { description: Study not found, or not visible to this user }
+post:
+  summary: Create or update the requesting user's comment on a study
+  description: >
+    A user has at most one comment per study; posting again replaces the
+    existing rating and text. Requires an active researcher status,
+    i.e. the Researcher role and a library card.
+  operationId: apiStudyCommentsPost
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [rating]
+          properties:
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+              description: The rating for the study, from 1 to 5.
+            commentText:
+              type: string
+              description: Optional comment text.
+  tags: [Study]
+  responses:
+    200:
+      description: The created or updated comment
+      content:
+        application/json:
+          schema: { $ref: '../schemas/StudyComment.yaml' }
+    400: { description: Missing payload, a rating that is not a whole JSON number, or a rating outside 1-5 }
+    403: { description: Active researcher status is required to comment or rate }
+    404: { description: Study not found, or not visible to this user }

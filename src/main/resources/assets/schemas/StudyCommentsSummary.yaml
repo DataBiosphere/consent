@@ -1,0 +1,13 @@
+type: object
+description: All comments on a study, with their average rating.
+properties:
+  comments:
+    type: array
+    items:
+      $ref: './StudyComment.yaml'
+    description: The study's comments, newest first.
+  averageRating:
+    type: number
+    format: double
+    nullable: true
+    description: The mean of all ratings on the study, or null when there are none.

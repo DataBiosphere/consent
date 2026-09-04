@@ -1,0 +1,18 @@
+get:
+  summary: Registered intellectual property for a study
+  operationId: apiStudyAssetsIntellectualPropertyGet
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+  tags: [Study]
+  responses:
+    200:
+      description: Study intellectual property
+      content:
+        application/json:
+          schema:
+            type: array
+            items: { $ref: '../schemas/IntellectualProperty.yaml' }
+    404: { description: Study not found, or not visible to this user }

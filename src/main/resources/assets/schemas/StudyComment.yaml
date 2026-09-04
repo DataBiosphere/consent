@@ -1,0 +1,34 @@
+type: object
+description: A researcher's rating and comment on a study.
+properties:
+  studyCommentId:
+    type: integer
+    description: The unique identifier of the comment.
+  studyId:
+    type: integer
+    description: The study the comment belongs to.
+  userId:
+    type: integer
+    description: The user who wrote the comment.
+  rating:
+    type: integer
+    minimum: 1
+    maximum: 5
+    description: The rating the user gave the study, from 1 to 5.
+  commentText:
+    type: string
+    description: The comment text. Optional; a rating may stand on its own.
+  createDate:
+    type: string
+    format: date-time
+    description: When the comment was first posted.
+  updateDate:
+    type: string
+    format: date-time
+    description: When the comment was last edited.
+  displayName:
+    type: string
+    description: The display name of the commenting user.
+  institutionName:
+    type: string
+    description: The institution of the commenting user, if they have one.

@@ -1,0 +1,39 @@
+type: object
+description: An analysis Workspace object.
+properties:
+  workspaceId:
+    type: string
+    description: The unique identifier for the workspace.
+  studyId:
+    type: string
+    description: The study ID associated with the workspace.
+  name:
+    type: string
+    description: The name of the workspace.
+  platform:
+    type: string
+    description: The platform hosting the workspace.
+  url:
+    type: string
+    description: The URL to the workspace.
+  cloud:
+    type: array
+    items:
+      type: string
+    description: The cloud platforms the workspace runs on.
+  description:
+    type: string
+    description: A description of the workspace.
+  tools:
+    type: array
+    items:
+      type: string
+    description: The tools available in the workspace.
+  access:
+    type: string
+    description: The access level of the workspace.
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the workspace.

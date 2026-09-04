@@ -1,0 +1,81 @@
+type: object
+description: A Clinical Trial object.
+properties:
+  clinicalTrialId:
+    type: string
+    description: The unique identifier for the clinical trial.
+  studyId:
+    type: string
+    description: The study ID associated with the clinical trial.
+  title:
+    type: string
+    description: The title of the clinical trial.
+  registry:
+    type: string
+    description: The registry the trial is listed in.
+  identifier:
+    type: string
+    description: The trial's identifier within its registry.
+  status:
+    type: string
+    description: The recruitment status of the clinical trial.
+    enum:
+      - Active, not recruiting
+      - Completed
+      - Enrolling by invitation
+      - Not yet recruiting
+      - Recruiting
+      - Suspended
+      - Terminated
+      - Withdrawn
+      - Available
+      - No longer available
+      - Temporarily not available
+      - Approved for marketing
+      - Withheld
+      - Unknown
+  sponsor:
+    type: string
+    description: The sponsor of the clinical trial.
+  startDate:
+    type: string
+    description: The date the clinical trial started.
+  endDate:
+    type: string
+    description: The date the clinical trial ended.
+  interventionType:
+    type: string
+    description: The type of intervention studied.
+    enum:
+      - Behavioral
+      - Biological
+      - Combination product
+      - Device
+      - Diagnostic test
+      - Dietary supplement
+      - Drug
+      - Genetic
+      - Procedure
+      - Radiation
+      - Other
+  description:
+    type: string
+    description: A description of the clinical trial.
+  phase:
+    type: string
+    description: The phase of the clinical trial.
+    enum:
+      - Not Applicable
+      - Early Phase 1
+      - Phase 1
+      - Phase 2
+      - Phase 3
+      - Phase 4
+  url:
+    type: string
+    description: The URL to the clinical trial.
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the clinical trial.
