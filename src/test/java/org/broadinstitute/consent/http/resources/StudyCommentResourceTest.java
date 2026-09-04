@@ -67,7 +67,7 @@ class StudyCommentResourceTest extends AbstractTestHelper {
   void testPost() {
     when(duosUser.getUser()).thenReturn(user);
     StudyComment comment = new StudyComment(7, 1, 10, 5, "Great", null, null, "Name", "Inst");
-    when(service.post(eq(1), eq(user), eq(5), eq("Great"))).thenReturn(comment);
+    when(service.post(1, user, 5, "Great")).thenReturn(comment);
 
     Response response = resource.post(duosUser, 1, "{\"rating\": 5, \"commentText\": \"Great\"}");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -132,7 +132,7 @@ class StudyCommentResourceTest extends AbstractTestHelper {
   void testPostAcceptsWholeJsonNumberRatings(String body) {
     when(duosUser.getUser()).thenReturn(user);
     StudyComment comment = new StudyComment(7, 1, 10, 4, null, null, null, "Name", "Inst");
-    when(service.post(eq(1), eq(user), eq(4), eq(null))).thenReturn(comment);
+    when(service.post(1, user, 4, null)).thenReturn(comment);
 
     Response response = resource.post(duosUser, 1, body);
 

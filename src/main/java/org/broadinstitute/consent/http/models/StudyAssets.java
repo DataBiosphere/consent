@@ -90,7 +90,7 @@ public class StudyAssets implements ConsentLogger {
     for (String key : PROMOTED_KEYS) {
       // Remove any legacy copy first. In particular, an authoritative empty promoted property
       // must remove a stale legacy list rather than accidentally resurrecting it.
-      assets.keySet().removeIf(existingKey -> key.equalsIgnoreCase(existingKey));
+      assets.keySet().removeIf(key::equalsIgnoreCase);
       List<Object> values = findAssetList(properties, key);
       if (!values.isEmpty()) {
         assets.put(key, values);
@@ -101,15 +101,15 @@ public class StudyAssets implements ConsentLogger {
 
   /**
    * A client-supplied assets object with the promoted keys removed, so they are not stored twice.
-   * Returns null when nothing is left to store.
+   * Empty when nothing is left to store.
    */
   public static Map<String, Object> stripPromoted(Map<String, Object> assets) {
-    if (assets == null || assets.isEmpty()) {
-      return null;
+    if (assets == null) {
+      return Map.of();
     }
     Map<String, Object> remaining = new LinkedHashMap<>(assets);
     PROMOTED_KEYS.forEach(remaining::remove);
-    return remaining.isEmpty() ? null : remaining;
+    return remaining;
   }
 
   /**
@@ -139,7 +139,7 @@ public class StudyAssets implements ConsentLogger {
     return properties.stream()
         .filter(property -> ASSETS.equalsIgnoreCase(property.getKey()))
         .map(StudyProperty::getValue)
-        .map(value -> parseMap(value))
+        .map(this::parseMap)
         .filter(assets -> !assets.isEmpty())
         .findFirst()
         .orElseGet(Map::of);

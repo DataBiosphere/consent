@@ -337,7 +337,7 @@ public class RegistrationRequestMapper {
               PropertyType.Json,
               request -> {
                 Map<String, Object> remaining = StudyAssets.stripPromoted(request.getAssets());
-                return Objects.nonNull(remaining) ? GsonUtil.getInstance().toJson(remaining) : null;
+                return remaining.isEmpty() ? null : GsonUtil.getInstance().toJson(remaining);
               }),
           new StudyPropertyExtractor(
               data,

@@ -4,6 +4,7 @@ import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_E
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -282,13 +283,12 @@ public class DatasetServiceDAO implements ConsentLogger {
   private void executeUpdateStudy(Handle handle, StudyUpdate update, boolean replaceProps) {
     StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
     Study study = studyDAOLocal.findStudyById(update.studyId);
+    if (study == null) {
+      throw new NotFoundException("Study with ID " + update.studyId + " does not exist.");
+    }
     // A null piDetails means the caller carries no PI detail values, so keep the stored ones.
     StudyPiDetails piDetails =
-        update.piDetails != null
-            ? update.piDetails
-            : (study == null
-                ? new StudyPiDetails(null, null, null, null)
-                : StudyPiDetails.of(study));
+        update.piDetails != null ? update.piDetails : StudyPiDetails.of(study);
     studyDAOLocal.updateStudy(
         update.studyId,
         update.name,

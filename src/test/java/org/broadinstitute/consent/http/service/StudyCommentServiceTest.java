@@ -52,8 +52,9 @@ class StudyCommentServiceTest extends AbstractTestHelper {
   @Test
   void testListStudyNotFound() {
     when(studyDAO.findStudyById(1)).thenReturn(null);
+    User user = researcher(10);
 
-    assertThrows(NotFoundException.class, () -> service.list(1, researcher(10)));
+    assertThrows(NotFoundException.class, () -> service.list(1, user));
   }
 
   @Test
@@ -82,8 +83,9 @@ class StudyCommentServiceTest extends AbstractTestHelper {
   @Test
   void testPostStudyNotFound() {
     when(studyDAO.findStudyById(1)).thenReturn(null);
+    User user = researcher(10);
 
-    assertThrows(NotFoundException.class, () -> service.post(1, researcher(10), 5, "text"));
+    assertThrows(NotFoundException.class, () -> service.post(1, user, 5, "text"));
   }
 
   @Test
