@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <changeSet id="study-comments-2026-08-18" author="duos">
+    <createTable tableName="study_comment">
+      <column name="study_comment_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="study_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="user_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="rating" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="comment_text" type="TEXT"/>
+      <column name="create_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="update_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="study_comment" baseColumnNames="study_id" referencedTableName="study" referencedColumnNames="study_id" constraintName="fk_study_comment_study" onDelete="CASCADE"/>
+    <addForeignKeyConstraint baseTableName="study_comment" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="user_id" constraintName="fk_study_comment_user" onDelete="CASCADE"/>
+    <sql>ALTER TABLE study_comment ADD CONSTRAINT ck_study_comment_rating CHECK (rating BETWEEN 1 AND 5)</sql>
+    <addUniqueConstraint tableName="study_comment" columnNames="study_id,user_id" constraintName="uq_study_comment_study_user"/>
+  </changeSet>
+</databaseChangeLog>

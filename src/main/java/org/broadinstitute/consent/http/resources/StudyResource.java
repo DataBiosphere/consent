@@ -155,16 +155,23 @@ public class StudyResource extends Resource {
   public Response patchStudyById(
       @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId, String json) {
     try {
+      User user = duosUser.getUser();
       Study study = datasetService.findStudy(studyId);
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
-      checkPublicVisibilityForUser(study, duosUser.getUser());
+      checkPublicVisibilityForUser(study, user);
+      // The role gate above only says the caller holds a study-editing role somewhere in DUOS; a
+      // publicly visible study passes the visibility check for everyone. Writes additionally
+      // require ownership of this study, as the registration PUT path does.
+      if (!datasetService.isCreatorCustodianOrAdmin(user, study)) {
+        throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
+      }
       StudyPatch studyPatch = StudyPatch.fromJson(json);
       if (!studyPatch.isPatchable(study)) {
         return Response.status(Status.NOT_MODIFIED).entity(study).build();
       }
-      Study patchedStudy = datasetService.patchStudy(studyId, duosUser.getUser(), studyPatch);
+      Study patchedStudy = datasetService.patchStudy(studyId, user, studyPatch);
       return Response.ok(patchedStudy).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -298,11 +305,6 @@ public class StudyResource extends Resource {
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {
-    boolean isApprovedRole = datasetService.isCreatorCustodianOrAdmin(user, study);
-    boolean isPubliclyVisible = study.getPublicVisibility();
-    // If approved role or publicly visible, the user can see the study, otherwise throw
-    if (!isApprovedRole && !isPubliclyVisible) {
-      throw new NotFoundException("Study not found");
-    }
+    datasetService.verifyStudyVisibilityAccess(study, user);
   }
 }

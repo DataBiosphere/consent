@@ -89,6 +89,71 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateStudyWritesPiDetails() {
+    Study study = insertStudyWithProperties();
+    User user = createUserWithInstitution();
+    Integer institutionId = user.getInstitutionId();
+    String orcid = "0000-0001-2345-6789";
+    String linkedinUrl = "https://linkedin.com/in/pi";
+    String websiteUrl = "https://pi.example.com";
+
+    // PI details default to null
+    assertNull(study.getPiInstitution());
+    assertNull(study.getPiOrcid());
+    assertNull(study.getPiLinkedinUrl());
+    assertNull(study.getPiWebsiteUrl());
+
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        institutionId,
+        orcid,
+        linkedinUrl,
+        websiteUrl,
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+
+    Study found = studyDAO.findStudyById(study.getStudyId());
+    assertEquals(institutionId, found.getPiInstitution().getId());
+    assertEquals(
+        institutionDAO.findInstitutionById(institutionId).getName(),
+        found.getPiInstitution().getName());
+    assertEquals(orcid, found.getPiOrcid());
+    assertEquals(linkedinUrl, found.getPiLinkedinUrl());
+    assertEquals(websiteUrl, found.getPiWebsiteUrl());
+
+    Study foundByName = studyDAO.findStudyByName(study.getName());
+    assertEquals(institutionId, foundByName.getPiInstitution().getId());
+    assertEquals(orcid, foundByName.getPiOrcid());
+
+    // Clearing the details persists nulls
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        null,
+        null,
+        null,
+        null,
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+    Study cleared = studyDAO.findStudyById(study.getStudyId());
+    assertNull(cleared.getPiInstitution());
+    assertNull(cleared.getPiOrcid());
+    assertNull(cleared.getPiLinkedinUrl());
+    assertNull(cleared.getPiWebsiteUrl());
+  }
+
+  @Test
   void testStudyProps() {
     User u = createUser();
 
@@ -308,6 +373,10 @@ class StudyDAOTest extends DAOTestHelper {
         newName,
         newDescription,
         newPiName,
+        null,
+        null,
+        null,
+        null,
         null,
         newDataTypes,
         true,

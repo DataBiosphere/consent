@@ -1,0 +1,35 @@
+type: object
+description: A Funding Resource object.
+properties:
+  fundingId:
+    type: string
+    description: The unique identifier for the funding resource.
+  studyId:
+    type: string
+    description: The study ID associated with the funding resource.
+  funderName:
+    type: string
+    description: The name of the funder.
+  funderProgram:
+    type: string
+    description: The funder's program supporting the study.
+  grantNumber:
+    type: string
+    description: The grant number.
+  projectTitle:
+    type: string
+    description: The title of the funded project.
+  startDate:
+    type: string
+    description: The date the funding started.
+  endDate:
+    type: string
+    description: The date the funding ended.
+  url:
+    type: string
+    description: The URL to the funding resource.
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the funding resource.

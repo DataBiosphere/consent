@@ -1,0 +1,15 @@
+type: object
+description: Research outputs self-reported in a study's data access request progress reports.
+properties:
+  presentations:
+    type: array
+    items:
+      $ref: './Presentation.yaml'
+  publications:
+    type: array
+    items:
+      $ref: './Publication.yaml'
+  intellectualProperties:
+    type: array
+    items:
+      $ref: './IntellectualProperty.yaml'

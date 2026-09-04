@@ -1187,6 +1187,92 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(dataset.getDatasetId(), verifiedDataset.getDatasetId());
   }
 
+  // verifyStudyVisibilityAccess is the single read-access gate shared by StudyResource and the
+  // study asset, comment, and metrics endpoints.
+  @Test
+  void testVerifyStudyVisibilityAccess_PublicStudyIsReadableByAnyone() {
+    initService();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setPublicVisibility(true);
+    User generalUser = new User();
+    generalUser.setUserId(2);
+    generalUser.setEmail("general@email.com");
+
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, generalUser));
+  }
+
+  @Test
+  void testVerifyStudyVisibilityAccess_PrivateStudyIsHiddenFromOtherUsers() {
+    initService();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setCreateUserEmail("creator@email.com");
+    study.setPublicVisibility(false);
+    User generalUser = new User();
+    generalUser.setUserId(2);
+    generalUser.setEmail("general@email.com");
+
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.verifyStudyVisibilityAccess(study, generalUser));
+  }
+
+  @Test
+  void testVerifyStudyVisibilityAccess_PrivateStudyIsReadableByCreatorAndAdmin() {
+    initService();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setCreateUserEmail("creator@email.com");
+    study.setPublicVisibility(false);
+    User creator = new User();
+    creator.setUserId(1);
+    creator.setEmail("creator@email.com");
+    User admin = new User();
+    admin.setUserId(3);
+    admin.setEmail("admin@email.com");
+    admin.setAdminRole();
+
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, creator));
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, admin));
+  }
+
+  // The public_visibility column is nullable; a null reads as "not public".
+  @Test
+  void testVerifyStudyVisibilityAccess_NullVisibilityIsNotPublic() {
+    initService();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setCreateUserEmail("creator@email.com");
+    study.setPublicVisibility(null);
+    User generalUser = new User();
+    generalUser.setUserId(2);
+    generalUser.setEmail("general@email.com");
+    User creator = new User();
+    creator.setUserId(1);
+    creator.setEmail("creator@email.com");
+
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.verifyStudyVisibilityAccess(study, generalUser));
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, creator));
+  }
+
+  @Test
+  void testVerifyStudyVisibilityAccess_NullStudyIsNotFound() {
+    initService();
+    User generalUser = new User();
+    generalUser.setUserId(2);
+
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.verifyStudyVisibilityAccess(null, generalUser));
+  }
+
   @Test
   void testIsCreatorOrCustodian_DatasetCreator() {
     User datasetCreator = new User();
@@ -1308,6 +1394,10 @@ class DatasetServiceTest extends AbstractTestHelper {
             "New Phenotype",
             "New Species",
             "New PI",
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -1640,7 +1730,10 @@ class DatasetServiceTest extends AbstractTestHelper {
     Study result = datasetService.convertDatasetToStudy(admin, dataset, conversion);
 
     assertNotNull(result);
-    verify(studyDAO).updateStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    verify(studyDAO)
+        .updateStudy(
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+            any());
     verify(studyDAO, never())
         .insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
@@ -1782,7 +1875,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     user.setUserId(1);
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null);
 
     when(studyDAO.findStudyById(1)).thenReturn(study);
     when(datasetServiceDAO.patchStudy(any(), any(), any()))

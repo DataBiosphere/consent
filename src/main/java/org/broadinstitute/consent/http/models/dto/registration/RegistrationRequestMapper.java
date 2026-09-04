@@ -3,12 +3,14 @@ package org.broadinstitute.consent.http.models.dto.registration;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
@@ -98,6 +100,18 @@ public class RegistrationRequestMapper {
 
       return Optional.of(studyProperty);
     }
+  }
+
+  private static StudyPropertyExtractor promotedAsset(
+      String key, Function<StudyRegistrationRequest, List<Object>> getTopLevelValue) {
+    return new StudyPropertyExtractor(
+        key,
+        PropertyType.Json,
+        request -> {
+          List<Object> values =
+              StudyAssets.promotedValue(getTopLevelValue.apply(request), request.getAssets(), key);
+          return values == null ? null : GsonUtil.getInstance().toJson(values);
+        });
   }
 
   /**
@@ -306,14 +320,24 @@ public class RegistrationRequestMapper {
                 }
                 return null;
               }),
+          promotedAsset(StudyAssets.MODELS, StudyRegistrationRequest::getModels),
+          promotedAsset(StudyAssets.WORKSPACES, StudyRegistrationRequest::getWorkspaces),
+          promotedAsset(StudyAssets.PRESENTATIONS, StudyRegistrationRequest::getPresentations),
+          promotedAsset(StudyAssets.PUBLICATIONS, StudyRegistrationRequest::getPublications),
+          promotedAsset(StudyAssets.CLINICAL_TRIALS, StudyRegistrationRequest::getClinicalTrials),
+          promotedAsset(
+              StudyAssets.INTELLECTUAL_PROPERTIES,
+              StudyRegistrationRequest::getIntellectualProperties),
+          promotedAsset(StudyAssets.BIOSPECIMENS, StudyRegistrationRequest::getBiospecimens),
+          promotedAsset(StudyAssets.FUNDING, StudyRegistrationRequest::getFunding),
+          // Whatever the client sends under the deprecated assets object that has not been
+          // promoted to a first-class field is still round-tripped as-is.
           new StudyPropertyExtractor(
-              "assets",
+              StudyAssets.ASSETS,
               PropertyType.Json,
               request -> {
-                if (Objects.nonNull(request.getAssets()) && !request.getAssets().isEmpty()) {
-                  return GsonUtil.getInstance().toJson(request.getAssets());
-                }
-                return null;
+                Map<String, Object> remaining = StudyAssets.stripPromoted(request.getAssets());
+                return remaining.isEmpty() ? null : GsonUtil.getInstance().toJson(remaining);
               }),
           new StudyPropertyExtractor(
               data,

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,6 +65,22 @@ class StudyResourceTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     resource = new StudyResource(datasetService, datasetRegistrationService, elasticSearchService);
+    // The read-access gate now lives in DatasetService#verifyStudyVisibilityAccess (shared with
+    // the study asset, comment, and metrics endpoints). These tests exercise the resource, so the
+    // mock replays the real rule against whatever isCreatorCustodianOrAdmin each test stubs.
+    // DatasetServiceTest covers the rule itself.
+    lenient()
+        .when(datasetService.verifyStudyVisibilityAccess(any(), any()))
+        .thenAnswer(
+            invocation -> {
+              Study study = invocation.getArgument(0);
+              User requestingUser = invocation.getArgument(1);
+              if (!datasetService.isCreatorCustodianOrAdmin(requestingUser, study)
+                  && !Boolean.TRUE.equals(study.getPublicVisibility())) {
+                throw new NotFoundException("Study not found");
+              }
+              return study;
+            });
   }
 
   @Test
@@ -679,8 +696,11 @@ class StudyResourceTest extends AbstractTestHelper {
     }
   }
 
+  // A study whose public_visibility is NULL (the column is nullable) reads as "not public".
+  // An approved user still sees it; anyone else gets a 404 rather than the 500 this used to
+  // produce by unboxing the null before checking the role.
   @Test
-  void testCheckPublicVisibilityForUser_PublicVisibilityNull_CausesError() {
+  void testCheckPublicVisibilityForUser_PublicVisibilityNull() {
     Study study = createMockStudy();
     study.setPublicVisibility(null);
     User approvedUser = new User();
@@ -691,7 +711,23 @@ class StudyResourceTest extends AbstractTestHelper {
     when(duosUser.getUser()).thenReturn(approvedUser);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PublicVisibilityNull_NoApprovedRole() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(null);
+    User generalUser = new User();
+    generalUser.setUserId(randomInt(1000, 1100));
+    when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(duosUser.getUser()).thenReturn(generalUser);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 
@@ -702,6 +738,7 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
     when(duosUser.getUser()).thenReturn(admin);
     String patchJson =
         """
@@ -715,6 +752,31 @@ class StudyResourceTest extends AbstractTestHelper {
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  /**
+   * The role gate on the endpoint only says the caller holds a study-editing role somewhere in
+   * DUOS. A publicly visible study is readable by everyone, so read visibility cannot stand in for
+   * write authorization: patching it still requires being its creator, a custodian, or an admin.
+   */
+  @Test
+  void testPatchStudyByIdForbiddenForNonOwnerOfPublicStudy() {
+    Study study = createMockStudy();
+    User chairperson = new User();
+    chairperson.setUserId(study.getCreateUserId() + 1);
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(chairperson, study)).thenReturn(false);
+    when(duosUser.getUser()).thenReturn(chairperson);
+    String patchJson =
+        """
+            {
+              "piOrcid": "0000-0002-1825-0097"
+            }
+            """;
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+    verify(datasetService, never()).patchStudy(any(), any(), any());
   }
 
   @Test
@@ -736,6 +798,8 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
@@ -758,6 +822,8 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }

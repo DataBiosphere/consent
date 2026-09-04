@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+  <!--
+    changelog-consent-2026-08-18-study-pi-details added study.pi_institution_id, but the PI
+    institution had already been collected at registration time as the numeric `piInstitution`
+    study property. The study page reads the column only, so every study registered before that
+    changeset would show a blank PI Institution until someone re-PATCHed it. Copy the property
+    into the column once; registration now writes both.
+
+    The property is written by StudyPropertyExtractor with PropertyType.Number, but it is stored
+    in a text column, so the guards below skip anything that is not a plain integer, and skip ids
+    with no matching institution row — fk_study_pi_institution would otherwise reject the update.
+  -->
+  <changeSet id="changelog-consent-2026-09-02-study-pi-institution-backfill" author="otchet">
+    <sql>
+      UPDATE study s
+      SET pi_institution_id = btrim(sp.value)::integer
+      FROM study_property sp
+      WHERE sp.study_id = s.study_id
+        AND sp.key = 'piInstitution'
+        AND s.pi_institution_id IS NULL
+        AND btrim(sp.value) ~ '^[0-9]+$'
+        AND EXISTS (
+          SELECT 1 FROM institution i WHERE i.institution_id = btrim(sp.value)::integer
+        );
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

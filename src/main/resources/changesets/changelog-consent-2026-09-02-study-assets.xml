@@ -1,0 +1,55 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+  <!--
+    Promotes the study registration asset lists out of the client-managed `assets` object and
+    into their own study_property rows, one per asset type. The schema declared `assets` as
+    unvalidated client metadata, but backend endpoints and dashboard counts came to depend on
+    individual keys inside it, so those keys are now first-class registration fields.
+
+    Every `assets` value was written by GsonUtil.toJson(Map), so it is valid JSON; the guards
+    below still skip any row that is not a JSON object, and only promote keys holding an array.
+  -->
+  <changeSet id="changelog-consent-2026-09-02-study-assets-promote" author="otchet">
+    <sql>
+      INSERT INTO study_property (study_id, key, type, value)
+      SELECT sp.study_id, k.key, 'json', (sp.value::jsonb -> k.key)::text
+      FROM study_property sp
+      CROSS JOIN (VALUES
+        ('models'), ('workspaces'), ('presentations'), ('publications'),
+        ('clinicalTrials'), ('intellectualProperties'), ('biospecimens'), ('funding')
+      ) AS k(key)
+      WHERE sp.key = 'assets'
+        AND jsonb_typeof(sp.value::jsonb) = 'object'
+        AND jsonb_typeof(sp.value::jsonb -> k.key) = 'array'
+        AND jsonb_array_length(sp.value::jsonb -> k.key) > 0
+        AND NOT EXISTS (
+          SELECT 1 FROM study_property existing
+          WHERE existing.study_id = sp.study_id AND existing.key = k.key
+        );
+    </sql>
+  </changeSet>
+
+  <!--
+    Strip the promoted keys from the legacy object so a value is not stored twice, then drop
+    any `assets` row that held nothing else. Rows that are not JSON objects are left untouched.
+  -->
+  <changeSet id="changelog-consent-2026-09-02-study-assets-strip" author="otchet">
+    <sql>
+      UPDATE study_property
+      SET value = (
+        value::jsonb - 'models' - 'workspaces' - 'presentations' - 'publications'
+                     - 'clinicalTrials' - 'intellectualProperties' - 'biospecimens' - 'funding'
+      )::text
+      WHERE key = 'assets'
+        AND jsonb_typeof(value::jsonb) = 'object';
+
+      DELETE FROM study_property
+      WHERE key = 'assets'
+        AND jsonb_typeof(value::jsonb) = 'object'
+        AND value::jsonb = '{}'::jsonb;
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

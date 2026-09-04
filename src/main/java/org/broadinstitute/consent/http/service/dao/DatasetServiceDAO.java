@@ -4,6 +4,7 @@ import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_E
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -221,6 +222,9 @@ public class DatasetServiceDAO implements ConsentLogger {
             insert.userId,
             Instant.now(),
             uuid);
+    if (insert.piInstitutionId != null) {
+      studyDAOLocal.updateStudyPiInstitutionId(studyId, insert.piInstitutionId);
+    }
 
     for (StudyProperty prop : insert.props) {
       studyDAOLocal.insertStudyProperty(
@@ -279,12 +283,22 @@ public class DatasetServiceDAO implements ConsentLogger {
   private void executeUpdateStudy(Handle handle, StudyUpdate update, boolean replaceProps) {
     StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
     Study study = studyDAOLocal.findStudyById(update.studyId);
+    if (study == null) {
+      throw new NotFoundException("Study with ID " + update.studyId + " does not exist.");
+    }
+    // A null piDetails means the caller carries no PI detail values, so keep the stored ones.
+    StudyPiDetails piDetails =
+        update.piDetails != null ? update.piDetails : StudyPiDetails.of(study);
     studyDAOLocal.updateStudy(
         update.studyId,
         update.name,
         update.description,
         update.piName,
         update.piEmail,
+        piDetails.piInstitutionId(),
+        piDetails.piOrcid(),
+        piDetails.piLinkedinUrl(),
+        piDetails.piWebsiteUrl(),
         update.dataTypes,
         update.publicVisibility,
         update.userId,
@@ -458,6 +472,19 @@ public class DatasetServiceDAO implements ConsentLogger {
             });
   }
 
+  /**
+   * Applies the patch's absent=no-op / explicit-null=clear / value=set convention to the PI detail
+   * columns. See {@link StudyPatch#resolvePiInstitutionId(Integer)}.
+   */
+  private StudyPiDetails resolvePiDetails(Study study, StudyPatch patch) {
+    StudyPiDetails existing = StudyPiDetails.of(study);
+    return new StudyPiDetails(
+        patch.resolvePiInstitutionId(existing.piInstitutionId()),
+        patch.resolvePiOrcid(existing.piOrcid()),
+        patch.resolvePiLinkedinUrl(existing.piLinkedinUrl()),
+        patch.resolvePiWebsiteUrl(existing.piWebsiteUrl()));
+  }
+
   // Helper method to convert StudyPatch to StudyUpdate
   private StudyUpdate convertToStudyUpdate(Study study, User user, StudyPatch patch) {
     StudyUpdate studyUpdate =
@@ -468,6 +495,7 @@ public class DatasetServiceDAO implements ConsentLogger {
             patch.dataTypes() != null ? patch.dataTypes() : study.getDataTypes(),
             patch.piName() != null ? patch.piName() : study.getPiName(),
             patch.piEmail() != null ? patch.piEmail() : study.getPiEmail(),
+            resolvePiDetails(study, patch),
             patch.publicVisibility() != null
                 ? patch.publicVisibility()
                 : study.getPublicVisibility(),
@@ -694,11 +722,29 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<String> dataTypes,
       String piName,
       String piEmail,
+      Integer piInstitutionId,
       Boolean publicVisibility,
       Integer userId,
       List<StudyProperty> props,
       List<FileStorageObject> files,
       UUID uuid) {}
+
+  /**
+   * The PI detail columns, resolved against the stored study. A null {@code piDetails} on a {@link
+   * StudyUpdate} means "leave the PI details as they are", for a caller that carries no PI detail
+   * values at all.
+   */
+  public record StudyPiDetails(
+      Integer piInstitutionId, String piOrcid, String piLinkedinUrl, String piWebsiteUrl) {
+
+    public static StudyPiDetails of(Study study) {
+      return new StudyPiDetails(
+          study.getPiInstitution() == null ? null : study.getPiInstitution().getId(),
+          study.getPiOrcid(),
+          study.getPiLinkedinUrl(),
+          study.getPiWebsiteUrl());
+    }
+  }
 
   public record StudyUpdate(
       String name,
@@ -707,6 +753,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<String> dataTypes,
       String piName,
       String piEmail,
+      StudyPiDetails piDetails,
       Boolean publicVisibility,
       Integer userId,
       List<StudyProperty> props,
