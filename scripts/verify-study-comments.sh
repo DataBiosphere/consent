@@ -140,7 +140,7 @@ cleanup() {
       || warn "Could not clean up comments on study $STUDY — check study_comment by hand."
   fi
   rm -rf "$WORK"
-  exit $status
+  exit "$status"
 }
 trap cleanup EXIT INT TERM
 
@@ -333,7 +333,9 @@ FAILURES=(); NOTES=()
 
 ok()   { PASS=$((PASS + 1)); printf "  ${GRN}PASS${RST}  %-6s %s\n" "$1" "$2"; }
 bad()  { FAIL=$((FAIL + 1)); printf "  ${RED}FAIL${RST}  %-6s %s\n" "$1" "$2"
-         FAILURES+=("$1 $2${3:+ — ${3:0:200}}"); [ -n "${LAST_CURL:-}" ] && FAILURES+=("        repro: $LAST_CURL"); }
+         FAILURES+=("$1 $2${3:+ — ${3:0:200}}")
+         [ -n "${LAST_CURL:-}" ] && FAILURES+=("        repro: $LAST_CURL")
+         return 0; }   # never let an empty LAST_CURL make bad() fail under set -e
 skip() { SKIP=$((SKIP + 1)); printf "  ${YLW}SKIP${RST}  %-6s %s\n" "$1" "$2"; }
 note() { NOTES+=("$1"); }
 
@@ -465,9 +467,11 @@ request POST "$EMAIL_r1" r1 "$COMMENTS" '{"rating":5,"commentText":"Well documen
 expect "C-4a" "POST as a fully eligible researcher" "200" "$LAST_CODE"
 CREATED_COMMENT_USERS+=("$UID_r1")
 R1_COMMENT_ID="$(json '.studyCommentId')"
-[ -n "$R1_COMMENT_ID" ] && [ "$R1_COMMENT_ID" != "null" ] \
-  && ok "C-4b" "response carries studyCommentId ($R1_COMMENT_ID)" \
-  || bad "C-4b" "response carries studyCommentId" "$LAST_BODY"
+if [ -n "$R1_COMMENT_ID" ] && [ "$R1_COMMENT_ID" != "null" ]; then
+  ok "C-4b" "response carries studyCommentId ($R1_COMMENT_ID)"
+else
+  bad "C-4b" "response carries studyCommentId" "$LAST_BODY"
+fi
 expect "C-4c" "displayName populated from the caller's user row" \
   "$(sql1 "SELECT coalesce(display_name, '') FROM users WHERE user_id = $UID_r1;")" "$(json '.displayName')"
 expect "C-4d" "institutionName populated from the caller's institution" \

@@ -104,7 +104,7 @@ cleanup() {
     printf "  docker exec -i %s psql -U %s -d %s -c \"DELETE FROM study WHERE name LIKE '%s%%';\"\n" \
       "$DB_CONTAINER" "$DB_USER" "$DB_NAME" "$TAG"
     printf "  ${DIM}(and the dar_collection rows with dar_code LIKE '%s%%')${RST}\n" "$TAG"
-    exit $status
+    exit "$status"
   fi
   # Bottom-up: votes hang off elections, elections and dar_dataset off DARs by reference_id,
   # DARs off collections, datasets off studies. Nothing here cascades on its own.
@@ -119,7 +119,7 @@ cleanup() {
     echo "DELETE FROM study_property WHERE study_id IN (SELECT study_id FROM study WHERE name LIKE $(sql_quote "$TAG%"));"
     echo "DELETE FROM study WHERE name LIKE $(sql_quote "$TAG%");"
   } | psql_q >/dev/null 2>&1 || warn "Could not fully remove the '$TAG' fixtures — check by hand."
-  exit $status
+  exit "$status"
 }
 trap cleanup EXIT INT TERM
 
@@ -253,7 +253,7 @@ S_ARCHONLY="$(new_study "S_ARCHONLY"   true "$TAG Arch PI"  "$TYPE_ISOLATED")"
 DS1="$(new_dataset "$S_MAIN" "DS1")"
 DS2="$(new_dataset "$S_MAIN" "DS2")"
 DSO="$(new_dataset "$S_OTHER" "DSO")"
-DST="$(new_dataset "$S_TYPEONLY" "DST")"
+new_dataset "$S_TYPEONLY" "DST" >/dev/null   # S_TYPEONLY only has to own a dataset; its id is never referenced
 DSP="$(new_dataset "$S_PRIVATE" "DSP")"
 DSD="$(new_dataset "$S_DRAFTONLY" "DSD")"
 DSA="$(new_dataset "$S_ARCHONLY" "DSA")"

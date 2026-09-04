@@ -142,7 +142,7 @@ cleanup() {
   drop_study "$S_PUB"
   drop_study "$S_PRIV"
   rm -rf "$WORK"
-  exit $status
+  exit "$status"
 }
 trap cleanup EXIT INT TERM
 
@@ -202,7 +202,7 @@ UID_creator="$(user_id_for "$EMAIL_creator")"
 [ -n "$UID_creator" ] || error "$EMAIL_creator has no row in users."
 
 for persona in creator custodian outsider admin; do
-  eval "e=\${EMAIL_$persona}"
+  var="EMAIL_$persona"; e="${!var}"
   [ -n "$(user_id_for "$e")" ] || error "$persona ($e) has no row in users."
 done
 
@@ -289,7 +289,9 @@ FAILURES=(); NOTES=()
 
 ok()   { PASS=$((PASS + 1)); printf "  ${GRN}PASS${RST}  %-6s %s\n" "$1" "$2"; }
 bad()  { FAIL=$((FAIL + 1)); printf "  ${RED}FAIL${RST}  %-6s %s\n" "$1" "$2"
-         FAILURES+=("$1 $2${3:+ — ${3:0:200}}"); [ -n "${LAST_CURL:-}" ] && FAILURES+=("        repro: $LAST_CURL"); }
+         FAILURES+=("$1 $2${3:+ — ${3:0:200}}")
+         [ -n "${LAST_CURL:-}" ] && FAILURES+=("        repro: $LAST_CURL")
+         return 0; }   # never let an empty LAST_CURL make bad() fail under set -e
 skip() { SKIP=$((SKIP + 1)); printf "  ${YLW}SKIP${RST}  %-6s %s\n" "$1" "$2"; }
 note() { NOTES+=("$1"); }
 

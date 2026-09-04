@@ -124,7 +124,7 @@ cleanup() {
     } | psql_q >/dev/null 2>&1 || warn "Could not fully remove the throwaway study '$STUDY_NAME' — check by hand."
   fi
   rm -rf "$WORK"
-  exit $status
+  exit "$status"
 }
 trap cleanup EXIT INT TERM
 
@@ -160,12 +160,14 @@ request() {
     -H "OAUTH2_CLAIM_aud: $RUN_ID"
     -H 'Accept: application/json')
 
+  # LAST_CURL is the copy-pasteable repro printed beside each failure.
+  LAST_CURL="curl -X $method [auth headers] '$API/$path'"
   case "$mode" in
-    json)      args+=(-H 'Content-Type: application/json' --data-binary "$body");;
-    multipart) args+=(-F "dataset=$body");;
+    json)      args+=(-H 'Content-Type: application/json' --data-binary "$body")
+               LAST_CURL="curl -X $method [auth headers] -H 'Content-Type: application/json' --data-binary '${body:0:200}' '$API/$path'";;
+    multipart) args+=(-F "dataset=$body")
+               LAST_CURL="curl -X $method [auth headers] -F 'dataset=<payload>' '$API/$path'";;
   esac
-
-  LAST_CURL="curl -X $method [auth headers] ${mode:+--$mode} '$API/$path'"
   LAST_CODE="$(curl "${args[@]}" "$API/$path" || echo "000")"
   LAST_BODY="$(head -c 20000 "$out" 2>/dev/null | tr '\n' ' ')"
   if [ "$VERBOSE" = "true" ]; then
@@ -181,7 +183,9 @@ PASS=0; FAIL=0; SKIP=0
 FAILURES=(); NOTES=()
 ok()   { PASS=$((PASS + 1)); printf "  ${GRN}PASS${RST}  %-6s %s\n" "$1" "$2"; }
 bad()  { FAIL=$((FAIL + 1)); printf "  ${RED}FAIL${RST}  %-6s %s\n" "$1" "$2"
-         FAILURES+=("$1 $2${3:+ — ${3:0:220}}"); }
+         FAILURES+=("$1 $2${3:+ — ${3:0:220}}")
+         [ -n "${LAST_CURL:-}" ] && FAILURES+=("        repro: $LAST_CURL")
+         return 0; }
 skip() { SKIP=$((SKIP + 1)); printf "  ${YLW}SKIP${RST}  %-6s %s\n" "$1" "$2"; }
 note() { NOTES+=("$1"); }
 expect() { if [ "$3" = "$4" ]; then ok "$1" "$2"; else bad "$1" "$2 (expected '$3', got '$4')" "$LAST_BODY"; fi; }
