@@ -105,6 +105,12 @@ public class AuthorizationHelper implements ConsentLogger {
     boolean authorize = false;
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      // A user with no user_role rows has a null role list, not an empty one. Without this guard
+      // the authorizer throws a NullPointerException and Jersey turns what should be a plain
+      // denial into a 500 on every @RolesAllowed endpoint. Mirrors User#hasAnyUserRole.
+      if (user == null || user.getRoles() == null) {
+        return false;
+      }
       return user.getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase(role));
     } catch (NotFoundException e) {
       logWarn("User not found, authorization incomplete: %s".formatted(authUser.getEmail()));
