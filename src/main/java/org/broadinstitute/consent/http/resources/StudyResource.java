@@ -298,11 +298,6 @@ public class StudyResource extends Resource {
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {
-    boolean isApprovedRole = datasetService.isCreatorCustodianOrAdmin(user, study);
-    boolean isPubliclyVisible = study.getPublicVisibility();
-    // If approved role or publicly visible, the user can see the study, otherwise throw
-    if (!isApprovedRole && !isPubliclyVisible) {
-      throw new NotFoundException("Study not found");
-    }
+    datasetService.verifyStudyVisibilityAccess(study, user);
   }
 }
