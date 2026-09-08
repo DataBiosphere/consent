@@ -50,6 +50,14 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupp
   "alternativeDataSharingPlanTargetPublicReleaseDate",
   "alternativeDataSharingPlanAccessManagement",
   "consentGroups",
+  "models",
+  "workspaces",
+  "presentations",
+  "publications",
+  "clinicalTrials",
+  "intellectualProperties",
+  "biospecimens",
+  "funding",
   "assets",
   "data",
   "externalIdentifier",
@@ -169,6 +177,30 @@ public class StudyRegistrationRequest {
 
   @JsonProperty("consentGroups")
   private List<ConsentGroupRequest> consentGroups;
+
+  @JsonProperty("models")
+  private List<Object> models;
+
+  @JsonProperty("workspaces")
+  private List<Object> workspaces;
+
+  @JsonProperty("presentations")
+  private List<Object> presentations;
+
+  @JsonProperty("publications")
+  private List<Object> publications;
+
+  @JsonProperty("clinicalTrials")
+  private List<Object> clinicalTrials;
+
+  @JsonProperty("intellectualProperties")
+  private List<Object> intellectualProperties;
+
+  @JsonProperty("biospecimens")
+  private List<Object> biospecimens;
+
+  @JsonProperty("funding")
+  private List<Object> funding;
 
   @JsonProperty("assets")
   private Map<String, Object> assets;
@@ -495,6 +527,70 @@ public class StudyRegistrationRequest {
 
   public void setConsentGroups(List<ConsentGroupRequest> consentGroups) {
     this.consentGroups = consentGroups;
+  }
+
+  public List<Object> getModels() {
+    return models;
+  }
+
+  public void setModels(List<Object> models) {
+    this.models = models;
+  }
+
+  public List<Object> getWorkspaces() {
+    return workspaces;
+  }
+
+  public void setWorkspaces(List<Object> workspaces) {
+    this.workspaces = workspaces;
+  }
+
+  public List<Object> getPresentations() {
+    return presentations;
+  }
+
+  public void setPresentations(List<Object> presentations) {
+    this.presentations = presentations;
+  }
+
+  public List<Object> getPublications() {
+    return publications;
+  }
+
+  public void setPublications(List<Object> publications) {
+    this.publications = publications;
+  }
+
+  public List<Object> getClinicalTrials() {
+    return clinicalTrials;
+  }
+
+  public void setClinicalTrials(List<Object> clinicalTrials) {
+    this.clinicalTrials = clinicalTrials;
+  }
+
+  public List<Object> getIntellectualProperties() {
+    return intellectualProperties;
+  }
+
+  public void setIntellectualProperties(List<Object> intellectualProperties) {
+    this.intellectualProperties = intellectualProperties;
+  }
+
+  public List<Object> getBiospecimens() {
+    return biospecimens;
+  }
+
+  public void setBiospecimens(List<Object> biospecimens) {
+    this.biospecimens = biospecimens;
+  }
+
+  public List<Object> getFunding() {
+    return funding;
+  }
+
+  public void setFunding(List<Object> funding) {
+    this.funding = funding;
   }
 
   public Map<String, Object> getAssets() {

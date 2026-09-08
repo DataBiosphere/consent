@@ -1,0 +1,43 @@
+type: object
+description: An AI Model object.
+properties:
+  modelId:
+    type: string
+    description: The unique identifier for the model.
+  studyId:
+    type: string
+    description: The study ID associated with the model.
+  name:
+    type: string
+    description: The name of the model.
+  description:
+    type: string
+    description: A description of the model.
+  url:
+    type: string
+    description: The URL to the model.
+  cloud:
+    type: array
+    items:
+      type: string
+    description: The cloud platforms the model is available on.
+  format:
+    type: string
+    description: The format the model is distributed in.
+  license:
+    type: string
+    description: The license the model is released under.
+  trainedOnDatasets:
+    type: array
+    items:
+      type: string
+    description: The datasets the model was trained on.
+  maintainer:
+    description: The maintainer of the model.
+    allOf:
+      - $ref: './Maintainer.yaml'
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the model.
