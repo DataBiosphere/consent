@@ -1,0 +1,72 @@
+get:
+  summary: A page of the comments and ratings on a study
+  description: >
+    Comments are returned newest first by creation date. The response is paged: a study's
+    comment count grows with its readers, so an unpaged list would grow without limit.
+    `averageRating` and `total` describe every comment on the study rather than the page
+    returned, so neither changes as a caller pages through.
+  operationId: apiStudyCommentsGet
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+    - name: limit
+      in: query
+      required: false
+      description: How many comments to return. Defaults to 25.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+    - name: offset
+      in: query
+      required: false
+      description: How many comments to skip. Defaults to 0.
+      schema: { type: integer, minimum: 0, default: 0 }
+  tags: [Study]
+  responses:
+    200:
+      description: A page of the study's comments, with the study-wide average and total
+      content:
+        application/json:
+          schema: { $ref: '../schemas/StudyCommentsSummary.yaml' }
+    400: { description: limit outside 1-100, or a negative offset }
+    404: { description: Study not found, or not visible to this user }
+post:
+  summary: Create or update the requesting user's comment on a study
+  description: >
+    A user has at most one comment per study; posting again replaces the
+    existing rating and text. Requires an active researcher status,
+    i.e. the Researcher role and a library card. A study's creator and its
+    custodians may rate it on the same terms as anyone else, and their
+    ratings count toward the average.
+  operationId: apiStudyCommentsPost
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [rating]
+          properties:
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+              description: The rating for the study, from 1 to 5.
+            commentText:
+              type: string
+              description: Optional comment text.
+  tags: [Study]
+  responses:
+    200:
+      description: The created or updated comment
+      content:
+        application/json:
+          schema: { $ref: '../schemas/StudyComment.yaml' }
+    400: { description: Missing payload, a rating that is not a whole JSON number, a rating outside 1-5, comment text that is not a JSON string, or comment text longer than 2000 characters }
+    403: { description: Active researcher status is required to comment or rate }
+    404: { description: Study not found, or not visible to this user }
