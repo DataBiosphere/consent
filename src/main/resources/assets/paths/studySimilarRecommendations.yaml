@@ -1,0 +1,18 @@
+get:
+  summary: Publicly visible studies similar to a study
+  operationId: apiMetricsStudyRecommendationsSimilarGet
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+  tags: [Metrics]
+  responses:
+    200:
+      description: Up to 12 similar studies, best matches first
+      content:
+        application/json:
+          schema:
+            type: array
+            items: { $ref: '../schemas/StudyRecommendation.yaml' }
+    404: { description: Study not found, or not visible to this user }
