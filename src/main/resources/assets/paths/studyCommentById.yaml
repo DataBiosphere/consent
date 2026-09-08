@@ -1,0 +1,28 @@
+delete:
+  summary: Delete a comment on a study
+  description: >
+    Removes the requesting user's own comment, or any user's comment when the requester is an
+    admin. Admins are the moderation path over comments, which every authenticated user can read
+    on a visible study. Requires the Researcher role or the Admin role: a user who has lost the
+    Researcher role can no longer delete, their own comment included.
+  operationId: apiStudyCommentsDelete
+  parameters:
+    - name: studyId
+      in: path
+      required: true
+      schema: { type: integer }
+    - name: commentId
+      in: path
+      required: true
+      schema: { type: integer }
+  tags: [Study]
+  responses:
+    204: { description: Comment deleted }
+    403:
+      description: >
+        The requesting user holds neither the Researcher role nor the Admin role
+    404:
+      description: >
+        Study not found or not visible to this user, or the comment does not
+        exist on that study - or, for a non-admin, does not belong to the
+        requesting user
