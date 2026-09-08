@@ -4,6 +4,10 @@ properties:
     type: string
     format: date-time
     description: The latest update date of the DAR
+  submissionDate:
+    type: string
+    format: date-time
+    description: The date the DAR was submitted
   projectTitle:
     type: string
     description: The DAR project title
@@ -19,3 +23,9 @@ properties:
   referenceId:
     type: string
     description: The reference identifier for the DAR
+  piName:
+    type: string
+    description: The requesting principal investigator's display name
+  institutionName:
+    type: string
+    description: The requesting principal investigator's institution
