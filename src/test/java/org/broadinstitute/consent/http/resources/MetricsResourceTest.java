@@ -83,6 +83,38 @@ class MetricsResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
+  @Test
+  void testGetSimilarStudies() {
+    when(service.getSimilarStudies(any(), any())).thenReturn(List.of());
+
+    Response response = resource.getSimilarStudies(duosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetSimilarStudiesNotFound() {
+    when(service.getSimilarStudies(any(), any())).thenThrow(new NotFoundException());
+
+    Response response = resource.getSimilarStudies(duosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetFrequentlyRequestedWith() {
+    when(service.getFrequentlyRequestedWith(any(), any())).thenReturn(List.of());
+
+    Response response = resource.getFrequentlyRequestedWith(duosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetFrequentlyRequestedWithNotFound() {
+    when(service.getFrequentlyRequestedWith(any(), any())).thenThrow(new NotFoundException());
+
+    Response response = resource.getFrequentlyRequestedWith(duosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
   private DarMetricsSummary generateDarMetricsSummary() {
     return new DarMetricsSummary(
         null,

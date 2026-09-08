@@ -17,6 +17,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -25,6 +26,7 @@ import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Jdbi;
@@ -43,6 +45,8 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private DataAccessRequestDAO darDAO;
 
+  @Mock private StudyRecommendationDAO recommendationDAO;
+
   @Mock private DatasetService datasetService;
 
   private final User user = new User();
@@ -53,6 +57,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   void initService() {
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(dataSetDAO);
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
+    when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     service = new MetricsService(jdbi, datasetService);
   }
 
@@ -130,6 +135,8 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     assertThrows(NotFoundException.class, () -> service.generateStudyDarSummaries(1, user));
     assertThrows(NotFoundException.class, () -> service.generateStudyResearchOutputs(1, user));
+    assertThrows(NotFoundException.class, () -> service.getSimilarStudies(1, user));
+    assertThrows(NotFoundException.class, () -> service.getFrequentlyRequestedWith(1, user));
   }
 
   @Test
@@ -212,6 +219,38 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(List.of(ip), outputs.intellectualProperties());
   }
 
+  @Test
+  void testGetSimilarStudies() {
+    StudyRecommendation recommendation = generateStudyRecommendation();
+    studyIsVisible();
+    when(recommendationDAO.findSimilar(1)).thenReturn(List.of(recommendation));
+
+    assertEquals(List.of(recommendation), service.getSimilarStudies(1, user));
+  }
+
+  @Test
+  void testGetSimilarStudiesNotFound() {
+    studyIsNotReadable();
+
+    assertThrows(NotFoundException.class, () -> service.getSimilarStudies(1, user));
+  }
+
+  @Test
+  void testGetFrequentlyRequestedWith() {
+    StudyRecommendation recommendation = generateStudyRecommendation();
+    studyIsVisible();
+    when(recommendationDAO.findFrequentlyRequestedWith(1)).thenReturn(List.of(recommendation));
+
+    assertEquals(List.of(recommendation), service.getFrequentlyRequestedWith(1, user));
+  }
+
+  @Test
+  void testGetFrequentlyRequestedWithNotFound() {
+    studyIsNotReadable();
+
+    assertThrows(NotFoundException.class, () -> service.getFrequentlyRequestedWith(1, user));
+  }
+
   private DarMetricsSummary generateDarMetricsSummary() {
     return new DarMetricsSummary(
         null,
@@ -234,6 +273,16 @@ class MetricsServiceTest extends AbstractTestHelper {
         null,
         null,
         false);
+  }
+
+  private StudyRecommendation generateStudyRecommendation() {
+    return new StudyRecommendation(
+        randomInt(2, 100),
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        1L,
+        List.of(randomInt(1, 100)));
   }
 
   private Dataset generateDataset() {

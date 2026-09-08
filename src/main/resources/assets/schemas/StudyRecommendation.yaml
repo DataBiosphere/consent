@@ -1,0 +1,24 @@
+type: object
+description: A publicly visible study recommended alongside another study.
+properties:
+  studyId:
+    type: integer
+    description: The unique identifier of the recommended study.
+  studyName:
+    type: string
+    description: The name of the recommended study.
+  studyDescription:
+    type: string
+    description: A human-readable description of the recommended study.
+  piName:
+    type: string
+    description: The name of the PI of the recommended study.
+  datasetCount:
+    type: integer
+    format: int64
+    description: Number of datasets belonging to the recommended study.
+  datasetIds:
+    type: array
+    items:
+      type: integer
+    description: The dataset ids belonging to the recommended study.

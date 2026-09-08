@@ -66,4 +66,30 @@ public class MetricsResource extends Resource {
       return createExceptionResponse(e);
     }
   }
+
+  @GET
+  @Path("/study-recommendations/{studyId}/similar")
+  @Produces("application/json")
+  @PermitAll
+  public Response getSimilarStudies(@Auth DuosUser user, @PathParam("studyId") Integer studyId) {
+    try {
+      return Response.ok(metricsService.getSimilarStudies(studyId, user.getUser())).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/study-recommendations/{studyId}/frequently-requested-with")
+  @Produces("application/json")
+  @PermitAll
+  public Response getFrequentlyRequestedWith(
+      @Auth DuosUser user, @PathParam("studyId") Integer studyId) {
+    try {
+      return Response.ok(metricsService.getFrequentlyRequestedWith(studyId, user.getUser()))
+          .build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

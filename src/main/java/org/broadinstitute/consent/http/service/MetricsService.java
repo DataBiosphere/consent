@@ -7,9 +7,11 @@ import java.util.Objects;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Jdbi;
@@ -18,12 +20,14 @@ public class MetricsService {
 
   private final DatasetDAO dataSetDAO;
   private final DataAccessRequestDAO darDAO;
+  private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
   @Inject
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
     this.dataSetDAO = jdbi.onDemand(DatasetDAO.class);
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;
   }
 
@@ -59,6 +63,16 @@ public class MetricsService {
         .filter(Objects::nonNull)
         .flatMap(List::stream)
         .toList();
+  }
+
+  public List<StudyRecommendation> getSimilarStudies(Integer studyId, User user) {
+    requireStudy(studyId, user);
+    return recommendationDAO.findSimilar(studyId);
+  }
+
+  public List<StudyRecommendation> getFrequentlyRequestedWith(Integer studyId, User user) {
+    requireStudy(studyId, user);
+    return recommendationDAO.findFrequentlyRequestedWith(studyId);
   }
 
   /**
