@@ -59,6 +59,7 @@ import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
@@ -1399,6 +1400,10 @@ class DatasetServiceTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             true,
             null,
             null);
@@ -1719,6 +1724,18 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     Study existingStudy = new Study();
     existingStudy.setStudyId(77);
+    // Stored PI details a conversion does not carry, so it must pass them straight through
+    Institution institution = new Institution();
+    institution.setId(9);
+    existingStudy.setPiInstitution(institution);
+    existingStudy.setPiOrcid("0000-0002-1825-0097");
+    existingStudy.setPiLinkedinUrl("https://linkedin.com/in/example");
+    existingStudy.setPiWebsiteUrl("https://example.org");
+    conversion.setDescription("A converted study");
+    conversion.setPiName("Dr Convert");
+    conversion.setPiEmail("convert@example.org");
+    conversion.setPublicVisibility(true);
+    conversion.setDataTypes(List.of("Genomic"));
 
     when(studyDAO.findStudyByName("Existing Study")).thenReturn(existingStudy);
     when(studyDAO.findStudyById(77)).thenReturn(existingStudy);
@@ -1727,7 +1744,24 @@ class DatasetServiceTest extends AbstractTestHelper {
     Study result = datasetService.convertDatasetToStudy(admin, dataset, conversion);
 
     assertNotNull(result);
-    verify(studyDAO).updateStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    // Named rather than any() for every argument: with several adjacent String parameters, an
+    // any() assertion would pass just as happily if two of them were transposed.
+    verify(studyDAO)
+        .updateStudy(
+            eq(77),
+            eq("Existing Study"),
+            eq("A converted study"),
+            eq("Dr Convert"),
+            eq("convert@example.org"),
+            eq(9),
+            eq("0000-0002-1825-0097"),
+            eq("https://linkedin.com/in/example"),
+            eq("https://example.org"),
+            eq(List.of("Genomic")),
+            eq(true),
+            // The dataset's creator, not the admin performing the conversion
+            eq(5),
+            any(Instant.class));
     verify(studyDAO, never())
         .insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
@@ -1869,7 +1903,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     user.setUserId(1);
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null);
 
     when(studyDAO.findStudyById(1)).thenReturn(study);
     when(datasetServiceDAO.patchStudy(any(), any(), any()))
@@ -1877,6 +1912,30 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     assertThrows(
         InternalServerErrorException.class, () -> datasetService.patchStudy(1, user, patch));
+  }
+
+  /**
+   * A rejected patch has to keep its own status. The catch-all above it used to rewrap every
+   * exception, so "PI institution 999999 does not exist" reached the caller as an opaque 500.
+   */
+  @Test
+  void testPatchStudy_BadRequestKeepsItsStatus() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    User user = new User();
+    user.setUserId(1);
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, 999999, null, null, null, null, null,
+            null, null, null, null);
+
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+    when(datasetServiceDAO.patchStudy(any(), any(), any()))
+        .thenThrow(new BadRequestException("PI institution 999999 does not exist"));
+
+    BadRequestException thrown =
+        assertThrows(BadRequestException.class, () -> datasetService.patchStudy(1, user, patch));
+    assertEquals("PI institution 999999 does not exist", thrown.getMessage());
   }
 
   // ==================== findDatasetsByIds ====================

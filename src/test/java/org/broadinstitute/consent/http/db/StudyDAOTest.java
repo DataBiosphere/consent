@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.mapper.StudyReducer;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -26,10 +27,12 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -86,6 +89,71 @@ class StudyDAOTest extends DAOTestHelper {
     assertEquals(u.getUserId(), study.getCreateUserId());
     assertEquals(uuid, study.getUuid());
     assertNotNull(u.getCreateDate());
+  }
+
+  @Test
+  void testUpdateStudyWritesPiDetails() {
+    Study study = insertStudyWithProperties();
+    User user = createUserWithInstitution();
+    Integer institutionId = user.getInstitutionId();
+    String orcid = "0000-0001-2345-6789";
+    String linkedinUrl = "https://linkedin.com/in/pi";
+    String websiteUrl = "https://pi.example.com";
+
+    // PI details default to null
+    assertNull(study.getPiInstitution());
+    assertNull(study.getPiOrcid());
+    assertNull(study.getPiLinkedinUrl());
+    assertNull(study.getPiWebsiteUrl());
+
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        institutionId,
+        orcid,
+        linkedinUrl,
+        websiteUrl,
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+
+    Study found = studyDAO.findStudyById(study.getStudyId());
+    assertEquals(institutionId, found.getPiInstitution().getId());
+    assertEquals(
+        institutionDAO.findInstitutionById(institutionId).getName(),
+        found.getPiInstitution().getName());
+    assertEquals(orcid, found.getPiOrcid());
+    assertEquals(linkedinUrl, found.getPiLinkedinUrl());
+    assertEquals(websiteUrl, found.getPiWebsiteUrl());
+
+    Study foundByName = studyDAO.findStudyByName(study.getName());
+    assertEquals(institutionId, foundByName.getPiInstitution().getId());
+    assertEquals(orcid, foundByName.getPiOrcid());
+
+    // Clearing the details persists nulls
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        null,
+        null,
+        null,
+        null,
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+    Study cleared = studyDAO.findStudyById(study.getStudyId());
+    assertNull(cleared.getPiInstitution());
+    assertNull(cleared.getPiOrcid());
+    assertNull(cleared.getPiLinkedinUrl());
+    assertNull(cleared.getPiWebsiteUrl());
   }
 
   @Test
@@ -308,6 +376,10 @@ class StudyDAOTest extends DAOTestHelper {
         newName,
         newDescription,
         newPiName,
+        null,
+        null,
+        null,
+        null,
         null,
         newDataTypes,
         true,
@@ -570,5 +642,78 @@ class StudyDAOTest extends DAOTestHelper {
                 propertyValue,
                 PropertyType.String,
                 Date.from(Instant.now()))));
+  }
+
+  /**
+   * Item 5: the Institution constructor seeds createDate with "now", so StudyReducer always
+   * overwrites it. hasOptionalColumn swallows every exception and returns empty, which means a
+   * broken alias would silently produce null rather than failing - so both outcomes are pinned: the
+   * stored timestamps when the query joins the institution, and null when it does not.
+   */
+  @Test
+  void testPiInstitutionTimestampsComeFromTheInstitutionRow() {
+    User user = createUserWithInstitution();
+    Institution institution = institutionDAO.findInstitutionById(user.getInstitutionId());
+    Integer studyId = insertStudyWithInstitution(user, institution.getId());
+
+    Study study = studyDAO.findStudyById(studyId);
+
+    // Compared against the stored column rather than the Institution the institution DAO maps,
+    // which narrows create_date to a date-only value.
+    Timestamp stored =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("SELECT create_date FROM institution WHERE institution_id = :id")
+                    .bind("id", institution.getId())
+                    .mapTo(Timestamp.class)
+                    .one());
+
+    assertEquals(institution.getId(), study.getPiInstitution().getId());
+    assertEquals(institution.getName(), study.getPiInstitution().getName());
+    assertEquals(stored, study.getPiInstitution().getCreateDate());
+    // A never-updated institution has no update_date, and that null is the stored one rather
+    // than a swallowed mapping failure - the create_date beside it proves the read works.
+    assertNull(study.getPiInstitution().getUpdateDate());
+  }
+
+  @Test
+  void testPiInstitutionTimestampsAreNullWhenTheQueryDoesNotJoinTheInstitution() {
+    User user = createUserWithInstitution();
+    Integer studyId = insertStudyWithInstitution(user, user.getInstitutionId());
+
+    // The same reducer over a row view that carries the id but no institution columns, which is
+    // what a query selecting only the study's own columns produces.
+    Study study =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("SELECT s.* FROM study s WHERE s.study_id = :studyId")
+                    .bind("studyId", studyId)
+                    .registerRowMapper(BeanMapper.factory(Study.class))
+                    .reduceRows(new StudyReducer())
+                    .findFirst()
+                    .orElseThrow());
+
+    assertEquals(user.getInstitutionId(), study.getPiInstitution().getId());
+    assertNull(study.getPiInstitution().getName());
+    assertNull(study.getPiInstitution().getCreateDate());
+    assertNull(study.getPiInstitution().getUpdateDate());
+  }
+
+  private Integer insertStudyWithInstitution(User user, Integer institutionId) {
+    Integer studyId =
+        studyDAO.insertStudy(
+            RandomStringUtils.secure().nextAlphabetic(20),
+            "description",
+            "piName",
+            "piEmail",
+            List.of("dataType"),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    studyDAO.updateStudyPiInstitutionId(studyId, institutionId);
+    return studyId;
   }
 }

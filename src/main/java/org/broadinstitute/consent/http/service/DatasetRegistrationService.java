@@ -168,6 +168,13 @@ public class DatasetRegistrationService implements ConsentLogger {
             });
 
     List<StudyProperty> studyProps = registrationRequestMapper.toStudyProperties(registration);
+    // Registration carries the PI institution but not the PI's profile links, which are only
+    // editable through PATCH /api/dataset/study/{studyId}. The institution comes from this
+    // payload; the links are filled in from the study the write transaction already loads, so a
+    // registration edit does not drop them and does not need a second read of the whole study.
+    DatasetServiceDAO.StudyPiDetails piDetails =
+        DatasetServiceDAO.StudyPiDetails.institutionWithStoredLinks(
+            registration.getPiInstitution());
     DatasetServiceDAO.StudyUpdate studyUpdate =
         new StudyUpdate(
             registration.getStudyName(),
@@ -176,6 +183,7 @@ public class DatasetRegistrationService implements ConsentLogger {
             registration.getDataTypes(),
             registration.getPiName(),
             registration.getPiEmail(),
+            piDetails,
             registration.getPublicVisibility(),
             user.getUserId(),
             studyProps,
@@ -259,6 +267,7 @@ public class DatasetRegistrationService implements ConsentLogger {
         registration.getDataTypes(),
         registration.getPiName(),
         registration.getPiEmail(),
+        registration.getPiInstitution(),
         registration.getPublicVisibility(),
         user.getUserId(),
         registrationRequestMapper.toStudyProperties(registration),

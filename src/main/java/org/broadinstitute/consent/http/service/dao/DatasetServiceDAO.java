@@ -4,6 +4,8 @@ import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_E
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -19,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
+import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -33,6 +36,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -207,8 +211,27 @@ public class DatasetServiceDAO implements ConsentLogger {
         });
   }
 
+  /**
+   * Rejects a PI institution id that names no institution.
+   *
+   * <p>Both write paths reach the column through here, so the rule has one definition. Without it
+   * the id fell through to fk_study_pi_institution: a registration then failed its whole
+   * transaction, where before the column existed the same id was accepted as a text property, and a
+   * PATCH surfaced the constraint violation as a 500 rather than telling the caller the id was
+   * wrong.
+   */
+  private void requireExistingInstitution(Handle handle, Integer piInstitutionId) {
+    if (piInstitutionId == null) {
+      return;
+    }
+    if (handle.attach(InstitutionDAO.class).findInstitutionById(piInstitutionId) == null) {
+      throw new BadRequestException("PI institution %d does not exist".formatted(piInstitutionId));
+    }
+  }
+
   private Integer executeInsertStudy(Handle handle, StudyInsert insert) {
     StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
+    requireExistingInstitution(handle, insert.piInstitutionId);
     UUID uuid = insert.uuid;
     Integer studyId =
         studyDAOLocal.insertStudy(
@@ -221,6 +244,9 @@ public class DatasetServiceDAO implements ConsentLogger {
             insert.userId,
             Instant.now(),
             uuid);
+    if (insert.piInstitutionId != null) {
+      studyDAOLocal.updateStudyPiInstitutionId(studyId, insert.piInstitutionId);
+    }
 
     for (StudyProperty prop : insert.props) {
       studyDAOLocal.insertStudyProperty(
@@ -279,12 +305,25 @@ public class DatasetServiceDAO implements ConsentLogger {
   private void executeUpdateStudy(Handle handle, StudyUpdate update, boolean replaceProps) {
     StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
     Study study = studyDAOLocal.findStudyById(update.studyId);
+    if (study == null) {
+      throw new NotFoundException("Study with ID " + update.studyId + " does not exist.");
+    }
+    // A null piDetails means the caller carries no PI detail values, so keep the stored ones.
+    StudyPiDetails piDetails =
+        update.piDetails != null
+            ? update.piDetails.resolveAgainst(study)
+            : StudyPiDetails.of(study);
+    requireExistingInstitution(handle, piDetails.piInstitutionId());
     studyDAOLocal.updateStudy(
         update.studyId,
         update.name,
         update.description,
         update.piName,
         update.piEmail,
+        piDetails.piInstitutionId(),
+        piDetails.piOrcid(),
+        piDetails.piLinkedinUrl(),
+        piDetails.piWebsiteUrl(),
         update.dataTypes,
         update.publicVisibility,
         update.userId,
@@ -436,6 +475,7 @@ public class DatasetServiceDAO implements ConsentLogger {
             executeUpdateStudyKeepProps(handle, studyUpdate);
             // Blank string signals intent to remove the property
             deleteBlankPatchedStudyProps(handle, study.getStudyId(), patch);
+            retireLegacyPiInstitutionProp(handle, study.getStudyId(), patch);
           } catch (Exception e) {
             handle.rollback();
             logException(e);
@@ -444,6 +484,24 @@ public class DatasetServiceDAO implements ConsentLogger {
           handle.commit();
         });
     return studyDAO.findStudyById(study.getStudyId());
+  }
+
+  /**
+   * Drops the legacy numeric `piInstitution` study property once a patch has set the column.
+   *
+   * <p>study.pi_institution_id is authoritative, but registration also recorded the institution as
+   * a study property, and the backfill copied that into the column rather than removing it. Left in
+   * place after a patch, the property is a second, stale answer: raw study reads report it beside
+   * the new value, and SchemaFromStudy falls back to it whenever the column is null - so a patch
+   * that deliberately cleared the institution would see the old one resurface in the next
+   * registration payload.
+   */
+  private void retireLegacyPiInstitutionProp(Handle handle, Integer studyId, StudyPatch patch) {
+    if (patch.patchesPiInstitutionId()) {
+      handle
+          .attach(StudyDAO.class)
+          .deleteStudyPropertyByKey(studyId, DatasetRegistrationSchemaV1Builder.piInstitution);
+    }
   }
 
   private void deleteBlankPatchedStudyProps(Handle handle, Integer studyId, StudyPatch patch) {
@@ -458,6 +516,19 @@ public class DatasetServiceDAO implements ConsentLogger {
             });
   }
 
+  /**
+   * Applies the patch's absent=no-op / explicit-null=clear / value=set convention to the PI detail
+   * columns. See {@link StudyPatch#resolvePiInstitutionId(Integer)}.
+   */
+  private StudyPiDetails resolvePiDetails(Study study, StudyPatch patch) {
+    StudyPiDetails existing = StudyPiDetails.of(study);
+    return new StudyPiDetails(
+        patch.resolvePiInstitutionId(existing.piInstitutionId()),
+        patch.resolvePiOrcid(existing.piOrcid()),
+        patch.resolvePiLinkedinUrl(existing.piLinkedinUrl()),
+        patch.resolvePiWebsiteUrl(existing.piWebsiteUrl()));
+  }
+
   // Helper method to convert StudyPatch to StudyUpdate
   private StudyUpdate convertToStudyUpdate(Study study, User user, StudyPatch patch) {
     StudyUpdate studyUpdate =
@@ -468,6 +539,7 @@ public class DatasetServiceDAO implements ConsentLogger {
             patch.dataTypes() != null ? patch.dataTypes() : study.getDataTypes(),
             patch.piName() != null ? patch.piName() : study.getPiName(),
             patch.piEmail() != null ? patch.piEmail() : study.getPiEmail(),
+            resolvePiDetails(study, patch),
             patch.publicVisibility() != null
                 ? patch.publicVisibility()
                 : study.getPublicVisibility(),
@@ -694,11 +766,67 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<String> dataTypes,
       String piName,
       String piEmail,
+      Integer piInstitutionId,
       Boolean publicVisibility,
       Integer userId,
       List<StudyProperty> props,
       List<FileStorageObject> files,
       UUID uuid) {}
+
+  /**
+   * The PI detail columns, resolved against the stored study. A null {@code piDetails} on a {@link
+   * StudyUpdate} means "leave the PI details as they are", for a caller that carries no PI detail
+   * values at all.
+   */
+  public record StudyPiDetails(
+      Integer piInstitutionId,
+      String piOrcid,
+      String piLinkedinUrl,
+      String piWebsiteUrl,
+      /**
+       * Whether the profile links above are placeholders to be filled from the stored study. A
+       * patch has already resolved its values against storage, so its links are written verbatim; a
+       * registration edit carries no links at all, because they are PATCH-only.
+       */
+      boolean keepStoredLinks) {
+
+    public StudyPiDetails(
+        Integer piInstitutionId, String piOrcid, String piLinkedinUrl, String piWebsiteUrl) {
+      this(piInstitutionId, piOrcid, piLinkedinUrl, piWebsiteUrl, false);
+    }
+
+    public static StudyPiDetails of(Study study) {
+      return new StudyPiDetails(
+          study.getPiInstitution() == null ? null : study.getPiInstitution().getId(),
+          study.getPiOrcid(),
+          study.getPiLinkedinUrl(),
+          study.getPiWebsiteUrl());
+    }
+
+    /**
+     * A registration edit: the institution comes from the payload, the profile links from the
+     * stored study.
+     *
+     * <p>Registration used to read those links through a separate findStudyById before building the
+     * update, which assembled the whole study - properties, dataset ids and files - to copy three
+     * strings, and left a gap between that read and the write. They are now filled in from the
+     * study the write transaction has already loaded.
+     */
+    public static StudyPiDetails institutionWithStoredLinks(Integer piInstitutionId) {
+      return new StudyPiDetails(piInstitutionId, null, null, null, true);
+    }
+
+    /** This, with any placeholder profile links filled in from the study being updated. */
+    StudyPiDetails resolveAgainst(Study study) {
+      return keepStoredLinks
+          ? new StudyPiDetails(
+              piInstitutionId,
+              study.getPiOrcid(),
+              study.getPiLinkedinUrl(),
+              study.getPiWebsiteUrl())
+          : this;
+    }
+  }
 
   public record StudyUpdate(
       String name,
@@ -707,6 +835,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<String> dataTypes,
       String piName,
       String piEmail,
+      StudyPiDetails piDetails,
       Boolean publicVisibility,
       Integer userId,
       List<StudyProperty> props,

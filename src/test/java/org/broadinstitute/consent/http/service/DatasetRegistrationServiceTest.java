@@ -1075,6 +1075,41 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(schema.getPiEmail(), studyUpdateCaptor.getValue().piEmail());
   }
 
+  /**
+   * Registration carries piInstitution but not the PI's profile links, which are PATCH-only, so an
+   * update takes the institution from the payload and carries the stored links forward. Without
+   * this the study page's PI Institution row stays blank until someone PATCHes it.
+   */
+  @Test
+  void testUpdateStudyFromRegistrationSetsThePiInstitutionAndKeepsTheProfileLinks()
+      throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    schema.setPiInstitution(7);
+    Study study = mock();
+
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
+        ArgumentCaptor.forClass(DatasetServiceDAO.StudyUpdate.class);
+    when(datasetServiceDAO.updateStudy(studyUpdateCaptor.capture(), any(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    // The institution comes from the payload; the links are marked to be filled in from the
+    // study the write transaction loads, rather than read here through a second whole-study fetch.
+    DatasetServiceDAO.StudyPiDetails piDetails = studyUpdateCaptor.getValue().piDetails();
+    assertEquals(7, piDetails.piInstitutionId());
+    assertTrue(piDetails.keepStoredLinks());
+    assertNull(piDetails.piOrcid());
+    assertNull(piDetails.piLinkedinUrl());
+    assertNull(piDetails.piWebsiteUrl());
+    // ...and the study is not read again just to copy three strings
+    verify(studyDAO, never()).findStudyById(1);
+  }
+
   @Test
   void testUpdateStudyFromRegistrationExcludesAccessManagementForExistingConsentGroup()
       throws Exception {
