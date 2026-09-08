@@ -19,10 +19,13 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
                 < System.currentTimeMillis();
     return new DarMetricsSummary(
         rs.getTimestamp("update_date"),
+        submissionDate,
         rs.getString("project_title"),
         rs.getString("dar_code"),
         rs.getString("non_tech_rus"),
         rs.getString("reference_id"),
+        rs.getString("pi_name"),
+        rs.getString("institution_name"),
         expired);
   }
 }

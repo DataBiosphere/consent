@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
@@ -1181,6 +1183,228 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     // The collection is still returned, sourced from the dataset-linked DAR, not the later one
     assertEquals(1, summaries.size());
     assertEquals(approvedDAR.getReferenceId(), summaries.getFirst().referenceId());
+
+    // With no piName recorded on the DAR, the summary falls back to the submitter
+    assertEquals(user.getDisplayName(), summaries.getFirst().piName());
+    assertEquals(
+        institutionDAO.findInstitutionById(user.getInstitutionId()).getName(),
+        summaries.getFirst().institutionName());
+    assertNotNull(summaries.getFirst().submissionDate());
+  }
+
+  // The PI recorded on the DAR is the stable record of who was granted access, so it wins over
+  // the submitting user's current display name.
+  @Test
+  void testFindSummaryMetricApprovedDARsPrefersThePiNameRecordedOnTheDar() {
+    Dataset dataset = createDataset();
+    User user = createUserWithInstitution();
+    Date now = new Date();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 10), user.getUserId(), new Date());
+
+    String referenceId = UUID.randomUUID().toString();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiName("Recorded PI Name");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, dataset.getDatasetId());
+    Election election = createDataAccessElection(referenceId, dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
+
+    assertEquals(1, summaries.size());
+    assertEquals("Recorded PI Name", summaries.getFirst().piName());
+    assertNotEquals(user.getDisplayName(), summaries.getFirst().piName());
+  }
+
+  // The study-scoped query covers every dataset in the study in one round trip, and must agree
+  // with the per-dataset query it replaces.
+  @Test
+  void testFindSummaryMetricApprovedDARsByStudyId() {
+    User user = createUserWithInstitution();
+    Date now = new Date();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            null,
+            List.of(randomAlphabetic(10)),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    Dataset datasetOne = createDataset();
+    Dataset datasetTwo = createDataset();
+    datasetDAO.updateStudyId(datasetOne.getDatasetId(), studyId);
+    datasetDAO.updateStudyId(datasetTwo.getDatasetId(), studyId);
+    // A dataset outside the study, whose approved DAR must not appear
+    Dataset unrelatedDataset = createDataset();
+
+    approveDarForDataset(user, datasetOne, now);
+    approveDarForDataset(user, datasetTwo, now);
+    approveDarForDataset(user, unrelatedDataset, now);
+    // An unsubmitted draft on one of the study's datasets never sources a summary
+    DataAccessRequest draft = createDraftDAR(user);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        draft.getReferenceId(), datasetOne.getDatasetId());
+
+    List<DarMetricsSummary> byStudy =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+    List<DarMetricsSummary> datasetOneSummaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            datasetOne.getDatasetId());
+    List<DarMetricsSummary> datasetTwoSummaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            datasetTwo.getDatasetId());
+
+    // One summary per qualifying collection across the whole study, and nothing from outside it
+    assertEquals(2, byStudy.size());
+    assertEquals(
+        Stream.concat(datasetOneSummaries.stream(), datasetTwoSummaries.stream())
+            .map(DarMetricsSummary::referenceId)
+            .collect(Collectors.toSet()),
+        byStudy.stream().map(DarMetricsSummary::referenceId).collect(Collectors.toSet()));
+    assertTrue(
+        byStudy.stream()
+            .map(DarMetricsSummary::referenceId)
+            .noneMatch(draft.getReferenceId()::equals));
+  }
+
+  /**
+   * The section presents every row as a granted request, and the current/expired chip comes from
+   * the sourced DAR's submission date. A progress report is submitted but has no election of its
+   * own, so the collection's newest submission is not necessarily a grant: sourcing the display
+   * record from it would overwrite the grant's title and RUS and reset an expired grant to current.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsByStudyIdIgnoresALaterUnapprovedProgressReport() {
+    User user = createUserWithInstitution();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            null,
+            List.of(randomAlphabetic(10)),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    Dataset dataset = createDataset();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    Integer collectionId = createDarCollection(user.getUserId());
+
+    // A grant old enough that the chip should read "expired"
+    Date grantedOn =
+        new Date(System.currentTimeMillis() - DataAccessRequest.EXPIRATION_DURATION_MILLIS - 1000);
+    DataAccessRequest grantedDar =
+        createDataAccessRequest(collectionId, user.getUserId(), grantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        grantedDar.getReferenceId(), dataset.getDatasetId());
+    Election election =
+        createDataAccessElection(grantedDar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(
+        true, "", grantedOn, vote.getVoteId(), false, election.getElectionId(), grantedOn, false);
+
+    // Submitted just now, in the same collection, and awaiting review
+    DataAccessRequest pendingReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, grantedDar.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        pendingReport.getReferenceId(), dataset.getDatasetId());
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+
+    assertEquals(1, summaries.size());
+    assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
+    assertNotEquals(pendingReport.getReferenceId(), summaries.getFirst().referenceId());
+    assertTrue(summaries.getFirst().expired());
+  }
+
+  private void approveDarForDataset(User user, Dataset dataset, Date now) {
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomAlphabetic(10), user.getUserId(), new Date());
+    DataAccessRequest dar = createDataAccessRequest(collectionId, user.getUserId(), now);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+  }
+
+  @Test
+  void testFindProgressReportsByDatasetIdAndStudyId() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            null,
+            List.of(randomAlphabetic(10)),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + randomInt(1, 999999999), user.getUserId(), new Date());
+
+    // The originating DAR has no parent, so it is never a progress report
+    DataAccessRequest parentDar = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        parentDar.getReferenceId(), dataset.getDatasetId());
+
+    DataAccessRequest olderReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, parentDar.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        olderReport.getReferenceId(), dataset.getDatasetId());
+    // Reports chain: each DAR may only parent a single progress report
+    DataAccessRequest newerReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, olderReport.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        newerReport.getReferenceId(), dataset.getDatasetId());
+
+    // Archived progress reports are excluded
+    DataAccessRequest archivedReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, newerReport.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        archivedReport.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedReport.getReferenceId()));
+
+    // Progress reports on an unrelated dataset/study are excluded
+    Dataset otherDataset = createDataset();
+    DataAccessRequest otherReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, archivedReport.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        otherReport.getReferenceId(), otherDataset.getDatasetId());
+
+    List<DataAccessRequest> byDataset =
+        dataAccessRequestDAO.findProgressReportsByDatasetId(dataset.getDatasetId());
+    List<DataAccessRequest> byStudy = dataAccessRequestDAO.findProgressReportsByStudyId(studyId);
+
+    // Both queries return only the two live reports, most recent first
+    assertEquals(
+        List.of(newerReport.getReferenceId(), olderReport.getReferenceId()),
+        byDataset.stream().map(DataAccessRequest::getReferenceId).toList());
+    assertEquals(
+        List.of(newerReport.getReferenceId(), olderReport.getReferenceId()),
+        byStudy.stream().map(DataAccessRequest::getReferenceId).toList());
+    assertTrue(byStudy.stream().allMatch(dar -> dar.getParentId() != null));
   }
 
   // findAllDraftDataAccessRequests should exclude archived DARs
