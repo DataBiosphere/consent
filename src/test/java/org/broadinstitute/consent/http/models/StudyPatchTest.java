@@ -10,10 +10,12 @@ import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
@@ -36,7 +38,11 @@ class StudyPatchTest extends AbstractTestHelper {
         "{ \"studyType\": \"not a study type\" }",
         "{ \"publicVisibility\": \"not a boolean\" }",
         "{ \"publicVisibility\": \"true\" }",
-        "{ \"publicVisibility\": \"false\" }"
+        "{ \"publicVisibility\": \"false\" }",
+        // Item 7b: an integer field is as strict as the String and Boolean fields beside it
+        "{ \"piInstitutionId\": \"123\" }",
+        "{ \"piInstitutionId\": 1.5 }",
+        "{ \"piInstitutionId\": true }"
       })
   void testFromJson(String json) {
     assertThrows(Exception.class, () -> StudyPatch.fromJson(json));
@@ -47,7 +53,8 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null);
     assertFalse(patch.isPatchable(study));
   }
 
@@ -64,6 +71,10 @@ class StudyPatchTest extends AbstractTestHelper {
             "HUMAN",
             mockStudy.getPiName(),
             mockStudy.getPiEmail(),
+            null,
+            null,
+            null,
+            null,
             List.of("EMAIL1", "EMAIL2"),
             "01/01/2020",
             "01/01/2020",
@@ -78,7 +89,8 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            "Name", null, null, null, null, null, null, null, null, null, null, null, null, null);
+            "Name", null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -89,6 +101,10 @@ class StudyPatchTest extends AbstractTestHelper {
         new StudyPatch(
             null,
             StudyType.ANALYTICAL,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -122,6 +138,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     assertTrue(patch.isPatchable(study));
   }
@@ -135,6 +155,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             List.of("type1", "type2"),
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -166,6 +190,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     assertTrue(patch.isPatchable(study));
   }
@@ -181,6 +209,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             "New Species",
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -210,6 +242,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     assertTrue(patch.isPatchable(study));
   }
@@ -232,6 +268,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             null);
     assertTrue(patch.isPatchable(study));
   }
@@ -241,6 +281,10 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -263,6 +307,10 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -295,6 +343,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             "New Date",
             null,
             null,
@@ -307,7 +359,8 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, false, null, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, false, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -316,8 +369,8 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, "SCP1671",
-            null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, "SCP1671", null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -326,6 +379,10 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -349,7 +406,8 @@ class StudyPatchTest extends AbstractTestHelper {
     study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, "OLD_ID", PropertyType.String));
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, "NEW_ID", null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, "NEW_ID", null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -360,6 +418,10 @@ class StudyPatchTest extends AbstractTestHelper {
     study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, existingValue, PropertyType.String));
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -383,6 +445,10 @@ class StudyPatchTest extends AbstractTestHelper {
     study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, "Old Type", PropertyType.String));
     StudyPatch patch =
         new StudyPatch(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -421,6 +487,10 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
             existingValue);
     assertFalse(patch.isPatchable(study));
   }
@@ -431,7 +501,8 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, blank, null);
     assertFalse(patch.isPatchable(study));
   }
 
@@ -442,7 +513,8 @@ class StudyPatchTest extends AbstractTestHelper {
     study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, "SCP1671", PropertyType.String));
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, blank, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -452,7 +524,8 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, blank);
     assertFalse(patch.isPatchable(study));
   }
 
@@ -464,8 +537,161 @@ class StudyPatchTest extends AbstractTestHelper {
         new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, "Single Cell Portal", PropertyType.String));
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            null, null, null, blank);
     assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchablePiDetailsChanged() {
+    Study study = mockStudy();
+
+    assertTrue(patchWithPiDetails(1, null, null, null).isPatchable(study));
+    assertTrue(patchWithPiDetails(null, "0000-0001-2345-6789", null, null).isPatchable(study));
+    assertTrue(
+        patchWithPiDetails(null, null, "https://linkedin.com/in/pi", null).isPatchable(study));
+    assertTrue(patchWithPiDetails(null, null, null, "https://pi.example.com").isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchablePiDetailsSameValues() {
+    Study study = mockStudy();
+    Institution institution = new Institution();
+    institution.setId(1);
+    study.setPiInstitution(institution);
+    study.setPiOrcid("0000-0001-2345-6789");
+    study.setPiLinkedinUrl("https://linkedin.com/in/pi");
+    study.setPiWebsiteUrl("https://pi.example.com");
+
+    StudyPatch patch =
+        patchWithPiDetails(
+            1, "0000-0001-2345-6789", "https://linkedin.com/in/pi", "https://pi.example.com");
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchablePiInstitutionChanged() {
+    Study study = mockStudy();
+    Institution institution = new Institution();
+    institution.setId(1);
+    study.setPiInstitution(institution);
+
+    assertFalse(patchWithPiDetails(1, null, null, null).isPatchable(study));
+    assertTrue(patchWithPiDetails(2, null, null, null).isPatchable(study));
+  }
+
+  /**
+   * The PI columns are columns on the study row, not patchable properties, so they follow the JSON
+   * convention: an absent field is a no-op and an explicit null clears. A blank string is
+   * normalized to a clear rather than stored.
+   */
+  @Test
+  void testIsPatchableClearsPiDetailsOnExplicitNull() {
+    Study study = mockStudy();
+    Institution institution = new Institution();
+    institution.setId(1);
+    study.setPiInstitution(institution);
+    study.setPiOrcid("0000-0001-2345-6789");
+
+    // An explicit null clears a stored value, so it is patchable
+    assertTrue(StudyPatch.fromJson("{\"piOrcid\": null}").isPatchable(study));
+    assertTrue(StudyPatch.fromJson("{\"piInstitutionId\": null}").isPatchable(study));
+    // A blank string is normalized to the same clear
+    assertTrue(StudyPatch.fromJson("{\"piOrcid\": \"\"}").isPatchable(study));
+
+    // An absent field is a no-op, even when a value is stored
+    assertFalse(StudyPatch.fromJson("{}").isPatchable(study));
+
+    // Clearing a column that is already empty is not a change
+    assertFalse(StudyPatch.fromJson("{\"piLinkedinUrl\": null}").isPatchable(study));
+    assertFalse(StudyPatch.fromJson("{\"piWebsiteUrl\": \"\"}").isPatchable(study));
+
+    Study noPiDetails = mockStudy();
+    assertFalse(StudyPatch.fromJson("{\"piOrcid\": null}").isPatchable(noPiDetails));
+    assertFalse(StudyPatch.fromJson("{\"piInstitutionId\": null}").isPatchable(noPiDetails));
+  }
+
+  @Test
+  void testResolvePiDetailConventions() {
+    // Absent = keep the stored value
+    StudyPatch absent = StudyPatch.fromJson("{}");
+    assertEquals("existing", absent.resolvePiOrcid("existing"));
+    assertEquals("existing", absent.resolvePiLinkedinUrl("existing"));
+    assertEquals("existing", absent.resolvePiWebsiteUrl("existing"));
+    assertEquals(5, absent.resolvePiInstitutionId(5));
+
+    // Explicit null = clear
+    StudyPatch cleared =
+        StudyPatch.fromJson(
+            """
+            {"piInstitutionId": null, "piOrcid": null,
+             "piLinkedinUrl": null, "piWebsiteUrl": null}
+            """);
+    assertNull(cleared.resolvePiOrcid("existing"));
+    assertNull(cleared.resolvePiLinkedinUrl("existing"));
+    assertNull(cleared.resolvePiWebsiteUrl("existing"));
+    assertNull(cleared.resolvePiInstitutionId(5));
+
+    // Blank = clear; a value = set
+    assertNull(StudyPatch.fromJson("{\"piOrcid\": \"\"}").resolvePiOrcid("existing"));
+    assertNull(StudyPatch.fromJson("{\"piOrcid\": \"   \"}").resolvePiOrcid("existing"));
+    assertEquals("new", StudyPatch.fromJson("{\"piOrcid\": \"new\"}").resolvePiOrcid("existing"));
+    assertEquals(6, StudyPatch.fromJson("{\"piInstitutionId\": 6}").resolvePiInstitutionId(5));
+  }
+
+  /**
+   * Item 7c: the explicit-null convention is deliberately not universal. The PI *columns* honour
+   * it, but piName and piEmail are older plain columns whose patch treats null as "absent", so
+   * {"piName": null} keeps the stored name where {"piOrcid": null} clears the orcid. Pinning the
+   * asymmetry here so a later attempt to unify it has to change a test that says why.
+   */
+  @Test
+  void testExplicitNullClearsPiColumnsButIsANoOpForPiName() {
+    Study study = mockStudy();
+    study.setPiName("Dr Existing");
+    study.setPiOrcid("0000-0001-2345-6789");
+
+    StudyPatch nullPiName = StudyPatch.fromJson("{\"piName\": null}");
+    assertTrue(nullPiName.explicitNulls().contains("piName"));
+    // Recorded as an explicit null, but piName is not resolved through that convention
+    assertNull(nullPiName.piName());
+    assertFalse(nullPiName.isPatchable(study), "an explicit null on piName changes nothing");
+
+    StudyPatch nullPiOrcid = StudyPatch.fromJson("{\"piOrcid\": null}");
+    assertTrue(nullPiOrcid.isPatchable(study), "an explicit null on piOrcid clears it");
+    assertNull(nullPiOrcid.resolvePiOrcid(study.getPiOrcid()));
+  }
+
+  /** A patch built directly, rather than from a body, has no explicitly nulled fields. */
+  @Test
+  void testDirectlyBuiltPatchHasNoExplicitNulls() {
+    StudyPatch patch = patchWithPiDetails(null, null, null, null);
+    assertEquals(Set.of(), patch.explicitNulls());
+    assertEquals("existing", patch.resolvePiOrcid("existing"));
+    assertEquals(5, patch.resolvePiInstitutionId(5));
+  }
+
+  private StudyPatch patchWithPiDetails(
+      Integer piInstitutionId, String piOrcid, String piLinkedinUrl, String piWebsiteUrl) {
+    return new StudyPatch(
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        piInstitutionId,
+        piOrcid,
+        piLinkedinUrl,
+        piWebsiteUrl,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   @Test
