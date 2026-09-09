@@ -10,9 +10,14 @@
     so a reference would either block the delete or cascade the evidence away with it. Column types
     are wider than the source for the same reason - the snapshot must never be the thing that fails.
 
-    Populated by POST /api/match/migration/dataset-id/run, not by this changeset. The affected set
-    drains as DARs are re-matched, so it is captured when the run executes rather than fixed now.
-    Retained until the migration is confirmed good, then dropped with the migration surface.
+    Populated by the migration run rather than by this changeset, because the affected set drained as
+    DARs were re-matched and had to be captured at execution time. That run was an admin endpoint,
+    POST /api/match/migration/dataset-id/run, which no longer exists: it was retired in the release
+    that applied the constraints. Do not go looking for it.
+
+    These tables outlive that surface deliberately. They are the rollback path for the run, and the
+    release that applies the constraints is the one most likely to need it. Dropped in a later
+    cleanup, once production has settled.
   -->
   <changeSet id="changelog-consent-2026-09-09-match-migration-snapshot" author="kmarete">
     <createTable tableName="match_migration_snapshot">

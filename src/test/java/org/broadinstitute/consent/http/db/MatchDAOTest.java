@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -223,28 +222,42 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindMatchesForLatestDataAccessElectionsReturnsMatchesWithNoDatasetId() {
-    // Legacy rows predate dataset_id and are still readable until they have been reprocessed.
+  void testAMatchCannotBeStoredWithoutADataset() {
     Dataset dataset = createDataset();
-    String darReferenceId = UUID.randomUUID().toString();
-    createDataAccessElection(darReferenceId, dataset.getDatasetId());
+    Match orphaned =
+        mockMatch(
+            dataset.getDatasetIdentifier(),
+            null,
+            UUID.randomUUID().toString(),
+            true,
+            false,
+            MatchAlgorithm.V5.getVersion());
 
-    Integer matchId =
-        matchDAO.insertMatch(
-            mockMatch(
-                UUID.randomUUID().toString(),
-                null,
-                darReferenceId,
-                true,
-                false,
-                MatchAlgorithm.V1.getVersion()));
+    assertThrows(UnableToExecuteStatementException.class, () -> matchDAO.insertMatch(orphaned));
+  }
 
-    List<Match> matchResults =
-        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
-    assertEquals(1, matchResults.size());
-    Match result = matchResults.getFirst();
-    assertEquals(matchId, result.getId());
-    assertNull(result.getDatasetId());
+  @Test
+  void testAPurposeCannotHoldTwoMatchesForTheSameDataset() {
+    Dataset dataset = createDataset();
+    String purposeId = UUID.randomUUID().toString();
+    matchDAO.insertMatch(
+        mockMatch(
+            dataset.getDatasetIdentifier(),
+            dataset.getDatasetId(),
+            purposeId,
+            true,
+            false,
+            MatchAlgorithm.V5.getVersion()));
+    Match duplicate =
+        mockMatch(
+            dataset.getDatasetIdentifier(),
+            dataset.getDatasetId(),
+            purposeId,
+            false,
+            false,
+            MatchAlgorithm.V5.getVersion());
+
+    assertThrows(UnableToExecuteStatementException.class, () -> matchDAO.insertMatch(duplicate));
   }
 
   @Test

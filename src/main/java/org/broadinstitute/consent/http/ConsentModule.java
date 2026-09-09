@@ -69,7 +69,6 @@ import org.broadinstitute.consent.http.service.FeatureFlagService;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.MatchMigrationService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
@@ -812,13 +811,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       UseRestrictionConverter useRestrictionConverter,
       DataUseMatcherV5 dataUseMatcherV5) {
     return new MatchService(jdbi, useRestrictionConverter, dataUseMatcherV5);
-  }
-
-  @Provides
-  @Singleton
-  private MatchMigrationService providesMatchMigrationService(
-      Jdbi jdbi, MatchService matchService) {
-    return new MatchMigrationService(jdbi, matchService);
   }
 
   @Provides
