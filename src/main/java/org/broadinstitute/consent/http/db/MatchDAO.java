@@ -48,12 +48,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
           ) AS e ON e.reference_id = match_entity.purpose
-            -- Correlate on dataset only when both sides carry one: legacy match rows predate
-            -- dataset_id and legacy elections can be missing it too, and either would otherwise
-            -- drop out. The tolerance goes away with the non-null constraints.
-            AND (match_entity.dataset_id IS NULL
-                 OR e.dataset_id IS NULL
-                 OR e.dataset_id = match_entity.dataset_id)
+            -- match_entity.dataset_id is NOT NULL from this release, so its own tolerance is
+            -- gone. election.dataset_id is still nullable, and a match must not drop out of an
+            -- older election that never recorded one.
+            AND (e.dataset_id IS NULL OR e.dataset_id = match_entity.dataset_id)
         WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
       """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
