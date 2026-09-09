@@ -50,6 +50,7 @@ public class MatchService implements ConsentLogger {
           Integer id =
               dao.insertMatch(
                   m.getConsent(),
+                  m.getDatasetId(),
                   m.getPurpose(),
                   m.getMatch(),
                   m.getFailed(),
@@ -92,8 +93,8 @@ public class MatchService implements ConsentLogger {
     if (datasetIds.isEmpty()) {
       return matches;
     }
-    // Fetch every dataset in a single query. Matching only needs the data use and the dataset
-    // identifier, both of which this query populates.
+    // Fetch every dataset in a single query. Matching only needs the data use and the dataset's
+    // identity, both of which this query populates.
     Map<Integer, Dataset> datasetsById =
         datasetDAO.findDatasetsByIdList(datasetIds).stream()
             .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
@@ -107,11 +108,7 @@ public class MatchService implements ConsentLogger {
               String message = "Error finding single match for purpose: " + dar.getReferenceId();
               logWarn(message);
               matches.add(
-                  matchFailure(
-                      dataset.getDatasetIdentifier(),
-                      dar.getReferenceId(),
-                      MatchAlgorithm.V5,
-                      List.of(message)));
+                  matchFailure(dataset, dar.getReferenceId(), MatchAlgorithm.V5, List.of(message)));
             }
           }
         });
@@ -136,7 +133,7 @@ public class MatchService implements ConsentLogger {
     MatchResult matchResult =
         dataUseMatcherV5.matchPurposeAndDatasetV5(darDataUse, dataset.getDataUse());
     return matchSuccess(
-        dataset.getDatasetIdentifier(),
+        dataset,
         dar.getReferenceId(),
         matchResult.getMatchResultType(),
         MatchAlgorithm.V5,

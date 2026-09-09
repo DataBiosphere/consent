@@ -13,6 +13,7 @@ public class MatchMapper implements RowMapper<Match> {
     return new Match(
         r.getInt("match_id"),
         r.getString("consent"),
+        (r.getObject("dataset_id") == null) ? null : r.getInt("dataset_id"),
         r.getString("purpose"),
         r.getBoolean("match_entity"),
         r.getBoolean("abstain"),

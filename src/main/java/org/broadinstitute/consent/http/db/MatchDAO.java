@@ -48,6 +48,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
           ) AS e ON e.reference_id = match_entity.purpose
+            -- Legacy rows carry no dataset_id and would otherwise drop out; the tolerance goes
+            -- away with the non-null constraint.
+            AND (match_entity.dataset_id IS NULL OR e.dataset_id = match_entity.dataset_id)
         WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
       """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
@@ -56,13 +59,16 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate(
       """
         INSERT INTO match_entity
-          (consent, purpose, match_entity, failed, create_date, algorithm_version, abstain)
+          (consent, dataset_id, purpose, match_entity, failed, create_date,
+           algorithm_version, abstain)
         VALUES
-          (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
+          (:consentId, :datasetId, :purposeId, :match, :failed, :createDate,
+           :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
   Integer insertMatch(
       @Bind("consentId") String consentId,
+      @Bind("datasetId") Integer datasetId,
       @Bind("purposeId") String purposeId,
       @Bind("match") Boolean match,
       @Bind("failed") Boolean failed,

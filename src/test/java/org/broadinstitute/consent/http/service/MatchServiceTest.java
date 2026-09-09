@@ -93,7 +93,11 @@ class MatchServiceTest extends AbstractTestHelper {
       List<Match> matches = service.createMatchesForDataAccessRequest(dar);
       assertFalse(matches.isEmpty());
       // Each match should be false since the exception is thrown during the matching process
-      matches.forEach(m -> assertFalse(m.getMatch()));
+      matches.forEach(
+          m -> {
+            assertFalse(m.getMatch());
+            assertEquals(dataset.getDatasetId(), m.getDatasetId());
+          });
     } catch (Exception e) {
       fail(
           "createMatchesForDataAccessRequest should not throw an exception even if singleEntitiesMatch fails: "
@@ -180,6 +184,7 @@ class MatchServiceTest extends AbstractTestHelper {
   void testSingleEntitiesMatch() {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
+    dataset.setAlias(1);
     dataset.setName("Test Dataset 1");
     dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
     dataset.setProperties(Collections.emptySet());
@@ -195,6 +200,8 @@ class MatchServiceTest extends AbstractTestHelper {
     assertNotNull(match);
     assertTrue(match.getMatch());
     assertEquals(MatchAlgorithm.V5.getVersion(), match.getAlgorithmVersion());
+    assertEquals(dataset.getDatasetId(), match.getDatasetId());
+    assertEquals(dataset.getDatasetIdentifier(), match.getConsent());
   }
 
   @Test
@@ -211,6 +218,7 @@ class MatchServiceTest extends AbstractTestHelper {
   void testReprocessMatchesForPurpose() {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
+    dataset.setAlias(1);
     dataset.setName("Test Dataset 1");
     dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
     dataset.setProperties(Collections.emptySet());
@@ -230,7 +238,15 @@ class MatchServiceTest extends AbstractTestHelper {
     verify(matchDAO).deleteRationalesByPurposeIds(List.of(dar.getReferenceId()));
     verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
     verify(matchDAO)
-        .insertMatch(any(), any(), any(), any(), any(), eq(MatchAlgorithm.V5.getVersion()), any());
+        .insertMatch(
+            eq(dataset.getDatasetIdentifier()),
+            eq(dataset.getDatasetId()),
+            eq(dar.getReferenceId()),
+            any(),
+            any(),
+            any(),
+            eq(MatchAlgorithm.V5.getVersion()),
+            any());
   }
 
   /** The rebuild is computed first, so a purpose is never left with its matches deleted. */
@@ -275,7 +291,7 @@ class MatchServiceTest extends AbstractTestHelper {
 
     verify(matchDAO).deleteRationalesByPurposeIds(List.of("DAR-gone"));
     verify(matchDAO).deleteMatchesByPurposeId("DAR-gone");
-    verify(matchDAO, never()).insertMatch(any(), any(), any(), any(), any(), any(), any());
+    verify(matchDAO, never()).insertMatch(any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   /** Runs the transaction body against the mock, which otherwise never invokes the callback. */
@@ -323,6 +339,7 @@ class MatchServiceTest extends AbstractTestHelper {
     return new Match(
         1,
         UUID.randomUUID().toString(),
+        1,
         UUID.randomUUID().toString(),
         true,
         true,

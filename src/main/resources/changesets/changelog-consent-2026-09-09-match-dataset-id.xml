@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    match_entity identifies its dataset by text in `consent`: the public `DUOS-######` identifier on
+    current rows, but a consent UUID on legacy ones, and those UUIDs resolve to no dataset since the
+    consent mapping was dropped in 2024. Add the real foreign key alongside it.
+
+    Nullable, and `consent` keeps being written, so an instance on the previous release can still
+    write a complete row and read one written by this release. The column becomes non-null once the
+    legacy rows have been reprocessed.
+  -->
+  <changeSet id="changelog-consent-2026-09-09-match-dataset-id" author="kmarete">
+    <addColumn tableName="match_entity">
+      <column name="dataset_id" type="bigint">
+        <constraints nullable="true"/>
+      </column>
+    </addColumn>
+    <addForeignKeyConstraint baseTableName="match_entity" baseColumnNames="dataset_id"
+      constraintName="fk_match_entity_dataset_id" referencedTableName="dataset"
+      referencedColumnNames="dataset_id" onDelete="CASCADE"/>
+    <!-- Deleting a dataset now cascades into match_entity, so the rationales of the rows it
+         removes have to go with them; the original constraint took no action. -->
+    <dropForeignKeyConstraint baseTableName="match_rationale"
+      constraintName="fk_match_failure_entity_id"/>
+    <addForeignKeyConstraint baseTableName="match_rationale" baseColumnNames="match_entity_id"
+      constraintName="fk_match_rationale_match_entity_id" referencedTableName="match_entity"
+      referencedColumnNames="match_id" onDelete="CASCADE"/>
+    <rollback>
+      <dropForeignKeyConstraint baseTableName="match_rationale"
+        constraintName="fk_match_rationale_match_entity_id"/>
+      <addForeignKeyConstraint baseTableName="match_rationale" baseColumnNames="match_entity_id"
+        constraintName="fk_match_failure_entity_id" referencedTableName="match_entity"
+        referencedColumnNames="match_id"/>
+      <dropColumn tableName="match_entity" columnName="dataset_id"/>
+    </rollback>
+  </changeSet>
+
+  <!--
+    Postgres does not index the referencing side of a foreign key, and the delete cascade above
+    reads match_entity by dataset_id. Built CONCURRENTLY (runInTransaction="false") to avoid the
+    write-blocking SHARE lock; see changelog-consent-2026-08-07-so-dashboard-indices.xml for
+    recovery notes.
+  -->
+  <changeSet id="changelog-consent-2026-09-09-match-dataset-id-index" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_match_entity_dataset_id ON match_entity (dataset_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_match_entity_dataset_id</sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

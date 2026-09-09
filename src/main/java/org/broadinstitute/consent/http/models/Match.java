@@ -16,6 +16,8 @@ public class Match {
 
   private String consent;
 
+  private Integer datasetId;
+
   private String purpose;
 
   private Boolean match;
@@ -33,6 +35,7 @@ public class Match {
   public Match(
       Integer id,
       String consent,
+      Integer datasetId,
       String purpose,
       Boolean match,
       Boolean abstain,
@@ -41,6 +44,7 @@ public class Match {
       String algorithmVersion) {
     this.id = id;
     this.consent = consent;
+    this.datasetId = datasetId;
     this.purpose = purpose;
     this.match = match;
     this.abstain = abstain;
@@ -50,14 +54,15 @@ public class Match {
   }
 
   public Match(
-      String consentId,
+      Dataset dataset,
       String purposeId,
       boolean match,
       boolean abstain,
       boolean failed,
       MatchAlgorithm algorithm,
       List<String> rationales) {
-    this.setConsent(consentId);
+    this.setConsent(dataset.getDatasetIdentifier());
+    this.setDatasetId(dataset.getDatasetId());
     this.setPurpose(purposeId);
     this.setMatch(match);
     this.setAbstain(abstain);
@@ -83,6 +88,14 @@ public class Match {
 
   public void setConsent(String consent) {
     this.consent = consent;
+  }
+
+  public Integer getDatasetId() {
+    return datasetId;
+  }
+
+  public void setDatasetId(Integer datasetId) {
+    this.datasetId = datasetId;
   }
 
   public String getPurpose() {
@@ -154,17 +167,17 @@ public class Match {
   }
 
   public static Match matchFailure(
-      String consentId, String purposeId, MatchAlgorithm algorithm, List<String> rationales) {
-    return new Match(consentId, purposeId, false, false, true, algorithm, rationales);
+      Dataset dataset, String purposeId, MatchAlgorithm algorithm, List<String> rationales) {
+    return new Match(dataset, purposeId, false, false, true, algorithm, rationales);
   }
 
   public static Match matchSuccess(
-      String consentId,
+      Dataset dataset,
       String purposeId,
       DataUseMatchResultType match,
       MatchAlgorithm algorithm,
       List<String> rationales) {
     return new Match(
-        consentId, purposeId, Approve(match), Abstain(match), false, algorithm, rationales);
+        dataset, purposeId, Approve(match), Abstain(match), false, algorithm, rationales);
   }
 }

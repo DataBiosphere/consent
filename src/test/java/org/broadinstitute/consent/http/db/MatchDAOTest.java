@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -36,13 +37,15 @@ class MatchDAOTest extends DAOTestHelper {
     assertEquals(found.getId(), m.getId());
     assertEquals(found.getPurpose(), m.getPurpose());
     assertEquals(found.getConsent(), m.getConsent());
+    assertEquals(found.getDatasetId(), m.getDatasetId());
     assertEquals(found.getFailed(), m.getFailed());
     assertEquals(found.getMatch(), m.getMatch());
   }
 
-  private Match makeMockMatch(String consentId) {
+  private Match makeMockMatch(Dataset dataset) {
     Match match = new Match();
-    match.setConsent(consentId);
+    match.setConsent(dataset.getDatasetIdentifier());
+    match.setDatasetId(dataset.getDatasetId());
     match.setPurpose(UUID.randomUUID().toString());
     match.setFailed(false);
     match.setCreateDate(FIXED_DATE);
@@ -90,6 +93,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This match represents the match record generated for the target election
     matchDAO.insertMatch(
         datasetIdentifier,
+        dataset.getDatasetId(),
         darReferenceId,
         true,
         false,
@@ -100,6 +104,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This match represents the match record generated for the ignored access election
     matchDAO.insertMatch(
         datasetIdentifier,
+        dataset.getDatasetId(),
         ignoredAccessElection.getReferenceId(),
         false,
         false,
@@ -111,6 +116,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(
         datasetIdentifier,
+        dataset.getDatasetId(),
         unknownElection.getReferenceId(),
         false,
         false,
@@ -141,6 +147,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This match represents the match record generated for the access election
     matchDAO.insertMatch(
         datasetIdentifier,
+        dataset.getDatasetId(),
         accessElection.getReferenceId(),
         true,
         false,
@@ -152,6 +159,7 @@ class MatchDAOTest extends DAOTestHelper {
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
     matchDAO.insertMatch(
         datasetIdentifier,
+        dataset.getDatasetId(),
         unknownElection.getReferenceId(),
         false,
         false,
@@ -169,11 +177,109 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindMatchById() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
+  void testFindMatchesForLatestDataAccessElectionsCorrelatesOnDatasetId() {
+    // A multi-dataset purpose where only one of its datasets went to a data access election. The
+    // other dataset's match has no election of its own and must not borrow the first one's.
+    Dataset elected = createDataset();
+    Dataset notElected = createDataset();
+    String darReferenceId = UUID.randomUUID().toString();
+    createDataAccessElection(darReferenceId, elected.getDatasetId());
+
+    Integer electedMatchId =
+        matchDAO.insertMatch(
+            elected.getDatasetIdentifier(),
+            elected.getDatasetId(),
+            darReferenceId,
+            true,
+            false,
+            FIXED_DATE,
+            MatchAlgorithm.V5.getVersion(),
+            false);
+    matchDAO.insertMatch(
+        notElected.getDatasetIdentifier(),
+        notElected.getDatasetId(),
+        darReferenceId,
+        true,
+        false,
+        FIXED_DATE,
+        MatchAlgorithm.V5.getVersion(),
+        false);
+
+    List<Match> matchResults =
+        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+    assertEquals(1, matchResults.size());
+    assertEquals(electedMatchId, matchResults.getFirst().getId());
+  }
+
+  @Test
+  void testFindMatchesForLatestDataAccessElectionsReturnsMatchesWithNoDatasetId() {
+    // Legacy rows predate dataset_id and are still readable until they have been reprocessed.
+    Dataset dataset = createDataset();
+    String darReferenceId = UUID.randomUUID().toString();
+    createDataAccessElection(darReferenceId, dataset.getDatasetId());
+
+    Integer matchId =
+        matchDAO.insertMatch(
+            UUID.randomUUID().toString(),
+            null,
+            darReferenceId,
+            true,
+            false,
+            FIXED_DATE,
+            MatchAlgorithm.V1.getVersion(),
+            false);
+
+    List<Match> matchResults =
+        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+    assertEquals(1, matchResults.size());
+    Match result = matchResults.getFirst();
+    assertEquals(matchId, result.getId());
+    assertNull(result.getDatasetId());
+  }
+
+  @Test
+  void testDeletingDatasetCascadesToMatchesAndRationales() {
+    Dataset dataset = createDataset();
+    Match match = makeMockMatch(dataset);
+    match.addRationale(randomAlphabetic(100));
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
+            match.getDatasetId(),
+            match.getPurpose(),
+            match.getMatch(),
+            match.getFailed(),
+            match.getCreateDate(),
+            match.getAlgorithmVersion(),
+            match.getAbstain());
+    match.getRationales().forEach(r -> matchDAO.insertRationale(matchId, r));
+    assertEquals(1, getRationaleCount(matchId));
+
+    datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
+    datasetDAO.deleteDatasetById(dataset.getDatasetId());
+
+    assertNull(matchDAO.findMatchById(matchId));
+    assertEquals(0, getRationaleCount(matchId));
+  }
+
+  private static Integer getRationaleCount(Integer matchId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT count(*) FROM match_rationale WHERE match_entity_id = :matchId")
+                .bind("matchId", matchId)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  @Test
+  void testFindMatchById() {
+    Match match = makeMockMatch(createDataset());
+    Integer matchId =
+        matchDAO.insertMatch(
+            match.getConsent(),
+            match.getDatasetId(),
             match.getPurpose(),
             match.getMatch(),
             match.getFailed(),
@@ -186,7 +292,7 @@ class MatchDAOTest extends DAOTestHelper {
 
   @Test
   void testInsertFailureReason() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
+    Match match = makeMockMatch(createDataset());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(randomAlphabetic(100));
@@ -194,6 +300,7 @@ class MatchDAOTest extends DAOTestHelper {
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
+            match.getDatasetId(),
             match.getPurpose(),
             match.getMatch(),
             match.getFailed(),
@@ -208,7 +315,7 @@ class MatchDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteFailureReasonsByPurposeIds() {
-    Match match = makeMockMatch(UUID.randomUUID().toString());
+    Match match = makeMockMatch(createDataset());
     match.setMatch(false);
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(randomAlphabetic(100));
@@ -216,6 +323,7 @@ class MatchDAOTest extends DAOTestHelper {
     Integer matchId =
         matchDAO.insertMatch(
             match.getConsent(),
+            match.getDatasetId(),
             match.getPurpose(),
             match.getMatch(),
             match.getFailed(),
@@ -236,6 +344,7 @@ class MatchDAOTest extends DAOTestHelper {
     Integer matchId =
         matchDAO.insertMatch(
             dataset.getDatasetIdentifier(),
+            dataset.getDatasetId(),
             dar.getReferenceId(),
             randomBoolean(),
             false,
