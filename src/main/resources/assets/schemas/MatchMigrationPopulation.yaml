@@ -31,3 +31,8 @@ properties:
   duplicatePurposeDatasetPairs:
     type: integer
     description: Existing (purpose, dataset_id) collisions, which block the uniqueness constraint.
+  blocksConstraints:
+    type: boolean
+    description: >
+      Whether the non-null and uniqueness constraints would still be refused. The changeset that
+      applies them halts on the same conditions, so this is what to read before releasing it.

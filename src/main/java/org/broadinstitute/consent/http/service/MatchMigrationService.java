@@ -91,7 +91,7 @@ public class MatchMigrationService implements ConsentLogger {
             failedPurposeIds,
             skipped);
     MatchMigrationRunResult result =
-        new MatchMigrationRunResult(
+        MatchMigrationRunResult.of(
             before, matchMigrationDAO.findPopulation(), report, matchMigrationDAO.reconcile());
     if (!result.readyForConstraints()) {
       // Said plainly, because the next step is a release whose changeset halts on these conditions

@@ -8,13 +8,27 @@ public record MatchMigrationRunResult(
     MatchMigrationPopulation before,
     MatchMigrationPopulation after,
     MatchMigrationRunReport run,
-    SnapshotReconciliation reconciliation) {
+    SnapshotReconciliation reconciliation,
+    boolean readyForConstraints) {
 
   /**
    * Whether the constraints can now be released: the snapshot accounts for everything and no
    * affected row is left except the ones deliberately skipped.
+   *
+   * <p>Computed here into a component rather than exposed as a method, because responses serialize
+   * with Gson, which reads fields and drops computed accessors. This is the run's headline signal,
+   * so it has to reach the operator reading the response.
    */
-  public boolean readyForConstraints() {
-    return reconciliation.reconciles() && !after.blocksConstraints();
+  public static MatchMigrationRunResult of(
+      MatchMigrationPopulation before,
+      MatchMigrationPopulation after,
+      MatchMigrationRunReport run,
+      SnapshotReconciliation reconciliation) {
+    return new MatchMigrationRunResult(
+        before,
+        after,
+        run,
+        reconciliation,
+        reconciliation.reconciles() && !after.blocksConstraints());
   }
 }

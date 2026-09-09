@@ -1,6 +1,11 @@
 type: object
 description: One migration run, with the population either side of it and the reconciliation it produced.
 properties:
+  readyForConstraints:
+    type: boolean
+    description: >
+      The run's headline signal: the snapshot accounts for everything and no affected row is left
+      except the ones deliberately skipped. The gate for releasing the constraints.
   before:
     $ref: './MatchMigrationPopulation.yaml'
   after:

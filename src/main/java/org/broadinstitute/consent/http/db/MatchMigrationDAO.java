@@ -54,8 +54,9 @@ public interface MatchMigrationDAO {
         WHERE """
           + ARCHIVED_TEST
           + """
-      )
-      SELECT
+      ),
+      counts AS (
+        SELECT
         (SELECT COUNT(*) FROM affected) AS affected_matches,
         (SELECT COUNT(DISTINCT purpose) FROM affected) AS affected_purposes,
         (SELECT COUNT(*) FROM affected WHERE LOWER(algorithm_version) = 'v1') AS version_v1,
@@ -73,6 +74,11 @@ public interface MatchMigrationDAO {
           WHERE dataset_id IS NOT NULL
           GROUP BY purpose, dataset_id HAVING COUNT(*) > 1
         ) dupes) AS duplicate_purpose_dataset_pairs
+      )
+      SELECT counts.*,
+             (counts.affected_matches > 0 OR counts.duplicate_purpose_dataset_pairs > 0)
+               AS blocks_constraints
+      FROM counts
       """)
   MatchMigrationPopulation findPopulation();
 
@@ -174,8 +180,9 @@ public interface MatchMigrationDAO {
           + ARCHIVED_TEST
           + """
           )
-      )
-      SELECT
+      ),
+      counts AS (
+        SELECT
         (SELECT COUNT(*) FROM match_migration_snapshot) AS snapshotted,
         (SELECT COUNT(*) FROM match_migration_snapshot s
          WHERE NOT EXISTS (SELECT 1 FROM match_entity m WHERE m.match_id = s.match_id))
@@ -197,6 +204,11 @@ public interface MatchMigrationDAO {
           + AFFECTED_PREDICATE
           + """
         ) AS still_affected
+      )
+      SELECT counts.*,
+             (counts.snapshotted_rows_remaining = counts.unresolvable_rows
+               AND counts.still_affected = counts.unresolvable_rows) AS reconciles
+      FROM counts
       """)
   SnapshotReconciliation reconcile();
 }

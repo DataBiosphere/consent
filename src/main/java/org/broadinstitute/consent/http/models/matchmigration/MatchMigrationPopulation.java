@@ -18,6 +18,11 @@ package org.broadinstitute.consent.http.models.matchmigration;
  *     rebuild could collapse two rows onto one (purpose, dataset_id) pair
  * @param duplicatePurposeDatasetPairs existing (purpose, dataset_id) collisions, which block the
  *     uniqueness constraint whether or not this migration created them
+ * @param blocksConstraints whether the non-null and uniqueness constraints would still be refused.
+ *     Derived in the query rather than from a method, so it reaches the JSON: responses serialize
+ *     with Gson, which reads fields and drops computed accessors. The changeset that applies the
+ *     constraints halts on the same conditions, so this is the report an operator reads before
+ *     releasing it rather than a second, softer opinion
  */
 public record MatchMigrationPopulation(
     int affectedMatches,
@@ -29,14 +34,5 @@ public record MatchMigrationPopulation(
     int resolvablePurposes,
     int archivedOrMissingPurposes,
     int purposesWithMultipleAffectedMatches,
-    int duplicatePurposeDatasetPairs) {
-
-  /**
-   * Whether the non-null and uniqueness constraints would still be refused. The changeset that
-   * applies them halts on the same conditions, so this is the report an operator reads before
-   * releasing it rather than a second, softer opinion.
-   */
-  public boolean blocksConstraints() {
-    return affectedMatches > 0 || duplicatePurposeDatasetPairs > 0;
-  }
-}
+    int duplicatePurposeDatasetPairs,
+    boolean blocksConstraints) {}

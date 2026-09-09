@@ -131,7 +131,7 @@ class MatchMigrationServiceTest {
   @Test
   void testRunIsNotReadyForConstraintsWhileRowsRemainUnaccountedFor() {
     SnapshotReconciliation unreconciled =
-        new SnapshotReconciliation(409, 0, 409, 0, 405, 405, 0, 409);
+        new SnapshotReconciliation(409, 0, 409, 0, 405, 405, 0, 409, false);
     stubPopulationAndReconciliation(blockedPopulation(), unreconciled);
     when(matchMigrationDAO.findResolvablePurposes()).thenReturn(List.of());
     when(matchMigrationDAO.findUnresolvablePurposes()).thenReturn(List.of());
@@ -146,7 +146,8 @@ class MatchMigrationServiceTest {
   /** A clean reconciliation is not enough on its own: an existing pair collision still blocks. */
   @Test
   void testRunIsNotReadyForConstraintsWhileAPairCollisionRemains() {
-    MatchMigrationPopulation collision = new MatchMigrationPopulation(0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+    MatchMigrationPopulation collision =
+        new MatchMigrationPopulation(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, true);
     stubPopulationAndReconciliation(collision, reconciled());
     when(matchMigrationDAO.findResolvablePurposes()).thenReturn(List.of());
     when(matchMigrationDAO.findUnresolvablePurposes()).thenReturn(List.of());
@@ -195,14 +196,14 @@ class MatchMigrationServiceTest {
   }
 
   private static MatchMigrationPopulation clearPopulation() {
-    return new MatchMigrationPopulation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    return new MatchMigrationPopulation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false);
   }
 
   private static MatchMigrationPopulation blockedPopulation() {
-    return new MatchMigrationPopulation(409, 405, 409, 0, 0, 409, 405, 0, 4, 0);
+    return new MatchMigrationPopulation(409, 405, 409, 0, 0, 409, 405, 0, 4, 0, true);
   }
 
   private static SnapshotReconciliation reconciled() {
-    return new SnapshotReconciliation(409, 409, 0, 0, 405, 405, 0, 0);
+    return new SnapshotReconciliation(409, 409, 0, 0, 405, 405, 0, 0, true);
   }
 }

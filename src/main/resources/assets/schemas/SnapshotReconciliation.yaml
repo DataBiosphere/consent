@@ -29,3 +29,8 @@ properties:
   stillAffected:
     type: integer
     description: Rows the constraints would still reject.
+  reconciles:
+    type: boolean
+    description: >
+      Whether every captured row was either handled or deliberately skipped, with nothing else
+      outstanding. False if the run skipped more than it meant to.

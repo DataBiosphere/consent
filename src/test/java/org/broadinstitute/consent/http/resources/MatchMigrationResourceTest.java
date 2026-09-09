@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -17,6 +18,7 @@ import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationRunRe
 import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationRunResult;
 import org.broadinstitute.consent.http.models.matchmigration.SnapshotReconciliation;
 import org.broadinstitute.consent.http.service.MatchMigrationService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -70,7 +72,7 @@ class MatchMigrationResourceTest {
   @Test
   void testRun() {
     MatchMigrationRunResult result =
-        new MatchMigrationRunResult(
+        MatchMigrationRunResult.of(
             population(),
             population(),
             new MatchMigrationRunReport(409, 52, 405, 0, 0, 0, List.of(), List.of()),
@@ -92,11 +94,32 @@ class MatchMigrationResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
+  /**
+   * Responses serialize with Gson, which reads fields and drops computed accessors. These three
+   * flags are the operator-facing gates, so they have to be components rather than methods.
+   */
+  @Test
+  void testRunResponseCarriesTheDerivedGates() {
+    MatchMigrationRunResult result =
+        MatchMigrationRunResult.of(
+            population(),
+            population(),
+            new MatchMigrationRunReport(409, 52, 405, 0, 0, 0, List.of(), List.of()),
+            reconciliation());
+    when(service.run()).thenReturn(result);
+    initResource();
+
+    String json = GsonUtil.getInstance().toJson(resource.run(duosUser).getEntity());
+    assertTrue(json.contains("\"readyForConstraints\""));
+    assertTrue(json.contains("\"reconciles\""));
+    assertTrue(json.contains("\"blocksConstraints\""));
+  }
+
   private static MatchMigrationPopulation population() {
-    return new MatchMigrationPopulation(409, 405, 409, 0, 0, 409, 405, 0, 4, 0);
+    return new MatchMigrationPopulation(409, 405, 409, 0, 0, 409, 405, 0, 4, 0, true);
   }
 
   private static SnapshotReconciliation reconciliation() {
-    return new SnapshotReconciliation(409, 409, 0, 0, 405, 405, 0, 0);
+    return new SnapshotReconciliation(409, 409, 0, 0, 405, 405, 0, 0, true);
   }
 }

@@ -19,6 +19,11 @@ package org.broadinstitute.consent.http.models.matchmigration;
  * @param purposesHoldingNoMatches captured purposes now holding none - the intended deletions,
  *     where the DAR carries no dataset associations to rebuild from
  * @param stillAffected rows the constraints would still reject
+ * @param reconciles whether every captured row was either handled or deliberately skipped, and
+ *     nothing else is outstanding. Two equalities rather than one, so a run that skipped more than
+ *     it meant to fails here instead of looking complete. Derived in the query rather than from a
+ *     method, so it reaches the JSON: responses serialize with Gson, which reads fields and drops
+ *     computed accessors
  */
 public record SnapshotReconciliation(
     int snapshotted,
@@ -28,14 +33,5 @@ public record SnapshotReconciliation(
     int snapshottedPurposes,
     int purposesHoldingMatches,
     int purposesHoldingNoMatches,
-    int stillAffected) {
-
-  /**
-   * Every captured row was either handled or deliberately skipped, and nothing else is outstanding.
-   * Stated as two equalities rather than one so a run that skipped more than it meant to fails here
-   * instead of looking complete.
-   */
-  public boolean reconciles() {
-    return snapshottedRowsRemaining == unresolvableRows && stillAffected == unresolvableRows;
-  }
-}
+    int stillAffected,
+    boolean reconciles) {}
