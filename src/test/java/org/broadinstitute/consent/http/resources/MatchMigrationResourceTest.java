@@ -70,6 +70,15 @@ class MatchMigrationResourceTest {
   }
 
   @Test
+  void testGetReconciliationHandlesAFailure() {
+    when(service.reconcile()).thenThrow(new IllegalStateException("boom"));
+    initResource();
+
+    Response response = resource.getReconciliation(duosUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
   void testRun() {
     MatchMigrationRunResult result =
         MatchMigrationRunResult.of(
