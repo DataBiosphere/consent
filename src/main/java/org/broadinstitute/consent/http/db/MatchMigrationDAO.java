@@ -16,7 +16,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
  * {@code v1} or {@code v2} stamp, or has no stamp at all. Versions are reported separately because
  * the acceptance criteria count those populations, but they are not what selects the work.
  *
- * <p>{@code ARCHIVED_TEST} repeats the archived-status condition from {@code
+ * <p>{@code NOT_ARCHIVED} repeats the not-archived condition from {@code
  * DataAccessRequestDAO.findByReferenceId} rather than sharing it. That lookup is what a reprocess
  * resolves its DAR through, so the run has to predict it exactly; if it changes, these queries have
  * to be revisited deliberately, not silently follow it.
@@ -30,8 +30,7 @@ public interface MatchMigrationDAO {
         OR LOWER(m.algorithm_version) IN ('v1', 'v2'))
       """;
 
-  String ARCHIVED_TEST =
-      "(LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)";
+  String NOT_ARCHIVED = "(LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)";
 
   /**
    * Counted in one statement so the totals cannot disagree with each other, and recounted on every
@@ -52,7 +51,7 @@ public interface MatchMigrationDAO {
         FROM affected a
         JOIN data_access_request dar ON dar.reference_id = a.purpose
         WHERE """
-          + ARCHIVED_TEST
+          + NOT_ARCHIVED
           + """
       ),
       counts AS (
@@ -95,7 +94,7 @@ public interface MatchMigrationDAO {
       WHERE """
           + AFFECTED_PREDICATE
           + " AND "
-          + ARCHIVED_TEST
+          + NOT_ARCHIVED
           + """
       ORDER BY m.purpose
       """)
@@ -113,7 +112,7 @@ public interface MatchMigrationDAO {
           SELECT 1 FROM data_access_request dar
           WHERE dar.reference_id = m.purpose
             AND """
-          + ARCHIVED_TEST
+          + NOT_ARCHIVED
           + """
         )
       ORDER BY m.purpose
@@ -143,20 +142,21 @@ public interface MatchMigrationDAO {
   int snapshotAffectedMatches();
 
   /**
-   * Keyed on the snapshot rather than on {@code match_entity}, so it can never capture rationales
-   * for a match the other half did not capture. Re-runnable for the same reason as that half.
+   * Joined against the snapshot rather than {@code match_entity}, so it can never capture
+   * rationales for a match the other half did not capture.
+   *
+   * <p>Carries each row's own {@code match_rationale.id}, which makes the capture exact where
+   * comparing text would not: two rationales identical in text are still two rows, and restoring
+   * has to produce two. That id is also what makes the insert re-runnable, by the same {@code ON
+   * CONFLICT} idiom as the matches half.
    */
   @SqlUpdate(
       """
-      INSERT INTO match_migration_rationale_snapshot (match_id, rationale)
-      SELECT r.match_entity_id, r.rationale
+      INSERT INTO match_migration_rationale_snapshot (rationale_id, match_id, rationale)
+      SELECT r.id, r.match_entity_id, r.rationale
       FROM match_rationale r
       JOIN match_migration_snapshot s ON s.match_id = r.match_entity_id
-      WHERE NOT EXISTS (
-        SELECT 1 FROM match_migration_rationale_snapshot existing
-        WHERE existing.match_id = r.match_entity_id
-          AND existing.rationale = r.rationale
-      )
+      ON CONFLICT (rationale_id) DO NOTHING
       """)
   int snapshotAffectedRationales();
 
@@ -177,7 +177,7 @@ public interface MatchMigrationDAO {
             SELECT 1 FROM data_access_request dar
             WHERE dar.reference_id = m.purpose
               AND """
-          + ARCHIVED_TEST
+          + NOT_ARCHIVED
           + """
           )
       ),

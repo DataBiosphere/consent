@@ -38,7 +38,9 @@
     </createIndex>
 
     <createTable tableName="match_migration_rationale_snapshot">
-      <column name="id" type="bigint" autoIncrement="true">
+      <!-- The source row's own match_rationale.id, so the capture is exact and re-runnable
+           without having to compare rationale text. -->
+      <column name="rationale_id" type="bigint">
         <constraints primaryKey="true" nullable="false"/>
       </column>
       <column name="match_id" type="bigint">

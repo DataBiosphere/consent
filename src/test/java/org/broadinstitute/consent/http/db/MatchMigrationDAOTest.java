@@ -135,6 +135,23 @@ class MatchMigrationDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testSnapshotKeepsTwoRationalesThatShareTheirText() {
+    // Keyed on each row's own id, so identical text is still two rows and a restore rebuilds two
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    Integer matchId = insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchDAO.insertRationale(matchId, "same text");
+    matchDAO.insertRationale(matchId, "same text");
+
+    matchMigrationDAO.snapshotAffectedMatches();
+    assertEquals(2, matchMigrationDAO.snapshotAffectedRationales());
+    assertEquals(List.of("same text", "same text"), snapshottedRationales(matchId));
+
+    // And a second pass still captures nothing new
+    assertEquals(0, matchMigrationDAO.snapshotAffectedRationales());
+  }
+
+  @Test
   void testSnapshotIsRerunnableAndKeepsTheFirstCapture() {
     Dataset dataset = createDataset();
     String purposeId = createSubmittedDar(dataset, false);
