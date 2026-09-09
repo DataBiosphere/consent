@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.MatchMapper;
 import org.broadinstitute.consent.http.db.mapper.MatchReducer;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -56,25 +56,21 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
       @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
+  /**
+   * Bound from the {@link Match} itself. The column list is long enough that positional parameters
+   * were both unreadable and a Sonar finding, and the model already holds exactly these fields.
+   */
   @SqlUpdate(
       """
         INSERT INTO match_entity
           (consent, dataset_id, purpose, match_entity, failed, create_date,
            algorithm_version, abstain)
         VALUES
-          (:consentId, :datasetId, :purposeId, :match, :failed, :createDate,
+          (:consent, :datasetId, :purpose, :match, :failed, :createDate,
            :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
-  Integer insertMatch(
-      @Bind("consentId") String consentId,
-      @Bind("datasetId") Integer datasetId,
-      @Bind("purposeId") String purposeId,
-      @Bind("match") Boolean match,
-      @Bind("failed") Boolean failed,
-      @Bind("createDate") Date date,
-      @Bind("algorithmVersion") String algorithmVersion,
-      @Bind("abstain") Boolean abstain);
+  Integer insertMatch(@BindBean Match match);
 
   @SqlUpdate(
       "INSERT INTO match_rationale (match_entity_id, rationale) VALUES (:matchId, :rationale) ")

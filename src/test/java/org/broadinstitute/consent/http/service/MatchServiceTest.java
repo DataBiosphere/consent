@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
@@ -38,6 +37,7 @@ import org.jdbi.v3.sqlobject.transaction.TransactionalConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -237,16 +237,13 @@ class MatchServiceTest extends AbstractTestHelper {
     service.reprocessMatchesForPurpose(dar.getReferenceId());
     verify(matchDAO).deleteRationalesByPurposeIds(List.of(dar.getReferenceId()));
     verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
-    verify(matchDAO)
-        .insertMatch(
-            eq(dataset.getDatasetIdentifier()),
-            eq(dataset.getDatasetId()),
-            eq(dar.getReferenceId()),
-            any(),
-            any(),
-            any(),
-            eq(MatchAlgorithm.V5.getVersion()),
-            any());
+    ArgumentCaptor<Match> inserted = ArgumentCaptor.forClass(Match.class);
+    verify(matchDAO).insertMatch(inserted.capture());
+    Match persisted = inserted.getValue();
+    assertEquals(dataset.getDatasetIdentifier(), persisted.getConsent());
+    assertEquals(dataset.getDatasetId(), persisted.getDatasetId());
+    assertEquals(dar.getReferenceId(), persisted.getPurpose());
+    assertEquals(MatchAlgorithm.V5.getVersion(), persisted.getAlgorithmVersion());
   }
 
   /** The rebuild is computed first, so a purpose is never left with its matches deleted. */
@@ -291,7 +288,7 @@ class MatchServiceTest extends AbstractTestHelper {
 
     verify(matchDAO).deleteRationalesByPurposeIds(List.of("DAR-gone"));
     verify(matchDAO).deleteMatchesByPurposeId("DAR-gone");
-    verify(matchDAO, never()).insertMatch(any(), any(), any(), any(), any(), any(), any(), any());
+    verify(matchDAO, never()).insertMatch(any());
   }
 
   /** Runs the transaction body against the mock, which otherwise never invokes the callback. */

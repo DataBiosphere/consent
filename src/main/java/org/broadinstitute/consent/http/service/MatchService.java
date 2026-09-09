@@ -5,7 +5,6 @@ import static org.broadinstitute.consent.http.models.Match.matchSuccess;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,16 +46,7 @@ public class MatchService implements ConsentLogger {
   private static void insertMatches(MatchDAO dao, List<Match> match) {
     match.forEach(
         m -> {
-          Integer id =
-              dao.insertMatch(
-                  m.getConsent(),
-                  m.getDatasetId(),
-                  m.getPurpose(),
-                  m.getMatch(),
-                  m.getFailed(),
-                  new Date(),
-                  m.getAlgorithmVersion(),
-                  m.getAbstain());
+          Integer id = dao.insertMatch(m);
           if (!m.getRationales().isEmpty()) {
             m.getRationales().forEach(f -> dao.insertRationale(id, f));
           }
