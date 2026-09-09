@@ -1,0 +1,40 @@
+type: object
+description: One migration run, with the population either side of it and the reconciliation it produced.
+properties:
+  before:
+    $ref: './MatchMigrationPopulation.yaml'
+  after:
+    $ref: './MatchMigrationPopulation.yaml'
+  reconciliation:
+    $ref: './SnapshotReconciliation.yaml'
+  run:
+    type: object
+    properties:
+      snapshottedMatches:
+        type: integer
+        description: Rows captured by this run. Zero where an earlier run already held them.
+      snapshottedRationales:
+        type: integer
+        description: Rationale rows captured by this run.
+      reprocessed:
+        type: integer
+        description: Purposes rebuilt without a failure.
+      skipped:
+        type: integer
+        description: Purposes left alone because their DAR is archived or gone.
+      failed:
+        type: integer
+        description: Purposes whose every attempt failed.
+      retried:
+        type: integer
+        description: Purposes that failed once and were attempted again, successfully or not.
+      failedPurposeIds:
+        type: array
+        items:
+          type: string
+        description: Purposes needing follow-up, so a rerun can be scoped to them.
+      skippedPurposeIds:
+        type: array
+        items:
+          type: string
+        description: Purposes the run refused to touch.

@@ -10,7 +10,7 @@ In progress. Ticket-by-ticket state:
 | 2. Canonical primary classification on Data Use writes | Done. `DataUsePrimaryClassifier`/`DataUsePrimaryValidator` back registration, admin Data Use replacement, and dataset-to-study conversion. |
 | 3. Explicit legacy and unsupported matcher behavior | Done. `DataUseMatcherV5` classifies before matching and abstains on Other-only, NONE/null, and MULTIPLE. |
 | 4. Normalize legacy records and reprocess affected matches | Done. |
-| 5. Replace alias-derived internal dataset references | In progress. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), Phase 1 has landed: nullable `match_entity.dataset_id`, dual write, and a dataset-correlated election join. The reprocess and the non-null and uniqueness constraints follow once Phase 1 is deployed everywhere. |
+| 5. Replace alias-derived internal dataset references | In progress. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), Phase 1 has landed: nullable `match_entity.dataset_id`, dual write, and a dataset-correlated election join. Phase 2a adds the snapshot tables and the admin migration surface that runs the reprocess. The constraints are release C, gated on that run reporting clean. |
 | 6. Align duos-ui with the canonical classification | Done in duos-ui (DT-3866). The Data Use translation collapse is an owned follow-up (DT-4008). |
 
 ## Objective
@@ -498,6 +498,60 @@ in external contracts and does not make the internal numeric `dataset_id` public
 - Replacing the `DUOS-######` public identifier contract.
 - Reusing deleted aliases or requiring gapless alias numbering.
 - Changing Data Use classification or matcher decisions.
+
+
+**Phase 2 execution and validation (DT-3942)**
+
+Three releases, because the constraints must not deploy until the run that clears them has happened.
+Their changeset halts on the same conditions the run reports, so releasing it early fails the deploy
+rather than corrupting anything - but a halted deploy is still a broken deploy, so the ordering is
+not optional.
+
+| Release | Contents | Gate to the next |
+| --- | --- | --- |
+| A | Nullable `dataset_id`, dual write, dataset-correlated election join | Deployed everywhere |
+| B | Snapshot tables and the admin migration surface | `run` reports `readyForConstraints` |
+| C | Non-null and `(purpose, dataset_id)` uniqueness constraints; retire the surface | Confirmed good |
+
+Pre-deployment, per environment, before running anything:
+
+- `GET /api/match/migration/dataset-id/population`. Record `affectedMatches`, `affectedPurposes`,
+  `versionV1`, `versionV2`, `versionNull`, `archivedOrMissingPurposes`, and
+  `duplicatePurposeDatasetPairs`. These are recounted on every call and drain on their own as DARs
+  are re-matched, so the figures in this plan and in the ticket are illustrative only.
+- A non-zero `archivedOrMissingPurposes` is expected to be zero in production but is not an error:
+  those purposes are skipped, reported by id, and left for a decision.
+- A non-zero `duplicatePurposeDatasetPairs` blocks release C on its own and is not something the run
+  fixes. Reconcile those pairs first.
+
+Post-deployment, after `POST /api/match/migration/dataset-id/run`:
+
+- `readyForConstraints` is the single check. It requires both that the reconciliation balances and
+  that nothing affected remains beyond what was skipped.
+- `run.failedPurposeIds` scopes a rerun. The run is restartable: each purpose is rebuilt in its own
+  transaction and the snapshot keeps its first capture, so re-running is safe and captures nothing
+  new.
+- `snapshottedRowsGone` plus `snapshottedRowsRemaining` equals `snapshotted`, and
+  `snapshottedRowsRemaining` equals `unresolvableRows`. A snapshotted row that is still present was
+  not handled, because a reprocess deletes and re-inserts under new ids.
+- `purposesHoldingNoMatches` counts the intended deletions - purposes whose DAR carries no dataset
+  associations. Expect this to be non-zero and reconcile it against the population's
+  `affectedPurposes`.
+- Re-check `GET /api/match/migration/dataset-id/reconciliation` after any DAR activity, before
+  releasing C.
+
+Rollback:
+
+- Before release C, restoring is an insert from `match_migration_snapshot` and
+  `match_migration_rationale_snapshot`; the snapshot carries no foreign key to `match_entity`, so it
+  survives the deletion of the rows it describes. Restored rows return under new `match_id`s, which
+  is why reconciliation keys on presence rather than on identity.
+- After release C, the constraints reject the legacy shape, so rolling back means rolling back that
+  changeset first.
+- Release A's changeset rolls back on its own; the election join's `IS NULL` tolerance means a
+  half-migrated table still reads correctly either side of it.
+- Retain both snapshot tables until the migration is confirmed good in production, then drop them
+  with the surface.
 
 ---
 

@@ -1,0 +1,33 @@
+type: object
+description: The match rows the dataset_id migration still has to deal with, recounted on each call.
+properties:
+  affectedMatches:
+    type: integer
+    description: Rows the constraints would reject - no dataset_id, or a v1/v2/absent algorithm version.
+  affectedPurposes:
+    type: integer
+    description: Distinct purposes those rows belong to, the unit a reprocess works by.
+  versionV1:
+    type: integer
+    description: Affected rows still stamped v1.
+  versionV2:
+    type: integer
+    description: Affected rows still stamped v2.
+  versionNull:
+    type: integer
+    description: Affected rows carrying no algorithm version at all.
+  missingDatasetId:
+    type: integer
+    description: Affected rows with no dataset_id.
+  resolvablePurposes:
+    type: integer
+    description: Affected purposes whose DAR resolves, so a reprocess can rebuild them.
+  archivedOrMissingPurposes:
+    type: integer
+    description: Affected purposes whose DAR is archived or gone. Skipped, never reprocessed.
+  purposesWithMultipleAffectedMatches:
+    type: integer
+    description: Purposes holding more than one affected row, where a rebuild could collapse two onto one pair.
+  duplicatePurposeDatasetPairs:
+    type: integer
+    description: Existing (purpose, dataset_id) collisions, which block the uniqueness constraint.
