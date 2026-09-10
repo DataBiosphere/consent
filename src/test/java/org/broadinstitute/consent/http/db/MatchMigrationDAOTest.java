@@ -135,6 +135,32 @@ class MatchMigrationDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testSnapshotCapturesCurrentRowsSharingAReprocessedPurpose() {
+    // A reprocess deletes every row for the purpose, not just the affected one, so a current row
+    // sitting alongside a legacy one has to be captured or it is destroyed with no way back
+    Dataset legacyDataset = createDataset();
+    Dataset currentDataset = createDataset();
+    String purposeId = createSubmittedDar(legacyDataset, false);
+    Integer legacy = insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    Integer current =
+        insertMatch(purposeId, currentDataset.getDatasetId(), MatchAlgorithm.V5.getVersion());
+
+    assertEquals(2, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(List.of(legacy, current), snapshottedMatchIds());
+  }
+
+  @Test
+  void testSnapshotLeavesCurrentRowsOnPurposesThatAreNotReprocessed() {
+    // The widening is scoped to purposes a run will touch; everything else stays out
+    Dataset dataset = createDataset();
+    insertMatch(
+        createSubmittedDar(dataset, false), dataset.getDatasetId(), MatchAlgorithm.V5.getVersion());
+
+    assertEquals(0, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(List.of(), snapshottedMatchIds());
+  }
+
+  @Test
   void testSnapshotKeepsTwoRationalesThatShareTheirText() {
     // Keyed on each row's own id, so identical text is still two rows and a restore rebuilds two
     Dataset dataset = createDataset();

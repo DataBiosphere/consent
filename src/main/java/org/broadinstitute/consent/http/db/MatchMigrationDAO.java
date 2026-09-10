@@ -33,6 +33,20 @@ public interface MatchMigrationDAO {
   String NOT_ARCHIVED = "(LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)";
 
   /**
+   * The purposes a run will reprocess. Reused by the snapshot, because a reprocess deletes every
+   * row for a purpose rather than only its affected ones.
+   */
+  String RESOLVABLE_PURPOSES =
+      """
+      SELECT DISTINCT m.purpose
+      FROM match_entity m
+      JOIN data_access_request dar ON dar.reference_id = m.purpose
+      WHERE """
+          + AFFECTED_PREDICATE
+          + " AND "
+          + NOT_ARCHIVED;
+
+  /**
    * Counted in one statement so the totals cannot disagree with each other, and recounted on every
    * call because the affected set drains as DARs are re-matched.
    */
@@ -86,18 +100,7 @@ public interface MatchMigrationDAO {
    * by {@link #findUnresolvablePurposes()} rather than silently dropped: reprocessing one would
    * delete its matches and insert nothing, because the rebuild has no DAR to read.
    */
-  @SqlQuery(
-      """
-      SELECT DISTINCT m.purpose
-      FROM match_entity m
-      JOIN data_access_request dar ON dar.reference_id = m.purpose
-      WHERE """
-          + AFFECTED_PREDICATE
-          + " AND "
-          + NOT_ARCHIVED
-          + """
-      ORDER BY m.purpose
-      """)
+  @SqlQuery(RESOLVABLE_PURPOSES + " ORDER BY m.purpose")
   List<String> findResolvablePurposes();
 
   /** Affected purposes whose DAR is archived or gone; left untouched and reported for follow-up. */
@@ -120,7 +123,13 @@ public interface MatchMigrationDAO {
   List<String> findUnresolvablePurposes();
 
   /**
-   * Captures every affected row before anything is reprocessed.
+   * Captures everything the run can destroy, before anything is reprocessed.
+   *
+   * <p>Wider than the affected set on purpose. {@code reprocessMatchesForPurpose} deletes every
+   * match row for a purpose and rebuilds from the DAR, so on a purpose holding both a legacy row
+   * and an already-current one, capturing only the legacy row would let the run delete the other
+   * with no way back. So: every row of a purpose that will be reprocessed, plus any affected row
+   * elsewhere - the latter covering unresolvable purposes, which are skipped and never deleted.
    *
    * <p>{@code ON CONFLICT DO NOTHING} keeps the first capture authoritative: a re-run after a
    * partial failure must not overwrite pre-migration state with post-migration state, and must not
@@ -134,7 +143,11 @@ public interface MatchMigrationDAO {
       SELECT m.match_id, m.consent, m.dataset_id, m.purpose, m.match_entity, m.abstain, m.failed,
              m.create_date, m.algorithm_version
       FROM match_entity m
-      WHERE """
+      WHERE m.purpose IN ("""
+          + RESOLVABLE_PURPOSES
+          + """
+      )
+         OR """
           + AFFECTED_PREDICATE
           + """
       ON CONFLICT (match_id) DO NOTHING
