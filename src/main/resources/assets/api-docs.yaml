@@ -901,6 +901,10 @@ paths:
     $ref: './paths/studyDarSummaries.yaml'
   /api/metrics/research-outputs/study/{studyId}:
     $ref: './paths/studyResearchOutputs.yaml'
+  /api/metrics/study-recommendations/{studyId}/similar:
+    $ref: './paths/studySimilarRecommendations.yaml'
+  /api/metrics/study-recommendations/{studyId}/frequently-requested-with:
+    $ref: './paths/studyFrequentlyRequestedWith.yaml'
   /api/passport/userinfo:
     $ref: './paths/passportUserInfo.yaml'
   /api/user:
