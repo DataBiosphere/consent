@@ -278,13 +278,13 @@ class MatchDAOTest extends DAOTestHelper {
     // a past access decision. The identifier is asserted so the refusal cannot come from some
     // other reference to dataset.
     Dataset dataset = createDataset();
+    Integer datasetId = dataset.getDatasetId();
     matchDAO.insertMatch(makeMockMatch(dataset));
-    datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
+    datasetDAO.deleteDatasetPropertiesByDatasetId(datasetId);
 
     UnableToExecuteStatementException thrown =
         assertThrows(
-            UnableToExecuteStatementException.class,
-            () -> datasetDAO.deleteDatasetById(dataset.getDatasetId()));
+            UnableToExecuteStatementException.class, () -> datasetDAO.deleteDatasetById(datasetId));
     assertTrue(thrown.getMessage().contains("fk_match_entity_dataset_id"));
   }
 
