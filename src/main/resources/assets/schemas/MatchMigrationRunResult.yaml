@@ -23,7 +23,10 @@ properties:
         description: Rationale rows captured by this run.
       reprocessed:
         type: integer
-        description: Purposes rebuilt without a failure.
+        description: >
+          Purposes rebuilt successfully, counting any that succeeded on a retry. With failed this
+          accounts for every purpose attempted; retried overlaps both rather than forming a bucket
+          of its own.
       skipped:
         type: integer
         description: Purposes left alone because their DAR is archived or gone.

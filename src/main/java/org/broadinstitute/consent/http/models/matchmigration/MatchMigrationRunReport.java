@@ -10,7 +10,9 @@ import java.util.List;
  *
  * @param snapshottedMatches rows captured by this run, zero if an earlier run already held them
  * @param snapshottedRationales rationale rows captured by this run
- * @param reprocessed purposes rebuilt without a failure
+ * @param reprocessed purposes rebuilt successfully, counting any that succeeded on a retry. With
+ *     {@code failed} this accounts for every purpose attempted; {@code retried} overlaps both
+ *     rather than forming a bucket of its own
  * @param skipped purposes left alone because their DAR is archived or gone
  * @param failed purposes whose every attempt failed
  * @param retried purposes that failed once and were attempted again, successfully or not
