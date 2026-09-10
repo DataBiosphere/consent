@@ -246,38 +246,38 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeletingDatasetCascadesToMatchesAndRationales() {
+  void testFindMatchesForLatestDataAccessElectionsReturnsElectionsWithNoDatasetId() {
+    // election.dataset_id is nullable too, and a reprocessed match must not drop out of an older
+    // election that never recorded one.
     Dataset dataset = createDataset();
-    Match match = makeMockMatch(dataset);
-    match.addRationale(randomAlphabetic(100));
-    Integer matchId = matchDAO.insertMatch(match);
-    match.getRationales().forEach(r -> matchDAO.insertRationale(matchId, r));
-    assertEquals(1, getRationaleCount(matchId));
+    String darReferenceId = UUID.randomUUID().toString();
+    createDataAccessElection(darReferenceId, null);
 
-    datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
-    datasetDAO.deleteDatasetById(dataset.getDatasetId());
+    Integer matchId =
+        matchDAO.insertMatch(
+            mockMatch(
+                dataset.getDatasetIdentifier(),
+                dataset.getDatasetId(),
+                darReferenceId,
+                true,
+                false,
+                MatchAlgorithm.V5.getVersion()));
 
-    assertNull(matchDAO.findMatchById(matchId));
-    assertEquals(0, getRationaleCount(matchId));
-  }
-
-  private static Integer getRationaleCount(Integer matchId) {
-    return jdbi.withHandle(
-        handle ->
-            handle
-                .createQuery(
-                    "SELECT count(*) FROM match_rationale WHERE match_entity_id = :matchId")
-                .bind("matchId", matchId)
-                .mapTo(Integer.class)
-                .one());
+    List<Match> matchResults =
+        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+    assertEquals(1, matchResults.size());
+    assertEquals(matchId, matchResults.getFirst().getId());
   }
 
   @Test
   void testFindMatchById() {
     Match match = makeMockMatch(createDataset());
+    match.setAbstain(true);
     Integer matchId = matchDAO.insertMatch(match);
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
+    assertEquals(match.getDatasetId(), foundMatch.getDatasetId());
+    assertTrue(foundMatch.getAbstain());
   }
 
   @Test

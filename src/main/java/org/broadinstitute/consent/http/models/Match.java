@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Abstain;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Approve;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,7 +17,8 @@ public class Match {
 
   private String consent;
 
-  private Integer datasetId;
+  // Internal identity only: responses keep exposing the dataset through the public `consent` id.
+  @JsonIgnore private Integer datasetId;
 
   private String purpose;
 

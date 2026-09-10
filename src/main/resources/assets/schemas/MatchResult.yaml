@@ -6,11 +6,6 @@ properties:
   consent:
     type: string
     description: The Consent ID or Dataset Identifier
-  datasetId:
-    type:
-      - integer
-      - 'null'
-    description: The id of the matched dataset. Null on legacy matches recorded before the column existed.
   purpose:
     type: string
     description: The Data Access Request ID
