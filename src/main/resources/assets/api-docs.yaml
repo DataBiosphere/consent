@@ -897,6 +897,10 @@ paths:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
+  /api/metrics/dar-summaries/study/{studyId}:
+    $ref: './paths/studyDarSummaries.yaml'
+  /api/metrics/research-outputs/study/{studyId}:
+    $ref: './paths/studyResearchOutputs.yaml'
   /api/passport/userinfo:
     $ref: './paths/passportUserInfo.yaml'
   /api/user:
