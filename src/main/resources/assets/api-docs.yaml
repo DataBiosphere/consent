@@ -595,6 +595,20 @@ paths:
     $ref: './paths/studyConvertByIdentifier.yaml'
   /api/dataset/study/{studyId}/custodians:
     $ref: './paths/studyByIdCustodians.yaml'
+  /api/dataset/study/{studyId}/assets/publications:
+    $ref: './paths/studyPublications.yaml'
+  /api/dataset/study/{studyId}/assets/models:
+    $ref: './paths/studyModels.yaml'
+  /api/dataset/study/{studyId}/assets/workspaces:
+    $ref: './paths/studyWorkspaces.yaml'
+  /api/dataset/study/{studyId}/assets/presentations:
+    $ref: './paths/studyPresentations.yaml'
+  /api/dataset/study/{studyId}/assets/clinicalTrials:
+    $ref: './paths/studyClinicalTrials.yaml'
+  /api/dataset/study/{studyId}/assets/intellectualProperty:
+    $ref: './paths/studyIntellectualProperty.yaml'
+  /api/dataset/study/{studyId}/assets/fundingResources:
+    $ref: './paths/studyFundingResources.yaml'
   /api/dataset/study/{studyId}/comments:
     $ref: './paths/studyComments.yaml'
   /api/dataset/study/{studyId}/comments/{commentId}:
