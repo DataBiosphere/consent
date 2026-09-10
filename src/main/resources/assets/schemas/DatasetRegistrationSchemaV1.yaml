@@ -228,13 +228,59 @@ properties:
     description: Consent Groups
     items:
       "$ref": "./ConsentGroup.yaml"
+  models:
+    type: array
+    description: Models produced by or associated with this study.
+    items:
+      $ref: './AiModel.yaml'
+  workspaces:
+    type: array
+    description: Analysis workspaces associated with this study.
+    items:
+      $ref: './Workspace.yaml'
+  presentations:
+    type: array
+    description: Presentations produced by or associated with this study.
+    items:
+      $ref: './Presentation.yaml'
+  publications:
+    type: array
+    description: Publications produced by or associated with this study.
+    items:
+      $ref: './Publication.yaml'
+  clinicalTrials:
+    type: array
+    description: Clinical trials associated with this study.
+    items:
+      $ref: './ClinicalTrial.yaml'
+  intellectualProperties:
+    type: array
+    description: Intellectual property produced by or associated with this study.
+    items:
+      $ref: './IntellectualProperty.yaml'
+  biospecimens:
+    type: array
+    description: Biospecimens associated with this study.
+    items:
+      $ref: './Biospecimen.yaml'
+  funding:
+    type: array
+    description: Funding sources for this study.
+    items:
+      $ref: './FundingResource.yaml'
   assets:
     type: object
+    deprecated: true
     title: DatasetRegistrationSchemaV1Assets
     description: |
-      Optional client-managed presentation/submission-context metadata (e.g.
-      UI labels or form choices). Preserved and returned as-is by the backend;
-      not backend-validated.
+      Deprecated. The asset lists the backend reads — models, workspaces,
+      presentations, publications, clinicalTrials, intellectualProperties,
+      biospecimens and funding — are now first-class fields above, and are
+      stripped from this object when submitted here. What remains is optional
+      client-managed presentation/submission-context metadata (e.g. UI labels
+      or form choices), preserved and returned as-is; not backend-validated.
+      Reads and writes still round-trip the promoted keys here for
+      compatibility; send the top-level fields instead.
   data:
     type: object
     title: DatasetRegistrationSchemaV1Data

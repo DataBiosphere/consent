@@ -1,0 +1,89 @@
+type: object
+description: A Biospecimen object.
+properties:
+  biospecimenId:
+    type: string
+    description: The unique identifier for the biospecimen.
+  studyId:
+    type: string
+    description: The study ID associated with the biospecimen.
+  donorId:
+    type: string
+    description: The identifier of the donor the biospecimen came from.
+  specimenType:
+    type: string
+    description: The type of biospecimen.
+    enum:
+      - BLOOD
+      - PLASMA
+      - SERUM
+      - TISSUE
+      - SALIVA
+      - CSF
+      - PBMC
+      - TUMOR
+      - NORMAL_ADJACENT
+  preservationMethod:
+    type: string
+    description: The method used to preserve the biospecimen.
+    enum:
+      - FFPE
+      - FRESH_FROZEN
+      - CRYO_PRESERVED
+      - RNA_LATER
+      - FORMALIN_FIXED
+  preservationDetails:
+    type: string
+    description: Additional detail about the preservation method.
+  dateOfCollection:
+    type: string
+    description: The date the biospecimen was collected.
+  postMortemInterval:
+    type: object
+    description: The interval between death and collection.
+    properties:
+      value:
+        type: number
+        description: The length of the interval.
+      unit:
+        type: string
+        description: The unit the interval is measured in.
+        enum:
+          - HOURS
+          - MINUTES
+          - DAYS
+          - WEEKS
+  sex:
+    type: string
+    description: The donor's sex.
+    enum:
+      - FEMALE
+      - MALE
+      - UNKNOWN
+      - NOT_REPORTED
+  age:
+    type: number
+    description: The donor's age.
+  race:
+    type: string
+    description: The donor's race.
+  countryOfOrigin:
+    type: string
+    description: The donor's country of origin, as an ISO-3166 country name.
+  extractedDiagnoses:
+    type: array
+    items:
+      type: string
+    description: Diagnoses extracted for the donor.
+  pathology:
+    type: string
+    description: Pathology information for the biospecimen.
+  organization:
+    type: string
+    description: The institution, biobank, or provider holding the biospecimen.
+  sourceSite:
+    type: string
+    description: The clinic, hospital, or collection site the biospecimen came from.
+  optionalDataUse:
+    type: string
+    description: Additional data use terms attached to the biospecimen.
