@@ -1,0 +1,32 @@
+type: object
+description: >
+  A page of a study's comments, with the study-wide average rating and comment count.
+properties:
+  comments:
+    type: array
+    items:
+      $ref: './StudyComment.yaml'
+    description: >
+      The requested page, newest first by creation date. Editing a comment does not change
+      its position: the order is by when it was first posted, and an edit advances only
+      updateDate.
+  averageRating:
+    type: number
+    format: double
+    nullable: true
+    description: >
+      The mean of every rating on the study, not only the returned page, or null when the
+      study has no comments.
+  total:
+    type: integer
+    description: >
+      How many comments the study has in total, so a caller can tell whether more pages
+      remain.
+  yourComment:
+    allOf:
+      - $ref: './StudyComment.yaml'
+    nullable: true
+    description: >
+      The requesting user's own comment, or null when they have none. Carried separately
+      because paging puts it on an unpredictable page, and a client needs it to know whether
+      saving will add a comment or revise the existing one.

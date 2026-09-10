@@ -595,6 +595,10 @@ paths:
     $ref: './paths/studyConvertByIdentifier.yaml'
   /api/dataset/study/{studyId}/custodians:
     $ref: './paths/studyByIdCustodians.yaml'
+  /api/dataset/study/{studyId}/comments:
+    $ref: './paths/studyComments.yaml'
+  /api/dataset/study/{studyId}/comments/{commentId}:
+    $ref: './paths/studyCommentById.yaml'
   /api/dataset/study/registration/{studyId}:
     $ref: './paths/studyRegistrationByStudyId.yaml'
   /api/dataset/{id}:
