@@ -10,7 +10,7 @@ In progress. Ticket-by-ticket state:
 | 2. Canonical primary classification on Data Use writes | Done. `DataUsePrimaryClassifier`/`DataUsePrimaryValidator` back registration, admin Data Use replacement, and dataset-to-study conversion. |
 | 3. Explicit legacy and unsupported matcher behavior | Done. `DataUseMatcherV5` classifies before matching and abstains on Other-only, NONE/null, and MULTIPLE. |
 | 4. Normalize legacy records and reprocess affected matches | Done. |
-| 5. Replace alias-derived internal dataset references | Not started. `match_entity.consent` still holds the formatted alias. |
+| 5. Replace alias-derived internal dataset references | In progress. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), Phase 1 has landed: nullable `match_entity.dataset_id`, dual write, and a dataset-correlated election join. The reprocess and the non-null and uniqueness constraints follow once Phase 1 is deployed everywhere. |
 | 6. Align duos-ui with the canonical classification | Done in duos-ui (DT-3866). The Data Use translation collapse is an owned follow-up (DT-4008). |
 
 ## Objective
@@ -460,8 +460,12 @@ in external contracts and does not make the internal numeric `dataset_id` public
 
 - Audit null, duplicate, noncanonical, and conflicting aliases before adding constraints.
 - Add a nullable `match_entity.dataset_id`, its foreign key, and an index first.
-- Backfill only exact, unambiguous legacy mappings. Quarantine or explicitly resolve unmatched and
-  ambiguous `match_entity.consent` values; never guess from numeric parsing alone.
+- Reprocess rather than backfill (DT-3942, endorsed on review). The legacy `consent` values are
+  UUIDs whose dataset mapping was deleted in 2024, so no mapping can be derived without guessing.
+  Re-running matching for the affected purposes rebuilds the rows carrying a real `dataset_id`, and
+  purposes whose DAR has no dataset associations rebuild to nothing, which deletes them. The cost is
+  that historical `v1` rationales are replaced by current-algorithm results; this is what the
+  application already does whenever a DAR is edited. Snapshot the affected rows first.
 - Change match creation to pass the selected dataset's `dataset_id`. Join to `dataset` when the
   public identifier is needed in a response.
 - During rollout, use an explicitly bounded compatibility phase (for example, dual-write plus
@@ -483,8 +487,9 @@ in external contracts and does not make the internal numeric `dataset_id` public
 - Concurrent dataset creation cannot allocate duplicate aliases, and the database enforces alias
   uniqueness.
 - Match uniqueness is enforced by `(purpose, dataset_id)`.
-- Backfill totals reconcile: migrated plus explicitly unresolved rows equals the pre-migration row
-  count.
+- The execution-time snapshot reconciles: rebuilt plus explicitly deleted rows equals the snapshotted
+  row count. Counts drift as DARs are re-matched, so the snapshot is taken when the migration runs
+  rather than fixed in advance.
 - Rollout and rollback tests cover legacy reads, dual-write comparison (if used), constraint
   validation, and public identifier compatibility.
 

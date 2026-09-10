@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    match_entity identifies its dataset by text in `consent`: the public `DUOS-######` identifier on
+    current rows, but a consent UUID on legacy ones, and those UUIDs resolve to no dataset since the
+    consent mapping was dropped in 2024. Add the real foreign key alongside it.
+
+    Nullable, and `consent` keeps being written, so an instance on the previous release can still
+    write a complete row and read one written by this release. The column becomes non-null once the
+    legacy rows have been reprocessed.
+
+    NO ACTION, like the sibling `dar_dataset` and `election` references. A dataset carrying matches
+    always carries the `dar_dataset` rows that produced them, so it is already undeletable, and
+    match deletion is driven by the DAR rather than by the dataset.
+  -->
+  <changeSet id="changelog-consent-2026-09-09-match-dataset-id" author="kmarete">
+    <addColumn tableName="match_entity">
+      <column name="dataset_id" type="bigint">
+        <constraints nullable="true"/>
+      </column>
+    </addColumn>
+    <addForeignKeyConstraint baseTableName="match_entity" baseColumnNames="dataset_id"
+      constraintName="fk_match_entity_dataset_id" referencedTableName="dataset"
+      referencedColumnNames="dataset_id" onDelete="NO ACTION" onUpdate="NO ACTION"/>
+    <rollback>
+      <dropColumn tableName="match_entity" columnName="dataset_id"/>
+    </rollback>
+  </changeSet>
+
+  <!--
+    Postgres does not index the referencing side of a foreign key, so every dataset delete would
+    otherwise scan match_entity to enforce the constraint above. Built CONCURRENTLY
+    (runInTransaction="false") to avoid the write-blocking SHARE lock; see
+    changelog-consent-2026-08-07-so-dashboard-indices.xml for recovery notes.
+  -->
+  <changeSet id="changelog-consent-2026-09-09-match-dataset-id-index" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_match_entity_dataset_id ON match_entity (dataset_id)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_match_entity_dataset_id</sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
