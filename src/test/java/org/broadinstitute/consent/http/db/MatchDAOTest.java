@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -267,6 +269,23 @@ class MatchDAOTest extends DAOTestHelper {
         matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     assertEquals(matchId, matchResults.getFirst().getId());
+  }
+
+  @Test
+  void testDeletingDatasetIsRefusedWhileMatchesReferenceIt() {
+    // The dataset reference is NO ACTION, not CASCADE: matches are deleted with the DAR that
+    // produced them, and taking them out silently with the dataset would drop the evidence behind
+    // a past access decision. The identifier is asserted so the refusal cannot come from some
+    // other reference to dataset.
+    Dataset dataset = createDataset();
+    matchDAO.insertMatch(makeMockMatch(dataset));
+    datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
+
+    UnableToExecuteStatementException thrown =
+        assertThrows(
+            UnableToExecuteStatementException.class,
+            () -> datasetDAO.deleteDatasetById(dataset.getDatasetId()));
+    assertTrue(thrown.getMessage().contains("fk_match_entity_dataset_id"));
   }
 
   @Test
