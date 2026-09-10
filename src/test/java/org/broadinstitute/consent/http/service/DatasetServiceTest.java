@@ -230,8 +230,12 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertThrows(NotFoundException.class, () -> datasetService.findStudyByIdForRead(mockUser, 99));
   }
 
+  /**
+   * A study the caller may not read is reported absent, not forbidden - the same answer
+   * verifyStudyVisibilityAccess gives, so the study's files and its registration assets agree.
+   */
   @Test
-  void testFindStudyByIdForReadForbidden() {
+  void testFindStudyByIdForReadHiddenStudyIsNotFound() {
     User user = new User();
     user.setUserId(1);
     user.setEmail("user@email.com");
@@ -247,8 +251,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     int studyId = study.getStudyId();
     when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
 
-    assertThrows(
-        ForbiddenException.class, () -> datasetService.findStudyByIdForRead(user, studyId));
+    assertThrows(NotFoundException.class, () -> datasetService.findStudyByIdForRead(user, studyId));
   }
 
   @Test
@@ -1097,8 +1100,11 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setStudy(study);
     dataset.setStudyId(study.getStudyId());
 
-    Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
-    assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+    // An unset public_visibility is no longer treated as published: the caller is neither the
+    // dataset's creator nor the study's, so the dataset is withheld. It previously came back,
+    // which is what let a null-visibility study stay readable here while the study endpoints
+    // returned 404 for it.
+    assertNull(datasetService.verifyPublicVisibilityAccess(dataset, user));
   }
 
   @Test
@@ -1185,6 +1191,87 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dataset verifiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, datasetCreator);
 
     assertEquals(dataset.getDatasetId(), verifiedDataset.getDatasetId());
+  }
+
+  // verifyStudyVisibilityAccess is the single read-access gate shared by StudyResource and the
+  // study asset, comment, and metrics endpoints.
+  @Test
+  void testVerifyStudyVisibilityAccess_PublicStudyIsReadableByAnyone() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setPublicVisibility(true);
+    User generalUser = new User();
+    generalUser.setUserId(2);
+    generalUser.setEmail("general@email.com");
+
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, generalUser));
+  }
+
+  @Test
+  void testVerifyStudyVisibilityAccess_PrivateStudyIsHiddenFromOtherUsers() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setCreateUserEmail("creator@email.com");
+    study.setPublicVisibility(false);
+    User generalUser = new User();
+    generalUser.setUserId(2);
+    generalUser.setEmail("general@email.com");
+
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.verifyStudyVisibilityAccess(study, generalUser));
+  }
+
+  @Test
+  void testVerifyStudyVisibilityAccess_PrivateStudyIsReadableByCreatorAndAdmin() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setCreateUserEmail("creator@email.com");
+    study.setPublicVisibility(false);
+    User creator = new User();
+    creator.setUserId(1);
+    creator.setEmail("creator@email.com");
+    User admin = new User();
+    admin.setUserId(3);
+    admin.setEmail("admin@email.com");
+    admin.setAdminRole();
+
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, creator));
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, admin));
+  }
+
+  // The public_visibility column is nullable; a null reads as "not public".
+  @Test
+  void testVerifyStudyVisibilityAccess_NullVisibilityIsNotPublic() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(1);
+    study.setCreateUserEmail("creator@email.com");
+    study.setPublicVisibility(null);
+    User generalUser = new User();
+    generalUser.setUserId(2);
+    generalUser.setEmail("general@email.com");
+    User creator = new User();
+    creator.setUserId(1);
+    creator.setEmail("creator@email.com");
+
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.verifyStudyVisibilityAccess(study, generalUser));
+    assertEquals(study, datasetService.verifyStudyVisibilityAccess(study, creator));
+  }
+
+  @Test
+  void testVerifyStudyVisibilityAccess_NullStudyIsNotFound() {
+    User generalUser = new User();
+    generalUser.setUserId(2);
+
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.verifyStudyVisibilityAccess(null, generalUser));
   }
 
   @Test
@@ -1832,6 +1919,55 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(0, result.size());
   }
 
+  // ============= verifyPublicVisibilityAccess(Dataset, User) – null visibility =============
+
+  /**
+   * The dataset route reaches the same rule through canReadStudy, so a study whose
+   * public_visibility is null is hidden here too. Before the rule was unified, such a study
+   * returned 404 from the study endpoints while its datasets stayed readable.
+   */
+  @Test
+  void testVerifyPublicVisibilityAccess_Dataset_PublicVisibilityNull_NotCreator() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@test.com");
+    Study study = studyWithNullVisibility(99);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(3);
+    dataset.setStudyId(study.getStudyId());
+    dataset.setStudy(study);
+
+    assertNull(datasetService.verifyPublicVisibilityAccess(dataset, user));
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_Dataset_PublicVisibilityNull_Creator() {
+    User creator = new User();
+    creator.setUserId(1);
+    creator.setEmail("creator@test.com");
+    Study study = studyWithNullVisibility(creator.getUserId());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(creator.getUserId());
+    dataset.setStudyId(study.getStudyId());
+    dataset.setStudy(study);
+
+    assertEquals(dataset, datasetService.verifyPublicVisibilityAccess(dataset, creator));
+  }
+
+  private Study studyWithNullVisibility(Integer createUserId) {
+    Study study = new Study();
+    study.setStudyId(7);
+    study.setCreateUserId(createUserId);
+    study.setPublicVisibility(null);
+    StudyProperty property = new StudyProperty();
+    property.setKey("other");
+    property.setValue("[]");
+    study.addProperties(property);
+    return study;
+  }
+
   // ==================== canReadStudy ====================
 
   @Test
@@ -1849,13 +1985,28 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertTrue(datasetService.canReadStudy(admin, study));
   }
 
+  /**
+   * public_visibility is nullable, and a null now reads as "not published" rather than as public.
+   * It previously read as public here while the dataset study summaries treated it as private, so
+   * the same study was readable through one route and hidden on another.
+   */
   @Test
   void testCanReadStudy_PublicVisibilityNull() {
     User user = new User();
     user.setUserId(1);
+    user.setEmail("user@test.com");
     Study study = new Study();
-    // publicVisibility null → !Boolean.FALSE.equals(null) is true → readable
-    assertTrue(datasetService.canReadStudy(user, study));
+    study.setCreateUserId(99);
+    assertFalse(datasetService.canReadStudy(user, study));
+  }
+
+  @Test
+  void testCanReadStudy_PublicVisibilityNullForCreator() {
+    User creator = new User();
+    creator.setUserId(1);
+    Study study = new Study();
+    study.setCreateUserId(creator.getUserId());
+    assertTrue(datasetService.canReadStudy(creator, study));
   }
 
   @Test
