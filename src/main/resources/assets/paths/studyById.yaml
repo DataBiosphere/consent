@@ -151,6 +151,9 @@ patch:
       * Study Target Delivery Date
       * Study Target Public Release Date
       * Study PI Name
+      * Study PI Email
+      * Study PI Institution Id
+      * Study PI ORCID, LinkedIn URL, and website URL
       * Study public visibility (boolean)
   parameters:
     - name: studyId

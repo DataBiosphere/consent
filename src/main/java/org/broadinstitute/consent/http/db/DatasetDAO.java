@@ -328,6 +328,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           s.update_date AS s_update_date,
           s.public_visibility AS s_public_visibility,
           s.uuid AS s_uuid,
+          -- StudyReducer reads the institution columns unprefixed, as StudyDAO's queries alias
+          -- them. Without these the study on this route reported no PI institution at all, though
+          -- Dataset.yaml reuses Study.yaml and documents the field.
+          s.pi_institution_id AS pi_institution_id,
+          i.institution_name AS pi_institution_name,
+          i.create_date AS pi_institution_create_date,
+          i.update_date AS pi_institution_update_date,
           sp.study_property_id AS sp_study_property_id,
           sp.study_id AS sp_study_id,
           sp.key AS sp_key,
@@ -335,6 +342,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           sp.type AS sp_type
       FROM dataset d
       LEFT JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN institution i ON i.institution_id = s.pi_institution_id
       LEFT JOIN study_property sp ON sp.study_id = s.study_id
       WHERE d.dataset_id = :datasetId
       """)

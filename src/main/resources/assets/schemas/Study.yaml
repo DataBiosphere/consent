@@ -22,6 +22,20 @@ properties:
     type: string
     format: email
     description: Principal Investigator Email
+  piInstitution:
+    $ref: './Institution.yaml'
+    description: Principal Investigator institution
+  piOrcid:
+    type: string
+    description: Principal Investigator ORCID identifier or URL
+  piLinkedinUrl:
+    type: string
+    format: uri
+    description: Principal Investigator LinkedIn profile URL
+  piWebsiteUrl:
+    type: string
+    format: uri
+    description: Principal Investigator website URL
   publicVisibility:
     type: boolean
     description: Whether this study is publicly visible or not.
