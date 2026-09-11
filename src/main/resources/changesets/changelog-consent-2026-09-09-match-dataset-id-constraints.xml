@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Closes the dataset_id migration: every match row now identifies its dataset by foreign key, and
+    a purpose holds at most one match per dataset.
+
+    Gated rather than trusted. The precondition halts on exactly the conditions the migration run
+    reports, so this never applies a constraint the data cannot satisfy.
+
+    It does not stop the deploy. ConsentApplication logs a LiquibaseException and starts Jersey
+    anyway, so an environment released early runs this code with the constraints silently unapplied
+    rather than failing loudly. The gate protects the data, not the rollout, which is why the
+    ordering is a release-plan requirement and not something this file can enforce on its own.
+
+    Both statements take an ACCESS EXCLUSIVE lock and scan the table. match_entity is small enough
+    for that to be brief; revisit with a NOT VALID check plus VALIDATE if it grows by an order of
+    magnitude.
+
+    The snapshot tables are deliberately kept. They are the rollback path for the run, and this is
+    the release most likely to need one; they are dropped in a later cleanup.
+  -->
+  <changeSet id="changelog-consent-2026-09-09-match-dataset-id-constraints" author="kmarete">
+    <preConditions onFail="HALT" onError="HALT"
+      onFailMessage="Match rows are not ready for these constraints: every row must carry a dataset_id and an algorithm version later than v2, with no duplicate (purpose, dataset_id) pair. This release retires the migration surface, so deploy the previous release and run POST /api/match/migration/dataset-id/run, then deploy this one once it reports readyForConstraints. The run does not clear every blocker: a duplicate (purpose, dataset_id) pair and a purpose whose DAR is archived or missing are both left untouched and need resolving directly, so rerunning alone will not make this pass.">
+      <dbms type="postgresql"/>
+      <sqlCheck expectedResult="0">
+        SELECT
+          (SELECT COUNT(*) FROM match_entity
+           WHERE dataset_id IS NULL
+             OR algorithm_version IS NULL
+             OR LOWER(algorithm_version) IN ('v1', 'v2'))
+          +
+          (SELECT COUNT(*) FROM (
+            SELECT purpose, dataset_id FROM match_entity
+            GROUP BY purpose, dataset_id HAVING COUNT(*) &gt; 1
+          ) duplicate_pairs)
+      </sqlCheck>
+    </preConditions>
+
+    <addNotNullConstraint tableName="match_entity" columnName="dataset_id"
+      columnDataType="bigint"/>
+    <addUniqueConstraint tableName="match_entity" columnNames="purpose, dataset_id"
+      constraintName="match_entity_purpose_dataset_unique"/>
+
+    <rollback>
+      <dropUniqueConstraint tableName="match_entity"
+        constraintName="match_entity_purpose_dataset_unique"/>
+      <dropNotNullConstraint tableName="match_entity" columnName="dataset_id"
+        columnDataType="bigint"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
