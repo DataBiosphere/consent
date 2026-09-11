@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationPopulation;
+import org.broadinstitute.consent.http.models.matchmigration.SnapshotReconciliation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -119,6 +120,165 @@ class MatchMigrationDAOTest extends DAOTestHelper {
     assertTrue(population.blocksConstraints());
   }
 
+  @Test
+  void testSnapshotCapturesAffectedRowsAndTheirRationales() {
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    Integer affected = insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchDAO.insertRationale(affected, "legacy rationale");
+    insertMatch(
+        createSubmittedDar(dataset, false), dataset.getDatasetId(), MatchAlgorithm.V5.getVersion());
+
+    assertEquals(1, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(1, matchMigrationDAO.snapshotAffectedRationales());
+    assertEquals(List.of(affected), snapshottedMatchIds());
+    assertEquals(List.of("legacy rationale"), snapshottedRationales(affected));
+  }
+
+  @Test
+  void testSnapshotCapturesCurrentRowsSharingAReprocessedPurpose() {
+    // A reprocess deletes every row for the purpose, not just the affected one, so a current row
+    // sitting alongside a legacy one has to be captured or it is destroyed with no way back
+    Dataset legacyDataset = createDataset();
+    Dataset currentDataset = createDataset();
+    String purposeId = createSubmittedDar(legacyDataset, false);
+    Integer legacy = insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    Integer current =
+        insertMatch(purposeId, currentDataset.getDatasetId(), MatchAlgorithm.V5.getVersion());
+
+    assertEquals(2, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(List.of(legacy, current), snapshottedMatchIds());
+  }
+
+  @Test
+  void testSnapshotLeavesCurrentRowsOnPurposesThatAreNotReprocessed() {
+    // The widening is scoped to purposes a run will touch; everything else stays out
+    Dataset dataset = createDataset();
+    insertMatch(
+        createSubmittedDar(dataset, false), dataset.getDatasetId(), MatchAlgorithm.V5.getVersion());
+
+    assertEquals(0, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(List.of(), snapshottedMatchIds());
+  }
+
+  @Test
+  void testSnapshotKeepsTwoRationalesThatShareTheirText() {
+    // Keyed on each row's own id, so identical text is still two rows and a restore rebuilds two
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    Integer matchId = insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchDAO.insertRationale(matchId, "same text");
+    matchDAO.insertRationale(matchId, "same text");
+
+    matchMigrationDAO.snapshotAffectedMatches();
+    assertEquals(2, matchMigrationDAO.snapshotAffectedRationales());
+    assertEquals(List.of("same text", "same text"), snapshottedRationales(matchId));
+
+    // And a second pass still captures nothing new
+    assertEquals(0, matchMigrationDAO.snapshotAffectedRationales());
+  }
+
+  @Test
+  void testSnapshotIsRerunnableAndKeepsTheFirstCapture() {
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    Integer matchId = insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchDAO.insertRationale(matchId, "first");
+    matchMigrationDAO.snapshotAffectedMatches();
+    matchMigrationDAO.snapshotAffectedRationales();
+
+    // A second pass captures nothing new and leaves the original capture in place
+    assertEquals(0, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(0, matchMigrationDAO.snapshotAffectedRationales());
+    assertEquals(List.of(matchId), snapshottedMatchIds());
+    assertEquals(List.of("first"), snapshottedRationales(matchId));
+  }
+
+  @Test
+  void testSnapshotSkipsRationalesOfMatchesItDidNotCapture() {
+    Dataset dataset = createDataset();
+    Integer current =
+        insertMatch(
+            createSubmittedDar(dataset, false),
+            dataset.getDatasetId(),
+            MatchAlgorithm.V5.getVersion());
+    matchDAO.insertRationale(current, "current rationale");
+
+    assertEquals(0, matchMigrationDAO.snapshotAffectedMatches());
+    assertEquals(0, matchMigrationDAO.snapshotAffectedRationales());
+  }
+
+  @Test
+  void testReconcileCountsARowStillPresentAsUnhandled() {
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchMigrationDAO.snapshotAffectedMatches();
+
+    SnapshotReconciliation reconciliation = matchMigrationDAO.reconcile();
+    assertEquals(1, reconciliation.snapshotted());
+    assertEquals(1, reconciliation.snapshottedRowsRemaining());
+    assertEquals(0, reconciliation.snapshottedRowsGone());
+    assertEquals(1, reconciliation.stillAffected());
+    // Resolvable, so it should have been reprocessed; nothing was skipped
+    assertEquals(0, reconciliation.unresolvableRows());
+    assertFalse(reconciliation.reconciles());
+  }
+
+  @Test
+  void testReconcileTreatsAReplacedRowAsHandled() {
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchMigrationDAO.snapshotAffectedMatches();
+
+    // Stands in for a reprocess: the old row goes, a replacement arrives under a new id
+    matchDAO.deleteMatchesByPurposeId(purposeId);
+    insertMatch(purposeId, dataset.getDatasetId(), MatchAlgorithm.V5.getVersion());
+
+    SnapshotReconciliation reconciliation = matchMigrationDAO.reconcile();
+    assertEquals(1, reconciliation.snapshottedRowsGone());
+    assertEquals(0, reconciliation.snapshottedRowsRemaining());
+    assertEquals(1, reconciliation.purposesHoldingMatches());
+    assertEquals(0, reconciliation.purposesHoldingNoMatches());
+    assertEquals(0, reconciliation.stillAffected());
+    assertTrue(reconciliation.reconciles());
+  }
+
+  @Test
+  void testReconcileTreatsAPurposeRebuiltToNothingAsHandled() {
+    Dataset dataset = createDataset();
+    String purposeId = createSubmittedDar(dataset, false);
+    insertMatch(purposeId, null, MatchAlgorithm.V1.getVersion());
+    matchMigrationDAO.snapshotAffectedMatches();
+
+    // A DAR with no dataset associations rebuilds to nothing, which deletes its rows
+    matchDAO.deleteMatchesByPurposeId(purposeId);
+
+    SnapshotReconciliation reconciliation = matchMigrationDAO.reconcile();
+    assertEquals(1, reconciliation.snapshottedRowsGone());
+    assertEquals(1, reconciliation.purposesHoldingNoMatches());
+    assertEquals(0, reconciliation.purposesHoldingMatches());
+    assertTrue(reconciliation.reconciles());
+  }
+
+  @Test
+  void testReconcileAcceptsSkippedRowsThatAreStillAffected() {
+    Dataset dataset = createDataset();
+    String archived = createSubmittedDar(dataset, true);
+    insertMatch(archived, null, MatchAlgorithm.V1.getVersion());
+    matchMigrationDAO.snapshotAffectedMatches();
+
+    // Never reprocessed, by design. The run is still complete: what remains is what it skipped.
+    SnapshotReconciliation reconciliation = matchMigrationDAO.reconcile();
+    assertEquals(1, reconciliation.snapshottedRowsRemaining());
+    assertEquals(1, reconciliation.unresolvableRows());
+    assertEquals(1, reconciliation.stillAffected());
+    // Still holds its original rows, which is why this counter is named for the state
+    assertEquals(1, reconciliation.purposesHoldingMatches());
+    assertTrue(reconciliation.reconciles());
+  }
+
   private Integer insertMatch(String purposeId, Integer datasetId, String algorithmVersion) {
     Match match = new Match();
     match.setConsent("DUOS-" + randomInt(1, 999999));
@@ -149,6 +309,29 @@ class MatchMigrationDAOTest extends DAOTestHelper {
         collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, dataset.getDatasetId());
     return referenceId;
+  }
+
+  private static List<Integer> snapshottedMatchIds() {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery("SELECT match_id FROM match_migration_snapshot ORDER BY match_id")
+                .mapTo(Integer.class)
+                .list());
+  }
+
+  private static List<String> snapshottedRationales(Integer matchId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    SELECT rationale FROM match_migration_rationale_snapshot
+                    WHERE match_id = :matchId ORDER BY rationale
+                    """)
+                .bind("matchId", matchId)
+                .mapTo(String.class)
+                .list());
   }
 
   private Dataset createDataset() {

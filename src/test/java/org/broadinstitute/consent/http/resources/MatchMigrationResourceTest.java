@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationPopulation;
+import org.broadinstitute.consent.http.models.matchmigration.SnapshotReconciliation;
 import org.broadinstitute.consent.http.service.MatchMigrationService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,30 @@ class MatchMigrationResourceTest {
     assertTrue(json.contains("\"blocksConstraints\""));
   }
 
+  @Test
+  void testGetReconciliation() {
+    when(service.reconcile()).thenReturn(reconciliation());
+    initResource();
+
+    Response response = resource.getReconciliation(duosUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(reconciliation(), response.getEntity());
+  }
+
+  @Test
+  void testGetReconciliationHandlesAFailure() {
+    when(service.reconcile()).thenThrow(new IllegalStateException("boom"));
+    initResource();
+
+    Response response = resource.getReconciliation(duosUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
   private static MatchMigrationPopulation population() {
     return new MatchMigrationPopulation(409, 405, 409, 0, 0, 409, 405, 0, 4, 0, true);
+  }
+
+  private static SnapshotReconciliation reconciliation() {
+    return new SnapshotReconciliation(409, 409, 0, 0, 405, 405, 0, 0, true);
   }
 }
