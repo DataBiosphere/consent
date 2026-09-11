@@ -258,4 +258,5 @@
   <include file="changesets/changelog-consent-2026-08-10-dataset-alias-sequence.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-08-11-researcher-dashboard-indices.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-09-09-match-dataset-id.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-09-match-migration-snapshot.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
