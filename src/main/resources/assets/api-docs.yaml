@@ -889,6 +889,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         500:
           description: Server error.
+  /api/match/migration/dataset-id/population:
+    $ref: './paths/matchMigrationPopulation.yaml'
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/metrics/dar-summaries/{datasetId}:
@@ -1309,6 +1311,8 @@ components:
       $ref: './schemas/Vote.yaml'
     MatchResult:
       $ref: './schemas/MatchResult.yaml'
+    MatchMigrationPopulation:
+      $ref: './schemas/MatchMigrationPopulation.yaml'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SigningOfficialUser:
