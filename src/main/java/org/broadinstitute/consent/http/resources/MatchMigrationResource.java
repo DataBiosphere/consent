@@ -37,4 +37,17 @@ public class MatchMigrationResource extends Resource {
       return createExceptionResponse(e);
     }
   }
+
+  /** Read-only. Reconciles a run that has already happened, for a later confirmation pass. */
+  @GET
+  @Path("/reconciliation")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({Resource.ADMIN})
+  public Response getReconciliation(@Auth DuosUser duosUser) {
+    try {
+      return Response.ok().entity(service.reconcile()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

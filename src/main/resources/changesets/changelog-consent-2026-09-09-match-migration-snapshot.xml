@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Holds the pre-migration state of the match rows the dataset_id migration reprocesses, so the run
+    is reversible and can be reconciled against what it rebuilt or deleted.
+
+    Deliberately carries no foreign key to match_entity: the run deletes the very rows captured here,
+    so a reference would either block the delete or cascade the evidence away with it. Column types
+    are wider than the source for the same reason - the snapshot must never be the thing that fails.
+
+    The absent foreign key to dataset cuts both ways. fk_match_entity_dataset_id is NO ACTION, so a
+    dataset stays undeletable while a match row references it; once the run removes that row the
+    dataset can go, leaving the capture pointing at nothing and a restore failing that same
+    constraint. Adding a foreign key here would only move the problem onto the evidence, so a restore
+    skips captured rows whose dataset is gone instead of resurrecting them.
+
+    Populated by POST /api/match/migration/dataset-id/run, not by this changeset. The affected set
+    drains as DARs are re-matched, so it is captured when the run executes rather than fixed now.
+    Outlives the release that retires the migration surface, being the rollback path for the run;
+    a later cleanup release drops them once the migration is confirmed good.
+  -->
+  <changeSet id="changelog-consent-2026-09-09-match-migration-snapshot" author="kmarete">
+    <createTable tableName="match_migration_snapshot">
+      <column name="match_id" type="bigint">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="consent" type="text"/>
+      <column name="dataset_id" type="bigint"/>
+      <column name="purpose" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="match_entity" type="boolean"/>
+      <column name="abstain" type="boolean"/>
+      <column name="failed" type="boolean"/>
+      <column name="create_date" type="timestamp"/>
+      <column name="algorithm_version" type="text"/>
+      <column name="captured_at" type="timestamp" defaultValue="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="match_migration_snapshot" indexName="idx_match_migration_snapshot_purpose">
+      <column name="purpose"/>
+    </createIndex>
+
+    <createTable tableName="match_migration_rationale_snapshot">
+      <!-- The source row's own match_rationale.id, so the capture is exact and re-runnable
+           without having to compare rationale text. -->
+      <column name="rationale_id" type="bigint">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="match_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="rationale" type="text">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="match_migration_rationale_snapshot"
+      indexName="idx_match_migration_rationale_snapshot_match_id">
+      <column name="match_id"/>
+    </createIndex>
+
+    <rollback>
+      <dropTable tableName="match_migration_rationale_snapshot"/>
+      <dropTable tableName="match_migration_snapshot"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
