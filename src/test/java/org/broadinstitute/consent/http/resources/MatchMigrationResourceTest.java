@@ -14,6 +14,8 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationPopulation;
+import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationRunReport;
+import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationRunResult;
 import org.broadinstitute.consent.http.models.matchmigration.SnapshotReconciliation;
 import org.broadinstitute.consent.http.service.MatchMigrationService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -87,6 +89,52 @@ class MatchMigrationResourceTest {
 
     Response response = resource.getReconciliation(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testRun() {
+    MatchMigrationRunResult result =
+        MatchMigrationRunResult.of(
+            population(),
+            population(),
+            new MatchMigrationRunReport(409, 52, 405, 0, 0, 0, List.of(), List.of()),
+            reconciliation());
+    when(service.run()).thenReturn(result);
+    initResource();
+
+    Response response = resource.run(duosUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(result, response.getEntity());
+  }
+
+  @Test
+  void testRunHandlesAFailure() {
+    when(service.run()).thenThrow(new IllegalStateException("boom"));
+    initResource();
+
+    Response response = resource.run(duosUser);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  /**
+   * Responses serialize with Gson, which reads fields and drops computed accessors. These three
+   * flags are the operator-facing gates, so they have to be components rather than methods.
+   */
+  @Test
+  void testRunResponseCarriesTheDerivedGates() {
+    MatchMigrationRunResult result =
+        MatchMigrationRunResult.of(
+            population(),
+            population(),
+            new MatchMigrationRunReport(409, 52, 405, 0, 0, 0, List.of(), List.of()),
+            reconciliation());
+    when(service.run()).thenReturn(result);
+    initResource();
+
+    String json = GsonUtil.getInstance().toJson(resource.run(duosUser).getEntity());
+    assertTrue(json.contains("\"readyForConstraints\""));
+    assertTrue(json.contains("\"reconciles\""));
+    assertTrue(json.contains("\"blocksConstraints\""));
   }
 
   private static MatchMigrationPopulation population() {

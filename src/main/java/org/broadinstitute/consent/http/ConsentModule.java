@@ -816,8 +816,9 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  private MatchMigrationService providesMatchMigrationService(Jdbi jdbi) {
-    return new MatchMigrationService(jdbi);
+  private MatchMigrationService providesMatchMigrationService(
+      Jdbi jdbi, MatchService matchService) {
+    return new MatchMigrationService(jdbi, matchService);
   }
 
   @Provides
