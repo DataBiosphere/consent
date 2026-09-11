@@ -1,0 +1,41 @@
+post:
+  summary: Run the match dataset_id migration
+  operationId: apiMatchMigrationDatasetIdRunPost
+  description: |
+    Snapshots the affected match rows and their rationales, then rebuilds each affected purpose so
+    its matches carry a real dataset_id at the current algorithm version.
+    Rewrites only match rows and their rationales - never stored Data Use, elections, or votes.
+    Historical v1 and v2 rationales are replaced by current-algorithm results, including on closed
+    elections. This is deliberate and was endorsed on review; the snapshot makes it reversible.
+    A purpose whose DAR carries no dataset associations rebuilds to nothing, which deletes its rows.
+    That is the intended outcome for it.
+    A purpose whose DAR is archived or missing is skipped and reported, never reprocessed: the
+    rebuild would find no DAR and would delete the rows without inserting any.
+    Restartable. Each purpose is rebuilt in one transaction, so a failure leaves its existing matches
+    in place, and the snapshot keeps its first capture rather than overwriting it with post-run state.
+    Returns the population either side of the run plus the reconciliation, so a run can be seen to
+    account for everything it touched.
+    Not serialized against DAR activity. A DAR edited while the run is in flight can have its own
+    rebuild replaced by this one, so run it in a quiet window and re-check the reports after.
+  tags:
+    - Match
+    - Admin
+  responses:
+    200:
+      description: Returns the run totals, the population either side of it, and the reconciliation.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/MatchMigrationRunResult.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error

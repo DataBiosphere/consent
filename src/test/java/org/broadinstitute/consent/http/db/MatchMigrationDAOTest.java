@@ -121,6 +121,29 @@ class MatchMigrationDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testResolvableAndUnresolvablePurposesPartitionTheAffectedSet() {
+    Dataset dataset = createDataset();
+    String resolvable = createSubmittedDar(dataset, false);
+    String archived = createSubmittedDar(dataset, true);
+    insertMatch(resolvable, null, MatchAlgorithm.V1.getVersion());
+    insertMatch(archived, null, MatchAlgorithm.V1.getVersion());
+
+    assertEquals(List.of(resolvable), matchMigrationDAO.findResolvablePurposes());
+    assertEquals(List.of(archived), matchMigrationDAO.findUnresolvablePurposes());
+  }
+
+  @Test
+  void testUnresolvablePurposesIncludesMatchesWithNoDarAtAll() {
+    // A match whose purpose has no data_access_request row: findByReferenceId returns null for it,
+    // so a reprocess would delete the rows and insert nothing
+    String orphaned = UUID.randomUUID().toString();
+    insertMatch(orphaned, null, MatchAlgorithm.V1.getVersion());
+
+    assertTrue(matchMigrationDAO.findResolvablePurposes().isEmpty());
+    assertEquals(List.of(orphaned), matchMigrationDAO.findUnresolvablePurposes());
+  }
+
+  @Test
   void testSnapshotCapturesAffectedRowsAndTheirRationales() {
     Dataset dataset = createDataset();
     String purposeId = createSubmittedDar(dataset, false);
