@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.MatchMigrationDAO;
 import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationPopulation;
+import org.broadinstitute.consent.http.models.matchmigration.SnapshotReconciliation;
 import org.jdbi.v3.core.Jdbi;
 
 /**
@@ -27,5 +28,10 @@ public class MatchMigrationService {
   /** Read-only. What a run would do, and whether the constraints would still be refused. */
   public MatchMigrationPopulation findPopulation() {
     return matchMigrationDAO.findPopulation();
+  }
+
+  /** Read-only. Reconciles a run that has already happened, for a later confirmation pass. */
+  public SnapshotReconciliation reconcile() {
+    return matchMigrationDAO.reconcile();
   }
 }
