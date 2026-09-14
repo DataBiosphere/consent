@@ -13,6 +13,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -759,12 +760,17 @@ public class DatasetService implements ConsentLogger {
       study.setStudyId(studyId);
     } else {
       studyId = study.getStudyId();
+      // A study conversion carries no PI detail columns, so keep the stored ones.
       studyDAO.updateStudy(
           study.getStudyId(),
           studyConversion.getName(),
           studyConversion.getDescription(),
           studyConversion.getPiName(),
           studyConversion.getPiEmail(),
+          study.getPiInstitution() == null ? null : study.getPiInstitution().getId(),
+          study.getPiOrcid(),
+          study.getPiLinkedinUrl(),
+          study.getPiWebsiteUrl(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
           userId,
@@ -824,6 +830,10 @@ public class DatasetService implements ConsentLogger {
       datasetServiceDAO.patchStudy(study, user, patch);
       elasticSearchService.indexStudy(studyId);
       return studyDAO.findStudyById(studyId);
+    } catch (WebApplicationException ex) {
+      // A rejected patch is the caller's problem, not a server fault: re-wrapping it here turned
+      // "PI institution 999999 does not exist" into an opaque 500.
+      throw ex;
     } catch (Exception ex) {
       logException(ex);
       throw new InternalServerErrorException(

@@ -86,7 +86,14 @@ public class SchemaFromStudy {
       schemaV1.setEmbargoReleaseDate(
           findStringPropValue(study.getProperties(), embargoReleaseDate));
       schemaV1.setSequencingCenter(findStringPropValue(study.getProperties(), sequencingCenter));
-      schemaV1.setPiInstitution(findIntegerPropValue(study.getProperties(), piInstitution));
+      // The study.pi_institution_id column is authoritative: it is what PATCH writes and what the
+      // study page reads. The legacy piInstitution study property is only consulted for a study
+      // whose column is still null - the backfill leaves it null when the recorded id matched no
+      // institution row - so that such a study keeps reporting what it reported before.
+      schemaV1.setPiInstitution(
+          study.getPiInstitution() != null && study.getPiInstitution().getId() != null
+              ? study.getPiInstitution().getId()
+              : findIntegerPropValue(study.getProperties(), piInstitution));
       schemaV1.setNihGrantContractNumber(
           findStringPropValue(study.getProperties(), nihGrantContractNumber));
       schemaV1.setNihICsSupportingStudy(findListNICSSPropValue(study.getProperties()));

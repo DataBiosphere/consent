@@ -14,6 +14,10 @@ public class Study {
   private Boolean publicVisibility;
   private String piName;
   private String piEmail;
+  private Institution piInstitution;
+  private String piOrcid;
+  private String piLinkedinUrl;
+  private String piWebsiteUrl;
   private List<String> dataTypes;
   private final Set<Integer> datasetIds = new HashSet<>();
   private Set<Dataset> datasets;
@@ -72,6 +76,38 @@ public class Study {
 
   public void setPiEmail(String piEmail) {
     this.piEmail = piEmail;
+  }
+
+  public Institution getPiInstitution() {
+    return piInstitution;
+  }
+
+  public void setPiInstitution(Institution piInstitution) {
+    this.piInstitution = piInstitution;
+  }
+
+  public String getPiOrcid() {
+    return piOrcid;
+  }
+
+  public void setPiOrcid(String piOrcid) {
+    this.piOrcid = piOrcid;
+  }
+
+  public String getPiLinkedinUrl() {
+    return piLinkedinUrl;
+  }
+
+  public void setPiLinkedinUrl(String piLinkedinUrl) {
+    this.piLinkedinUrl = piLinkedinUrl;
+  }
+
+  public String getPiWebsiteUrl() {
+    return piWebsiteUrl;
+  }
+
+  public void setPiWebsiteUrl(String piWebsiteUrl) {
+    this.piWebsiteUrl = piWebsiteUrl;
   }
 
   public List<String> getDataTypes() {

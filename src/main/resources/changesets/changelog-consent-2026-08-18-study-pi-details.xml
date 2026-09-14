@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <changeSet id="study-pi-details-2026-08-18" author="duos">
+    <addColumn tableName="study">
+      <column name="pi_institution_id" type="INTEGER"/>
+      <column name="pi_orcid" type="VARCHAR(255)"/>
+      <column name="pi_linkedin_url" type="VARCHAR(2048)"/>
+      <column name="pi_website_url" type="VARCHAR(2048)"/>
+    </addColumn>
+    <addForeignKeyConstraint baseTableName="study" baseColumnNames="pi_institution_id"
+        referencedTableName="institution" referencedColumnNames="institution_id"
+        constraintName="fk_study_pi_institution" onDelete="SET NULL"/>
+    <createIndex tableName="study" indexName="idx_study_pi_institution_id">
+      <column name="pi_institution_id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>
