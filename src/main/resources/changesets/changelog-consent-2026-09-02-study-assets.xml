@@ -1,0 +1,98 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+  <!--
+    Promotes the study registration asset lists out of the client-managed `assets` object and
+    into their own study_property rows, one per asset type. The schema declared `assets` as
+    unvalidated client metadata, but backend endpoints and dashboard counts came to depend on
+    individual keys inside it, so those keys are now first-class registration fields.
+
+    Every `assets` value was written by GsonUtil.toJson(Map), so it is valid JSON; the guards
+    below still skip any row that is not a JSON object, and only promote keys holding an array.
+
+    Each statement draws its rows from a MATERIALIZED CTE that filters on the key first, so the
+    casts below can only ever see an `assets` row. Left in one WHERE beside `key = 'assets'`, the
+    cast is free to be evaluated first on every study_property row, and the String-typed ones -
+    phenotypeIndication, species and the rest - are bare text that raises "invalid input syntax
+    for type json" and fails the whole migration. MATERIALIZED rather than a plain CTE because
+    Postgres 12 and later inline a CTE by default, which would put the filter back in the same
+    qual list as the cast.
+  -->
+  <changeSet id="changelog-consent-2026-09-02-study-assets-promote" author="otchet">
+    <sql>
+      WITH assets_rows AS MATERIALIZED (
+        SELECT sp.study_id, sp.value
+        FROM study_property sp
+        WHERE sp.key = 'assets'
+      )
+      INSERT INTO study_property (study_id, key, type, value)
+      SELECT a.study_id, k.key, 'json', (a.value::jsonb -> k.key)::text
+      FROM assets_rows a
+      CROSS JOIN (VALUES
+        ('models'), ('workspaces'), ('presentations'), ('publications'),
+        ('clinicalTrials'), ('intellectualProperties'), ('biospecimens'), ('funding')
+      ) AS k(key)
+      WHERE jsonb_typeof(a.value::jsonb) = 'object'
+        AND jsonb_typeof(a.value::jsonb -> k.key) = 'array'
+        -- Compared against the empty array rather than measured with jsonb_array_length: the
+        -- planner is free to evaluate this before the typeof guard above, and the length
+        -- function raises "cannot get array length of a scalar" on a string or number value,
+        -- which the unvalidated assets object is free to hold. Comparison is total.
+        -- Spelled != rather than the other inequality operator, whose leading angle bracket
+        -- would not be valid XML character data here.
+        AND a.value::jsonb -> k.key != '[]'::jsonb
+        AND NOT EXISTS (
+          SELECT 1 FROM study_property existing
+          WHERE existing.study_id = a.study_id AND existing.key = k.key
+        );
+    </sql>
+  </changeSet>
+
+  <!--
+    Strip a promoted key from the legacy object only once the value is safely stored elsewhere:
+    either this migration promoted it, or a first-class property for that key already existed.
+    A key whose value was the wrong shape - a string or object where a list was expected - was
+    never promoted, so it is left in place rather than deleted; the unvalidated `assets` object
+    was free to hold anything, and dropping such a value would lose it with no copy anywhere.
+    Then drop any `assets` row that held nothing else. Rows that are not JSON objects are left
+    untouched.
+  -->
+  <changeSet id="changelog-consent-2026-09-02-study-assets-strip" author="otchet">
+    <sql>
+      WITH assets_rows AS MATERIALIZED (
+        SELECT sp.study_property_id, sp.study_id, sp.value
+        FROM study_property sp
+        WHERE sp.key = 'assets'
+      )
+      UPDATE study_property sp
+      SET value = (
+        SELECT COALESCE(jsonb_object_agg(kv.key, kv.value), '{}'::jsonb)::text
+        FROM jsonb_each(a.value::jsonb) AS kv
+        WHERE NOT (
+          kv.key IN ('models', 'workspaces', 'presentations', 'publications',
+                     'clinicalTrials', 'intellectualProperties', 'biospecimens', 'funding')
+          AND EXISTS (
+            SELECT 1 FROM study_property promoted
+            WHERE promoted.study_id = a.study_id AND promoted.key = kv.key
+          )
+        )
+      )
+      FROM assets_rows a
+      WHERE sp.study_property_id = a.study_property_id
+        AND jsonb_typeof(a.value::jsonb) = 'object';
+
+      WITH assets_rows AS MATERIALIZED (
+        SELECT sp.study_property_id, sp.value
+        FROM study_property sp
+        WHERE sp.key = 'assets'
+      )
+      DELETE FROM study_property sp
+      USING assets_rows a
+      WHERE sp.study_property_id = a.study_property_id
+        AND jsonb_typeof(a.value::jsonb) = 'object'
+        AND a.value::jsonb = '{}'::jsonb;
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>
