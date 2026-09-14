@@ -277,6 +277,24 @@ public class DatasetService implements ConsentLogger {
     return study;
   }
 
+  /**
+   * Loads a study for reading by an endpoint scoped to it, or reports it absent.
+   *
+   * <p>Reads only the study's own details. {@link #findStudy(Integer)} additionally opens a
+   * REPEATABLE_READ transaction and fetches dataset ids and the alternative data sharing plan file,
+   * none of which the visibility rule looks at; the study-scoped comment, metrics and asset
+   * endpoints were each paying for that on every request.
+   *
+   * @throws NotFoundException if the study does not exist, or is not visible to the user
+   */
+  public Study requireReadableStudy(Integer studyId, User user) {
+    Study study = studyDAO.findStudyDetailsById(studyId);
+    if (study == null) {
+      throw new NotFoundException("Study not found");
+    }
+    return verifyStudyVisibilityAccess(study, user);
+  }
+
   public Dataset getDatasetByName(String name) {
     String lowercaseName = name.toLowerCase();
     return datasetDAO.getDatasetByName(lowercaseName);
