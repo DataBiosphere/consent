@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -440,6 +442,61 @@ class UserDAOTest extends DAOTestHelper {
 
     List<User> differentInstitutionUsers = userDAO.getSOsByInstitution(institutionId + 1);
     assertEquals(0, differentInstitutionUsers.size());
+  }
+
+  @Test
+  void testFindLibraryCardIssuerByInstitution() throws Exception {
+    String domain = randomAlphabetic(10) + ".org";
+    Institution institution = createInstitutionWithDomain(domain);
+    // Created first, so it would win the ordering if the domain filter did not exclude it.
+    createUserWithEmailRoleAndInstitution(
+        randomAlphabetic(10) + "@" + randomAlphabetic(10) + ".org",
+        UserRoles.SIGNINGOFFICIAL.getRoleId(),
+        institution.getId());
+    createUserWithEmailRoleAndInstitution(
+        randomAlphabetic(10) + "@" + domain, UserRoles.RESEARCHER.getRoleId(), institution.getId());
+    User eligible =
+        createUserWithEmailRoleAndInstitution(
+            randomAlphabetic(10) + "@" + domain.toUpperCase(),
+            UserRoles.SIGNINGOFFICIAL.getRoleId(),
+            institution.getId());
+    User later =
+        createUserWithEmailRoleAndInstitution(
+            randomAlphabetic(10) + "@" + domain,
+            UserRoles.SIGNINGOFFICIAL.getRoleId(),
+            institution.getId());
+
+    User issuer = userDAO.findLibraryCardIssuerByInstitution(institution.getId());
+    assertNotNull(issuer);
+    assertEquals(eligible.getUserId(), issuer.getUserId());
+    assertNotEquals(later.getUserId(), issuer.getUserId());
+  }
+
+  @Test
+  void testFindLibraryCardIssuerByInstitutionNoEligibleSigningOfficial() throws Exception {
+    String domain = randomAlphabetic(10) + ".org";
+    Institution institution = createInstitutionWithDomain(domain);
+    createUserWithEmailRoleAndInstitution(
+        randomAlphabetic(10) + "@" + randomAlphabetic(10) + ".org",
+        UserRoles.SIGNINGOFFICIAL.getRoleId(),
+        institution.getId());
+
+    assertNull(userDAO.findLibraryCardIssuerByInstitution(institution.getId()));
+  }
+
+  private Institution createInstitutionWithDomain(String domain) throws Exception {
+    Institution institution = new Institution();
+    institution.setName(randomAlphabetic(20));
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of(domain));
+    return institutionDAO.insertFullInstitution(institution, createUser().getUserId());
+  }
+
+  private User createUserWithEmailRoleAndInstitution(
+      String email, Integer roleId, Integer institutionId) {
+    Integer userId = userDAO.insertUser(email, "display name", institutionId, new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
   }
 
   @Test

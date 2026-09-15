@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -158,7 +159,31 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
       libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     }
 
-    return needsLCRemoved || needsInstitutionAssigned;
+    boolean issuedLC =
+        (needsLCRemoved || !hasLibraryCard(user)) && issueLibraryCard(user, institutionId);
+
+    return needsLCRemoved || needsInstitutionAssigned || issuedLC;
+  }
+
+  /**
+   * Makes a domain-matched researcher active without waiting for a signing official. The card is
+   * attributed to an SO of the institution so {@link #needsLibraryCardRemovedForUser} leaves it in
+   * place; an institution with no eligible SO leaves the researcher inactive. Deliberately silent:
+   * the issuance email says an SO acted, and the all-users sweep would send it in bulk.
+   */
+  @VisibleForTesting
+  protected boolean issueLibraryCard(User user, Integer institutionId) {
+    User issuer = userDAO.findLibraryCardIssuerByInstitution(institutionId);
+    if (issuer == null) {
+      return false;
+    }
+    return libraryCardDAO.insertLibraryCardIfAbsent(
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            issuer.getUserId(),
+            new Date())
+        > 0;
   }
 
   @VisibleForTesting

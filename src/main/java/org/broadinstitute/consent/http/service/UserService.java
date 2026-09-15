@@ -173,7 +173,16 @@ public class UserService implements ConsentLogger {
     if (institution != null) {
       user.setInstitutionId(institution.getId());
     }
-    return userServiceDAO.createUser(user);
+    User createdUser = userServiceDAO.createUser(user);
+    try {
+      // Registration is first login, so activate now rather than on the next authenticated request.
+      return institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(
+          createdUser.getEmail());
+    } catch (Exception e) {
+      // The user exists; failing registration here would only make the retry a duplicate-email 400.
+      logException("Error enforcing institution and LC rules for new user: " + user.getEmail(), e);
+      return createdUser;
+    }
   }
 
   public User findUserById(Integer id) throws NotFoundException {

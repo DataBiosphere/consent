@@ -194,6 +194,37 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateUserReturnsUserWithEnforcedInstitutionAndLibraryCardRules() {
+    User u = generateUser();
+    u.setRoles(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
+    Institution institution = new Institution();
+    institution.setId(u.getInstitutionId());
+    User enforcedUser = generateUser();
+
+    when(userDAO.findUserByEmail(any())).thenReturn(null);
+    when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(institution);
+    when(userServiceDAO.createUser(u)).thenReturn(u);
+    when(institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(u.getEmail()))
+        .thenReturn(enforcedUser);
+
+    assertSame(enforcedUser, service.createUser(u));
+  }
+
+  @Test
+  void testCreateUserReturnsCreatedUserWhenEnforcementFails() {
+    User u = generateUser();
+    u.setRoles(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
+
+    when(userDAO.findUserByEmail(any())).thenReturn(null);
+    when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(null);
+    when(userServiceDAO.createUser(u)).thenReturn(u);
+    when(institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(u.getEmail()))
+        .thenThrow(new RuntimeException("enforcement error"));
+
+    assertSame(u, service.createUser(u));
+  }
+
+  @Test
   void testCreateUserDuplicateEmail() {
     User u = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));

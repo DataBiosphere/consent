@@ -34,7 +34,7 @@ post:
     - User
   responses:
     200:
-      description: Returns the created user.
+      description: Returns the created user, holding a library card when their email domain belongs to an institution with a signing official.
       content:
         application/json:
           schema:

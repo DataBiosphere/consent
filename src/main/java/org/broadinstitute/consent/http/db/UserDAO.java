@@ -530,6 +530,26 @@ public interface UserDAO extends Transactional<UserDAO> {
         """)
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
+  /**
+   * Issuer for an automatically issued library card. Restricted to SOs whose own email domain
+   * resolves back to the institution, since enforcement deletes a card whose issuer fails that
+   * check; ordered so every pass settles on the same issuer.
+   */
+  @RegisterBeanMapper(value = User.class)
+  @SqlQuery(
+      """
+          SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u
+          INNER JOIN user_role ur ON ur.user_id = u.user_id
+          INNER JOIN roles r ON r.role_id = ur.role_id
+          INNER JOIN institution_domains d ON d.institution_id = u.institution_id
+          WHERE LOWER(r.name) = 'signingofficial'
+          AND u.institution_id = :institutionId
+          AND LOWER(d.domain) = LOWER(SUBSTRING(u.email FROM POSITION('@' IN u.email) + 1))
+          ORDER BY u.user_id
+          LIMIT 1
+        """)
+  User findLibraryCardIssuerByInstitution(@Bind("institutionId") Integer institutionId);
+
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)

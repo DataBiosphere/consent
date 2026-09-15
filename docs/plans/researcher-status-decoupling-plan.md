@@ -692,6 +692,20 @@ ships with Phase 1 rather than with this ticket — and because that dual-write 
 the bare `:158` branch is a Phase-1 (ticket 5a) deliverable rather than waiting for this ticket. See
 [Flag-gated dual-write](#flag-gated-dual-write-phase-1-required).
 
+**Enforcement now issues cards as well as removing them, and that collides with a decision below —
+unresolved, for ticket 9 to settle.** DT-3800 shipped domain-based auto-issuance into
+`handleUserWithInstitutionInMap`: a card-less user whose email domain maps to an institution is issued
+a card attributed to a signing official of that institution, selected by
+`UserDAO.findLibraryCardIssuerByInstitution` and restricted to SOs whose own email domain resolves back
+to the institution so the removal rule above leaves the card in place. Registration
+(`UserService.createUser`) runs enforcement for the same reason, so activation lands at first login.
+But [Library Card creation](#library-card-creation-daa-assignment-and-registration) decides that after
+the flip issuing a card activates nobody — so at Phase 3 that auto-issuance silently stops meeting
+DT-3800's objective unless ticket 9's per-user evaluation *activates* on a domain match rather than only
+deactivating on a mismatch. The two rules cannot both hold: this plan treats vouching as always a
+deliberate SO act, and DT-3800 treats a matching domain as sufficient. Ticket 9 must choose, with PO
+sign-off, and whichever way it goes the other statement needs correcting here.
+
 ### Library Card creation, DAA assignment, and registration
 
 `LibraryCardService.createLibraryCard`, `DaaServiceDAO` bulk assignment, and the DAA resource retain
