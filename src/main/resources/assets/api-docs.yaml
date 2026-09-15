@@ -891,6 +891,8 @@ paths:
           description: Server error.
   /api/match/migration/dataset-id/population:
     $ref: './paths/matchMigrationPopulation.yaml'
+  /api/match/migration/dataset-id/reconciliation:
+    $ref: './paths/matchMigrationReconciliation.yaml'
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/metrics/dar-summaries/{datasetId}:
@@ -1313,6 +1315,8 @@ components:
       $ref: './schemas/MatchResult.yaml'
     MatchMigrationPopulation:
       $ref: './schemas/MatchMigrationPopulation.yaml'
+    SnapshotReconciliation:
+      $ref: './schemas/SnapshotReconciliation.yaml'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SigningOfficialUser:
