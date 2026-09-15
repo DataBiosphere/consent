@@ -15,12 +15,21 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
  * {@code v1} or {@code v2} stamp, or has no stamp at all. Versions are reported separately because
  * the acceptance criteria count those populations, but they are not what selects the work.
  *
- * <p>The not-archived condition on {@code resolvable} repeats the one in {@code
+ * <p>{@code NOT_ARCHIVED} repeats the not-archived condition from {@code
  * DataAccessRequestDAO.findByReferenceId} rather than sharing it. That lookup is what a reprocess
  * resolves its DAR through, so the run has to predict it exactly; if it changes, these queries have
  * to be revisited deliberately, not silently follow it.
  */
 public interface MatchMigrationDAO {
+
+  String AFFECTED_PREDICATE =
+      """
+      (m.dataset_id IS NULL
+        OR m.algorithm_version IS NULL
+        OR LOWER(m.algorithm_version) IN ('v1', 'v2'))
+      """;
+
+  String NOT_ARCHIVED = "(LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)";
 
   /**
    * The purposes a run will reprocess. Reused by the snapshot, because a reprocess deletes every
@@ -46,15 +55,17 @@ public interface MatchMigrationDAO {
       WITH affected AS (
         SELECT m.match_id, m.purpose, m.dataset_id, m.algorithm_version
         FROM match_entity m
-        WHERE (m.dataset_id IS NULL
-          OR m.algorithm_version IS NULL
-          OR LOWER(m.algorithm_version) IN ('v1', 'v2'))
+        WHERE """
+          + AFFECTED_PREDICATE
+          + """
       ),
       resolvable AS (
         SELECT DISTINCT a.purpose
         FROM affected a
         JOIN data_access_request dar ON dar.reference_id = a.purpose
-        WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+        WHERE """
+          + NOT_ARCHIVED
+          + """
       ),
       counts AS (
         SELECT
