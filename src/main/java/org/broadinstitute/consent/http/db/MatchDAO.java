@@ -48,10 +48,12 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
           ) AS e ON e.reference_id = match_entity.purpose
-            -- match_entity.dataset_id is NOT NULL from this release, so its own tolerance is
-            -- gone. election.dataset_id is still nullable, and a match must not drop out of an
-            -- older election that never recorded one.
-            AND (e.dataset_id IS NULL OR e.dataset_id = match_entity.dataset_id)
+            -- The match-side null tolerance looks dead once the constraints are on, but a
+            -- halted precondition still starts the app: without it, an unmigrated row silently
+            -- drops out of every election that does carry a dataset id.
+            AND (match_entity.dataset_id IS NULL
+                 OR e.dataset_id IS NULL
+                 OR e.dataset_id = match_entity.dataset_id)
         WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
       """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
