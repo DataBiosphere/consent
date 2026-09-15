@@ -692,19 +692,28 @@ ships with Phase 1 rather than with this ticket — and because that dual-write 
 the bare `:158` branch is a Phase-1 (ticket 5a) deliverable rather than waiting for this ticket. See
 [Flag-gated dual-write](#flag-gated-dual-write-phase-1-required).
 
-**Enforcement now issues cards as well as removing them, and that collides with a decision below —
-unresolved, for ticket 9 to settle.** DT-3800 shipped domain-based auto-issuance into
+**Enforcement now issues cards as well as removing them — PO-confirmed as the interim mechanism, with a
+consequence for ticket 9.** DT-3800 shipped domain-based auto-issuance into
 `handleUserWithInstitutionInMap`: a card-less user whose email domain maps to an institution is issued
 a card attributed to a signing official of that institution, selected by
 `UserDAO.findLibraryCardIssuerByInstitution` and restricted to SOs whose own email domain resolves back
 to the institution so the removal rule above leaves the card in place. Registration
-(`UserService.createUser`) runs enforcement for the same reason, so activation lands at first login.
-But [Library Card creation](#library-card-creation-daa-assignment-and-registration) decides that after
-the flip issuing a card activates nobody — so at Phase 3 that auto-issuance silently stops meeting
-DT-3800's objective unless ticket 9's per-user evaluation *activates* on a domain match rather than only
-deactivating on a mismatch. The two rules cannot both hold: this plan treats vouching as always a
-deliberate SO act, and DT-3800 treats a matching domain as sufficient. Ticket 9 must choose, with PO
-sign-off, and whichever way it goes the other statement needs correcting here.
+(`UserService.createUser`) runs enforcement for the same reason, so activation lands at first login. The
+PO confirmed auto-creating a Library Card precisely because persisted researcher status does not exist
+yet, and expects it to be replaced by — or renamed to — researcher status.
+
+That makes the decision under
+[Library Card creation](#library-card-creation-daa-assignment-and-registration) wrong as written for
+this path: "issuing a card no longer activates anyone" would, at Phase 3, silently retire DT-3800's
+activation. **Ticket 9's per-user evaluation must therefore activate on a domain match, not only
+deactivate on a mismatch**, and that section's sentence needs narrowing to SO-issued cards.
+
+The PO's stated reservation was that a Library Card "is currently an object that may have content". For
+auto-issued cards it is not: every DAA-authorization read inner-joins `lc_daa` —
+`DaaDAO.findDaaDatasetIdsByUserId` and `SigningOfficialDashboardDAO`'s `researchers_approved` — and that
+table is empty for a card no SO has attached an agreement to. An auto-issued card therefore passes the
+status gates (DAR draft create and update, `validateActiveERACredentials`) and grants no data access and
+no pre-authorization, which is the split this plan wants anyway.
 
 ### Library Card creation, DAA assignment, and registration
 
