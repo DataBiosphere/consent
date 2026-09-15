@@ -10,7 +10,7 @@ In progress. Ticket-by-ticket state:
 | 2. Canonical primary classification on Data Use writes | Done. `DataUsePrimaryClassifier`/`DataUsePrimaryValidator` back registration, admin Data Use replacement, and dataset-to-study conversion. |
 | 3. Explicit legacy and unsupported matcher behavior | Done. `DataUseMatcherV5` classifies before matching and abstains on Other-only, NONE/null, and MULTIPLE. |
 | 4. Normalize legacy records and reprocess affected matches | Done. |
-| 5. Replace alias-derived internal dataset references | In progress. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), Phase 1 has landed: nullable `match_entity.dataset_id`, dual write, and a dataset-correlated election join. The reprocess and the non-null and uniqueness constraints follow once Phase 1 is deployed everywhere. |
+| 5. Replace alias-derived internal dataset references | In progress. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), Phase 1 has landed: nullable `match_entity.dataset_id`, dual write, and a dataset-correlated election join. Phase 2a adds the snapshot tables and the admin migration surface that runs the reprocess. The constraints are release C, gated on that run reporting clean. |
 | 6. Align duos-ui with the canonical classification | Done in duos-ui (DT-3866). The Data Use translation collapse is an owned follow-up (DT-4008). |
 
 ## Objective
@@ -226,8 +226,8 @@ failure. The audit utility must not log the raw JSON. Classification rules:
 The `match_usage` CTE deliberately isolates the legacy alias-derived join needed to reconcile the
 current schema. It is not the target design. Before relying on match counts, separately report null,
 noncanonical, duplicate-mapping, and unmatched `match_entity.consent` values; do not silently omit
-them. Ticket 5 backfills and validates a real `dataset_id` relationship before application reads or
-writes stop using the legacy text column.
+them. Ticket 5 reprocesses affected matches and validates a real `dataset_id` relationship before
+application reads or writes stop using the legacy text column.
 
 **Acceptance criteria**
 
@@ -498,6 +498,101 @@ in external contracts and does not make the internal numeric `dataset_id` public
 - Replacing the `DUOS-######` public identifier contract.
 - Reusing deleted aliases or requiring gapless alias numbering.
 - Changing Data Use classification or matcher decisions.
+
+
+**Phase 2 execution and validation (DT-3942)**
+
+Three gated releases - A, B, C - plus a later cleanup that is not part of the gated sequence.
+
+The constraints must not deploy until the run that clears them has happened. Their changeset halts
+on the same conditions the run reports, so it never applies a constraint the data cannot satisfy.
+It does not stop the deploy: `ConsentApplication` logs a Liquibase failure and starts Jersey anyway,
+so releasing C early leaves an environment running C's code with the constraints silently unapplied.
+Worse than the missing constraints, C's election join no longer tolerates a null `match_entity.dataset_id`,
+so any legacy row that the run has not yet rebuilt drops out of match reads while looking healthy.
+That is quiet rather than loud, which is exactly why the ordering is not optional.
+
+| Release | Contents | Gate to the next |
+| --- | --- | --- |
+| A | Nullable `dataset_id`, dual write, dataset-correlated election join | Deployed everywhere |
+| B | Snapshot tables and the admin migration surface | `run` reports `readyForConstraints` |
+| C | Non-null and `(purpose, dataset_id)` uniqueness constraints; retire the surface | Confirmed good |
+| cleanup | Drop the snapshot tables; then, behind a release that derives the `consent` response field from `dataset_id` and stops reading and writing the column, drop it and its `purpose_consent` constraint | - |
+
+With A deployed everywhere and B deployed to the environment, before running anything:
+
+- Run in a quiet window. The run is not serialized against DAR activity: `reprocessMatchesForPurpose`
+  reads its DAR outside the transaction it writes in, so a DAR edited while the run is in flight can
+  have its own rebuild replaced by a stale one. No DAR edits or matching while it executes.
+
+- `GET /api/match/migration/dataset-id/population`. Record `affectedMatches`, `affectedPurposes`,
+  `missingDatasetId`, `versionV1`, `versionV2`, `versionNull`, `archivedOrMissingPurposes`, and
+  `duplicatePurposeDatasetPairs`. All are recounted on every call, and the affected counters drain
+  on their own as DARs are re-matched, so the figures in this plan and in the ticket are
+  illustrative only. `missingDatasetId` is the subset that blocks the non-null constraint directly;
+  the rest of `affectedMatches` carries an old or absent stamp instead. `duplicatePurposeDatasetPairs`
+  is independent of those counters rather than static: any rebuild of a duplicated purpose can clear
+  it, whether that is an ordinary DAR update - which calls `reprocessMatchesForPurpose` too - or this
+  run. A purpose whose only problem is a duplicate pair is not affected, so the run never selects it.
+  Read the count fresh before and after.
+- A non-zero `archivedOrMissingPurposes` is expected to be zero in production. It is not a run
+  failure - those purposes are skipped and reported by id - but it does block release C: a skipped
+  purpose keeps whichever affected rows it had - a null `dataset_id`, a `v1`/`v2` stamp, or no stamp
+  - so it holds `readyForConstraints` false until they are resolved. A partial constraint is not a
+  way around it on its own: both `readyForConstraints` and C's precondition count those rows, so
+  either would still refuse.
+- Resolving them means deleting those match rows, which needs a product decision first, and needs
+  doing in the right order: `match_rationale.match_entity_id` is `NO ACTION`, so the rationales go
+  first or the delete fails. Snapshot before deleting - it is the same evidence the run captures.
+- A non-zero `duplicatePurposeDatasetPairs` is an independent gate: it blocks release C on its own
+  and the run does not set out to fix it. It counts every non-null `(purpose, dataset_id)`
+  collision, including between rows the run does reprocess. A rebuild can clear one - it inserts a
+  single match per DAR-dataset relation - but will not create one, so the count only ever falls.
+  Reconcile the pairs first, and read it again after the run rather than trusting the pre-run
+  figure.
+
+After `POST /api/match/migration/dataset-id/run`, still on release B:
+
+- `readyForConstraints` is the single check, and it covers three things: the reconciliation
+  balances, no affected row remains, and no `(purpose, dataset_id)` collision remains. Skipped
+  purposes are not exempt - their rows stay affected and hold this false, which is correct, because
+  C's precondition would reject them too.
+- `run.failedPurposeIds` says which purposes to investigate; it does not scope a rerun, which takes
+  no arguments and re-attempts every purpose still affected. Rerunning is safe: each purpose is
+  rebuilt in its own transaction and the snapshot keeps its first capture, so it never overwrites
+  pre-run state. It can still capture rows that became affected since the first attempt, so treat
+  the snapshot as growing across reruns rather than frozen.
+- `snapshottedRowsGone` plus `snapshottedRowsRemaining` equals `snapshotted`, and
+  `snapshottedRowsRemaining` equals `unresolvableRows`. A snapshotted row that is still present was
+  not handled, because a reprocess deletes and re-inserts under new ids.
+- `purposesHoldingNoMatches` counts the intended deletions - purposes whose DAR carries no dataset
+  associations. Non-zero in production, where one identifier's DARs carry none; reconcile it
+  against the population's `affectedPurposes` when it is.
+- Re-check both `population` and `reconciliation` after any DAR activity, before releasing C. The
+  constraints are applied against the rows as they are then, not as the run left them.
+
+Rollback:
+
+- Before release C, restoring reads from `match_migration_snapshot` and
+  `match_migration_rationale_snapshot`; neither carries a foreign key to `match_entity`, so both
+  survive the deletion of the rows they describe. It is not a straight pair of inserts. A successful
+  reprocess has already left replacement rows in place, so for each purpose being restored, delete
+  its current rationales and then its matches before inserting anything - otherwise the restore
+  collides with the `(purpose, consent)` uniqueness rule or leaves the purpose holding both
+  generations. The capture itself needs no such care: it is keyed on `match_id`, so a
+  rerun never re-captures a row it already holds and a failed-then-retried purpose adds nothing. Leave skipped and failed purposes alone; they still hold their originals. Then insert
+  the captured matches, which take new `match_id`s, carrying each old id alongside so the rationale
+  rows can be remapped onto their new parent. Skip captured rows whose dataset has since been deleted:
+  `fk_match_entity_dataset_id` is `NO ACTION`, so the dataset was undeletable until the run removed
+  the row referencing it, and re-inserting that row now would fail the same constraint. Reconciliation keys on presence rather than identity for the same reason.
+- After release C, the constraints reject the legacy shape and C's code has dropped the match-side
+  `IS NULL` tolerance in the election join, so restored null-`dataset_id` rows would not be read
+  back. Roll the application back to B first, then the changeset, then restore.
+- Release A's changeset drops a column its own application writes, so roll the application back
+  first and the changeset second. The election join's `IS NULL` tolerance means a half-migrated
+  table still reads correctly either side of it.
+- Both snapshot tables outlive release C, which is the release most likely to need them. A later
+  cleanup release drops them once the migration is confirmed good in production.
 
 ---
 
