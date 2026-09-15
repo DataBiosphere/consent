@@ -276,6 +276,17 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
   }
 
   @Test
+  void issueLibraryCard_DoesNotRepeatTheLookupForAnInstitutionWithNoIssuer() {
+    User testUser = generateUser(1);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(null);
+
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    verify(userDAO, times(1)).findLibraryCardIssuerByInstitution(1);
+  }
+
+  @Test
   void issueLibraryCard_LosesRaceToAConcurrentIssuance() {
     User testUser = generateUser(1);
     User signingOfficial = generateUser(2);

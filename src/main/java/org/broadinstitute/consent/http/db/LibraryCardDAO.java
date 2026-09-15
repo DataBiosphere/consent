@@ -207,8 +207,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlUpdate(
       """
       WITH targets AS (
-        SELECT id FROM library_card
-        WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId
+        SELECT id FROM library_card WHERE user_id = :userId
       ),
       daa_deletes AS (DELETE FROM lc_daa WHERE lc_id IN (SELECT id FROM targets))
       DELETE FROM library_card WHERE id IN (SELECT id FROM targets)

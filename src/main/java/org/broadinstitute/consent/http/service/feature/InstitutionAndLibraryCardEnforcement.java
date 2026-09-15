@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service.feature;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -11,6 +13,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -32,6 +35,11 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   private final LibraryCardDAO libraryCardDAO;
   private final UserDAO userDAO;
   private final UserServiceDAO userServiceDAO;
+
+  // Institutions with no eligible issuer, so a card-less user there doesn't re-run the lookup on
+  // every authenticated request. Expiry bounds how long a newly eligible SO goes unnoticed.
+  private final Cache<Integer, Boolean> institutionsWithoutIssuer =
+      CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
 
   @Inject
   public InstitutionAndLibraryCardEnforcement(
@@ -173,11 +181,13 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
    */
   @VisibleForTesting
   protected boolean issueLibraryCard(User user, Integer institutionId) {
-    if (!hasAddressAndDomain(user.getEmail())) {
+    if (!hasAddressAndDomain(user.getEmail())
+        || institutionsWithoutIssuer.getIfPresent(institutionId) != null) {
       return false;
     }
     User issuer = userDAO.findLibraryCardIssuerByInstitution(institutionId);
     if (issuer == null) {
+      institutionsWithoutIssuer.put(institutionId, Boolean.TRUE);
       return false;
     }
     int inserted =

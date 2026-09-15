@@ -342,6 +342,25 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteLibraryCardByUserIdLeavesCardsTheUserIssued() {
+    User signingOfficial = createUser();
+    User researcher = createUser();
+    Integer issuedId =
+        libraryCardDAO.insertLibraryCard(
+            researcher.getUserId(),
+            researcher.getDisplayName(),
+            researcher.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+    LibraryCard ownCard = createLibraryCard(signingOfficial);
+
+    libraryCardDAO.deleteAllLibraryCardsByUser(signingOfficial.getUserId());
+
+    assertNull(libraryCardDAO.findLibraryCardById(ownCard.getId()));
+    assertNotNull(libraryCardDAO.findLibraryCardById(issuedId));
+  }
+
+  @Test
   void testDeleteLibraryCardByUserId() {
     User user = createUser();
     LibraryCard card = createLibraryCard(user);
