@@ -1,0 +1,30 @@
+get:
+  summary: Count the match rows blocking the dataset_id constraints
+  operationId: apiMatchMigrationDatasetIdPopulationGet
+  description: |
+    Recounts the match rows the dataset_id migration still has to deal with. Read-only.
+    The affected set is defined by what the constraints will reject - no dataset_id, or a v1/v2/absent
+    algorithm version - rather than by algorithm version alone. It drains on its own as DARs are
+    re-matched, so a run is always scoped from a fresh count rather than from an earlier report.
+  tags:
+    - Match
+    - Admin
+  responses:
+    200:
+      description: Returns the affected population and the conditions that would block the constraints.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/MatchMigrationPopulation.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
