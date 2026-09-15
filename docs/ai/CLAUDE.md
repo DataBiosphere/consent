@@ -34,17 +34,27 @@ instantiated via `jdbi.onDemand()`.
 
 ## ConsentModule singleton pattern
 
-Every `@Provides` method in `ConsentModule` that creates a new service or DAO instance uses
-`@Singleton` + `synchronized` + a lazy null-guard field to guarantee a single instance
-on both the Guice injection path and the direct inter-provider call path:
+Every `@Provides` method in `ConsentModule` that creates a new service or DAO instance is
+annotated `@Singleton`, and takes each of its dependencies as a method parameter so Guice
+resolves them. Guice caches the singleton itself, so no lazy field or `synchronized` guard
+is needed:
 
 ```java
 @Provides
 @Singleton
-synchronized EmailService providesEmailService() {
-  if (emailService == null) {
-    emailService = new EmailService(...);
-  }
-  return emailService;
+private DatasetService providesDatasetService(
+    Jdbi jdbi,
+    DatasetServiceDAO datasetServiceDAO,
+    ElasticSearchService elasticSearchService,
+    EmailService emailService,
+    OntologyService ontologyService) {
+  return new DatasetService(
+      jdbi, datasetServiceDAO, elasticSearchService, emailService, ontologyService);
 }
 ```
+
+Never call one `@Provides` method from another. A direct call bypasses Guice's scoping and
+builds a second instance with its own `jdbi.onDemand` DAOs. Declare the dependency as a
+parameter instead. Adding a new service means adding a provider here — a service that is
+only JIT-bound (constructed by Guice without a declared provider) is unscoped, so a second
+injection point silently creates a second instance.
