@@ -36,9 +36,12 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserServiceDAO userServiceDAO;
 
-  // Institutions with no eligible issuer, so a card-less user there doesn't re-run the lookup on
-  // every authenticated request. Expiry bounds how long a newly eligible SO goes unnoticed.
+  // Issuance attempts that cannot succeed as things stand, so a card-less user doesn't retry them
+  // on every authenticated request. Expiry bounds how long the fix for either goes unnoticed: an
+  // institution gaining an eligible SO, or the other user's card releasing the email.
   private final Cache<Integer, Boolean> institutionsWithoutIssuer =
+      CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+  private final Cache<Integer, Boolean> usersWithConflictingCardEmail =
       CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
 
   @Inject
@@ -182,7 +185,8 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   @VisibleForTesting
   protected boolean issueLibraryCard(User user, Integer institutionId) {
     if (!hasAddressAndDomain(user.getEmail())
-        || institutionsWithoutIssuer.getIfPresent(institutionId) != null) {
+        || institutionsWithoutIssuer.getIfPresent(institutionId) != null
+        || usersWithConflictingCardEmail.getIfPresent(user.getUserId()) != null) {
       return false;
     }
     User issuer = userDAO.findLibraryCardIssuerByInstitution(institutionId);
@@ -197,9 +201,13 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
             user.getEmail(),
             issuer.getUserId(),
             new Date());
-    // A concurrent pass may have won; only an email conflict held by another user leaves them
-    // card-less.
-    return inserted > 0 || libraryCardDAO.findLibraryCardIdByUserId(user.getUserId()) != null;
+    if (inserted > 0 || libraryCardDAO.findLibraryCardIdByUserId(user.getUserId()) != null) {
+      // Either this pass or a concurrent one carded them.
+      return true;
+    }
+    // The conflict is another user's card holding this email, which stands until that card goes.
+    usersWithConflictingCardEmail.put(user.getUserId(), Boolean.TRUE);
+    return false;
   }
 
   @VisibleForTesting

@@ -287,6 +287,20 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
   }
 
   @Test
+  void issueLibraryCard_DoesNotRetryAnEmailHeldByAnotherUsersCard() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(0);
+    when(libraryCardDAO.findLibraryCardIdByUserId(testUser.getUserId())).thenReturn(null);
+
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    verify(libraryCardDAO, times(1)).insertLibraryCardIfAbsent(any(), any(), any(), any(), any());
+  }
+
+  @Test
   void issueLibraryCard_LosesRaceToAConcurrentIssuance() {
     User testUser = generateUser(1);
     User signingOfficial = generateUser(2);
