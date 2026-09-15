@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -46,6 +47,19 @@ public class MatchMigrationResource extends Resource {
   public Response getReconciliation(@Auth DuosUser duosUser) {
     try {
       return Response.ok().entity(service.reconcile()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  /** Snapshots and then rebuilds; rewrites only match rows and rationales. */
+  @POST
+  @Path("/run")
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({Resource.ADMIN})
+  public Response run(@Auth DuosUser duosUser) {
+    try {
+      return Response.ok().entity(service.run()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

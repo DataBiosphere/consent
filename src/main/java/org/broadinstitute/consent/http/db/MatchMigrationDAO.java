@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.List;
 import org.broadinstitute.consent.http.models.matchmigration.MatchMigrationPopulation;
 import org.broadinstitute.consent.http.models.matchmigration.SnapshotReconciliation;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -93,6 +94,33 @@ public interface MatchMigrationDAO {
       FROM counts
       """)
   MatchMigrationPopulation findPopulation();
+
+  /**
+   * The purposes to reprocess, restricted to those whose DAR still resolves. The rest are reported
+   * by {@link #findUnresolvablePurposes()} rather than silently dropped: reprocessing one would
+   * delete its matches and insert nothing, because the rebuild has no DAR to read.
+   */
+  @SqlQuery(RESOLVABLE_PURPOSES + " ORDER BY m.purpose")
+  List<String> findResolvablePurposes();
+
+  /** Affected purposes whose DAR is archived or gone; left untouched and reported for follow-up. */
+  @SqlQuery(
+      """
+      SELECT DISTINCT m.purpose
+      FROM match_entity m
+      WHERE """
+          + AFFECTED_PREDICATE
+          + """
+        AND NOT EXISTS (
+          SELECT 1 FROM data_access_request dar
+          WHERE dar.reference_id = m.purpose
+            AND """
+          + NOT_ARCHIVED
+          + """
+        )
+      ORDER BY m.purpose
+      """)
+  List<String> findUnresolvablePurposes();
 
   /**
    * Captures everything the run can destroy, before anything is reprocessed.

@@ -893,6 +893,8 @@ paths:
     $ref: './paths/matchMigrationPopulation.yaml'
   /api/match/migration/dataset-id/reconciliation:
     $ref: './paths/matchMigrationReconciliation.yaml'
+  /api/match/migration/dataset-id/run:
+    $ref: './paths/matchMigrationRun.yaml'
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/metrics/dar-summaries/{datasetId}:
@@ -1317,6 +1319,8 @@ components:
       $ref: './schemas/MatchMigrationPopulation.yaml'
     SnapshotReconciliation:
       $ref: './schemas/SnapshotReconciliation.yaml'
+    MatchMigrationRunResult:
+      $ref: './schemas/MatchMigrationRunResult.yaml'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
     SigningOfficialUser:
