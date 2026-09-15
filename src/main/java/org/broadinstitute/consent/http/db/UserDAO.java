@@ -536,8 +536,10 @@ public interface UserDAO extends Transactional<UserDAO> {
    * the institution — so a card this selects is never removed by the next pass. It deliberately
    * does not also require {@code users.institution_id}, which is a staleness-prone restatement of
    * that domain rule; the signing official role is required, since the card records who vouched.
-   * The domain is extracted exactly as {@code trimmedEmailDomain} does so the two agree on an
-   * untrimmed stored email, and the ordering settles every pass on the same issuer.
+   * The domain is extracted as {@code trimmedEmailDomain} does, so the two agree on an untrimmed
+   * stored email, but an address is also required: emails are not validated on write, and without
+   * that a stored value of {@code institution.org} would resolve to itself as a domain and vouch
+   * for real users. The ordering settles every pass on the same issuer.
    */
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
@@ -547,6 +549,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           INNER JOIN roles r ON r.role_id = ur.role_id
           INNER JOIN institution_domains d ON d.institution_id = :institutionId
           WHERE LOWER(r.name) = 'signingofficial'
+          AND POSITION('@' IN BTRIM(u.email)) > 1
           AND LOWER(d.domain) =
               LOWER(SUBSTRING(BTRIM(u.email) FROM POSITION('@' IN BTRIM(u.email)) + 1))
           ORDER BY u.user_id

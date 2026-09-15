@@ -504,6 +504,19 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindLibraryCardIssuerByInstitutionRejectsValueWithoutAnAddress() throws Exception {
+    String domain = randomAlphabetic(10) + ".org";
+    Institution institution = createInstitutionWithDomain(domain);
+    // Emails are not validated on write, so a bare domain must not resolve to itself and vouch.
+    createUserWithEmailRoleAndInstitution(
+        domain, UserRoles.SIGNINGOFFICIAL.getRoleId(), institution.getId());
+    createUserWithEmailRoleAndInstitution(
+        "@" + domain, UserRoles.SIGNINGOFFICIAL.getRoleId(), institution.getId());
+
+    assertNull(userDAO.findLibraryCardIssuerByInstitution(institution.getId()));
+  }
+
+  @Test
   void testFindLibraryCardIssuerByInstitutionNoEligibleSigningOfficial() throws Exception {
     String domain = randomAlphabetic(10) + ".org";
     Institution institution = createInstitutionWithDomain(domain);
