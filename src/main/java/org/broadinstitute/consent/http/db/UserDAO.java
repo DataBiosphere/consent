@@ -531,10 +531,13 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
   /**
-   * Issuer for an automatically issued library card. Restricted to SOs whose own email domain
-   * resolves back to the institution, since enforcement deletes a card whose issuer fails that
-   * check; the domain is extracted exactly as {@code trimmedEmailDomain} does so the two agree on
-   * an untrimmed stored email. Ordered so every pass settles on the same issuer.
+   * Issuer for an automatically issued library card. Eligibility is the same rule enforcement
+   * applies when deciding whether to delete a card — the issuer's own email domain must resolve to
+   * the institution — so a card this selects is never removed by the next pass. It deliberately
+   * does not also require {@code users.institution_id}, which is a staleness-prone restatement of
+   * that domain rule; the signing official role is required, since the card records who vouched.
+   * The domain is extracted exactly as {@code trimmedEmailDomain} does so the two agree on an
+   * untrimmed stored email, and the ordering settles every pass on the same issuer.
    */
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
@@ -542,9 +545,8 @@ public interface UserDAO extends Transactional<UserDAO> {
           SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u
           INNER JOIN user_role ur ON ur.user_id = u.user_id
           INNER JOIN roles r ON r.role_id = ur.role_id
-          INNER JOIN institution_domains d ON d.institution_id = u.institution_id
+          INNER JOIN institution_domains d ON d.institution_id = :institutionId
           WHERE LOWER(r.name) = 'signingofficial'
-          AND u.institution_id = :institutionId
           AND LOWER(d.domain) =
               LOWER(SUBSTRING(BTRIM(u.email) FROM POSITION('@' IN BTRIM(u.email)) + 1))
           ORDER BY u.user_id

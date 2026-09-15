@@ -266,6 +266,20 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
     when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
     when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(0);
+    when(libraryCardDAO.findLibraryCardIdByUserId(testUser.getUserId())).thenReturn(10);
+
+    // The concurrent pass carded them, so the caller still has to re-read the user.
+    assertTrue(service.issueLibraryCard(testUser, 1));
+  }
+
+  @Test
+  void issueLibraryCard_EmailConflictHeldByAnotherUser() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(0);
+    when(libraryCardDAO.findLibraryCardIdByUserId(testUser.getUserId())).thenReturn(null);
 
     assertFalse(service.issueLibraryCard(testUser, 1));
   }

@@ -473,6 +473,21 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindLibraryCardIssuerByInstitutionStaleInstitutionAssignment() throws Exception {
+    String domain = randomAlphabetic(10) + ".org";
+    Institution institution = createInstitutionWithDomain(domain);
+    // Eligible under the removal rule, which resolves the issuer by email domain alone, so a null
+    // or stale users.institution_id must not exclude them.
+    User eligible =
+        createUserWithEmailRoleAndInstitution(
+            randomAlphabetic(10) + "@" + domain, UserRoles.SIGNINGOFFICIAL.getRoleId(), null);
+
+    User issuer = userDAO.findLibraryCardIssuerByInstitution(institution.getId());
+    assertNotNull(issuer);
+    assertEquals(eligible.getUserId(), issuer.getUserId());
+  }
+
+  @Test
   void testFindLibraryCardIssuerByInstitutionUntrimmedEmail() throws Exception {
     String domain = randomAlphabetic(10) + ".org";
     Institution institution = createInstitutionWithDomain(domain);

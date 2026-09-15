@@ -178,13 +178,16 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
     if (issuer == null) {
       return false;
     }
-    return libraryCardDAO.insertLibraryCardIfAbsent(
+    int inserted =
+        libraryCardDAO.insertLibraryCardIfAbsent(
             user.getUserId(),
             user.getDisplayName(),
             user.getEmail(),
             issuer.getUserId(),
-            new Date())
-        > 0;
+            new Date());
+    // Losing the race still leaves this user carded, and the caller has to re-read them for it.
+    // Only a user_email conflict held by a different user_id leaves them without one.
+    return inserted > 0 || libraryCardDAO.findLibraryCardIdByUserId(user.getUserId()) != null;
   }
 
   @VisibleForTesting
