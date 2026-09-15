@@ -16,10 +16,14 @@
     constraint. Adding a foreign key here would only move the problem onto the evidence, so a restore
     skips captured rows whose dataset is gone instead of resurrecting them.
 
-    Populated by POST /api/match/migration/dataset-id/run, not by this changeset. The affected set
-    drains as DARs are re-matched, so it is captured when the run executes rather than fixed now.
-    Outlives the release that retires the migration surface, being the rollback path for the run;
-    a later cleanup release drops them once the migration is confirmed good.
+    Populated by the migration run rather than by this changeset, because the affected set drained as
+    DARs were re-matched and had to be captured at execution time. That run was an admin endpoint,
+    POST /api/match/migration/dataset-id/run, which no longer exists: it was retired in the release
+    that applied the constraints. Do not go looking for it.
+
+    These tables outlive that surface deliberately. They are the rollback path for the run, and the
+    release that applies the constraints is the one most likely to need it. Dropped in a later
+    cleanup, once production has settled.
   -->
   <changeSet id="changelog-consent-2026-09-09-match-migration-snapshot" author="kmarete">
     <createTable tableName="match_migration_snapshot">
