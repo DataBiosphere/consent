@@ -34,7 +34,7 @@ post:
     - User
   responses:
     200:
-      description: Returns the created user, holding a library card when their email domain belongs to an institution with a signing official.
+      description: Returns the created user, holding a library card when their email domain belongs to an institution that also has a signing official at one of its own domains.
       content:
         application/json:
           schema:

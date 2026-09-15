@@ -533,7 +533,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   /**
    * Issuer for an automatically issued library card. Restricted to SOs whose own email domain
    * resolves back to the institution, since enforcement deletes a card whose issuer fails that
-   * check; ordered so every pass settles on the same issuer.
+   * check; the domain is extracted exactly as {@code trimmedEmailDomain} does so the two agree on
+   * an untrimmed stored email. Ordered so every pass settles on the same issuer.
    */
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
@@ -544,7 +545,8 @@ public interface UserDAO extends Transactional<UserDAO> {
           INNER JOIN institution_domains d ON d.institution_id = u.institution_id
           WHERE LOWER(r.name) = 'signingofficial'
           AND u.institution_id = :institutionId
-          AND LOWER(d.domain) = LOWER(SUBSTRING(u.email FROM POSITION('@' IN u.email) + 1))
+          AND LOWER(d.domain) =
+              LOWER(SUBSTRING(BTRIM(u.email) FROM POSITION('@' IN BTRIM(u.email)) + 1))
           ORDER BY u.user_id
           LIMIT 1
         """)

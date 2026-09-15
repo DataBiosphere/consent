@@ -166,10 +166,11 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   }
 
   /**
-   * Makes a domain-matched researcher active without waiting for a signing official. The card is
-   * attributed to an SO of the institution so {@link #needsLibraryCardRemovedForUser} leaves it in
-   * place; an institution with no eligible SO leaves the researcher inactive. Deliberately silent:
-   * the issuance email says an SO acted, and the all-users sweep would send it in bulk.
+   * Makes a domain-matched user active without waiting for a signing official. Not role-filtered:
+   * every user whose domain maps to the institution is issued a card. It is attributed to an SO of
+   * that institution so {@link #needsLibraryCardRemovedForUser} leaves it in place, and an
+   * institution with no eligible SO leaves the user inactive. Deliberately silent: the issuance
+   * email says an SO acted, and the all-users sweep would send it in bulk.
    */
   @VisibleForTesting
   protected boolean issueLibraryCard(User user, Integer institutionId) {

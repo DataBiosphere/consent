@@ -708,12 +708,19 @@ this path: "issuing a card no longer activates anyone" would, at Phase 3, silent
 activation. **Ticket 9's per-user evaluation must therefore activate on a domain match, not only
 deactivate on a mismatch**, and that section's sentence needs narrowing to SO-issued cards.
 
-The PO's stated reservation was that a Library Card "is currently an object that may have content". For
-auto-issued cards it is not: every DAA-authorization read inner-joins `lc_daa` —
-`DaaDAO.findDaaDatasetIdsByUserId` and `SigningOfficialDashboardDAO`'s `researchers_approved` — and that
-table is empty for a card no SO has attached an agreement to. An auto-issued card therefore passes the
-status gates (DAR draft create and update, `validateActiveERACredentials`) and grants no data access and
-no pre-authorization, which is the split this plan wants anyway.
+The PO's stated reservation was that a Library Card "is currently an object that may have content". An
+auto-issued card has none: `lc_daa` stays empty until a signing official attaches an agreement, and every
+authorization read inner-joins it (`DaaDAO.findDaaDatasetIdsByUserId`, `SigningOfficialDashboardDAO`'s
+`researchers_approved`), so the card authorizes no dataset and pre-authorizes nothing.
+
+**It is not inert, though, and the obvious summary — "an empty card grants nothing" — is wrong.** Four
+gates key on card *presence* rather than on `lc_daa`: `DatasetDAO.getApprovedDatasets`,
+`ResearcherDashboardDAO`, `ElectionDAO.findElectionsWithCardHoldingUsersByElectionIds`, and
+`TDRService`'s approved-users list. All four filter views of DARs a DAC has *already* approved, so none
+of them grants new access — but a user who was approved for a dataset and later lost their card drops
+out of all four today, and auto-issuance puts them back, including in the list handed to TDR. That is a
+real and externally visible consequence of this ticket, and that population is the one ticket 4 has to
+keep in mind when these gates move to persisted status.
 
 ### Library Card creation, DAA assignment, and registration
 

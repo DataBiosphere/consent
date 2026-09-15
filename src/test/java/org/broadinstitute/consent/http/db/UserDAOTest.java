@@ -473,6 +473,22 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindLibraryCardIssuerByInstitutionUntrimmedEmail() throws Exception {
+    String domain = randomAlphabetic(10) + ".org";
+    Institution institution = createInstitutionWithDomain(domain);
+    // Emails are not normalized on write, so the issuer predicate has to trim as enforcement does.
+    User eligible =
+        createUserWithEmailRoleAndInstitution(
+            "  " + randomAlphabetic(10) + "@" + domain + "  ",
+            UserRoles.SIGNINGOFFICIAL.getRoleId(),
+            institution.getId());
+
+    User issuer = userDAO.findLibraryCardIssuerByInstitution(institution.getId());
+    assertNotNull(issuer);
+    assertEquals(eligible.getUserId(), issuer.getUserId());
+  }
+
+  @Test
   void testFindLibraryCardIssuerByInstitutionNoEligibleSigningOfficial() throws Exception {
     String domain = randomAlphabetic(10) + ".org";
     Institution institution = createInstitutionWithDomain(domain);
