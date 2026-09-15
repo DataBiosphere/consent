@@ -530,6 +530,30 @@ public interface UserDAO extends Transactional<UserDAO> {
         """)
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
+  /**
+   * Issuer for an automatically issued library card. Eligibility mirrors the rule enforcement uses
+   * to remove one — the issuer's own email domain must resolve to the institution — so a card this
+   * selects survives the next pass. {@code users.institution_id} is deliberately not also required,
+   * being a staleness-prone restatement of that rule; the role is, because the card records who
+   * vouched, as is a real address, since emails are not validated on write. Ordering keeps the
+   * choice stable across passes.
+   */
+  @RegisterBeanMapper(value = User.class)
+  @SqlQuery(
+      """
+          SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u
+          INNER JOIN user_role ur ON ur.user_id = u.user_id
+          INNER JOIN roles r ON r.role_id = ur.role_id
+          INNER JOIN institution_domains d ON d.institution_id = :institutionId
+          WHERE LOWER(r.name) = 'signingofficial'
+          AND POSITION('@' IN BTRIM(u.email)) > 1
+          AND LOWER(d.domain) =
+              LOWER(SUBSTRING(BTRIM(u.email) FROM POSITION('@' IN BTRIM(u.email)) + 1))
+          ORDER BY u.user_id
+          LIMIT 1
+        """)
+  User findLibraryCardIssuerByInstitution(@Bind("institutionId") Integer institutionId);
+
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)

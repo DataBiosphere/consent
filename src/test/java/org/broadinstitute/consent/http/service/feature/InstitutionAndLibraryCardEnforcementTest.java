@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -228,6 +230,174 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
     verify(userDAO, times(0)).updateInstitutionId(any(), any());
     verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  @Test
+  void issueLibraryCard() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(1);
+
+    assertTrue(service.issueLibraryCard(testUser, 1));
+    verify(libraryCardDAO)
+        .insertLibraryCardIfAbsent(
+            eq(testUser.getUserId()),
+            eq(testUser.getDisplayName()),
+            eq(testUser.getEmail()),
+            eq(signingOfficial.getUserId()),
+            any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"institution.org", "@institution.org", "user@", " ", "noatsign"})
+  void issueLibraryCard_UserWithoutAnEmailAddress(String email) {
+    User testUser = generateUser(1);
+    testUser.setEmail(email);
+
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    verify(libraryCardDAO, times(0)).insertLibraryCardIfAbsent(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void hasAddressAndDomain_NullEmail() {
+    assertFalse(service.hasAddressAndDomain(null));
+  }
+
+  @Test
+  void issueLibraryCard_NoEligibleSigningOfficial() {
+    User testUser = generateUser(1);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(null);
+
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    verify(libraryCardDAO, times(0)).insertLibraryCardIfAbsent(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void issueLibraryCard_LosesRaceToAConcurrentIssuance() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(0);
+    when(libraryCardDAO.findLibraryCardIdByUserId(testUser.getUserId())).thenReturn(10);
+
+    // The concurrent pass carded them, so the caller still has to re-read the user.
+    assertTrue(service.issueLibraryCard(testUser, 1));
+  }
+
+  @Test
+  void issueLibraryCard_EmailConflictHeldByAnotherUser() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(0);
+    when(libraryCardDAO.findLibraryCardIdByUserId(testUser.getUserId())).thenReturn(null);
+
+    assertFalse(service.issueLibraryCard(testUser, 1));
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_CardlessUserIsIssuedACard() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+    testUser.setInstitutionId(1);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(1);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, 1));
+    verify(libraryCardDAO)
+        .insertLibraryCardIfAbsent(
+            eq(testUser.getUserId()),
+            eq(testUser.getDisplayName()),
+            eq(testUser.getEmail()),
+            eq(signingOfficial.getUserId()),
+            any());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_CardlessUserAtInstitutionWithNoSigningOfficial() {
+    User testUser = generateUser(1);
+    testUser.setInstitutionId(1);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(null);
+
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, 1));
+    verify(libraryCardDAO, times(0)).insertLibraryCardIfAbsent(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_NewlyAssignedInstitutionIssuesACard() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+    testUser.setInstitutionId(2);
+
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(signingOfficial);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(1);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, 1));
+    verify(userDAO).updateInstitutionId(testUser.getUserId(), 1);
+    verify(libraryCardDAO)
+        .insertLibraryCardIfAbsent(
+            eq(testUser.getUserId()),
+            eq(testUser.getDisplayName()),
+            eq(testUser.getEmail()),
+            eq(signingOfficial.getUserId()),
+            any());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_ValidCardIsNotReissued() {
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institution = new Institution();
+    institution.setId(1);
+    testUser.setInstitution(institution);
+    testUser.setInstitutionId(1);
+    String soDomain = service.trimmedEmailDomain(signingOfficial.getEmail());
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(institutionDAO.findInstitutionByDomain(soDomain)).thenReturn(institution);
+
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, 1));
+    verify(libraryCardDAO, times(0)).insertLibraryCardIfAbsent(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_RemovedCardIsReissuedByAnEligibleSigningOfficial() {
+    User testUser = generateUser(1);
+    User staleIssuer = generateUser(2);
+    User eligibleIssuer = generateUser(3);
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(staleIssuer.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institution = new Institution();
+    institution.setId(1);
+    testUser.setInstitution(institution);
+    testUser.setInstitutionId(1);
+    String staleIssuerDomain = service.trimmedEmailDomain(staleIssuer.getEmail());
+
+    when(userDAO.findUserById(staleIssuer.getUserId())).thenReturn(staleIssuer);
+    when(institutionDAO.findInstitutionByDomain(staleIssuerDomain)).thenReturn(null);
+    when(userDAO.findLibraryCardIssuerByInstitution(1)).thenReturn(eligibleIssuer);
+    when(libraryCardDAO.insertLibraryCardIfAbsent(any(), any(), any(), any(), any())).thenReturn(1);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, 1));
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+    verify(libraryCardDAO)
+        .insertLibraryCardIfAbsent(
+            eq(testUser.getUserId()),
+            eq(testUser.getDisplayName()),
+            eq(testUser.getEmail()),
+            eq(eligibleIssuer.getUserId()),
+            any());
   }
 
   @Test

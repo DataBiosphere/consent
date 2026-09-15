@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -158,7 +159,37 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
       libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     }
 
-    return needsLCRemoved || needsInstitutionAssigned;
+    boolean issuedLC =
+        (needsLCRemoved || !hasLibraryCard(user)) && issueLibraryCard(user, institutionId);
+
+    return needsLCRemoved || needsInstitutionAssigned || issuedLC;
+  }
+
+  /**
+   * Makes a domain-matched user active without waiting for a signing official, and is not
+   * role-filtered. Attributed to an SO of the institution so {@link
+   * #needsLibraryCardRemovedForUser} leaves it in place; no eligible SO means no card. Sends no
+   * email: the template says an SO acted, and the sweep would send it in bulk.
+   */
+  @VisibleForTesting
+  protected boolean issueLibraryCard(User user, Integer institutionId) {
+    if (!hasAddressAndDomain(user.getEmail())) {
+      return false;
+    }
+    User issuer = userDAO.findLibraryCardIssuerByInstitution(institutionId);
+    if (issuer == null) {
+      return false;
+    }
+    int inserted =
+        libraryCardDAO.insertLibraryCardIfAbsent(
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            issuer.getUserId(),
+            new Date());
+    // A concurrent pass may have won; only an email conflict held by another user leaves them
+    // card-less.
+    return inserted > 0 || libraryCardDAO.findLibraryCardIdByUserId(user.getUserId()) != null;
   }
 
   @VisibleForTesting
@@ -193,6 +224,20 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
       }
     }
     return false;
+  }
+
+  /**
+   * Emails are not validated on write, and {@code trimmedEmailDomain} maps a value with no address
+   * to itself, so {@code institution.org} would otherwise resolve to that institution and activate.
+   */
+  @VisibleForTesting
+  protected boolean hasAddressAndDomain(String email) {
+    if (email == null) {
+      return false;
+    }
+    String trimmed = email.trim();
+    int at = trimmed.indexOf('@');
+    return at > 0 && at < trimmed.length() - 1;
   }
 
   @VisibleForTesting

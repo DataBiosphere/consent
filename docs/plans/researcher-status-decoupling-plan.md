@@ -692,6 +692,28 @@ ships with Phase 1 rather than with this ticket — and because that dual-write 
 the bare `:158` branch is a Phase-1 (ticket 5a) deliverable rather than waiting for this ticket. See
 [Flag-gated dual-write](#flag-gated-dual-write-phase-1-required).
 
+**Enforcement now issues cards as well as removing them — PO-confirmed as the interim mechanism, with a
+consequence for ticket 9.** DT-3800 shipped domain-based auto-issuance into
+`handleUserWithInstitutionInMap` and into registration, attributing the card to a signing official
+picked by `UserDAO.findLibraryCardIssuerByInstitution`, which applies the same domain rule as removal
+above so the card survives the next pass. The PO confirmed this precisely because persisted researcher
+status does not exist yet, and expects it to be replaced by — or renamed to — researcher status.
+
+That makes "issuing a card no longer activates anyone", under
+[Library Card creation](#library-card-creation-daa-assignment-and-registration), wrong as written for
+this path: at Phase 3 it would silently retire DT-3800's activation. **Ticket 9's evaluation must
+therefore activate on a domain match, not only deactivate on a mismatch**, and that sentence needs
+narrowing to SO-issued cards.
+
+The PO's reservation was that a card "is currently an object that may have content". An auto-issued one
+has none — `lc_daa` stays empty until an SO attaches an agreement, and every authorization read
+inner-joins it — **but "an empty card grants nothing" is still wrong.** Four gates key on card
+*presence*: `DatasetDAO.getApprovedDatasets`, `ResearcherDashboardDAO`,
+`ElectionDAO.findElectionsWithCardHoldingUsersByElectionIds`, and `TDRService`'s approved-users list.
+All four filter views of *already-approved* DARs, so none grants new access, but a user who lost their
+card drops out of all four today and auto-issuance puts them back, including in the list handed to TDR.
+That population is the one ticket 4 must keep in mind when these gates move to persisted status.
+
 ### Library Card creation, DAA assignment, and registration
 
 `LibraryCardService.createLibraryCard`, `DaaServiceDAO` bulk assignment, and the DAA resource retain
