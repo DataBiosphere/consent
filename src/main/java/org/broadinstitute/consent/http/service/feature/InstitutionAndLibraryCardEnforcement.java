@@ -11,9 +11,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Duration;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -40,9 +40,9 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   // on every authenticated request. Expiry bounds how long the fix for either goes unnoticed: an
   // institution gaining an eligible SO, or the other user's card releasing the email.
   private final Cache<Integer, Boolean> institutionsWithoutIssuer =
-      CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+      CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(5)).build();
   private final Cache<Integer, Boolean> usersWithConflictingCardEmail =
-      CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+      CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(5)).build();
 
   @Inject
   public InstitutionAndLibraryCardEnforcement(
