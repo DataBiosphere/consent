@@ -36,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -247,6 +248,21 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
             eq(testUser.getEmail()),
             eq(signingOfficial.getUserId()),
             any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"institution.org", "@institution.org", "user@", " ", "noatsign"})
+  void issueLibraryCard_UserWithoutAnEmailAddress(String email) {
+    User testUser = generateUser(1);
+    testUser.setEmail(email);
+
+    assertFalse(service.issueLibraryCard(testUser, 1));
+    verify(libraryCardDAO, times(0)).insertLibraryCardIfAbsent(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void hasAddressAndDomain_NullEmail() {
+    assertFalse(service.hasAddressAndDomain(null));
   }
 
   @Test

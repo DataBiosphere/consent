@@ -166,14 +166,16 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   }
 
   /**
-   * Makes a domain-matched user active without waiting for a signing official. Not role-filtered:
-   * every user whose domain maps to the institution is issued a card. It is attributed to an SO of
-   * that institution so {@link #needsLibraryCardRemovedForUser} leaves it in place, and an
-   * institution with no eligible SO leaves the user inactive. Deliberately silent: the issuance
-   * email says an SO acted, and the all-users sweep would send it in bulk.
+   * Makes a domain-matched user active without waiting for a signing official, and is not
+   * role-filtered. Attributed to an SO of the institution so {@link
+   * #needsLibraryCardRemovedForUser} leaves it in place; no eligible SO means no card. Sends no
+   * email: the template says an SO acted, and the sweep would send it in bulk.
    */
   @VisibleForTesting
   protected boolean issueLibraryCard(User user, Integer institutionId) {
+    if (!hasAddressAndDomain(user.getEmail())) {
+      return false;
+    }
     User issuer = userDAO.findLibraryCardIssuerByInstitution(institutionId);
     if (issuer == null) {
       return false;
@@ -185,8 +187,8 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
             user.getEmail(),
             issuer.getUserId(),
             new Date());
-    // Losing the race still leaves this user carded, and the caller has to re-read them for it.
-    // Only a user_email conflict held by a different user_id leaves them without one.
+    // A concurrent pass may have won; only an email conflict held by another user leaves them
+    // card-less.
     return inserted > 0 || libraryCardDAO.findLibraryCardIdByUserId(user.getUserId()) != null;
   }
 
@@ -222,6 +224,20 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
       }
     }
     return false;
+  }
+
+  /**
+   * Emails are not validated on write, and {@code trimmedEmailDomain} maps a value with no address
+   * to itself, so {@code institution.org} would otherwise resolve to that institution and activate.
+   */
+  @VisibleForTesting
+  protected boolean hasAddressAndDomain(String email) {
+    if (email == null) {
+      return false;
+    }
+    String trimmed = email.trim();
+    int at = trimmed.indexOf('@');
+    return at > 0 && at < trimmed.length() - 1;
   }
 
   @VisibleForTesting

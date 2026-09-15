@@ -531,15 +531,12 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
   /**
-   * Issuer for an automatically issued library card. Eligibility is the same rule enforcement
-   * applies when deciding whether to delete a card — the issuer's own email domain must resolve to
-   * the institution — so a card this selects is never removed by the next pass. It deliberately
-   * does not also require {@code users.institution_id}, which is a staleness-prone restatement of
-   * that domain rule; the signing official role is required, since the card records who vouched.
-   * The domain is extracted as {@code trimmedEmailDomain} does, so the two agree on an untrimmed
-   * stored email, but an address is also required: emails are not validated on write, and without
-   * that a stored value of {@code institution.org} would resolve to itself as a domain and vouch
-   * for real users. The ordering settles every pass on the same issuer.
+   * Issuer for an automatically issued library card. Eligibility mirrors the rule enforcement uses
+   * to remove one — the issuer's own email domain must resolve to the institution — so a card this
+   * selects survives the next pass. {@code users.institution_id} is deliberately not also required,
+   * being a staleness-prone restatement of that rule; the role is, because the card records who
+   * vouched, as is a real address, since emails are not validated on write. Ordering keeps the
+   * choice stable across passes.
    */
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(

@@ -203,8 +203,16 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery("SELECT * FROM library_card " + "WHERE user_email = :email")
   LibraryCard findLibraryCardByUserEmail(@Bind("email") String email);
 
+  // lc_daa's foreign key is NO ACTION, so its rows have to go first or the delete throws.
   @SqlUpdate(
-      "DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
+      """
+      WITH targets AS (
+        SELECT id FROM library_card
+        WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId
+      ),
+      daa_deletes AS (DELETE FROM lc_daa WHERE lc_id IN (SELECT id FROM targets))
+      DELETE FROM library_card WHERE id IN (SELECT id FROM targets)
+      """)
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);
 
   @SqlUpdate(
