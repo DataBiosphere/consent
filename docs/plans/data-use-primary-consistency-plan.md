@@ -508,8 +508,9 @@ The constraints must not deploy until the run that clears them has happened. The
 on the same conditions the run reports, so it never applies a constraint the data cannot satisfy.
 It does not stop the deploy: `ConsentApplication` logs a Liquibase failure and starts Jersey anyway,
 so releasing C early leaves an environment running C's code with the constraints silently unapplied.
-Worse than the missing constraints, C's election join no longer tolerates a null `match_entity.dataset_id`,
-so any legacy row that the run has not yet rebuilt drops out of match reads while looking healthy.
+Worse than the missing constraints, `onFail="HALT"` halts the whole changelog rather than one
+changeset, so every changeset ordered after it stops applying in that environment until the data is
+fixed - a frozen schema behind an application that starts cleanly.
 That is quiet rather than loud, which is exactly why the ordering is not optional.
 
 | Release | Contents | Gate to the next |
@@ -585,9 +586,11 @@ Rollback:
   rows can be remapped onto their new parent. Skip captured rows whose dataset has since been deleted:
   `fk_match_entity_dataset_id` is `NO ACTION`, so the dataset was undeletable until the run removed
   the row referencing it, and re-inserting that row now would fail the same constraint. Reconciliation keys on presence rather than identity for the same reason.
-- After release C, the constraints reject the legacy shape and C's code has dropped the match-side
-  `IS NULL` tolerance in the election join, so restored null-`dataset_id` rows would not be read
-  back. Roll the application back to B first, then the changeset, then restore.
+- After release C, the constraints reject the legacy shape: a restored null-`dataset_id` row fails
+  the non-null constraint outright, so the changeset has to come off before anything is restored.
+  Roll the application back to B first, then the changeset, then restore. C keeps the match-side
+  `IS NULL` tolerance in the election join, so that ordering is about the constraint rather than the
+  read path.
 - Release A's changeset drops a column its own application writes, so roll the application back
   first and the changeset second. The election join's `IS NULL` tolerance means a half-migrated
   table still reads correctly either side of it.
