@@ -1,12 +1,12 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.MatchMapper;
 import org.broadinstitute.consent.http.db.mapper.MatchReducer;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -48,27 +48,32 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
           ) AS e ON e.reference_id = match_entity.purpose
+            -- Correlate on dataset only when both sides carry one: legacy match rows predate
+            -- dataset_id and legacy elections can be missing it too, and either would otherwise
+            -- drop out. The tolerance goes away with the non-null constraints.
+            AND (match_entity.dataset_id IS NULL
+                 OR e.dataset_id IS NULL
+                 OR e.dataset_id = match_entity.dataset_id)
         WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
       """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
       @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
+  /**
+   * Bound from the {@link Match} itself. The column list is long enough that positional parameters
+   * were both unreadable and a Sonar finding, and the model already holds exactly these fields.
+   */
   @SqlUpdate(
       """
         INSERT INTO match_entity
-          (consent, purpose, match_entity, failed, create_date, algorithm_version, abstain)
+          (consent, dataset_id, purpose, match_entity, failed, create_date,
+           algorithm_version, abstain)
         VALUES
-          (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
+          (:consent, :datasetId, :purpose, :match, :failed, :createDate,
+           :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
-  Integer insertMatch(
-      @Bind("consentId") String consentId,
-      @Bind("purposeId") String purposeId,
-      @Bind("match") Boolean match,
-      @Bind("failed") Boolean failed,
-      @Bind("createDate") Date date,
-      @Bind("algorithmVersion") String algorithmVersion,
-      @Bind("abstain") Boolean abstain);
+  Integer insertMatch(@BindBean Match match);
 
   @SqlUpdate(
       "INSERT INTO match_rationale (match_entity_id, rationale) VALUES (:matchId, :rationale) ")

@@ -56,6 +56,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static StudyDAO studyDAO;
   protected static DataAccessRequestDAO dataAccessRequestDAO;
   protected static MatchDAO matchDAO;
+  protected static MatchMigrationDAO matchMigrationDAO;
   protected static MailMessageDAO mailMessageDAO;
   protected static UserPropertyDAO userPropertyDAO;
   protected static InstitutionDAO institutionDAO;
@@ -152,6 +153,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     studyDAO = jdbi.onDemand(StudyDAO.class);
     dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     matchDAO = jdbi.onDemand(MatchDAO.class);
+    matchMigrationDAO = jdbi.onDemand(MatchMigrationDAO.class);
     mailMessageDAO = jdbi.onDemand(MailMessageDAO.class);
     userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
     institutionDAO = jdbi.onDemand(InstitutionDAO.class);

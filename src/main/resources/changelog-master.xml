@@ -260,4 +260,6 @@
   <include file="changesets/changelog-consent-2026-08-18-study-pi-details.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-08-18-study-comments.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-09-02-study-pi-institution-backfill.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-09-match-dataset-id.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-09-match-migration-snapshot.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
