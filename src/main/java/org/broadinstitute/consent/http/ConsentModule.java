@@ -636,8 +636,15 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  private MetricsService providesMetricsService(Jdbi jdbi) {
-    return new MetricsService(jdbi);
+  private MetricsService providesMetricsService(Jdbi jdbi, DatasetService datasetService) {
+    return new MetricsService(jdbi, datasetService);
+  }
+
+  @Provides
+  @Singleton
+  private StudyCommentService providesStudyCommentService(
+      Jdbi jdbi, DatasetService datasetService) {
+    return new StudyCommentService(jdbi, datasetService);
   }
 
   @Provides
