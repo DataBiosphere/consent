@@ -187,19 +187,6 @@ class StudyAssetsMigrationTest extends DAOTestHelper {
   }
 
   /** Runs every &lt;sql&gt; block from the shipped changeset, in order. */
-  /**
-   * {@link #runMigration()} with index scans disabled, so study_property is sequentially scanned.
-   */
-  private void runMigrationWithoutIndexScans() throws Exception {
-    jdbi.useHandle(
-        handle -> {
-          handle.execute("SET enable_indexscan = off");
-          handle.execute("SET enable_bitmapscan = off");
-          handle.execute("SET enable_indexonlyscan = off");
-        });
-    runMigration();
-  }
-
   private void runMigration() throws Exception {
     String changeset = Files.readString(CHANGESET);
     Matcher matcher = Pattern.compile("<sql>(.*?)</sql>", Pattern.DOTALL).matcher(changeset);

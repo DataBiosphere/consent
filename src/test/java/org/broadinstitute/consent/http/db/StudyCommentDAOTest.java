@@ -148,13 +148,13 @@ class StudyCommentDAOTest extends DAOTestHelper {
    * leave that alone and move only update_date - otherwise an edit would jump a comment to the top.
    */
   @Test
-  void testUpsertPreservesCreateDateAndAdvancesUpdateDate() throws Exception {
+  void testUpsertPreservesCreateDateAndAdvancesUpdateDate() {
     Integer studyId = insertStudy();
     User user = createUserWithInstitution();
-    studyCommentDAO.upsert(studyId, user.getUserId(), 3, "first");
+    Integer commentId = studyCommentDAO.upsert(studyId, user.getUserId(), 3, "first");
+    backdate(commentId);
     StudyComment before = studyCommentDAO.findByStudyId(studyId, 100, 0).getFirst();
 
-    Thread.sleep(10);
     studyCommentDAO.upsert(studyId, user.getUserId(), 5, "revised");
     StudyComment after = studyCommentDAO.findByStudyId(studyId, 100, 0).getFirst();
 
@@ -165,12 +165,12 @@ class StudyCommentDAOTest extends DAOTestHelper {
 
   /** Newest first by creation, so an edited comment does not jump the queue. */
   @Test
-  void testFindByStudyIdOrdersNewestFirstByCreation() throws Exception {
+  void testFindByStudyIdOrdersNewestFirstByCreation() {
     Integer studyId = insertStudy();
     User first = createUserWithInstitution();
     User second = createUserWithInstitution();
     Integer firstId = studyCommentDAO.upsert(studyId, first.getUserId(), 3, "older");
-    Thread.sleep(10);
+    backdate(firstId);
     Integer secondId = studyCommentDAO.upsert(studyId, second.getUserId(), 4, "newer");
 
     assertEquals(
@@ -180,7 +180,6 @@ class StudyCommentDAOTest extends DAOTestHelper {
             .toList());
 
     // Editing the older one does not move it, because the order is by create_date
-    Thread.sleep(10);
     studyCommentDAO.upsert(studyId, first.getUserId(), 5, "older, revised");
 
     assertEquals(
@@ -238,5 +237,26 @@ class StudyCommentDAOTest extends DAOTestHelper {
         user.getUserId(),
         Instant.now(),
         UUID.randomUUID());
+  }
+
+  /**
+   * Move a comment's timestamps a second into the past, so a following upsert cannot land on the
+   * same clock tick.
+   *
+   * <p>These tests slept to get that separation. A sleep buys it only probabilistically - short
+   * enough to be cheap is short enough for a loaded machine to miss - and every run pays the wait
+   * whether it needed it or not. Backdating states the precondition instead of hoping for it.
+   */
+  private void backdate(Integer studyCommentId) {
+    jdbi.useHandle(
+        handle ->
+            handle.execute(
+                """
+                UPDATE study_comment
+                SET create_date = create_date - interval '1 second',
+                    update_date = update_date - interval '1 second'
+                WHERE study_comment_id = ?
+                """,
+                studyCommentId));
   }
 }
