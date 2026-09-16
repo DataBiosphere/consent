@@ -649,13 +649,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  private StudyCommentService providesStudyCommentService(
-      Jdbi jdbi, DatasetService datasetService) {
-    return new StudyCommentService(jdbi, datasetService);
-  }
-
-  @Provides
-  @Singleton
   private InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement(
       Jdbi jdbi, UserServiceDAO userServiceDAO, ExecutorService executorService) {
     return new InstitutionAndLibraryCardEnforcement(jdbi, userServiceDAO, executorService);
