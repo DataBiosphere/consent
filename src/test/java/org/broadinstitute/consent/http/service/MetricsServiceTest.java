@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -81,7 +82,9 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummaries() {
     DarMetricsSummary summary = generateDarMetricsSummary();
     Dataset dataset = generateDataset();
+    dataset.setStudyId(10);
 
+    when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
         .thenReturn(List.of(summary));
 
@@ -91,6 +94,53 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(summary.darCode(), metrics.getFirst().darCode());
     verify(datasetService).findDatasetByIdForRead(user, dataset.getDatasetId());
     verify(darDAO).findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId());
+  }
+
+  /**
+   * A dataset that belongs to a study was gated on that study's visibility, so the requester it
+   * names was already readable by this caller.
+   */
+  @Test
+  void testGenerateDarSummariesKeepsRequesterIdentityForAStudysDataset() {
+    Dataset dataset = generateDataset();
+    dataset.setStudyId(10);
+    DarMetricsSummary summary =
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, "ref-1", "Dr. Ada Lovelace", "Broad", false);
+
+    when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
+    when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
+        .thenReturn(List.of(summary));
+
+    List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId(), user);
+
+    assertEquals("Dr. Ada Lovelace", metrics.getFirst().piName());
+    assertEquals("Broad", metrics.getFirst().institutionName());
+  }
+
+  /**
+   * A dataset with no study has no visibility to test, so findDatasetByIdForRead admits every
+   * authenticated caller. The request itself is readable under that rule; the requester's name and
+   * affiliation are about a person, and would otherwise be harvestable by walking dataset ids.
+   */
+  @Test
+  void testGenerateDarSummariesWithholdsRequesterIdentityWithoutAStudy() {
+    Dataset dataset = generateDataset();
+    DarMetricsSummary summary =
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, "ref-1", "Dr. Ada Lovelace", "Broad", false);
+
+    when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
+    when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
+        .thenReturn(List.of(summary));
+
+    List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId(), user);
+
+    assertNull(metrics.getFirst().piName());
+    assertNull(metrics.getFirst().institutionName());
+    // The request itself still comes through
+    assertEquals("Project", metrics.getFirst().projectTitle());
+    assertEquals("DAR-1", metrics.getFirst().darCode());
   }
 
   /** A dataset the caller may not read yields no summaries, rather than its DAR project titles. */
