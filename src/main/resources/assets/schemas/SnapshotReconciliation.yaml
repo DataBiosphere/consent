@@ -1,0 +1,36 @@
+type: object
+description: >
+  The snapshot measured against what the run left behind. A reprocess deletes and re-inserts, so
+  replacements carry new ids and a snapshotted row that is gone was handled.
+properties:
+  snapshotted:
+    type: integer
+    description: Rows captured before the run.
+  snapshottedRowsGone:
+    type: integer
+    description: Captured rows the run replaced or removed.
+  snapshottedRowsRemaining:
+    type: integer
+    description: Captured rows still present, expected to be exactly the skipped ones.
+  unresolvableRows:
+    type: integer
+    description: Affected rows on purposes whose DAR does not resolve. Skipped by design.
+  snapshottedPurposes:
+    type: integer
+    description: Distinct purposes captured.
+  purposesHoldingMatches:
+    type: integer
+    description: >
+      Captured purposes now holding at least one match. Named for the state, not the cause - a
+      skipped purpose still holds its original rows, so it counts here without having been rebuilt.
+  purposesHoldingNoMatches:
+    type: integer
+    description: Captured purposes now holding none - the intended deletions.
+  stillAffected:
+    type: integer
+    description: Rows the constraints would still reject.
+  reconciles:
+    type: boolean
+    description: >
+      Whether every captured row was either handled or deliberately skipped, with nothing else
+      outstanding. False if the run skipped more than it meant to.

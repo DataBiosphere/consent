@@ -1,0 +1,29 @@
+get:
+  summary: Reconcile a dataset_id migration run against its snapshot
+  operationId: apiMatchMigrationDatasetIdReconciliationGet
+  description: |
+    Reconciles a migration run that has already happened, for a confirmation pass before the
+    constraints are released. Read-only.
+    Reports zeros for the snapshot until a run has populated it.
+  tags:
+    - Match
+    - Admin
+  responses:
+    200:
+      description: Returns the snapshot measured against what the run left behind.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/SnapshotReconciliation.yaml'
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - Admin role required
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
