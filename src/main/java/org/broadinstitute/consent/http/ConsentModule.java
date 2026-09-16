@@ -76,6 +76,7 @@ import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.ResearcherDashboardService;
 import org.broadinstitute.consent.http.service.SigningOfficialDashboardService;
+import org.broadinstitute.consent.http.service.StudyCommentService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -637,6 +638,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private MetricsService providesMetricsService(Jdbi jdbi) {
     return new MetricsService(jdbi);
+  }
+
+  @Provides
+  @Singleton
+  private StudyCommentService providesStudyCommentService(
+      Jdbi jdbi, DatasetService datasetService) {
+    return new StudyCommentService(jdbi, datasetService);
   }
 
   @Provides
