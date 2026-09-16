@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -283,6 +284,43 @@ class MatchDAOTest extends DAOTestHelper {
         matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     assertEquals(matchId, matchResults.getFirst().getId());
+  }
+
+  @Test
+  void testFindMatchesForLatestDataAccessElectionsKeepsMatchesWithNoDatasetId() {
+    // The only state that can produce such a row is a halted precondition, which leaves the
+    // constraints unapplied while the application starts anyway, so the constraint is dropped
+    // here to reach it. The transaction is rolled back rather than committed: the DDL is
+    // undone with it, and truncateAllTables would not restore it.
+    Dataset dataset = createDataset();
+    String darReferenceId = UUID.randomUUID().toString();
+    createDataAccessElection(darReferenceId, dataset.getDatasetId());
+
+    jdbi.useHandle(
+        handle -> {
+          handle.begin();
+          handle.execute("ALTER TABLE match_entity ALTER COLUMN dataset_id DROP NOT NULL");
+          handle.execute(
+              """
+              INSERT INTO match_entity
+                (consent, dataset_id, purpose, match_entity, failed, create_date,
+                 algorithm_version, abstain)
+              VALUES (?, NULL, ?, true, false, NOW(), ?, false)
+              """,
+              dataset.getDatasetIdentifier(),
+              darReferenceId,
+              MatchAlgorithm.V1.getVersion());
+
+          List<Match> matchResults =
+              handle
+                  .attach(MatchDAO.class)
+                  .findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+
+          assertEquals(1, matchResults.size());
+          assertNull(matchResults.getFirst().getDatasetId());
+
+          handle.rollback();
+        });
   }
 
   @Test
