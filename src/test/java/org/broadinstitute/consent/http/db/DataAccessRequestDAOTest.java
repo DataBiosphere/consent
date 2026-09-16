@@ -1185,10 +1185,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(approvedDAR.getReferenceId(), summaries.getFirst().referenceId());
     assertNotNull(summaries.getFirst().submissionDate());
 
-    // Requester identity belongs to the gated study route, not this one; the fallback to the
-    // submitter is asserted there.
-    assertNull(summaries.getFirst().piName());
-    assertNull(summaries.getFirst().institutionName());
+    // Requester identity, resolved as on the study route: the DAR's own piName when it has one,
+    // otherwise the submitter's display name.
+    assertNotNull(summaries.getFirst().piName());
   }
 
   /**
@@ -1293,15 +1292,14 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   /**
-   * The per-dataset route must not carry requester identity.
+   * Both routes carry requester identity, resolved the same way.
    *
-   * <p>Its only caller, {@code GET /api/metrics/dar-summaries/{datasetId}}, is {@code @PermitAll}
-   * and verifies nothing beyond the dataset existing, so a PI name and affiliation selected here
-   * could be harvested by walking dataset ids. The study-scoped sibling supplies them for the study
-   * page and is gated on the study's visibility; this asserts the two stay different.
+   * <p>The dataset route is gated on being able to read the dataset, so identity here is not
+   * reachable by walking ids. The dataset page and the study page show the same requester, and this
+   * asserts they do not drift apart.
    */
   @Test
-  void testFindSummaryMetricApprovedDARsByDatasetIdOmitsRequesterIdentity() {
+  void testFindSummaryMetricApprovedDARsByDatasetIdCarriesRequesterIdentity() {
     User user = createUserWithInstitution();
     Integer studyId =
         studyDAO.insertStudy(
@@ -1325,11 +1323,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertFalse(byDataset.isEmpty());
-    assertTrue(byDataset.stream().allMatch(s -> s.piName() == null));
-    assertTrue(byDataset.stream().allMatch(s -> s.institutionName() == null));
-    // The same grant, read through the gated study route, does carry them
+    assertTrue(byDataset.stream().allMatch(s -> s.piName() != null));
+    assertTrue(byDataset.stream().allMatch(s -> s.institutionName() != null));
+    // The same grant read through the study route names the same requester
     assertFalse(byStudy.isEmpty());
-    assertTrue(byStudy.stream().allMatch(s -> s.piName() != null));
+    assertEquals(byStudy.getFirst().piName(), byDataset.getFirst().piName());
+    assertEquals(byStudy.getFirst().institutionName(), byDataset.getFirst().institutionName());
   }
 
   /**

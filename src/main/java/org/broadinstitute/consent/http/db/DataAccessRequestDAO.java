@@ -166,14 +166,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              -- No requester identity on this route. Its only caller,
-              -- GET /api/metrics/dar-summaries/{datasetId}, is @PermitAll and checks nothing but
-              -- the dataset's existence, so selecting the granted PI's name and affiliation here
-              -- would let any authenticated user harvest them by walking dataset ids. Nothing
-              -- reads these fields from this query; the study-scoped sibling below supplies them
-              -- for the study page and is gated on the study's visibility.
-              NULL::text AS pi_name,
-              NULL::text AS institution_name
+              -- Caller must already be able to read the dataset, so identity is not id-walkable.
+              COALESCE(latest_dar.data ->> 'piName', u.display_name) AS pi_name,
+              i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that is
@@ -189,6 +184,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               AND dd.dataset_id = :datasetId
               ORDER BY dar.collection_id, dar.submission_date DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = latest_dar.user_id
+          LEFT JOIN institution i ON i.institution_id = u.institution_id
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
