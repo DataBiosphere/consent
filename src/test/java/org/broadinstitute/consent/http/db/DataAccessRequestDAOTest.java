@@ -1185,9 +1185,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(approvedDAR.getReferenceId(), summaries.getFirst().referenceId());
     assertNotNull(summaries.getFirst().submissionDate());
 
-    // Requester identity, resolved as on the study route: the DAR's own piName when it has one,
-    // otherwise the submitter's display name.
-    assertNotNull(summaries.getFirst().piName());
+    // The requester's institution, as on the study route. The name is deliberately not carried.
+    assertNotNull(summaries.getFirst().institutionName());
+    assertNull(summaries.getFirst().piName());
   }
 
   /**
@@ -1196,7 +1196,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    * only route that carries requester identity.
    */
   @Test
-  void testFindSummaryMetricApprovedDARsPrefersThePiNameRecordedOnTheDar() {
+  void testFindSummaryMetricApprovedDARsCarriesTheSubmittersInstitution() {
     Dataset dataset = createDataset();
     User user = createUserWithInstitution();
     Date now = new Date();
@@ -1230,8 +1230,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertEquals(1, summaries.size());
-    assertEquals("Recorded PI Name", summaries.getFirst().piName());
-    assertNotEquals(user.getDisplayName(), summaries.getFirst().piName());
+    assertNull(summaries.getFirst().piName());
     assertEquals(
         institutionDAO.findInstitutionById(user.getInstitutionId()).getName(),
         summaries.getFirst().institutionName());
@@ -1323,12 +1322,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertFalse(byDataset.isEmpty());
-    assertTrue(byDataset.stream().allMatch(s -> s.piName() != null));
     assertTrue(byDataset.stream().allMatch(s -> s.institutionName() != null));
-    // The same grant read through the study route names the same requester
+    assertTrue(byDataset.stream().allMatch(s -> s.piName() == null));
+    // The same grant read through the study route reports the same institution, and no name
     assertFalse(byStudy.isEmpty());
-    assertEquals(byStudy.getFirst().piName(), byDataset.getFirst().piName());
     assertEquals(byStudy.getFirst().institutionName(), byDataset.getFirst().institutionName());
+    assertTrue(byStudy.stream().allMatch(s -> s.piName() == null));
   }
 
   /**

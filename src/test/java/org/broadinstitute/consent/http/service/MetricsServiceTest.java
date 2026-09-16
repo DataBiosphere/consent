@@ -105,8 +105,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     dataset.setStudyId(10);
     DarMetricsSummary summary =
-        new DarMetricsSummary(
-            null, null, "Project", "DAR-1", null, "ref-1", "Dr. Ada Lovelace", "Broad", false);
+        new DarMetricsSummary(null, null, "Project", "DAR-1", null, "ref-1", null, "Broad", false);
 
     when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
@@ -114,7 +113,6 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId(), user);
 
-    assertEquals("Dr. Ada Lovelace", metrics.getFirst().piName());
     assertEquals("Broad", metrics.getFirst().institutionName());
   }
 
@@ -127,8 +125,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesWithholdsRequesterIdentityWithoutAStudy() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(
-            null, null, "Project", "DAR-1", null, "ref-1", "Dr. Ada Lovelace", "Broad", false);
+        new DarMetricsSummary(null, null, "Project", "DAR-1", null, "ref-1", null, "Broad", false);
 
     when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
@@ -136,7 +133,6 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId(), user);
 
-    assertNull(metrics.getFirst().piName());
     assertNull(metrics.getFirst().institutionName());
     // The request itself still comes through
     assertEquals("Project", metrics.getFirst().projectTitle());

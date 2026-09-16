@@ -49,8 +49,8 @@ public class MetricsService {
     }
     // Nothing gated this dataset: findDatasetByIdForRead returns one with no study to every
     // authenticated caller, having no study visibility to test. The rest of the summary is the
-    // request, which that rule already decided this caller may see; the requester's name and
-    // affiliation are about a person, so they are withheld rather than left to be walked.
+    // request, which that rule already decided this caller may see; the requester's affiliation
+    // identifies an organisation, so it is withheld rather than left to be walked.
     return summaries.stream().map(MetricsService::withoutRequesterIdentity).toList();
   }
 
