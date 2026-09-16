@@ -1384,6 +1384,47 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(summaries.getFirst().expired());
   }
 
+  /**
+   * The dataset route sourced its display record from anything submitted against the dataset, so a
+   * pending progress report stood in for the grant - overwriting the title and RUS, resetting an
+   * expired grant to current, and, once identity was added, naming the report's submitter as the
+   * PI. The study route already refused to do that; this asserts the dataset route now matches.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsByDatasetIdIgnoresALaterUnapprovedProgressReport() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset();
+    Integer collectionId = createDarCollection(user.getUserId());
+
+    Date grantedOn =
+        new Date(System.currentTimeMillis() - DataAccessRequest.EXPIRATION_DURATION_MILLIS - 1000);
+    DataAccessRequest grantedDar =
+        createDataAccessRequest(collectionId, user.getUserId(), grantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        grantedDar.getReferenceId(), dataset.getDatasetId());
+    Election election =
+        createDataAccessElection(grantedDar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(
+        true, "", grantedOn, vote.getVoteId(), false, election.getElectionId(), grantedOn, false);
+
+    // Submitted just now, in the same collection, and awaiting review
+    DataAccessRequest pendingReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, grantedDar.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        pendingReport.getReferenceId(), dataset.getDatasetId());
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
+
+    assertEquals(1, summaries.size());
+    assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
+    assertNotEquals(pendingReport.getReferenceId(), summaries.getFirst().referenceId());
+    assertTrue(summaries.getFirst().expired());
+  }
+
   private void approveDarForDataset(User user, Dataset dataset, Date now) {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
