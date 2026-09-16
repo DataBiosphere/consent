@@ -5,7 +5,6 @@ import static org.broadinstitute.consent.http.models.Match.matchSuccess;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,15 +46,7 @@ public class MatchService implements ConsentLogger {
   private static void insertMatches(MatchDAO dao, List<Match> match) {
     match.forEach(
         m -> {
-          Integer id =
-              dao.insertMatch(
-                  m.getConsent(),
-                  m.getPurpose(),
-                  m.getMatch(),
-                  m.getFailed(),
-                  new Date(),
-                  m.getAlgorithmVersion(),
-                  m.getAbstain());
+          Integer id = dao.insertMatch(m);
           if (!m.getRationales().isEmpty()) {
             m.getRationales().forEach(f -> dao.insertRationale(id, f));
           }
@@ -92,8 +83,8 @@ public class MatchService implements ConsentLogger {
     if (datasetIds.isEmpty()) {
       return matches;
     }
-    // Fetch every dataset in a single query. Matching only needs the data use and the dataset
-    // identifier, both of which this query populates.
+    // Fetch every dataset in a single query. Matching only needs the data use and the dataset's
+    // identity, both of which this query populates.
     Map<Integer, Dataset> datasetsById =
         datasetDAO.findDatasetsByIdList(datasetIds).stream()
             .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
@@ -107,11 +98,7 @@ public class MatchService implements ConsentLogger {
               String message = "Error finding single match for purpose: " + dar.getReferenceId();
               logWarn(message);
               matches.add(
-                  matchFailure(
-                      dataset.getDatasetIdentifier(),
-                      dar.getReferenceId(),
-                      MatchAlgorithm.V5,
-                      List.of(message)));
+                  matchFailure(dataset, dar.getReferenceId(), MatchAlgorithm.V5, List.of(message)));
             }
           }
         });
@@ -136,7 +123,7 @@ public class MatchService implements ConsentLogger {
     MatchResult matchResult =
         dataUseMatcherV5.matchPurposeAndDatasetV5(darDataUse, dataset.getDataUse());
     return matchSuccess(
-        dataset.getDatasetIdentifier(),
+        dataset,
         dar.getReferenceId(),
         matchResult.getMatchResultType(),
         MatchAlgorithm.V5,
