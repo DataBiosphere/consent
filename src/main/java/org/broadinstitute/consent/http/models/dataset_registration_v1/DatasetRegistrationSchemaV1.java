@@ -58,6 +58,14 @@ import java.util.Map;
   "alternativeDataSharingPlanTargetPublicReleaseDate",
   "alternativeDataSharingPlanAccessManagement",
   "consentGroups",
+  "models",
+  "workspaces",
+  "presentations",
+  "publications",
+  "clinicalTrials",
+  "intellectualProperties",
+  "biospecimens",
+  "funding",
   "assets",
   "data",
   "externalIdentifier",
@@ -286,6 +294,46 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("consentGroups")
   @JsonPropertyDescription("Consent Groups")
   private List<ConsentGroup> consentGroups = new ArrayList<ConsentGroup>();
+
+  /** Models produced by or associated with this study */
+  @JsonProperty("models")
+  @JsonPropertyDescription("Models produced by or associated with this study")
+  private List<Object> models = new ArrayList<>();
+
+  /** Analysis workspaces associated with this study */
+  @JsonProperty("workspaces")
+  @JsonPropertyDescription("Analysis workspaces associated with this study")
+  private List<Object> workspaces = new ArrayList<>();
+
+  /** Presentations produced by or associated with this study */
+  @JsonProperty("presentations")
+  @JsonPropertyDescription("Presentations produced by or associated with this study")
+  private List<Object> presentations = new ArrayList<>();
+
+  /** Publications produced by or associated with this study */
+  @JsonProperty("publications")
+  @JsonPropertyDescription("Publications produced by or associated with this study")
+  private List<Object> publications = new ArrayList<>();
+
+  /** Clinical trials associated with this study */
+  @JsonProperty("clinicalTrials")
+  @JsonPropertyDescription("Clinical trials associated with this study")
+  private List<Object> clinicalTrials = new ArrayList<>();
+
+  /** Intellectual property produced by or associated with this study */
+  @JsonProperty("intellectualProperties")
+  @JsonPropertyDescription("Intellectual property produced by or associated with this study")
+  private List<Object> intellectualProperties = new ArrayList<>();
+
+  /** Biospecimens associated with this study */
+  @JsonProperty("biospecimens")
+  @JsonPropertyDescription("Biospecimens associated with this study")
+  private List<Object> biospecimens = new ArrayList<>();
+
+  /** Funding sources for this study */
+  @JsonProperty("funding")
+  @JsonPropertyDescription("Funding sources for this study")
+  private List<Object> funding = new ArrayList<>();
 
   /** Additional assets or metadata associated with this study registration */
   @JsonProperty("assets")
@@ -823,6 +871,102 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("consentGroups")
   public void setConsentGroups(List<ConsentGroup> consentGroups) {
     this.consentGroups = consentGroups;
+  }
+
+  /** Models produced by or associated with this study */
+  @JsonProperty("models")
+  public List<Object> getModels() {
+    return models;
+  }
+
+  /** Models produced by or associated with this study */
+  @JsonProperty("models")
+  public void setModels(List<Object> models) {
+    this.models = models;
+  }
+
+  /** Analysis workspaces associated with this study */
+  @JsonProperty("workspaces")
+  public List<Object> getWorkspaces() {
+    return workspaces;
+  }
+
+  /** Analysis workspaces associated with this study */
+  @JsonProperty("workspaces")
+  public void setWorkspaces(List<Object> workspaces) {
+    this.workspaces = workspaces;
+  }
+
+  /** Presentations produced by or associated with this study */
+  @JsonProperty("presentations")
+  public List<Object> getPresentations() {
+    return presentations;
+  }
+
+  /** Presentations produced by or associated with this study */
+  @JsonProperty("presentations")
+  public void setPresentations(List<Object> presentations) {
+    this.presentations = presentations;
+  }
+
+  /** Publications produced by or associated with this study */
+  @JsonProperty("publications")
+  public List<Object> getPublications() {
+    return publications;
+  }
+
+  /** Publications produced by or associated with this study */
+  @JsonProperty("publications")
+  public void setPublications(List<Object> publications) {
+    this.publications = publications;
+  }
+
+  /** Clinical trials associated with this study */
+  @JsonProperty("clinicalTrials")
+  public List<Object> getClinicalTrials() {
+    return clinicalTrials;
+  }
+
+  /** Clinical trials associated with this study */
+  @JsonProperty("clinicalTrials")
+  public void setClinicalTrials(List<Object> clinicalTrials) {
+    this.clinicalTrials = clinicalTrials;
+  }
+
+  /** Intellectual property produced by or associated with this study */
+  @JsonProperty("intellectualProperties")
+  public List<Object> getIntellectualProperties() {
+    return intellectualProperties;
+  }
+
+  /** Intellectual property produced by or associated with this study */
+  @JsonProperty("intellectualProperties")
+  public void setIntellectualProperties(List<Object> intellectualProperties) {
+    this.intellectualProperties = intellectualProperties;
+  }
+
+  /** Biospecimens associated with this study */
+  @JsonProperty("biospecimens")
+  public List<Object> getBiospecimens() {
+    return biospecimens;
+  }
+
+  /** Biospecimens associated with this study */
+  @JsonProperty("biospecimens")
+  public void setBiospecimens(List<Object> biospecimens) {
+    this.biospecimens = biospecimens;
+  }
+
+  /** Funding sources for this study */
+  @JsonProperty("funding")
+  public List<Object> getFunding() {
+    return funding;
+  }
+
+  /** Funding sources for this study */
+  @JsonProperty("funding")
+  public void setFunding(List<Object> funding) {
+    this.funding = funding;
   }
 
   /** Additional assets or metadata associated with this study registration */
