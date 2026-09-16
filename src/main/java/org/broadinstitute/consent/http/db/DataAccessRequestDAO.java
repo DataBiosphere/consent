@@ -168,7 +168,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              -- Caller must already be able to read the dataset, so identity is not id-walkable.
+              -- Requester identity, as on the study route. Gated only on reading the dataset,
+              -- which admits any authenticated user when the dataset belongs to no study.
               COALESCE(latest_dar.data ->> 'piName', u.display_name) AS pi_name,
               i.institution_name
           FROM dar_collection c
