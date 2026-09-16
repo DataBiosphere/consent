@@ -13,6 +13,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -274,6 +275,24 @@ public class DatasetService implements ConsentLogger {
       throw new NotFoundException("Study not found");
     }
     return study;
+  }
+
+  /**
+   * Loads a study for reading by an endpoint scoped to it, or reports it absent.
+   *
+   * <p>Reads only the study's own details. {@link #findStudy(Integer)} additionally opens a
+   * REPEATABLE_READ transaction and fetches dataset ids and the alternative data sharing plan file,
+   * none of which the visibility rule looks at; the study-scoped comment, metrics and asset
+   * endpoints were each paying for that on every request.
+   *
+   * @throws NotFoundException if the study does not exist, or is not visible to the user
+   */
+  public Study requireReadableStudy(Integer studyId, User user) {
+    Study study = studyDAO.findStudyDetailsById(studyId);
+    if (study == null) {
+      throw new NotFoundException("Study not found");
+    }
+    return verifyStudyVisibilityAccess(study, user);
   }
 
   public Dataset getDatasetByName(String name) {
@@ -759,12 +778,17 @@ public class DatasetService implements ConsentLogger {
       study.setStudyId(studyId);
     } else {
       studyId = study.getStudyId();
+      // A study conversion carries no PI detail columns, so keep the stored ones.
       studyDAO.updateStudy(
           study.getStudyId(),
           studyConversion.getName(),
           studyConversion.getDescription(),
           studyConversion.getPiName(),
           studyConversion.getPiEmail(),
+          study.getPiInstitution() == null ? null : study.getPiInstitution().getId(),
+          study.getPiOrcid(),
+          study.getPiLinkedinUrl(),
+          study.getPiWebsiteUrl(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
           userId,
@@ -824,6 +848,10 @@ public class DatasetService implements ConsentLogger {
       datasetServiceDAO.patchStudy(study, user, patch);
       elasticSearchService.indexStudy(studyId);
       return studyDAO.findStudyById(studyId);
+    } catch (WebApplicationException ex) {
+      // A rejected patch is the caller's problem, not a server fault: re-wrapping it here turned
+      // "PI institution 999999 does not exist" into an opaque 500.
+      throw ex;
     } catch (Exception ex) {
       logException(ex);
       throw new InternalServerErrorException(

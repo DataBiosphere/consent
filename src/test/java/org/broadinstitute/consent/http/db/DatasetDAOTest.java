@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
@@ -307,6 +308,10 @@ class DatasetDAOTest extends DAOTestHelper {
         study.getDescription(),
         study.getPiName(),
         study.getPiEmail(),
+        null,
+        null,
+        null,
+        null,
         study.getDataTypes(),
         study.getPublicVisibility(),
         updateUser.getUserId(),
@@ -1753,6 +1758,47 @@ class DatasetDAOTest extends DAOTestHelper {
     User u = createUser();
 
     return insertStudyWithProperties(u);
+  }
+
+  /**
+   * The dataset lookup path carries the PI's profile links and institution.
+   *
+   * <p>Dataset.yaml reuses Study.yaml and documents these fields, but findDatasetStudyById selects
+   * the study's columns explicitly rather than with s.*, so a column it omits reads as null on this
+   * route even when stored. The links use the s_ prefix the Study bean mapper is registered with;
+   * the institution columns are read unprefixed by StudyReducer.
+   */
+  @Test
+  void testFindDatasetByIdCarriesThePiDetailsFromTheStudy() {
+    User user = createUserWithInstitution();
+    Institution institution = institutionDAO.findInstitutionById(user.getInstitutionId());
+    Study study = insertStudyWithProperties(user);
+    studyDAO.updateStudy(
+        study.getStudyId(),
+        study.getName(),
+        study.getDescription(),
+        study.getPiName(),
+        study.getPiEmail(),
+        institution.getId(),
+        "0000-0002-1825-0097",
+        "https://linkedin.com/in/example",
+        "https://example.org",
+        study.getDataTypes(),
+        study.getPublicVisibility(),
+        user.getUserId(),
+        Instant.now());
+    Dataset dataset = createDataset(true);
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+
+    Study found = datasetDAO.findDatasetById(dataset.getDatasetId()).getStudy();
+
+    assertNotNull(found);
+    assertEquals("0000-0002-1825-0097", found.getPiOrcid());
+    assertEquals("https://linkedin.com/in/example", found.getPiLinkedinUrl());
+    assertEquals("https://example.org", found.getPiWebsiteUrl());
+    assertNotNull(found.getPiInstitution());
+    assertEquals(institution.getId(), found.getPiInstitution().getId());
+    assertEquals(institution.getName(), found.getPiInstitution().getName());
   }
 
   private Study insertStudyWithProperties(User user) {

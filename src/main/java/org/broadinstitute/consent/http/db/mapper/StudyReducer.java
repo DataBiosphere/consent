@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -20,6 +22,26 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
   }
 
   public void reduceStudy(Study study, RowView rowView) {
+
+    if (study.getPiInstitution() == null && hasNonZeroColumn(rowView, "pi_institution_id")) {
+      Institution institution = new Institution();
+      institution.setId(rowView.getColumn("pi_institution_id", Integer.class));
+      // Not every query that selects the study's columns joins in the institution, so each of
+      // these reads is optional. The Institution constructor seeds createDate with "now", which
+      // would surface as a fabricated timestamp that changes on every read, so it is always
+      // overwritten here - with the stored value when the join supplied it, null when it did not.
+      institution.setName(
+          hasOptionalColumn(rowView, "pi_institution_name", String.class).orElse(null));
+      // Read as Timestamp, not java.util.Date: jdbi registers no mapper for java.util.Date, so
+      // asking for one threw NoSuchMapperException, hasOptionalColumn swallowed it, and these
+      // came back null even when the query did join the institution. Timestamp extends Date, so
+      // the setters take it as-is.
+      institution.setCreateDate(
+          hasOptionalColumn(rowView, "pi_institution_create_date", Timestamp.class).orElse(null));
+      institution.setUpdateDate(
+          hasOptionalColumn(rowView, "pi_institution_update_date", Timestamp.class).orElse(null));
+      study.setPiInstitution(institution);
+    }
 
     if (hasNonZeroColumn(rowView, "sp_study_property_id")) {
       Integer studyPropertyId = rowView.getColumn("sp_study_property_id", Integer.class);

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -201,6 +202,79 @@ class RegistrationRequestMapperTest extends AbstractTestHelper {
                 assetsProp.get().getValue().toString(),
                 new TypeToken<Map<String, Object>>() {}.getType());
     assertEquals(5L, roundTripped.get("count"));
+  }
+
+  /** A promoted asset list sent as a top-level field is stored in its own study property. */
+  @Test
+  void testPromotedAssetListsBecomeTheirOwnStudyProperties() {
+    StudyRegistrationRequest request = new StudyRegistrationRequest();
+    request.setModels(List.of(Map.of("modelId", "m-1")));
+    request.setFunding(List.of(Map.of("grant", "R01")));
+
+    List<StudyProperty> props = mapper.toStudyProperties(request);
+
+    assertTrue(findProp(props, "models").isPresent());
+    assertTrue(findProp(props, "funding").isPresent());
+    // Nothing unpromoted was sent, so no legacy assets property is stored
+    assertTrue(findProp(props, "assets").isEmpty());
+  }
+
+  /**
+   * Until clients move to the top-level fields, a promoted list sent inside the deprecated assets
+   * object is still stored as its promoted property, and stripped from the object.
+   */
+  @Test
+  void testPromotedAssetListsSentInsideTheLegacyObjectAreStillPromoted() {
+    StudyRegistrationRequest request = new StudyRegistrationRequest();
+    request.setAssets(
+        Map.of(
+            "models", List.of(Map.of("modelId", "m-1")),
+            "uiLabels", Map.of("tab", "Assets")));
+
+    List<StudyProperty> props = mapper.toStudyProperties(request);
+
+    assertTrue(findProp(props, "models").isPresent());
+    Map<String, Object> remaining =
+        GsonUtil.getInstance()
+            .fromJson(
+                findProp(props, "assets").orElseThrow().getValue().toString(),
+                new TypeToken<Map<String, Object>>() {}.getType());
+    assertEquals(Set.of("uiLabels"), remaining.keySet());
+  }
+
+  /** A top-level field wins over the same key inside the deprecated object. */
+  @Test
+  void testTopLevelPromotedFieldWinsOverTheLegacyObject() {
+    StudyRegistrationRequest request = new StudyRegistrationRequest();
+    request.setModels(List.of(Map.of("modelId", "top-level")));
+    request.setAssets(Map.of("models", List.of(Map.of("modelId", "legacy"))));
+
+    List<StudyProperty> props = mapper.toStudyProperties(request);
+
+    assertTrue(findProp(props, "models").orElseThrow().getValue().toString().contains("top-level"));
+    assertTrue(findProp(props, "assets").isEmpty());
+  }
+
+  /**
+   * Registration reads return every promoted list both top-level and inside the deprecated assets
+   * object, so an edit that removes the last entry arrives as an empty top-level list next to the
+   * pre-edit legacy copy. The empty list is the submitter's intent and has to win, or the removed
+   * entry comes straight back on save.
+   */
+  @Test
+  void testClearedTopLevelPromotedFieldIsNotRestoredFromTheLegacyObject() {
+    StudyRegistrationRequest request = new StudyRegistrationRequest();
+    request.setPublications(List.of());
+    request.setAssets(Map.of("publications", List.of(Map.of("title", "removed"))));
+
+    List<StudyProperty> props = mapper.toStudyProperties(request);
+
+    assertEquals("[]", findProp(props, "publications").orElseThrow().getValue().toString());
+    assertTrue(findProp(props, "assets").isEmpty());
+  }
+
+  private Optional<StudyProperty> findProp(List<StudyProperty> props, String key) {
+    return props.stream().filter(p -> p.getKey().equals(key)).findFirst();
   }
 
   private void assertDataUse(ConsentGroupRequest consentGroup, DataUse dataUse) {
