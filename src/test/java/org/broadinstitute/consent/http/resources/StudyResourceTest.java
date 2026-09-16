@@ -726,6 +726,9 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
     when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    // The PATCH gate additionally requires ownership of this study, not merely a
+    // study-editing role plus read visibility.
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
     when(duosUser.getUser()).thenReturn(admin);
     String patchJson =
         """
@@ -739,6 +742,31 @@ class StudyResourceTest extends AbstractTestHelper {
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  /**
+   * The role gate on the endpoint only says the caller holds a study-editing role somewhere in
+   * DUOS. A publicly visible study is readable by everyone, so read visibility cannot stand in for
+   * write authorization: patching it still requires being its creator, a custodian, or an admin.
+   */
+  @Test
+  void testPatchStudyByIdForbiddenForNonOwnerOfPublicStudy() {
+    Study study = createMockStudy();
+    User chairperson = new User();
+    chairperson.setUserId(study.getCreateUserId() + 1);
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(chairperson, study)).thenReturn(false);
+    when(duosUser.getUser()).thenReturn(chairperson);
+    String patchJson =
+        """
+            {
+              "piOrcid": "0000-0002-1825-0097"
+            }
+            """;
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+    verify(datasetService, never()).patchStudy(any(), any(), any());
   }
 
   @Test
@@ -761,6 +789,9 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
     when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    // The PATCH gate additionally requires ownership of this study, not merely a
+    // study-editing role plus read visibility.
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
     when(duosUser.getUser()).thenReturn(admin);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
@@ -785,6 +816,9 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
     when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    // The PATCH gate additionally requires ownership of this study, not merely a
+    // study-editing role plus read visibility.
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
     when(duosUser.getUser()).thenReturn(admin);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
