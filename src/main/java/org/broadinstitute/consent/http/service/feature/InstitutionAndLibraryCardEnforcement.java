@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.service.feature;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -11,8 +9,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
-import java.time.Duration;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -35,14 +31,6 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   private final LibraryCardDAO libraryCardDAO;
   private final UserDAO userDAO;
   private final UserServiceDAO userServiceDAO;
-
-  // Issuance attempts that cannot succeed as things stand, so a card-less user doesn't retry them
-  // on every authenticated request. Expiry bounds how long the fix for either goes unnoticed: an
-  // institution gaining an eligible SO, or the other user's card releasing the email.
-  private final Cache<Integer, Boolean> institutionsWithoutIssuer =
-      CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(5)).build();
-  private final Cache<Integer, Boolean> usersWithConflictingCardEmail =
-      CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(5)).build();
 
   @Inject
   public InstitutionAndLibraryCardEnforcement(
@@ -170,44 +158,21 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
       libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     }
 
-    boolean issuedLC =
-        (needsLCRemoved || !hasLibraryCard(user)) && issueLibraryCard(user, institutionId);
-
-    return needsLCRemoved || needsInstitutionAssigned || issuedLC;
+    return needsLCRemoved || needsInstitutionAssigned;
   }
 
   /**
-   * Makes a domain-matched user active without waiting for a signing official, and is not
-   * role-filtered. Attributed to an SO of the institution so {@link
-   * #needsLibraryCardRemovedForUser} leaves it in place; no eligible SO means no card. Sends no
-   * email: the template says an SO acted, and the sweep would send it in bulk.
+   * Signing official to attribute a new user's card to, activating them, of any role, without
+   * waiting for one to act. Registration only, so a revoked card stays revoked. An SO of the
+   * institution keeps {@link #needsLibraryCardRemovedForUser} from removing it; no eligible one
+   * means no card, and no email, as the template says an SO acted.
    */
-  @VisibleForTesting
-  protected boolean issueLibraryCard(User user, Integer institutionId) {
-    if (!hasAddressAndDomain(user.getEmail())
-        || institutionsWithoutIssuer.getIfPresent(institutionId) != null
-        || usersWithConflictingCardEmail.getIfPresent(user.getUserId()) != null) {
-      return false;
+  public User findLibraryCardIssuerForNewUser(User user) {
+    if (!hasAddressAndDomain(user.getEmail())) {
+      return null;
     }
-    User issuer = userDAO.findLibraryCardIssuerByInstitution(institutionId);
-    if (issuer == null) {
-      institutionsWithoutIssuer.put(institutionId, Boolean.TRUE);
-      return false;
-    }
-    int inserted =
-        libraryCardDAO.insertLibraryCardIfAbsent(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            issuer.getUserId(),
-            new Date());
-    if (inserted > 0 || libraryCardDAO.findLibraryCardIdByUserId(user.getUserId()) != null) {
-      // Either this pass or a concurrent one carded them.
-      return true;
-    }
-    // The conflict is another user's card holding this email, which stands until that card goes.
-    usersWithConflictingCardEmail.put(user.getUserId(), Boolean.TRUE);
-    return false;
+    Integer institutionId = findInstitutionIdForEmail(user.getEmail());
+    return institutionId == null ? null : userDAO.findLibraryCardIssuerByInstitution(institutionId);
   }
 
   @VisibleForTesting
@@ -245,8 +210,8 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   }
 
   /**
-   * Emails are not validated on write, and {@code trimmedEmailDomain} maps a value with no address
-   * to itself, so {@code institution.org} would otherwise resolve to that institution and activate.
+   * {@code trimmedEmailDomain} maps a value with no address to itself, so an unvalidated email of
+   * {@code institution.org} would otherwise resolve to that institution and activate.
    */
   @VisibleForTesting
   protected boolean hasAddressAndDomain(String email) {

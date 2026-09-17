@@ -34,23 +34,6 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Date createDate);
 
-  /**
-   * Concurrent authenticated requests can race to auto-issue the same researcher a card, so this
-   * absorbs the unique violations over user_id and user_email and reports whether it won.
-   */
-  @SqlUpdate(
-      """
-      INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
-      VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
-      ON CONFLICT DO NOTHING
-      """)
-  int insertLibraryCardIfAbsent(
-      @Bind("userId") Integer userId,
-      @Bind("userName") String userName,
-      @Bind("userEmail") String userEmail,
-      @Bind("createUserId") Integer createUserId,
-      @Bind("createDate") Date createDate);
-
   @SqlUpdate(
       """
       UPDATE library_card SET

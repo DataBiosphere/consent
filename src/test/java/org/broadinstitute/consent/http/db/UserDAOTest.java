@@ -448,7 +448,7 @@ class UserDAOTest extends DAOTestHelper {
   void testFindLibraryCardIssuerByInstitution() throws Exception {
     String domain = randomAlphabetic(10) + ".org";
     Institution institution = createInstitutionWithDomain(domain);
-    // Created first, so it would win the ordering if the domain filter did not exclude it.
+    // Created first, so it would win the tie-break if the domain filter did not exclude it.
     createUserWithEmailRoleAndInstitution(
         randomAlphabetic(10) + "@" + randomAlphabetic(10) + ".org",
         UserRoles.SIGNINGOFFICIAL.getRoleId(),
@@ -476,8 +476,7 @@ class UserDAOTest extends DAOTestHelper {
   void testFindLibraryCardIssuerByInstitutionStaleInstitutionAssignment() throws Exception {
     String domain = randomAlphabetic(10) + ".org";
     Institution institution = createInstitutionWithDomain(domain);
-    // Eligible under the removal rule, which resolves the issuer by email domain alone, so a null
-    // or stale users.institution_id must not exclude them.
+    // The removal rule resolves the issuer by email domain, so users.institution_id must not gate.
     User eligible =
         createUserWithEmailRoleAndInstitution(
             randomAlphabetic(10) + "@" + domain, UserRoles.SIGNINGOFFICIAL.getRoleId(), null);
@@ -526,6 +525,41 @@ class UserDAOTest extends DAOTestHelper {
         institution.getId());
 
     assertNull(userDAO.findLibraryCardIssuerByInstitution(institution.getId()));
+  }
+
+  @Test
+  void testFindLibraryCardIssuerByInstitutionPrefersTheMostActiveSigningOfficial()
+      throws Exception {
+    String domain = randomAlphabetic(10) + ".org";
+    Institution institution = createInstitutionWithDomain(domain);
+    User occasionalIssuer =
+        createUserWithEmailRoleAndInstitution(
+            randomAlphabetic(10) + "@" + domain,
+            UserRoles.SIGNINGOFFICIAL.getRoleId(),
+            institution.getId());
+    // Created second, so it wins only on the cards it has issued.
+    User frequentIssuer =
+        createUserWithEmailRoleAndInstitution(
+            randomAlphabetic(10) + "@" + domain,
+            UserRoles.SIGNINGOFFICIAL.getRoleId(),
+            institution.getId());
+    createLibraryCardIssuedBy(occasionalIssuer);
+    createLibraryCardIssuedBy(frequentIssuer);
+    createLibraryCardIssuedBy(frequentIssuer);
+
+    User issuer = userDAO.findLibraryCardIssuerByInstitution(institution.getId());
+    assertNotNull(issuer);
+    assertEquals(frequentIssuer.getUserId(), issuer.getUserId());
+  }
+
+  private void createLibraryCardIssuedBy(User issuer) {
+    User holder = createUser();
+    libraryCardDAO.insertLibraryCard(
+        holder.getUserId(),
+        holder.getDisplayName(),
+        holder.getEmail(),
+        issuer.getUserId(),
+        new Date());
   }
 
   private Institution createInstitutionWithDomain(String domain) throws Exception {

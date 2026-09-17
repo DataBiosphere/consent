@@ -531,12 +531,10 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
   /**
-   * Issuer for an automatically issued library card. Eligibility mirrors the rule enforcement uses
-   * to remove one — the issuer's own email domain must resolve to the institution — so a card this
-   * selects survives the next pass. {@code users.institution_id} is deliberately not also required,
-   * being a staleness-prone restatement of that rule; the role is, because the card records who
-   * vouched, as is a real address, since emails are not validated on write. Ordering keeps the
-   * choice stable across passes.
+   * Issuer for an auto-issued library card. Eligibility mirrors the rule that removes one — the
+   * issuer's own email domain must resolve to the institution — so the card survives the next pass.
+   * Ranking by cards already issued names the institution's most active SO, grouped once because
+   * create_user_id is unindexed; user_id breaks ties.
    */
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
@@ -545,11 +543,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           INNER JOIN user_role ur ON ur.user_id = u.user_id
           INNER JOIN roles r ON r.role_id = ur.role_id
           INNER JOIN institution_domains d ON d.institution_id = :institutionId
+          LEFT JOIN (
+              SELECT create_user_id, COUNT(*) AS issued FROM library_card GROUP BY create_user_id
+          ) lc ON lc.create_user_id = u.user_id
           WHERE LOWER(r.name) = 'signingofficial'
           AND POSITION('@' IN BTRIM(u.email)) > 1
           AND LOWER(d.domain) =
               LOWER(SUBSTRING(BTRIM(u.email) FROM POSITION('@' IN BTRIM(u.email)) + 1))
-          ORDER BY u.user_id
+          ORDER BY COALESCE(lc.issued, 0) DESC, u.user_id
           LIMIT 1
         """)
   User findLibraryCardIssuerByInstitution(@Bind("institutionId") Integer institutionId);

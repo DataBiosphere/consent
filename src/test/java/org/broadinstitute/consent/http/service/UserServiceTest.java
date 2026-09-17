@@ -194,32 +194,32 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateUserReturnsUserWithEnforcedInstitutionAndLibraryCardRules() {
+  void testCreateUserPassesTheResolvedLibraryCardIssuerToTheCreateTransaction() {
     User u = generateUser();
     u.setRoles(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
     Institution institution = new Institution();
     institution.setId(u.getInstitutionId());
-    User enforcedUser = generateUser();
+    User issuer = generateUser();
+    User cardedUser = generateUser();
 
     when(userDAO.findUserByEmail(any())).thenReturn(null);
     when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(institution);
-    when(userServiceDAO.createUser(u)).thenReturn(u);
-    when(institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(u.getEmail()))
-        .thenReturn(enforcedUser);
+    when(institutionAndLibraryCardEnforcement.findLibraryCardIssuerForNewUser(u))
+        .thenReturn(issuer);
+    when(userServiceDAO.createUser(u, issuer)).thenReturn(cardedUser);
 
-    assertSame(enforcedUser, service.createUser(u));
+    assertSame(cardedUser, service.createUser(u));
   }
 
   @Test
-  void testCreateUserReturnsCreatedUserWhenEnforcementFails() {
+  void testCreateUserWithoutAnEligibleLibraryCardIssuer() {
     User u = generateUser();
     u.setRoles(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
 
     when(userDAO.findUserByEmail(any())).thenReturn(null);
     when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(null);
-    when(userServiceDAO.createUser(u)).thenReturn(u);
-    when(institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(u.getEmail()))
-        .thenThrow(new RuntimeException("enforcement error"));
+    when(institutionAndLibraryCardEnforcement.findLibraryCardIssuerForNewUser(u)).thenReturn(null);
+    when(userServiceDAO.createUser(u, null)).thenReturn(u);
 
     assertSame(u, service.createUser(u));
   }

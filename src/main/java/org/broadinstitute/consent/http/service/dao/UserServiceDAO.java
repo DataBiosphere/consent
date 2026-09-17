@@ -39,7 +39,10 @@ public class UserServiceDAO {
         });
   }
 
-  public User createUser(User user) {
+  /**
+   * @param libraryCardIssuer signing official to attribute an auto-issued card to, or null for none
+   */
+  public User createUser(User user, User libraryCardIssuer) {
     return jdbi.inTransaction(
         transactionHandle -> {
           if (user.getRoles() == null || user.getRoles().isEmpty()) {
@@ -63,6 +66,14 @@ public class UserServiceDAO {
                 user.getDisplayName(),
                 user.getEmail(),
                 userId,
+                new Date());
+          } else if (libraryCardIssuer != null) {
+            // Registration is the only issuance point, so a card lost here is never retried.
+            libraryCardDAOT.insertLibraryCard(
+                userId,
+                user.getDisplayName(),
+                user.getEmail(),
+                libraryCardIssuer.getUserId(),
                 new Date());
           }
           return userDAOT.findUserById(userId);

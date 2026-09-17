@@ -96,40 +96,6 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testInsertLibraryCardIfAbsent() {
-    User user1 = createUser();
-    assertEquals(
-        1,
-        libraryCardDAO.insertLibraryCardIfAbsent(
-            user1.getUserId(),
-            user1.getDisplayName(),
-            user1.getEmail(),
-            user1.getUserId(),
-            new Date()));
-
-    // Same user_id, and separately the same user_email, are absorbed rather than raising.
-    assertEquals(
-        0,
-        libraryCardDAO.insertLibraryCardIfAbsent(
-            user1.getUserId(),
-            user1.getDisplayName(),
-            user1.getEmail(),
-            user1.getUserId(),
-            new Date()));
-    User user2 = createUser();
-    assertEquals(
-        0,
-        libraryCardDAO.insertLibraryCardIfAbsent(
-            user2.getUserId(),
-            user2.getDisplayName(),
-            user1.getEmail(),
-            user2.getUserId(),
-            new Date()));
-
-    assertEquals(1, libraryCardDAO.findAllLibraryCards().size());
-  }
-
-  @Test
   void testDeleteLibraryCardById() {
     LibraryCard card = createLibraryCard();
     Integer id = card.getId();

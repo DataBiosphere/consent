@@ -177,7 +177,7 @@ class UserServiceDAOTest extends DAOTestHelper {
     User u = generateUnsavedUser(i);
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
-    User user = serviceDAO.createUser(u);
+    User user = serviceDAO.createUser(u, null);
     assertTrue(user.getUserId() > 0);
     assertEquals(u.getEmail(), user.getEmail());
     assertEquals(u.getDisplayName(), user.getDisplayName());
@@ -190,7 +190,7 @@ class UserServiceDAOTest extends DAOTestHelper {
     User u = generateUnsavedUser(null);
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
-    User user = serviceDAO.createUser(u);
+    User user = serviceDAO.createUser(u, null);
     assertTrue(user.getUserId() > 0);
     assertEquals(u.getEmail(), user.getEmail());
     assertEquals(u.getDisplayName(), user.getDisplayName());
@@ -206,15 +206,41 @@ class UserServiceDAOTest extends DAOTestHelper {
         null, u.getDisplayName(), u.getEmail(), i.getCreateUserId(), new Date());
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
-    User user = serviceDAO.createUser(u);
+    User user = serviceDAO.createUser(u, null);
     assertNotNull(user.getLibraryCard());
+  }
+
+  @Test
+  void testCreateUserIssuesALibraryCardForTheGivenIssuer() throws Exception {
+    Institution i = createInstitution();
+    User issuer = createUser();
+    User u = generateUnsavedUser(i);
+    u.setRoles(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
+
+    User user = serviceDAO.createUser(u, issuer);
+    assertNotNull(user.getLibraryCard());
+    assertEquals(issuer.getUserId(), user.getLibraryCard().getCreateUserId());
+  }
+
+  @Test
+  void testCreateUserClaimsAnExistingCardRatherThanIssuingOne() throws Exception {
+    Institution i = createInstitution();
+    User issuer = createUser();
+    User u = generateUnsavedUser(i);
+    libraryCardDAO.insertLibraryCard(
+        null, u.getDisplayName(), u.getEmail(), i.getCreateUserId(), new Date());
+    u.setRoles(List.of(generateRole(UserRoles.RESEARCHER.getRoleId())));
+
+    User user = serviceDAO.createUser(u, issuer);
+    assertNotNull(user.getLibraryCard());
+    assertEquals(i.getCreateUserId(), user.getLibraryCard().getCreateUserId());
   }
 
   @Test
   void testCreateUserNoRoles() throws Exception {
     Institution i = createInstitution();
     User u = generateUnsavedUser(i);
-    assertThrows(IllegalArgumentException.class, () -> serviceDAO.createUser(u));
+    assertThrows(IllegalArgumentException.class, () -> serviceDAO.createUser(u, null));
   }
 
   private static User generateUnsavedUser(Institution institution) {
