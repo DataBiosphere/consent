@@ -58,9 +58,9 @@ public class SchemaFromStudy {
   public DatasetRegistrationSchemaV1 build(Study study) {
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
 
-    // Guard first rather than wrapping the whole build: nesting every assignment inside an
-    // if() is what put this method over the cognitive-complexity limit, and the six enum
-    // conversions below each cost double while they sit a level deeper than they need to.
+    // Guard first rather than wrapping the whole build: holding every assignment one level
+    // deeper is what put this method over the cognitive-complexity limit, and the six enum
+    // conversions below each cost double at that depth.
     if (Objects.isNull(study)) {
       return schemaV1;
     }
