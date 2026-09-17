@@ -223,28 +223,43 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindMatchesForLatestDataAccessElectionsReturnsMatchesWithNoDatasetId() {
-    // Legacy rows predate dataset_id and are still readable until they have been reprocessed.
+  void testAMatchCannotBeStoredWithoutADataset() {
     Dataset dataset = createDataset();
-    String darReferenceId = UUID.randomUUID().toString();
-    createDataAccessElection(darReferenceId, dataset.getDatasetId());
+    Match orphaned =
+        mockMatch(
+            dataset.getDatasetIdentifier(),
+            null,
+            UUID.randomUUID().toString(),
+            true,
+            false,
+            MatchAlgorithm.V5.getVersion());
 
-    Integer matchId =
-        matchDAO.insertMatch(
-            mockMatch(
-                UUID.randomUUID().toString(),
-                null,
-                darReferenceId,
-                true,
-                false,
-                MatchAlgorithm.V1.getVersion()));
+    assertThrows(UnableToExecuteStatementException.class, () -> matchDAO.insertMatch(orphaned));
+  }
 
-    List<Match> matchResults =
-        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
-    assertEquals(1, matchResults.size());
-    Match result = matchResults.getFirst();
-    assertEquals(matchId, result.getId());
-    assertNull(result.getDatasetId());
+  @Test
+  void testAPurposeCannotHoldTwoMatchesForTheSameDataset() {
+    Dataset dataset = createDataset();
+    String purposeId = UUID.randomUUID().toString();
+    matchDAO.insertMatch(
+        mockMatch(
+            dataset.getDatasetIdentifier(),
+            dataset.getDatasetId(),
+            purposeId,
+            true,
+            false,
+            MatchAlgorithm.V5.getVersion()));
+    // A different consent, so the legacy purpose_consent constraint cannot be what rejects this
+    Match duplicate =
+        mockMatch(
+            "DUOS-" + randomInt(1, 999999),
+            dataset.getDatasetId(),
+            purposeId,
+            false,
+            false,
+            MatchAlgorithm.V5.getVersion());
+
+    assertThrows(UnableToExecuteStatementException.class, () -> matchDAO.insertMatch(duplicate));
   }
 
   @Test
@@ -269,6 +284,43 @@ class MatchDAOTest extends DAOTestHelper {
         matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     assertEquals(matchId, matchResults.getFirst().getId());
+  }
+
+  @Test
+  void testFindMatchesForLatestDataAccessElectionsKeepsMatchesWithNoDatasetId() {
+    // The only state that can produce such a row is a halted precondition, which leaves the
+    // constraints unapplied while the application starts anyway, so the constraint is dropped
+    // here to reach it. The transaction is rolled back rather than committed: the DDL is
+    // undone with it, and truncateAllTables would not restore it.
+    Dataset dataset = createDataset();
+    String darReferenceId = UUID.randomUUID().toString();
+    createDataAccessElection(darReferenceId, dataset.getDatasetId());
+
+    jdbi.useHandle(
+        handle -> {
+          handle.begin();
+          handle.execute("ALTER TABLE match_entity ALTER COLUMN dataset_id DROP NOT NULL");
+          handle.execute(
+              """
+              INSERT INTO match_entity
+                (consent, dataset_id, purpose, match_entity, failed, create_date,
+                 algorithm_version, abstain)
+              VALUES (?, NULL, ?, true, false, NOW(), ?, false)
+              """,
+              dataset.getDatasetIdentifier(),
+              darReferenceId,
+              MatchAlgorithm.V1.getVersion());
+
+          List<Match> matchResults =
+              handle
+                  .attach(MatchDAO.class)
+                  .findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
+
+          assertEquals(1, matchResults.size());
+          assertNull(matchResults.getFirst().getDatasetId());
+
+          handle.rollback();
+        });
   }
 
   @Test

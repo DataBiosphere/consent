@@ -48,9 +48,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
           ) AS e ON e.reference_id = match_entity.purpose
-            -- Correlate on dataset only when both sides carry one: legacy match rows predate
-            -- dataset_id and legacy elections can be missing it too, and either would otherwise
-            -- drop out. The tolerance goes away with the non-null constraints.
+            -- The match-side null tolerance looks dead once the constraints are on, but a
+            -- halted precondition still starts the app: without it, an unmigrated row silently
+            -- drops out of every election that does carry a dataset id.
             AND (match_entity.dataset_id IS NULL
                  OR e.dataset_id IS NULL
                  OR e.dataset_id = match_entity.dataset_id)
