@@ -37,8 +37,8 @@ public class MetricsService {
    * <p>Gated on being able to read the dataset: this route once checked only that the dataset
    * existed, so any authenticated caller could walk ids and read the project titles and research
    * use statements. findDatasetByIdForRead applies the existence-then-visibility rule the other
-   * dataset routes use, but it admits a dataset with no study to everyone, having no study
-   * visibility to test - so requester identity is withheld on those.
+   * dataset routes use, but admits a dataset with no study to everyone, having no study visibility
+   * to test - so the requester's institution is withheld on those.
    */
   public List<DarMetricsSummary> generateDarSummaries(Integer datasetId, User user) {
     Dataset dataset = datasetService.findDatasetByIdForRead(user, datasetId);

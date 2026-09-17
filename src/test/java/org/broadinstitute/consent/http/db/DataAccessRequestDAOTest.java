@@ -1290,15 +1290,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .noneMatch(draft.getReferenceId()::equals));
   }
 
-  /**
-   * Both routes carry requester identity, resolved the same way.
-   *
-   * <p>The dataset route is gated on being able to read the dataset, so identity here is not
-   * reachable by walking ids. The dataset page and the study page show the same requester, and this
-   * asserts they do not drift apart.
-   */
+  /** Both routes report the same institution, and neither names the requester. */
   @Test
-  void testFindSummaryMetricApprovedDARsByDatasetIdCarriesRequesterIdentity() {
+  void testFindSummaryMetricApprovedDARsByDatasetIdCarriesRequesterInstitution() {
     User user = createUserWithInstitution();
     Integer studyId =
         studyDAO.insertStudy(
