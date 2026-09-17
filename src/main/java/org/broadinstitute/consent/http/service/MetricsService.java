@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -17,14 +16,12 @@ import org.jdbi.v3.core.Jdbi;
 
 public class MetricsService {
 
-  private final DatasetDAO dataSetDAO;
   private final DataAccessRequestDAO darDAO;
   private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
   @Inject
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
-    this.dataSetDAO = jdbi.onDemand(DatasetDAO.class);
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;

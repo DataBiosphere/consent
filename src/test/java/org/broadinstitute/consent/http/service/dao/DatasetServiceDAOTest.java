@@ -349,9 +349,12 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.of(),
             List.of());
 
+    // Built outside the lambda so the only call inside it is the one expected to throw
+    List<DatasetInsert> inserts = List.of(datasetInsert);
+
     assertThrows(
         BadRequestException.class,
-        () -> serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert)));
+        () -> serviceDAO.insertDatasetRegistration(studyInsert, inserts));
   }
 
   @Test
