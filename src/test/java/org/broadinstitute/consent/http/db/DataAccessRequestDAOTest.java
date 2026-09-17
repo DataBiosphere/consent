@@ -1185,10 +1185,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(approvedDAR.getReferenceId(), summaries.getFirst().referenceId());
     assertNotNull(summaries.getFirst().submissionDate());
 
-    // Requester identity belongs to the gated study route, not this one; the fallback to the
-    // submitter is asserted there.
+    // The requester's institution, as on the study route. The name is deliberately not carried.
+    assertNotNull(summaries.getFirst().institutionName());
     assertNull(summaries.getFirst().piName());
-    assertNull(summaries.getFirst().institutionName());
   }
 
   /**
@@ -1197,7 +1196,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    * only route that carries requester identity.
    */
   @Test
-  void testFindSummaryMetricApprovedDARsPrefersThePiNameRecordedOnTheDar() {
+  void testFindSummaryMetricApprovedDARsCarriesTheSubmittersInstitution() {
     Dataset dataset = createDataset();
     User user = createUserWithInstitution();
     Date now = new Date();
@@ -1231,8 +1230,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertEquals(1, summaries.size());
-    assertEquals("Recorded PI Name", summaries.getFirst().piName());
-    assertNotEquals(user.getDisplayName(), summaries.getFirst().piName());
+    assertNull(summaries.getFirst().piName());
     assertEquals(
         institutionDAO.findInstitutionById(user.getInstitutionId()).getName(),
         summaries.getFirst().institutionName());
@@ -1292,16 +1290,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .noneMatch(draft.getReferenceId()::equals));
   }
 
-  /**
-   * The per-dataset route must not carry requester identity.
-   *
-   * <p>Its only caller, {@code GET /api/metrics/dar-summaries/{datasetId}}, is {@code @PermitAll}
-   * and verifies nothing beyond the dataset existing, so a PI name and affiliation selected here
-   * could be harvested by walking dataset ids. The study-scoped sibling supplies them for the study
-   * page and is gated on the study's visibility; this asserts the two stay different.
-   */
+  /** Both routes report the same institution, and neither names the requester. */
   @Test
-  void testFindSummaryMetricApprovedDARsByDatasetIdOmitsRequesterIdentity() {
+  void testFindSummaryMetricApprovedDARsByDatasetIdCarriesRequesterInstitution() {
     User user = createUserWithInstitution();
     Integer studyId =
         studyDAO.insertStudy(
@@ -1325,11 +1316,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertFalse(byDataset.isEmpty());
+    assertTrue(byDataset.stream().allMatch(s -> s.institutionName() != null));
     assertTrue(byDataset.stream().allMatch(s -> s.piName() == null));
-    assertTrue(byDataset.stream().allMatch(s -> s.institutionName() == null));
-    // The same grant, read through the gated study route, does carry them
+    // The same grant read through the study route reports the same institution, and no name
     assertFalse(byStudy.isEmpty());
-    assertTrue(byStudy.stream().allMatch(s -> s.piName() != null));
+    assertEquals(byStudy.getFirst().institutionName(), byDataset.getFirst().institutionName());
+    assertTrue(byStudy.stream().allMatch(s -> s.piName() == null));
   }
 
   /**
@@ -1378,6 +1370,47 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     List<DarMetricsSummary> summaries =
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+
+    assertEquals(1, summaries.size());
+    assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
+    assertNotEquals(pendingReport.getReferenceId(), summaries.getFirst().referenceId());
+    assertTrue(summaries.getFirst().expired());
+  }
+
+  /**
+   * The dataset route sourced its display record from anything submitted against the dataset, so a
+   * pending progress report stood in for the grant - overwriting the title and RUS, resetting an
+   * expired grant to current, and, once identity was added, naming the report's submitter as the
+   * PI. The study route already refused to do that; this asserts the dataset route now matches.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsByDatasetIdIgnoresALaterUnapprovedProgressReport() {
+    User user = createUserWithInstitution();
+    Dataset dataset = createDataset();
+    Integer collectionId = createDarCollection(user.getUserId());
+
+    Date grantedOn =
+        new Date(System.currentTimeMillis() - DataAccessRequest.EXPIRATION_DURATION_MILLIS - 1000);
+    DataAccessRequest grantedDar =
+        createDataAccessRequest(collectionId, user.getUserId(), grantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        grantedDar.getReferenceId(), dataset.getDatasetId());
+    Election election =
+        createDataAccessElection(grantedDar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(
+        true, "", grantedOn, vote.getVoteId(), false, election.getElectionId(), grantedOn, false);
+
+    // Submitted just now, in the same collection, and awaiting review
+    DataAccessRequest pendingReport =
+        createProgressReport(
+            user.getEraCommonsId(), user.getUserId(), collectionId, grantedDar.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        pendingReport.getReferenceId(), dataset.getDatasetId());
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
 
     assertEquals(1, summaries.size());
     assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());

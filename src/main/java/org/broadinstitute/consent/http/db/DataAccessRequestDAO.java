@@ -127,8 +127,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @RegisterRowMapper(DarMetricsSummaryMapper.class)
   @SqlQuery(
       """
-          WITH approved_collections AS (
-              SELECT DISTINCT dar.collection_id
+          WITH qualifying_dars AS (
+              SELECT DISTINCT dar.reference_id, dar.collection_id
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
@@ -152,12 +152,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               -- Pull in all closeouts for this dataset. Closeouts do not have elections,
               -- but we want to include them in the dataset usage metrics.
               UNION
-              SELECT DISTINCT dar.collection_id
+              SELECT DISTINCT dar.reference_id, dar.collection_id
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               WHERE dd.dataset_id = :datasetId
                   AND dar.submission_date IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
+          ), approved_collections AS (
+              SELECT DISTINCT collection_id FROM qualifying_dars
           )
           SELECT
               c.dar_code,
@@ -166,29 +168,27 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              -- No requester identity on this route. Its only caller,
-              -- GET /api/metrics/dar-summaries/{datasetId}, is @PermitAll and checks nothing but
-              -- the dataset's existence, so selecting the granted PI's name and affiliation here
-              -- would let any authenticated user harvest them by walking dataset ids. Nothing
-              -- reads these fields from this query; the study-scoped sibling below supplies them
-              -- for the study page and is gated on the study's visibility.
+              -- The requester's institution, but not their name: the pages show where a grant
+              -- went, not who holds it. Gated only on reading the dataset, which admits any
+              -- authenticated user when the dataset belongs to no study.
               NULL::text AS pi_name,
-              NULL::text AS institution_name
+              i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
-          -- Source the summary from the most recently submitted DAR in the collection that is
-          -- linked to :datasetId. Constraining to the dataset here (rather than filtering after
-          -- picking the collection-wide latest) keeps a collection whose newest DAR targets a
-          -- different dataset from being dropped.
+          -- Source the summary from the most recently submitted DAR in the collection that itself
+          -- qualified, as the study-scoped query does. Constraining to the qualifying DARs, rather
+          -- than to anything submitted against :datasetId, keeps a collection whose newest DAR
+          -- targets a different dataset from being dropped and keeps a pending progress report
+          -- from standing in for the grant - which would have shown its submitter as the PI.
           INNER JOIN (
               SELECT DISTINCT ON (dar.collection_id) dar.*
               FROM data_access_request dar
-              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-              WHERE dar.submission_date IS NOT NULL
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              AND dd.dataset_id = :datasetId
-              ORDER BY dar.collection_id, dar.submission_date DESC
+              INNER JOIN qualifying_dars q ON q.reference_id = dar.reference_id
+              WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = latest_dar.user_id
+          LEFT JOIN institution i ON i.institution_id = u.institution_id
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
@@ -256,7 +256,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              COALESCE(latest_dar.data ->> 'piName', u.display_name) AS pi_name,
+              -- Institution, not name: see the dataset-scoped query above.
+              NULL::text AS pi_name,
               i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id

@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
@@ -33,16 +34,37 @@ public class MetricsService {
   /**
    * The granted requests recorded against one dataset.
    *
-   * <p>Gated on being able to read the dataset. The summaries carry the project titles and research
-   * use statements of approved DARs, and this route used to check only that the dataset existed -
-   * so any authenticated caller could walk dataset ids and read them. findDatasetByIdForRead
-   * applies the existence-then-visibility rule the other dataset routes use, and still allows a
-   * dataset that belongs to no study, which has no study visibility to test. It costs assembling
-   * the dataset where an id lookup used to do; that is the price of the check.
+   * <p>Gated on being able to read the dataset: this route once checked only that the dataset
+   * existed, so any authenticated caller could walk ids and read the project titles and research
+   * use statements. findDatasetByIdForRead applies the existence-then-visibility rule the other
+   * dataset routes use, but admits a dataset with no study to everyone, having no study visibility
+   * to test - so the requester's institution is withheld on those.
    */
   public List<DarMetricsSummary> generateDarSummaries(Integer datasetId, User user) {
-    datasetService.findDatasetByIdForRead(user, datasetId);
-    return darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
+    Dataset dataset = datasetService.findDatasetByIdForRead(user, datasetId);
+    List<DarMetricsSummary> summaries =
+        darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
+    if (dataset.getStudyId() != null) {
+      return summaries;
+    }
+    // Nothing gated this dataset: findDatasetByIdForRead returns one with no study to every
+    // authenticated caller, having no study visibility to test. The rest of the summary is the
+    // request, which that rule already decided this caller may see; the requester's affiliation
+    // identifies an organisation, so it is withheld rather than left to be walked.
+    return summaries.stream().map(MetricsService::withoutRequesterIdentity).toList();
+  }
+
+  private static DarMetricsSummary withoutRequesterIdentity(DarMetricsSummary summary) {
+    return new DarMetricsSummary(
+        summary.updateDate(),
+        summary.submissionDate(),
+        summary.projectTitle(),
+        summary.darCode(),
+        summary.nonTechRus(),
+        summary.referenceId(),
+        null,
+        null,
+        summary.expired());
   }
 
   public List<DarMetricsSummary> generateStudyDarSummaries(Integer studyId, User user) {
