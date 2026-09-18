@@ -66,10 +66,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate(
       """
         INSERT INTO match_entity
-          (consent, dataset_id, purpose, match_entity, failed, create_date,
+          (dataset_id, purpose, match_entity, failed, create_date,
            algorithm_version, abstain)
         VALUES
-          (:consent, :datasetId, :purpose, :match, :failed, :createDate,
+          (:datasetId, :purpose, :match, :failed, :createDate,
            :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
