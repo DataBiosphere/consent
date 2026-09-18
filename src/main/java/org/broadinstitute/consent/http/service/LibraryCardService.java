@@ -67,10 +67,10 @@ public class LibraryCardService implements ConsentLogger {
     return libraryCardDAO.findLibraryCardById(id);
   }
 
-  public void deleteLibraryCardById(Integer id) {
+  public void deleteLibraryCardById(Integer id, User user) {
     LibraryCard card = findLibraryCardById(id);
     throwIfNull(card);
-    libraryCardDAO.deleteLibraryCardById(id);
+    libraryCardDAO.deleteLibraryCardById(id, user.getUserId());
   }
 
   public List<LibraryCard> findAllLibraryCards() {

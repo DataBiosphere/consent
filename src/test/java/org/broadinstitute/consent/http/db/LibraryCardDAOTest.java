@@ -99,14 +99,14 @@ class LibraryCardDAOTest extends DAOTestHelper {
   void testDeleteLibraryCardById() {
     LibraryCard card = createLibraryCard();
     Integer id = card.getId();
-    libraryCardDAO.deleteLibraryCardById(id);
+    libraryCardDAO.deleteLibraryCardById(id, card.getCreateUserId());
     assertNull(libraryCardDAO.findLibraryCardById(id));
   }
 
   @Test
   void testDeleteLibraryCardByIdNegative() {
     try {
-      libraryCardDAO.deleteLibraryCardById(randomInt(1, 1000));
+      libraryCardDAO.deleteLibraryCardById(randomInt(1, 1000), createUser().getUserId());
     } catch (Exception e) {
       assertEquals(
           PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
@@ -132,8 +132,15 @@ class LibraryCardDAOTest extends DAOTestHelper {
     libraryCardDAO.createLibraryCardDaaRelation(
         card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId);
 
-    libraryCardDAO.deleteLibraryCardById(card.getId());
+    libraryCardDAO.deleteLibraryCardById(card.getId(), signingOfficial.getUserId());
     assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
+    List<LibraryCardDaaAudit> removals =
+        libraryCardDAO.findAuditsByLcUserId(card.getUserId()).stream()
+            .filter(audit -> audit.action() == AuditActions.REMOVE)
+            .toList();
+    assertEquals(1, removals.size());
+    assertEquals(daaId, removals.getFirst().daaId());
+    assertEquals(signingOfficial.getUserId(), removals.getFirst().userId());
   }
 
   @Test
@@ -304,7 +311,12 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
     assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
     // The audit trail has no foreign key to the card and outlives it, as on deleteLibraryCardById.
-    assertFalse(libraryCardDAO.findAuditsByLcUserId(user.getUserId()).isEmpty());
+    List<LibraryCardDaaAudit> removals =
+        libraryCardDAO.findAuditsByLcUserId(user.getUserId()).stream()
+            .filter(audit -> audit.action() == AuditActions.REMOVE)
+            .toList();
+    assertEquals(1, removals.size());
+    assertEquals(daaId, removals.getFirst().daaId());
   }
 
   @Test
@@ -319,11 +331,20 @@ class LibraryCardDAOTest extends DAOTestHelper {
             signingOfficial.getUserId(),
             new Date());
     LibraryCard ownCard = createLibraryCard(signingOfficial);
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
+    Instant now = Instant.now();
+    int daaId =
+        daaDAO.createDaa(signingOfficial.getUserId(), now, signingOfficial.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        researcher.getUserId(), signingOfficial.getUserId(), issuedId, daaId);
 
     libraryCardDAO.deleteAllLibraryCardsByUser(signingOfficial.getUserId());
 
     assertNull(libraryCardDAO.findLibraryCardById(ownCard.getId()));
-    assertNotNull(libraryCardDAO.findLibraryCardById(issuedId));
+    LibraryCard issuedCard = libraryCardDAO.findLibraryCardById(issuedId);
+    assertNotNull(issuedCard);
+    assertEquals(List.of(daaId), issuedCard.getDaaIds());
   }
 
   @Test

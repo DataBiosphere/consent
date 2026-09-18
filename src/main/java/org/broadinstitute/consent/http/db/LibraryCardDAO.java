@@ -55,10 +55,20 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate(
       """
-      WITH daa_deletes AS (DELETE FROM lc_daa lc_daa WHERE lc_daa.lc_id = :libraryCardId)
-      DELETE FROM library_card lc WHERE lc.id = :libraryCardId
+      WITH daa_deletes AS (
+        DELETE FROM lc_daa WHERE lc_id = :libraryCardId RETURNING lc_id, daa_id
+      ),
+      daa_audits AS (
+        INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+        SELECT d.daa_id, d.lc_id, lc.user_id, :userId, 'REMOVE', NOW()
+        FROM daa_deletes d
+        JOIN library_card lc ON lc.id = d.lc_id
+        WHERE lc.user_id IS NOT NULL
+      )
+      DELETE FROM library_card WHERE id = :libraryCardId
       """)
-  void deleteLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
+  void deleteLibraryCardById(
+      @Bind("libraryCardId") Integer libraryCardId, @Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
@@ -186,14 +196,19 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery("SELECT * FROM library_card " + "WHERE user_email = :email")
   LibraryCard findLibraryCardByUserEmail(@Bind("email") String email);
 
-  // lc_daa's foreign key is NO ACTION, so its rows have to go first or the delete throws.
+  // fk_lc_id is NO ACTION, checked at end of statement, so clearing lc_daa in the same statement
+  // satisfies it. Enforcement runs during the card owner's own login, so they are the initiator.
   @SqlUpdate(
       """
-      WITH targets AS (
-        SELECT id FROM library_card WHERE user_id = :userId
+      WITH daa_deletes AS (
+        DELETE FROM lc_daa WHERE lc_id IN (SELECT id FROM library_card WHERE user_id = :userId)
+        RETURNING lc_id, daa_id
       ),
-      daa_deletes AS (DELETE FROM lc_daa WHERE lc_id IN (SELECT id FROM targets))
-      DELETE FROM library_card WHERE id IN (SELECT id FROM targets)
+      daa_audits AS (
+        INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+        SELECT d.daa_id, d.lc_id, :userId, :userId, 'REMOVE', NOW() FROM daa_deletes d
+      )
+      DELETE FROM library_card WHERE user_id = :userId
       """)
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);
 

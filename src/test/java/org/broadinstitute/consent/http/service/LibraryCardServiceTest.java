@@ -295,7 +295,8 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     user.setAdminRole();
     LibraryCard libraryCard = testLibraryCard(user.getUserId());
 
-    assertThrows(NotFoundException.class, () -> service.deleteLibraryCardById(libraryCard.getId()));
+    assertThrows(
+        NotFoundException.class, () -> service.deleteLibraryCardById(libraryCard.getId(), user));
   }
 
   @Test

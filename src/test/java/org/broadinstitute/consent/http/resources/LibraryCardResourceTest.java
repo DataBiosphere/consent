@@ -203,7 +203,7 @@ class LibraryCardResourceTest {
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     try (Response response = resource.deleteLibraryCard(duosAdminUser, card.getId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
-      verify(libraryCardService).deleteLibraryCardById(card.getId());
+      verify(libraryCardService).deleteLibraryCardById(card.getId(), adminUser);
     }
   }
 
@@ -216,7 +216,7 @@ class LibraryCardResourceTest {
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     try (Response response = resource.deleteLibraryCard(duosAdminUser, card.getId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
-      verify(libraryCardService).deleteLibraryCardById(card.getId());
+      verify(libraryCardService).deleteLibraryCardById(card.getId(), adminUser);
     }
   }
 
@@ -224,7 +224,9 @@ class LibraryCardResourceTest {
   void testDeleteLibraryCardThrowsNotFoundException() {
     LibraryCard card = mockLibraryCardSetup();
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
-    doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt());
+    doThrow(new NotFoundException())
+        .when(libraryCardService)
+        .deleteLibraryCardById(anyInt(), any());
     try (Response response = resource.deleteLibraryCard(duosAdminUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
