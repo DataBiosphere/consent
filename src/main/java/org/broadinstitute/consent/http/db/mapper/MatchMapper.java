@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -12,7 +13,7 @@ public class MatchMapper implements RowMapper<Match> {
 
     return new Match(
         r.getInt("match_id"),
-        r.getString("consent"),
+        (r.getObject("alias") == null) ? null : Dataset.parseAliasToIdentifier(r.getInt("alias")),
         (r.getObject("dataset_id") == null) ? null : r.getInt("dataset_id"),
         r.getString("purpose"),
         r.getBoolean("match_entity"),
