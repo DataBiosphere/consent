@@ -260,4 +260,5 @@
   <include file="changesets/changelog-consent-2026-09-09-match-dataset-id.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-09-09-match-migration-snapshot.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-09-09-match-dataset-id-constraints.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-17-dataset-alias-default.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
