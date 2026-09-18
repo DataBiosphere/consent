@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Closes the dataset identity contract: match_entity now identifies its dataset only by foreign
+    key, and the public `DUOS-######` the API still returns is derived from it on read.
+
+    Gated on the previous release being deployed everywhere, not merely merged. That release stops
+    writing the column; an instance still on the one before it writes a non-null value, and its
+    inserts fail outright once the column is gone.
+
+    purpose_consent goes with the column it constrains - a unique constraint cannot outlive its
+    column - and match_entity_purpose_dataset_unique has enforced the same rule since the
+    dataset_id constraints were applied.
+  -->
+  <changeSet id="changelog-consent-2026-09-19-drop-match-consent" author="kmarete">
+    <!--
+      Two things a previous release was supposed to have done, neither of which stops a deploy when
+      it fails. A nullable column says the release that stopped writing it applied here; the
+      replacement constraint says purpose_consent is not the last uniqueness rule over a purpose's
+      matches.
+
+      The second check makes the drop provably lossless. dropColumn is irreversible, and the rollback
+      rebuilds the value by derivation, so a surviving value that disagrees with its own dataset -
+      a hand-fixed row, say - would be discarded for good and replaced with a different one. Any
+      such row halts the deploy instead.
+    -->
+    <preConditions onFail="HALT" onError="HALT"
+      onFailMessage="match_entity.consent must already be nullable, match_entity_purpose_dataset_unique must be present, and every surviving consent value must equal the identifier derived from its dataset_id. A non-null column means the release that stops writing it has not applied here; a missing constraint means the release applying it halted; a disagreeing value means the drop would lose something the rollback cannot rebuild. Resolve those first.">
+      <dbms type="postgresql"/>
+      <sqlCheck expectedResult="2">
+        SELECT
+          (SELECT COUNT(*) FROM pg_attribute
+           WHERE attrelid = 'match_entity'::regclass
+             AND attname = 'consent' AND NOT attnotnull)
+          +
+          (SELECT COUNT(*) FROM pg_constraint
+           WHERE conname = 'match_entity_purpose_dataset_unique'
+             AND conrelid = 'match_entity'::regclass)
+      </sqlCheck>
+      <!-- The ::BIGINT is load-bearing: alias is numeric in some environments, where 42.0 would
+           otherwise render as DUOS-0042.0 and every row would look like it disagreed. -->
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM match_entity m
+        JOIN dataset d ON d.dataset_id = m.dataset_id
+        WHERE m.consent IS NOT NULL
+          AND m.consent &lt;&gt;
+            'DUOS-' || LPAD(d.alias::BIGINT::TEXT, GREATEST(6, LENGTH(d.alias::BIGINT::TEXT)), '0')
+      </sqlCheck>
+    </preConditions>
+
+    <dropUniqueConstraint tableName="match_entity" constraintName="purpose_consent"/>
+    <dropColumn tableName="match_entity" columnName="consent"/>
+
+    <rollback>
+      <addColumn tableName="match_entity">
+        <column name="consent" type="varchar(255)"/>
+      </addColumn>
+      <!-- The values were derived from the dataset before they were dropped, so they can be
+           derived again; a legacy consent UUID is not recoverable and no longer exists. The
+           ::BIGINT is load-bearing: alias is numeric in some environments, where 42.0 satisfies
+           the alias = trunc(alias) check and would otherwise render as DUOS-0042.0. -->
+      <sql>
+        UPDATE match_entity m
+        SET consent =
+          'DUOS-' || LPAD(d.alias::BIGINT::TEXT, GREATEST(6, LENGTH(d.alias::BIGINT::TEXT)), '0')
+        FROM dataset d
+        WHERE d.dataset_id = m.dataset_id
+      </sql>
+      <addUniqueConstraint tableName="match_entity" columnNames="purpose, consent"
+        constraintName="purpose_consent"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
