@@ -7,8 +7,9 @@
     It existed to replace aliases supplied by instances predating that release; those are gone, so a
     plain column default over the same sequence does the whole job.
 
-    The two halves are one changeset deliberately. Dropping the trigger before the default is in
-    place would leave a window in which an insert that omits alias fails the not-null constraint.
+    The two halves are one changeset deliberately. The column still carries the DEFAULT 0 that
+    changelog-consent-43.0 gave it, so dropping the trigger first would not fail: it would quietly
+    hand every insert in the window alias 0, and the first of them would take DUOS-000000.
 
     Aliases supplied explicitly are now honoured rather than overwritten, which a column default
     cannot prevent. Nothing in the application supplies one - DatasetDAO.insertDataset omits the

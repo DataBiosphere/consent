@@ -664,10 +664,12 @@ Alias half, roll-forward recovery:
 
 Match half, deployment verification:
 
-- Before match 1, in production: a version histogram over `match_entity` -
-  `SELECT algorithm_version, COUNT(*) FROM match_entity GROUP BY algorithm_version` - returns no
-  `v1`, no `v2` and no null. That is the prerequisite in a single query; match 1 gates on the
-  constraints rather than on this, because the constraints are what make it true.
+- Before match 1, in production: `match_entity` carries no `v1`, no `v2` and no null
+  `algorithm_version`. `SELECT COUNT(*) FILTER (WHERE algorithm_version IN ('v1','v2')), COUNT(*)
+  FILTER (WHERE algorithm_version IS NULL), COUNT(*) FROM match_entity` answers it in one query,
+  returning two zeroes over a non-zero total - a zero total is the wrong database, not a pass.
+  Match 1 gates on the constraints rather than on this, because the constraints are what make it
+  true.
 - After match 1: both snapshot tables are absent, and `GET /api/match/purpose/batch` returns the
   dataset's `DUOS-######` in each result's `consent` field. An alias past six digits widens rather
   than wraps. The column still holds the same values, so a mismatch between the two is visible:
