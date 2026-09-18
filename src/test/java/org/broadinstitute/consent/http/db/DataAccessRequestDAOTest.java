@@ -1441,23 +1441,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     // Submitted later than the grant, and never reviewed. The submitter is the same researcher:
     // only the parent DAR's own user may file a progress report against it.
-    Date closedOn = new Date();
     DataAccessRequest closeoutDar =
-        createProgressReport(
-            grantee.getEraCommonsId(), grantee.getUserId(), collectionId, grantedDar.getId());
-    dataAccessRequestDAO.insertDARDatasetRelation(
-        closeoutDar.getReferenceId(), dataset.getDatasetId());
-    closeoutDar
-        .getData()
-        .setCloseoutSupplement(
-            new CloseoutSupplement(List.of("Reason"), "Other Reason", grantee.getUserId()));
-    dataAccessRequestDAO.updateDataByReferenceId(
-        closeoutDar.getReferenceId(),
-        grantee.getUserId(),
-        closedOn,
-        closedOn,
-        closeoutDar.getData(),
-        randomAlphabetic(10));
+        fileFollowOn(grantee, collectionId, grantedDar, List.of(dataset), 0, true);
 
     List<DarMetricsSummary> summaries =
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
@@ -1466,7 +1451,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, summaries.size());
     assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
     assertNotEquals(closeoutDar.getReferenceId(), summaries.getFirst().referenceId());
-    assertEquals(grantedDar.getData().getProjectTitle(), summaries.getFirst().projectTitle());
+    // The closeout inherits the grant's title and RUS, so the dates are what gives it away: a row
+    // sourced from the closeout would report when the grant ended, not when it was requested.
+    assertEquals(grantedOn.getTime(), summaries.getFirst().submissionDate().getTime());
+    assertNotEquals(
+        closeoutDar.getSubmissionDate().getTime(), summaries.getFirst().submissionDate().getTime());
   }
 
   /**
@@ -1739,6 +1728,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest closeoutDar =
         createProgressReport(
             researcher.getEraCommonsId(), researcher.getUserId(), collectionId, parent.getId());
+    // populateProgressReportFromJsonString starts from a copy of the parent's data and overrides
+    // only the fields the researcher fills in again, so the narrative carries over unchanged
+    closeoutDar.getData().setProjectTitle(parent.getData().getProjectTitle());
+    closeoutDar.getData().setNonTechRus(parent.getData().getNonTechRus());
     covered.forEach(
         dataset ->
             dataAccessRequestDAO.insertDARDatasetRelation(
