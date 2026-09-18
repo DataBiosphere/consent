@@ -288,6 +288,45 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteLibraryCardByUserIdWithDaa() {
+    User signingOfficial = createUser();
+    User user = createUser();
+    LibraryCard card = createLibraryCard(user);
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
+    Instant now = Instant.now();
+    int daaId =
+        daaDAO.createDaa(signingOfficial.getUserId(), now, signingOfficial.getUserId(), now, dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), card.getId(), daaId);
+
+    libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+
+    assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
+    // The audit trail has no foreign key to the card and outlives it, as on deleteLibraryCardById.
+    assertFalse(libraryCardDAO.findAuditsByLcUserId(user.getUserId()).isEmpty());
+  }
+
+  @Test
+  void testDeleteLibraryCardByUserIdLeavesCardsTheUserIssued() {
+    User signingOfficial = createUser();
+    User researcher = createUser();
+    Integer issuedId =
+        libraryCardDAO.insertLibraryCard(
+            researcher.getUserId(),
+            researcher.getDisplayName(),
+            researcher.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+    LibraryCard ownCard = createLibraryCard(signingOfficial);
+
+    libraryCardDAO.deleteAllLibraryCardsByUser(signingOfficial.getUserId());
+
+    assertNull(libraryCardDAO.findLibraryCardById(ownCard.getId()));
+    assertNotNull(libraryCardDAO.findLibraryCardById(issuedId));
+  }
+
+  @Test
   void testDeleteLibraryCardByUserId() {
     User user = createUser();
     LibraryCard card = createLibraryCard(user);
