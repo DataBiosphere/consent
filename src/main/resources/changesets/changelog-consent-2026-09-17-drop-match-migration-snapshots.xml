@@ -20,9 +20,9 @@
       <dbms type="postgresql"/>
       <sqlCheck expectedResult="2">
         SELECT
-          (SELECT COUNT(*) FROM information_schema.columns
-           WHERE table_schema = 'public' AND table_name = 'match_entity'
-             AND column_name = 'dataset_id' AND is_nullable = 'NO')
+          (SELECT COUNT(*) FROM pg_attribute
+           WHERE attrelid = 'match_entity'::regclass
+             AND attname = 'dataset_id' AND attnotnull)
           +
           (SELECT COUNT(*) FROM pg_constraint
            WHERE conname = 'match_entity_purpose_dataset_unique'
