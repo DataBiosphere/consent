@@ -5,7 +5,8 @@ properties:
     description: The id of the stored match result
   consent:
     type: string
-    description: The Consent ID or Dataset Identifier
+    description: The Dataset Identifier, derived from the matched dataset - DUOS- followed by
+      the alias, zero-padded to at least six digits
   purpose:
     type: string
     description: The Data Access Request ID
