@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
@@ -34,18 +36,45 @@ public class GCSService implements ConsentLogger {
   public GCSService(StoreConfiguration config) {
     this.config = config;
     try {
-      ServiceAccountCredentials credentials =
-          ServiceAccountCredentials.fromStream(new FileInputStream(config.getPassword()));
-      Storage storage =
-          StorageOptions.newBuilder()
-              .setProjectId(credentials.getProjectId())
-              .setCredentials(credentials)
-              .build()
-              .getService();
-      this.setStorage(storage);
+      GoogleCredentials credentials = loadCredentials();
+      StorageOptions.Builder builder = StorageOptions.newBuilder().setCredentials(credentials);
+      if (credentials instanceof ServiceAccountCredentials sa && sa.getProjectId() != null) {
+        builder.setProjectId(sa.getProjectId());
+      }
+      this.setStorage(builder.build().getService());
     } catch (Exception e) {
       logException("Exception initializing GCSService: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Resolve the credentials used to talk to GCS.
+   *
+   * <p>Deployed environments mount a Yale-managed service account key file and name it in {@code
+   * googleStore.password}. When that value is blank, fall back to Application Default Credentials
+   * so local development needs no long-lived key: developers run {@code gcloud auth
+   * application-default login}, optionally impersonating the environment's service account. See
+   * DEVNOTES.md, "Google Cloud Storage credentials".
+   *
+   * @return GoogleCredentials for the Storage client
+   * @throws IOException when the key file cannot be read or no default credentials are available
+   */
+  @VisibleForTesting
+  GoogleCredentials loadCredentials() throws IOException {
+    String keyPath = config.getPassword();
+    if (StringUtils.isBlank(keyPath)) {
+      logInfo("No googleStore.password configured; using Application Default Credentials for GCS");
+      return applicationDefaultCredentials();
+    }
+    try (InputStream keyStream = new FileInputStream(keyPath)) {
+      return ServiceAccountCredentials.fromStream(keyStream);
+    }
+  }
+
+  /** Seam for tests; resolves credentials from the ambient environment. */
+  @VisibleForTesting
+  GoogleCredentials applicationDefaultCredentials() throws IOException {
+    return GoogleCredentials.getApplicationDefault();
   }
 
   @VisibleForTesting
