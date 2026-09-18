@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Date;
 import java.util.Map;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -14,8 +13,6 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
     Match match =
         map.computeIfAbsent(
             rowView.getColumn("match_id", Integer.class), id -> rowView.getRow(Match.class));
-    hasOptionalColumn(rowView, "alias", Integer.class)
-        .ifPresent(alias -> match.setConsent(Dataset.parseAliasToIdentifier(alias)));
     hasOptionalColumn(rowView, "dataset_id", Integer.class).ifPresent(match::setDatasetId);
     hasOptionalColumn(rowView, "purpose", String.class).ifPresent(match::setPurpose);
     hasOptionalColumn(rowView, "algorithm_version", String.class)
