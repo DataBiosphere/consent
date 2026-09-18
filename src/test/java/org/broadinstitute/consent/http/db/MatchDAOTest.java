@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -144,6 +143,8 @@ class MatchDAOTest extends DAOTestHelper {
     assertEquals(1, matchResults.size());
     Match result = matchResults.getFirst();
     assertEquals(targetElection.getReferenceId(), result.getPurpose());
+    // Each query derives the identifier for itself, so this one is asserted separately.
+    assertEquals(dataset.getDatasetIdentifier(), result.getConsent());
   }
 
   @Test
@@ -287,40 +288,39 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindMatchesForLatestDataAccessElectionsKeepsMatchesWithNoDatasetId() {
-    // The only state that can produce such a row is a halted precondition, which leaves the
-    // constraints unapplied while the application starts anyway, so the constraint is dropped
-    // here to reach it. The transaction is rolled back rather than committed: the DDL is
-    // undone with it, and truncateAllTables would not restore it.
+  void testTheConsentIdentifierIsDerivedFromTheDataset() {
     Dataset dataset = createDataset();
-    String darReferenceId = UUID.randomUUID().toString();
-    createDataAccessElection(darReferenceId, dataset.getDatasetId());
+    Integer matchId = matchDAO.insertMatch(makeMockMatch(dataset));
 
+    assertEquals(dataset.getDatasetIdentifier(), matchDAO.findMatchById(matchId).getConsent());
+  }
+
+  @Test
+  void testASuppliedConsentIdentifierIsIgnoredInFavourOfTheDataset() {
+    // The dataset is the only source of the identifier now, so a value carried on the model - or
+    // left in the column by an older writer - cannot reach the response.
+    Dataset dataset = createDataset();
+    Match match = makeMockMatch(dataset);
+    match.setConsent("DUOS-999999");
+    Integer matchId = matchDAO.insertMatch(match);
+
+    assertEquals(dataset.getDatasetIdentifier(), matchDAO.findMatchById(matchId).getConsent());
+    assertEquals(
+        dataset.getDatasetIdentifier(),
+        matchDAO.findMatchesByPurposeId(match.getPurpose()).getFirst().getConsent());
+  }
+
+  @Test
+  void testADerivedConsentIdentifierIsNotTruncatedPastSixDigits() {
+    // Aliases are only left-padded to six digits, so a seven-digit one must widen rather than wrap.
+    Dataset dataset = createDataset();
     jdbi.useHandle(
-        handle -> {
-          handle.begin();
-          handle.execute("ALTER TABLE match_entity ALTER COLUMN dataset_id DROP NOT NULL");
-          handle.execute(
-              """
-              INSERT INTO match_entity
-                (consent, dataset_id, purpose, match_entity, failed, create_date,
-                 algorithm_version, abstain)
-              VALUES (?, NULL, ?, true, false, NOW(), ?, false)
-              """,
-              dataset.getDatasetIdentifier(),
-              darReferenceId,
-              MatchAlgorithm.V1.getVersion());
+        handle ->
+            handle.execute(
+                "UPDATE dataset SET alias = 1234567 WHERE dataset_id = ?", dataset.getDatasetId()));
+    Integer matchId = matchDAO.insertMatch(makeMockMatch(dataset));
 
-          List<Match> matchResults =
-              handle
-                  .attach(MatchDAO.class)
-                  .findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
-
-          assertEquals(1, matchResults.size());
-          assertNull(matchResults.getFirst().getDatasetId());
-
-          handle.rollback();
-        });
+    assertEquals("DUOS-1234567", matchDAO.findMatchById(matchId).getConsent());
   }
 
   @Test

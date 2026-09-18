@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Retires the migration run's rollback path, kept deliberately through the release that applied the
+    dataset_id constraints because that was the release most likely to need it.
+
+    Gated on those constraints rather than on the calendar. An environment where they never applied
+    is one where the run did not finish, which is exactly when the evidence is still wanted - and
+    this release also stops reading match_entity.consent and drops the match-side IS NULL tolerance,
+    so a row without a dataset_id stops being read at all rather than merely losing an election.
+
+    The rollback recreates the tables so later changesets stay rollable, but it cannot bring the
+    captured rows back. Take a dump first if the evidence is still wanted.
+  -->
+  <changeSet id="changelog-consent-2026-09-17-drop-match-migration-snapshots" author="kmarete">
+    <preConditions onFail="HALT" onError="HALT"
+      onFailMessage="match_entity.dataset_id must be non-null and match_entity_purpose_dataset_unique must be present before this release: it stops tolerating a row without a dataset_id, and the snapshots are the recovery for the run that clears them. The release applying those constraints halted in this environment, so resolve the rows it reported and let that changeset apply first.">
+      <dbms type="postgresql"/>
+      <sqlCheck expectedResult="2">
+        SELECT
+          (SELECT COUNT(*) FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = 'match_entity'
+             AND column_name = 'dataset_id' AND is_nullable = 'NO')
+          +
+          (SELECT COUNT(*) FROM pg_constraint
+           WHERE conname = 'match_entity_purpose_dataset_unique'
+             AND conrelid = 'match_entity'::regclass)
+      </sqlCheck>
+    </preConditions>
+
+    <dropTable tableName="match_migration_rationale_snapshot"/>
+    <dropTable tableName="match_migration_snapshot"/>
+
+    <rollback>
+      <createTable tableName="match_migration_snapshot">
+        <column name="match_id" type="bigint">
+          <constraints primaryKey="true" nullable="false"/>
+        </column>
+        <column name="consent" type="text"/>
+        <column name="dataset_id" type="bigint"/>
+        <column name="purpose" type="text">
+          <constraints nullable="false"/>
+        </column>
+        <column name="match_entity" type="boolean"/>
+        <column name="abstain" type="boolean"/>
+        <column name="failed" type="boolean"/>
+        <column name="create_date" type="timestamp"/>
+        <column name="algorithm_version" type="text"/>
+        <column name="captured_at" type="timestamp" defaultValue="now()">
+          <constraints nullable="false"/>
+        </column>
+      </createTable>
+      <createIndex tableName="match_migration_snapshot"
+        indexName="idx_match_migration_snapshot_purpose">
+        <column name="purpose"/>
+      </createIndex>
+      <createTable tableName="match_migration_rationale_snapshot">
+        <column name="rationale_id" type="bigint">
+          <constraints primaryKey="true" nullable="false"/>
+        </column>
+        <column name="match_id" type="bigint">
+          <constraints nullable="false"/>
+        </column>
+        <column name="rationale" type="text">
+          <constraints nullable="false"/>
+        </column>
+      </createTable>
+      <createIndex tableName="match_migration_rationale_snapshot"
+        indexName="idx_match_migration_rationale_snapshot_match_id">
+        <column name="match_id"/>
+      </createIndex>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
