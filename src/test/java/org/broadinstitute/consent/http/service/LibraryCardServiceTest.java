@@ -289,6 +289,19 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testDeleteLibraryCard() {
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    user.setAdminRole();
+    LibraryCard libraryCard = testLibraryCard(user.getUserId());
+    when(libraryCardDAO.findLibraryCardById(libraryCard.getId())).thenReturn(libraryCard);
+
+    service.deleteLibraryCardById(libraryCard.getId(), user);
+
+    verify(libraryCardDAO).deleteLibraryCardById(libraryCard.getId(), user.getUserId());
+  }
+
+  @Test
   void testDeleteLibraryCard_NotFound() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
