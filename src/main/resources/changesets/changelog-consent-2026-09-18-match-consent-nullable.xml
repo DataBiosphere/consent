@@ -16,16 +16,24 @@
     the real rule since the dataset_id constraints were applied.
   -->
   <changeSet id="changelog-consent-2026-09-18-match-consent-nullable" author="kmarete">
-    <!-- The snapshot tables are gone only if the release that stopped reading the column applied
-         its changeset here; without it, this release's nulls reach a reader that still wants a
-         value. -->
+    <!--
+      The snapshot tables are gone only if the release that stopped reading the column applied its
+      changeset here; without it, this release's nulls reach a reader that still wants a value.
+      match_entity_purpose_dataset_unique is the other half: the argument for letting purpose_consent
+      go toothless below is that it is not the last uniqueness rule over a purpose's matches.
+    -->
     <preConditions onFail="HALT" onError="HALT"
-      onFailMessage="The release that stops reading match_entity.consent must have applied here first; its changeset drops match_migration_snapshot, which is still present. Deploy that release before this one.">
+      onFailMessage="The release that stops reading match_entity.consent must have applied here first; its changeset drops match_migration_snapshot, and match_entity_purpose_dataset_unique must be present because purpose_consent stops constraining the rows written after this. Deploy that release before this one.">
       <dbms type="postgresql"/>
-      <sqlCheck expectedResult="0">
-        SELECT COUNT(*) FROM pg_class
-        WHERE relname IN ('match_migration_snapshot', 'match_migration_rationale_snapshot')
-          AND relnamespace = 'public'::regnamespace
+      <sqlCheck expectedResult="1">
+        SELECT
+          (CASE WHEN to_regclass('match_migration_snapshot') IS NULL THEN 0 ELSE 1 END)
+          +
+          (CASE WHEN to_regclass('match_migration_rationale_snapshot') IS NULL THEN 0 ELSE 1 END)
+          +
+          (SELECT COUNT(*) FROM pg_constraint
+           WHERE conname = 'match_entity_purpose_dataset_unique'
+             AND conrelid = 'match_entity'::regclass)
       </sqlCheck>
     </preConditions>
 
@@ -34,7 +42,11 @@
 
     <rollback>
       <!-- Restoring the constraint means the rows written since have to carry a value again, and
-           the dataset each one points at is the only place left to get it. The ::BIGINT is
+           the dataset each one points at is the only place left to get it. Every row is re-derived
+           rather than only the null ones: that makes consent a function of dataset_id, so
+           purpose_consent can only be violated where match_entity_purpose_dataset_unique already
+           was. Restricting it to the nulls would let a legacy value that disagrees with its own
+           dataset collide with a re-derived row and abort the rollback half-applied. The ::BIGINT is
            load-bearing: alias is numeric in some environments, where 42.0 satisfies the
            alias = trunc(alias) check and would otherwise render as DUOS-0042.0. -->
       <sql>
@@ -42,7 +54,7 @@
         SET consent =
           'DUOS-' || LPAD(d.alias::BIGINT::TEXT, GREATEST(6, LENGTH(d.alias::BIGINT::TEXT)), '0')
         FROM dataset d
-        WHERE d.dataset_id = m.dataset_id AND m.consent IS NULL
+        WHERE d.dataset_id = m.dataset_id
       </sql>
       <addNotNullConstraint tableName="match_entity" columnName="consent"
         columnDataType="varchar(255)"/>
