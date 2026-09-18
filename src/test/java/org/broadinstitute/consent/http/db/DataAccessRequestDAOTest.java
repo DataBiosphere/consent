@@ -1420,12 +1420,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   /**
    * A closeout carries no election of its own, so it is not a qualifying DAR and cannot source the
    * display record. Before, it could: sourcing by date alone let a closeout submitted after the
-   * grant speak for it, showing the closeout submitter's institution, its title and its dates.
+   * grant speak for it, showing the closeout's title, RUS and dates in place of the grant's.
    */
   @Test
   void testFindSummaryMetricApprovedDARsPrefersTheGrantOverALaterCloseout() {
     User grantee = createUserWithInstitution();
-    User closer = createUserWithInstitution();
     Dataset dataset = createDataset();
     Integer collectionId = createDarCollection(grantee.getUserId());
 
@@ -1440,20 +1439,21 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     updateVote(
         true, "", grantedOn, vote.getVoteId(), false, election.getElectionId(), grantedOn, false);
 
-    // Submitted later, by someone else, and never reviewed
+    // Submitted later than the grant, and never reviewed. The submitter is the same researcher:
+    // only the parent DAR's own user may file a progress report against it.
     Date closedOn = new Date();
     DataAccessRequest closeoutDar =
         createProgressReport(
-            closer.getEraCommonsId(), closer.getUserId(), collectionId, grantedDar.getId());
+            grantee.getEraCommonsId(), grantee.getUserId(), collectionId, grantedDar.getId());
     dataAccessRequestDAO.insertDARDatasetRelation(
         closeoutDar.getReferenceId(), dataset.getDatasetId());
     closeoutDar
         .getData()
         .setCloseoutSupplement(
-            new CloseoutSupplement(List.of("Reason"), "Other Reason", closer.getUserId()));
+            new CloseoutSupplement(List.of("Reason"), "Other Reason", grantee.getUserId()));
     dataAccessRequestDAO.updateDataByReferenceId(
         closeoutDar.getReferenceId(),
-        closer.getUserId(),
+        grantee.getUserId(),
         closedOn,
         closedOn,
         closeoutDar.getData(),
@@ -1466,9 +1466,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, summaries.size());
     assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
     assertNotEquals(closeoutDar.getReferenceId(), summaries.getFirst().referenceId());
-    assertEquals(
-        institutionDAO.findInstitutionById(grantee.getInstitutionId()).getName(),
-        summaries.getFirst().institutionName());
+    assertEquals(grantedDar.getData().getProjectTitle(), summaries.getFirst().projectTitle());
   }
 
   /**
@@ -1571,9 +1569,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    * that were not are excluded for different reasons - one was voted down, the other is still under
    * review - and neither may borrow its sibling's approval.
    *
-   * <p>Closeouts are then filed one at a time. A closeout ends access rather than undoing it, so
-   * these are usage history and every expectation has to hold unchanged after each one, still
-   * naming the grant and the requester's institution rather than the closeout and its submitter.
+   * <p>A progress report and then a closeout are filed on the approved datasets. Both end or report
+   * on access rather than undoing it, so these remain usage history and every expectation has to
+   * hold unchanged after each one, still naming the grant rather than the follow-on.
    */
   @Test
   void testFindSummaryMetricApprovedDARsSpanningTwoStudiesFollowsPerDatasetApproval() {
@@ -1639,16 +1637,15 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         requester,
         "once the votes land");
 
-    // Follow-on submissions arrive one at a time, each later than the grant and filed by someone
-    // else. A progress report is reviewed on its own election; a closeout ends access rather than
-    // undoing it. Neither erases the fact that access was given, so every expectation above has to
-    // survive both - and the summaries must keep naming the grant and the requester's institution,
-    // not the follow-on and its submitter. Each report hangs off the previous submission, since
-    // uk_parent_id allows a DAR only one child.
-    User closer = createUserWithInstitution();
+    // Follow-on submissions arrive one at a time, each later than the grant. A progress report is
+    // reviewed on its own election; a closeout ends access rather than undoing it. Neither erases
+    // the fact that access was given, so every expectation above has to survive both, with the
+    // summaries still naming the grant rather than the follow-on. Only the parent DAR's own
+    // researcher may file one, and each hangs off the previous submission, since uk_parent_id
+    // allows a DAR only one child.
     DataAccessRequest progressReport =
         fileFollowOn(
-            closer, collectionId, dar, List.of(firstGranted, secondGranted), 30_000, false);
+            requester, collectionId, dar, List.of(firstGranted, secondGranted), 30_000, false);
     assertGrantVisibleWhereApproved(
         firstStudyId,
         secondStudyId,
@@ -1664,7 +1661,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     // dataset the parent was not granted, and findDatasetApprovalsByDar returns nothing for a
     // collection that already holds a closeout.
     fileFollowOn(
-        closer, collectionId, progressReport, List.of(firstGranted, secondGranted), 20_000, true);
+        requester,
+        collectionId,
+        progressReport,
+        List.of(firstGranted, secondGranted),
+        20_000,
+        true);
     assertGrantVisibleWhereApproved(
         firstStudyId,
         secondStudyId,
@@ -1728,7 +1730,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    * {@code agoMillis} ago, and returns it so a further report can hang off it in turn.
    */
   private DataAccessRequest fileFollowOn(
-      User closer,
+      User researcher,
       Integer collectionId,
       DataAccessRequest parent,
       List<Dataset> covered,
@@ -1736,7 +1738,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       boolean closeout) {
     DataAccessRequest closeoutDar =
         createProgressReport(
-            closer.getEraCommonsId(), closer.getUserId(), collectionId, parent.getId());
+            researcher.getEraCommonsId(), researcher.getUserId(), collectionId, parent.getId());
     covered.forEach(
         dataset ->
             dataAccessRequestDAO.insertDARDatasetRelation(
@@ -1745,12 +1747,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       closeoutDar
           .getData()
           .setCloseoutSupplement(
-              new CloseoutSupplement(List.of("Reason"), "Other Reason", closer.getUserId()));
+              new CloseoutSupplement(List.of("Reason"), "Other Reason", researcher.getUserId()));
     }
     Date closedOn = new Date(System.currentTimeMillis() - agoMillis);
     dataAccessRequestDAO.updateDataByReferenceId(
         closeoutDar.getReferenceId(),
-        closer.getUserId(),
+        researcher.getUserId(),
         closedOn,
         closedOn,
         closeoutDar.getData(),
