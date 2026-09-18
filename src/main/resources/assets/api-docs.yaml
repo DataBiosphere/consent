@@ -595,6 +595,24 @@ paths:
     $ref: './paths/studyConvertByIdentifier.yaml'
   /api/dataset/study/{studyId}/custodians:
     $ref: './paths/studyByIdCustodians.yaml'
+  /api/dataset/study/{studyId}/assets/publications:
+    $ref: './paths/studyPublications.yaml'
+  /api/dataset/study/{studyId}/assets/models:
+    $ref: './paths/studyModels.yaml'
+  /api/dataset/study/{studyId}/assets/workspaces:
+    $ref: './paths/studyWorkspaces.yaml'
+  /api/dataset/study/{studyId}/assets/presentations:
+    $ref: './paths/studyPresentations.yaml'
+  /api/dataset/study/{studyId}/assets/clinicalTrials:
+    $ref: './paths/studyClinicalTrials.yaml'
+  /api/dataset/study/{studyId}/assets/intellectualProperty:
+    $ref: './paths/studyIntellectualProperty.yaml'
+  /api/dataset/study/{studyId}/assets/fundingResources:
+    $ref: './paths/studyFundingResources.yaml'
+  /api/dataset/study/{studyId}/comments:
+    $ref: './paths/studyComments.yaml'
+  /api/dataset/study/{studyId}/comments/{commentId}:
+    $ref: './paths/studyCommentById.yaml'
   /api/dataset/study/registration/{studyId}:
     $ref: './paths/studyRegistrationByStudyId.yaml'
   /api/dataset/{id}:
@@ -893,6 +911,14 @@ paths:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
+  /api/metrics/dar-summaries/study/{studyId}:
+    $ref: './paths/studyDarSummaries.yaml'
+  /api/metrics/research-outputs/study/{studyId}:
+    $ref: './paths/studyResearchOutputs.yaml'
+  /api/metrics/study-recommendations/{studyId}/similar:
+    $ref: './paths/studySimilarRecommendations.yaml'
+  /api/metrics/study-recommendations/{studyId}/frequently-requested-with:
+    $ref: './paths/studyFrequentlyRequestedWith.yaml'
   /api/passport/userinfo:
     $ref: './paths/passportUserInfo.yaml'
   /api/user:

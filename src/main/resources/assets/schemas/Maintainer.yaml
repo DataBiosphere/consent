@@ -1,0 +1,9 @@
+type: object
+description: A Maintainer object.
+properties:
+  name:
+    type: string
+    description: The maintainer's name.
+  email:
+    type: string
+    description: The maintainer's email address.

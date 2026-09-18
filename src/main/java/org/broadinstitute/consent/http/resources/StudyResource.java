@@ -140,7 +140,7 @@ public class StudyResource extends Resource {
   public Response getStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
-      checkPublicVisibilityForUser(study, duosUser.getUser());
+      requireReadableStudy(study, duosUser.getUser());
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -155,16 +155,24 @@ public class StudyResource extends Resource {
   public Response patchStudyById(
       @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId, String json) {
     try {
+      User user = duosUser.getUser();
       Study study = datasetService.findStudy(studyId);
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
-      checkPublicVisibilityForUser(study, duosUser.getUser());
+      requireReadableStudy(study, user);
+      // Reading the study is not authority to change it: a publicly visible study is readable by
+      // everyone, and the class-level role gate only says the caller holds a study-editing role
+      // somewhere in DUOS. A write additionally requires ownership of this study, as the
+      // registration PUT path does.
+      if (!datasetService.isCreatorCustodianOrAdmin(user, study)) {
+        throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
+      }
       StudyPatch studyPatch = StudyPatch.fromJson(json);
       if (!studyPatch.isPatchable(study)) {
         return Response.status(Status.NOT_MODIFIED).entity(study).build();
       }
-      Study patchedStudy = datasetService.patchStudy(studyId, duosUser.getUser(), studyPatch);
+      Study patchedStudy = datasetService.patchStudy(studyId, user, studyPatch);
       return Response.ok(patchedStudy).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -212,7 +220,7 @@ public class StudyResource extends Resource {
       @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
-      checkPublicVisibilityForUser(study, duosUser.getUser());
+      requireReadableStudy(study, duosUser.getUser());
       List<Dataset> datasets =
           Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
       DatasetRegistrationSchemaV1 registration =
@@ -297,12 +305,17 @@ public class StudyResource extends Resource {
     return new StudyUpdateValidationResult(request, valid);
   }
 
-  private void checkPublicVisibilityForUser(Study study, User user) {
-    boolean isApprovedRole = datasetService.isCreatorCustodianOrAdmin(user, study);
-    boolean isPubliclyVisible = study.getPublicVisibility();
-    // If approved role or publicly visible, the user can see the study, otherwise throw
-    if (!isApprovedRole && !isPubliclyVisible) {
-      throw new NotFoundException("Study not found");
-    }
+  /**
+   * Enforces read access to the study, and nothing more.
+   *
+   * <p>Named for what it actually decides. A publicly visible study satisfies this for everyone, so
+   * it says only that the caller may see the study - never that they may change it. A write needs
+   * ownership on top, which is what {@link DatasetService#isCreatorCustodianOrAdmin} is for and
+   * what the DELETE path applies. The previous name said "check public visibility for user" without
+   * naming the operation it authorized, which is how a read predicate came to stand in front of a
+   * write.
+   */
+  private void requireReadableStudy(Study study, User user) {
+    datasetService.verifyStudyVisibilityAccess(study, user);
   }
 }

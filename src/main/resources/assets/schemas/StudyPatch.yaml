@@ -22,6 +22,36 @@ properties:
   piName:
     type: string
     description: The name of the PI of the study.
+  piEmail:
+    type: string
+    format: email
+    description: The email address of the PI of the study.
+  piInstitutionId:
+    type: integer
+    nullable: true
+    description: >
+      The institution of the PI of the study. Omit the field to leave it
+      unchanged; send null to clear it.
+  piOrcid:
+    type: string
+    nullable: true
+    description: >
+      The ORCID identifier or URL of the PI of the study. Omit the field to
+      leave it unchanged; send null (or an empty string) to clear it.
+  piLinkedinUrl:
+    type: string
+    format: uri
+    nullable: true
+    description: >
+      The LinkedIn profile URL of the PI of the study. Omit the field to leave
+      it unchanged; send null (or an empty string) to clear it.
+  piWebsiteUrl:
+    type: string
+    format: uri
+    nullable: true
+    description: >
+      The website URL of the PI of the study. Omit the field to leave it
+      unchanged; send null (or an empty string) to clear it.
   dataCustodianEmail:
     type: array
     items:
