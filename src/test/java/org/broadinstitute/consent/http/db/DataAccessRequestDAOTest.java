@@ -1190,11 +1190,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNull(summaries.getFirst().piName());
   }
 
-  /**
-   * The PI recorded on the DAR is the stable record of who was granted access, so it wins over the
-   * submitting user's current display name. Asserted through the study-scoped query, which is the
-   * only route that carries requester identity.
-   */
+  /** The submitter's institution comes through on the study route; their name does not. */
   @Test
   void testFindSummaryMetricApprovedDARsCarriesTheSubmittersInstitution() {
     Dataset dataset = createDataset();
@@ -1230,6 +1226,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertEquals(1, summaries.size());
+    // The DAR does record a piName, so this is the query withholding it rather than there being
+    // nothing to find - which is why that fixture stays.
     assertNull(summaries.getFirst().piName());
     assertEquals(
         institutionDAO.findInstitutionById(user.getInstitutionId()).getName(),
@@ -1326,9 +1324,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
   /**
    * The section presents every row as a granted request, and the current/expired chip comes from
-   * the sourced DAR's submission date. A progress report is submitted but has no election of its
-   * own, so the collection's newest submission is not necessarily a grant: sourcing the display
-   * record from it would overwrite the grant's title and RUS and reset an expired grant to current.
+   * the sourced DAR's submission date. A progress report is submitted and reviewed on its own
+   * election, so until that election approves it the collection's newest submission is not a grant:
+   * sourcing the display record from it would overwrite the grant's title and RUS and reset an
+   * expired grant to current.
    */
   @Test
   void testFindSummaryMetricApprovedDARsByStudyIdIgnoresALaterUnapprovedProgressReport() {
@@ -1416,6 +1415,154 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
     assertNotEquals(pendingReport.getReferenceId(), summaries.getFirst().referenceId());
     assertTrue(summaries.getFirst().expired());
+  }
+
+  /**
+   * A closeout carries no election of its own, so it is not a qualifying DAR and cannot source the
+   * display record. Before, it could: sourcing by date alone let a closeout submitted after the
+   * grant speak for it, showing the closeout submitter's institution, its title and its dates.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsPrefersTheGrantOverALaterCloseout() {
+    User grantee = createUserWithInstitution();
+    User closer = createUserWithInstitution();
+    Dataset dataset = createDataset();
+    Integer collectionId = createDarCollection(grantee.getUserId());
+
+    Date grantedOn = new Date(System.currentTimeMillis() - 60_000);
+    DataAccessRequest grantedDar =
+        createDataAccessRequest(collectionId, grantee.getUserId(), grantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        grantedDar.getReferenceId(), dataset.getDatasetId());
+    Election election =
+        createDataAccessElection(grantedDar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(
+        true, "", grantedOn, vote.getVoteId(), false, election.getElectionId(), grantedOn, false);
+
+    // Submitted later, by someone else, and never reviewed
+    Date closedOn = new Date();
+    DataAccessRequest closeoutDar =
+        createProgressReport(
+            closer.getEraCommonsId(), closer.getUserId(), collectionId, grantedDar.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        closeoutDar.getReferenceId(), dataset.getDatasetId());
+    closeoutDar
+        .getData()
+        .setCloseoutSupplement(
+            new CloseoutSupplement(List.of("Reason"), "Other Reason", closer.getUserId()));
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDar.getReferenceId(),
+        closer.getUserId(),
+        closedOn,
+        closedOn,
+        closeoutDar.getData(),
+        randomAlphabetic(10));
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
+
+    assertEquals(1, summaries.size());
+    assertEquals(grantedDar.getReferenceId(), summaries.getFirst().referenceId());
+    assertNotEquals(closeoutDar.getReferenceId(), summaries.getFirst().referenceId());
+    assertEquals(
+        institutionDAO.findInstitutionById(grantee.getInstitutionId()).getName(),
+        summaries.getFirst().institutionName());
+  }
+
+  /**
+   * A grant can be approved on one of its datasets and denied on another, and its closeout may
+   * cover either. The denied dataset has no approval to show, so its page must stay empty even
+   * though the closeout names it. The study sees the collection, because the study was granted
+   * access to one of its datasets.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsSkipsTheDatasetTheGrantWasDeniedOn() {
+    User grantee = createUserWithInstitution();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            null,
+            List.of(randomAlphabetic(10)),
+            true,
+            grantee.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    Dataset granted = createDataset();
+    Dataset denied = createDataset();
+    datasetDAO.updateStudyId(granted.getDatasetId(), studyId);
+    datasetDAO.updateStudyId(denied.getDatasetId(), studyId);
+
+    Date grantedOn = new Date(System.currentTimeMillis() - 60_000);
+    Integer collectionId = createDarCollection(grantee.getUserId());
+    DataAccessRequest dar = createDataAccessRequest(collectionId, grantee.getUserId(), grantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), granted.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), denied.getDatasetId());
+
+    Election approval = createDataAccessElection(dar.getReferenceId(), granted.getDatasetId());
+    Vote approvingVote = createFinalVote(granted.getCreateUserId(), approval.getElectionId());
+    updateVote(
+        true,
+        "",
+        grantedOn,
+        approvingVote.getVoteId(),
+        false,
+        approval.getElectionId(),
+        grantedOn,
+        false);
+
+    Election rejection = createDataAccessElection(dar.getReferenceId(), denied.getDatasetId());
+    Vote rejectingVote = createFinalVote(denied.getCreateUserId(), rejection.getElectionId());
+    updateVote(
+        false,
+        "",
+        grantedOn,
+        rejectingVote.getVoteId(),
+        false,
+        rejection.getElectionId(),
+        grantedOn,
+        false);
+
+    // A closeout on the whole grant, including the dataset it was denied on
+    Date closedOn = new Date();
+    DataAccessRequest closeoutDar =
+        createProgressReport(
+            grantee.getEraCommonsId(), grantee.getUserId(), collectionId, dar.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        closeoutDar.getReferenceId(), granted.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        closeoutDar.getReferenceId(), denied.getDatasetId());
+    closeoutDar
+        .getData()
+        .setCloseoutSupplement(
+            new CloseoutSupplement(List.of("Reason"), "Other Reason", grantee.getUserId()));
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDar.getReferenceId(),
+        grantee.getUserId(),
+        closedOn,
+        closedOn,
+        closeoutDar.getData(),
+        randomAlphabetic(10));
+
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(denied.getDatasetId())
+            .isEmpty(),
+        "A closeout must not stand in for an approval the denied dataset never had");
+
+    List<DarMetricsSummary> onGranted =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            granted.getDatasetId());
+    assertEquals(1, onGranted.size());
+    assertEquals(dar.getReferenceId(), onGranted.getFirst().referenceId());
+
+    List<DarMetricsSummary> byStudy =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+    assertEquals(1, byStudy.size());
+    assertEquals(dar.getReferenceId(), byStudy.getFirst().referenceId());
   }
 
   private void approveDarForDataset(User user, Dataset dataset, Date now) {
