@@ -10,10 +10,11 @@ import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
+import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
 
 public class MetricsService {
@@ -41,30 +42,18 @@ public class MetricsService {
    * to test - so the requester's institution is withheld on those.
    */
   public List<DarMetricsSummary> generateDarSummaries(Integer datasetId, User user) {
-    Dataset dataset = datasetService.findDatasetByIdForRead(user, datasetId);
+    DatasetRead read = datasetService.findDatasetByIdForReadWithBasis(user, datasetId);
     List<DarMetricsSummary> summaries =
         darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
-    if (dataset.getStudyId() != null) {
+    // Withheld only where nothing about this caller was checked. A dataset with no study is
+    // returned to every authenticated caller because there is no visibility to test, and the
+    // requester's affiliation would be enumerable by walking ids. Anyone allowed in on their own
+    // merits - an admin, the dataset's creator, a reader of its study - was established as
+    // entitled to what the dataset carries, so they keep it.
+    if (read.basis() != DatasetReadBasis.NO_STUDY) {
       return summaries;
     }
-    // Nothing gated this dataset: findDatasetByIdForRead returns one with no study to every
-    // authenticated caller, having no study visibility to test. The rest of the summary is the
-    // request, which that rule already decided this caller may see; the requester's affiliation
-    // identifies an organisation, so it is withheld rather than left to be walked.
-    return summaries.stream().map(MetricsService::withoutRequesterIdentity).toList();
-  }
-
-  private static DarMetricsSummary withoutRequesterIdentity(DarMetricsSummary summary) {
-    return new DarMetricsSummary(
-        summary.updateDate(),
-        summary.submissionDate(),
-        summary.projectTitle(),
-        summary.darCode(),
-        summary.nonTechRus(),
-        summary.referenceId(),
-        null,
-        null,
-        summary.expired());
+    return summaries.stream().map(DarMetricsSummary::withoutRequesterIdentity).toList();
   }
 
   public List<DarMetricsSummary> generateStudyDarSummaries(Integer studyId, User user) {

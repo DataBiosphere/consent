@@ -1187,11 +1187,13 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setStudyId(dataset.getStudyId());
     study.setCreateUserId(datasetCreator.getUserId() + 1);
     study.setPublicVisibility(Boolean.FALSE);
-    when(studyDAO.findStudyDetailsById(dataset.getStudyId())).thenReturn(study);
 
     Dataset verifiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, datasetCreator);
 
     assertEquals(dataset.getDatasetId(), verifiedDataset.getDatasetId());
+    // The creator is recognized before the study is consulted, so the hidden study is never read.
+    // Same answer as before, one query fewer.
+    verify(studyDAO, never()).findStudyDetailsById(dataset.getStudyId());
   }
 
   // verifyStudyVisibilityAccess is the single read-access gate shared by StudyResource and the

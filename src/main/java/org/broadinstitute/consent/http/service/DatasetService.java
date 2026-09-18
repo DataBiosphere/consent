@@ -181,13 +181,29 @@ public class DatasetService implements ConsentLogger {
   }
 
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
-    // Admins
+    return readBasis(dataset, user) == null ? null : dataset;
+  }
+
+  /**
+   * Why this user may read this dataset, or null if they may not.
+   *
+   * <p>Same decision {@link #verifyPublicVisibilityAccess(Dataset, User)} has always made - the set
+   * of callers it lets through is unchanged - but it says which rule let them through. A caller
+   * that derives something more sensitive than the dataset itself needs that: a dataset belonging
+   * to no study is returned to everyone because there is no visibility to test, which is a weaker
+   * reason than being its creator or an admin, and the two should not be treated alike.
+   */
+  protected DatasetReadBasis readBasis(Dataset dataset, User user) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
-      return dataset;
+      return DatasetReadBasis.ADMIN;
     }
-    // If there is no study, we can't verify visibility, so return the dataset
+    // Checked before the study, so a creator is reported as one whether or not a study exists. This
+    // grants nothing new: the study branch below already admitted them.
+    if (Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
+      return DatasetReadBasis.DATASET_CREATOR;
+    }
     if (dataset.getStudyId() == null) {
-      return dataset;
+      return DatasetReadBasis.NO_STUDY;
     }
     // Reuse the study when the caller already populated it for the response. Otherwise read only
     // the details canReadStudy needs, and do not attach it - callers decide what the response
@@ -196,10 +212,25 @@ public class DatasetService implements ConsentLogger {
         dataset.getStudy() != null
             ? dataset.getStudy()
             : studyDAO.findStudyDetailsById(dataset.getStudyId());
-    if (canReadStudy(user, study) || Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
-      return dataset;
-    }
-    return null;
+    return canReadStudy(user, study) ? DatasetReadBasis.STUDY_READABLE : null;
+  }
+
+  /** The dataset, and the rule that let this caller read it. */
+  public record DatasetRead(Dataset dataset, DatasetReadBasis basis) {}
+
+  /** Why a caller was allowed to read a dataset. */
+  public enum DatasetReadBasis {
+    /** An admin, who may read anything. */
+    ADMIN,
+    /** The user who created the dataset. */
+    DATASET_CREATOR,
+    /** The dataset's study is published, or this caller is its creator or custodian. */
+    STUDY_READABLE,
+    /**
+     * The dataset belongs to no study, so there was no visibility to test and every authenticated
+     * caller is let through. Nothing about this caller was checked.
+     */
+    NO_STUDY
   }
 
   /**
@@ -320,15 +351,23 @@ public class DatasetService implements ConsentLogger {
    * @throws ForbiddenException if the user cannot view the dataset
    */
   public Dataset findDatasetByIdForRead(User user, Integer id) {
+    return findDatasetByIdForReadWithBasis(user, id).dataset();
+  }
+
+  /**
+   * {@link #findDatasetByIdForRead(User, Integer)} with the rule that allowed it, for callers that
+   * return more than the dataset and need to know how much the check actually established.
+   */
+  public DatasetRead findDatasetByIdForReadWithBasis(User user, Integer id) {
     Dataset dataset = datasetDAO.findDatasetById(id);
     if (dataset == null) {
       throw new NotFoundException("Entity not found");
     }
-    Dataset authorizedDataset = verifyPublicVisibilityAccess(dataset, user);
-    if (authorizedDataset == null) {
+    DatasetReadBasis basis = readBasis(dataset, user);
+    if (basis == null) {
       throw new ForbiddenException("User does not have permission");
     }
-    return authorizedDataset;
+    return new DatasetRead(dataset, basis);
   }
 
   /**

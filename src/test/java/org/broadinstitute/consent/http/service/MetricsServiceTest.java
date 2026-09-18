@@ -31,6 +31,8 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
+import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,7 +86,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     dataset.setStudyId(10);
 
-    when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
+        .thenReturn(new DatasetRead(dataset, DatasetReadBasis.STUDY_READABLE));
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
         .thenReturn(List.of(summary));
 
@@ -92,7 +95,7 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     assertEquals(summary.projectTitle(), metrics.getFirst().projectTitle());
     assertEquals(summary.darCode(), metrics.getFirst().darCode());
-    verify(datasetService).findDatasetByIdForRead(user, dataset.getDatasetId());
+    verify(datasetService).findDatasetByIdForReadWithBasis(user, dataset.getDatasetId());
     verify(darDAO).findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId());
   }
 
@@ -107,7 +110,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     DarMetricsSummary summary =
         new DarMetricsSummary(null, null, "Project", "DAR-1", null, "ref-1", null, "Broad", false);
 
-    when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
+        .thenReturn(new DatasetRead(dataset, DatasetReadBasis.STUDY_READABLE));
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
         .thenReturn(List.of(summary));
 
@@ -117,9 +121,9 @@ class MetricsServiceTest extends AbstractTestHelper {
   }
 
   /**
-   * A dataset with no study has no visibility to test, so findDatasetByIdForRead admits every
-   * authenticated caller. The request itself is readable under that rule; the requester's name and
-   * affiliation are about a person, and would otherwise be harvestable by walking dataset ids.
+   * Nothing about this caller was checked: a dataset with no study is returned to everyone because
+   * there is no visibility to test. The request itself is readable under that rule; the requester's
+   * affiliation would otherwise be harvestable by walking dataset ids.
    */
   @Test
   void testGenerateDarSummariesWithholdsRequesterIdentityWithoutAStudy() {
@@ -127,7 +131,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     DarMetricsSummary summary =
         new DarMetricsSummary(null, null, "Project", "DAR-1", null, "ref-1", null, "Broad", false);
 
-    when(datasetService.findDatasetByIdForRead(user, dataset.getDatasetId())).thenReturn(dataset);
+    when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
+        .thenReturn(new DatasetRead(dataset, DatasetReadBasis.NO_STUDY));
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
         .thenReturn(List.of(summary));
 
@@ -139,10 +144,66 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals("DAR-1", metrics.getFirst().darCode());
   }
 
+  /**
+   * The old rule keyed on the dataset having no study, which is a proxy for "nothing was checked" -
+   * and wrong for anyone allowed in on their own merits. An admin reading a study-less dataset was
+   * losing the institution for no reason.
+   */
+  @Test
+  void testGenerateDarSummariesKeepsInstitutionForAnAdminOnAStudylessDataset() {
+    Dataset dataset = generateDataset();
+    DarMetricsSummary summary =
+        new DarMetricsSummary(null, null, "Project", "DAR-1", null, "ref-1", null, "Broad", false);
+
+    when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
+        .thenReturn(new DatasetRead(dataset, DatasetReadBasis.ADMIN));
+    when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
+        .thenReturn(List.of(summary));
+
+    List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId(), user);
+
+    assertEquals("Broad", metrics.getFirst().institutionName());
+  }
+
+  /** Likewise the person who created the dataset. */
+  @Test
+  void testGenerateDarSummariesKeepsInstitutionForTheDatasetCreator() {
+    Dataset dataset = generateDataset();
+    DarMetricsSummary summary =
+        new DarMetricsSummary(null, null, "Project", "DAR-1", null, "ref-1", null, "Broad", false);
+
+    when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
+        .thenReturn(new DatasetRead(dataset, DatasetReadBasis.DATASET_CREATOR));
+    when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
+        .thenReturn(List.of(summary));
+
+    List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId(), user);
+
+    assertEquals("Broad", metrics.getFirst().institutionName());
+  }
+
+  /** A named copy, so a reordered component cannot quietly land in the wrong slot. */
+  @Test
+  void testWithoutRequesterIdentityKeepsEverythingElse() {
+    DarMetricsSummary summary =
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", "RUS", "ref-1", "Dr Who", "Broad", true);
+
+    DarMetricsSummary redacted = summary.withoutRequesterIdentity();
+
+    assertNull(redacted.piName());
+    assertNull(redacted.institutionName());
+    assertEquals("Project", redacted.projectTitle());
+    assertEquals("DAR-1", redacted.darCode());
+    assertEquals("RUS", redacted.nonTechRus());
+    assertEquals("ref-1", redacted.referenceId());
+    assertEquals(true, redacted.expired());
+  }
+
   /** A dataset the caller may not read yields no summaries, rather than its DAR project titles. */
   @Test
   void testGenerateDarSummariesIsGatedOnReadingTheDataset() {
-    when(datasetService.findDatasetByIdForRead(eq(user), eq(1)))
+    when(datasetService.findDatasetByIdForReadWithBasis(eq(user), eq(1)))
         .thenThrow(new ForbiddenException("User does not have permission"));
 
     assertThrows(ForbiddenException.class, () -> service.generateDarSummaries(1, user));
@@ -151,7 +212,7 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Test
   void testGenerateDarSummariesNotFound() {
-    when(datasetService.findDatasetByIdForRead(eq(user), any()))
+    when(datasetService.findDatasetByIdForReadWithBasis(eq(user), any()))
         .thenThrow(new NotFoundException("Entity not found"));
 
     assertThrows(NotFoundException.class, () -> service.generateDarSummaries(1, user));

@@ -12,6 +12,27 @@ public record DarMetricsSummary(
     String piName,
     String institutionName,
     Boolean expired) {
+
+  /**
+   * The same summary with no requester identity on it.
+   *
+   * <p>Named rather than rebuilt positionally at the call site: a nine-argument constructor call
+   * still compiles after two same-typed components are reordered, and would quietly move values
+   * into the wrong slots. Here the compiler names every field.
+   */
+  public DarMetricsSummary withoutRequesterIdentity() {
+    return new DarMetricsSummary(
+        updateDate,
+        submissionDate,
+        projectTitle,
+        darCode,
+        nonTechRus,
+        referenceId,
+        null,
+        null,
+        expired);
+  }
+
   public DarMetricsSummary(
       Timestamp updateDate,
       String projectTitle,
