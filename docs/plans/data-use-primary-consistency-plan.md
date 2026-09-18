@@ -10,7 +10,7 @@ In progress. Ticket-by-ticket state:
 | 2. Canonical primary classification on Data Use writes | Done. `DataUsePrimaryClassifier`/`DataUsePrimaryValidator` back registration, admin Data Use replacement, and dataset-to-study conversion. |
 | 3. Explicit legacy and unsupported matcher behavior | Done. `DataUseMatcherV5` classifies before matching and abstains on Other-only, NONE/null, and MULTIPLE. |
 | 4. Normalize legacy records and reprocess affected matches | Done. |
-| 5. Replace alias-derived internal dataset references | Done pending rollout. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), all three releases are written: the column and dual write, the snapshot and migration surface, and the gated constraints that retire the surface. They deploy in that order, each gated on the previous. |
+| 5. Replace alias-derived internal dataset references | Done pending rollout. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), all three releases are written: the column and dual write, the snapshot and migration surface, and the gated constraints that retire the surface. They deploy in that order, each gated on the previous. DT-3940 then removes the compatibility mechanisms both migrations left behind - see Phase 3. |
 | 6. Align duos-ui with the canonical classification | Done in duos-ui (DT-3866). The Data Use translation collapse is an owned follow-up (DT-4008). |
 
 ## Objective
@@ -518,7 +518,7 @@ That is quiet rather than loud, which is exactly why the ordering is not optiona
 | A | Nullable `dataset_id`, dual write, dataset-correlated election join | Deployed everywhere |
 | B | Snapshot tables and the admin migration surface | `run` reports `readyForConstraints` |
 | C | Non-null and `(purpose, dataset_id)` uniqueness constraints; retire the surface | Confirmed good |
-| cleanup | Drop the snapshot tables; then, behind a release that derives the `consent` response field from `dataset_id` and stops reading and writing the column, drop it and its `purpose_consent` constraint | - |
+| cleanup | Drop the snapshot tables; then, behind a release that derives the `consent` response field from `dataset_id` and stops reading and writing the column, drop it and its `purpose_consent` constraint. Carried out as Phase 3 below (DT-3940) | - |
 
 With A deployed everywhere and B deployed to the environment, before running anything:
 
@@ -598,6 +598,103 @@ Rollback:
   path for the run, and C is the release most likely to need one; dropping a backup in the same
   release that applies an irreversible constraint removes the recovery exactly when it is wanted.
   A later cleanup drops them once production has settled.
+
+**Phase 3 cleanup (DT-3940)**
+
+Removes the compatibility mechanisms the two migrations left behind. The alias half is independent
+of the match half and of the DT-3942 rollout; the match half is not, and its prerequisites are the
+ones listed on DT-3940.
+
+| Release | Contents | Gate to the next |
+| --- | --- | --- |
+| alias | `dataset_alias_seq` becomes the `dataset.alias` column default; the `dataset_alias_allocate` trigger and `allocate_dataset_alias()` go | none - independent of the match half |
+| match 1 | Stop reading `match_entity.consent`: derive the response field from `dataset_id`. Drop the match-side `IS NULL` tolerance in the election join and the snapshot tables | Deployed everywhere |
+| match 2 | Stop writing `match_entity.consent`; make the column nullable | Deployed everywhere |
+| match 3 | Drop `match_entity.consent` and `purpose_consent` | - |
+
+Three match releases, for the same reason the migration itself was three: every step has to be
+readable and writable by both the release before it and the release after.
+
+- Stopping the read has to come first. From match 2 a row is written with a null `consent`, and any
+  instance still on match 1's predecessor reads that column directly - it would serve `consent:
+  null`, which duos-ui lowercases without a guard.
+- Stopping the write has to come before the drop, for the mirror-image reason: an instance still
+  supplying a value fails every insert once the column is gone.
+- Folding any two together collapses one of those windows onto a rolling deployment, where both
+  generations are serving at once.
+
+Each release gates on the previous one having applied, because a halted precondition does not stop
+the deploy. Match 1 checks that `dataset_id` is non-null and `match_entity_purpose_dataset_unique`
+is present - it is the release that stops tolerating a row without a `dataset_id`, and after it such
+a row is not merely dropped from an election but not read at all. Match 2 checks that the snapshot
+tables are gone, which is match 1's signature. Match 3 checks that `consent` is already nullable,
+which is match 2's.
+
+Those gates protect an environment that skipped a release. They cannot protect one that deploys two
+of these releases together, because both changesets then apply moments apart in the same run; that
+ordering stays a release-plan requirement, exactly as it was for A, B and C.
+
+The `IS NULL` tolerance goes in match 1 rather than being kept as a safety net. It only ever
+mattered while a null `dataset_id` row could exist, which the non-null constraint now prevents, and
+the prerequisite that those constraints are confirmed present in every environment - not merely that
+release C deployed - is what makes removing it safe. DT-4099 covers the deploy behaviour behind the
+distinction.
+
+Alias half, deployment verification:
+
+- `dataset_alias_allocate` and `allocate_dataset_alias()` are absent, and `dataset.alias` defaults
+  to `nextval('dataset_alias_seq')`.
+- A dataset created after the deploy carries an alias above the pre-deploy maximum, and its
+  `DUOS-######` identifier is unchanged in shape.
+- The unique constraint and the integer bound are still enforced.
+
+Alias half, roll-forward recovery:
+
+- The failure this can produce is a duplicate alias on insert: if the sequence trails the table, or
+  if an ad-hoc insert supplies a value the sequence has not reached yet, which a column default
+  cannot reserve against the way the trigger did. The changeset's precondition halts on exactly that, so the state should be unreachable;
+  if it is reached anyway, `setval('dataset_alias_seq', ((SELECT MAX(alias) FROM dataset) + 1)::bigint,
+  false)` repositions it and inserts resume - the cast matters, because the column is `numeric` in
+  some environments. This applies only while the maximum is below `2147483647`; at the bound it
+  produces an out-of-range allocation and inserts keep failing, which is alias-space exhaustion
+  rather than a misplaced sequence and needs the space widened. The trigger this replaced hit the
+  same wall, so that state predates the cleanup. Roll forward rather than back - the rollback restores a trigger
+  whose purpose was compatibility with instances that no longer exist.
+- Treat the gap the failed inserts consumed as ordinary. Aliases are not gapless.
+
+Match half, deployment verification:
+
+- Before match 1, in production: `match_entity` carries no `v1`, no `v2` and no null
+  `algorithm_version`. `SELECT COUNT(*) FILTER (WHERE algorithm_version IN ('v1','v2')), COUNT(*)
+  FILTER (WHERE algorithm_version IS NULL), COUNT(*) FROM match_entity` answers it in one query,
+  returning two zeroes over a non-zero total - a zero total is the wrong database, not a pass.
+  Match 1 gates on the constraints rather than on this, because the constraints are what make it
+  true.
+- After match 1: both snapshot tables are absent, and `GET /api/match/purpose/batch` returns the
+  dataset's `DUOS-######` in each result's `consent` field. An alias past six digits widens rather
+  than wraps. The column still holds the same values, so a mismatch between the two is visible:
+  `SELECT COUNT(*) FROM match_entity m JOIN dataset d ON d.dataset_id = m.dataset_id WHERE m.consent
+  <> 'DUOS-' || LPAD(d.alias::BIGINT::TEXT, GREATEST(6, LENGTH(d.alias::BIGINT::TEXT)), '0')`
+  returns 0. The `::BIGINT` is load-bearing where `alias` is still `numeric`: `42.0` satisfies the
+  `alias = trunc(alias)` check and would otherwise render as `DUOS-0042.0`.
+- After match 2: `match_entity.consent` is nullable and rows written after the deploy carry a null
+  in it, while the endpoint returns the same identifiers as before.
+- After match 3: `match_entity.consent` and `purpose_consent` are absent,
+  `match_entity_purpose_dataset_unique` is present, and the endpoint is unchanged again.
+- Throughout: deleting a dataset behaves as it did - which is to say it is still refused while a
+  match references it, by `fk_match_entity_dataset_id`.
+
+Match half, roll-forward recovery:
+
+- Each release is reversible on its own. The snapshot tables come back empty, and the `consent`
+  values come back derived from each row's dataset; the only values ever lost are the legacy consent
+  UUIDs, which the migration run deleted with the rows that held them.
+- Deploying match 3 before match 2 is everywhere is the failure worth naming. An instance still
+  writing `consent` fails every match insert once the column is gone, which surfaces as failed
+  matching on DAR create and edit. Roll forward by completing the match 2 rollout rather than
+  restoring the column; the rows that failed to write are rebuilt by reprocessing their purposes.
+- A halted precondition names which release is missing. Deploy that one and let its changeset apply
+  before retrying, rather than editing the gate.
 
 ---
 
