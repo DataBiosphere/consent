@@ -35,33 +35,76 @@ docker build . -t consent
 
 This image can then be run with the proper configuration files provided.
 
-### Render Configs
+### Configure
 
-Specific to internal Broad systems:
+Copy `src/test/resources/consent-config.yml` to `config/consent.yaml` (the `config/` directory is
+git-ignored) and fill in the values for your environment. The `googleStore` section is the only
+part that needs cloud credentials; see the next section.
+
+### Google Cloud Storage credentials
+
+Local development does **not** use a service account key file. Leave `googleStore.password`
+unset (or blank) and `GCSService` falls back to
+[Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials),
+which you obtain once with your own Google account:
 
 ```bash
-APP_NAME=consent ENV=local OUTPUT_DIR=config ../firecloud-develop/configure.rb
+# Act as the dev service account (matches what the deployed dev environment can do):
+gcloud auth application-default login \
+  --impersonate-service-account consent-dev@broad-dsde-dev.iam.gserviceaccount.com
+
+# Or act as yourself; dsde-engineering already has object access to the dev bucket:
+gcloud auth application-default login
 ```
 
-Otherwise, use `src/test/resources/consent-config.yml` as a template to
-create your own environment-specific configuration.
+Either way the credential is short-lived, tied to you, and revocable by signing out of `gcloud`. Do not create or
+request a JSON key for `consent-dev`: keys on that account are managed by Yale, which disables
+keys it did not create.
 
-### Spin up application:
+```yaml
+googleStore:
+  # password: intentionally unset locally -> Application Default Credentials
+  endpoint: https://storage.googleapis.com/
+  bucket: broad-dsde-dev-consent   # shared with the deployed dev environment
+```
 
-Specific to internal Broad systems:
+If GCS calls fail with a quota-project warning when running as yourself, set one:
+
+```bash
+gcloud auth application-default set-quota-project broad-dsde-dev
+```
+
+Deployed environments are unchanged: the Helm chart mounts a Yale-managed key at
+`/etc/service-account.json` and sets `googleStore.password` to that path.
+
+#### Running in Docker Compose
+
+The container has no `gcloud` login of its own, so mount your ADC file and point the SDK at it:
+
+```yaml
+  consent:
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/etc/gcloud/application_default_credentials.json
+    volumes:
+      - ~/.config/gcloud/application_default_credentials.json:/etc/gcloud/application_default_credentials.json:ro
+```
+
+### Spin up application
+
+```bash
+mvn clean package
+java -jar target/consent-*.jar server config/consent.yaml
+```
+
+Or with docker compose, using your own `config/docker-compose.yaml`:
 
 ```bash
 mvn clean compile
 docker-compose -p consent -f config/docker-compose.yaml up
 ```
 
-Or, if not using docker:
-
-```bash
-java -jar /path/to/consent.jar server /path/to/config/file
-```
-
-Visit local swagger page: https://local.dsde-dev.broadinstitute.org:27443
+Visit the local swagger page at the URL configured for your setup (the compose setup used at
+Broad serves https://local.dsde-dev.broadinstitute.org:27443).
 
 ### Debugging
 
