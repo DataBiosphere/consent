@@ -1565,6 +1565,145 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(dar.getReferenceId(), byStudy.getFirst().referenceId());
   }
 
+  /**
+   * One DAR spanning two studies, two datasets each. Approval is per dataset, so the same request
+   * can be a grant on one of a study's datasets and nothing at all on the other. Nothing shows
+   * anywhere until a final vote lands; afterwards each study shows the DAR because each granted one
+   * of its datasets, while on the dataset pages only the two that were approved list it. The two
+   * that were not are excluded for different reasons - one was voted down, the other is still under
+   * review - and neither may borrow its sibling's approval.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsSpanningTwoStudiesFollowsPerDatasetApproval() {
+    User requester = createUserWithInstitution();
+    Integer firstStudyId = createStudy(requester);
+    Integer secondStudyId = createStudy(requester);
+
+    Dataset firstGranted = createStudyDataset(firstStudyId);
+    Dataset firstDenied = createStudyDataset(firstStudyId);
+    Dataset secondGranted = createStudyDataset(secondStudyId);
+    Dataset secondPending = createStudyDataset(secondStudyId);
+    List<Dataset> allDatasets = List.of(firstGranted, firstDenied, secondGranted, secondPending);
+
+    Integer collectionId = createDarCollection(requester.getUserId());
+    Date submittedOn = new Date(System.currentTimeMillis() - 60_000);
+    DataAccessRequest dar =
+        createDataAccessRequest(collectionId, requester.getUserId(), submittedOn);
+    allDatasets.forEach(
+        dataset ->
+            dataAccessRequestDAO.insertDARDatasetRelation(
+                dar.getReferenceId(), dataset.getDatasetId()));
+
+    // Under review on every dataset it asks for, decided on none
+    Election firstApproval =
+        createDataAccessElection(dar.getReferenceId(), firstGranted.getDatasetId());
+    Election firstRejection =
+        createDataAccessElection(dar.getReferenceId(), firstDenied.getDatasetId());
+    Election secondApproval =
+        createDataAccessElection(dar.getReferenceId(), secondGranted.getDatasetId());
+    createDataAccessElection(dar.getReferenceId(), secondPending.getDatasetId());
+
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(firstStudyId)
+            .isEmpty(),
+        "A study shows nothing for a DAR that has not been granted any of its datasets");
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(secondStudyId)
+            .isEmpty(),
+        "A study shows nothing for a DAR that has not been granted any of its datasets");
+    allDatasets.forEach(
+        dataset ->
+            assertTrue(
+                dataAccessRequestDAO
+                    .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+                    .isEmpty(),
+                "A dataset shows nothing for a DAR still awaiting its election"));
+
+    approve(firstApproval, firstGranted, submittedOn);
+    approve(secondApproval, secondGranted, submittedOn);
+    reject(firstRejection, firstDenied, submittedOn);
+    // secondPending keeps an open election and no final vote
+
+    assertSourcesTheDar(
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(firstStudyId),
+        dar,
+        "The study granted one of its datasets, so the DAR is part of its usage history");
+    assertSourcesTheDar(
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(secondStudyId),
+        dar,
+        "The study granted one of its datasets, so the DAR is part of its usage history");
+
+    assertSourcesTheDar(
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            firstGranted.getDatasetId()),
+        dar,
+        "The approved dataset lists the grant it gave");
+    assertSourcesTheDar(
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            secondGranted.getDatasetId()),
+        dar,
+        "The approved dataset lists the grant it gave");
+
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(firstDenied.getDatasetId())
+            .isEmpty(),
+        "A dataset the DAR was voted down on must not borrow its sibling's approval");
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(secondPending.getDatasetId())
+            .isEmpty(),
+        "A dataset whose election is still open must not borrow its sibling's approval");
+  }
+
+  private void assertSourcesTheDar(
+      List<DarMetricsSummary> summaries, DataAccessRequest dar, String message) {
+    assertEquals(1, summaries.size(), message);
+    assertEquals(dar.getReferenceId(), summaries.getFirst().referenceId(), message);
+  }
+
+  private Integer createStudy(User creator) {
+    return studyDAO.insertStudy(
+        randomAlphabetic(20),
+        randomAlphabetic(20),
+        randomAlphabetic(20),
+        null,
+        List.of(randomAlphabetic(10)),
+        true,
+        creator.getUserId(),
+        Instant.now(),
+        UUID.randomUUID());
+  }
+
+  private Dataset createStudyDataset(Integer studyId) {
+    Dataset dataset = createDataset();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    return dataset;
+  }
+
+  private void approve(Election election, Dataset dataset, Date decidedOn) {
+    castFinalVote(election, dataset, decidedOn, true);
+  }
+
+  private void reject(Election election, Dataset dataset, Date decidedOn) {
+    castFinalVote(election, dataset, decidedOn, false);
+  }
+
+  private void castFinalVote(Election election, Dataset dataset, Date decidedOn, boolean approved) {
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(
+        approved,
+        "",
+        decidedOn,
+        vote.getVoteId(),
+        false,
+        election.getElectionId(),
+        decidedOn,
+        false);
+  }
+
   private void approveDarForDataset(User user, Dataset dataset, Date now) {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
