@@ -25,15 +25,16 @@
     <preConditions onFail="HALT" onError="HALT"
       onFailMessage="The release that stops reading match_entity.consent must have applied here first; its changeset drops match_migration_snapshot, and match_entity_purpose_dataset_unique must be present because purpose_consent stops constraining the rows written after this. Deploy that release before this one.">
       <dbms type="postgresql"/>
+      <sqlCheck expectedResult="0">
+        SELECT CASE WHEN to_regclass('match_migration_snapshot') IS NULL THEN 0 ELSE 1 END
+      </sqlCheck>
+      <sqlCheck expectedResult="0">
+        SELECT CASE WHEN to_regclass('match_migration_rationale_snapshot') IS NULL THEN 0 ELSE 1 END
+      </sqlCheck>
       <sqlCheck expectedResult="1">
-        SELECT
-          (CASE WHEN to_regclass('match_migration_snapshot') IS NULL THEN 0 ELSE 1 END)
-          +
-          (CASE WHEN to_regclass('match_migration_rationale_snapshot') IS NULL THEN 0 ELSE 1 END)
-          +
-          (SELECT COUNT(*) FROM pg_constraint
-           WHERE conname = 'match_entity_purpose_dataset_unique'
-             AND conrelid = 'match_entity'::regclass)
+        SELECT COUNT(*) FROM pg_constraint
+        WHERE conname = 'match_entity_purpose_dataset_unique'
+          AND conrelid = 'match_entity'::regclass
       </sqlCheck>
     </preConditions>
 

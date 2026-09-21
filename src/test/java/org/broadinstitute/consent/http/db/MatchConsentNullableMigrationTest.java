@@ -95,9 +95,40 @@ class MatchConsentNullableMigrationTest extends MigrationTestHelper {
   }
 
   @Test
+  void migrationHaltsWhileTheRationaleSnapshotSurvives() throws Exception {
+    execute("CREATE TABLE match_migration_rationale_snapshot (match_id bigint PRIMARY KEY)");
+
+    assertThrows(LiquibaseException.class, this::update);
+
+    assertFalse(consentIsNullable());
+  }
+
+  @Test
   void migrationHaltsWhenTheReplacementConstraintIsMissing() throws Exception {
     // Without it, the rows this release writes with a null consent fall under no uniqueness rule
     // at all, which is the whole reason purpose_consent is allowed to go toothless.
+    execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
+
+    assertThrows(LiquibaseException.class, this::update);
+
+    assertFalse(consentIsNullable());
+  }
+
+  @Test
+  void migrationHaltsWhenASurvivingSnapshotOffsetsTheMissingConstraint() throws Exception {
+    // Each half of the gate is checked on its own, so one unmet condition cannot be paid for by
+    // another. Both of these states are the predecessor release not having applied.
+    execute("CREATE TABLE match_migration_snapshot (match_id bigint PRIMARY KEY)");
+    execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
+
+    assertThrows(LiquibaseException.class, this::update);
+
+    assertFalse(consentIsNullable());
+  }
+
+  @Test
+  void migrationHaltsWhenASurvivingRationaleSnapshotOffsetsTheMissingConstraint() throws Exception {
+    execute("CREATE TABLE match_migration_rationale_snapshot (match_id bigint PRIMARY KEY)");
     execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
 
     assertThrows(LiquibaseException.class, this::update);
