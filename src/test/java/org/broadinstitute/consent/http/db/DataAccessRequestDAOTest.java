@@ -1134,16 +1134,18 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .orElseThrow();
     assertTrue(expiredSummary.expired());
 
-    // Approved collection summary is present, sourced from one of its submitted DARs, not expired
+    // Approved collection summary is present, sourced from one of its approved DARs. The closeout
+    // is not one of them, and having been filed it has already ended the grant's access.
     DarMetricsSummary approvedSummary =
         summaries.stream()
             .filter(s -> !expiredReferenceId.equals(s.referenceId()))
             .findFirst()
             .orElseThrow();
     assertTrue(
-        List.of(approvedDAR.getReferenceId(), prDAR.getReferenceId(), closeoutDAR.getReferenceId())
+        List.of(approvedDAR.getReferenceId(), prDAR.getReferenceId())
             .contains(approvedSummary.referenceId()));
-    assertFalse(approvedSummary.expired());
+    assertNotEquals(closeoutDAR.getReferenceId(), approvedSummary.referenceId());
+    assertTrue(approvedSummary.expired());
   }
 
   // A collection's most recently submitted DAR may target a different dataset than the one that
@@ -1751,6 +1753,187 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         closeoutDar.getData(),
         randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(closeoutDar.getReferenceId());
+  }
+
+  /**
+   * The row spans the collection's whole history on a dataset: it is submitted on the day access
+   * began, and it lapses on the day access ended. Those are different DARs. A renewal restarts the
+   * term without changing when the work started, and a closeout ends the grant on the day it is
+   * filed even though the renewal it cut short still had time to run. The row stays either way -
+   * these queries report how a dataset has been used, they do not decide who may reach it.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsSpansFromFirstGrantToLastExpiry() {
+    User requester = createUserWithInstitution();
+    Integer studyId = createStudy(requester);
+    Dataset dataset = createStudyDataset(studyId);
+
+    long day = TimeUnit.DAYS.toMillis(1);
+    Date firstGrantedOn = new Date(System.currentTimeMillis() - 400 * day);
+    Integer collectionId = createDarCollection(requester.getUserId());
+    DataAccessRequest grant =
+        createDataAccessRequest(collectionId, requester.getUserId(), firstGrantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(grant.getReferenceId(), dataset.getDatasetId());
+    approve(
+        createDataAccessElection(grant.getReferenceId(), dataset.getDatasetId()),
+        dataset,
+        firstGrantedOn);
+
+    // On its own the first grant's term has run out
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .getFirst()
+            .expired());
+
+    // A renewal is approved, restarting the term
+    DataAccessRequest renewal =
+        fileFollowOn(requester, collectionId, grant, List.of(dataset), 10 * day, false);
+    approve(
+        createDataAccessElection(renewal.getReferenceId(), dataset.getDatasetId()),
+        dataset,
+        renewal.getSubmissionDate());
+
+    DarMetricsSummary renewed =
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .getFirst();
+    assertEquals(
+        firstGrantedOn.getTime(),
+        renewed.submissionDate().getTime(),
+        "The row is submitted on the day access began, not the day it was last renewed");
+    assertFalse(renewed.expired(), "The renewal's term governs, and it has not run out");
+
+    // The closeout ends the grant early, and the collection still belongs in the history
+    fileFollowOn(requester, collectionId, renewal, List.of(dataset), 0, true);
+
+    List<DarMetricsSummary> closedOut =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
+    assertEquals(1, closedOut.size(), "A closed-out grant is still part of the dataset's history");
+    assertEquals(
+        firstGrantedOn.getTime(),
+        closedOut.getFirst().submissionDate().getTime(),
+        "Closing out does not change when access began");
+    assertTrue(
+        closedOut.getFirst().expired(),
+        "The closeout ended access, though the renewal it cut short had time left");
+
+    List<DarMetricsSummary> byStudy =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+    assertEquals(1, byStudy.size(), "The study keeps the closed-out grant in its history too");
+    assertEquals(firstGrantedOn.getTime(), byStudy.getFirst().submissionDate().getTime());
+    assertTrue(byStudy.getFirst().expired());
+  }
+
+  /**
+   * A closeout ends the collection's grant outright, so every dataset it reached is closed even
+   * when the closeout's own report names only some of them. That matches how
+   * findApprovedDARsByDatasetId and its neighbours already treat a closeout - they drop the whole
+   * collection the moment one exists.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsClosesOutEveryDatasetInTheCollection() {
+    User requester = createUserWithInstitution();
+    Integer studyId = createStudy(requester);
+    Dataset namedByTheCloseout = createStudyDataset(studyId);
+    Dataset leftOutOfTheCloseout = createStudyDataset(studyId);
+
+    Date grantedOn = new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30));
+    Integer collectionId = createDarCollection(requester.getUserId());
+    DataAccessRequest grant =
+        createDataAccessRequest(collectionId, requester.getUserId(), grantedOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        grant.getReferenceId(), namedByTheCloseout.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        grant.getReferenceId(), leftOutOfTheCloseout.getDatasetId());
+    approve(
+        createDataAccessElection(grant.getReferenceId(), namedByTheCloseout.getDatasetId()),
+        namedByTheCloseout,
+        grantedOn);
+    approve(
+        createDataAccessElection(grant.getReferenceId(), leftOutOfTheCloseout.getDatasetId()),
+        leftOutOfTheCloseout,
+        grantedOn);
+
+    // The closeout's own report names one of the two datasets
+    fileFollowOn(requester, collectionId, grant, List.of(namedByTheCloseout), 0, true);
+
+    List<DarMetricsSummary> onNamed =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            namedByTheCloseout.getDatasetId());
+    assertEquals(1, onNamed.size(), "A closed-out grant stays in the dataset's history");
+    assertTrue(onNamed.getFirst().expired(), "The closeout ended this dataset's grant");
+
+    List<DarMetricsSummary> onLeftOut =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            leftOutOfTheCloseout.getDatasetId());
+    assertEquals(1, onLeftOut.size(), "A closed-out grant stays in this dataset's history too");
+    assertTrue(
+        onLeftOut.getFirst().expired(),
+        "The closeout ends the whole collection, including datasets its report left out");
+
+    List<DarMetricsSummary> byStudy =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+    assertEquals(1, byStudy.size());
+    assertTrue(byStudy.getFirst().expired(), "The study's grant is closed out along with it");
+  }
+
+  /**
+   * The study list is newest first, and the date it sorts by has to be the date it shows. A
+   * collection whose grant is old but recently renewed is older, for this purpose, than one granted
+   * last month and never renewed - the cards carry the first submission, so that is what orders
+   * them. StudyDarHistory renders the list as it arrives and never re-sorts.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsByStudyIdOrdersByTheDateItShows() {
+    User requester = createUserWithInstitution();
+    Integer studyId = createStudy(requester);
+    Dataset dataset = createStudyDataset(studyId);
+    long day = TimeUnit.DAYS.toMillis(1);
+
+    // Granted long ago, renewed recently
+    Date oldGrantOn = new Date(System.currentTimeMillis() - 400 * day);
+    Integer renewedCollection = createDarCollection(requester.getUserId());
+    DataAccessRequest oldGrant =
+        createDataAccessRequest(renewedCollection, requester.getUserId(), oldGrantOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        oldGrant.getReferenceId(), dataset.getDatasetId());
+    approve(
+        createDataAccessElection(oldGrant.getReferenceId(), dataset.getDatasetId()),
+        dataset,
+        oldGrantOn);
+    DataAccessRequest renewal =
+        fileFollowOn(requester, renewedCollection, oldGrant, List.of(dataset), 5 * day, false);
+    approve(
+        createDataAccessElection(renewal.getReferenceId(), dataset.getDatasetId()),
+        dataset,
+        renewal.getSubmissionDate());
+
+    // Granted more recently, never renewed
+    Date recentGrantOn = new Date(System.currentTimeMillis() - 100 * day);
+    Integer freshCollection = createDarCollection(requester.getUserId());
+    DataAccessRequest recentGrant =
+        createDataAccessRequest(freshCollection, requester.getUserId(), recentGrantOn);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        recentGrant.getReferenceId(), dataset.getDatasetId());
+    approve(
+        createDataAccessElection(recentGrant.getReferenceId(), dataset.getDatasetId()),
+        dataset,
+        recentGrantOn);
+
+    List<DarMetricsSummary> byStudy =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+
+    assertEquals(2, byStudy.size());
+    assertEquals(
+        recentGrantOn.getTime(),
+        byStudy.getFirst().submissionDate().getTime(),
+        "The collection granted most recently comes first");
+    assertEquals(
+        oldGrantOn.getTime(),
+        byStudy.getLast().submissionDate().getTime(),
+        "A renewal does not move an old grant to the top of the list");
   }
 
   private void assertSourcesTheDar(

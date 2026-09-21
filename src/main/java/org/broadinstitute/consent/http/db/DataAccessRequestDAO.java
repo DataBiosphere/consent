@@ -150,11 +150,27 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
           ), approved_collections AS (
-              SELECT DISTINCT collection_id FROM qualifying_dars
+              -- One row per collection, carrying the day access to this dataset began
+              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission
+              FROM qualifying_dars q
+              INNER JOIN data_access_request dar ON dar.reference_id = q.reference_id
+              GROUP BY q.collection_id
+          ), closeouts AS (
+              -- A closeout revokes access the day it is filed, ending the grant before its term
+              -- runs out. It closes the whole collection rather than only the datasets its own
+              -- report names, which is how findApprovedDARsByDatasetId, findDatasetApprovalsByDar
+              -- and DatasetDAO.findApprovedDatasetsByUserId already treat one.
+              SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
+              FROM data_access_request dar
+              WHERE dar.submission_date IS NOT NULL
+                  AND dar.data ->> 'closeoutSupplement' IS NOT NULL
+              GROUP BY dar.collection_id
           )
           SELECT
               c.dar_code,
-              latest_dar.submission_date,
+              approved_collections.first_submission AS submission_date,
+              latest_dar.submission_date AS expiration_basis_date,
+              closeouts.closeout_date,
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
@@ -178,6 +194,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
           LEFT JOIN users u ON u.user_id = latest_dar.user_id
           LEFT JOIN institution i ON i.institution_id = u.institution_id
           ORDER BY c.dar_code
@@ -201,7 +218,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * otherwise overwrite the grant's title, RUS, and date and reset it to "current".
    *
    * @param studyId the study to filter by
-   * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest first
+   * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest grant first
    */
   @RegisterRowMapper(DarMetricsSummaryMapper.class)
   @SqlQuery(
@@ -231,11 +248,24 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
           ), approved_collections AS (
-              SELECT DISTINCT collection_id FROM qualifying_dars
+              -- One row per collection, carrying the day access to this study began
+              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission
+              FROM qualifying_dars q
+              INNER JOIN data_access_request dar ON dar.reference_id = q.reference_id
+              GROUP BY q.collection_id
+          ), closeouts AS (
+              -- A closeout closes the whole collection, as in the dataset-scoped query above
+              SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
+              FROM data_access_request dar
+              WHERE dar.submission_date IS NOT NULL
+                  AND dar.data ->> 'closeoutSupplement' IS NOT NULL
+              GROUP BY dar.collection_id
           )
           SELECT
               c.dar_code,
-              latest_dar.submission_date,
+              approved_collections.first_submission AS submission_date,
+              latest_dar.submission_date AS expiration_basis_date,
+              closeouts.closeout_date,
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
@@ -257,9 +287,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
           LEFT JOIN users u ON u.user_id = latest_dar.user_id
           LEFT JOIN institution i ON i.institution_id = u.institution_id
-          ORDER BY latest_dar.submission_date DESC, c.dar_code
+          -- Newest first by the date the row carries, which is when access began. Ordering by
+          -- the sourced DAR's own date instead would float an old grant to the top the moment it
+          -- was renewed, and the cards would read out of order.
+          ORDER BY approved_collections.first_submission DESC, c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByStudyIdIncludesExpired(
       @Bind("studyId") Integer studyId);
