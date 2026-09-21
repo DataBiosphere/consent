@@ -6,6 +6,10 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StoreConfiguration {
 
+  /**
+   * Path to a service account key file. Optional: when blank, {@code GCSService} uses Application
+   * Default Credentials instead (the local development path). Deployed environments always set it.
+   */
   public String password;
 
   @NotNull public String endpoint;

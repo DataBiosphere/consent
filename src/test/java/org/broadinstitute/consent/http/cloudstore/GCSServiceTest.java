@@ -4,20 +4,32 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyPairGenerator;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +39,7 @@ import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -160,5 +173,74 @@ class GCSServiceTest extends AbstractTestHelper {
     when(storage.get(blobId)).thenReturn(null);
     initStore();
     assertThrows(NotFoundException.class, () -> service.hasBytes(blobId));
+  }
+
+  @Test
+  void testLoadCredentials_blankPasswordUsesApplicationDefault() throws Exception {
+    GoogleCredentials adc = mock(GoogleCredentials.class);
+    config.setPassword("   ");
+    GCSService spyService = spy(new GCSService());
+    spyService.setConfig(config);
+    doReturn(adc).when(spyService).applicationDefaultCredentials();
+
+    assertSame(adc, spyService.loadCredentials());
+  }
+
+  @Test
+  void testLoadCredentials_nullPasswordUsesApplicationDefault() throws Exception {
+    GoogleCredentials adc = mock(GoogleCredentials.class);
+    config.setPassword(null);
+    GCSService spyService = spy(new GCSService());
+    spyService.setConfig(config);
+    doReturn(adc).when(spyService).applicationDefaultCredentials();
+
+    assertSame(adc, spyService.loadCredentials());
+  }
+
+  @Test
+  void testLoadCredentials_keyFileWins(@TempDir Path tempDir) throws Exception {
+    Path keyFile = tempDir.resolve("synthetic-sa.json");
+    Files.writeString(keyFile, syntheticServiceAccountKeyJson("synthetic-project"));
+    config.setPassword(keyFile.toString());
+    GCSService spyService = spy(new GCSService());
+    spyService.setConfig(config);
+
+    GoogleCredentials credentials = spyService.loadCredentials();
+
+    assertTrue(credentials instanceof ServiceAccountCredentials);
+    assertEquals("synthetic-project", ((ServiceAccountCredentials) credentials).getProjectId());
+    verify(spyService, never()).applicationDefaultCredentials();
+  }
+
+  @Test
+  void testLoadCredentials_missingKeyFileDoesNotFallBack(@TempDir Path tempDir) throws Exception {
+    config.setPassword(tempDir.resolve("does-not-exist.json").toString());
+    GCSService spyService = spy(new GCSService());
+    spyService.setConfig(config);
+
+    assertThrows(IOException.class, spyService::loadCredentials);
+    verify(spyService, never()).applicationDefaultCredentials();
+  }
+
+  /** A structurally valid service account key with a freshly generated, throwaway RSA key. */
+  private static String syntheticServiceAccountKeyJson(String projectId) throws Exception {
+    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+    generator.initialize(2048);
+    String pkcs8 =
+        Base64.getMimeEncoder(64, "\n".getBytes())
+            .encodeToString(generator.generateKeyPair().getPrivate().getEncoded());
+    String pem = "-----BEGIN PRIVATE KEY-----\n" + pkcs8 + "\n-----END PRIVATE KEY-----\n";
+    return """
+        {
+          "type": "service_account",
+          "project_id": "%s",
+          "private_key_id": "synthetic",
+          "private_key": "%s",
+          "client_email": "synthetic@%s.iam.gserviceaccount.com",
+          "client_id": "0",
+          "token_uri": "https://oauth2.googleapis.com/token"
+        }
+        """
+        .formatted(projectId, pem.replace("\n", "\\n"), projectId);
   }
 }
