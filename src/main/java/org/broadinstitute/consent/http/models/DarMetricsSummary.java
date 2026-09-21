@@ -9,28 +9,19 @@ public record DarMetricsSummary(
     String darCode,
     String nonTechRus,
     String referenceId,
-    String piName,
     String institutionName,
     Boolean expired) {
 
   /**
    * The same summary with no requester identity on it.
    *
-   * <p>Named rather than rebuilt positionally at the call site: a nine-argument constructor call
+   * <p>Named rather than rebuilt positionally at the call site: an eight-argument constructor call
    * still compiles after two same-typed components are reordered, and would quietly move values
    * into the wrong slots. Here the compiler names every field.
    */
   public DarMetricsSummary withoutRequesterIdentity() {
     return new DarMetricsSummary(
-        updateDate,
-        submissionDate,
-        projectTitle,
-        darCode,
-        nonTechRus,
-        referenceId,
-        null,
-        null,
-        expired);
+        updateDate, submissionDate, projectTitle, darCode, nonTechRus, referenceId, null, expired);
   }
 
   public DarMetricsSummary(
@@ -40,6 +31,6 @@ public record DarMetricsSummary(
       String nonTechRus,
       String referenceId,
       Boolean expired) {
-    this(updateDate, null, projectTitle, darCode, nonTechRus, referenceId, null, null, expired);
+    this(updateDate, null, projectTitle, darCode, nonTechRus, referenceId, null, expired);
   }
 }

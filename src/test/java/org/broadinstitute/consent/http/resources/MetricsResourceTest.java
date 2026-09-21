@@ -1,19 +1,24 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.JsonParser;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.service.MetricsService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -114,6 +119,38 @@ class MetricsResourceTest extends AbstractTestHelper {
 
     Response response = resource.getFrequentlyRequestedWith(duosUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  /**
+   * The requester's name is not in this payload, and the assertion is on the serialized response so
+   * that it can still fail: pinning it to a record component would only restate the shape of a type
+   * that no longer carries one. Comparing the whole field set means re-adding a name, under any
+   * spelling, breaks this rather than passing unnoticed.
+   */
+  @Test
+  void testDarSummariesCarryNoRequesterName() {
+    Timestamp now = new Timestamp(System.currentTimeMillis());
+    DarMetricsSummary summary =
+        new DarMetricsSummary(now, now, "Project", "DAR-1", "RUS", "ref-1", "Broad", false);
+    when(service.generateDarSummaries(any(), any())).thenReturn(List.of(summary));
+
+    Response response = resource.getDarSummaryData(duosUser, 1);
+    String json = GsonUtil.getInstance().toJson(response.getEntity());
+    Set<String> fields =
+        JsonParser.parseString(json).getAsJsonArray().get(0).getAsJsonObject().keySet();
+
+    assertEquals(
+        Set.of(
+            "updateDate",
+            "submissionDate",
+            "projectTitle",
+            "darCode",
+            "nonTechRus",
+            "referenceId",
+            "institutionName",
+            "expired"),
+        fields);
+    assertFalse(json.toLowerCase().contains("piname"), "No PI name is served with a DAR summary");
   }
 
   private DarMetricsSummary generateDarMetricsSummary() {
