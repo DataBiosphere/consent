@@ -57,9 +57,7 @@ gcloud auth application-default login \
 gcloud auth application-default login
 ```
 
-Either way the credential is short-lived, tied to you, and revocable by signing out of `gcloud`. Do not create or
-request a JSON key for `consent-dev`: keys on that account are managed by Yale, which disables
-keys it did not create.
+The access tokens are short-lived, but Application Default Credentials may store a refresh token locally. To remove the local ADC credential, run `gcloud auth application-default revoke`. Do not create or request a JSON key for `consent-dev`: keys on that account are managed by Yale, which disables keys it did not create.
 
 ```yaml
 googleStore:
