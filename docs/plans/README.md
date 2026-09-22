@@ -8,7 +8,7 @@ Use this directory for documents that describe a proposed path forward, migratio
 
 | Plan | Purpose |
 | --- | --- |
-| `dar-metrics-analytics-plan.md` | Plan for capturing DAR lifecycle facts (DAC decision outcome and source, SO approval turnaround, volume) as append-only events in Consent, and surfacing them in an internal admin analytics dashboard in duos-ui. |
+| `dar-metrics-analytics-plan.md` | Plan for reporting DAR metrics (DAC decision outcome, source and turnaround, SO approval turnaround, volume, expiration) from data Consent already persists, and surfacing them in an internal admin analytics dashboard in duos-ui. Records which of the thirteen requested metrics are feasible and why renewal is not. |
 | `data-use-primary-consistency-plan.md` | Plan for aligning dataset primary Data Use registration rules with automated matching while handling legacy records safely. |
 | `vodar-plan.md` | Plan for VODAR (View Only Data Access Requests) across duos-ui and consent: a constrained DAR for viewing data without analysis or publication, RADAR auto-approved when the DAC opts in and otherwise sent to normal DAC review. |
 | `dataset-registration-schema-migration-plan.md` | Plan for migrating dataset/study registration away from `dataset-registration-schema_v1.json` backend validation. |
