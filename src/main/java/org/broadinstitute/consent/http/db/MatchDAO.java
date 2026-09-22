@@ -21,8 +21,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, r.*
+      SELECT m.*, d.alias, r.*
         FROM match_entity m
+        INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
         WHERE m.purpose = :purposeId
       """)
@@ -31,8 +32,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, r.*
+      SELECT m.*, d.alias, r.*
         FROM match_entity m
+        INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
         WHERE m.match_id = :id
       """)
@@ -41,19 +43,17 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT match_entity.*, r.* FROM match_entity
+      SELECT match_entity.*, d.alias, r.* FROM match_entity
+        INNER JOIN dataset d ON d.dataset_id = match_entity.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = match_entity.match_id
         INNER JOIN (
           SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.dataset_id) AS latest
           FROM election
           WHERE LOWER(election.election_type) = 'dataaccess'
           ) AS e ON e.reference_id = match_entity.purpose
-            -- The match-side null tolerance looks dead once the constraints are on, but a
-            -- halted precondition still starts the app: without it, an unmigrated row silently
-            -- drops out of every election that does carry a dataset id.
-            AND (match_entity.dataset_id IS NULL
-                 OR e.dataset_id IS NULL
-                 OR e.dataset_id = match_entity.dataset_id)
+            -- election.dataset_id is still nullable, so an older election that never recorded one
+            -- must keep every match of its purpose.
+            AND (e.dataset_id IS NULL OR e.dataset_id = match_entity.dataset_id)
         WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
       """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
