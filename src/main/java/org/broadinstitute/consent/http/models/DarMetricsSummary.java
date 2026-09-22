@@ -9,7 +9,6 @@ public record DarMetricsSummary(
     String darCode,
     String nonTechRus,
     String referenceId,
-    String piName,
     String institutionName,
     Boolean expired) {
 
@@ -25,15 +24,7 @@ public record DarMetricsSummary(
    */
   public DarMetricsSummary withoutRequesterIdentity() {
     return new DarMetricsSummary(
-        updateDate,
-        submissionDate,
-        projectTitle,
-        darCode,
-        nonTechRus,
-        referenceId,
-        null,
-        null,
-        expired);
+        updateDate, submissionDate, projectTitle, darCode, nonTechRus, referenceId, null, expired);
   }
 
   public DarMetricsSummary(
@@ -43,6 +34,6 @@ public record DarMetricsSummary(
       String nonTechRus,
       String referenceId,
       Boolean expired) {
-    this(updateDate, null, projectTitle, darCode, nonTechRus, referenceId, null, null, expired);
+    this(updateDate, null, projectTitle, darCode, nonTechRus, referenceId, null, expired);
   }
 }
