@@ -83,6 +83,22 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(schemaV1);
   }
 
+  /**
+   * A null study yields an empty schema rather than a failure. The build used to express that by
+   * wrapping every assignment in a nonNull check; it returns early now, and this pins the behaviour
+   * that inversion has to preserve.
+   */
+  @Test
+  void testBuildSchemaWithNullStudy() {
+    DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
+
+    DatasetRegistrationSchemaV1 schemaV1 = builder.build(null, List.of());
+
+    assertNotNull(schemaV1);
+    assertNull(schemaV1.getStudyName());
+    assertNull(schemaV1.getStudyId());
+  }
+
   @Test
   void testBuildSchemaWithStudyProps() {
     DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();

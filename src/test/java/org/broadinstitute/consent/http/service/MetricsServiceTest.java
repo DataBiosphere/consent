@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -45,8 +44,6 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private Jdbi jdbi;
 
-  @Mock private DatasetDAO dataSetDAO;
-
   @Mock private DataAccessRequestDAO darDAO;
 
   @Mock private StudyRecommendationDAO recommendationDAO;
@@ -59,7 +56,6 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
-    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(dataSetDAO);
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     service = new MetricsService(jdbi, datasetService);
@@ -210,7 +206,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   /** A dataset the caller may not read yields no summaries, rather than its DAR project titles. */
   @Test
   void testGenerateDarSummariesIsGatedOnReadingTheDataset() {
-    when(datasetService.findDatasetByIdForReadWithBasis(eq(user), eq(1)))
+    when(datasetService.findDatasetByIdForReadWithBasis(user, 1))
         .thenThrow(new ForbiddenException("User does not have permission"));
 
     assertThrows(ForbiddenException.class, () -> service.generateDarSummaries(1, user));
@@ -249,9 +245,9 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     assertEquals(List.of(summary), service.generateStudyDarSummaries(1, user));
 
-    // One round trip for the whole study, rather than one query per dataset
+    // One round trip for the whole study. The service holds no DatasetDAO at all now, so it
+    // cannot fan out per dataset even by accident.
     verify(darDAO).findSummaryMetricApprovedDARsByStudyIdIncludesExpired(1);
-    verify(dataSetDAO, never()).findDatasetIdsByStudyId(any());
   }
 
   @Test
@@ -383,19 +379,6 @@ class MetricsServiceTest extends AbstractTestHelper {
         "DAR-" + randomInt(1, 100),
         null,
         UUID.randomUUID().toString(),
-        false);
-  }
-
-  private DarMetricsSummary generateDarMetricsSummary(
-      String referenceId, Timestamp submissionDate) {
-    return new DarMetricsSummary(
-        null,
-        submissionDate,
-        UUID.randomUUID().toString(),
-        "DAR-" + randomInt(1, 100),
-        null,
-        referenceId,
-        null,
         false);
   }
 
