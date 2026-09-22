@@ -12,11 +12,9 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
 
   @Override
   public DarMetricsSummary map(ResultSet rs, StatementContext ctx) throws SQLException {
+    // When access began, which is the whole collection's earliest approved submission rather than
+    // the latest renewal's: the section reports how long a dataset has been in use.
     Timestamp submissionDate = rs.getTimestamp("submission_date");
-    boolean expired =
-        submissionDate != null
-            && submissionDate.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS
-                < System.currentTimeMillis();
     return new DarMetricsSummary(
         rs.getTimestamp("update_date"),
         submissionDate,
@@ -25,6 +23,20 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
         rs.getString("non_tech_rus"),
         rs.getString("reference_id"),
         rs.getString("institution_name"),
-        expired);
+        hasLapsed(rs.getTimestamp("expiration_basis_date"), rs.getTimestamp("closeout_date")));
+  }
+
+  /**
+   * Access ends either when its term runs out or when the researcher closes it out, whichever
+   * actually happened. A closeout revokes access the day it is filed, so it ends the grant even
+   * though the term it cut short may still have had time left to run.
+   */
+  private boolean hasLapsed(Timestamp latestRenewal, Timestamp closeoutDate) {
+    if (closeoutDate != null) {
+      return closeoutDate.getTime() < System.currentTimeMillis();
+    }
+    return latestRenewal != null
+        && latestRenewal.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS
+            < System.currentTimeMillis();
   }
 }

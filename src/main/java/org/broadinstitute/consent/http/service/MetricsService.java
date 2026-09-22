@@ -45,11 +45,13 @@ public class MetricsService {
     DatasetRead read = datasetService.findDatasetByIdForReadWithBasis(user, datasetId);
     List<DarMetricsSummary> summaries =
         darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
-    // Withheld only where nothing about this caller was checked. A dataset with no study is
-    // returned to every authenticated caller because there is no visibility to test, and the
-    // requester's affiliation would be enumerable by walking ids. Anyone allowed in on their own
-    // merits - an admin, the dataset's creator, a reader of its study - was established as
-    // entitled to what the dataset carries, so they keep it.
+    // Withheld only where no visibility decision covers the dataset at all. A dataset with no
+    // study has none to test, so it is returned to every authenticated caller and the requester's
+    // affiliation would be enumerable by walking ids. Everything else is covered by a decision
+    // someone made: a published study was deliberately opened to any authenticated caller, and a
+    // hidden one is reachable only by its creator, its custodians or an admin. STUDY_READABLE
+    // spans both, so it does not mean this particular caller was vetted - only that the study's
+    // own visibility already answered who may see what it carries.
     if (read.basis() != DatasetReadBasis.NO_STUDY) {
       return summaries;
     }

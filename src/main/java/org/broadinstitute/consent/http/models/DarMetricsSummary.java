@@ -15,9 +15,12 @@ public record DarMetricsSummary(
   /**
    * The same summary with no requester identity on it.
    *
-   * <p>Named rather than rebuilt positionally at the call site: an eight-argument constructor call
-   * still compiles after two same-typed components are reordered, and would quietly move values
-   * into the wrong slots. Here the compiler names every field.
+   * <p>A record's canonical constructor is positional, so reordering two same-typed components
+   * still compiles and quietly moves values into the wrong slots. This does not escape that - the
+   * call below is positional too - it confines it: callers say what they want instead of rebuilding
+   * the record, so there is one such call rather than one per call site, and {@code
+   * MetricsServiceTest#testWithoutRequesterIdentityKeepsEverythingElse} asserts every surviving
+   * field, which is what would actually catch a reorder.
    */
   public DarMetricsSummary withoutRequesterIdentity() {
     return new DarMetricsSummary(
