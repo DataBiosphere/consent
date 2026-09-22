@@ -69,6 +69,8 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
+import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
@@ -208,6 +210,61 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class, () -> datasetService.findDatasetByIdForRead(user, datasetId));
+  }
+
+  /**
+   * A study's data custodian reads its datasets on the study's terms, so the basis reported is
+   * STUDY_READABLE and the requester's institution survives. Custodianship is a property of the
+   * study - isCreatorOrCustodian answers false for a null one - so there is no custodian to
+   * distinguish on a dataset that has no study, and every caller there is NO_STUDY.
+   */
+  @Test
+  void testFindDatasetByIdForReadWithBasisStudyCustodianReadsOnTheStudysTerms() {
+    User custodian = new User();
+    custodian.setUserId(1);
+    custodian.setEmail("alice@custodiansRus.org");
+
+    Study study = new Study();
+    study.setStudyId(7);
+    study.setCreateUserId(custodian.getUserId() + 1);
+    study.setPublicVisibility(false);
+    StudyProperty property = new StudyProperty();
+    property.setKey(dataCustodianEmail);
+    property.setType(PropertyType.Json);
+    property.setValue(GsonUtil.getInstance().toJson(List.of(custodian.getEmail())));
+    study.addProperties(property);
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(study.getCreateUserId());
+    dataset.setStudyId(study.getStudyId());
+    dataset.setStudy(study);
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    DatasetRead read =
+        datasetService.findDatasetByIdForReadWithBasis(custodian, dataset.getDatasetId());
+
+    assertEquals(DatasetReadBasis.STUDY_READABLE, read.basis());
+    assertEquals(dataset.getDatasetId(), read.dataset().getDatasetId());
+  }
+
+  /** The contrast: with no study there is nothing to be a custodian of, and nothing is checked. */
+  @Test
+  void testFindDatasetByIdForReadWithBasisReportsNoStudy() {
+    User caller = new User();
+    caller.setUserId(1);
+    caller.setEmail("alice@custodiansRus.org");
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(6);
+    dataset.setCreateUserId(caller.getUserId() + 1);
+    dataset.setStudyId(null);
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    DatasetRead read =
+        datasetService.findDatasetByIdForReadWithBasis(caller, dataset.getDatasetId());
+
+    assertEquals(DatasetReadBasis.NO_STUDY, read.basis());
   }
 
   @Test
@@ -1187,11 +1244,13 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setStudyId(dataset.getStudyId());
     study.setCreateUserId(datasetCreator.getUserId() + 1);
     study.setPublicVisibility(Boolean.FALSE);
-    when(studyDAO.findStudyDetailsById(dataset.getStudyId())).thenReturn(study);
 
     Dataset verifiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, datasetCreator);
 
     assertEquals(dataset.getDatasetId(), verifiedDataset.getDatasetId());
+    // The creator is recognized before the study is consulted, so the hidden study is never read.
+    // Same answer as before, one query fewer.
+    verify(studyDAO, never()).findStudyDetailsById(dataset.getStudyId());
   }
 
   // verifyStudyVisibilityAccess is the single read-access gate shared by StudyResource and the

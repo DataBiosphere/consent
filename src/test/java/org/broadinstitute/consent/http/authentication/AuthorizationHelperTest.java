@@ -54,6 +54,7 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   private AuthorizationHelper authorizationHelper;
   private DuosUserAuthenticator duosUserAuthenticator;
   private OAuthAuthenticator oAuthAuthenticator;
+  private static final String EMAIL = "email";
   private final ClaimsCache headerCache = new ClaimsCache();
   private final String bearerToken = randomAlphabetic(100);
   private final MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
@@ -68,12 +69,15 @@ class AuthorizationHelperTest extends AbstractTestHelper {
 
   @Test
   void testAuthorized() {
-    unauthorizedUser.setEmail("email");
-    unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
+    // Stubbed, not set: these are mocks, so setEmail would be a no-op and getEmail would answer
+    // null - which findUserByEmail(null) would then match, passing the test through a path the
+    // service never takes.
+    when(authorizedUser.getEmail()).thenReturn(EMAIL);
+    when(authorizedDuosUser.getEmail()).thenReturn(EMAIL);
     User user = new User();
-    user.setEmail(unauthorizedUser.getEmail());
+    user.setEmail(EMAIL);
     user.addRole(UserRoles.Chairperson());
-    when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
+    when(userService.findUserByEmail(EMAIL)).thenReturn(user);
     assertTrue(authorizationHelper.authorize(authorizedUser, Resource.CHAIRPERSON));
     assertTrue(authorizationHelper.authorize(authorizedDuosUser, Resource.CHAIRPERSON));
   }
@@ -90,12 +94,12 @@ class AuthorizationHelperTest extends AbstractTestHelper {
         Resource.ITDIRECTOR
       })
   void testNotAuthorized(String roleName) {
-    unauthorizedUser.setEmail("email");
-    unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
+    when(unauthorizedUser.getEmail()).thenReturn(EMAIL);
+    when(unauthorizedDuosUser.getEmail()).thenReturn(EMAIL);
     User user = new User();
-    user.setEmail(unauthorizedUser.getEmail());
+    user.setEmail(EMAIL);
     user.addRole(UserRoles.Researcher());
-    when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
+    when(userService.findUserByEmail(EMAIL)).thenReturn(user);
     assertFalse(authorizationHelper.authorize(unauthorizedUser, roleName));
     assertFalse(authorizationHelper.authorize(unauthorizedDuosUser, roleName));
   }

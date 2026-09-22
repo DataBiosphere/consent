@@ -103,22 +103,22 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
-   * Returns one {@link DarMetricsSummary} per DAR collection that contains at least one approved
-   * DAR or closeout supplement for the given dataset, ordered by DAR code ascending. Unlike {@link
-   * #findApprovedDARsByDatasetId(Integer) findApprovedDARsByDatasetId}, expired DARs are included
-   * so they appear in dataset usage metrics.
+   * Returns one {@link DarMetricsSummary} per DAR collection holding an approval on the given
+   * dataset, ordered by DAR code ascending. Unlike {@link #findApprovedDARsByDatasetId(Integer)
+   * findApprovedDARsByDatasetId}, expired DARs are included so they appear in dataset usage
+   * metrics.
    *
-   * <p>A collection is included when either of the following is true for the given dataset:
+   * <p>A collection is included when at least one submitted, non-archived DAR in it has a terminal
+   * {@code final} or {@code radar_approve} vote on this dataset whose last value is {@code TRUE}.
+   * The approval has to be on this dataset: one DAR can be granted some of the datasets it asks for
+   * and denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
+   * qualify a collection only on the same terms: a progress report gets its own election and counts
+   * once that election approves it, while a closeout has no election at all and so never does.
+   * Otherwise either could speak for an approval that was never given.
    *
-   * <ul>
-   *   <li>At least one submitted, non-archived DAR in the collection has a terminal {@code final}
-   *       or {@code radar_approve} vote whose last value is {@code TRUE}.
-   *   <li>At least one submitted DAR in the collection carries a {@code closeoutSupplement} (no
-   *       election required).
-   * </ul>
-   *
-   * <p>Each summary is sourced from the most recently submitted DAR in the collection that is
-   * linked to the given dataset. Only the fields needed for dataset usage metrics are selected.
+   * <p>Each summary is sourced from the most recently submitted DAR that qualified the collection,
+   * so it always describes a granted request. Only the fields needed for dataset usage metrics are
+   * selected, and the requester's institution is among them while their name is not.
    *
    * @param datasetId the dataset to filter by
    * @return list of {@link DarMetricsSummary}, one per qualifying collection, ordered by {@code
@@ -127,8 +127,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @RegisterRowMapper(DarMetricsSummaryMapper.class)
   @SqlQuery(
       """
-          WITH approved_collections AS (
-              SELECT DISTINCT dar.collection_id
+          WITH qualifying_dars AS (
+              SELECT DISTINCT dar.reference_id, dar.collection_id
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
@@ -149,46 +149,52 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                   AND dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              -- Pull in all closeouts for this dataset. Closeouts do not have elections,
-              -- but we want to include them in the dataset usage metrics.
-              UNION
-              SELECT DISTINCT dar.collection_id
+          ), approved_collections AS (
+              -- One row per collection, carrying the day access to this dataset began
+              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission
+              FROM qualifying_dars q
+              INNER JOIN data_access_request dar ON dar.reference_id = q.reference_id
+              GROUP BY q.collection_id
+          ), closeouts AS (
+              -- A closeout revokes access the day it is filed, ending the grant before its term
+              -- runs out. It closes the whole collection rather than only the datasets its own
+              -- report names, which is how findApprovedDARsByDatasetId, findDatasetApprovalsByDar
+              -- and DatasetDAO.findApprovedDatasetsByUserId already treat one.
+              SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
               FROM data_access_request dar
-              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-              WHERE dd.dataset_id = :datasetId
-                  AND dar.submission_date IS NOT NULL
+              WHERE dar.submission_date IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
+              GROUP BY dar.collection_id
           )
           SELECT
               c.dar_code,
-              latest_dar.submission_date,
+              approved_collections.first_submission AS submission_date,
+              latest_dar.submission_date AS expiration_basis_date,
+              closeouts.closeout_date,
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              -- No requester identity on this route. Its only caller,
-              -- GET /api/metrics/dar-summaries/{datasetId}, is @PermitAll and checks nothing but
-              -- the dataset's existence, so selecting the granted PI's name and affiliation here
-              -- would let any authenticated user harvest them by walking dataset ids. Nothing
-              -- reads these fields from this query; the study-scoped sibling below supplies them
-              -- for the study page and is gated on the study's visibility.
-              NULL::text AS pi_name,
-              NULL::text AS institution_name
+              -- The requester's institution, but never their name: the pages show where a grant
+              -- went, not who holds it.
+              i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
-          -- Source the summary from the most recently submitted DAR in the collection that is
-          -- linked to :datasetId. Constraining to the dataset here (rather than filtering after
-          -- picking the collection-wide latest) keeps a collection whose newest DAR targets a
-          -- different dataset from being dropped.
+          -- Source the summary from the most recently submitted DAR in the collection that itself
+          -- qualified, as the study-scoped query does. Constraining to the qualifying DARs, rather
+          -- than to anything submitted against :datasetId, keeps a collection whose newest DAR
+          -- targets a different dataset from being dropped and keeps a pending progress report
+          -- from standing in for the grant - which would have shown its submitter as the PI.
           INNER JOIN (
               SELECT DISTINCT ON (dar.collection_id) dar.*
               FROM data_access_request dar
-              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-              WHERE dar.submission_date IS NOT NULL
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              AND dd.dataset_id = :datasetId
-              ORDER BY dar.collection_id, dar.submission_date DESC
+              INNER JOIN qualifying_dars q ON q.reference_id = dar.reference_id
+              WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = latest_dar.user_id
+          LEFT JOIN institution i ON i.institution_id = u.institution_id
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
@@ -197,18 +203,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   /**
    * The study-scoped counterpart of {@link
    * #findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(Integer)}. A DAR qualifies when it was
-   * approved on at least one of the study's datasets, or is a closeout against one of them; each
-   * summary is sourced from the most recently submitted qualifying DAR in the collection. Doing the
-   * whole study in one round trip avoids re-running this query once per dataset.
+   * approved on at least one of the study's datasets; each summary is sourced from the most
+   * recently submitted qualifying DAR in the collection. A grant denied on one dataset but approved
+   * on another in the same study still appears here, having been granted access to the study, even
+   * though the denied dataset's own page omits it. Doing the whole study in one round trip avoids
+   * re-running this query once per dataset.
    *
    * <p>The display record has to come from a qualifying DAR rather than from whatever the
    * collection's newest submission happens to be. This section presents each row as a granted
    * request, and {@link DarMetricsSummaryMapper} derives the current/expired chip from the sourced
-   * DAR's submission date; a pending progress report (a submitted child DAR with no election of its
-   * own) would otherwise overwrite the grant's title, RUS, and date and reset it to "current".
+   * DAR's submission date; a progress report still awaiting the outcome of its own election would
+   * otherwise overwrite the grant's title, RUS, and date and reset it to "current".
    *
    * @param studyId the study to filter by
-   * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest first
+   * @return list of {@link DarMetricsSummary}, one per qualifying collection, newest grant first
    */
   @RegisterRowMapper(DarMetricsSummaryMapper.class)
   @SqlQuery(
@@ -228,6 +236,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                           RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                       ) last_vote
                   FROM election e
+                  -- Bound to the study's datasets inside the window, not after it. The outer join
+                  -- to dd.dataset_id cannot be pushed in here, so without this the window sorts
+                  -- and partitions every dataaccess election and vote in the table to answer for a
+                  -- study with a handful of datasets. The partition is already per dataset, so
+                  -- dropping other datasets' rows leaves every surviving partition untouched.
+                  INNER JOIN study_datasets sds ON sds.dataset_id = e.dataset_id
                   INNER JOIN vote v ON e.election_id = v.election_id
                       AND v.vote IS NOT NULL
                       AND LOWER(e.election_type) = 'dataaccess'
@@ -237,26 +251,30 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              -- Pull in all closeouts for this study. Closeouts do not have elections,
-              -- but we want to include them in the study usage metrics.
-              UNION
-              SELECT DISTINCT dar.reference_id, dar.collection_id
+          ), approved_collections AS (
+              -- One row per collection, carrying the day access to this study began
+              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission
+              FROM qualifying_dars q
+              INNER JOIN data_access_request dar ON dar.reference_id = q.reference_id
+              GROUP BY q.collection_id
+          ), closeouts AS (
+              -- A closeout closes the whole collection, as in the dataset-scoped query above
+              SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
               FROM data_access_request dar
-              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-              INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
               WHERE dar.submission_date IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
-          ), approved_collections AS (
-              SELECT DISTINCT collection_id FROM qualifying_dars
+              GROUP BY dar.collection_id
           )
           SELECT
               c.dar_code,
-              latest_dar.submission_date,
+              approved_collections.first_submission AS submission_date,
+              latest_dar.submission_date AS expiration_basis_date,
+              closeouts.closeout_date,
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              COALESCE(latest_dar.data ->> 'piName', u.display_name) AS pi_name,
+              -- Institution, not name: see the dataset-scoped query above.
               i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
@@ -272,9 +290,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
           LEFT JOIN users u ON u.user_id = latest_dar.user_id
           LEFT JOIN institution i ON i.institution_id = u.institution_id
-          ORDER BY latest_dar.submission_date DESC, c.dar_code
+          -- Newest first by the date the row carries, which is when access began. Ordering by
+          -- the sourced DAR's own date instead would float an old grant to the top the moment it
+          -- was renewed, and the cards would read out of order.
+          ORDER BY approved_collections.first_submission DESC, c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByStudyIdIncludesExpired(
       @Bind("studyId") Integer studyId);
