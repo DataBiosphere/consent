@@ -182,17 +182,25 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals("Broad", metrics.getFirst().institutionName());
   }
 
-  /** A named copy, so a reordered component cannot quietly land in the wrong slot. */
+  /**
+   * The copy is positional, so this asserts every surviving field - including the two timestamps,
+   * which are the same type and adjacent, and so the pair a reorder would swap without the compiler
+   * noticing. Distinct values, because equal ones would survive a swap.
+   */
   @Test
   void testWithoutRequesterIdentityKeepsEverythingElse() {
+    Timestamp updated = new Timestamp(2_000_000_000L);
+    Timestamp submitted = new Timestamp(1_000_000_000L);
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            null, null, "Project", "DAR-1", "RUS", "ref-1", "Dr Who", "Broad", true);
+            updated, submitted, "Project", "DAR-1", "RUS", "ref-1", "Dr Who", "Broad", true);
 
     DarMetricsSummary redacted = summary.withoutRequesterIdentity();
 
     assertNull(redacted.piName());
     assertNull(redacted.institutionName());
+    assertEquals(updated, redacted.updateDate());
+    assertEquals(submitted, redacted.submissionDate());
     assertEquals("Project", redacted.projectTitle());
     assertEquals("DAR-1", redacted.darCode());
     assertEquals("RUS", redacted.nonTechRus());
