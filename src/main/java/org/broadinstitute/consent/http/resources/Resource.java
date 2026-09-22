@@ -322,10 +322,10 @@ public abstract class Resource implements ConsentLogger {
    */
   void validateAuthedRoleUser(
       final List<UserRoles> privilegedRoles, final User authedUser, final Integer userId) {
-    List<Integer> authedRoleIds = privilegedRoles.stream().map(UserRoles::getRoleId).toList();
-    boolean authedUserHasRole =
-        authedUser.getRoles().stream()
-            .anyMatch(userRole -> authedRoleIds.contains(userRole.getRoleId()));
+    // Through User rather than over getRoles() directly: a user with no user_role rows has a null
+    // role list, not an empty one, and streaming it threw a NullPointerException that Jersey turned
+    // into a 500 where a plain denial was meant. hasAnyUserRole matches on the same role ids.
+    boolean authedUserHasRole = authedUser.hasAnyUserRole(privilegedRoles);
     if (!authedUserHasRole && !authedUser.getUserId().equals(userId)) {
       throw new ForbiddenException("User does not have permission");
     }
