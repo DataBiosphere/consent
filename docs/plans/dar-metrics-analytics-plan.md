@@ -2,583 +2,823 @@
 
 ## Status
 
-Proposed. No code written. This plan is the deliverable of DT-3999 ("Investigate: DUOS Admin
-Metrics & Dashboard V1"); the implementation tickets it proposes are not yet filed.
+Proposed. Implementation can begin on six of the nine tickets immediately; the rest wait on four
+product decisions listed in [Blocking Decisions](#blocking-decisions).
 
-The headline conclusion changed during review: **this work needs no new data capture.** Twelve of the
-thirteen requested metrics are answerable from columns Consent already persists, and the thirteenth
-(renewal) needs a product decision before any schema. An earlier draft proposed an event table on the
-premise that DAC decision timestamps were not recorded; that premise was wrong. See
-[Findings That Change the Ticket's Plan](#findings-that-change-the-tickets-plan).
+## Summary
+
+DUOS is asked to report thirteen Data Access Request (DAR) metrics — decision outcomes, how decisions
+were reached, approval turnaround, submission volume, expiration and renewal — as longitudinal data on
+an internal admin dashboard.
+
+Twelve of the thirteen can be answered from columns Consent already persists, across full history. The
+work is therefore a reporting layer, not a change to how DUOS records anything: four read-only
+endpoints in `consent`, one dashboard in `duos-ui`, and one defect fix. The thirteenth metric, renewal,
+has no representation in DUOS at all and needs a product definition before it can be built.
+
+Nine tickets, each independently deployable and scoped to a single reviewable change. Five can be
+worked in parallel. The critical path to a usable dashboard is five tickets.
 
 ## Objective
 
-Report a defined set of Data Access Request (DAR) metrics — DAC decision outcomes, RADAR versus
-manual decisions, Signing Official (SO) approval turnaround, submission volume, dataset counts, and
-expiration and renewal — as flat, timestamped rows that drop into descriptive-statistics tooling
-without reshaping, and surface them in an internal admin dashboard in `duos-ui`.
+Give DUOS administrators a single internal view of how Data Access Requests move through the system:
+how many are submitted and by whom, how many reach a DAC decision and what that decision was, how
+often RADAR decides instead of a chairperson, how long Signing Official (SO) and DAC approval take,
+and how many requests expire.
 
-## Feasibility of the Requested Metrics
+Every figure must be returned as flat, timestamped rows so it can be bucketed by day, week or month
+and fed directly into descriptive statistics — mean, median, mode — without reshaping on the client.
 
-The ticket reads as though most of these metrics need new plumbing. They do not. Twelve of thirteen
-are answerable from data Consent already stores; what is missing is a reporting query, not a capture
-subsystem.
+## Blocking Decisions
 
-This distinction is the whole scoping story: **reporting work is fast and covers history
-retroactively. Capture work is slow and only ever starts from the deploy date.** Only renewal falls
-in the second bucket.
+Four questions need answers from product. Only the first prevents work starting; the rest shape what
+a later deliverable is allowed to claim, and two of them change numbers a reader of the dashboard
+would act on. They are listed first because the cost of discovering them late is rework on endpoints
+that have already shipped.
 
-Verdicts are based on reading the code, not on querying production. Whether enough rows exist to make
-a given chart worth drawing is separate — see [Before Promising Charts](#before-promising-charts).
-
-| # | Requested metric | Verdict | Source |
+| # | Decision needed | What it gates | Cost of guessing |
 | --- | --- | --- | --- |
-| 1 | DARs with a DAC decision vs. not | Available now, once "decided" is defined | Latest election per DAR-dataset pair. Reopening changes the answer — Open Question 6 |
-| 2 | Decision results: approved vs. denied | Available now per dataset; DAR-level rollup needs a product decision | `vote.vote` on the latest `FINAL`/`RADAR_APPROVE` vote. See Open Question 3 |
-| 3 | DARs decided via RADAR rules | Available now | `VoteType.RADAR_APPROVE`, in place since July 2025 |
-| 4 | DARs submitted per researcher | Available now | `user_id` + `submission_date` |
-| 5 | DARs submitted per institution | Available now — for *current* institution only | Caveat A |
-| 6 | Datasets requested per DAR | Available now | `dar_dataset` |
-| 7 | Researchers per DAR (PI, lab staff, internal collaborators) | Available now as counts | Caveat B |
-| 8 | Turnaround: submission → DAC decision | Available now | `vote.update_date` on the deciding vote. Caveat C |
-| 9 | Turnaround: submission → SO approval, delineating pre-auth skip | Available now | `approving_so_timestamp`; skip identified by `requires_so_approval IS NOT TRUE`. Caveat D |
-| 10 | DARs expired | Available now, full history | Deterministic from `submission_date`; no capture needed |
-| 11 | DARs renewed | **Not possible today** | No renewal concept exists. Needs a product definition, then new capture, then forward-only data. Open Question 1 |
-| 12 | Number of researchers submitting DARs | Available now | Distinct `user_id` where `submission_date` is not null |
-| 13 | Timestamp everything, longitudinal | Available now | Every row above carries a timestamp; bucketing is a query concern |
+| 1 | **What "renewal" means.** Is it the existing progress-report continuing-review flow, or a researcher submitting a fresh request after one expired? These are different flows and only the first exists today. | Ticket 8 entirely. Nothing can be built without it. | Total rework — the two readings need different schema. |
+| 2 | **Whether a reopened decision still counts as decided.** When a decided DAR-dataset pair is reopened, the last cast vote stands but the live election has no vote. | Ticket 7. Tickets 4 and 5 return both readings until it is answered; the dashboard has to pick one. | The funnel silently over- or under-reports outstanding work, which is the number the dashboard exists to show. |
+| 3 | **When a multi-dataset DAR counts as decided** — on the first dataset decision, or once all are in. | The deferred DAR-level rollup over tickets 4 and 5. Per-pair rows ship without it. | Turnaround averages shift materially for multi-dataset requests. |
+| 4 | **Whether a DAR is denied if any dataset is denied, all are, or partial approval is its own bucket.** | The deferred DAR-level rollup over ticket 4. Per-pair rows ship without it. | Approval rate is wrong in a way no one can see from the chart. |
 
-### Caveat A — institution attribution is current, not historical
+**None of these gates a reporting ticket's release.** Tickets 4 and 5 ship per-DAR-dataset rows, which
+are correct under every reading; Decisions 3 and 4 shape only the DAR-level rollup, a later reduction
+over those rows, and Decision 4 gates nothing else. Decision 2 is needed before ticket 7 presents a
+single funnel figure, and until it is answered tickets 4 and 5 return both readings rather than
+choosing one. Only Decision 1 blocks a ticket outright.
 
-Institution is read live from `users.institution_id`. The DAR's own `institution` property is in
-`DataAccessRequestData.DEPRECATED_PROPS` and is stripped, so nothing records the researcher's
-institution *at the time they submitted*. A researcher who changes institution silently moves all
-their past DARs with them.
+Answering any of 2 to 4 changes a query, not a schema.
 
-"DARs per institution" is answerable as "DARs by where the submitter works now" — fine for a current
-workload view, wrong for a year-over-year trend. Fixing it means snapshotting at submission, which is
-cheap but forward-only. See ticket 8.
-
-### Caveat B — collaborators are validated but not durably identified
-
-Internal collaborators and lab staff are not unverified free text: at submission each is looked up by
-email, must resolve to a DUOS user holding a library card, and must share the submitter's institution
-(`DataAccessRequestService.java:617`, `:718`). External collaborators do not go through that check.
-
-What is missing is a persisted identity. `Collaborator` is a record of name, email, title, era commons
-id and country stored in the DAR's JSON, with no user-id foreign key. Counting collaborators per DAR
-is reliable. Counting *distinct people* across DARs means joining on email after the fact, which is
-workable but will drift as people change address, so it needs stating as an approximation rather than
-being quietly presented as a headcount.
-
-### Caveat C — the decision timestamp exists, but not where the ticket looked
-
-`vote.update_date` is written when a vote is cast, by `VoteServiceDAO.updateVotesWithValue:41-44`,
-for manual and RADAR decisions alike. The two other writes to the `vote` table — the reminder flag
-(`VoteDAO.java:78`) and the rationale edit (`VoteDAO.java:113`) — deliberately leave it alone. It is
-therefore a durable decision timestamp with full history, not an approximation.
-
-What is unreliable is `Election.finalVoteDate`, which is derived in SQL two different ways: as
-`v.create_date` (`ElectionDAO.java:62`), which is when the election opened, and as
-`COALESCE(v.update_date, v.create_date)` (`ElectionDAO.java:134-138`), which is correct. Both restrict
-the vote join to type `final`, so neither sees a RADAR decision — and they fail differently. The first
-uses an INNER JOIN (`:66`), so a RADAR-only election returns **no row at all**; the second uses a LEFT
-JOIN (`:145`), so it returns the election with null vote fields.
-
-The conclusion for this plan: read `vote.update_date` directly and do not build on
-`Election.finalVoteDate`. `SigningOfficialDashboardDAO.java:48-64` already does exactly this — its
-`ranked_final_votes`/`latest_final_votes` CTEs filter `LOWER(v.type) IN ('final', 'radar_approve')`,
-require `v.vote IS NOT NULL` so uncast votes cannot win, and rank by
-`COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC`. `ResearcherDashboardDAO.java:46-68`
-applies equivalent logic under different names — `final_votes` feeding a `latest_final_votes` that
-ranks in an inline subquery. Either is the precedent to copy.
-
-One thing to confirm against production rather than assume: rows old enough to predate the current
-vote-casting path may carry a null `update_date`, in which case their decision time falls back to
-`create_date` and is wrong. Measure how many before promising full-history turnaround.
-
-### Caveat D — the SO approval flag is null when approval was skipped
-
-`requires_so_approval` is nullable with no default
-(`changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml:6`), and
-`DataAccessRequestService.java:298-300` writes it **only when true**. A DAR that skipped SO approval
-therefore holds NULL, not `false`.
-
-This is a live trap for the reporting query. `WHERE requires_so_approval = false` returns **zero
-rows** under Postgres null semantics, so the pre-authorization skip count would silently come out
-empty. The correct predicate is `IS NOT TRUE`.
-
-Java code does not see this, because `DataAccessRequestMapper.java:57` coerces the null to primitive
-`false` — which is also why the flag looks trustworthy from the model layer and is not.
-
-NULL has two further meanings, so `IS NOT TRUE` on its own over-counts skips:
-
-- **Rows predating the column** (January 2026). Bound the report to DARs submitted after it existed.
-- **Progress reports and closeouts**, which split three ways
-  (`DataAccessRequestService.java:349-355`). A non-closeout progress report whose submitter is not
-  pre-authorized gets `true`; one whose submitter is pre-authorized is left NULL; a **closeout is left
-  NULL unconditionally**, even though closeouts do go to an SO and approval writes the same
-  `approving_so_timestamp` through `approveDataAccessRequestCloseout` (`:414-417`). So a NULL on a
-  child row can mean a genuine skip or a closeout awaiting review, and the two are not separable from
-  this column.
-
-The usable predicate is therefore `requires_so_approval IS NOT TRUE` **restricted to original
-submissions** — `parent_id IS NULL` — and bounded by date. Progress reports and closeouts need
-counting separately, against their own approval flow, rather than folding into the submission
-figures.
-
-### Before promising charts
-
-Everything above states what the schema *can* answer. Before committing to specific visuals, run
-counts against production for: submitted DARs per month over the last two years; how many carry a
-closed data-access election; how many have a `RADAR_APPROVE` vote; how many have a non-null
-`approving_so_timestamp`; and how many deciding votes have a null `update_date` (Caveat C). RADAR has
-existed only since July 2025 and the SO columns since January 2026, so year-over-year comparisons on
-metrics 3 and 9 are not available yet regardless of what is built.
+A fifth question is smaller and engineering-answerable: whether "researchers on a DAR" should include
+external collaborators, who unlike internal collaborators are not institution-validated at submission.
+It affects the shape of ticket 3's response only.
 
 ## Background and Scope
 
-In scope: reporting endpoints in Consent over existing data, one defect fix, and an admin dashboard
-page in `duos-ui`.
+DUOS records DAR state across four entities: `data_access_request` holds the request and its
+submission and SO-approval timestamps, `dar_dataset` links it to the datasets requested, `election`
+opens a decision process per DAR-dataset pair, and `vote` records what was decided and when.
 
-Out of scope, stated up front because the ticket's plan drifts toward it: any change to DAC voting,
-RADAR rule, or SO-approval workflow semantics. This is a read-only reporting layer.
+Most of what the dashboard needs is already in those tables. What does not exist is a reporting
+surface over them: the current `MetricsResource` exposes a single dataset-scoped endpoint, and the
+role dashboards (`DacDashboardResource`, `SigningOfficialDashboardResource`,
+`ResearcherDashboardResource`) answer "what should this user do next", not "what has happened over
+time".
+
+In scope: read-only reporting endpoints in `consent`, an admin dashboard page in `duos-ui`, one defect
+fix, and two optional accuracy improvements.
+
+Out of scope: any change to how DAC voting, RADAR rules or SO approval behave. This is an observation
+layer over existing decision logic.
 
 ## Current Behavior
 
-Each item was verified against the code on `develop` at the time of writing.
+The facts below determine how each metric is queried. Each was verified against `develop`.
 
-### Decision outcomes are not rolled up to the DAR
+### Decisions live on votes, not on elections
 
-`DacDashboardSummary.DarRequests` says so directly: "There is deliberately no denied count because
-DUOS has no denied collection status" (`models/DacDashboardSummary.java:8-13`). Denial exists as a
-`false` `vote` row on a closed election, never aggregated to the DAR.
+A decision is a `vote` row whose `type` is `FINAL` (a chairperson) or `RADAR_APPROVE` (an automation
+rule), with `vote.vote` carrying approve or deny. Casting it closes the election
+(`service/dao/VoteServiceDAO.java:61-67`).
 
-Note that `election.final_access_vote` is *not* the source, contrary to the ticket. The only
-`updateElectionById` overload writing that column (`ElectionDAO.java:220-226`) has no production
-callers — only tests. `updateVotesWithValue` sets `election.status` and nothing else
-(`service/dao/VoteServiceDAO.java:45-46`, `:63-66`). The live signal is `vote.vote`.
+Two columns look like they hold the outcome and do not. `election.final_access_vote` has no production
+writer — the only `updateElectionById` overload that sets it (`ElectionDAO.java:220-226`) is called
+solely from tests. `Election.finalVoteDate` is not a column at all; it is derived in SQL, two different
+ways, and neither sees RADAR (see [the RADAR gap](#radar-decisions-are-invisible-to-two-election-queries)).
 
-### A DAR-dataset pair can have many elections, and only the last one counts
+Reporting reads `vote` directly.
 
-`DataAccessRequestDAO` documents the rule at `:56-64` and `:190-201`: election 1 may be denied,
-election 2 approved, election 3 denied again, and `LAST_VALUE` over the partition selects the most
-recent. Reporting must therefore reduce over an election history rather than assume one decision per
-pair. Reopening a decision creates a *new* election rather than re-voting an old one
-(`service/dao/DarCollectionServiceDAO.java:85`).
+### The decision timestamp is `vote.update_date`
 
-### RADAR and manual decisions share one write path
+`VoteServiceDAO.updateVotesWithValue:41-44` writes `update_date` when a vote is cast, for manual and
+RADAR decisions alike. The only other two writes to the `vote` table — the reminder flag
+(`VoteDAO.java:78`) and a rationale edit (`VoteDAO.java:113`) — deliberately leave it alone.
 
-`DACAutomationRuleService.openElectionAndApprove` creates an election and a single
-`VoteType.RADAR_APPROVE` vote, then calls the same `voteServiceDAO.updateVotesWithValue` a manual
-chair vote uses (`DACAutomationRuleService.java:299-329`). That method closes the election for both
-types in one branch (`service/dao/VoteServiceDAO.java:61-67`).
+It is therefore a durable record of when a decision was made, with full history.
 
-RADAR votes are attributed to `rule.enabledByUserId()` — the admin who enabled the rule — so a null
-actor does not distinguish them; the vote type does.
+### A DAR-dataset pair accumulates elections
 
-### SO approval is well modeled, with one null trap
+Reopening a decision archives the previous elections and opens a new one
+(`service/dao/DarCollectionServiceDAO.java:85`), so one pair can carry a sequence: denied, then
+approved, then denied again. `DataAccessRequestDAO.java:56-64` documents the reduction — rank the
+pair's votes and take the most recent.
+
+`SigningOfficialDashboardDAO.java:48-64` implements it as a pair of CTEs, `ranked_final_votes` feeding
+`latest_final_votes`. Three details in that query matter and are easy to omit:
+
+- it accepts both `final` and `radar_approve` vote types;
+- it requires `v.vote IS NOT NULL`, so an uncast vote on a freshly reopened election cannot win the
+  ranking and report a decision nobody made;
+- it orders by `COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC`, making ties
+  deterministic.
+
+`ResearcherDashboardDAO.java:46-68` applies equivalent logic under different CTE names. Either is the
+precedent to copy.
+
+### RADAR decisions are invisible to two election queries
+
+Both derivations of `final_vote_date` join the vote on `LOWER(v.type) = 'final'`, so a
+`RADAR_APPROVE` vote never matches. They fail differently:
+
+- `findElectionWithFinalVoteById` (`ElectionDAO.java:58-72`) uses an INNER JOIN (`:66`), so a
+  RADAR-only election is **absent from the result entirely**;
+- `findLastElectionsByReferenceIds` (`:130-160`) uses a LEFT JOIN (`:145`), so the election is returned
+  with null vote fields.
+
+`:62` compounds it by deriving the date from `v.create_date`, which is when the election opened rather
+than when anyone voted. Ticket 2 fixes both.
+
+### SO approval is timestamped; its requirement flag is not always written
 
 `updateDarApprovalSO` sets `approving_so_id` and `approving_so_timestamp = now()`
-(`DataAccessRequestDAO.java:521-524`) — a real event timestamp. `requires_so_approval` is computed by
-`requiresSOApproval` (`DataAccessRequestService.java:898-905`) as an OR of two causes: a dataset
-carries the `REQUIRE_SO_DAR_APPROVAL` automation rule, or the user is not pre-authorized for all
-required DAAs.
+(`DataAccessRequestDAO.java:521-524`) — a reliable event timestamp.
 
-The OR means a *computed* `false` does identify the pre-authorization skip. The *stored* column does
-not, because it is only written when true — see Caveat D. Note also that the method is
-`requiresSOApproval`; the ticket's `flagIfSOApprovalIsNeeded` does not exist.
+`requires_so_approval` is computed at submission by `requiresSOApproval`
+(`DataAccessRequestService.java:898-905`) as an OR: a dataset carries the `REQUIRE_SO_DAR_APPROVAL`
+automation rule, or the researcher is not pre-authorized for all required Data Access Agreements.
 
-### Expiration is deterministic
+The column is nullable with no default
+(`changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml:6`) and is written **only when
+true** (`DataAccessRequestService.java:298-300`). NULL therefore means three different things: approval
+was skipped because the researcher was pre-authorized; the row predates the column (January 2026); or
+the row is a progress report or closeout, which take a separate path
+(`DataAccessRequestService.java:349-355` writes `true` only for non-closeout reports whose submitter
+lacks pre-authorization, leaving closeouts NULL even though they do go to an SO).
 
-`expiresAt` is `submissionDate + EXPIRATION_DURATION_MILLIS` (365 days), recomputed on hydration
-(`models/DataAccessRequest.java:31`, `:154-163`).
+Consequences for any query: `WHERE requires_so_approval = false` matches nothing under Postgres null
+semantics and fails silently. `DataAccessRequestMapper.java:57` coerces the NULL to primitive `false`,
+so the problem is invisible from the service layer. The usable predicate is
+`requires_so_approval IS NOT TRUE AND parent_id IS NULL`, date-bounded.
 
-The ticket argues this "loses the point-in-time fact" and that monthly counts "silently change as
-time passes". That does not hold: expiration is a pure function of a persisted `submission_date` and
-a compile-time constant, so the date a DAR expired is computable retroactively and is stable. What
-changes is which DARs are *currently* expired, which is correct for a current-state field and
-irrelevant to a historical chart. No capture is needed.
+### Expiration is derived, not stored
 
-### `parent_id` cannot carry renewals
+`expiresAt` is `submissionDate + EXPIRATION_DURATION_MILLIS` (365 days), recomputed whenever the object
+is hydrated (`models/DataAccessRequest.java:31`, `:154-163`). Because it is a pure function of a
+persisted timestamp and a constant, the date any DAR expired is computable retroactively and is stable
+over time. Reporting computes it; nothing needs capturing.
 
-`parent_id` is UNIQUE (`uk_parent_id`, from
-`changelog-consent-2025-05-16-disallow-pr-siblings.xml:5-6`), so a DAR has at most one child, and it
-already means continuing review: `createProgressReport` requires the datasets to be approved on the
-parent (`DataAccessRequestService.java:318-331`). Renewal needs its own column.
-
-### Cancellation is a JSON status, not a column
+### Cancellation is a JSON status
 
 `DarStatus.CANCELED` is written into `data->>'status'` and read back by string comparison
-(`resources/DarCollectionResource.java:301-305`). There is no cancellation timestamp.
+(`resources/DarCollectionResource.java:301-305`). There is no cancellation timestamp. A canceled DAR is
+neither decided nor awaiting a decision, so every funnel query must exclude it explicitly or it counts
+as pending indefinitely.
 
-Cancellation is not a requested metric, but it matters for reporting: a canceled DAR is neither
-decided nor awaiting a decision, so the decision funnel must exclude it explicitly or count it as
-pending forever.
+### Renewal has no representation
 
-### The existing metrics surface is narrower than the ticket states
+The nearest artifact is the progress-report chain, and it cannot be reused: `parent_id` is UNIQUE
+(`changelog-consent-2025-05-16-disallow-pr-siblings.xml:5-6`), so a DAR has at most one child, and it
+already means continuing review — `createProgressReport` requires the datasets to be approved on the
+parent (`DataAccessRequestService.java:318-331`). Renewal needs its own column and its own definition.
 
-`MetricsResource` exposes one endpoint, `GET /api/metrics/dar-summaries/{datasetId}`, annotated
-`@PermitAll`. The `/study/{studyId}` endpoint the ticket refers to does not exist.
+### Collaborators are validated but not identified
 
-`@PermitAll` matters: an admin analytics surface must not inherit it, so the new endpoints belong on
-a separate admin-scoped resource even though they reuse the service and mapper patterns.
+At submission, internal collaborators and lab staff are looked up by email, must resolve to a DUOS user
+holding a library card, and must share the submitter's institution
+(`DataAccessRequestService.java:617`, `:718`). External collaborators do not go through that check.
 
-## Findings That Change the Ticket's Plan
+`Collaborator` is a record of name, email, title, era commons id and country stored in the DAR's JSON,
+with no user-id foreign key. Counting collaborators per DAR is exact; identifying the same person
+across DARs means joining on email after the fact.
 
-| # | Ticket's position | Finding | Effect |
-| --- | --- | --- | --- |
-| 1 | Decision timestamps are not recorded, so an event table is required | `vote.update_date` is written when a vote is cast, for manual and RADAR alike, and nothing else overwrites it | **No capture layer at all.** This removes the event table, its emission hook, and the forward-only constraint |
-| 2 | `Election.finalVoteDate` is stored | It is derived two ways, one of them wrong, and null for RADAR | Read `vote.update_date`; the null-for-RADAR half is ticket 1 |
-| 3 | `Election.finalAccessVote` holds the outcome | No production code writes that column | Read `vote.vote` |
-| 4 | Persist an `EXPIRED` event | Expiration is deterministic from `submission_date` | Compute it |
-| 5 | `requiresSOApproval` only needs exposing | True of the computed value; the stored column is NULL when approval was skipped | Query with `IS NOT TRUE`, not `= false` |
-| 6 | Renewal may reuse `parentId` | `parent_id` is UNIQUE per DAR | Renewal needs a distinct column |
-| 7 | Add rollup columns to `data_access_request` | Rollup rules are unresolved product questions, and a pair has an election *history* | Do not denormalize; reduce at query time |
-| 8 | Extend `MetricsResource` | It is `@PermitAll` | New admin-scoped resource |
+### Institution is read live
+
+`users.institution_id` is the only source. The DAR's own `institution` property is in
+`DataAccessRequestData.DEPRECATED_PROPS` and is stripped at submission, so nothing records where a
+researcher worked when they applied.
+
+## Requirements → Behavior
+
+| # | Requested metric | Where it lands |
+| --- | --- | --- |
+| 1 | DARs with a DAC decision vs. not | Ticket 4. Latest cast vote per DAR-dataset pair; canceled DARs excluded. Exact meaning set by Blocking Decision 2 |
+| 2 | Decision results: approved vs. denied | Ticket 4. `vote.vote` on the latest cast `FINAL`/`RADAR_APPROVE` vote. DAR-level rollup by Blocking Decision 4 |
+| 3 | DARs decided via RADAR rules | Ticket 4. `vote.type`. History from July 2025 |
+| 4 | DARs submitted per researcher | Ticket 3. `user_id` + `submission_date` |
+| 5 | DARs submitted per institution | Ticket 3, current institution only. Ticket 9 makes it historical |
+| 6 | Datasets requested per DAR | Ticket 3. `dar_dataset` |
+| 7 | Researchers per DAR (PI, lab staff, internal collaborators) | Ticket 3. Counts per DAR, not distinct people |
+| 8 | Turnaround: submission → DAC decision | Ticket 5. `submission_date` to `vote.update_date` |
+| 9 | Turnaround: submission → SO approval, delineating pre-auth skip | Ticket 6. `approving_so_timestamp`; skip via `IS NOT TRUE AND parent_id IS NULL`. History from January 2026 |
+| 10 | DARs expired | Ticket 6. Computed from `submission_date` |
+| 11 | DARs renewed | Ticket 8, conditional on Blocking Decision 1 |
+| 12 | Number of researchers submitting DARs | Ticket 3. Distinct `user_id` where `submission_date` is not null |
+| 13 | Timestamp everything, longitudinal | Every reporting ticket returns a timestamp per row; bucketing is a client concern |
+
+## Data Accuracy Caveats
+
+Four limits are properties of the data, not of the queries. Each needs stating on the endpoint and on
+the dashboard, because a number that is quietly wrong is worse than one that is absent.
+
+| Caveat | Effect | Remedy |
+| --- | --- | --- |
+| **Institution is current, not historical** | A researcher changing employer moves all their past DARs with them | Ticket 9, forward-only |
+| **Collaborators have no durable identity** | Per-DAR counts are exact; distinct-person counts across DARs are an email-join approximation | State as approximate; do not present as a headcount |
+| **`requires_so_approval` NULL is overloaded** | Skips, pre-column rows and closeouts are indistinguishable without extra predicates | `IS NOT TRUE AND parent_id IS NULL`, bounded to submissions after January 2026 |
+| **Short history on two metrics** | RADAR exists from July 2025, SO columns from January 2026 | No year-over-year comparison on metrics 3 and 9 yet |
+
+A fifth is a measurement rather than a known limit: deciding votes old enough to predate the current
+vote-casting path may carry a null `update_date`, which would make their turnaround wrong rather than
+missing. Ticket 1 quantifies it before anything is promised.
 
 ## Recommended Decisions
 
-1. **Capture nothing.** Every requested fact except renewal is already persisted or derivable from
-   what is. Re-recording them would duplicate facts that can then disagree with their source, and
-   would make metrics forward-only that are currently answerable across full history.
-2. **Read `vote.update_date` and `vote.vote` directly**, not `Election.finalVoteDate` or
-   `election.final_access_vote`. Follow the `ranked_final_votes`/`latest_final_votes` CTEs in
-   `SigningOfficialDashboardDAO.java:48-64`, which already handle RADAR, uncast votes and recency
-   correctly.
-3. **Reduce over the election history at query time**, so Open Questions 2 and 3 (first-versus-last
-   decision date; any-versus-all denial) do not block implementation and can change without a
-   migration.
-4. **Defer renewal** until Open Question 1 is answered, and reserve `renewed_from_dar_id` rather than
-   overloading `parent_id`.
-5. **Put the new endpoints on an admin-scoped resource**, reusing `MetricsService` and mapper
-   patterns rather than the `MetricsResource` path prefix.
-6. **Split the work by metric family, not by layer.** With no shared schema, the reporting tickets
-   can be built in parallel — see [Implementation Approach](#implementation-approach).
-
-## Design
-
-There is no new table and no new column in the core of this plan. The design work is in the queries.
-
-### Selecting the current decision
-
-For each DAR-dataset pair, rank that pair's `FINAL` and `RADAR_APPROVE` votes by
-`COALESCE(update_date, create_date)` descending, tie-broken by `vote_id`, and take the first. That
-row yields all three decision facts at once:
-
-- `vote.vote` — approved or denied;
-- `vote.type` — RADAR or manual;
-- `vote.update_date` — when it was decided.
-
-`SigningOfficialDashboardDAO.java:48-64` is this query already, written for the SO console, and
-`ResearcherDashboardDAO.java:46-68` applies equivalent logic under different CTE names. Reuse that
-shape rather than inventing another — note in particular its `v.vote IS NOT NULL` filter, without
-which an uncast vote on a reopened election wins the ranking and reports a decision that was never
-made.
-
-Partition by `(reference_id, dataset_id)`. Omitting `dataset_id` yields one election per DAR and is
-valid only for existence checks — `ElectionDAO.findLastElectionsByReferenceIds` carries a comment
-saying exactly that.
-
-### Reopened elections change the answer
-
-Reopening a decision archives the previous elections and creates a new one
-(`service/dao/DarCollectionServiceDAO.java:85`). So a DAR-dataset pair that was approved and then
-reopened has an archived election carrying a cast vote and a live election carrying none.
-
-The two plausible readings disagree:
-
-- **Latest election** — the pair is *undecided*, because the live election has no cast vote.
-- **Latest cast vote** — the pair is *approved*, because the archived vote is the most recent one
-  actually cast.
-
-The precedent CTE gives the second reading: it filters `v.vote IS NOT NULL`, so it skips the live
-uncast vote and reports the old decision. That is right for the SO console, which is asking "what was
-decided", and it is not obviously right for a funnel asking "what is still awaiting a decision".
-
-This is a product-visible choice, not an implementation detail, so it is Open Question 6 rather than
-a decision taken here. Until it is settled, report the two counts separately rather than picking one
-silently.
-
-### Shape of the returned rows
-
-One row per DAR-dataset pair, each carrying its own timestamp so the client can bucket by day, week
-or month without reshaping. DAR-level aggregates are a reduction over those rows, applied once Open
-Questions 2 and 3 are answered.
-
-Prefer CTEs for the multi-table reductions, per the repo's PostgreSQL convention, and paginate rather
-than materialising unbounded result sets.
-
-### Predicates that are easy to get wrong
-
-- SO approval skipped: `requires_so_approval IS NOT TRUE`, never `= false` (Caveat D).
-- Canceled DARs: excluded via `data->>'status'`, or they count as pending forever.
-- Expired: `submission_date + INTERVAL '365 days'`, matching
-  `DataAccessRequest.EXPIRATION_DURATION_MILLIS`.
-- Decision turnaround: bound to DARs submitted after January 2026 if the SO columns are involved, and
-  check for null `update_date` on old votes (Caveat C).
+| Question | Decision |
+| --- | --- |
+| Capture new lifecycle events? | No. Every requested fact except renewal is already persisted or derivable. Re-recording them would duplicate facts that can then disagree with their source, and would make metrics forward-only that are currently answerable across full history. |
+| Read decisions from where? | `vote.vote`, `vote.type` and `vote.update_date`, never `Election.finalVoteDate` or `election.final_access_vote`. |
+| Denormalize decision rollups onto `data_access_request`? | No. The rollup rules are unresolved, and an election history would need invalidating whenever a later election supersedes an earlier one. Reduce at query time. |
+| Extend `MetricsResource`? | No. It is `@PermitAll`; an admin analytics surface must not inherit that. New admin-scoped resource, same service and mapper patterns. |
+| One endpoint or several? | Several, split by metric family. A single surface covering every metric would be too large to review in one pass, and would couple unrelated queries into one release. |
+| Row granularity? | Per endpoint, not global. Volume and composition (ticket 3) returns one row per DAR, since that is the unit being counted. Decision and turnaround reporting (tickets 4 and 5) returns one row per DAR-dataset pair, because a decision is made per pair. DAR-level decision aggregates are reductions over the pair rows. Every row carries a timestamp either way. |
 
 ## Implementation Approach
 
-### Shape of the work
+### Sequencing
 
-Because nothing in the core needs capturing, tickets 2 to 5 are read-only reporting surfaces over
-existing data with no schema between them, so there is no ordering constraint — a **fan-out, not a
-stack**. Nothing here requires the DT-3942 pattern of five PRs rebasing onto each other.
+Ticket 1 is a measurement spike and should run first, because its answers set the honest date range
+for tickets 5 and 6 and could change what the dashboard promises.
 
-Three tickets sit outside that core and do write: ticket 1 changes what two existing queries return,
-and tickets 7 and 8 add columns. All three are independent of the reporting tickets and of each
-other.
+Tickets 2 to 6 are then independent of one another and can be worked in parallel — a fan-out, not a
+stack. None of them is gated on a blocking decision; see [Blocking Decisions](#blocking-decisions) for
+what each decision actually shapes.
 
-One qualification, so "standalone" is not oversold: tickets 2 to 5 all add endpoints to the same new
-resource, service and DAO, so they overlap textually. Whichever lands first creates those files and
-the others add a method each. That is a merge conflict of a few lines, not a dependency — none needs
-another's behavior, and they can be reviewed in any order.
+Ticket 7 (`duos-ui`) consumes tickets 3 to 6 at runtime and follows them, and is the one place
+Decision 2 must be settled, because a dashboard has to show one funnel number. Tickets 8 and 9 are
+conditional and optional respectively.
 
-### Sizing basis
+The critical path to a usable dashboard is tickets 3 to 7. Ticket 1 should precede them but does not
+block them, and ticket 2 can land at any point.
 
-Budget is 500 insertions per PR. Estimates are calibrated against comparable merged work in this
-repository rather than guessed:
+### Shared surface
 
-- `DacDashboardResource` + service + DAO + summary model is 239 lines of main code and 498 of test —
-  737 total for one read-only reporting surface. A single "DAR analytics" PR covering every reporting
-  metric would be roughly three times the budget, which is why reporting is split by metric family.
-- Recent merged PRs run 434–612 insertions (`[DT-3942][2/5]` 508, `[3/5]` 538, `[4/5]` 612,
-  `[DT-3940][1/4]` 434).
+Tickets 3 to 6 each add endpoints to a new admin-scoped `DarAnalyticsResource`, with a matching
+service and DAO. Whichever merges first creates those three files; the others add a method to each.
+That is a small textual conflict, not an ordering dependency — none depends on another's behavior.
 
-Estimates are insertions, split main/test. Treat them as ±25%.
-
-Every endpoint ticket also touches, by convention, and counted in the estimates:
+Every endpoint ticket also touches, by convention and counted in its estimate:
 
 - `ConsentApplication.java` — `env.jersey().register(...)`
 - `ConsentModule.java` — a `@Provides @Singleton synchronized` provider
-- `src/main/resources/assets/paths/<endpoint>.yaml` and its entry in `api-docs.yaml`
+- `src/main/resources/assets/paths/<endpoint>.yaml`, and its entry in `api-docs.yaml`
+
+### Sizing
+
+Each ticket is scoped to one reviewable change against a comparable existing surface — the role
+dashboards are the closest analogue, each being a resource, service, DAO and response model with its
+tests. Where a metric family would have grown past that, it was split rather than carried.
+
+Points below are relative estimates, not durations.
 
 ## Jira-Ready Tickets
 
-### Ticket 1: Fix RADAR-approved elections reporting no final vote
+### Ticket 1: Measure reporting data coverage in production
 
-**Depends on: nothing.** Size: ~120 (20 main / 100 test).
+**Issue type:** Spike
 
-A pre-existing defect. Both `final_vote_date` derivations join the vote on `LOWER(v.type) = 'final'`,
-so a `RADAR_APPROVE` vote never matches. They fail differently, and the difference matters:
+**Suggested size:** 2 points
 
-- `findElectionWithFinalVoteById` (`ElectionDAO.java:58-72`) uses an **INNER JOIN** (`:66`), so a
-  RADAR-only election is **absent from the result**, not merely missing its vote. Fixing it changes
-  which elections appear, not just which fields are populated.
-- `findLastElectionsByReferenceIds` (`:130-160`) uses a **LEFT JOIN** (`:145`), so it returns the
-  election with null vote fields. It also derives the date correctly once the type filter is fixed.
-- `:62` additionally derives the date from `create_date`, the election-open time, rather than
-  `update_date`.
+**Dependencies:** None
 
-Impacted: `db/ElectionDAO.java`, `src/test/java/org/broadinstitute/consent/http/db/ElectionDAOTest.java`.
+**Summary**
 
-Confirm each with a failing test first. This is the only reporting ticket that alters existing read
-behavior, and the INNER JOIN change is the riskier half — an election appearing where none did before
-can change counts and list contents, so check what consumes both queries in `duos-ui` before shipping.
+Establish how much history each metric actually has before any endpoint promises a trend line.
 
-Done when: a RADAR-approved election is returned by both queries, carries its vote and a decision date
-taken from `update_date`, and a test fails without the fix.
+**Description**
 
-### Ticket 2: DAR volume and composition reporting
+Every metric in this plan is answerable in principle. What is unknown is how many rows exist to answer
+it with. Two of the metrics have short histories by construction, and one depends on a timestamp that
+may be absent on older rows.
 
-Metrics 4, 5, 6, 7, 12. **Depends on: nothing.** Size: ~450 (220 main / 230 test).
+Run counts against production and record them in this plan, so the dashboard's date ranges and the
+product conversation are grounded in real volume.
 
-Aggregation over existing columns; no schema change.
+**Implementation notes**
 
-Impacted: new `resources/DarAnalyticsResource.java`, `service/DarAnalyticsService.java`,
-`db/DarAnalyticsDAO.java` + mapper, record DTOs under `models/`. Reads `data_access_request`,
-`dar_dataset`, `users`, `institution`, and the DAR `data` JSON for collaborators.
+- Read-only queries. No schema or code changes.
+- Query the `consent` schema via `pg_catalog` and `::regclass`, not `information_schema` with
+  `table_schema = 'public'`.
 
-Record Caveats A and B in the path spec: institution is the submitter's current institution, and
-collaborator counts are per-DAR rather than distinct people.
+**Acceptance criteria**
 
-### Ticket 3: DAC decision reporting
+- Submitted DARs per month for the last 24 months is recorded.
+- The count of DAR-dataset pairs with a closed data-access election is recorded.
+- The count of `RADAR_APPROVE` votes, and the earliest, is recorded.
+- The count of DARs with a non-null `approving_so_timestamp`, and the earliest, is recorded.
+- The count of **cast** `FINAL`/`RADAR_APPROVE` votes with a null `update_date` is recorded, with the
+  newest such vote's date. The count must require `v.vote IS NOT NULL` and be scoped to data-access
+  elections: election creation inserts uncast `FINAL` votes with neither a value nor an update
+  timestamp (`service/dao/DarCollectionServiceDAO.java:149`, `:181`), and counting those would measure
+  pending work rather than missing history.
+- The count of DARs with a null `requires_so_approval` split by `parent_id IS NULL`, so skips can be
+  separated from progress reports.
+- This plan is updated with the figures and with any metric the volume makes not worth charting.
 
-Metrics 1, 2, 3. **Depends on: nothing.** Size: ~480 (215 main / 265 test).
+**Tests**
 
-Whether each DAR-dataset pair has a decision, whether it was approved or denied, and whether RADAR or
-a chairperson decided. Ship **one row per DAR-dataset pair**, which is what keeps this independent of
-Open Questions 2 and 3; the DAR-level rollup is a later small addition, not a rewrite.
+None; this is a measurement.
 
-Impacted: `db/DarAnalyticsDAO.java` + mapper, `service/DarAnalyticsService.java`,
-`resources/DarAnalyticsResource.java`, record DTOs. Reads `election`, `vote`, `dar_dataset`.
+**Out of scope**
 
-Copy the `ranked_final_votes`/`latest_final_votes` CTEs from `SigningOfficialDashboardDAO.java:48-64`,
-including the `v.vote IS NOT NULL` filter; partition by `(reference_id, dataset_id)`. Exclude canceled
-DARs via `data->>'status'`, and settle the reopened-election question below before writing the
-funnel.
+Any change to application code or schema.
 
-Done when: a pair with a denied-then-approved-then-denied election history reports denied, a
-multi-dataset DAR mixing RADAR and manual decisions reports both, and a canceled DAR appears in
-neither the decided nor the pending count.
+---
 
-### Ticket 4: Decision turnaround reporting
+### Ticket 2: Report RADAR decisions from the election queries
 
-Metric 8. **Depends on: nothing.** Size: ~300 (130 main / 170 test).
+**Issue type:** Story
 
-Submission-to-decision turnaround from `submission_date` to `vote.update_date` on the deciding vote,
-with mean, median and mode. Full history, no capture — this is the metric the ticket believed
-impossible.
+**Suggested size:** 3 points
 
-Impacted: `db/DarAnalyticsDAO.java`, `service/DarAnalyticsService.java`,
-`resources/DarAnalyticsResource.java`.
+**Dependencies:** None
 
-Quantify null `update_date` on old deciding votes first (Caveat C) and either exclude those rows or
-report them as a known-unknown; do not silently fall back to `create_date`, which would report the
-election-open date as the decision date.
+**Summary**
 
-### Ticket 5: SO approval and expiration reporting
+Fix two election queries that cannot see RADAR-approved decisions, and one that dates a decision from
+when its election opened.
 
-Metrics 9, 10. **Depends on: nothing.** Size: ~350 (160 main / 190 test).
+**Description**
 
-Impacted: `db/DarAnalyticsDAO.java` + mapper, `service/DarAnalyticsService.java`,
-`resources/DarAnalyticsResource.java`, record DTOs. Reads `approving_so_id`,
-`approving_so_timestamp`, `requires_so_approval`, `submission_date`.
+Both derivations of `final_vote_date` in `ElectionDAO` restrict the vote join to type `final`, so a
+`RADAR_APPROVE` vote never matches. `findElectionWithFinalVoteById` uses an INNER JOIN, so a
+RADAR-decided election is missing from its results entirely; `findLastElectionsByReferenceIds` uses a
+LEFT JOIN, so the election is returned with a null vote and null date. Separately, the first query
+derives the date from `v.create_date`, which is when the election opened rather than when the vote was
+cast.
 
-Identify the pre-authorization skip as `requires_so_approval IS NOT TRUE AND parent_id IS NULL`,
-bounded to DARs submitted after the column existed (January 2026). All three conditions are needed:
-the column is NULL when approval was skipped, NULL on closeouts and on pre-authorized progress
-reports, and NULL on everything written before January 2026 (Caveat D). A test asserting that
-`= false` returns nothing is worth keeping as a guard against the predicate regressing.
+This predates the analytics work and affects any consumer of `Election.finalVote`, which is why it is
+separated from the reporting tickets.
 
-Done when: turnaround is reported for approved DARs, skips are distinguishable from pending, a
-closeout that went to an SO is not counted as a skip, and expiry matches
-`EXPIRATION_DURATION_MILLIS`.
+**Implementation notes**
 
-### Ticket 6: Admin DAR analytics dashboard (`duos-ui`)
+- Accept both `final` and `radar_approve` in the vote-type filter, matching
+  `SigningOfficialDashboardDAO.java:48-64`.
+- Derive the date from `COALESCE(v.update_date, v.create_date)` in both queries.
+- The INNER JOIN change alters which elections are returned, not only which fields are populated.
+  Identify what consumes both queries in `duos-ui` and confirm a newly appearing election does not
+  change a count or list the UI depends on.
 
-**Depends on tickets 2 to 5 being deployed, at runtime.** Separate repository. Size: ~500–600, split
-by section.
+**Acceptance criteria**
 
-Decision funnel, RADAR-versus-manual split, SO turnaround distribution with mean/median/mode beside
-it, volume rollups, and day/week/month bucketing. Built on the existing
-`src/components/dashboard/{ConsoleDashboard,ConsoleDashboardGrid}.tsx` framework and the `dataviz`
-skill's chart conventions. Each section consumes one endpoint, so the split seams already exist.
+- A RADAR-approved election is returned by `findElectionWithFinalVoteById`, having previously been
+  absent.
+- A RADAR-approved election returned by `findLastElectionsByReferenceIds` carries its vote value and a
+  non-null decision date.
+- Both queries date a manual decision from when the vote was cast, not when the election opened.
+- Elections with no cast vote are unaffected.
+- `duos-ui` consumers of both queries have been identified and confirmed unaffected, or updated.
 
-### Ticket 7 (conditional): Renewal capture
+**Tests**
 
-Metric 11. **Blocked on Open Question 1.** Size: ~350.
+- A test per query asserting the RADAR case, each failing before the fix and passing after.
+- A regression test that a manual `FINAL` decision reports the vote-cast date.
+- A test that an open election with an uncast vote is unchanged.
 
-The only capture work needed for a *requested metric*; ticket 8 also writes, but for accuracy rather
-than a new metric. Adds `renewed_from_dar_id` — not a reuse of `parent_id`. Revisit the decision to
-derive expiration if renewal resets the clock.
+**Out of scope**
 
-Impacted: a changeset, `models/DataAccessRequest.java`, `db/DataAccessRequestDAO.java`, and whichever
-resubmission path product defines.
+Any change to how votes are cast or elections are closed.
 
-### Ticket 8 (optional): Snapshot institution at submission
+---
 
-Fixes Caveat A. **Capture half depends on nothing; the reporting half depends on ticket 2.** Size:
-~280 (110 main / 170 test), splittable along that seam if the dependency is inconvenient.
+### Ticket 3: DAR volume and composition reporting
 
-Persist the submitter's institution on the DAR at submission so historical attribution stops moving
-when a researcher changes employer, **and consume it in the reporting query** — capturing the column
-alone leaves ticket 2 still reporting current institution, so the caveat would survive its own fix.
+**Issue type:** Story
 
-Impacted: a changeset adding the column; `service/DataAccessRequestService.java` (inside the existing
-creation transaction, beside `captureDatasetDaaSnapshots`); `models/DataAccessRequest.java`;
-`db/DataAccessRequestDAO.java`; `db/mapper/DataAccessRequestMapper.java`, since DAR hydration is
-explicitly mapped rather than automatic (`:16`); and `db/DarAnalyticsDAO.java` to prefer the snapshot
-and fall back to the live institution for rows predating it.
+**Suggested size:** 5 points
 
-Forward-only, and the fallback means the two eras have to be distinguishable in the output rather than
-silently blended. Worth filing only if year-over-year institution reporting matters to the PO.
+**Dependencies:** None. Creates `DarAnalyticsResource` if tickets 4 to 6 have not
 
-### Summary
+**Summary**
 
-| Ticket | Metrics | Size | Depends on |
+Expose submission volume and request composition: DARs per researcher and per institution, datasets
+per DAR, researchers per DAR, and the number of distinct researchers submitting.
+
+**Description**
+
+Covers requested metrics 4, 5, 6, 7 and 12. All are aggregations over existing columns; no schema
+change is involved.
+
+This is the first of four endpoints on a new admin-scoped analytics resource. It establishes the
+resource, its service and its DAO, which the other three extend.
+
+**Implementation notes**
+
+- New `resources/DarAnalyticsResource.java` annotated `@RolesAllowed(ADMIN)`, plus
+  `service/DarAnalyticsService.java`, `db/DarAnalyticsDAO.java` and a mapper.
+- Reads `data_access_request`, `dar_dataset`, `users`, `institution`, and the DAR `data` JSON for
+  collaborators.
+- Java records for the response DTOs.
+- Prefer CTEs for the multi-table rollups; paginate rather than materialising unbounded results.
+- Return one row per DAR, with a timestamp, so the client buckets without reshaping. This endpoint
+  counts requests, so the DAR is the unit; tickets 4 and 5 return pair-level rows instead because a
+  decision is made per dataset.
+- Institution comes from `users.institution_id` and is the submitter's current institution. Record
+  that in the OpenAPI path spec.
+- Collaborator counts are per DAR. Do not expose a distinct-person count.
+
+**Acceptance criteria**
+
+- Each of metrics 4, 5, 6, 7 and 12 is retrievable by an admin.
+- A non-admin receives 403.
+- Every row carries a timestamp permitting day, week and month bucketing.
+- A DAR with no collaborators reports zero rather than being omitted.
+- A researcher with no institution is reported rather than dropped from the institution rollup.
+- The path spec states that institution reflects the submitter's current employer.
+- Results are paginated.
+
+**Tests**
+
+- DAO tests for each aggregation, including a DAR with multiple datasets and one with none.
+- A test for a researcher with a null institution.
+- A resource test for the admin and non-admin cases.
+- A test that collaborator counts include PI, lab staff and internal collaborators separately.
+
+**Out of scope**
+
+Distinct-person collaborator counting. Historical institution attribution — see ticket 9.
+
+---
+
+### Ticket 4: DAC decision reporting
+
+**Issue type:** Story
+
+**Suggested size:** 5 points
+
+**Dependencies:** None. Blocking Decisions 3 and 4 shape only the deferred DAR-level rollup
+
+**Summary**
+
+Expose, per DAR-dataset pair, whether a DAC decision exists, whether it approved or denied, and
+whether RADAR or a chairperson made it.
+
+**Description**
+
+Covers requested metrics 1, 2 and 3. The decision is the most recent cast `FINAL` or `RADAR_APPROVE`
+vote for the pair, since reopening archives the previous election and opens a new one.
+
+Rows are returned per DAR-dataset pair rather than per DAR. That is what keeps the ticket independent
+of Blocking Decisions 3 and 4: the DAR-level rollup becomes a later reduction over these rows rather
+than a rewrite.
+
+**Implementation notes**
+
+- Copy the `ranked_final_votes`/`latest_final_votes` CTE pair from
+  `SigningOfficialDashboardDAO.java:48-64`, partitioning by `(reference_id, dataset_id)`.
+- Retain its `v.vote IS NOT NULL` filter. Without it an uncast vote on a reopened election wins the
+  ranking and reports a decision that was never made.
+- Retain its `vote_id` tie-break so ordering is deterministic.
+- Exclude canceled DARs via `data->>'status'`, or they are counted as pending indefinitely.
+- Read `vote.vote` for the outcome and `vote.type` for the source. Do not read
+  `election.final_access_vote`, which no production code writes.
+- Until Blocking Decision 2 is answered, report reopened pairs under both readings rather than
+  choosing one silently.
+
+**Acceptance criteria**
+
+- A pair whose election history is denied, approved, then denied reports denied.
+- A multi-dataset DAR with a RADAR decision on one dataset and a manual decision on another reports
+  both, attributed correctly.
+- A canceled DAR appears in neither the decided nor the pending count.
+- A pair with an open election and no cast vote reports undecided, with a null decision timestamp
+  rather than being omitted.
+- A reopened pair is reported under both readings while Blocking Decision 2 is unanswered, and under
+  the chosen reading once it is.
+- Every row carries the DAR's `submission_date` as its cohort timestamp, so undecided pairs can still
+  be bucketed by day, week or month, plus a nullable decision timestamp where a decision exists.
+- A non-admin receives 403.
+
+**Tests**
+
+- A DAO test per election-history shape: single decision, reopened once, reopened with no vote yet.
+- A test for a multi-dataset DAR mixing RADAR and manual decisions.
+- A test that a canceled DAR is excluded.
+- A test that an uncast vote does not win the ranking.
+
+**Out of scope**
+
+DAR-level rollups, pending Blocking Decisions 3 and 4. Turnaround statistics — see ticket 5.
+
+---
+
+### Ticket 5: DAC decision turnaround reporting
+
+**Issue type:** Story
+
+**Suggested size:** 3 points
+
+**Dependencies:** None. Shares the deciding-vote selector with ticket 4 — see Implementation notes
+
+**Summary**
+
+Report elapsed time from submission to DAC decision, with mean, median and mode.
+
+**Description**
+
+Covers requested metric 8, measuring `data_access_request.submission_date` to `vote.update_date` on
+the deciding vote. `update_date` is written when a vote is cast and is not touched by the reminder-flag
+or rationale-edit paths, so it is a durable decision timestamp across full history.
+
+**Implementation notes**
+
+- The deciding-vote selection is shared with ticket 4. Whichever ticket is implemented first adds it
+  to `db/DarAnalyticsDAO.java` as a named, reusable fragment; the second uses it rather than writing a
+  parallel version. Neither ticket has to wait for the other, in the same way both share the resource
+  scaffolding.
+- Exclude deciding votes with a null `update_date` and report the excluded count alongside the
+  statistics. Do not fall back to `create_date`: the election opened before the vote was cast, so
+  substituting it reports a **shorter** turnaround than actually occurred, understating how long DAC
+  review takes. Ticket 1 quantifies how many rows this affects.
+- Surface mean, median and mode together; a single average hides the shape of this distribution.
+- Return the per-row elapsed values as well as the summary, so the client can chart a distribution.
+
+**Acceptance criteria**
+
+- Turnaround is reported for decided DAR-dataset pairs with full history.
+- Pairs with a null deciding-vote `update_date` are excluded and counted, not silently dated from
+  `create_date`.
+- Mean, median and mode are each returned.
+- Undecided pairs are excluded from the statistics.
+- Rows are bucketable by day, week and month.
+- A non-admin receives 403.
+
+**Tests**
+
+- A test asserting a known turnaround for a manual decision and for a RADAR decision.
+- A test that a null `update_date` row is excluded and counted.
+- A test of mean, median and mode against a fixed, synthetic distribution.
+- A test that an undecided pair contributes nothing.
+
+**Out of scope**
+
+SO approval turnaround — see ticket 6.
+
+---
+
+### Ticket 6: SO approval and expiration reporting
+
+**Issue type:** Story
+
+**Suggested size:** 5 points
+
+**Dependencies:** None
+
+**Summary**
+
+Report submission-to-SO-approval turnaround, separate requests that skipped SO review through
+pre-authorization, and count expired DARs.
+
+**Description**
+
+Covers requested metrics 9 and 10. SO approval is timestamped by `approving_so_timestamp`. Expiration
+is computed as `submission_date + 365 days`, matching `EXPIRATION_DURATION_MILLIS`.
+
+The pre-authorization skip needs care. `requires_so_approval` is nullable and written only when true,
+so NULL means a skip, a row predating the column, or a progress report or closeout. All three must be
+separated.
+
+**Implementation notes**
+
+- Identify the skip as `requires_so_approval IS NOT TRUE AND parent_id IS NULL`, bounded to DARs
+  submitted after January 2026.
+- Never write `requires_so_approval = false`. It matches nothing and fails silently.
+- Report progress reports and closeouts separately, against their own approval flow, rather than
+  folding them into submission figures.
+- Compute expiry in SQL from `submission_date`; do not rely on the hydrated model.
+- State the January 2026 lower bound in the OpenAPI path spec.
+
+**Acceptance criteria**
+
+- Turnaround is reported for DARs with a non-null `approving_so_timestamp`.
+- Per-request elapsed values are returned alongside any summary statistics, so a distribution can be
+  charted rather than only an average.
+- Every row carries a timestamp permitting day, week and month bucketing, including the expiration
+  series.
+- DARs that skipped SO review are distinguishable from those still awaiting it.
+- A closeout that went to an SO is not counted as a pre-authorization skip, and progress reports and
+  closeouts are reported as their own figures rather than folded into submissions.
+- DARs submitted before January 2026 are excluded from the skip figure rather than counted as skips.
+- Expiry matches `EXPIRATION_DURATION_MILLIS` on both sides of the boundary.
+- A non-admin receives 403.
+
+**Tests**
+
+- A test per `requires_so_approval` state: true and approved, true and pending, NULL on an original
+  submission, NULL on a closeout, NULL on a pre-2026 row.
+- A test asserting that `= false` returns nothing, guarding the predicate against regression.
+- Expiry tests either side of 365 days.
+
+**Out of scope**
+
+DAC decision turnaround — see ticket 5.
+
+---
+
+### Ticket 7: Admin DAR analytics dashboard
+
+**Issue type:** Story
+
+**Suggested size:** 8 points, split by section if it grows past one reviewable change
+
+**Dependencies:** Tickets 3 to 6 deployed, and Blocking Decision 2 answered. Repository: `duos-ui`
+
+**Summary**
+
+Add an internal admin analytics page presenting the decision funnel, turnaround distributions, volume
+rollups and expiration over time.
+
+**Description**
+
+Consumes the four endpoints from tickets 3 to 6. Each section maps to one endpoint, so the page splits
+along those seams if it needs to.
+
+**Implementation notes**
+
+- Build on `src/components/dashboard/{ConsoleDashboard,ConsoleDashboardGrid}.tsx` rather than a new
+  layout system, and follow the `dataviz` skill's chart conventions.
+- Sections: decision funnel with RADAR-versus-manual split; SO turnaround distribution with mean,
+  median and mode shown beside it; volume rollups; expiration over time.
+- Every time series filterable and bucketable by day, week or month.
+- Surface the accuracy caveats in the UI where they apply — current-institution attribution on the
+  institution chart, the January 2026 lower bound on SO turnaround, and any exclusion count returned
+  by ticket 5.
+
+**Acceptance criteria**
+
+- Blocking Decision 2 is settled and the funnel presents one reading of a reopened decision, not two.
+- An admin can reach the page; no other role can.
+- Each section renders from its endpoint and shows an empty state rather than an error when a metric
+  has no data.
+- Turnaround sections display mean, median and mode.
+- Date bucketing by day, week and month works on every time series.
+- Caveats are visible next to the figures they qualify, not only in documentation.
+
+**Tests**
+
+- Component tests per section against fixture responses.
+- A test for the empty state of each section.
+- A test that a non-admin cannot reach the page.
+
+**Out of scope**
+
+Bulk export. Any metric not delivered by tickets 3 to 6.
+
+---
+
+### Ticket 8: Capture DAR renewal
+
+**Issue type:** Conditional Story
+
+**Suggested size:** 5 points, to be re-estimated once Blocking Decision 1 is answered
+
+**Dependencies:** Blocking Decision 1. Cannot start without it
+
+**Summary**
+
+Record when a DAR renews an earlier one, under whichever definition product settles on.
+
+**Description**
+
+Covers requested metric 11. DUOS has no renewal concept today, and the progress-report chain cannot be
+reused: `parent_id` is UNIQUE, so a DAR has at most one child, and it already means continuing review
+of an active request rather than resubmission after expiry.
+
+This is the only capture work in the plan, and the only metric that will be forward-only.
+
+**Implementation notes**
+
+- Add a distinct `renewed_from_dar_id` rather than overloading `parent_id`.
+- Write it on whichever submission path product's definition identifies.
+- If renewal resets the expiration clock, the derived-expiration decision in ticket 6 must be revisited,
+  because expiry would no longer be a pure function of `submission_date`.
+
+**Acceptance criteria**
+
+- A renewed DAR records the DAR it renews.
+- A DAR that is both progress-reported and renewed records both, independently.
+- Renewal counts are reportable over time.
+- Existing progress-report behavior is unchanged.
+- Whether renewal affects expiration is decided and implemented.
+
+**Tests**
+
+- A test that a renewal links to its predecessor.
+- A test that renewal and a progress report coexist on one DAR.
+- A regression test that progress-report creation is unaffected.
+
+**Out of scope**
+
+Backfilling renewals from historical data, which is not inferable.
+
+---
+
+### Ticket 9: Snapshot institution at submission
+
+**Issue type:** Story
+
+**Suggested size:** 3 points
+
+**Dependencies:** Capture half none; reporting half requires ticket 3
+
+**Summary**
+
+Record the submitter's institution on the DAR so historical attribution stops moving when a researcher
+changes employer.
+
+**Description**
+
+Institution is currently read live from `users.institution_id`, so a researcher who moves takes every
+past DAR with them and year-over-year institution reporting is unreliable.
+
+Persisting it at submission fixes the capture side; the reporting query must then prefer the snapshot
+and fall back to the live value for rows predating it. Both halves are needed — capturing alone leaves
+ticket 3 still reporting current institution.
+
+**Implementation notes**
+
+- Add the column in a Liquibase changeset with a `changelog-master.xml` include.
+- Write it inside the existing creation transaction in `DataAccessRequestService`, beside
+  `captureDatasetDaaSnapshots`.
+- Update `db/mapper/DataAccessRequestMapper.java`; DAR hydration is explicitly mapped, not automatic.
+- Update `db/DarAnalyticsDAO.java` to prefer the snapshot and fall back to the live institution.
+- Distinguish the two eras in the response rather than blending them, so a consumer can tell which
+  rows are historically accurate.
+
+**Acceptance criteria**
+
+- A DAR submitted after this change records the submitter's institution at submission.
+- The institution rollup uses the snapshot where present and the live value otherwise.
+- The response distinguishes snapshotted rows from fallback rows.
+- A researcher changing institution does not move their post-change DARs.
+- Existing submission behavior is otherwise unchanged.
+
+**Tests**
+
+- A test that submission records the institution.
+- A test that changing a user's institution does not alter an existing DAR's reported institution.
+- A test that a pre-change DAR falls back to the live value and is marked as such.
+
+**Out of scope**
+
+Backfilling historical institutions, which is not recoverable.
+
+---
+
+### Ticket summary
+
+| Ticket | Metrics | Size | Dependencies |
 | --- | --- | --- | --- |
-| 1. Fix RADAR final-vote defect | — | ~120 | nothing |
-| 2. Volume and composition reporting | 4, 5, 6, 7, 12 | ~450 | nothing |
-| 3. DAC decision reporting | 1, 2, 3 | ~480 | nothing |
-| 4. Decision turnaround reporting | 8 | ~300 | nothing |
-| 5. SO approval and expiration reporting | 9, 10 | ~350 | nothing |
-| 6. `duos-ui` dashboard | all | ~500–600, split | 2–5 deployed (runtime) |
-| 7. Renewal capture | 11 | ~350 | Open Question 1 |
-| 8. Snapshot institution at submission | 5 (accuracy) | ~280 | ticket 2, for the reporting half |
-
-Tickets 1 to 5 can all be worked in parallel; none blocks another. Ticket 8's capture half is equally
-independent, but its reporting half modifies the institution query ticket 2 introduces, so it either
-follows ticket 2 or splits in two.
-
-Metric 13 is not a ticket: every reporting ticket returns a timestamp per row, which is what makes
-bucketing a client concern.
+| 1. Measure reporting data coverage | — | 2 | none |
+| 2. Report RADAR decisions from election queries | — | 3 | none |
+| 3. Volume and composition reporting | 4, 5, 6, 7, 12 | 5 | none |
+| 4. DAC decision reporting | 1, 2, 3 | 5 | none |
+| 5. DAC decision turnaround reporting | 8 | 3 | none; shares a selector with ticket 4 |
+| 6. SO approval and expiration reporting | 9, 10 | 5 | none |
+| 7. Admin analytics dashboard (`duos-ui`) | all | 8 | tickets 3–6 deployed; Blocking Decision 2 |
+| 8. Capture DAR renewal | 11 | 5 | Blocking Decision 1 |
+| 9. Snapshot institution at submission | 5 (accuracy) | 3 | ticket 3 for the reporting half |
 
 ## Test Matrix
 
-At minimum, cover:
+Across the reporting tickets, cover at minimum:
 
-- a DAR-dataset pair with a denied-then-approved-then-denied election history, asserting the current
-  decision is denied;
-- a multi-dataset DAR mixing a RADAR decision on one dataset with a manual decision on another;
-- a RADAR-decided election reporting a decision date, which fails before ticket 1;
-- a canceled DAR counted as neither decided nor pending;
-- a DAR with `requires_so_approval` NULL, asserting it is reported as a skip and that `= false` would
-  have missed it;
-- a deciding vote with a null `update_date`, asserting it is excluded rather than dated from
-  `create_date`;
-- expiry against `EXPIRATION_DURATION_MILLIS` on either side of the boundary;
-- the reporting query against a DAR with no decision, a partial decision, and all datasets decided.
+- an election history of denied, approved, then denied on one DAR-dataset pair;
+- a reopened pair whose live election carries no cast vote;
+- a multi-dataset DAR mixing a RADAR decision with a manual one;
+- a RADAR-decided election, which ticket 2 makes visible to both election queries;
+- a canceled DAR, counted as neither decided nor pending;
+- each `requires_so_approval` state: true and approved, true and pending, NULL on an original
+  submission, NULL on a closeout, NULL on a pre-2026 row;
+- an assertion that `requires_so_approval = false` matches nothing;
+- a deciding vote with a null `update_date`, excluded and counted rather than dated from `create_date`;
+- expiry either side of the 365-day boundary;
+- a DAR with no decision, a partial decision, and all datasets decided;
+- admin and non-admin access to every endpoint.
 
 Synthetic data only. No Mockito `lenient()` stubbing.
 
-## Risks
-
-- **Reporting accuracy is bounded by the caveats, not the queries.** Institution attribution moves
-  with the researcher, collaborators have no durable identity, and two metrics have under fifteen
-  months of history. These are presentation risks: a number that is quietly wrong on a dashboard is
-  worse than one that is absent.
-- **Ticket 1 changes existing read behavior.** The reporting tickets add read-only surfaces; that one
-  alters what two existing queries return for RADAR elections — including making elections appear that
-  previously did not — so `duos-ui` consumers need checking.
-- **The `requires_so_approval` null trap fails silently.** A query using `= false` returns an empty
-  result rather than an error, and the Java model coerces the null away, so the mistake is invisible
-  from the service layer. This is why it has a named test above.
-- **Tickets 7 and 8 add columns**, and both are optional or blocked. They are the only schema changes
-  in the plan.
-
-## Open Questions
-
-1. **Renewal.** Is it the existing progress-report continuing-review flow, or a researcher
-   resubmitting after expiry — a flow that does not exist today? Blocks ticket 7, and the decision to
-   derive expiration if renewal resets the clock.
-2. **Decision timestamp rollup.** For a multi-dataset DAR, is it decided on the first dataset
-   decision or the last? Needed for DAR-level rollups in tickets 3 and 4; does not block per-dataset
-   rows.
-3. **Denial rollup.** Is a DAR denied if any dataset is denied, only if all are, or is partial
-   approval a third bucket? Same scope as question 2.
-4. **Researcher count.** Does "researchers on a DAR" deliberately exclude external collaborators, or
-   should those be a separate metric? Note that externals are not institution-validated at submission
-   while internals are (Caveat B).
-5. **History coverage.** Not a product question but a measurement: how many deciding votes carry a
-   null `update_date`, and how many DARs predate the SO columns? The answers set the honest starting
-   date for metrics 8 and 9. Run before promising charts.
-6. **Reopened elections.** When a decided DAR-dataset pair is reopened, is it "decided" (its last cast
-   vote stands) or "awaiting a decision" (its live election has no vote)? This changes the headline
-   funnel number. The existing dashboards already chose the first reading deliberately —
-   `ResearcherDashboardDAO.java:56-57` carries the comment "for a re-opened election the most recently
-   edited vote decides" — but they are answering "what was decided", not "what is outstanding", so the
-   choice should not be inherited without asking. Needed for tickets 3 and 4.
-
 ## Explicitly Out of Scope
 
-- Any change to DAC voting, RADAR rule, or SO-approval workflow semantics.
+- Any change to DAC voting, RADAR rule or SO-approval workflow semantics.
+- Capturing lifecycle facts Consent already persists.
 - Denormalized decision rollup columns on `data_access_request`.
-- Re-recording facts Consent already persists.
-- Bulk CSV or warehouse export. The dashboard is the agreed delivery target; export is a fast-follow
-  if the dashboard proves insufficient.
+- Bulk CSV or warehouse export. The dashboard is the delivery target; export is a fast-follow if it
+  proves insufficient.
 - A general-purpose audit framework across DUOS.
+- Backfilling renewal or historical institution, neither of which is recoverable.
 
 ## Definition of Done
 
 - Admin-scoped endpoints return flat, timestamped rows requiring no client-side reshaping before
   descriptive statistics.
 - Decision outcome, decision source and decision turnaround are reportable across full history, with
-  any excluded range stated rather than silently dropped.
+  any excluded range reported rather than silently dropped.
 - SO approval turnaround is reportable, with pre-authorization skips identified by a predicate that
-  survives the nullable column.
-- `duos-ui` surfaces the funnel, turnaround, volume and expiration views, bucketable by day, week or
-  month.
-- RADAR-decided elections report their vote and decision date, with a test that fails without the fix.
-- Renewal has an approved disposition, implemented or explicitly declined.
-- Apart from ticket 1, no existing DAR, voting, SO-approval or cancellation behavior has changed.
+  survives the nullable column and excludes progress reports.
+- RADAR-decided elections are visible to both election queries and carry a decision date.
+- `duos-ui` presents the funnel, turnaround, volume and expiration views, bucketable by day, week or
+  month, with the accuracy caveats shown beside the figures they qualify.
+- The four blocking decisions have been answered, and renewal is implemented or explicitly declined.
+- Apart from ticket 2, no existing DAR, voting, SO-approval or cancellation behavior has changed.
