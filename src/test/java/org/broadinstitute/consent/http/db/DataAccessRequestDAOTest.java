@@ -1187,9 +1187,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(approvedDAR.getReferenceId(), summaries.getFirst().referenceId());
     assertNotNull(summaries.getFirst().submissionDate());
 
-    // The requester's institution, as on the study route. The name is deliberately not carried.
+    // The requester's institution, as on the study route
     assertNotNull(summaries.getFirst().institutionName());
-    assertNull(summaries.getFirst().piName());
   }
 
   /** The submitter's institution comes through on the study route; their name does not. */
@@ -1228,9 +1227,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
 
     assertEquals(1, summaries.size());
-    // The DAR does record a piName, so this is the query withholding it rather than there being
-    // nothing to find - which is why that fixture stays.
-    assertNull(summaries.getFirst().piName());
     assertEquals(
         institutionDAO.findInstitutionById(user.getInstitutionId()).getName(),
         summaries.getFirst().institutionName());
@@ -1317,11 +1313,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     assertFalse(byDataset.isEmpty());
     assertTrue(byDataset.stream().allMatch(s -> s.institutionName() != null));
-    assertTrue(byDataset.stream().allMatch(s -> s.piName() == null));
-    // The same grant read through the study route reports the same institution, and no name
+    // The same grant read through the study route reports the same institution
     assertFalse(byStudy.isEmpty());
     assertEquals(byStudy.getFirst().institutionName(), byDataset.getFirst().institutionName());
-    assertTrue(byStudy.stream().allMatch(s -> s.piName() == null));
   }
 
   /**

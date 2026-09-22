@@ -25,4 +25,11 @@ properties:
     description: The reference identifier for the DAR
   institutionName:
     type: string
-    description: The institution of the requester the DAR was granted to
+    nullable: true
+    description: >-
+      The institution of the requester the DAR was granted to. Withheld, and omitted from the
+      response rather than sent as null, when the dataset belongs to no study: such a dataset is
+      readable by any authenticated caller, so nothing about the caller was established and the
+      requester's affiliation would be enumerable by walking dataset ids. Callers admitted on
+      their own merits - an admin, the dataset's creator, or a reader of its study - always
+      receive it. The requester's name is never included, whatever the caller.

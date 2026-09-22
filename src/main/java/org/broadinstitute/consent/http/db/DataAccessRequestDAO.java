@@ -175,10 +175,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
-              -- The requester's institution, but not their name: the pages show where a grant
-              -- went, not who holds it. Gated only on reading the dataset, which admits any
-              -- authenticated user when the dataset belongs to no study.
-              NULL::text AS pi_name,
+              -- The requester's institution, but never their name: the pages show where a grant
+              -- went, not who holds it.
               i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
@@ -271,7 +269,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
               -- Institution, not name: see the dataset-scoped query above.
-              NULL::text AS pi_name,
               i.institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
