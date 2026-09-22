@@ -236,6 +236,12 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                           RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                       ) last_vote
                   FROM election e
+                  -- Bound to the study's datasets inside the window, not after it. The outer join
+                  -- to dd.dataset_id cannot be pushed in here, so without this the window sorts
+                  -- and partitions every dataaccess election and vote in the table to answer for a
+                  -- study with a handful of datasets. The partition is already per dataset, so
+                  -- dropping other datasets' rows leaves every surviving partition untouched.
+                  INNER JOIN study_datasets sds ON sds.dataset_id = e.dataset_id
                   INNER JOIN vote v ON e.election_id = v.election_id
                       AND v.vote IS NOT NULL
                       AND LOWER(e.election_type) = 'dataaccess'

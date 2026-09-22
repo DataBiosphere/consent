@@ -116,6 +116,9 @@ public record StudyPatch(
    */
   public static final String PI_INSTITUTION_ID = "piInstitutionId";
 
+  /** The legacy study property that predates the pi_institution_id column. */
+  private static final String PI_INSTITUTION_PROPERTY = "piInstitution";
+
   public static final String PI_ORCID = "piOrcid";
   public static final String PI_LINKEDIN_URL = "piLinkedinUrl";
   public static final String PI_WEBSITE_URL = "piWebsiteUrl";
@@ -312,6 +315,27 @@ public record StudyPatch(
    */
   public boolean patchesPiInstitutionId() {
     return piInstitutionId() != null || explicitNulls().contains(PI_INSTITUTION_ID);
+  }
+
+  /**
+   * Whether this patch has legacy cleanup to do even though it changes no effective value.
+   *
+   * <p>study.pi_institution_id is authoritative, but a study registered before that column existed
+   * also carries the institution as the legacy {@code piInstitution} property, and {@code
+   * SchemaFromStudy} falls back to the property whenever the column is null. The column can become
+   * null without any patch: its foreign key is ON DELETE SET NULL, so deleting an institution
+   * clears it and leaves the property behind to resurface in the next registration payload.
+   *
+   * <p>Clearing that property is exactly a patch of {@code {"piInstitutionId": null}}, which
+   * changes no effective value and so is not {@link #isPatchable(Study) patchable}. Reported
+   * separately rather than folded into that answer, which means "does this change a stored value"
+   * and is relied on to answer 304.
+   */
+  public boolean retiresLegacyPiInstitution(Study study) {
+    return patchesPiInstitutionId()
+        && study.getProperties() != null
+        && study.getProperties().stream()
+            .anyMatch(property -> PI_INSTITUTION_PROPERTY.equals(property.getKey()));
   }
 
   /**

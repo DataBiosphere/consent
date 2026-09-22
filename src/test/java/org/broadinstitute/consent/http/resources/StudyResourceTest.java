@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -767,6 +768,59 @@ class StudyResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
     verify(datasetService, never()).patchStudy(any(), any(), any());
+  }
+
+  /**
+   * Deleting an institution nulls study.pi_institution_id through the foreign key without any
+   * patch, leaving the legacy piInstitution property behind - and SchemaFromStudy falls back to
+   * that property whenever the column is null, so the deleted institution resurfaces in the next
+   * registration payload. Clearing it is a patch of {"piInstitutionId": null}, which changes no
+   * stored value. That must not be answered with 304, or the property can never be retired.
+   */
+  @Test
+  void testPatchStudyByIdRetiresTheLegacyInstitutionPropertyWhenTheColumnIsAlreadyNull() {
+    Study study = createMockStudy();
+    study.setPiInstitution(null);
+    StudyProperty legacy = new StudyProperty();
+    legacy.setKey("piInstitution");
+    legacy.setType(PropertyType.Number);
+    legacy.setValue(7);
+    study.addProperties(legacy);
+
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
+    when(datasetService.patchStudy(eq(study.getStudyId()), eq(admin), any())).thenReturn(study);
+
+    try (var response =
+        resource.patchStudyById(duosUser, study.getStudyId(), "{\"piInstitutionId\": null}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(datasetService).patchStudy(eq(study.getStudyId()), eq(admin), any());
+  }
+
+  /** With no legacy property there is nothing to retire, so the same patch is still 304. */
+  @Test
+  void testPatchStudyByIdStillNotModifiedWithoutTheLegacyProperty() {
+    Study study = createMockStudy();
+    study.setPiInstitution(null);
+
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
+
+    try (var response =
+        resource.patchStudyById(duosUser, study.getStudyId(), "{\"piInstitutionId\": null}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    }
   }
 
   @Test

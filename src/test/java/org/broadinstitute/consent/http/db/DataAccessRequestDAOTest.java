@@ -2494,6 +2494,62 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
+  /**
+   * The study query prunes to the study's datasets inside the window over elections and votes, so
+   * the partition it sorts is bounded by the study rather than by the whole table. The partition
+   * was already per dataset, so this must not change what comes back: a vote cast on a dataset
+   * outside the study still has no bearing on one inside it, in either direction.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsByStudyIdIsUnaffectedByVotesOnOtherStudiesDatasets() {
+    User user = createUserWithInstitution();
+    Date now = new Date();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            List.of(randomAlphabetic(10)),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    Dataset inStudy = createDataset();
+    Dataset outsideStudy = createDataset();
+    datasetDAO.updateStudyId(inStudy.getDatasetId(), studyId);
+
+    // Approved on the study's dataset, denied later on one outside it
+    Integer grantedCollection = createDarCollection(user.getUserId());
+    DataAccessRequest granted = createDataAccessRequest(user.getUserId(), grantedCollection);
+    dataAccessRequestDAO.insertDARDatasetRelation(granted.getReferenceId(), inStudy.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        granted.getReferenceId(), outsideStudy.getDatasetId());
+    castFinalVote(granted.getReferenceId(), inStudy, now, true);
+    castFinalVote(granted.getReferenceId(), outsideStudy, new Date(), false);
+
+    // Approved only outside the study, and denied on the study's dataset
+    Integer deniedCollection = createDarCollection(user.getUserId());
+    DataAccessRequest denied = createDataAccessRequest(user.getUserId(), deniedCollection);
+    dataAccessRequestDAO.insertDARDatasetRelation(denied.getReferenceId(), inStudy.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        denied.getReferenceId(), outsideStudy.getDatasetId());
+    castFinalVote(denied.getReferenceId(), inStudy, now, false);
+    castFinalVote(denied.getReferenceId(), outsideStudy, new Date(), true);
+
+    List<DarMetricsSummary> summaries =
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId);
+
+    assertEquals(1, summaries.size(), "only the DAR approved on the study's own dataset");
+    assertEquals(granted.getReferenceId(), summaries.getFirst().referenceId());
+  }
+
+  private void castFinalVote(String referenceId, Dataset dataset, Date on, boolean approved) {
+    Election election = createDataAccessElection(referenceId, dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    updateVote(approved, "", on, vote.getVoteId(), false, election.getElectionId(), on, false);
+  }
+
   private Integer createDarCollection(Integer createUserId) {
     String darCode = randomAlphabetic(20);
     return darCollectionDAO.insertDarCollection(darCode, createUserId, new Date());

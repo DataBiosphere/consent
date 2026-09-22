@@ -169,7 +169,9 @@ public class StudyResource extends Resource {
         throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
       }
       StudyPatch studyPatch = StudyPatch.fromJson(json);
-      if (!studyPatch.isPatchable(study)) {
+      // Not modified means nothing to do, and a patch that only retires the legacy institution
+      // property has something to do even though it changes no stored value.
+      if (!studyPatch.isPatchable(study) && !studyPatch.retiresLegacyPiInstitution(study)) {
         return Response.status(Status.NOT_MODIFIED).entity(study).build();
       }
       Study patchedStudy = datasetService.patchStudy(studyId, user, studyPatch);
