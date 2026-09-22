@@ -7,49 +7,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import liquibase.Contexts;
-import liquibase.LabelExpression;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.testcontainers.containers.PostgreSQLContainer;
 
-class DatasetAliasSequenceMigrationTest {
+class DatasetAliasSequenceMigrationTest extends MigrationTestHelper {
 
   private static final String CHANGELOG =
       "changesets/changelog-consent-2026-08-10-dataset-alias-sequence.xml";
-  private static PostgreSQLContainer<?> postgres;
 
-  @BeforeAll
-  static void startPostgres() {
-    postgres = new PostgreSQLContainer<>(DAOTestHelper.POSTGRES_IMAGE);
-    postgres.start();
+  @Override
+  protected String changelog() {
+    return CHANGELOG;
   }
 
-  @AfterAll
-  static void stopPostgres() {
-    postgres.stop();
-  }
-
-  @BeforeEach
-  void createPreMigrationSchema() throws SQLException {
+  @Override
+  protected void createPreMigrationSchema() throws SQLException {
     try (Connection connection = connection();
         Statement statement = connection.createStatement()) {
-      statement.execute("DROP SCHEMA public CASCADE");
-      statement.execute("CREATE SCHEMA public");
       // Dev's legacy alias column is numeric, which exercises the setval bigint cast.
       statement.execute(
           "CREATE TABLE dataset (dataset_id bigserial PRIMARY KEY, alias numeric DEFAULT 0)");
@@ -146,58 +124,5 @@ class DatasetAliasSequenceMigrationTest {
 
     assertEquals(0, queryLong("INSERT INTO dataset DEFAULT VALUES RETURNING alias"));
     assertEquals(7, queryLong("INSERT INTO dataset (alias) VALUES (7) RETURNING alias"));
-  }
-
-  private static Connection connection() throws SQLException {
-    return DriverManager.getConnection(
-        postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-  }
-
-  private void update() throws Exception {
-    try (Connection connection = connection()) {
-      Database database =
-          DatabaseFactory.getInstance()
-              .findCorrectDatabaseImplementation(new JdbcConnection(connection));
-      try (Liquibase liquibase =
-          new Liquibase(CHANGELOG, new ClassLoaderResourceAccessor(), database)) {
-        liquibase.update(new Contexts(), new LabelExpression());
-      }
-    }
-  }
-
-  private void rollback() throws Exception {
-    try (Connection connection = connection()) {
-      Database database =
-          DatabaseFactory.getInstance()
-              .findCorrectDatabaseImplementation(new JdbcConnection(connection));
-      try (Liquibase liquibase =
-          new Liquibase(CHANGELOG, new ClassLoaderResourceAccessor(), database)) {
-        liquibase.rollback(1, new Contexts(), new LabelExpression());
-      }
-    }
-  }
-
-  private void execute(String sql) throws SQLException {
-    try (Connection connection = connection();
-        Statement statement = connection.createStatement()) {
-      statement.execute(sql);
-    }
-  }
-
-  private long queryLong(String sql) throws SQLException {
-    return ((Number) queryObject(sql)).longValue();
-  }
-
-  private boolean queryBoolean(String sql) throws SQLException {
-    return (Boolean) queryObject(sql);
-  }
-
-  private Object queryObject(String sql) throws SQLException {
-    try (Connection connection = connection();
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(sql)) {
-      resultSet.next();
-      return resultSet.getObject(1);
-    }
   }
 }

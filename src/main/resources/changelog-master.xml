@@ -263,4 +263,7 @@
   <include file="changesets/changelog-consent-2026-09-02-study-pi-institution-backfill.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-09-09-match-dataset-id.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-09-09-match-migration-snapshot.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-09-match-dataset-id-constraints.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-17-dataset-alias-default.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-09-17-drop-match-migration-snapshots.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

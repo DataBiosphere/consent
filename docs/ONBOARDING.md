@@ -10,6 +10,9 @@ From repository configuration:
 - Maven 3.9+
 - Docker or another OCI runtime for integration tests and local compose workflows
 - PostgreSQL (only if not using the provided compose stack)
+- `gcloud` CLI, logged in with `gcloud auth application-default login`. The service reads and
+  writes Google Cloud Storage with your own credentials locally; no service account key file is
+  needed or wanted. See "Google Cloud Storage credentials" in `DEVNOTES.md`.
 
 ## Quick Start (Docker Compose)
 

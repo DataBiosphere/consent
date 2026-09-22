@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <!--
+    Retires the alias-allocation trigger introduced by changelog-consent-2026-08-10-dataset-alias-sequence.
+    It existed to replace aliases supplied by instances predating that release; those are gone, so a
+    plain column default over the same sequence does the whole job.
+
+    The two halves are one changeset deliberately. The column still carries the DEFAULT 0 that
+    changelog-consent-43.0 gave it, so dropping the trigger first would not fail: it would quietly
+    hand every insert in the window alias 0, and the first of them would take DUOS-000000.
+
+    Aliases supplied explicitly are now honoured rather than overwritten, which a column default
+    cannot prevent. Nothing in the application supplies one - DatasetDAO.insertDataset omits the
+    column - so the exposure is an ad-hoc insert, and one that picks a value the sequence has not
+    reached yet leaves dataset_alias_unique to reject the allocation that later collides with it.
+    That is a loud failure on an unrelated insert; reposition the sequence with setval to clear it.
+  -->
+  <changeSet id="changelog-consent-2026-09-17-dataset-alias-default" author="kmarete">
+    <!--
+      The trigger called nextval() on every insert, so the sequence cannot trail the table unless a
+      row arrived around it. Halt rather than hand out a duplicate on the first insert after this.
+    -->
+    <preConditions onFail="HALT" onError="HALT"
+      onFailMessage="dataset_alias_seq must be positioned above every existing dataset.alias before it becomes the column default; a row was inserted without allocating from the sequence, so reposition it with setval before deploying">
+      <dbms type="postgresql"/>
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*)
+        FROM dataset d, dataset_alias_seq s
+        WHERE d.alias &gt;= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END)
+      </sqlCheck>
+    </preConditions>
+
+    <addDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"
+      defaultValueComputed="nextval('dataset_alias_seq')"/>
+    <sql>DROP TRIGGER dataset_alias_allocate ON dataset</sql>
+    <sql>DROP FUNCTION allocate_dataset_alias()</sql>
+
+    <rollback>
+      <sql splitStatements="false">
+        CREATE OR REPLACE FUNCTION allocate_dataset_alias() RETURNS trigger AS $$
+        BEGIN
+          NEW.alias := nextval('dataset_alias_seq');
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
+      </sql>
+      <sql splitStatements="false">
+        CREATE TRIGGER dataset_alias_allocate
+          BEFORE INSERT ON dataset
+          FOR EACH ROW EXECUTE FUNCTION allocate_dataset_alias()
+      </sql>
+      <!-- The legacy default the sequence replaced. The restored trigger overrides it on every
+           insert, but leaving the column with no default would not be the state this found. -->
+      <addDefaultValue tableName="dataset" columnName="alias" columnDataType="bigint"
+        defaultValueNumeric="0"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
