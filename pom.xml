@@ -19,7 +19,7 @@
     <logback.version>1.5.37</logback.version>
     <postgres.version>42.7.13</postgres.version>
     <surefire.version>3.6.0</surefire.version>
-    <swagger.ui.version>5.32.14</swagger.ui.version>
+    <swagger.ui.version>5.32.15</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
     <commons.csv.version>1.14.1</commons.csv.version>
@@ -33,7 +33,7 @@
          mvn.properties, which is how ElasticSearchCapabilityService reports the client version in a
          deployed build: the shade plugin strips dependency manifests, so the client's own
          Package.getImplementationVersion() is null in the uber jar. -->
-    <elasticsearch.rest.client.version>9.5.3</elasticsearch.rest.client.version>
+    <elasticsearch.rest.client.version>9.5.4</elasticsearch.rest.client.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -496,7 +496,7 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.56.0</version>
+        <version>8.57.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -848,7 +848,7 @@
     <dependency>
       <groupId>com.bucket4j</groupId>
       <artifactId>bucket4j_jdk17-core</artifactId>
-      <version>8.19.0</version>
+      <version>8.20.0</version>
     </dependency>
 
     <dependency>
