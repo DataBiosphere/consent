@@ -127,10 +127,10 @@ class ResourceTest {
     assertNull(noRoles.getRoles(), "the case under test is a null role list, not an empty one");
 
     Resource resource = new Resource() {};
+    List<UserRoles> privileged = List.of(UserRoles.ADMIN);
 
     assertThrows(
-        ForbiddenException.class,
-        () -> resource.validateAuthedRoleUser(List.of(UserRoles.ADMIN), noRoles, 2));
+        ForbiddenException.class, () -> resource.validateAuthedRoleUser(privileged, noRoles, 2));
   }
 
   /** The same caller asking about themselves is allowed through without consulting roles. */
@@ -140,7 +140,8 @@ class ResourceTest {
     noRoles.setUserId(1);
 
     Resource resource = new Resource() {};
+    List<UserRoles> privileged = List.of(UserRoles.ADMIN);
 
-    assertDoesNotThrow(() -> resource.validateAuthedRoleUser(List.of(UserRoles.ADMIN), noRoles, 1));
+    assertDoesNotThrow(() -> resource.validateAuthedRoleUser(privileged, noRoles, 1));
   }
 }
