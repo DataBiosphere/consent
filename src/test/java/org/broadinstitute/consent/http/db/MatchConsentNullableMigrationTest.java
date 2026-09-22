@@ -7,8 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import liquibase.exception.LiquibaseException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 /**
  * The rolling deployment is the point of this release: an instance on the previous one still
@@ -85,55 +88,45 @@ class MatchConsentNullableMigrationTest extends MigrationTestHelper {
         () -> execute("INSERT INTO match_entity (purpose, dataset_id) VALUES ('DAR-5', 1)"));
   }
 
-  @Test
-  void migrationHaltsWhileTheReleaseThatStoppedReadingIsNotApplied() throws Exception {
-    execute("CREATE TABLE match_migration_snapshot (match_id bigint PRIMARY KEY)");
+  private static final String CREATE_SNAPSHOT =
+      "CREATE TABLE match_migration_snapshot (match_id bigint PRIMARY KEY)";
+  private static final String CREATE_RATIONALE_SNAPSHOT =
+      "CREATE TABLE match_migration_rationale_snapshot (match_id bigint PRIMARY KEY)";
+  private static final String DROP_REPLACEMENT_CONSTRAINT =
+      "ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique";
 
-    assertThrows(LiquibaseException.class, this::update);
+  /**
+   * Each state below is the predecessor release not having applied. The last two pair an unmet half
+   * with another so that neither can be paid for by the other, since the gate checks each half on
+   * its own.
+   */
+  private enum UnmetGate {
+    SNAPSHOT_SURVIVES(CREATE_SNAPSHOT),
+    RATIONALE_SNAPSHOT_SURVIVES(CREATE_RATIONALE_SNAPSHOT),
+    // Without the replacement constraint the rows this release writes with a null consent fall
+    // under no uniqueness rule at all, which is why purpose_consent is allowed to go toothless.
+    REPLACEMENT_CONSTRAINT_MISSING(DROP_REPLACEMENT_CONSTRAINT),
+    SNAPSHOT_OFFSETS_MISSING_CONSTRAINT(CREATE_SNAPSHOT, DROP_REPLACEMENT_CONSTRAINT),
+    RATIONALE_SNAPSHOT_OFFSETS_MISSING_CONSTRAINT(
+        CREATE_RATIONALE_SNAPSHOT, DROP_REPLACEMENT_CONSTRAINT);
 
-    assertFalse(consentIsNullable());
+    private final List<String> preconditions;
+
+    UnmetGate(String... preconditions) {
+      this.preconditions = List.of(preconditions);
+    }
   }
 
-  @Test
-  void migrationHaltsWhileTheRationaleSnapshotSurvives() throws Exception {
-    execute("CREATE TABLE match_migration_rationale_snapshot (match_id bigint PRIMARY KEY)");
+  @ParameterizedTest(name = "{0}")
+  @EnumSource(UnmetGate.class)
+  void migrationHaltsWhileAGateIsUnmet(UnmetGate gate) throws Exception {
+    for (String sql : gate.preconditions) {
+      execute(sql);
+    }
 
-    assertThrows(LiquibaseException.class, this::update);
+    assertThrows(LiquibaseException.class, this::update, gate::name);
 
-    assertFalse(consentIsNullable());
-  }
-
-  @Test
-  void migrationHaltsWhenTheReplacementConstraintIsMissing() throws Exception {
-    // Without it, the rows this release writes with a null consent fall under no uniqueness rule
-    // at all, which is the whole reason purpose_consent is allowed to go toothless.
-    execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
-
-    assertThrows(LiquibaseException.class, this::update);
-
-    assertFalse(consentIsNullable());
-  }
-
-  @Test
-  void migrationHaltsWhenASurvivingSnapshotOffsetsTheMissingConstraint() throws Exception {
-    // Each half of the gate is checked on its own, so one unmet condition cannot be paid for by
-    // another. Both of these states are the predecessor release not having applied.
-    execute("CREATE TABLE match_migration_snapshot (match_id bigint PRIMARY KEY)");
-    execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
-
-    assertThrows(LiquibaseException.class, this::update);
-
-    assertFalse(consentIsNullable());
-  }
-
-  @Test
-  void migrationHaltsWhenASurvivingRationaleSnapshotOffsetsTheMissingConstraint() throws Exception {
-    execute("CREATE TABLE match_migration_rationale_snapshot (match_id bigint PRIMARY KEY)");
-    execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
-
-    assertThrows(LiquibaseException.class, this::update);
-
-    assertFalse(consentIsNullable());
+    assertFalse(consentIsNullable(), gate::name);
   }
 
   @Test
