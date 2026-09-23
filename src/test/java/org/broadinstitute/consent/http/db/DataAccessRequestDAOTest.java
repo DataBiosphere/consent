@@ -1940,6 +1940,41 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         message);
   }
 
+  /**
+   * The research use statement and the non-technical summary are different texts, and each query
+   * returns both. Distinct values, so a query that selected the same key twice or swapped the two
+   * columns would fail here.
+   */
+  @Test
+  void testFindSummaryMetricApprovedDARsReturnsTheRusAndTheNonTechnicalSummary() {
+    User requester = createUserWithInstitution();
+    Integer studyId = createStudy(requester);
+    Dataset dataset = createStudyDataset(studyId);
+    Date grantedOn = new Date(System.currentTimeMillis() - 60_000);
+    Integer collectionId = createDarCollection(requester.getUserId());
+    DataAccessRequest dar = createDataAccessRequest(collectionId, requester.getUserId(), grantedOn);
+    DataAccessRequestData data = dar.getData();
+    data.setRus("The technical account of how the data will be used");
+    data.setNonTechRus("A lay description of the research");
+    dataAccessRequestDAO.updateDataByReferenceId(
+        dar.getReferenceId(), requester.getUserId(), grantedOn, grantedOn, data, null);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    approve(
+        createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId()), dataset, grantedOn);
+
+    for (DarMetricsSummary summary :
+        List.of(
+            dataAccessRequestDAO
+                .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+                .getFirst(),
+            dataAccessRequestDAO
+                .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId)
+                .getFirst())) {
+      assertEquals("The technical account of how the data will be used", summary.rus());
+      assertEquals("A lay description of the research", summary.nonTechRus());
+    }
+  }
+
   private Integer createStudy(User creator) {
     return studyDAO.insertStudy(
         randomAlphabetic(20),

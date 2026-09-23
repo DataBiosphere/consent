@@ -175,6 +175,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
+              latest_dar.data ->> 'rus' AS rus,
               -- The requester's institution, but never their name: the pages show where a grant
               -- went, not who holds it.
               i.institution_name
@@ -274,6 +275,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
+              latest_dar.data ->> 'rus' AS rus,
               -- Institution, not name: see the dataset-scoped query above.
               i.institution_name
           FROM dar_collection c
