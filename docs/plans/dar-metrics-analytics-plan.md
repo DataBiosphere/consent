@@ -41,8 +41,9 @@ These need answers from product.
 Decisions 2 to 5 change queries, not schema, so the reporting tickets can ship per-pair rows now and
 apply the answers later.
 
-One smaller question engineering can answer: should "researchers on a DAR" include external
-collaborators, who are not institution-validated at submission? It only affects ticket 4's response.
+One smaller product question: should "researchers on a DAR" include external collaborators, who are
+not institution-validated at submission? It doesn't block anything; it only affects ticket 4's
+response.
 
 ## Background
 
