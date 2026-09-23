@@ -440,6 +440,8 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - Institution: the DAR's recorded institution from ticket 3, falling back to `users.institution_id`
   for DARs submitted before it. Include a flag saying which, and note it in the OpenAPI path spec. A
   DAR with no institution either way reports null and groups as "No institution".
+- Fall back only when `institution_name` is NULL. A NULL `institution_id` with a name means the
+  institution was deleted after submission; report the recorded name, not the user's current one.
 - Switch the study and dataset metrics queries, which read `users.institution_id` live, to the
   recorded institution of the submission they already display, falling back to live. They source a
   row from the latest qualifying submission and this endpoint from the original DAR, so the two can
@@ -465,6 +467,7 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 
 - DAO tests per aggregation, including a multi-dataset DAR and one with no datasets.
 - A null institution; a recorded institution that differs from the user's current one.
+- A recorded institution that was later deleted reports its recorded name.
 - PI, lab staff and internal collaborator counts reported separately.
 - A collection with a progress report counts once.
 - The serialised response contains no collaborator name or email.
