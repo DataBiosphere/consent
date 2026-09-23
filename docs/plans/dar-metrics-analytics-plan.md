@@ -4,7 +4,8 @@
 
 Proposed. Six of the nine tickets can start now, and ticket 4 follows ticket 3. Ticket 8 needs
 product answers on reopened and canceled decisions, and ticket 9 needs a definition of renewal. See
-[Blocking Decisions](#blocking-decisions).
+[Blocking Decisions](#blocking-decisions). Tracked in epic
+[DT-4182](https://broadworkbench.atlassian.net/browse/DT-4182).
 
 ## Summary
 
@@ -276,7 +277,7 @@ Points are relative estimates.
 
 ## Tickets
 
-### Ticket 1: Measure reporting data coverage and query cost
+### Ticket 1 (DT-4183): Measure reporting data coverage and query cost
 
 **Type:** Spike · **Size:** 2 · **Depends on:** nothing
 
@@ -301,13 +302,13 @@ line or choosing a backing store.
 - DARs with null `requires_so_approval`, split by `parent_id IS NULL`.
 - Canceled elections, split by archived and not.
 - `EXPLAIN ANALYZE` timings for the latest-vote CTE over all pairs and for the per-DAR volume query.
-- Figures and query plans recorded on the Jira ticket, not in this repo, which is public. This plan
+- Figures and query plans recorded on DT-4183, not in this repo, which is public. This plan
   links to them and records only which metrics aren't worth charting and whether Postgres is enough
   (see [Scalability](#scalability)).
 
 ---
 
-### Ticket 2: Include RADAR decisions in the election queries
+### Ticket 2 (DT-4184): Include RADAR decisions in the election queries
 
 **Type:** Story · **Size:** 3 · **Depends on:** nothing
 
@@ -352,7 +353,7 @@ uses `v.create_date` as the decision date. The only production callers are
 
 ---
 
-### Ticket 3: Record institution at submission
+### Ticket 3 (DT-4185): Record institution at submission
 
 **Type:** Story · **Size:** 2 · **Depends on:** nothing
 
@@ -390,7 +391,7 @@ changing when a researcher changes employer.
 
 ---
 
-### Ticket 4: DAR volume and composition reporting
+### Ticket 4 (DT-4186): DAR volume and composition reporting
 
 **Type:** Story · **Size:** 5 · **Depends on:** ticket 3
 
@@ -433,7 +434,7 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 
 ---
 
-### Ticket 5: DAC decision reporting
+### Ticket 5 (DT-4187): DAC decision reporting
 
 **Type:** Story · **Size:** 5 · **Depends on:** nothing
 
@@ -485,7 +486,7 @@ whether RADAR or a chair made it (metrics 1, 2 and 3).
 
 ---
 
-### Ticket 6: DAC decision turnaround reporting
+### Ticket 6 (DT-4188): DAC decision turnaround reporting
 
 **Type:** Story · **Size:** 3 · **Depends on:** nothing; shares the latest-vote fragment with ticket 5
 
@@ -519,7 +520,7 @@ deciding vote.
 
 ---
 
-### Ticket 7: SO approval and expiration reporting
+### Ticket 7 (DT-4189): SO approval and expiration reporting
 
 **Type:** Story · **Size:** 5 · **Depends on:** nothing
 
@@ -556,7 +557,7 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
 
 ---
 
-### Ticket 8: Admin DAR analytics dashboard
+### Ticket 8 (DT-4190): Admin DAR analytics dashboard
 
 **Type:** Story · **Size:** 8, split by section if needed · **Depends on:** tickets 4 to 7 deployed;
 Decisions 2 and 3 answered · **Repo:** `duos-ui`
@@ -588,7 +589,7 @@ An admin page showing the decision funnel, turnaround distributions, volume and 
 
 ---
 
-### Ticket 9: Record DAR renewal
+### Ticket 9 (DT-4191): Record DAR renewal
 
 **Type:** Story, conditional · **Size:** 5, re-estimate after Decision 1 · **Depends on:** Decision 1
 
@@ -618,17 +619,17 @@ Report renewals under product's definition (metric 11).
 
 ### Summary
 
-| Ticket | Metrics | Size | Depends on |
-| --- | --- | --- | --- |
-| 1. Data coverage and query cost | — | 2 | — |
-| 2. RADAR in election queries | — | 3 | — |
-| 3. Record institution at submission | 5 (accuracy) | 2 | — |
-| 4. Volume and composition | 4, 5, 6, 7, 12 | 5 | 3 |
-| 5. DAC decisions | 1, 2, 3 | 5 | — |
-| 6. DAC turnaround | 8 | 3 | shares a fragment with 5 |
-| 7. SO approval and expiration | 9, 10 | 5 | — |
-| 8. Dashboard (`duos-ui`) | all except 11 | 8 | 4–7; Decisions 2, 3 |
-| 9. Renewal | 11 | 5 | Decision 1 |
+| Ticket | Jira | Metrics | Size | Depends on |
+| --- | --- | --- | --- | --- |
+| 1. Data coverage and query cost | [DT-4183](https://broadworkbench.atlassian.net/browse/DT-4183) | — | 2 | — |
+| 2. RADAR in election queries | [DT-4184](https://broadworkbench.atlassian.net/browse/DT-4184) | — | 3 | — |
+| 3. Record institution at submission | [DT-4185](https://broadworkbench.atlassian.net/browse/DT-4185) | 5 (accuracy) | 2 | — |
+| 4. Volume and composition | [DT-4186](https://broadworkbench.atlassian.net/browse/DT-4186) | 4, 5, 6, 7, 12 | 5 | 3 |
+| 5. DAC decisions | [DT-4187](https://broadworkbench.atlassian.net/browse/DT-4187) | 1, 2, 3 | 5 | — |
+| 6. DAC turnaround | [DT-4188](https://broadworkbench.atlassian.net/browse/DT-4188) | 8 | 3 | shares a fragment with 5 |
+| 7. SO approval and expiration | [DT-4189](https://broadworkbench.atlassian.net/browse/DT-4189) | 9, 10 | 5 | — |
+| 8. Dashboard (`duos-ui`) | [DT-4190](https://broadworkbench.atlassian.net/browse/DT-4190) | all except 11 | 8 | 4–7; Decisions 2, 3 |
+| 9. Renewal | [DT-4191](https://broadworkbench.atlassian.net/browse/DT-4191) | 11 | 5 | Decision 1 |
 
 ## Test Matrix
 
