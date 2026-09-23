@@ -295,6 +295,7 @@ public class DataAccessRequestService implements ConsentLogger {
                   datasetIds, transactionReferenceId, transactionalDarDAO);
               captureDatasetDaaSnapshots(
                   darId, datasetIds, new Timestamp(now.getTime()), transactionalDaaDAO);
+              transactionalDarDAO.updateSubmissionInstitution(transactionReferenceId);
               if (requiresSOApproval) {
                 transactionalDarDAO.updateRequiresSOApproval(true, transactionReferenceId);
               }
@@ -355,6 +356,7 @@ public class DataAccessRequestService implements ConsentLogger {
             }
             syncDataAccessRequestDatasets(
                 progressReportDatasetIds, referenceId, transactionalDarDAO);
+            transactionalDarDAO.updateSubmissionInstitution(referenceId);
             if (!progressReport.getIsCloseoutProgressReport()) {
               captureDatasetDaaSnapshots(
                   progressReportId,

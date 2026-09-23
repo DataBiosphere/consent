@@ -1553,6 +1553,86 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(dar.getApprovingSigningOfficialApprovedDate());
   }
 
+  @Test
+  void testUpdateSubmissionInstitution() {
+    User user = createUserWithInstitution();
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+
+    assertEquals(
+        new SubmissionInstitution(
+            user.getInstitutionId().longValue(), getUserInstitution(user).getName()),
+        findSubmissionInstitution(dar.getReferenceId()));
+  }
+
+  @Test
+  void testUpdateSubmissionInstitution_NoInstitution() {
+    User user = createUserWithInstitution();
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+    userDAO.updateInstitutionId(user.getUserId(), null);
+
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+
+    assertEquals(
+        new SubmissionInstitution(null, null), findSubmissionInstitution(dar.getReferenceId()));
+  }
+
+  @Test
+  void testUpdateSubmissionInstitution_KeptWhenUserChangesInstitution() {
+    User user = createUserWithInstitution();
+    Integer newInstitutionId = createUserWithInstitution().getInstitutionId();
+    Integer collectionId = createDarCollection(user.getUserId());
+    DataAccessRequest parent = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.updateSubmissionInstitution(parent.getReferenceId());
+    SubmissionInstitution recorded = findSubmissionInstitution(parent.getReferenceId());
+
+    userDAO.updateInstitutionId(user.getUserId(), newInstitutionId);
+    DataAccessRequest progressReport =
+        createProgressReport(randomAlphabetic(10), user.getUserId(), collectionId, parent.getId());
+    dataAccessRequestDAO.updateSubmissionInstitution(progressReport.getReferenceId());
+
+    assertEquals(recorded, findSubmissionInstitution(parent.getReferenceId()));
+    assertEquals(
+        newInstitutionId.longValue(),
+        findSubmissionInstitution(progressReport.getReferenceId()).id());
+  }
+
+  @Test
+  void testUpdateSubmissionInstitution_NameKeptWhenInstitutionDeleted() {
+    User user = createUserWithInstitution();
+    String institutionName = getUserInstitution(user).getName();
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+
+    institutionDAO.deleteInstitutionById(user.getInstitutionId());
+
+    assertEquals(
+        new SubmissionInstitution(null, institutionName),
+        findSubmissionInstitution(dar.getReferenceId()));
+  }
+
+  private record SubmissionInstitution(Long id, String name) {}
+
+  private static SubmissionInstitution findSubmissionInstitution(String referenceId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT institution_id, institution_name FROM data_access_request WHERE reference_id = :referenceId")
+                .bind("referenceId", referenceId)
+                .map(
+                    (rs, ctx) ->
+                        new SubmissionInstitution(
+                            rs.getObject("institution_id", Long.class),
+                            rs.getString("institution_name")))
+                .one());
+  }
+
   /**
    * Replace parent implementation of `createDataset()`
    *
