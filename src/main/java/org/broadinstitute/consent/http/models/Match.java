@@ -15,9 +15,10 @@ public class Match {
 
   private Integer id;
 
+  // Derived from the dataset rather than stored: the API contract still names the public
+  // `DUOS-######` identifier `consent`.
   private String consent;
 
-  // Internal identity only: responses keep exposing the dataset through the public `consent` id.
   @JsonIgnore private Integer datasetId;
 
   private String purpose;
