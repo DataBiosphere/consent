@@ -119,7 +119,7 @@ The first-time setup command is:
 
 ```bash
 ./scripts/render-configs.sh --write_chart_configs true --write_compose true --export_db true
-docker compose -f config/docker-compose.yaml up -d
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ./scripts/index-es.sh
 ```
 
@@ -244,8 +244,19 @@ can:
 | `B2C_APPLICATION_ID` | From the `consent-proxy-b2c-secrets` secret in `terra-dev`. |
 
 A developer who needs other compose changes for their own machine can put them in
-`config/docker-compose.override.yaml`. Compose merges that file automatically, and the script
-never writes it. This file must not change the rendered config files.
+`config/docker-compose.override.yaml`. This file must not change the rendered config files.
+
+Compose loads an override file automatically only when the command has no `-f` option. The
+commands in this plan and in `DEVNOTES.md` use `-f`, so each command must name both files:
+
+```bash
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+```
+
+Compose stops with an error if a `-f` file does not exist. So `--write_compose` writes an empty
+override file (`services: {}`) when there is no override file. The script never changes an
+override file that exists. A test with `docker compose config` confirmed both points: with one
+`-f`, Compose ignores the override, and the empty file is valid.
 
 ### Database Export
 
@@ -311,10 +322,23 @@ The script does these steps:
 2. Wait for `/status` on `https://local.dsde-dev.broadinstitute.org:27443`, for up to 5 minutes.
 3. If `--reset true`, send `DELETE /dataset` to `localhost:9200`. Use `ELASTIC_PASSWORD` from
    `config/.env`. A 404 is not an error, because a new volume has no index.
-4. Send `POST /api/dataset/index` through the proxy with the token. Show the streamed response.
-5. Fail if the HTTP status is not 2xx. Also fail if the body has `Error indexing datasets`. The
-   endpoint streams its result, so it returns 200 when the bulk call fails.
-6. Show the document count from `GET /dataset/_count`.
+4. Send `POST /api/dataset/index` through the proxy with the token. Write the streamed response to
+   a temp file.
+5. Check the response. The endpoint streams its result, so the HTTP status is 200 even when
+   indexing fails. The script fails in each of these conditions:
+   - The HTTP status is not 2xx.
+   - The body is empty, or it is not valid JSON.
+   - The body has `Error indexing datasets`. `indexDatasetIds()` writes this text when it catches
+     an `IOException`, for example when Elasticsearch returns a status that is not 200.
+   - The `_bulk` response has `"errors": true`. Elasticsearch returns 200 when some documents
+     fail, for example because of a mapping conflict. `performRequest()` checks only the status,
+     and returns the body unchanged. So a failure of one document passes the other checks.
+6. If `errors` is true, show each failed item with `jq`: the dataset ID (`_id`), `status`,
+   `error.type` and `error.reason`. Then fail.
+7. Show the document count from `GET /dataset/_count`.
+
+See the [Elasticsearch bulk API](https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-bulk)
+for the response format.
 
 The token must belong to a user who has the Admin role in the loaded database. With a dev dump,
 this is the developer's dev DUOS account. If the call returns 401 or 403, the script says which
@@ -380,7 +404,8 @@ the reference. These findings show what changes for a developer who moves to the
 4. Add `scripts/export-db.sh` and the `--export_db` and `--db_env` flags. Move `scripts/db-connect.sh` to
    `cloud-sql-proxy` v2 in the same change, so both scripts use one proxy version.
 5. Add `scripts/index-es.sh`.
-6. Replace the "Configure" section of `DEVNOTES.md`. It tells developers to copy
+6. Change each compose command in `DEVNOTES.md` to name both compose files. Replace the
+   "Configure" section of `DEVNOTES.md`. It tells developers to copy
    `src/test/resources/consent-config.yml` by hand. Remove the steps for `wait-for-it.sh`, the
    JSON key, `sqlproxy.env` and `tcell_agent.config`.
 
@@ -400,7 +425,7 @@ For each ticket:
 2. Make sure that each rendered file is the same as the matching configmap key from a direct
    `helm template` run. The only differences must come from the
    [list of local changes](#all-local-changes).
-3. Run `docker compose -f config/docker-compose.yaml up`.
+3. Run `docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up`.
 4. Get `/status` and the Swagger page through the proxy on port 27443.
 5. Send one authenticated `/api` request with a dev B2C token. This test checks the audience
    allow list and `B2C_APPLICATION_ID`.
@@ -417,7 +442,11 @@ For each ticket:
     secret or starts the proxy.
 11. For ticket 5: run the script on a new volume and again on a full index. Make sure that the
     document count is the same as the number of datasets in the database both times.
-12. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
+12. For ticket 5: make one document fail, for example with a local index that has a conflicting
+    mapping for one field. Make sure that the script fails and shows the failed dataset IDs.
+13. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
+    `docker compose ... config` shows it, and that `--write_compose` does not change the file.
+14. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
     difference in the PR.
 
 ## Alternatives
