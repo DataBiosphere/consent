@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed. Tickets 1 to 3 can start now. Tickets 4 to 7 start once
-[#3049](https://github.com/DataBiosphere/consent/pull/3049) merges, since it rewrites the metrics
-queries they extend, and ticket 4 also follows ticket 3. Ticket 8 needs product answers on reopened
+In progress. Tickets 1 and 3 are done, and
+[#3049](https://github.com/DataBiosphere/consent/pull/3049), which rewrites the metrics queries tickets
+4 to 7 extend, has merged, so those can start. Ticket 8 needs product answers on reopened
 and canceled decisions, and ticket 9 needs a definition of renewal. See
 [Blocking Decisions](#blocking-decisions). Tracked in epic
 [DT-4182](https://broadworkbench.atlassian.net/browse/DT-4182).
@@ -171,17 +171,20 @@ collection counts once per submission.
 the researcher isn't pre-authorized for all required DAAs. The column is nullable with no default
 (`changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml:6`) and is only written when
 true (`DataAccessRequestService.java:298-300`). NULL can mean the SO step was skipped, the row predates
-January 2026, or the row is a progress report or closeout (`:349-355` writes true only for
-non-closeout reports without pre-authorization, so closeouts stay NULL even though they go to an SO).
+the first `true` in production (May 2026), or the row is a progress report or closeout (`:349-355`
+writes true only for non-closeout reports without pre-authorization, so closeouts stay NULL even
+though they go to an SO).
 
 So `requires_so_approval = false` matches nothing, and `DataAccessRequestMapper.java:57` maps NULL to
 `false`, which hides this in Java. Use `requires_so_approval IS NOT TRUE AND parent_id IS NULL`,
-limited to submissions after January 2026.
+limited to submissions from 20 May 2026, the first `true` in production
+([DT-4183](https://broadworkbench.atlassian.net/browse/DT-4183)).
 
-That cutoff applies to skip classification only. Closeout SO approvals were recorded from June 2025
-(`changelog-consent-2025-06-05-save-so-closeout-approval.xml`) and moved into `approving_so_timestamp`
-by `changelog-consent-2026-06-18-consolidate-so-approval-fields.xml`, so closeout approval times go
-back further than original-DAR ones.
+That cutoff applies to skip classification only. Closeout SO approvals could be recorded from June
+2025 (`changelog-consent-2025-06-05-save-so-closeout-approval.xml`) and moved into
+`approving_so_timestamp` by `changelog-consent-2026-06-18-consolidate-so-approval-fields.xml`, so
+closeout approval times go back further than original-DAR ones. The first recorded approvals are
+September 2025 for closeouts and June 2026 for original DARs.
 
 ### Expiration is computed
 
@@ -235,13 +238,13 @@ one can be submitted with none.
 | --- | --- | --- |
 | 1 | DARs with a DAC decision vs. not | 5. Latest cast vote per pair on original DARs; canceled and archived DARs excluded; canceled elections per Decision 3 |
 | 2 | Approved vs. denied | 5. `vote.vote` on the latest cast `FINAL`/`RADAR_APPROVE` vote |
-| 3 | Decided via RADAR | 5. `vote.type`. History from July 2025 |
+| 3 | Decided via RADAR | 5. `vote.type`. No production RADAR decisions yet |
 | 4 | DARs per researcher | 4. `user_id`, `submission_date` |
 | 5 | DARs per institution | 4. Snapshot from ticket 3 where present, current institution otherwise |
 | 6 | Datasets per DAR | 4. `dar_dataset` |
 | 7 | Researchers per DAR (PI, lab staff, internal collaborators) | 4. Per DAR, not distinct people |
 | 8 | Submission to DAC decision | 6. `submission_date` to `vote.update_date` |
-| 9 | Submission to SO approval, separating pre-auth skips | 7. `approving_so_timestamp`. Original DARs from January 2026, closeouts from June 2025 |
+| 9 | Submission to SO approval, separating pre-auth skips | 7. `approving_so_timestamp`. Original DARs from June 2026, closeouts from September 2025; skips from May 2026 |
 | 10 | DARs expired | 7. Per collection and dataset, from the newest approved submission; closeouts end access |
 | 11 | DARs renewed | 9, once Decision 1 is answered |
 | 12 | Researchers submitting DARs | 4. Distinct `user_id` with a `submission_date` |
@@ -255,27 +258,30 @@ These show on the endpoint docs and next to the affected dashboard figures.
 | --- | --- | --- |
 | Institution is current, not historical, before ticket 3 | A researcher who changes employer takes their past DARs with them | Ticket 3, forward-only |
 | Collaborators have no stable identity | Cross-DAR person counts are an email-join approximation | Only report per-DAR counts |
-| `requires_so_approval` NULL has three meanings | Skips, pre-2026 rows and closeouts look the same | Use the predicate above |
-| Short history | RADAR from July 2025; SO approval on original DARs from January 2026, on closeouts from June 2025 | No year-over-year on metrics 3 and 9 yet |
+| `requires_so_approval` NULL has three meanings | Skips, rows before May 2026 and closeouts look the same | Use the predicate above |
+| Short history | No RADAR decisions in production; SO approval on original DARs from June 2026, on closeouts from September 2025 | Don't chart metrics 3 and 9 yet; list metric 9's values |
+| Low volume | A few original DARs a month | Default to quarterly buckets or cumulative counts |
 | Election cancel time | Lost if the election was later archived | Report the cancellation, not its date, for archived elections |
 | Election cancel actor | Not recorded; admin and chair cancellations are identical rows | Don't split by who canceled |
 
-Old deciding votes may also have a null `update_date`. Ticket 1 measures how many.
+Deciding votes cast before March 2021 have a null `update_date`, so ticket 6 reports turnaround from
+then; their outcomes still count in ticket 5.
 
 ## Scalability
 
 The reporting queries are aggregations over full history, so they will get slower as data grows. For
-now the volume is small (ticket 1 records it) and the endpoints are admin-only with low traffic, so
+now the volume is small and the endpoints are admin-only with low traffic, so
 plain Postgres queries should be enough, provided every reporting endpoint takes a required date range,
 computes counts and summaries in SQL over it, and paginates its row detail. Index the join and date
 columns.
 
-Ticket 1 also records query plans and timings for the heaviest queries against production-sized data.
-If they are too slow, the options in rough order of effort are: add indexes; precompute into a
-materialized view refreshed on a schedule; or publish DAR lifecycle events to an Elasticsearch index,
-alongside the existing dataset index (`ElasticSearchService`), and serve reporting from there. The
-endpoint contracts in tickets 4 to 7 don't depend on which backs them, so this can change later without
-touching the dashboard.
+Ticket 1 measured this in production: every query it timed ran well under 100 ms from memory, so
+Postgres is enough (figures and plans on
+[DT-4183](https://broadworkbench.atlassian.net/browse/DT-4183)). If that changes, the options in rough
+order of effort are: add indexes; precompute into a materialized view refreshed on a schedule; or
+publish DAR lifecycle events to an Elasticsearch index, alongside the existing dataset index
+(`ElasticSearchService`), and serve reporting from there. The endpoint contracts in tickets 4 to 7
+don't depend on which backs them, so this can change later without touching the dashboard.
 
 ## Design Decisions
 
