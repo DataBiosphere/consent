@@ -80,6 +80,9 @@ public class OntologyResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   public Response searchByTermIds(@QueryParam("ids") String ids) {
     try {
+      if (ids == null || ids.isBlank()) {
+        throw new IllegalArgumentException("Query parameter 'ids' is required for search.");
+      }
       StreamingOutput stream = ontologyService.findByTermIds(ids.split(","));
       return Response.ok(stream).build();
     } catch (Exception e) {

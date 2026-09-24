@@ -173,6 +173,23 @@ class OntologyResourceTest extends AbstractTestHelper {
     }
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"", "   ", "\t", "\n"})
+  void testSearchByTermIdsInvalidIds(String ids) {
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.searchByTermIds(ids)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSearchByTermIdsNullIds() {
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.searchByTermIds(null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
   @Test
   void testAutocompleteSuccessAllValuesPopulated() {
     when(ontologyService.findByQuery("cancer", OntologyType.DOID, 10))
