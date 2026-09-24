@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.service.ontology.OntologyReconciliationRe
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -174,18 +175,11 @@ class OntologyResourceTest extends AbstractTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"", "   ", "\t", "\n"})
+  @NullAndEmptySource
+  @ValueSource(strings = {"  ", "\t", "\n"})
   void testSearchByTermIdsInvalidIds(String ids) {
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.searchByTermIds(ids)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
-  void testSearchByTermIdsNullIds() {
-    resource = new OntologyResource(ontologyService);
-    try (Response response = resource.searchByTermIds(null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
