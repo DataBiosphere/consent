@@ -270,25 +270,6 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testInsertDoesNotPersistASuppliedConsentIdentifier() {
-    // Asserted against the column rather than the model: the mapper derives consent on the way
-    // back out, so a read would look identical if the insert were still storing the value.
-    Dataset dataset = createDataset();
-    Match match = makeMockMatch(dataset);
-    match.setConsent("DUOS-999999");
-    Integer matchId = matchDAO.insertMatch(match);
-
-    jdbi.useHandle(
-        handle ->
-            assertTrue(
-                handle
-                    .createQuery("SELECT consent IS NULL FROM match_entity WHERE match_id = :id")
-                    .bind("id", matchId)
-                    .mapTo(Boolean.class)
-                    .one()));
-  }
-
-  @Test
   void testADerivedConsentIdentifierIsNotTruncatedPastSixDigits() {
     // Aliases are only left-padded to six digits, so a seven-digit one must widen rather than wrap.
     Dataset dataset = createDataset();

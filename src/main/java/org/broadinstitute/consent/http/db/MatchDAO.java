@@ -15,13 +15,21 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
+/**
+ * Match columns are listed rather than selected with a wildcard. A pod running the previous release
+ * has server-side prepared statements cached over these queries, and a wildcard whose result type
+ * changes under it fails with "cached plan must not change result type" for the life of the pooled
+ * connection - pgjdbc only re-prepares outside a transaction, and these reads are all in one.
+ */
 @RegisterRowMapper(MatchMapper.class)
 public interface MatchDAO extends Transactional<MatchDAO> {
 
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, d.alias, r.*
+      SELECT m.match_id, m.purpose, m.dataset_id, m.match_entity, m.abstain, m.failed,
+             m.create_date, m.algorithm_version,
+             d.alias, r.*
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
@@ -32,7 +40,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT m.*, d.alias, r.*
+      SELECT m.match_id, m.purpose, m.dataset_id, m.match_entity, m.abstain, m.failed,
+             m.create_date, m.algorithm_version,
+             d.alias, r.*
         FROM match_entity m
         INNER JOIN dataset d ON d.dataset_id = m.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
@@ -43,7 +53,11 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @UseRowReducer(MatchReducer.class)
   @SqlQuery(
       """
-      SELECT match_entity.*, d.alias, r.* FROM match_entity
+      SELECT match_entity.match_id, match_entity.purpose, match_entity.dataset_id,
+             match_entity.match_entity, match_entity.abstain, match_entity.failed,
+             match_entity.create_date, match_entity.algorithm_version,
+             d.alias, r.*
+        FROM match_entity
         INNER JOIN dataset d ON d.dataset_id = match_entity.dataset_id
         LEFT JOIN match_rationale r on r.match_entity_id = match_entity.match_id
         INNER JOIN (

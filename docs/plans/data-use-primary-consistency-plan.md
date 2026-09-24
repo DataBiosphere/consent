@@ -10,7 +10,7 @@ In progress. Ticket-by-ticket state:
 | 2. Canonical primary classification on Data Use writes | Done. `DataUsePrimaryClassifier`/`DataUsePrimaryValidator` back registration, admin Data Use replacement, and dataset-to-study conversion. |
 | 3. Explicit legacy and unsupported matcher behavior | Done. `DataUseMatcherV5` classifies before matching and abstains on Other-only, NONE/null, and MULTIPLE. |
 | 4. Normalize legacy records and reprocess affected matches | Done. |
-| 5. Replace alias-derived internal dataset references | Done pending rollout. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), all three releases are written: the column and dual write, the snapshot and migration surface, and the gated constraints that retire the surface. They deploy in that order, each gated on the previous. DT-3940 then removes the compatibility mechanisms both migrations left behind - see Phase 3. |
+| 5. Replace alias-derived internal dataset references | Done pending rollout. Alias allocation moved to a database sequence (DT-3865). For matches (DT-3942), all three releases are written: the column and dual write, the snapshot and migration surface, and the gated constraints that retire the surface. They deploy in that order, each gated on the previous. DT-3940 then removes the compatibility mechanisms both migrations left behind: all four of its releases are written - the alias column default, the derived match identifier, the nullable consent column, and the column drop - and deploy in the Phase 3 order, each gated on the previous. |
 | 6. Align duos-ui with the canonical classification | Done in duos-ui (DT-3866). The Data Use translation collapse is an owned follow-up (DT-4008). |
 
 ## Objective
