@@ -28,11 +28,11 @@ properties:
     description: The reference identifier for the DAR
   institutionName:
     type: string
-    nullable: true
     description: >-
-      The institution of the requester the DAR was granted to. Withheld, and omitted from the
-      response rather than sent as null, when the dataset belongs to no study: such a dataset is
-      readable by any authenticated caller, so nothing about the caller was established and the
-      requester's affiliation would be enumerable by walking dataset ids. Callers admitted on
-      their own merits - an admin, the dataset's creator, or a reader of its study - always
-      receive it. The requester's name is never included, whatever the caller.
+      The current institution of the requester the DAR was granted to. Omitted, never sent as
+      null, when the requester has no institution on record or that institution no longer exists.
+      Also withheld from the dataset-scoped route when the dataset belongs to no study: such a
+      dataset is readable by any authenticated caller, so nothing about the caller was established
+      and the requester's affiliation would be enumerable by walking dataset ids. Callers admitted
+      on their own merits - an admin, the dataset's creator, or a reader of its study - are not
+      subject to that withholding. The requester's name is never included, whatever the caller.

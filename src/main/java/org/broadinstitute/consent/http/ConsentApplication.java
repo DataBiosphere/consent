@@ -113,6 +113,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
   private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
   public static void main(String[] args) throws Exception {
+    // Guice 7.0.0 uses sun.misc.Unsafe to define generated classes, which Java 25 warns about
+    // and a future release will block. CHILD class loading avoids Unsafe. A -D value on the
+    // command line takes precedence.
+    if (System.getProperty("guice_custom_class_loading") == null) {
+      System.setProperty("guice_custom_class_loading", "CHILD");
+    }
     LOGGER.info("Starting Consent Application");
     try {
       String dsn = System.getProperties().getProperty("sentry.dsn");

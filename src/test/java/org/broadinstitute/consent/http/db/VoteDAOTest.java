@@ -294,47 +294,6 @@ class VoteDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindTotalFinalVoteByElectionTypeAndVote() {
-    User user = createUser();
-    Dac dac = createDac();
-    Dataset dataset = createDatasetWithDac(dac.getDacId());
-    String darCode = "DAR-1234567890";
-    Integer collectionId =
-        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
-    DataAccessRequest dar =
-        createDataAccessRequestWithDatasetAndCollectionInfo(
-            collectionId, dataset.getDatasetId(), user.getUserId());
-    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
-    electionDAO.updateElectionById(
-        election.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date());
-    Vote v = createFinalVote(user.getUserId(), election.getElectionId());
-    boolean voteValue = true;
-    updateVote(
-        voteValue,
-        randomAlphabetic(10),
-        new Date(),
-        v.getVoteId(),
-        false,
-        election.getElectionId(),
-        v.getCreateDate(),
-        false);
-
-    int count =
-        voteDAO.findTotalFinalVoteByElectionTypeAndVote(election.getElectionType(), voteValue);
-    assertEquals(1, count);
-
-    int count2 =
-        voteDAO.findTotalFinalVoteByElectionTypeAndVote(
-            election.getElectionType().toLowerCase(), voteValue);
-    assertEquals(1, count2);
-
-    int count3 =
-        voteDAO.findTotalFinalVoteByElectionTypeAndVote(
-            election.getElectionType().toUpperCase(), voteValue);
-    assertEquals(1, count3);
-  }
-
-  @Test
   void testFindMaxNumberOfDACMembers() {
     User user = createUser();
     Dataset dataset = createDataset();

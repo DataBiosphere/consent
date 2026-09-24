@@ -76,6 +76,8 @@
           <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
             -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
             -Xshare:off
+            -Dguice_custom_class_loading=CHILD
+            --enable-native-access=ALL-UNNAMED
           </argLine>
           <excludedGroups>${excludedTestGroups}</excludedGroups>
         </configuration>
@@ -335,6 +337,10 @@
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.broadinstitute.consent.http.ConsentApplication</mainClass>
+                  <manifestEntries>
+                    <!-- Conscrypt loads a native library; Java reads this only for java -jar -->
+                    <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                  </manifestEntries>
                 </transformer>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>

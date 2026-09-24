@@ -2,8 +2,8 @@ package org.broadinstitute.consent.http.util;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.swagger.v3.core.util.Json;
-import io.swagger.v3.core.util.Yaml;
+import io.swagger.v3.core.util.Json31;
+import io.swagger.v3.core.util.Yaml31;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
@@ -73,8 +73,8 @@ public class OpenAPIBundler {
     File jsonFile = new File(outputDir, "openapi.json");
     File yamlFile = new File(outputDir, "openapi.yaml");
 
-    Json.pretty().writeValue(jsonFile, result.getOpenAPI());
-    Yaml.pretty().writeValue(yamlFile, result.getOpenAPI());
+    Json31.pretty().writeValue(jsonFile, result.getOpenAPI());
+    Yaml31.pretty().writeValue(yamlFile, result.getOpenAPI());
   }
 
   public static void main(String[] args) {
