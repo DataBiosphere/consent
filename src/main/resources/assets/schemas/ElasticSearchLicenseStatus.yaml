@@ -17,36 +17,34 @@ description: |
 properties:
   cluster_name:
     type: string
-    description: The cluster's own name, confirming which cluster was reached.
+    description: >
+      The cluster's own name, confirming which cluster was reached. Omitted when the cluster
+      could not be read.
   license_type:
     type: string
-    nullable: true
     description: |
-      License tier reported by the cluster. Null when the license could not be read, in which case
-      nothing else here follows from it.
+      License tier reported by the cluster. Omitted when the license could not be read, in which
+      case nothing else here follows from it.
     examples:
       - basic
       - trial
       - platinum
   license_status:
     type: string
-    nullable: true
-    description: Whether that license is active.
+    description: Whether that license is active. Omitted when the license could not be read.
     examples:
       - active
       - expired
   dls_fls_licensed:
     type: boolean
-    nullable: true
     description: |
-      Whether the tier includes document- and field-level security. Null when the tier could not be
-      read — which is not the same as false.
+      Whether the tier includes document- and field-level security. Omitted when the tier could not
+      be read — which is not the same as false.
   trial_available:
     type: boolean
-    nullable: true
     description: |
       The cluster's authoritative answer about whether it is currently eligible to start a 30-day
-      trial. Eligibility can change after a major-version upgrade. Null when the cluster did not
+      trial. Eligibility can change after a major-version upgrade. Omitted when the cluster did not
       answer the eligibility check; that is not the same as ineligible, and an activation would still
       be attempted.
   detail:

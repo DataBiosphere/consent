@@ -13,9 +13,8 @@ properties:
   averageRating:
     type: number
     format: double
-    nullable: true
     description: >
-      The mean of every rating on the study, not only the returned page, or null when the
+      The mean of every rating on the study, not only the returned page. Omitted when the
       study has no comments.
   total:
     type: integer
@@ -25,8 +24,7 @@ properties:
   yourComment:
     allOf:
       - $ref: './StudyComment.yaml'
-    nullable: true
     description: >
-      The requesting user's own comment, or null when they have none. Carried separately
+      The requesting user's own comment, omitted when they have none. Carried separately
       because paging puts it on an unpredictable page, and a client needs it to know whether
       saving will add a comment or revise the existing one.

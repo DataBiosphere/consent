@@ -25,7 +25,6 @@ put:
       required: true
       schema:
         type: number
-        nullable: false
         enum:
           - 3
           - 4
@@ -83,7 +82,6 @@ delete:
       required: true
       schema:
         type: number
-        nullable: false
         enum:
           - 3
           - 4
