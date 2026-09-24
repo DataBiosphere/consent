@@ -169,6 +169,12 @@ namespace of the `terra-dev` cluster.
    `config/consent.yaml`, `config/oauth2.conf` and `config/site.conf`, with no changes.
 8. Fail if any output has `{{`.
 
+Before step 1, the script checks `scripts/templates/local-values.yaml` for secrets. It fails if a
+key name has `password`, `secret`, `token`, `apikey`, `api_key` or `dsn` in it, in any case. The
+check uses `grep -iE` on the key names, so it needs no YAML tool. The error names the file, the
+line and the key, and it says that secrets go only in `config/.env`. This check cannot find every
+secret, for example a secret under a key with a neutral name. It catches the likely mistakes.
+
 The rendered `site.conf` sends traffic to `localhost:8080`. In a pod, the proxy and the app share
 one network, so `localhost` is the app. Local compose does the same: the proxy service uses
 `network_mode: service:app`. The script then does not need to change `site.conf`.
@@ -353,6 +359,15 @@ account `gcloud` used and that this account needs the Admin role.
 | Sentry DSN | In plain text in `docker-compose.yaml` | Removed. |
 | `consent-dev` JSON key | `sqlproxy-service-account.json` | Removed. Use ADC. |
 
+Tracked files hold no secret values. This rule applies to all files under `scripts/templates/`,
+which includes `local-values.yaml` and `docker-compose.yaml`. A local secret goes only in
+`config/.env`, which is not tracked (`/config/` is in `.gitignore`). The compose template refers
+to each secret with a `${VAR}` reference, not a value.
+
+The chart gives no reason to put a secret in `local-values.yaml`. `_consent.yaml.tpl` has fixed
+placeholders for each secret (for example `password: foo`), and the `-Ddw.*` flags replace them.
+A secret in the values file has no template key to fill.
+
 The script never prints a secret value. All files that hold a secret get mode `600`.
 
 ### Tools
@@ -446,7 +461,9 @@ For each ticket:
     mapping for one field. Make sure that the script fails and shows the failed dataset IDs.
 13. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
     `docker compose ... config` shows it, and that `--write_compose` does not change the file.
-14. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
+14. For ticket 2: add a key such as `databasePassword: x` to `local-values.yaml`. Make sure that
+    the script stops before the render, and that the error names the line and the key.
+15. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
     difference in the PR.
 
 ## Alternatives
