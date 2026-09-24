@@ -24,6 +24,11 @@ public interface StudyRecommendationDAO {
    * fallback in StudyAssets never supplies one. Those rows are cut down in a MATERIALIZED CTE
    * before any JSON cast, because String-typed study properties are bare text and the cast would
    * fail on them if the planner evaluated it ahead of the key filter.
+   *
+   * <p>Data use and asset values are text columns, so each is cast only once pg_input_is_valid
+   * accepts it, inside a CASE so the planner cannot run the cast first. An empty or malformed value
+   * then reads as absent, as DataUseParser and StudyAssets treat it, rather than failing the query
+   * and with it every recommendation on the list.
    */
   String CARD_FIELDS =
       """
@@ -65,7 +70,9 @@ public interface StudyRecommendationDAO {
             CASE WHEN u.du ->> 'other' ~ '\\S' THEN 'OTHER' END
           ], NULL) AS data_use_codes
         FROM dataset d
-        CROSS JOIN LATERAL (SELECT d.data_use::jsonb AS du) u
+        CROSS JOIN LATERAL (
+          SELECT CASE WHEN pg_input_is_valid(d.data_use, 'jsonb') THEN d.data_use::jsonb END AS du
+        ) u
         WHERE d.study_id IN (SELECT study_id FROM ranked)
       ), card_dataset_totals AS (
         SELECT cd.study_id, COUNT(*) AS dataset_count,
@@ -80,16 +87,17 @@ public interface StudyRecommendationDAO {
         CROSS JOIN LATERAL UNNEST(cd.data_use_codes) AS code
         GROUP BY cd.study_id
       ), card_assets AS MATERIALIZED (
-        SELECT sp.study_property_id, sp.study_id, LOWER(sp.key) AS key, sp.value
+        SELECT sp.study_property_id, sp.study_id, LOWER(sp.key) AS key,
+          CASE WHEN pg_input_is_valid(sp.value, 'jsonb') THEN sp.value::jsonb END AS value
         FROM study_property sp
         WHERE sp.study_id IN (SELECT study_id FROM ranked)
           AND LOWER(sp.key) IN ('models', 'workspaces')
       ), card_asset_counts AS (
         -- The first row per key that holds a list, as StudyAssets reads it
         SELECT DISTINCT ON (ca.study_id, ca.key) ca.study_id, ca.key,
-          jsonb_array_length(ca.value::jsonb) AS asset_count
+          jsonb_array_length(ca.value) AS asset_count
         FROM card_assets ca
-        WHERE jsonb_typeof(ca.value::jsonb) = 'array'
+        WHERE jsonb_typeof(ca.value) = 'array'
         ORDER BY ca.study_id, ca.key, ca.study_property_id
       )
       SELECT s.study_id, s.name AS study_name, s.description AS study_description, s.pi_name,

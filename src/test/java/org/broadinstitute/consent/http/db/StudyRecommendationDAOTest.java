@@ -188,6 +188,41 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
     assertTrue(findRecommendation(similar, unlabelledId).dataUseCodes().isEmpty());
   }
 
+  /**
+   * Data use and asset values are text. DataUseParser and StudyAssets read an empty or malformed
+   * one as absent, so it must not fail the query and take every other recommendation with it.
+   */
+  @Test
+  void testRecommendationCardFieldsTolerateMalformedJson() {
+    String piName = randomAlphabetic(20);
+    String dataType = randomAlphabetic(20);
+    Integer sourceId = insertStudy(piName, List.of(dataType), true);
+
+    Integer malformedId = insertStudy(piName, List.of(dataType), true);
+    studyDAO.insertStudyProperty(
+        malformedId, "models", PropertyType.Json.toString(), "[{\"name\":");
+    studyDAO.insertStudyProperty(malformedId, "workspaces", PropertyType.Json.toString(), "");
+    Integer emptyDataUseId = insertDatasetForStudy(malformedId, "");
+    Integer malformedDataUseId = insertDatasetForStudy(malformedId, "{\"generalUse\": tru");
+    Integer validDataUseId =
+        insertDatasetForStudy(malformedId, new DataUseBuilder().setHmbResearch(true).build());
+
+    Integer wellFormedId = insertStudy(piName, List.of(dataType), true);
+    insertDatasetForStudy(wellFormedId);
+
+    List<StudyRecommendation> similar = studyRecommendationDAO.findSimilar(sourceId);
+
+    StudyRecommendation malformed = findRecommendation(similar, malformedId);
+    assertEquals(0, malformed.modelCount());
+    assertEquals(0, malformed.workspaceCount());
+    assertEquals(3L, malformed.datasetCount());
+    assertEquals(
+        List.of(emptyDataUseId, malformedDataUseId, validDataUseId), malformed.datasetIds());
+    // The malformed data uses contribute nothing; the valid one on the same study still does
+    assertEquals(List.of("HMB"), malformed.dataUseCodes());
+    assertEquals(List.of("GRU"), findRecommendation(similar, wellFormedId).dataUseCodes());
+  }
+
   /** A blank pi_name is not an identity, so blank-PI studies must not match each other. */
   @Test
   void testFindSimilarDoesNotMatchOnBlankPiNames() {
@@ -249,6 +284,11 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
   }
 
   private Integer insertDatasetForStudy(Integer studyId, DataUse dataUse) {
+    return insertDatasetForStudy(studyId, dataUse.toString());
+  }
+
+  /** Takes the stored text as is, so a test can store data use no builder would produce. */
+  private Integer insertDatasetForStudy(Integer studyId, String dataUse) {
     User user = createUser();
     Integer datasetId =
         datasetDAO.insertDataset(
@@ -256,7 +296,7 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
             new Timestamp(new Date().getTime()),
             user.getUserId(),
             randomAlphabetic(20),
-            dataUse.toString(),
+            dataUse,
             null);
     datasetDAO.updateStudyId(datasetId, studyId);
     return datasetId;
