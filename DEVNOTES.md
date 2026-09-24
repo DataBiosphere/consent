@@ -101,6 +101,11 @@ mvn clean compile
 docker-compose -p consent -f config/docker-compose.yaml up
 ```
 
+The compose command starts the app from the classpath, not with `java -jar`, so it does not read
+the `Enable-Native-Access` jar manifest entry. Add `"--enable-native-access=ALL-UNNAMED"` right
+after `"java"` in the compose `command` array. Without it, Java warns when Conscrypt loads its
+native library, and a future Java release will block that call.
+
 Visit the local swagger page at the URL configured for your setup (the compose setup used at
 Broad serves https://local.dsde-dev.broadinstitute.org:27443).
 
