@@ -16,7 +16,10 @@ properties:
     description: The DAR code
   nonTechRus:
     type: string
-    description: The DAR non-technical research use statement
+    description: The DAR's non-technical summary
+  rus:
+    type: string
+    description: The DAR's research use statement
   expired:
     type: boolean
     description: Whether the DAR is expired

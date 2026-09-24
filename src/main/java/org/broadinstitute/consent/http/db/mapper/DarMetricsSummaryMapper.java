@@ -21,6 +21,7 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
         rs.getString("project_title"),
         rs.getString("dar_code"),
         rs.getString("non_tech_rus"),
+        rs.getString("rus"),
         rs.getString("reference_id"),
         rs.getString("institution_name"),
         hasLapsed(rs.getTimestamp("expiration_basis_date"), rs.getTimestamp("closeout_date")));

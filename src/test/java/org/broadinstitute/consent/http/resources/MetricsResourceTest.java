@@ -131,7 +131,8 @@ class MetricsResourceTest extends AbstractTestHelper {
   void testDarSummariesCarryNoRequesterName() {
     Timestamp now = new Timestamp(System.currentTimeMillis());
     DarMetricsSummary summary =
-        new DarMetricsSummary(now, now, "Project", "DAR-1", "RUS", "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            now, now, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", false);
     when(service.generateDarSummaries(any(), any())).thenReturn(List.of(summary));
 
     Response response = resource.getDarSummaryData(duosUser, 1);
@@ -146,6 +147,7 @@ class MetricsResourceTest extends AbstractTestHelper {
             "projectTitle",
             "darCode",
             "nonTechRus",
+            "rus",
             "referenceId",
             "institutionName",
             "expired"),
