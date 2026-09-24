@@ -402,7 +402,8 @@ changing when a researcher changes employer.
   so a submission with no institution isn't mistaken for one from before the column existed.
 - Write it in the existing submission transaction in `DataAccessRequestService`, next to
   `captureDatasetDaaSnapshots`.
-- Update `db/mapper/DataAccessRequestMapper.java`; DAR hydration is mapped by hand.
+- Record the institution the submission was validated against. Reporting reads the columns in SQL,
+  so `DataAccessRequestMapper` and the DAR response are unchanged.
 - Progress reports and closeouts record the institution at their own submission, NULL if the
   submitter has none.
 

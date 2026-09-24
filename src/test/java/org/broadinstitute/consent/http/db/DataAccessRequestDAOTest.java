@@ -1559,7 +1559,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest dar =
         createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
 
-    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
 
     assertEquals(
         new SubmissionInstitution(
@@ -1572,10 +1572,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     DataAccessRequest dar =
         createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
-    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
-    userDAO.updateInstitutionId(user.getUserId(), null);
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
 
-    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), null);
 
     assertEquals(
         new SubmissionInstitution(null, null), findSubmissionInstitution(dar.getReferenceId()));
@@ -1598,13 +1597,15 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer newInstitutionId = createUserWithInstitution().getInstitutionId();
     Integer collectionId = createDarCollection(user.getUserId());
     DataAccessRequest parent = createDataAccessRequest(user.getUserId(), collectionId);
-    dataAccessRequestDAO.updateSubmissionInstitution(parent.getReferenceId());
+    dataAccessRequestDAO.updateSubmissionInstitution(
+        parent.getReferenceId(), user.getInstitutionId());
     SubmissionInstitution recorded = findSubmissionInstitution(parent.getReferenceId());
 
     userDAO.updateInstitutionId(user.getUserId(), newInstitutionId);
     DataAccessRequest progressReport =
         createProgressReport(randomAlphabetic(10), user.getUserId(), collectionId, parent.getId());
-    dataAccessRequestDAO.updateSubmissionInstitution(progressReport.getReferenceId());
+    dataAccessRequestDAO.updateSubmissionInstitution(
+        progressReport.getReferenceId(), newInstitutionId);
 
     assertEquals(recorded, findSubmissionInstitution(parent.getReferenceId()));
     assertEquals(
@@ -1618,13 +1619,26 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     String institutionName = getUserInstitution(user).getName();
     DataAccessRequest dar =
         createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
-    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId());
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
 
     institutionDAO.deleteInstitutionById(user.getInstitutionId());
 
     assertEquals(
         new SubmissionInstitution(null, institutionName),
         findSubmissionInstitution(dar.getReferenceId()));
+  }
+
+  @Test
+  void testUpdateSubmissionInstitution_InstitutionAlreadyDeleted() {
+    User user = createUserWithInstitution();
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    institutionDAO.deleteInstitutionById(user.getInstitutionId());
+
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+
+    assertEquals(
+        new SubmissionInstitution(null, null), findSubmissionInstitution(dar.getReferenceId()));
   }
 
   private record SubmissionInstitution(Long id, String name, boolean hasSnapshotDate) {
