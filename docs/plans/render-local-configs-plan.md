@@ -103,7 +103,8 @@ All output goes to `config/`. The script creates the directory if it does not ex
 
 ```
 Usage: scripts/render-configs.sh [OPTION]...
-  --project PROJECT                 Google project for the dev cluster. Defaults to broad-dsde-dev.
+  --project PROJECT                 Google project for the dev cluster, for the certs and dev secrets.
+                                    Defaults to broad-dsde-dev. The export never uses it.
   --helmfile_ref REF                The terra-helmfile branch or tag to render. Defaults to master.
   --helmfile_dir DIR                Render a local terra-helmfile checkout as it is, with changes that
                                     are not committed. Cannot be used with --helmfile_ref.
@@ -148,10 +149,14 @@ namespace of the `terra-dev` cluster.
 `scripts/render-chart-configs.sh` does these steps:
 
 1. Get the `terra-helmfile` source:
-   - With `--helmfile_dir`, use that checkout as it is. The script does not run `git` in it.
+   - With `--helmfile_dir`, use that checkout as it is. The script can run only read-only `git`
+     commands in it: `git -C DIR rev-parse HEAD` and `git -C DIR status --porcelain`. It never
+     runs a command that changes the checkout, such as `fetch`, `checkout`, `pull` or `stash`.
    - Otherwise, clone `broadinstitute/terra-helmfile` into a temp directory with
      `gh repo clone -- --depth 1 --branch REF`. `REF` is `--helmfile_ref`, or `master`.
-   - Print the source and its commit, so the developer can see which config they run.
+   - Print the source and its commit, so the developer can see which config they run. For
+     `--helmfile_dir`, add `(uncommitted changes)` when `git status --porcelain` has output.
+     If the folder is not a Git checkout, print `commit unknown`, and continue.
 2. Copy `charts/` into a temp directory. The script never changes the developer's checkout.
 3. Build the chart dependencies from the bottom up: first `liquibase-migration` (for `esolib`),
    then `consent`. Use `helm dependency update --skip-refresh`.
@@ -276,16 +281,26 @@ in `.env`. `ENV` comes from `--db_env`:
 | `prod` | None | The script stops with an error before it reads a secret. There is no flag that overrides this. |
 | Any other value | None | The script stops with an error. |
 
+The project comes only from this table. `export-db.sh` has no `--project` option, and
+`render-configs.sh` does not send its `--project` value to the export. Each `gcloud` and
+`cloud-sql-proxy` call gives the project from the table explicitly (`--project`, and the full
+instance connection name). So the gcloud default project and `CLOUDSDK_CORE_PROJECT` have no
+effect. The script checks `--db_env` against the table before it reads a secret.
+
 The steps:
 
 1. Read the instance name, user and password from the `consent-postgres-creds` secret in Secret
    Manager in the project, as `scripts/db-connect.sh` does.
 2. Start `cloud-sql-proxy` (v2) on port 5433. Port 5432 belongs to the local Postgres container.
 3. Run `pg_dump --no-owner --no-privileges` from the `postgres:16.14-alpine` image, the same image
-   as the local database. Connect to the proxy at `host.docker.internal:5433`.
+   as the local database. Connect to the proxy at `host.docker.internal:5433`. Start the container
+   with `--add-host=host.docker.internal:host-gateway`. Linux Docker Engine does not resolve
+   `host.docker.internal` without this option. Colima and Docker Desktop resolve the name with
+   or without it. A test on Colima confirmed that the option does no harm there.
 4. Compress the output with `gzip`. The Postgres image loads `.sql.gz` files on its own.
 5. Stop the proxy on exit, also when a step fails.
 6. Write to a temp file, and move it into place only when `pg_dump` succeeds.
+7. Delete the older dumps. See [Data Handling](#data-handling).
 
 Why this format: the local Postgres container loads the dump with `psql` and `ON_ERROR_STOP=1`.
 The dumps that developers use today have `Owner: -` on each object, so somebody made them with
@@ -296,6 +311,22 @@ not exist in local Postgres. The load then stops at the first error.
 Why run `pg_dump` in the image: a `pg_dump` from a newer major version can write settings that
 Postgres 16 does not know (for example `transaction_timeout` from version 17). The image version
 always matches the local database.
+
+#### Data Handling
+
+A dev or staging dump can contain real user data, for example the names and email addresses of
+people who use dev. The dump keeps this data unchanged. Consent finds users by email, so a local
+stack with changed emails does not work for the developer who signs in.
+
+The controls:
+
+| Control | Rule |
+|---|---|
+| Location | Dumps go only in `config/`, which is not tracked (`/config/` is in `.gitignore`). |
+| File mode | Each dump gets mode `600`, the same as the other files that hold secrets. |
+| Retention | After a new dump moves into place, the script deletes all older dumps that it made (`consentdb-dev-*.sql.gz` and `consentdb-staging-*.sql.gz`). Only the new dump stays. A failed export deletes nothing. |
+| Other dumps | The script never deletes a dump that it did not make, such as an old hand-made `.sql` file. It lists each one, and asks the developer to delete it. |
+| Sharing | `DEVNOTES.md` says: do not copy, share or upload a dump. Make a new one with the script. |
 
 A staging dump changes only the data. The rendered config stays dev, so the app still uses dev
 B2C, Sam and the dev bucket.
@@ -450,20 +481,28 @@ For each ticket:
 7. Run the script a second time. Make sure that it keeps the `.env` values and makes `.bak` files.
 8. For ticket 2: render with `--helmfile_ref` set to a test branch, and with `--helmfile_dir` set to
    a checkout that has a change that is not committed. Make sure that each change is in the output
-   and that the script prints the source and commit.
+   and that the script prints the source, the commit and `(uncommitted changes)`. Make sure that
+   `git status` in the checkout is the same before and after the run.
 9. For ticket 4: start compose with a new dev dump and a fresh container. Make sure that the load
    has no errors and that Liquibase reports no pending changes. Do the same with a staging dump.
 10. For ticket 4: run with `--db_env prod`. Make sure that the script stops before it reads a
-    secret or starts the proxy.
-11. For ticket 5: run the script on a new volume and again on a full index. Make sure that the
+    secret or starts the proxy. Then run `render-configs.sh --export_db true --project
+    broad-dsde-prod` with `gcloud config set project broad-dsde-prod`. Make sure that the export
+    still uses `broad-dsde-dev`.
+11. For ticket 4: run the export two times. Make sure that only the second dump stays, that it has
+    mode `600`, and that the script lists a hand-made `.sql` file in `config/` but does not
+    delete it. Then make an export fail, and make sure that the older dump stays.
+12. For ticket 4: run the export on Colima, on Linux Docker Engine and on Podman. Make sure that
+    `pg_dump` reaches the proxy on each one.
+13. For ticket 5: run the script on a new volume and again on a full index. Make sure that the
     document count is the same as the number of datasets in the database both times.
-12. For ticket 5: make one document fail, for example with a local index that has a conflicting
+14. For ticket 5: make one document fail, for example with a local index that has a conflicting
     mapping for one field. Make sure that the script fails and shows the failed dataset IDs.
-13. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
+15. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
     `docker compose ... config` shows it, and that `--write_compose` does not change the file.
-14. For ticket 2: add a key such as `databasePassword: x` to `local-values.yaml`. Make sure that
+16. For ticket 2: add a key such as `databasePassword: x` to `local-values.yaml`. Make sure that
     the script stops before the render, and that the error names the line and the key.
-15. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
+17. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
     difference in the PR.
 
 ## Alternatives
@@ -485,5 +524,6 @@ The team answered the open questions from the first review:
 | Which environments can the export script use? | Dev by default. Staging with an option. Never prod. | `--db_env dev\|staging`. The script refuses `prod`, and no flag overrides this. |
 | Does anyone use `sqlproxy.env` or `tcell_agent.config`? | No. | The script does not write them. Ticket 5 removes them from the docs. |
 | Does anyone run the app outside compose? | No. The team runs the app with compose from a terminal. | The `-Ddw.*` flags are only in the compose template. No IntelliJ steps. |
+| How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. The script can delete older dumps. | [Data Handling](#data-handling): mode `600`, only the newest dump stays, no sharing. |
 | How does the local `dataset` index get filled? | A script calls the reindex API with a `gcloud auth print-access-token` token. | `scripts/index-es.sh` (ticket 5). |
 | Which `terra-helmfile` commit does the script render? | `master` by default. The team often tests `terra-helmfile` changes with a local consent instance. | `--helmfile_ref` selects a branch. `--helmfile_dir` renders a local checkout with changes that are not committed. |
