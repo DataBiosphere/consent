@@ -395,13 +395,15 @@ changing when a researcher changes employer.
 
 **Notes**
 
-- Liquibase changeset adding nullable `institution_id` and `institution_name` to
-  `data_access_request`, with a `changelog-master.xml` include. `institution_id` references
-  `institution` `ON DELETE SET NULL` so an admin can still delete an institution; the name keeps the
-  history when that happens.
+- Liquibase changeset adding nullable `institution_id`, `institution_name` and
+  `institution_snapshot_date` to `data_access_request`, with a `changelog-master.xml` include.
+  `institution_id` references `institution` `ON DELETE SET NULL` so an admin can still delete an
+  institution; the name keeps the history when that happens. The date is set on every submission,
+  so a submission with no institution isn't mistaken for one from before the column existed.
 - Write it in the existing submission transaction in `DataAccessRequestService`, next to
   `captureDatasetDaaSnapshots`.
-- Update `db/mapper/DataAccessRequestMapper.java`; DAR hydration is mapped by hand.
+- Record the institution the submission was validated against. Reporting reads the columns in SQL,
+  so `DataAccessRequestMapper` and the DAR response are unchanged.
 - Progress reports and closeouts record the institution at their own submission, NULL if the
   submitter has none.
 
@@ -416,7 +418,7 @@ changing when a researcher changes employer.
 
 **Tests**
 
-- Submission records the institution.
+- Submission records the institution and the recorded date, including when there's no institution.
 - Changing the user's institution leaves an existing DAR's value alone.
 - Deleting an institution keeps the recorded name.
 
@@ -440,6 +442,10 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - Institution: the DAR's recorded institution from ticket 3, falling back to `users.institution_id`
   for DARs submitted before it. Include a flag saying which, and note it in the OpenAPI path spec. A
   DAR with no institution either way reports null and groups as "No institution".
+- Fall back only when `institution_snapshot_date` is NULL. A recorded NULL institution reports as
+  "No institution", not the user's current one.
+- Report the institution's current name through `institution_id`, so an admin rename shows. Use the
+  recorded name only when the id is NULL, meaning the institution was deleted after submission.
 - Switch the study and dataset metrics queries, which read `users.institution_id` live, to the
   recorded institution of the submission they already display, falling back to live. They source a
   row from the latest qualifying submission and this endpoint from the original DAR, so the two can
@@ -465,6 +471,9 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 
 - DAO tests per aggregation, including a multi-dataset DAR and one with no datasets.
 - A null institution; a recorded institution that differs from the user's current one.
+- A recorded institution that was later deleted reports its recorded name.
+- A renamed institution reports its current name.
+- A progress report recorded with no institution doesn't fall back to the user's current one.
 - PI, lab staff and internal collaborator counts reported separately.
 - A collection with a progress report counts once.
 - The serialised response contains no collaborator name or email.

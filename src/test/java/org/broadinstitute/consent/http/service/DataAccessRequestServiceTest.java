@@ -88,6 +88,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -223,6 +224,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
+    verify(dataAccessRequestDAO)
+        .updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
   }
 
   @Test
@@ -257,6 +260,19 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
+    ArgumentCaptor<String> insertedReferenceId = ArgumentCaptor.forClass(String.class);
+    verify(dataAccessRequestDAO)
+        .insertDataAccessRequest(
+            anyInt(),
+            insertedReferenceId.capture(),
+            anyInt(),
+            any(Date.class),
+            any(Date.class),
+            any(Date.class),
+            any(DataAccessRequestData.class),
+            anyString());
+    verify(dataAccessRequestDAO)
+        .updateSubmissionInstitution(insertedReferenceId.getValue(), user.getInstitutionId());
   }
 
   @Test
@@ -462,6 +478,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+    verify(dataAccessRequestDAO)
+        .updateSubmissionInstitution(progressReport.getReferenceId(), user.getInstitutionId());
   }
 
   @Test
@@ -622,6 +640,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
     verify(daaDAO, never()).insertDarDatasetDaaSnapshots(any());
+    verify(dataAccessRequestDAO)
+        .updateSubmissionInstitution(progressReport.getReferenceId(), user.getInstitutionId());
   }
 
   @Test

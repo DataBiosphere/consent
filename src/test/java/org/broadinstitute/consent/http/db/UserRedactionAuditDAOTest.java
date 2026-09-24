@@ -7,8 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +26,35 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
     return "redacted_"
         + Base64.getEncoder()
             .encodeToString(String.valueOf(userId).getBytes(StandardCharsets.UTF_8));
+  }
+
+  private String insertSubmittedDar(User user) {
+    Date now = new Date();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection("DAR-" + UUID.randomUUID(), user.getUserId(), now);
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        now,
+        now,
+        now,
+        new DataAccessRequestData(),
+        null);
+    dataAccessRequestDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
+    return referenceId;
+  }
+
+  private Map<String, Object> queryDarInstitution(String referenceId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT institution_id, institution_name, institution_snapshot_date FROM data_access_request WHERE reference_id = :referenceId")
+                .bind("referenceId", referenceId)
+                .mapToMap()
+                .one());
   }
 
   private List<Map<String, Object>> queryAuditRows(Integer userId) {
@@ -151,5 +183,23 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
 
     List<Map<String, Object>> rows = queryAuditRows(nonExistentUserId);
     assertTrue(rows.isEmpty());
+  }
+
+  @Test
+  void testRedactUser_clearsInstitutionRecordedOnOwnDarsOnly() {
+    User target = createUserWithInstitution();
+    User other = createUserWithInstitution();
+    User admin = createUser();
+    String targetDar = insertSubmittedDar(target);
+    String otherDar = insertSubmittedDar(other);
+
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
+
+    Map<String, Object> redacted = queryDarInstitution(targetDar);
+    assertNull(redacted.get("institution_id"));
+    assertNull(redacted.get("institution_name"));
+    assertNotNull(redacted.get("institution_snapshot_date"));
+    assertEquals(
+        other.getInstitutionId().longValue(), queryDarInstitution(otherDar).get("institution_id"));
   }
 }

@@ -8,17 +8,18 @@ public interface UserRedactionAuditDAO {
   /**
    * Redact a user's PII and write an audit record in a single atomic SQL statement.
    *
-   * <p>The statement uses two writeable CTEs:
+   * <p>The statement uses three writeable CTEs:
    *
    * <ol>
    *   <li>{@code original} — SELECT … FOR UPDATE locks and captures the current row values so the
    *       database is the sole source of truth for what is being redacted.
    *   <li>{@code update_user} — UPDATE … FROM original performs the redaction; because it joins
    *       through {@code original}, it is automatically a no-op when the user does not exist.
+   *   <li>{@code redact_dars} — clears the institution recorded on the user's DARs at submission.
    * </ol>
    *
-   * The outer INSERT selects from both CTEs, so all three operations (lock, update, audit) are
-   * atomic and no PII is passed through the application layer.
+   * Everything runs as one statement, so the lock, updates and audit are atomic and no PII is
+   * passed through the application layer.
    *
    * @param userId the user_id of the account being redacted
    * @param adminUserId the user_id of the admin performing the redaction
@@ -41,6 +42,12 @@ public interface UserRedactionAuditDAO {
         FROM   original
         WHERE  users.user_id = :userId
         RETURNING users.user_id
+      ),
+      redact_dars AS (
+        UPDATE data_access_request
+        SET    institution_id = NULL, institution_name = NULL
+        FROM   update_user
+        WHERE  data_access_request.user_id = update_user.user_id
       )
       INSERT INTO user_redaction_audit
         (user_id, admin_user_id, original_email, original_display_name, original_institution_id, action_date)

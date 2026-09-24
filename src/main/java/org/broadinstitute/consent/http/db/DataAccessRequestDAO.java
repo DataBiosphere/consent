@@ -689,6 +689,25 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("referenceId") String referenceId);
 
   /**
+   * Snapshots the institution a submission was validated against onto the DAR; null if there is
+   * none or it no longer exists.
+   *
+   * @param referenceId The DAR or progress report reference id
+   * @param institutionId The submitter's institution id, as validated
+   */
+  @SqlUpdate(
+      """
+        UPDATE data_access_request
+          SET (institution_id, institution_name) =
+              (SELECT institution_id, institution_name FROM institution
+                WHERE institution_id = :institutionId),
+            institution_snapshot_date = now()
+        WHERE reference_id = :referenceId
+        """)
+  void updateSubmissionInstitution(
+      @Bind("referenceId") String referenceId, @Bind("institutionId") Integer institutionId);
+
+  /**
    * Inserts into dar_dataset collection
    *
    * @param referenceId String
