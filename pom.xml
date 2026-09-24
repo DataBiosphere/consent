@@ -76,6 +76,8 @@
           <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
             -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
             -Xshare:off
+            -Dguice_custom_class_loading=CHILD
+            --enable-native-access=ALL-UNNAMED
           </argLine>
           <excludedGroups>${excludedTestGroups}</excludedGroups>
         </configuration>
