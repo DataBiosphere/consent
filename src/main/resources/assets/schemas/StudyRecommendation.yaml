@@ -1,5 +1,8 @@
 type: object
-description: A publicly visible study recommended alongside another study.
+description: >
+  A publicly visible study recommended alongside another study, with the fields a study card needs.
+  Each is derived from the database the way the search index derives it for the Studies tab, counting
+  every dataset of the study. A string field with no value is omitted.
 properties:
   studyId:
     type: integer
@@ -13,6 +16,17 @@ properties:
   piName:
     type: string
     description: The name of the PI of the recommended study.
+  species:
+    type: string
+    description: The species studied, from the study's species property.
+  phenotype:
+    type: string
+    description: The phenotype/indication studied, from the study's phenotypeIndication property.
+  dataTypes:
+    type: array
+    items:
+      type: string
+    description: The data types of the recommended study. Empty when none are recorded.
   datasetCount:
     type: integer
     format: int64
@@ -22,3 +36,27 @@ properties:
     items:
       type: integer
     description: The dataset ids belonging to the recommended study.
+  totalParticipants:
+    type: integer
+    format: int64
+    description: >
+      Sum of the study's dataset participant counts. A dataset whose "# of participants" is missing
+      or not an integer contributes nothing.
+  modelCount:
+    type: integer
+    description: Number of models recorded among the study's assets.
+  workspaceCount:
+    type: integer
+    description: Number of workspaces recorded among the study's assets.
+  accessTypes:
+    type: array
+    items:
+      type: string
+      enum: [open, controlled, external]
+    description: The distinct access management values across the study's datasets.
+  dataUseCodes:
+    type: array
+    items:
+      type: string
+      enum: [GRU, DS, HMB, NPOA, OTHER]
+    description: The distinct primary data use codes across the study's datasets.

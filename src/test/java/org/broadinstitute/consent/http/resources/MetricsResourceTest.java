@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -119,6 +120,51 @@ class MetricsResourceTest extends AbstractTestHelper {
 
     Response response = resource.getFrequentlyRequestedWith(duosUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  /** The UI renders a study card from each recommendation, so every card field is served. */
+  @Test
+  void testRecommendationsCarryStudyCardFields() {
+    StudyRecommendation recommendation =
+        new StudyRecommendation(
+            2,
+            "Study",
+            "Description",
+            "PI",
+            "Human",
+            "Cancer",
+            List.of("Genomic"),
+            1L,
+            List.of(3),
+            100L,
+            1,
+            2,
+            List.of("open"),
+            List.of("GRU", "HMB"));
+    when(service.getSimilarStudies(any(), any())).thenReturn(List.of(recommendation));
+
+    Response response = resource.getSimilarStudies(duosUser, 1);
+    String json = GsonUtil.getInstance().toJson(response.getEntity());
+    Set<String> fields =
+        JsonParser.parseString(json).getAsJsonArray().get(0).getAsJsonObject().keySet();
+
+    assertEquals(
+        Set.of(
+            "studyId",
+            "studyName",
+            "studyDescription",
+            "piName",
+            "species",
+            "phenotype",
+            "dataTypes",
+            "datasetCount",
+            "datasetIds",
+            "totalParticipants",
+            "modelCount",
+            "workspaceCount",
+            "accessTypes",
+            "dataUseCodes"),
+        fields);
   }
 
   /**

@@ -390,8 +390,16 @@ class MetricsServiceTest extends AbstractTestHelper {
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
+        "Human",
+        UUID.randomUUID().toString(),
+        List.of("Genomic"),
         1L,
-        List.of(randomInt(1, 100)));
+        List.of(randomInt(1, 100)),
+        100L,
+        0,
+        0,
+        List.of("open"),
+        List.of("GRU"));
   }
 
   private Dataset generateDataset() {
