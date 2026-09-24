@@ -540,6 +540,46 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindLastElectionsByReferenceIds_PrefersTheCastVoteAmongChairs() {
+    Election e =
+        createDataAccessElection(
+            createDataAccessRequestV3().getReferenceId(), createDataset().getDatasetId());
+    // Cast first so the uncast vote has the higher vote_id.
+    castFinalVote(createUserWithRole(UserRoles.CHAIRPERSON.getRoleId()), e, true);
+    voteDAO.insertVote(
+        createUserWithRole(UserRoles.CHAIRPERSON.getRoleId()).getUserId(),
+        e.getElectionId(),
+        VoteType.FINAL.getValue());
+
+    List<Election> returned =
+        electionDAO.findLastElectionsByReferenceIds(List.of(e.getReferenceId()));
+
+    assertEquals(1, returned.size());
+    assertEquals(true, returned.getFirst().getFinalVote());
+  }
+
+  @Test
+  void testFinalVote_LatestCastVoteWinsAmongChairs() {
+    Election e =
+        createDataAccessElection(
+            createDataAccessRequestV3().getReferenceId(), createDataset().getDatasetId());
+    Date later = Date.from(VOTE_CAST_DATE.toInstant().plus(Duration.ofDays(5)));
+    // The later decision gets the lower vote_id, so only update_date can pick it.
+    castFinalVote(createUserWithRole(UserRoles.CHAIRPERSON.getRoleId()), e, true, later);
+    castFinalVote(createUserWithRole(UserRoles.CHAIRPERSON.getRoleId()), e, false, VOTE_CAST_DATE);
+
+    Election byId = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    List<Election> byReference =
+        electionDAO.findLastElectionsByReferenceIds(List.of(e.getReferenceId()));
+
+    assertEquals(true, byId.getFinalVote());
+    assertSameDay(later, byId.getFinalVoteDate());
+    assertEquals(1, byReference.size());
+    assertEquals(true, byReference.getFirst().getFinalVote());
+    assertSameDay(later, byReference.getFirst().getFinalVoteDate());
+  }
+
+  @Test
   void testFindElectionsByIds() {
     Dac dac = createDac();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
@@ -788,10 +828,13 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   private void castFinalVote(User chair, Election e, boolean vote) {
+    castFinalVote(chair, e, vote, VOTE_CAST_DATE);
+  }
+
+  private void castFinalVote(User chair, Election e, boolean vote, Date castDate) {
     Integer voteId =
         voteDAO.insertVote(chair.getUserId(), e.getElectionId(), VoteType.FINAL.getValue());
-    updateVote(
-        vote, "rationale", VOTE_CAST_DATE, voteId, false, e.getElectionId(), FIXED_DATE, false);
+    updateVote(vote, "rationale", castDate, voteId, false, e.getElectionId(), FIXED_DATE, false);
   }
 
   // ElectionMapper reads final_vote_date with getDate, which drops the time of day.

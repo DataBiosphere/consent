@@ -135,8 +135,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
    */
   @SqlQuery(
       """
-      SELECT * FROM (
-          SELECT e.*, v.vote final_vote,
+      SELECT DISTINCT ON (results.election_id) * FROM (
+          SELECT e.*, v.vote final_vote, v.vote_id final_vote_id,
+               v.update_date final_vote_update_date,
                COALESCE(v.update_date, v.create_date) AS final_vote_date,
            v.rationale final_rationale, MAX(e.election_id)
            -- Note that `dataset_id` is intentionally absent from the partition key: this yields
@@ -155,11 +156,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
            WHERE e.reference_id IN (<referenceIds>)
           ) AS results
            WHERE results.latest = results.election_id
-           ORDER BY results.election_id DESC,
-               CASE
-               WHEN results.final_vote_date IS NULL THEN results.last_update
-               ELSE results.final_vote_date
-               END DESC
+           -- One row per election: every chair holds a FINAL vote, so prefer the one actually cast.
+           ORDER BY results.election_id DESC, results.final_vote IS NULL,
+               results.final_vote_update_date DESC NULLS LAST, results.final_vote_id DESC
     """)
   @UseRowMapper(ElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
