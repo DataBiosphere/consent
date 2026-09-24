@@ -50,7 +50,14 @@
       </sqlCheck>
     </preConditions>
 
-    <dropUniqueConstraint tableName="match_entity" constraintName="purpose_consent"/>
+    <!--
+      purpose_consent is only a constraint where the schema was built from these changelogs. An
+      environment migrated from MySQL carries the same rule as a bare unique index that pgloader
+      renamed (idx_20033_purpose_consent in dev), which DROP CONSTRAINT cannot name. Dropping the
+      column takes every index over it with it, whatever it is called, so the constraint is the only
+      thing that needs dropping by name - and only where it exists.
+    -->
+    <sql>ALTER TABLE match_entity DROP CONSTRAINT IF EXISTS purpose_consent</sql>
     <dropColumn tableName="match_entity" columnName="consent"/>
 
     <rollback>
