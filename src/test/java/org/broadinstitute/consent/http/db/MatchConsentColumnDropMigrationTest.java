@@ -66,6 +66,22 @@ class MatchConsentColumnDropMigrationTest extends MigrationTestHelper {
   }
 
   @Test
+  void migrationDropsTheColumnWhereTheLegacyRuleIsOnlyAnIndex() throws Exception {
+    // The shape a MySQL-migrated environment carries: pgloader turned the unique key into a bare,
+    // renamed unique index, so there is no purpose_consent constraint to drop by name.
+    execute("ALTER TABLE match_entity DROP CONSTRAINT purpose_consent");
+    execute("CREATE UNIQUE INDEX idx_20033_purpose_consent ON match_entity (purpose, consent)");
+    execute("CREATE INDEX idx_20033_fkmatchconsent ON match_entity (consent)");
+
+    update();
+
+    assertFalse(columnExists());
+    assertFalse(indexExists("idx_20033_purpose_consent"));
+    assertFalse(indexExists("idx_20033_fkmatchconsent"));
+    assertTrue(constraintExists("match_entity_purpose_dataset_unique"));
+  }
+
+  @Test
   void migrationHaltsWhenTheReplacementConstraintNeverApplied() throws Exception {
     execute("ALTER TABLE match_entity DROP CONSTRAINT match_entity_purpose_dataset_unique");
 
@@ -118,6 +134,18 @@ class MatchConsentColumnDropMigrationTest extends MigrationTestHelper {
         "SELECT EXISTS (SELECT 1 FROM pg_attribute "
             + "WHERE attrelid = 'match_entity'::regclass AND attname = 'consent' "
             + "AND attnum > 0 AND NOT attisdropped)");
+  }
+
+  private boolean indexExists(String name) throws SQLException {
+    try (Connection connection = connection();
+        PreparedStatement statement =
+            connection.prepareStatement("SELECT to_regclass(?) IS NOT NULL")) {
+      statement.setString(1, name);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        resultSet.next();
+        return resultSet.getBoolean(1);
+      }
+    }
   }
 
   private boolean constraintExists(String name) throws SQLException {
