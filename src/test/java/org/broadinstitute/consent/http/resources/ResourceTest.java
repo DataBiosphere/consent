@@ -2,12 +2,18 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.ForbiddenException;
+import java.util.List;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.StatementExceptions;
@@ -107,5 +113,35 @@ class ResourceTest {
         () -> {
           abstractResource.validateFileDetails(fileDetail);
         });
+  }
+
+  /**
+   * A user with no user_role rows has a null role list, not an empty one. Streaming it threw a
+   * NullPointerException, which Jersey renders as a 500 where the caller should simply have been
+   * denied. The same shape was fixed in AuthorizationHelper; this is the other site.
+   */
+  @Test
+  void testValidateAuthedRoleUserDeniesAUserWhoseRolesAreNull() {
+    User noRoles = new User();
+    noRoles.setUserId(1);
+    assertNull(noRoles.getRoles(), "the case under test is a null role list, not an empty one");
+
+    Resource resource = new Resource() {};
+    List<UserRoles> privileged = List.of(UserRoles.ADMIN);
+
+    assertThrows(
+        ForbiddenException.class, () -> resource.validateAuthedRoleUser(privileged, noRoles, 2));
+  }
+
+  /** The same caller asking about themselves is allowed through without consulting roles. */
+  @Test
+  void testValidateAuthedRoleUserAllowsSelfWhenRolesAreNull() {
+    User noRoles = new User();
+    noRoles.setUserId(1);
+
+    Resource resource = new Resource() {};
+    List<UserRoles> privileged = List.of(UserRoles.ADMIN);
+
+    assertDoesNotThrow(() -> resource.validateAuthedRoleUser(privileged, noRoles, 1));
   }
 }

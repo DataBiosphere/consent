@@ -141,7 +141,9 @@ patch:
   operationId: apiDatasetStudyStudyIdPatch
   description: |
     This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of study
-    properties. All fields are optional and if not provided, will be ignored.
+    properties. As with the registration PUT, a study is only patchable by Admins, its Creator,
+    and its Data Custodians; other callers holding one of those roles receive a 403. All fields
+    are optional and if not provided, will be ignored.
       * Study name
       * Study type
       * Study description
@@ -151,6 +153,9 @@ patch:
       * Study Target Delivery Date
       * Study Target Public Release Date
       * Study PI Name
+      * Study PI Email
+      * Study PI Institution Id
+      * Study PI ORCID, LinkedIn URL, and website URL
       * Study public visibility (boolean)
   parameters:
     - name: studyId
@@ -177,6 +182,10 @@ patch:
             $ref: '../schemas/Study.yaml'
     304:
       description: Not Modified
+    401:
+      description: Unauthorized.
+    403:
+      description: Forbidden - the caller does not own this study
     404:
       description: Not Found
     429:

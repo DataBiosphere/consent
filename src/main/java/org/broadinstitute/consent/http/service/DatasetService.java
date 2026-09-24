@@ -13,6 +13,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -180,13 +181,29 @@ public class DatasetService implements ConsentLogger {
   }
 
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
-    // Admins
+    return readBasis(dataset, user) == null ? null : dataset;
+  }
+
+  /**
+   * Why this user may read this dataset, or null if they may not.
+   *
+   * <p>Same decision {@link #verifyPublicVisibilityAccess(Dataset, User)} has always made - the set
+   * of callers it lets through is unchanged - but it says which rule let them through. A caller
+   * that derives something more sensitive than the dataset itself needs that: a dataset belonging
+   * to no study is returned to everyone because there is no visibility to test, which is a weaker
+   * reason than being its creator or an admin, and the two should not be treated alike.
+   */
+  protected DatasetReadBasis readBasis(Dataset dataset, User user) {
     if (user.hasUserRole(UserRoles.ADMIN)) {
-      return dataset;
+      return DatasetReadBasis.ADMIN;
     }
-    // If there is no study, we can't verify visibility, so return the dataset
+    // Checked before the study, so a creator is reported as one whether or not a study exists. This
+    // grants nothing new: the study branch below already admitted them.
+    if (Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
+      return DatasetReadBasis.DATASET_CREATOR;
+    }
     if (dataset.getStudyId() == null) {
-      return dataset;
+      return DatasetReadBasis.NO_STUDY;
     }
     // Reuse the study when the caller already populated it for the response. Otherwise read only
     // the details canReadStudy needs, and do not attach it - callers decide what the response
@@ -195,23 +212,44 @@ public class DatasetService implements ConsentLogger {
         dataset.getStudy() != null
             ? dataset.getStudy()
             : studyDAO.findStudyDetailsById(dataset.getStudyId());
-    if (canReadStudy(user, study) || Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
-      return dataset;
-    }
-    return null;
+    return canReadStudy(user, study) ? DatasetReadBasis.STUDY_READABLE : null;
   }
 
+  /** The dataset, and the rule that let this caller read it. */
+  public record DatasetRead(Dataset dataset, DatasetReadBasis basis) {}
+
+  /** Why a caller was allowed to read a dataset. */
+  public enum DatasetReadBasis {
+    /** An admin, who may read anything. */
+    ADMIN,
+    /** The user who created the dataset. */
+    DATASET_CREATOR,
+    /** The dataset's study is published, or this caller is its creator or custodian. */
+    STUDY_READABLE,
+    /**
+     * The dataset belongs to no study, so there was no visibility to test and every authenticated
+     * caller is let through. Nothing about this caller was checked.
+     */
+    NO_STUDY
+  }
+
+  /**
+   * Whether the user may read this study and anything derived from it: its creator, its custodians
+   * and admins always may, anyone may when it is publicly visible.
+   *
+   * <p>public_visibility is nullable, and a null is not a grant - it is an unset flag on a study
+   * nobody has published. This used to read as public here while the dataset study summaries
+   * treated it as private, so the same study was readable through one route and hidden on another.
+   * The single definition lives here; {@link #verifyStudyVisibilityAccess(Study, User)} is the
+   * throwing form of it.
+   */
   protected boolean canReadStudy(User user, Study study) {
     if (study == null) {
       return false;
     }
-    if (user.hasUserRole(UserRoles.ADMIN)) {
-      return true;
-    }
-    if (!Boolean.FALSE.equals(study.getPublicVisibility())) {
-      return true;
-    }
-    return isCreatorOrCustodian(user, study);
+    // Visibility first: a published study is readable without reading its creator or properties.
+    return Boolean.TRUE.equals(study.getPublicVisibility())
+        || isCreatorCustodianOrAdmin(user, study);
   }
 
   protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
@@ -251,6 +289,43 @@ public class DatasetService implements ConsentLogger {
     return user.hasUserRole(UserRoles.ADMIN) || isCreatorOrCustodian(user, study);
   }
 
+  /**
+   * Enforces read access to a study and everything derived from it. A study that is not publicly
+   * visible is readable only by its creator, its custodians, and admins. Mirrors {@link
+   * #verifyPublicVisibilityAccess(Dataset, User)} for datasets.
+   *
+   * @param study The study to check. Must be populated with creator and properties.
+   * @param user The requesting user
+   * @return The same study, when the user may read it
+   * @throws NotFoundException if the study is not visible to the user
+   */
+  public Study verifyStudyVisibilityAccess(Study study, User user) {
+    // A study the caller may not read is reported as absent rather than forbidden, as is a study
+    // that does not exist. canReadStudy holds the rule; see it for the null-visibility case.
+    if (!canReadStudy(user, study)) {
+      throw new NotFoundException("Study not found");
+    }
+    return study;
+  }
+
+  /**
+   * Loads a study for reading by an endpoint scoped to it, or reports it absent.
+   *
+   * <p>Reads only the study's own details. {@link #findStudy(Integer)} additionally opens a
+   * REPEATABLE_READ transaction and fetches dataset ids and the alternative data sharing plan file,
+   * none of which the visibility rule looks at; the study-scoped comment, metrics and asset
+   * endpoints were each paying for that on every request.
+   *
+   * @throws NotFoundException if the study does not exist, or is not visible to the user
+   */
+  public Study requireReadableStudy(Integer studyId, User user) {
+    Study study = studyDAO.findStudyDetailsById(studyId);
+    if (study == null) {
+      throw new NotFoundException("Study not found");
+    }
+    return verifyStudyVisibilityAccess(study, user);
+  }
+
   public Dataset getDatasetByName(String name) {
     String lowercaseName = name.toLowerCase();
     return datasetDAO.getDatasetByName(lowercaseName);
@@ -276,15 +351,23 @@ public class DatasetService implements ConsentLogger {
    * @throws ForbiddenException if the user cannot view the dataset
    */
   public Dataset findDatasetByIdForRead(User user, Integer id) {
+    return findDatasetByIdForReadWithBasis(user, id).dataset();
+  }
+
+  /**
+   * {@link #findDatasetByIdForRead(User, Integer)} with the rule that allowed it, for callers that
+   * return more than the dataset and need to know how much the check actually established.
+   */
+  public DatasetRead findDatasetByIdForReadWithBasis(User user, Integer id) {
     Dataset dataset = datasetDAO.findDatasetById(id);
     if (dataset == null) {
       throw new NotFoundException("Entity not found");
     }
-    Dataset authorizedDataset = verifyPublicVisibilityAccess(dataset, user);
-    if (authorizedDataset == null) {
+    DatasetReadBasis basis = readBasis(dataset, user);
+    if (basis == null) {
       throw new ForbiddenException("User does not have permission");
     }
-    return authorizedDataset;
+    return new DatasetRead(dataset, basis);
   }
 
   /**
@@ -347,15 +430,21 @@ public class DatasetService implements ConsentLogger {
     return studyDAO.findStudyById(studyId);
   }
 
+  /**
+   * Loads a study for reading, or reports it absent.
+   *
+   * <p>Delegates to {@link #verifyStudyVisibilityAccess(Study, User)} rather than re-deciding: a
+   * second gate over the same predicate used to answer 403 here and 404 there, so two routes over
+   * the same study - its registration assets and its files - disagreed about whether a study the
+   * caller may not read is forbidden or absent. A 403 also confirms the study exists, which is what
+   * the visibility flag is meant to withhold.
+   */
   public Study findStudyByIdForRead(User user, Integer studyId) {
     Study study = studyDAO.findStudyById(studyId);
     if (study == null) {
       throw new NotFoundException("Entity not found");
     }
-    if (!canReadStudy(user, study)) {
-      throw new ForbiddenException("User does not have permission");
-    }
-    return study;
+    return verifyStudyVisibilityAccess(study, user);
   }
 
   public List<DatasetStudySummary> findAllDatasetStudySummaries(User user) {
@@ -728,12 +817,17 @@ public class DatasetService implements ConsentLogger {
       study.setStudyId(studyId);
     } else {
       studyId = study.getStudyId();
+      // A study conversion carries no PI detail columns, so keep the stored ones.
       studyDAO.updateStudy(
           study.getStudyId(),
           studyConversion.getName(),
           studyConversion.getDescription(),
           studyConversion.getPiName(),
           studyConversion.getPiEmail(),
+          study.getPiInstitution() == null ? null : study.getPiInstitution().getId(),
+          study.getPiOrcid(),
+          study.getPiLinkedinUrl(),
+          study.getPiWebsiteUrl(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
           userId,
@@ -793,6 +887,10 @@ public class DatasetService implements ConsentLogger {
       datasetServiceDAO.patchStudy(study, user, patch);
       elasticSearchService.indexStudy(studyId);
       return studyDAO.findStudyById(studyId);
+    } catch (WebApplicationException ex) {
+      // A rejected patch is the caller's problem, not a server fault: re-wrapping it here turned
+      // "PI institution 999999 does not exist" into an opaque 500.
+      throw ex;
     } catch (Exception ex) {
       logException(ex);
       throw new InternalServerErrorException(

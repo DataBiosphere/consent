@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER;
 import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER_TYPE;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -41,6 +40,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
@@ -72,6 +72,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
+  private final StudyAssets studyAssets = new StudyAssets();
   private final DatasetDAO datasetDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final StudyDAO studyDAO;
@@ -299,8 +300,12 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDataSubmitterEmail(study.getCreateUserEmail());
     }
 
-    findStudyProperty(study.getProperties(), assets)
-        .ifPresent(prop -> term.setAssets(buildMapFromPropertyValue(prop.getValue())));
+    // The indexed assets object keeps its original shape — every promoted list plus whatever
+    // unpromoted keys remain — so search consumers are unaffected by the promotion.
+    Map<String, Object> studyAssetsMap = studyAssets.assemble(study.getProperties());
+    if (!studyAssetsMap.isEmpty()) {
+      term.setAssets(studyAssetsMap);
+    }
     findStudyProperty(study.getProperties(), data)
         .ifPresent(prop -> term.setData(buildMapFromPropertyValue(prop.getValue())));
     findStudyProperty(study.getProperties(), EXTERNAL_IDENTIFIER)

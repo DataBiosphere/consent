@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -128,7 +129,7 @@ class StudyResourceTest extends AbstractTestHelper {
     study.setName("asdfasdfasdfasdfasdfasdf");
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, user)).thenReturn(study);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -154,7 +155,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, user)).thenReturn(study);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -181,7 +182,8 @@ class StudyResourceTest extends AbstractTestHelper {
     when(duosUser.getUser()).thenReturn(generalUser);
     when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(datasetService.verifyStudyVisibilityAccess(study, generalUser))
+        .thenThrow(new NotFoundException("Study not found"));
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -197,7 +199,7 @@ class StudyResourceTest extends AbstractTestHelper {
     when(duosUser.getUser()).thenReturn(createUser);
     when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, createUser)).thenReturn(study);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -209,7 +211,7 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, user)).thenReturn(study);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -222,7 +224,7 @@ class StudyResourceTest extends AbstractTestHelper {
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, user)).thenReturn(study);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -249,7 +251,8 @@ class StudyResourceTest extends AbstractTestHelper {
     when(duosUser.getUser()).thenReturn(generalUser);
     when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(datasetService.verifyStudyVisibilityAccess(study, generalUser))
+        .thenThrow(new NotFoundException("Study not found"));
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -265,7 +268,7 @@ class StudyResourceTest extends AbstractTestHelper {
     when(duosUser.getUser()).thenReturn(createUser);
     when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, createUser)).thenReturn(study);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -593,7 +596,7 @@ class StudyResourceTest extends AbstractTestHelper {
     approvedUser.setUserId(study.getCreateUserId());
     when(datasetService.getStudyWithDatasetsById(approvedUser, study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(approvedUser, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, approvedUser)).thenReturn(study);
     when(duosUser.getUser()).thenReturn(approvedUser);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
@@ -609,7 +612,7 @@ class StudyResourceTest extends AbstractTestHelper {
     generalUser.setUserId(randomInt(1000, 1100));
     when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(datasetService.verifyStudyVisibilityAccess(study, generalUser)).thenReturn(study);
     when(duosUser.getUser()).thenReturn(generalUser);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
@@ -624,7 +627,7 @@ class StudyResourceTest extends AbstractTestHelper {
     User creator = new User();
     creator.setUserId(study.getCreateUserId());
     when(datasetService.getStudyWithDatasetsById(creator, study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(creator, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, creator)).thenReturn(study);
     when(duosUser.getUser()).thenReturn(creator);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
@@ -639,7 +642,7 @@ class StudyResourceTest extends AbstractTestHelper {
     User custodian = new User();
     custodian.setUserId(randomInt(1000, 1100));
     when(datasetService.getStudyWithDatasetsById(custodian, study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(custodian, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, custodian)).thenReturn(study);
     when(duosUser.getUser()).thenReturn(custodian);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
@@ -655,7 +658,7 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(randomInt(1000, 1100));
     admin.setAdminRole();
     when(datasetService.getStudyWithDatasetsById(admin, study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
     when(duosUser.getUser()).thenReturn(admin);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
@@ -671,7 +674,8 @@ class StudyResourceTest extends AbstractTestHelper {
     generalUser.setUserId(randomInt(1000, 1100));
     when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(datasetService.verifyStudyVisibilityAccess(study, generalUser))
+        .thenThrow(new NotFoundException("Study not found"));
     when(duosUser.getUser()).thenReturn(generalUser);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
@@ -679,19 +683,39 @@ class StudyResourceTest extends AbstractTestHelper {
     }
   }
 
+  // A study whose public_visibility is NULL (the column is nullable) reads as "not public".
+  // An approved user still sees it; anyone else gets a 404 rather than the 500 this used to
+  // produce by unboxing the null before checking the role.
   @Test
-  void testCheckPublicVisibilityForUser_PublicVisibilityNull_CausesError() {
+  void testCheckPublicVisibilityForUser_PublicVisibilityNull() {
     Study study = createMockStudy();
     study.setPublicVisibility(null);
     User approvedUser = new User();
     approvedUser.setUserId(study.getCreateUserId());
     when(datasetService.getStudyWithDatasetsById(approvedUser, study.getStudyId()))
         .thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(approvedUser, study)).thenReturn(true);
+    when(datasetService.verifyStudyVisibilityAccess(study, approvedUser)).thenReturn(study);
     when(duosUser.getUser()).thenReturn(approvedUser);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PublicVisibilityNull_NoApprovedRole() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(null);
+    User generalUser = new User();
+    generalUser.setUserId(randomInt(1000, 1100));
+    when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, generalUser))
+        .thenThrow(new NotFoundException("Study not found"));
+    when(duosUser.getUser()).thenReturn(generalUser);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 
@@ -702,6 +726,10 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    // The PATCH gate additionally requires ownership of this study, not merely a
+    // study-editing role plus read visibility.
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
     when(duosUser.getUser()).thenReturn(admin);
     String patchJson =
         """
@@ -714,6 +742,84 @@ class StudyResourceTest extends AbstractTestHelper {
         .thenReturn(study);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  /**
+   * The role gate on the endpoint only says the caller holds a study-editing role somewhere in
+   * DUOS. A publicly visible study is readable by everyone, so read visibility cannot stand in for
+   * write authorization: patching it still requires being its creator, a custodian, or an admin.
+   */
+  @Test
+  void testPatchStudyByIdForbiddenForNonOwnerOfPublicStudy() {
+    Study study = createMockStudy();
+    User chairperson = new User();
+    chairperson.setUserId(study.getCreateUserId() + 1);
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(chairperson, study)).thenReturn(false);
+    when(duosUser.getUser()).thenReturn(chairperson);
+    String patchJson =
+        """
+            {
+              "piOrcid": "0000-0002-1825-0097"
+            }
+            """;
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+    verify(datasetService, never()).patchStudy(any(), any(), any());
+  }
+
+  /**
+   * Deleting an institution nulls study.pi_institution_id through the foreign key without any
+   * patch, leaving the legacy piInstitution property behind - and SchemaFromStudy falls back to
+   * that property whenever the column is null, so the deleted institution resurfaces in the next
+   * registration payload. Clearing it is a patch of {"piInstitutionId": null}, which changes no
+   * stored value. That must not be answered with 304, or the property can never be retired.
+   */
+  @Test
+  void testPatchStudyByIdRetiresTheLegacyInstitutionPropertyWhenTheColumnIsAlreadyNull() {
+    Study study = createMockStudy();
+    study.setPiInstitution(null);
+    StudyProperty legacy = new StudyProperty();
+    legacy.setKey("piInstitution");
+    legacy.setType(PropertyType.Number);
+    legacy.setValue(7);
+    study.addProperties(legacy);
+
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
+    when(datasetService.patchStudy(eq(study.getStudyId()), eq(admin), any())).thenReturn(study);
+
+    try (var response =
+        resource.patchStudyById(duosUser, study.getStudyId(), "{\"piInstitutionId\": null}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(datasetService).patchStudy(eq(study.getStudyId()), eq(admin), any());
+  }
+
+  /** With no legacy property there is nothing to retire, so the same patch is still 304. */
+  @Test
+  void testPatchStudyByIdStillNotModifiedWithoutTheLegacyProperty() {
+    Study study = createMockStudy();
+    study.setPiInstitution(null);
+
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
+
+    try (var response =
+        resource.patchStudyById(duosUser, study.getStudyId(), "{\"piInstitutionId\": null}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
   }
 
@@ -736,6 +842,11 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    // The PATCH gate additionally requires ownership of this study, not merely a
+    // study-editing role plus read visibility.
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
@@ -758,6 +869,11 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(datasetService.verifyStudyVisibilityAccess(study, admin)).thenReturn(study);
+    // The PATCH gate additionally requires ownership of this study, not merely a
+    // study-editing role plus read visibility.
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,6 +54,7 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   private AuthorizationHelper authorizationHelper;
   private DuosUserAuthenticator duosUserAuthenticator;
   private OAuthAuthenticator oAuthAuthenticator;
+  private static final String EMAIL = "email";
   private final ClaimsCache headerCache = new ClaimsCache();
   private final String bearerToken = randomAlphabetic(100);
   private final MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
@@ -67,12 +69,15 @@ class AuthorizationHelperTest extends AbstractTestHelper {
 
   @Test
   void testAuthorized() {
-    unauthorizedUser.setEmail("email");
-    unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
+    // Stubbed, not set: these are mocks, so setEmail would be a no-op and getEmail would answer
+    // null - which findUserByEmail(null) would then match, passing the test through a path the
+    // service never takes.
+    when(authorizedUser.getEmail()).thenReturn(EMAIL);
+    when(authorizedDuosUser.getEmail()).thenReturn(EMAIL);
     User user = new User();
-    user.setEmail(unauthorizedUser.getEmail());
+    user.setEmail(EMAIL);
     user.addRole(UserRoles.Chairperson());
-    when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
+    when(userService.findUserByEmail(EMAIL)).thenReturn(user);
     assertTrue(authorizationHelper.authorize(authorizedUser, Resource.CHAIRPERSON));
     assertTrue(authorizationHelper.authorize(authorizedDuosUser, Resource.CHAIRPERSON));
   }
@@ -89,14 +94,73 @@ class AuthorizationHelperTest extends AbstractTestHelper {
         Resource.ITDIRECTOR
       })
   void testNotAuthorized(String roleName) {
-    unauthorizedUser.setEmail("email");
-    unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
+    when(unauthorizedUser.getEmail()).thenReturn(EMAIL);
+    when(unauthorizedDuosUser.getEmail()).thenReturn(EMAIL);
     User user = new User();
-    user.setEmail(unauthorizedUser.getEmail());
+    user.setEmail(EMAIL);
     user.addRole(UserRoles.Researcher());
-    when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
+    when(userService.findUserByEmail(EMAIL)).thenReturn(user);
     assertFalse(authorizationHelper.authorize(unauthorizedUser, roleName));
     assertFalse(authorizationHelper.authorize(unauthorizedDuosUser, roleName));
+  }
+
+  /**
+   * A user with no user_role rows comes back with a null role list, not an empty one. Before the
+   * null guard this threw a NullPointerException out of the authorizer, which Jersey reported as a
+   * 500 - so every @RolesAllowed endpoint answered a roleless caller with a server error instead of
+   * denying them. Authorization must simply be false.
+   */
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        Resource.MEMBER,
+        Resource.CHAIRPERSON,
+        Resource.RESEARCHER,
+        Resource.SIGNINGOFFICIAL,
+        Resource.ADMIN,
+        Resource.DATASUBMITTER,
+        Resource.ITDIRECTOR
+      })
+  void testNotAuthorizedWhenUserHasNoRoles(String roleName) {
+    User user = new User();
+    assertNull(user.getRoles(), "a user with no roles must have a null role list for this test");
+    // The email is incidental here: what matters is that the lookup yields a user with no roles.
+    when(userService.findUserByEmail(any())).thenReturn(user);
+
+    assertFalse(authorizationHelper.authorize(unauthorizedUser, roleName));
+    assertFalse(authorizationHelper.authorize(unauthorizedDuosUser, roleName));
+  }
+
+  /** The same case, reached through the authorizers Dropwizard actually wires up. */
+  @Test
+  void testAuthorizersDenyUserWithNoRoles() {
+    User user = new User();
+    when(userService.findUserByEmail(any())).thenReturn(user);
+
+    assertFalse(
+        new UserAuthorizer(authorizationHelper)
+            .authorize(unauthorizedUser, Resource.RESEARCHER, null));
+    assertFalse(
+        new DuosUserAuthorizer(authorizationHelper)
+            .authorize(unauthorizedDuosUser, Resource.RESEARCHER, null));
+  }
+
+  /** An explicitly empty role list behaves the same way as a null one. */
+  @Test
+  void testNotAuthorizedWhenUserHasEmptyRoleList() {
+    User user = new User();
+    user.setRoles(List.of());
+    when(userService.findUserByEmail(any())).thenReturn(user);
+
+    assertFalse(authorizationHelper.authorize(unauthorizedUser, Resource.RESEARCHER));
+  }
+
+  /** findUserByEmail returning null must deny rather than throw. */
+  @Test
+  void testNotAuthorizedWhenUserIsNull() {
+    when(userService.findUserByEmail(any())).thenReturn(null);
+
+    assertFalse(authorizationHelper.authorize(unauthorizedUser, Resource.RESEARCHER));
   }
 
   @Test
