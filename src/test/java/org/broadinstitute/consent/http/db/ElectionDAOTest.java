@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -43,6 +44,8 @@ class ElectionDAOTest extends DAOTestHelper {
   // Must be after FIXED_INSTANT so elections created with FIXED_DATE are included in reminder
   // queries
   private static final String REMINDER_QUERY_CUTOFF = "2030-01-01T00:00:00Z";
+
+  private static final Date VOTE_CAST_DATE = Date.from(FIXED_INSTANT.plus(Duration.ofDays(10)));
 
   @Test
   void testGetElectionIdsByReferenceIds() {
@@ -460,6 +463,83 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindElectionWithFinalVoteById_RadarApproved() {
+    Election e = createRadarApprovedElection();
+
+    Election returned = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+
+    assertNotNull(returned);
+    assertEquals(e.getElectionId(), returned.getElectionId());
+    assertEquals(true, returned.getFinalVote());
+    assertSameDay(VOTE_CAST_DATE, returned.getFinalVoteDate());
+  }
+
+  @Test
+  void testFindLastElectionsByReferenceIds_RadarApproved() {
+    Election e = createRadarApprovedElection();
+
+    List<Election> returned =
+        electionDAO.findLastElectionsByReferenceIds(List.of(e.getReferenceId()));
+
+    assertEquals(1, returned.size());
+    assertEquals(e.getElectionId(), returned.getFirst().getElectionId());
+    assertEquals(true, returned.getFirst().getFinalVote());
+    assertSameDay(VOTE_CAST_DATE, returned.getFirst().getFinalVoteDate());
+  }
+
+  @Test
+  void testFinalVoteDateIsWhenTheManualDecisionWasCast() {
+    Election e =
+        createDataAccessElection(
+            createDataAccessRequestV3().getReferenceId(), createDataset().getDatasetId());
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    castFinalVote(chair, e, false);
+
+    Election byId = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    List<Election> byReference =
+        electionDAO.findLastElectionsByReferenceIds(List.of(e.getReferenceId()));
+
+    assertEquals(false, byId.getFinalVote());
+    assertSameDay(VOTE_CAST_DATE, byId.getFinalVoteDate());
+    assertEquals(1, byReference.size());
+    assertSameDay(VOTE_CAST_DATE, byReference.getFirst().getFinalVoteDate());
+  }
+
+  @Test
+  void testFindElectionWithFinalVoteById_UncastVote() {
+    Election e =
+        createDataAccessElection(
+            createDataAccessRequestV3().getReferenceId(), createDataset().getDatasetId());
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    Integer voteId =
+        voteDAO.insertVote(chair.getUserId(), e.getElectionId(), VoteType.FINAL.getValue());
+    Vote uncast = voteDAO.findVoteById(voteId);
+
+    Election returned = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+
+    assertEquals(e.getElectionId(), returned.getElectionId());
+    assertNull(returned.getFinalVote());
+    assertSameDay(uncast.getCreateDate(), returned.getFinalVoteDate());
+  }
+
+  @Test
+  void testFindElectionWithFinalVoteById_PrefersTheCastVoteAmongChairs() {
+    Election e =
+        createDataAccessElection(
+            createDataAccessRequestV3().getReferenceId(), createDataset().getDatasetId());
+    User castingChair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    User otherChair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    // Cast first so the uncast vote has the higher vote_id.
+    castFinalVote(castingChair, e, true);
+    voteDAO.insertVote(otherChair.getUserId(), e.getElectionId(), VoteType.FINAL.getValue());
+
+    Election returned = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+
+    assertEquals(true, returned.getFinalVote());
+    assertSameDay(VOTE_CAST_DATE, returned.getFinalVoteDate());
+  }
+
+  @Test
   void testFindElectionsByIds() {
     Dac dac = createDac();
     Dataset dataset = createDatasetWithDac(dac.getDacId());
@@ -693,6 +773,33 @@ class ElectionDAOTest extends DAOTestHelper {
         libraryCardDAO.insertLibraryCard(
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), FIXED_DATE);
     libraryCardDAO.findLibraryCardById(id);
+  }
+
+  private Election createRadarApprovedElection() {
+    Election e =
+        createDataAccessElection(
+            createDataAccessRequestV3().getReferenceId(), createDataset().getDatasetId());
+    User ruleOwner = createUser();
+    Integer voteId =
+        voteDAO.insertVote(
+            ruleOwner.getUserId(), e.getElectionId(), VoteType.RADAR_APPROVE.getValue());
+    updateVote(true, "RADAR", VOTE_CAST_DATE, voteId, false, e.getElectionId(), FIXED_DATE, false);
+    return e;
+  }
+
+  private void castFinalVote(User chair, Election e, boolean vote) {
+    Integer voteId =
+        voteDAO.insertVote(chair.getUserId(), e.getElectionId(), VoteType.FINAL.getValue());
+    updateVote(
+        vote, "rationale", VOTE_CAST_DATE, voteId, false, e.getElectionId(), FIXED_DATE, false);
+  }
+
+  // ElectionMapper reads final_vote_date with getDate, which drops the time of day.
+  private static void assertSameDay(Date expected, Date actual) {
+    assertNotNull(actual);
+    assertEquals(
+        Instant.ofEpochMilli(expected.getTime()).atZone(ZoneId.systemDefault()).toLocalDate(),
+        Instant.ofEpochMilli(actual.getTime()).atZone(ZoneId.systemDefault()).toLocalDate());
   }
 
   private void createFinalVote(Integer userId, Integer electionId) {

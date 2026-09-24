@@ -57,20 +57,25 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
   @SqlQuery(
       """
-      SELECT DISTINCT
+      SELECT
           e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date,
-          e.reference_id, v.rationale final_rationale, v.create_date final_vote_date,
+          e.reference_id, v.rationale final_rationale,
+          COALESCE(v.update_date, v.create_date) final_vote_date,
           e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name,
           e.archived, e.version
       FROM election e
       INNER JOIN vote v ON v.election_id = e.election_id AND
           CASE
-              WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'
+              WHEN LOWER(e.election_type) = 'dataaccess'
+                  THEN LOWER(v.type) IN ('final', 'radar_approve')
               -- Note that `dataset` elections are deprecated but maintained for legacy elections
-              WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner'
-              ELSE 'chairperson'
-          END = LOWER(v.type)
-      WHERE e.election_id = :electionId LIMIT 1
+              WHEN LOWER(e.election_type) = 'dataset' THEN LOWER(v.type) = 'data_owner'
+              ELSE LOWER(v.type) = 'chairperson'
+          END
+      WHERE e.election_id = :electionId
+      -- Every chair gets a FINAL vote, so prefer the one actually cast.
+      ORDER BY v.vote IS NULL, v.update_date DESC NULLS LAST, v.vote_id DESC
+      LIMIT 1
     """)
   Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
@@ -132,10 +137,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       """
       SELECT * FROM (
           SELECT e.*, v.vote final_vote,
-               CASE
-               WHEN v.update_date IS NULL THEN v.create_date
-               ELSE v.update_date
-               END as final_vote_date,
+               COALESCE(v.update_date, v.create_date) AS final_vote_date,
            v.rationale final_rationale, MAX(e.election_id)
            -- Note that `dataset_id` is intentionally absent from the partition key: this yields
            -- one election per DAR and type, not one per dataset. Only valid for existence checks.
@@ -144,11 +146,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
            FROM election e
            LEFT JOIN vote v ON e.election_id = v.election_id AND
                CASE
-               WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'
+               WHEN LOWER(e.election_type) = 'dataaccess'
+                   THEN LOWER(v.type) IN ('final', 'radar_approve')
                -- Note that `dataset` elections are deprecated but maintained for legacy elections
-               WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner'
-               ELSE 'chairperson'
-               END = LOWER(v.type)
+               WHEN LOWER(e.election_type) = 'dataset' THEN LOWER(v.type) = 'data_owner'
+               ELSE LOWER(v.type) = 'chairperson'
+               END
            WHERE e.reference_id IN (<referenceIds>)
           ) AS results
            WHERE results.latest = results.election_id
