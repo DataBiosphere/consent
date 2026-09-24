@@ -291,16 +291,44 @@ The steps:
 
 1. Read the instance name, user and password from the `consent-postgres-creds` secret in Secret
    Manager in the project, as `scripts/db-connect.sh` does.
-2. Start `cloud-sql-proxy` (v2) on port 5433. Port 5432 belongs to the local Postgres container.
-3. Run `pg_dump --no-owner --no-privileges` from the `postgres:16.14-alpine` image, the same image
-   as the local database. Connect to the proxy at `host.docker.internal:5433`. Start the container
-   with `--add-host=host.docker.internal:host-gateway`. Linux Docker Engine does not resolve
-   `host.docker.internal` without this option. Colima and Docker Desktop resolve the name with
-   or without it. A test on Colima confirmed that the option does no harm there.
-4. Compress the output with `gzip`. The Postgres image loads `.sql.gz` files on its own.
-5. Stop the proxy on exit, also when a step fails.
-6. Write to a temp file, and move it into place only when `pg_dump` succeeds.
-7. Delete the older dumps. See [Data Handling](#data-handling).
+2. Create a temporary Docker network, for example `consent-export-$$`.
+3. Start the proxy in a container on that network, from a pinned image
+   (`gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.18.0`). Give it the options as `CSQL_PROXY_*`
+   environment variables:
+   - `CSQL_PROXY_TOKEN`: from `gcloud auth print-access-token`. The script passes `-e
+     CSQL_PROXY_TOKEN` with no value, so Docker copies the value from the script environment.
+     The token is not in the command line or the process list.
+   - `CSQL_PROXY_ADDRESS=0.0.0.0` and `CSQL_PROXY_PORT=5432`. The default address is `127.0.0.1`,
+     which other containers cannot reach. `0.0.0.0` is the address inside the proxy container
+     only. The container publishes no ports, so the host and the local network cannot reach it.
+   - `CSQL_PROXY_INSTANCE_CONNECTION_NAME`: the full name, with the project from the table.
+4. Wait until `pg_isready` from the `postgres:16.14-alpine` image connects to the proxy container
+   by its name. Stop after 60 seconds.
+5. Run `pg_dump --no-owner --no-privileges` from the `postgres:16.14-alpine` image, the same image
+   as the local database, on the same network. Connect to the proxy container by its name, on
+   port 5432. Pass the password with `-e PGPASSWORD`, in the same way as the token.
+6. Compress the output with `gzip`. The Postgres image loads `.sql.gz` files on its own.
+7. Write to a temp file, and move it into place only when `pg_dump` succeeds.
+8. Delete the older dumps. See [Data Handling](#data-handling).
+9. On exit, also when a step fails, remove the proxy container and the network.
+
+Why run the proxy in a container: a proxy on the host listens on the host's `127.0.0.1`. How a
+container reaches that address depends on the runtime:
+
+| Runtime | Container to host `127.0.0.1` |
+|---|---|
+| Colima | Works. `host.docker.internal` goes to the host loopback. A test with a listener on `127.0.0.1` confirmed this. |
+| Docker Desktop | Works through `host.docker.internal`. |
+| Linux Docker Engine | Fails. `host-gateway` is the bridge address, and the proxy does not listen there. |
+| Podman | Depends on the version and the network mode. |
+
+To bind a host proxy to `0.0.0.0` would open the database to the local network. On a private
+Docker network, the two containers find each other by name on each runtime. The developer also
+does not need to install `cloud-sql-proxy`.
+
+The access token expires after about one hour. The proxy uses the token only to connect, so a
+dump that takes longer than one hour is a risk only if the proxy must connect again. The
+verification checks the time of a full dev dump.
 
 Why this format: the local Postgres container loads the dump with `psql` and `ON_ERROR_STOP=1`.
 The dumps that developers use today have `Owner: -` on each object, so somebody made them with
@@ -408,7 +436,7 @@ The script never prints a secret value. All files that hold a secret get mode `6
 | `gcloud`, `kubectl` | Certs, dev secrets, Secret Manager |
 | `helm` (v3.8 or later) | Chart render |
 | `gh` | `terra-helmfile` clone at `--helmfile_ref`, if there is no `--helmfile_dir` |
-| `cloud-sql-proxy` (v2) | Database export |
+| `cloud-sql-proxy` (v2) | `db-connect.sh` only. The export runs the proxy image. |
 | `docker` | `pg_dump` and the local stack |
 | `jq`, `openssl`, `gzip` | Secrets and files |
 | `curl` | `index-es.sh` |
@@ -448,7 +476,8 @@ the reference. These findings show what changes for a developer who moves to the
    `--write_chart_configs`, `--helmfile_ref` and `--helmfile_dir` flags.
 3. Add `scripts/templates/docker-compose.yaml`, the `.env` step and the `--write_compose` flag.
 4. Add `scripts/export-db.sh` and the `--export_db` and `--db_env` flags. Move `scripts/db-connect.sh` to
-   `cloud-sql-proxy` v2 in the same change, so both scripts use one proxy version.
+   `cloud-sql-proxy` v2 in the same change. `db-connect.sh` runs on the host and uses `psql`, so it
+   keeps a host proxy on `127.0.0.1`.
 5. Add `scripts/index-es.sh`.
 6. Change each compose command in `DEVNOTES.md` to name both compose files. Replace the
    "Configure" section of `DEVNOTES.md`. It tells developers to copy
@@ -492,17 +521,21 @@ For each ticket:
 11. For ticket 4: run the export two times. Make sure that only the second dump stays, that it has
     mode `600`, and that the script lists a hand-made `.sql` file in `config/` but does not
     delete it. Then make an export fail, and make sure that the older dump stays.
-12. For ticket 4: run the export on Colima, on Linux Docker Engine and on Podman. Make sure that
-    `pg_dump` reaches the proxy on each one.
-13. For ticket 5: run the script on a new volume and again on a full index. Make sure that the
+12. For ticket 4: run a full export on Colima, on Linux Docker Engine and on Podman. Make sure that
+    `pg_dump` connects to the proxy and writes a complete dump on each one. A name that resolves
+    is not enough. Record the time of the dev dump.
+13. For ticket 4: while the proxy container runs, make sure that `docker port` shows no published
+    ports, and that `ps` on the host does not show the token or the password. After the script
+    exits, and after a failed run, make sure that the container and the network are gone.
+14. For ticket 5: run the script on a new volume and again on a full index. Make sure that the
     document count is the same as the number of datasets in the database both times.
-14. For ticket 5: make one document fail, for example with a local index that has a conflicting
+15. For ticket 5: make one document fail, for example with a local index that has a conflicting
     mapping for one field. Make sure that the script fails and shows the failed dataset IDs.
-15. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
+16. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
     `docker compose ... config` shows it, and that `--write_compose` does not change the file.
-16. For ticket 2: add a key such as `databasePassword: x` to `local-values.yaml`. Make sure that
+17. For ticket 2: add a key such as `databasePassword: x` to `local-values.yaml`. Make sure that
     the script stops before the render, and that the error names the line and the key.
-17. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
+18. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
     difference in the PR.
 
 ## Alternatives
