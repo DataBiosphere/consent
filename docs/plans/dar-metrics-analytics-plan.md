@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress. Tickets 1 and 3 are done, and
+In progress. Tickets 1 to 3 are done, and
 [#3049](https://github.com/DataBiosphere/consent/pull/3049), which rewrites the metrics queries tickets
 4 to 7 extend, has merged, so those can start. Ticket 8 needs product answers on reopened
 and canceled decisions, and ticket 9 needs a definition of renewal. See
@@ -293,15 +293,15 @@ don't depend on which backs them, so this can change later without touching the 
 | Where do the endpoints go? | `MetricsResource`, with `@RolesAllowed(ADMIN)` on each new method. Its existing endpoint is `@PermitAll` at the method level, so the two coexist. Queries go in `MetricsService` and a new `DarMetricsDAO`. |
 | One endpoint or several? | Several, one per metric family, so each is a reviewable change and releases independently. |
 | Row granularity? | Volume (ticket 4) returns one row per original DAR. Decisions and turnaround (tickets 5 and 6) return one row per DAR-dataset pair on original DARs, because decisions are made per pair; DAR-level figures are computed from those rows. |
-| Request shape? | Tickets 4 to 7 require `from` and `to` on `submission_date`, take an optional `bucket` (day, week, month), return per-bucket counts and summaries computed in SQL, and paginate row detail. |
+| Request shape? | Tickets 4 to 7 require `from` and `to` on `submission_date`, take an optional `bucket` (day, week, month, quarter), return per-bucket counts and summaries computed in SQL, and paginate row detail. |
 | Personal data? | Responses carry IDs, counts, enums and timestamps only. No names, emails or eRA Commons IDs, which sit in the DAR `data` JSON (`Collaborator`). |
 
 ## Sequencing
 
-1. **Tickets 1, 2 and 3 first.** Ticket 1 sets the honest date ranges and checks query cost. Tickets 2
-   and 3 fix existing problems: ticket 2 is a bug in queries existing code already calls, and ticket 3 is
-   forward-only, so every week it waits is a week of institution history lost.
-2. **Tickets 4 to 7 in parallel, after #3049 merges** (ticket 4 also after ticket 3). #3049 rewrites
+1. **Tickets 1, 2 and 3 first (done).** Ticket 1 set the honest date ranges and checked query cost.
+   Tickets 2 and 3 fixed existing problems: ticket 2 was a bug in queries existing code already calls,
+   and ticket 3 is forward-only, so every week it waited was a week of institution history lost.
+2. **Tickets 4 to 7 in parallel.** #3049 rewrote
    `MetricsResource`, `MetricsService` and the metrics queries these tickets extend. Each adds a
    method to those and to `DarMetricsDAO`; the first to merge creates the DAO. That is a merge
    conflict, not a dependency.
@@ -588,7 +588,7 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
 
 **Notes**
 
-- Skips: `requires_so_approval IS NOT TRUE AND parent_id IS NULL`, submitted after January 2026. Never
+- Skips: `requires_so_approval IS NOT TRUE AND parent_id IS NULL`, submitted from 20 May 2026. Never
   `= false`.
 - Report progress reports and closeouts separately, identifying closeouts by the reporting definition
   (see [Closeouts](#closeouts-have-two-definitions)).
@@ -597,15 +597,15 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
   or the closeout date if earlier. Return the end reason, `EXPIRED` or `CLOSED_OUT`; the study page
   shows both as "Expired". A collection counts as expired once every dataset's access has ended.
 - Required date range, optional bucket, paginated rows; summaries in SQL.
-- Note in the OpenAPI path spec that skip classification starts January 2026 and closeout approval
-  times start June 2025.
+- Note in the OpenAPI path spec that skip classification starts 20 May 2026 and approval times start
+  June 2026 for original DARs and September 2025 for closeouts.
 
 **Acceptance criteria**
 
 - Turnaround for DARs with `approving_so_timestamp`, with per-request values and summary statistics.
 - Skips are distinguishable from DARs still waiting on an SO.
 - A closeout that went to an SO isn't counted as a skip.
-- Pre-January 2026 DARs aren't counted as skips.
+- DARs submitted before 20 May 2026 aren't counted as skips.
 - Expiry agrees with `EXPIRATION_DURATION_MILLIS` either side of the boundary.
 - A parent older than 365 days with an approved progress report newer than 365 days isn't expired.
 - A pending progress report doesn't extend access.
@@ -617,7 +617,7 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
 **Tests**
 
 - One per `requires_so_approval` state: true and approved, true and pending, NULL original, NULL
-  closeout, NULL pre-2026.
+  closeout, NULL before 20 May 2026.
 - `= false` returns nothing.
 - Expiry either side of 365 days; a collection kept live by an approved progress report; one not
   kept live by a pending one; a closeout before 365 days.
@@ -634,9 +634,10 @@ An admin page showing the decision funnel, turnaround distributions, volume and 
 **Notes**
 
 - Build on `src/components/dashboard/{ConsoleDashboard,ConsoleDashboardGrid}.tsx`.
-- Sections: decision funnel with RADAR vs. manual; DAC and SO turnaround with mean, median and mode;
-  volume; expiration.
-- Every time series can be bucketed by day, week or month.
+- Sections: decision funnel; DAC turnaround with mean, median and mode; SO approval times as a list
+  of values; volume; expiration. Add the RADAR vs. manual split and an SO turnaround chart once
+  [Data Caveats](#data-caveats) lifts the short-history limit on metrics 3 and 9.
+- Every time series can be bucketed by day, week, month or quarter, defaulting to quarter.
 - Show caveats next to the figures they affect: institution source, the SO history bounds, and
   ticket 6's excluded count.
 
