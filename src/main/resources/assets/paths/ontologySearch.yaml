@@ -25,5 +25,7 @@ get:
             type: array
             items:
               $ref: '../schemas/OntologyTerm.yaml'
+    400:
+      description: Bad Request, the ids parameter is missing or blank
     500:
       description: Internal Server Error
