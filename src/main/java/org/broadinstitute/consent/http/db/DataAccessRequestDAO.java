@@ -542,7 +542,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
         UPDATE data_access_request dar
-          SET institution_id = i.institution_id, institution_name = i.institution_name
+          SET institution_id = i.institution_id, institution_name = i.institution_name,
+            institution_snapshot_date = now()
         FROM users u
         LEFT JOIN institution i ON i.institution_id = u.institution_id
         WHERE dar.reference_id = :referenceId

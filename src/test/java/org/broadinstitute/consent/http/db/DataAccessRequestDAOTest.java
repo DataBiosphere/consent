@@ -1582,6 +1582,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testSubmissionInstitution_NoSnapshotBeforeSubmission() {
+    User user = createUserWithInstitution();
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+
+    assertEquals(
+        new SubmissionInstitution(null, null, false),
+        findSubmissionInstitution(dar.getReferenceId()));
+  }
+
+  @Test
   void testUpdateSubmissionInstitution_KeptWhenUserChangesInstitution() {
     User user = createUserWithInstitution();
     Integer newInstitutionId = createUserWithInstitution().getInstitutionId();
@@ -1616,20 +1627,25 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         findSubmissionInstitution(dar.getReferenceId()));
   }
 
-  private record SubmissionInstitution(Long id, String name) {}
+  private record SubmissionInstitution(Long id, String name, boolean hasSnapshotDate) {
+    SubmissionInstitution(Long id, String name) {
+      this(id, name, true);
+    }
+  }
 
   private static SubmissionInstitution findSubmissionInstitution(String referenceId) {
     return jdbi.withHandle(
         handle ->
             handle
                 .createQuery(
-                    "SELECT institution_id, institution_name FROM data_access_request WHERE reference_id = :referenceId")
+                    "SELECT institution_id, institution_name, institution_snapshot_date FROM data_access_request WHERE reference_id = :referenceId")
                 .bind("referenceId", referenceId)
                 .map(
                     (rs, ctx) ->
                         new SubmissionInstitution(
                             rs.getObject("institution_id", Long.class),
-                            rs.getString("institution_name")))
+                            rs.getString("institution_name"),
+                            rs.getTimestamp("institution_snapshot_date") != null))
                 .one());
   }
 

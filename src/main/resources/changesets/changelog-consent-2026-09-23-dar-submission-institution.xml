@@ -4,7 +4,8 @@
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
   <!--
     The submitter's institution at submission, so reporting doesn't follow a researcher who changes
-    employer. SET NULL keeps institutions deletable; the name survives the delete.
+    employer. SET NULL keeps institutions deletable; the name survives the delete. The date tells a
+    submission with no institution apart from one made before this column existed.
   -->
   <changeSet id="changelog-consent-2026-09-23-dar-submission-institution" author="kmarete">
     <addColumn tableName="data_access_request">
@@ -14,10 +15,14 @@
       <column name="institution_name" type="varchar(255)">
         <constraints nullable="true"/>
       </column>
+      <column name="institution_snapshot_date" type="timestamp">
+        <constraints nullable="true"/>
+      </column>
     </addColumn>
     <!-- NOT VALID, so the validating scan runs without the ACCESS EXCLUSIVE lock -->
     <sql>ALTER TABLE data_access_request ADD CONSTRAINT fk_data_access_request_institution_id FOREIGN KEY (institution_id) REFERENCES institution (institution_id) ON DELETE SET NULL NOT VALID</sql>
     <rollback>
+      <dropColumn tableName="data_access_request" columnName="institution_snapshot_date"/>
       <dropColumn tableName="data_access_request" columnName="institution_name"/>
       <dropColumn tableName="data_access_request" columnName="institution_id"/>
     </rollback>
