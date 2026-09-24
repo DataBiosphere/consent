@@ -335,6 +335,10 @@
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.broadinstitute.consent.http.ConsentApplication</mainClass>
+                  <manifestEntries>
+                    <!-- Conscrypt loads a native library; Java reads this only for java -jar -->
+                    <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                  </manifestEntries>
                 </transformer>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
