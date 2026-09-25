@@ -188,6 +188,7 @@ class MetricsResourceTest extends AbstractTestHelper {
       nullValues = "null",
       value = {
         "null, 2026-01-01, quarter, 100, 0",
+        "'  ', 2026-01-01, quarter, 100, 0",
         "2026-01-01, null, quarter, 100, 0",
         "01/01/2026, 2026-02-01, quarter, 100, 0",
         "2026-02-01, 2026-01-01, quarter, 100, 0",

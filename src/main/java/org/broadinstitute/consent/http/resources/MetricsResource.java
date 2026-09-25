@@ -118,18 +118,18 @@ public class MetricsResource extends Resource {
     return decisionReport(from, to, bucket, limit, offset, metricsService::getDarDatasetDecisions);
   }
 
-  private interface DecisionReportQuery {
-    DecisionReport<?> run(
+  private interface DecisionReportQuery<T> {
+    DecisionReport<T> run(
         LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset);
   }
 
-  private Response decisionReport(
+  private <T> Response decisionReport(
       String from,
       String to,
       String bucket,
       Integer limit,
       Integer offset,
-      DecisionReportQuery query) {
+      DecisionReportQuery<T> query) {
     try {
       LocalDate start = parseDate("from", from);
       LocalDate end = parseRangeEnd(start, to);
