@@ -35,7 +35,7 @@ public interface DarMetricsDAO {
         FROM election e
         JOIN original_dars od ON od.reference_id = e.reference_id
         WHERE LOWER(e.election_type) = 'dataaccess'
-        ORDER BY e.reference_id, e.dataset_id, e.create_date DESC, e.election_id DESC
+        ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
       ),
       deciding_votes AS (
         SELECT DISTINCT ON (v.election_id) v.election_id, v.vote, v.type, v.update_date
