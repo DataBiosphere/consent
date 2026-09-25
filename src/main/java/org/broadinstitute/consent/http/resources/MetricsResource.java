@@ -105,6 +105,20 @@ public class MetricsResource extends Resource {
   }
 
   @GET
+  @Path("/dar-decisions")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDarDecisions(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    return decisionReport(from, to, bucket, limit, offset, metricsService::getDarDecisions);
+  }
+
+  @GET
   @Path("/dar-dataset-decisions")
   @Produces("application/json")
   @RolesAllowed(ADMIN)

@@ -7,6 +7,6 @@ properties:
     $ref: './DecisionState.yaml'
   decidedVia:
     type: [string, 'null']
-    enum: [MANUAL, RADAR, null]
+    enum: [MANUAL, RADAR, MIXED, null]
   count:
     type: integer

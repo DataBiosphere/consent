@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -112,6 +113,19 @@ public class MetricsService {
         bucket,
         darMetricsDAO.countPairDecisions(start, end, bucket.truncUnit()),
         darMetricsDAO.findPairDecisions(start, end, limit, offset));
+  }
+
+  /** DAC decisions rolled up per original DAR submitted from {@code from} to {@code to}. */
+  public DecisionReport<DarDecision> getDarDecisions(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return DecisionReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countDarDecisions(start, end, bucket.truncUnit()),
+        darMetricsDAO.findDarDecisions(start, end, limit, offset));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too

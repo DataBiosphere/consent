@@ -1,7 +1,9 @@
 type: string
+description: Pairs never report MIXED; DARs never report NO_ELECTION.
 enum:
   - APPROVED
   - DENIED
+  - MIXED
   - PENDING
   - CANCELED
   - NO_ELECTION
