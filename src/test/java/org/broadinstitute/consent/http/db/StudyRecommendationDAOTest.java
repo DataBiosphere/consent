@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -9,10 +10,15 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -96,8 +102,163 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
     assertEquals(List.of(frequentId, occasionalId), recommendedIds);
     assertFalse(recommendedIds.contains(draftOnlyId));
     assertFalse(recommendedIds.contains(archivedOnlyId));
-    assertEquals(1L, recommendations.getFirst().datasetCount());
-    assertEquals(List.of(frequentDatasetId), recommendations.getFirst().datasetIds());
+    StudyRecommendation frequent = recommendations.getFirst();
+    assertEquals(1L, frequent.datasetCount());
+    assertEquals(List.of(frequentDatasetId), frequent.datasetIds());
+    assertEquals(List.of("GRU"), frequent.dataUseCodes());
+    assertEquals(0L, frequent.totalParticipants());
+    assertTrue(frequent.accessTypes().isEmpty());
+  }
+
+  @Test
+  void testRecommendationCardFields() {
+    String piName = randomAlphabetic(20);
+    String dataType = randomAlphabetic(20);
+    Integer sourceId = insertStudy(piName, List.of(dataType), true);
+
+    Integer cardId = insertStudy(piName, List.of(dataType, randomAlphabetic(20)), true);
+    studyDAO.insertStudyProperty(cardId, "species", PropertyType.String.toString(), "Human");
+    studyDAO.insertStudyProperty(
+        cardId, "phenotypeIndication", PropertyType.String.toString(), "Cancer");
+    studyDAO.insertStudyProperty(
+        cardId, "models", PropertyType.Json.toString(), "[{\"name\":\"a\"},{\"name\":\"b\"}]");
+    studyDAO.insertStudyProperty(cardId, "workspaces", PropertyType.Json.toString(), "[]");
+
+    // Only a disease restriction the ontology index can label yields DS, matched ignoring case
+    String labelledTermId = "http://purl.obolibrary.org/obo/DOID_" + randomAlphabetic(8);
+    OntologyTerm term = new OntologyTerm(labelledTermId, "1", "doid");
+    term.setLabel("cancer");
+    ontologyDAO.batchInsertTerms(List.of(term), createUser().getUserId());
+
+    Integer gruHmbId =
+        insertDatasetForStudy(
+            cardId, new DataUseBuilder().setGeneralUse(true).setHmbResearch(true).build());
+    Integer gruDsId =
+        insertDatasetForStudy(
+            cardId,
+            new DataUseBuilder()
+                .setGeneralUse(true)
+                .setDiseaseRestrictions(List.of(labelledTermId.toUpperCase()))
+                .build());
+    Integer hmbOtherId =
+        insertDatasetForStudy(
+            cardId, new DataUseBuilder().setHmbResearch(true).setOther("other use").build());
+    insertParticipantCount(gruHmbId, "100");
+    insertParticipantCount(gruDsId, "50");
+    // Not an integer, so the index leaves it out of the sum
+    insertParticipantCount(hmbOtherId, "many");
+    insertAccessManagement(gruHmbId, "accessManagement", "controlled");
+    insertAccessManagement(gruDsId, "accessManagement", " Controlled ");
+    // An unparseable canonical value falls back to the legacy consent-group property
+    insertAccessManagement(hmbOtherId, "accessManagement", "bogus");
+    insertAccessManagement(hmbOtherId, "consentGroup.accessManagement", "Open");
+
+    Integer noDatasetsId = insertStudy(piName, List.of(dataType), true);
+    Integer unlabelledId = insertStudy(piName, List.of(dataType), true);
+    insertDatasetForStudy(
+        unlabelledId,
+        new DataUseBuilder().setDiseaseRestrictions(List.of(randomAlphabetic(10))).build());
+
+    List<StudyRecommendation> similar = studyRecommendationDAO.findSimilar(sourceId);
+
+    StudyRecommendation card = findRecommendation(similar, cardId);
+    assertEquals("Human", card.species());
+    assertEquals("Cancer", card.phenotype());
+    assertEquals(2, card.dataTypes().size());
+    assertEquals(3L, card.datasetCount());
+    assertEquals(List.of(gruHmbId, gruDsId, hmbOtherId), card.datasetIds());
+    assertEquals(150L, card.totalParticipants());
+    assertEquals(2, card.modelCount());
+    assertEquals(0, card.workspaceCount());
+    assertEquals(List.of("controlled", "open"), card.accessTypes());
+    assertEquals(List.of("DS", "GRU", "HMB", "OTHER"), card.dataUseCodes());
+
+    StudyRecommendation noDatasets = findRecommendation(similar, noDatasetsId);
+    assertNull(noDatasets.species());
+    assertNull(noDatasets.phenotype());
+    assertEquals(List.of(dataType), noDatasets.dataTypes());
+    assertEquals(0L, noDatasets.datasetCount());
+    assertTrue(noDatasets.datasetIds().isEmpty());
+    assertEquals(0L, noDatasets.totalParticipants());
+    assertEquals(0, noDatasets.modelCount());
+    assertEquals(0, noDatasets.workspaceCount());
+    assertTrue(noDatasets.accessTypes().isEmpty());
+    assertTrue(noDatasets.dataUseCodes().isEmpty());
+
+    assertTrue(findRecommendation(similar, unlabelledId).dataUseCodes().isEmpty());
+  }
+
+  /**
+   * Data use and asset values are text. DataUseParser and StudyAssets read an empty or malformed
+   * one as absent, so it must not fail the query and take every other recommendation with it.
+   */
+  @Test
+  void testRecommendationCardFieldsTolerateMalformedJson() {
+    String piName = randomAlphabetic(20);
+    String dataType = randomAlphabetic(20);
+    Integer sourceId = insertStudy(piName, List.of(dataType), true);
+
+    Integer malformedId = insertStudy(piName, List.of(dataType), true);
+    studyDAO.insertStudyProperty(
+        malformedId, "models", PropertyType.Json.toString(), "[{\"name\":");
+    studyDAO.insertStudyProperty(malformedId, "workspaces", PropertyType.Json.toString(), "");
+    Integer emptyDataUseId = insertDatasetForStudy(malformedId, "");
+    Integer malformedDataUseId = insertDatasetForStudy(malformedId, "{\"generalUse\": tru");
+    Integer validDataUseId =
+        insertDatasetForStudy(malformedId, new DataUseBuilder().setHmbResearch(true).build());
+
+    Integer wellFormedId = insertStudy(piName, List.of(dataType), true);
+    insertDatasetForStudy(wellFormedId);
+
+    List<StudyRecommendation> similar = studyRecommendationDAO.findSimilar(sourceId);
+
+    StudyRecommendation malformed = findRecommendation(similar, malformedId);
+    assertEquals(0, malformed.modelCount());
+    assertEquals(0, malformed.workspaceCount());
+    assertEquals(3L, malformed.datasetCount());
+    assertEquals(
+        List.of(emptyDataUseId, malformedDataUseId, validDataUseId), malformed.datasetIds());
+    // The malformed data uses contribute nothing; the valid one on the same study still does
+    assertEquals(List.of("HMB"), malformed.dataUseCodes());
+    assertEquals(List.of("GRU"), findRecommendation(similar, wellFormedId).dataUseCodes());
+  }
+
+  /**
+   * StudyAssets reads the legacy assets object when a study has no promoted list, matching names
+   * ignoring case. The promotion migration only moved exactly-cased ones, so an Assets row or a
+   * Models key still holds its list there, and the index counts it.
+   */
+  @Test
+  void testRecommendationCardFieldsFallBackToLegacyAssets() {
+    String piName = randomAlphabetic(20);
+    String dataType = randomAlphabetic(20);
+    Integer sourceId = insertStudy(piName, List.of(dataType), true);
+
+    Integer legacyId = insertStudy(piName, List.of(dataType), true);
+    studyDAO.insertStudyProperty(
+        legacyId,
+        "Assets",
+        PropertyType.Json.toString(),
+        "{\"Models\": [{}, {}, {}], \"workspaces\": \"not a list\"}");
+
+    // A promoted list is authoritative even when empty, so a stale legacy copy is not counted
+    Integer promotedId = insertStudy(piName, List.of(dataType), true);
+    studyDAO.insertStudyProperty(promotedId, "models", PropertyType.Json.toString(), "[]");
+    studyDAO.insertStudyProperty(
+        promotedId,
+        "assets",
+        PropertyType.Json.toString(),
+        "{\"models\": [{}], \"workspaces\": [{}, {}]}");
+
+    List<StudyRecommendation> similar = studyRecommendationDAO.findSimilar(sourceId);
+
+    StudyRecommendation legacy = findRecommendation(similar, legacyId);
+    assertEquals(3, legacy.modelCount());
+    assertEquals(0, legacy.workspaceCount());
+    StudyRecommendation promoted = findRecommendation(similar, promotedId);
+    assertEquals(0, promoted.modelCount());
+    // No promoted workspaces row, so that type still comes from the legacy object
+    assertEquals(2, promoted.workspaceCount());
   }
 
   /** A blank pi_name is not an identity, so blank-PI studies must not match each other. */
@@ -123,7 +284,49 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
         UUID.randomUUID());
   }
 
+  private StudyRecommendation findRecommendation(
+      List<StudyRecommendation> recommendations, Integer studyId) {
+    return recommendations.stream()
+        .filter(recommendation -> recommendation.studyId().equals(studyId))
+        .findFirst()
+        .orElseThrow();
+  }
+
+  private void insertParticipantCount(Integer datasetId, String value) {
+    Integer participantsKey =
+        datasetDAO.getDictionaryTerms().stream()
+            .filter(dictionary -> dictionary.getKey().equalsIgnoreCase("# of participants"))
+            .map(Dictionary::getKeyId)
+            .findFirst()
+            .orElseThrow();
+    datasetDAO.insertDatasetProperties(
+        List.of(
+            new DatasetProperty(
+                datasetId,
+                participantsKey,
+                "numberOfParticipants",
+                value,
+                PropertyType.String,
+                new Date())));
+  }
+
+  private void insertAccessManagement(Integer datasetId, String schemaProperty, String value) {
+    datasetDAO.insertDatasetProperties(
+        List.of(
+            new DatasetProperty(
+                datasetId, 1, schemaProperty, value, PropertyType.String, new Date())));
+  }
+
   private Integer insertDatasetForStudy(Integer studyId) {
+    return insertDatasetForStudy(studyId, new DataUseBuilder().setGeneralUse(true).build());
+  }
+
+  private Integer insertDatasetForStudy(Integer studyId, DataUse dataUse) {
+    return insertDatasetForStudy(studyId, dataUse.toString());
+  }
+
+  /** Takes the stored text as is, so a test can store data use no builder would produce. */
+  private Integer insertDatasetForStudy(Integer studyId, String dataUse) {
     User user = createUser();
     Integer datasetId =
         datasetDAO.insertDataset(
@@ -131,7 +334,7 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
             new Timestamp(new Date().getTime()),
             user.getUserId(),
             randomAlphabetic(20),
-            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dataUse,
             null);
     datasetDAO.updateStudyId(datasetId, studyId);
     return datasetId;
