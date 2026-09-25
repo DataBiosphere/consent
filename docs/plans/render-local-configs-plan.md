@@ -523,13 +523,10 @@ the reference. These findings show what changes for a developer who moves to the
 3. **The proxy needs `B2C_APPLICATION_ID`.** The allow list reads this variable when httpd starts.
    The deployed pod gets it from `consent-proxy-b2c-secrets`. If compose does not set it, the
    proxy rejects valid tokens.
-4. **Local `/mcp` routing stops.** The chart has no `/mcp` location. The `/mcp` block exists only
-   in local copies, so the rendered `site.conf` does not have it. To use `/mcp` locally, add the
-   location to the chart in `terra-helmfile` first.
-5. **`consent.yaml` gets the dev values.** Examples: JSON logs, rate limiting on,
+4. **`consent.yaml` gets the dev values.** Examples: JSON logs, rate limiting on,
    `cacheExpireMinutes: 1` and the Twilio status URL for SendGrid. Keys that only local copies
    have, such as `nih.denyEmailPatterns`, go away.
-6. **The vendored subcharts in a `terra-helmfile` checkout can be stale.** In the test checkout,
+5. **The vendored subcharts in a `terra-helmfile` checkout can be stale.** In the test checkout,
    `charts/consent/charts/` had `httpd-proxy-0.55.0`, but the source chart is at `0.57.0`. The
    old `liquibase-migration` package also had no `esolib`, so the render failed. The script must
    build the dependencies itself, in a temp copy.
@@ -556,9 +553,6 @@ Ticket 1 can start now. Tickets 2 to 4 can go in any order after ticket 1. Ticke
 output of ticket 2 to test. Ticket 5 needs a running stack from ticket 3 and a dump from ticket 4.
 Ticket 6 needs the final file list from tickets 1 to 4. Ticket 7 goes last. It also adds a Dev
 Container section to `DEVNOTES.md`, like the one in `duos-ui`.
-
-The `/mcp` proxy location is not part of this plan. If the team wants it, it is a separate
-`terra-helmfile` change. The next render then includes it.
 
 ## Verification
 
