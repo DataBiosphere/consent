@@ -4,9 +4,8 @@
 
 In progress. Tickets 1 to 3 are done, and
 [#3049](https://github.com/DataBiosphere/consent/pull/3049), which rewrites the metrics queries tickets
-4 to 7 extend, has merged, so those can start. Ticket 8 needs product answers on reopened
-and canceled decisions, and ticket 9 needs a definition of renewal. See
-[Blocking Decisions](#blocking-decisions). Tracked in epic
+4 to 7 extend, has merged, so those can start. Product has answered the blocking questions (see
+[Product Decisions](#product-decisions)), so nothing is waiting on product. Tracked in epic
 [DT-4182](https://broadworkbench.atlassian.net/browse/DT-4182).
 
 ## Summary
@@ -15,10 +14,10 @@ DUOS has been asked to report thirteen Data Access Request (DAR) metrics on an i
 dashboard: decision outcomes, how decisions were made, approval turnaround, submission volume,
 expiration and renewal, all as data over time.
 
-Twelve of the thirteen can be answered from data Consent already stores, most with full history (see
+All thirteen can be answered from data Consent already stores, most with full history (see
 [Data Caveats](#data-caveats)). Most of the work is a reporting layer: admin endpoints in `consent`
 and a dashboard in `duos-ui`. Two tickets fix existing problems the reporting would otherwise inherit,
-and they run first. Renewal needs a product definition before anything can be built.
+and they run first. Renewal is the existing progress-report flow, so it needs reporting only.
 
 ## Objective
 
@@ -29,24 +28,24 @@ and DAC approval take, and how many requests expire.
 Endpoints take a required date range and return counts and summary statistics per day, week or
 month, computed in SQL, plus paginated flat rows with a timestamp on each.
 
-## Blocking Decisions
+## Product Decisions
 
-These need answers from product.
+Answered by product on
+[DT-3999](https://broadworkbench.atlassian.net/browse/DT-3999) (25 September 2026).
 
-| # | Question | Gates |
-| --- | --- | --- |
-| 1 | **What does "renewal" mean?** The existing progress-report (continuing review) flow, or a researcher submitting a new request after one expired? Only the first exists today; it needs only reporting, while the second needs a new column. | Ticket 9, and the study-page expiry from #3049 if the second |
-| 2 | **Does a reopened decision still count as decided?** When a decided DAR-dataset pair is reopened, the last cast vote stands but the new election has no vote. | Ticket 8's funnel. Tickets 5 and 6 carry both readings (`decision` and `state`) until answered |
-| 3 | **How should a chair-canceled election be counted?** A canceled election is closed without a decision. It could be undecided, its own "canceled" outcome, or excluded. See [Cancellation](#cancellation-happens-at-two-levels). | Ticket 8's funnel. Ticket 5 reports it as its own state until answered |
-| 4 | **When does a multi-dataset DAR count as decided?** On the first dataset decision, or once all are in? | A DAR-level rollup, deferred. Per-pair rows ship without it |
-| 5 | **Is a DAR denied if any dataset is denied, if all are, or is partial approval its own bucket?** | Same deferred rollup |
+| # | Question | Decision | Applied in |
+| --- | --- | --- | --- |
+| 1 | What does "renewal" mean? | The existing progress-report flow. No new column. | Ticket 9 |
+| 2 | Does a reopened decision still count as decided? | No. A reopen overwrites the prior decision, so the pair's latest election alone decides its state. | Tickets 5, 6 |
+| 3 | How is a chair-canceled election counted? | As its own canceled outcome. | Tickets 5, 8 |
+| 4 | When does a multi-dataset DAR count as decided? | Once every dataset is decided. Metrics will later move to dataset granularity, so per-pair rows stay the base. | Tickets 5, 6 |
+| 5 | How do denials roll up? | Partial approval is its own category: approved, denied or mixed. | Ticket 5 |
 
-Decisions 2 to 5 change queries, not schema, so the reporting tickets can ship per-pair rows now and
-apply the answers later.
+Our reading of Decision 4, not product's: a canceled dataset is closed, so it doesn't hold a DAR
+open or affect its outcome.
 
-One smaller product question: should "researchers on a DAR" include external collaborators, who are
-not institution-validated at submission? It doesn't block anything; it only affects ticket 4's
-response.
+Still open, and blocking nothing: should "researchers on a DAR" include external collaborators, who
+are not institution-validated at submission? It only affects ticket 4's response.
 
 ## Background
 
@@ -60,8 +59,8 @@ dashboards
 (`DacDashboardResource`, `SigningOfficialDashboardResource`, `ResearcherDashboardResource`) answer
 "what should this user do next", not "what has happened over time".
 
-In scope: admin reporting endpoints, an admin dashboard in `duos-ui`, two fixes, and renewal if product
-defines it. Out of scope: any change to how DAC voting, RADAR rules or SO approval behave.
+In scope: admin reporting endpoints, an admin dashboard in `duos-ui`, two fixes, and renewal
+reporting. Out of scope: any change to how DAC voting, RADAR rules or SO approval behave.
 
 ## How the Data Works Today
 
@@ -107,6 +106,15 @@ Two other rankings exist. The researcher approvals page ranks by `create_date DE
 is edited after a later one was created, so the admin report and the study page can disagree on
 those pairs.
 
+Reporting follows none of these. Under Decision 2 a reopen overwrites the prior decision, so the
+pair's latest data-access election decides alone, chosen as
+`findLastElectionByReferenceIdDatasetIdAndType` does (newest `create_date`), with `election_id DESC`
+as a tie-break. Don't key on `archived = false`: it holds only because both reopen paths archive the
+old elections before creating the new one. Its cast `FINAL` or
+`RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. The SO and
+researcher dashboards keep the older cast vote, which is right for "does this researcher have access
+now" and is left alone.
+
 ### Closeouts have two definitions
 
 `DataAccessRequest.getIsCloseoutProgressReport` requires a child DAR with a non-empty
@@ -148,10 +156,10 @@ A canceled DAR never reaches a DAC, so reporting excludes it, and archived DARs 
 researcher dashboards do (`SigningOfficialDashboardDAO.java:46`, `DataAccessRequestDAO.java:52`).
 Status is stored as `Canceled`/`Archived` (`DarStatus`), so compare with `LOWER()`.
 
-A canceled election is a pair that reached a DAC and closed without a decision; how to count it is
-Blocking Decision 3. Its `last_update` is overwritten if the election is later archived by a reopen
-(`ElectionDAO.java:231`), so it is only a reliable cancellation time for elections that were never
-archived.
+A canceled election is a pair that reached a DAC and closed without a decision; reporting counts it
+as its own canceled outcome (Decision 3). Its `last_update` is overwritten if the election is later
+archived by a reopen (`ElectionDAO.java:231`), so it is only a reliable cancellation time for
+elections that were never archived.
 
 ### Progress reports are DAR rows
 
@@ -200,16 +208,16 @@ researcher dashboard applies this (`ResearcherDashboardDAO.java:111-132`) and dr
 collections; the study page after #3049 (DT-4130) applies it and ends access on the closeout's filing
 date. Ticket 7 uses the same per-pair rule, with the closeout date as #3049 has it.
 
-This already reads renewal as continuing review: an approved progress report restarts the term. If
-Decision 1 picks the other reading, the dashboard, the study page and ticket 7 all need revisiting.
+This reads renewal as continuing review, where an approved progress report restarts the term, and
+Decision 1 confirms it.
 
-### Renewal has no explicit representation
+### Renewal is the progress-report chain
 
-If renewal means continuing review, the progress-report chain already records it. If it means a new
-request after expiry, that chain can't be reused: `parent_id` is UNIQUE
-(`changelog-consent-2025-05-16-disallow-pr-siblings.xml:5-6`), so a DAR has at most one child, and it
-already means continuing review; `createProgressReport` requires the datasets to be approved on the
-parent (`DataAccessRequestService.java:318-331`).
+A renewal is an approved progress report: a `parent_id` child that isn't a closeout. `parent_id` is
+UNIQUE (`changelog-consent-2025-05-16-disallow-pr-siblings.xml:5-6`), so each submission has at most
+one child, and `createProgressReport` requires the datasets to be approved on the parent
+(`DataAccessRequestService.java:318-331`). A progress report can cover a subset of the parent's
+datasets, so a renewal is per collection and dataset, like expiry.
 
 ### Collaborators have no user id
 
@@ -236,17 +244,17 @@ one can be submitted with none.
 
 | # | Requested metric | Ticket and source |
 | --- | --- | --- |
-| 1 | DARs with a DAC decision vs. not | 5. Latest cast vote per pair on original DARs; canceled and archived DARs excluded; canceled elections per Decision 3 |
-| 2 | Approved vs. denied | 5. `vote.vote` on the latest cast `FINAL`/`RADAR_APPROVE` vote |
+| 1 | DARs with a DAC decision vs. not | 5. Latest election per pair on original DARs; a DAR is decided once every pair is; canceled and archived DARs excluded; canceled elections their own outcome |
+| 2 | Approved vs. denied | 5. `vote.vote` on the latest election's cast `FINAL`/`RADAR_APPROVE` vote; DARs roll up to approved, denied or mixed |
 | 3 | Decided via RADAR | 5. `vote.type`. No production RADAR decisions yet |
 | 4 | DARs per researcher | 4. `user_id`, `submission_date` |
 | 5 | DARs per institution | 4. Snapshot from ticket 3 where present, current institution otherwise |
 | 6 | Datasets per DAR | 4. `dar_dataset` |
 | 7 | Researchers per DAR (PI, lab staff, internal collaborators) | 4. Per DAR, not distinct people |
-| 8 | Submission to DAC decision | 6. `submission_date` to `vote.update_date` |
+| 8 | Submission to DAC decision | 6. `submission_date` to `vote.update_date`, per pair and per DAR (last pair decided) |
 | 9 | Submission to SO approval, separating pre-auth skips | 7. `approving_so_timestamp`. Original DARs from June 2026, closeouts from September 2025; skips from May 2026 |
 | 10 | DARs expired | 7. Per collection and dataset, from the newest approved submission; closeouts end access |
-| 11 | DARs renewed | 9, once Decision 1 is answered |
+| 11 | DARs renewed | 9. Approved progress reports, closeouts excluded |
 | 12 | Researchers submitting DARs | 4. Distinct `user_id` with a `submission_date` |
 | 13 | Timestamped, over time | Every reporting ticket returns a timestamp per row |
 
@@ -287,12 +295,12 @@ don't depend on which backs them, so this can change later without touching the 
 
 | Question | Decision |
 | --- | --- |
-| Record new lifecycle events? | No, except the institution snapshot, and renewal if it means a new flow. Everything else is already stored or computable from what is; copying it would create a second source that can disagree with the first. |
+| Record new lifecycle events? | No, except the institution snapshot. Everything else is already stored or computable from what is; copying it would create a second source that can disagree with the first. |
 | Where do decisions come from? | `vote.vote`, `vote.type` and `vote.update_date`. Not `Election.finalVoteDate` or `election.final_access_vote`. |
-| Store decision rollups on `data_access_request`? | No. The rollup rules aren't settled, and a reopen would have to invalidate them. Compute at query time. |
+| Store decision rollups on `data_access_request`? | No. A reopen would have to invalidate them, and product plans to move metrics to dataset granularity. Compute at query time. |
 | Where do the endpoints go? | `MetricsResource`, with `@RolesAllowed(ADMIN)` on each new method. Its existing endpoint is `@PermitAll` at the method level, so the two coexist. Queries go in `MetricsService` and a new `DarMetricsDAO`. |
 | One endpoint or several? | Several, one per metric family, so each is a reviewable change and releases independently. |
-| Row granularity? | Volume (ticket 4) returns one row per original DAR. Decisions and turnaround (tickets 5 and 6) return one row per DAR-dataset pair on original DARs, because decisions are made per pair; DAR-level figures are computed from those rows. |
+| Row granularity? | Volume (ticket 4) returns one row per original DAR. Decisions and turnaround (tickets 5 and 6) return one row per DAR-dataset pair on original DARs, because decisions are made per pair; DAR-level figures are rolled up from those rows in SQL. |
 | Request shape? | Tickets 4 to 7 require `from` and `to` on `submission_date`, take an optional `bucket` (day, week, month, quarter), return per-bucket counts and summaries computed in SQL, and paginate row detail. |
 | Personal data? | Responses carry IDs, counts, enums and timestamps only. No names, emails or eRA Commons IDs, which sit in the DAR `data` JSON (`Collaborator`). |
 
@@ -305,8 +313,8 @@ don't depend on which backs them, so this can change later without touching the 
    `MetricsResource`, `MetricsService` and the metrics queries these tickets extend. Each adds a
    method to those and to `DarMetricsDAO`; the first to merge creates the DAO. That is a merge
    conflict, not a dependency.
-3. **Ticket 8** (`duos-ui`) once 4 to 7 are deployed and Decisions 2 and 3 are answered.
-4. **Ticket 9** if and when product defines renewal.
+3. **Ticket 9** alongside them; it reuses ticket 7's per-pair access rule.
+4. **Ticket 8** (`duos-ui`) once 4 to 7 and 9 are deployed.
 
 Each endpoint ticket also touches `ConsentModule.java` if it adds a provider, and adds its
 `src/main/resources/assets/paths/<endpoint>.yaml` with an entry in `api-docs.yaml`.
@@ -491,89 +499,108 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 
 **Type:** Story · **Size:** 5 · **Depends on:** #3049
 
-Report, per DAR-dataset pair, whether a DAC decision exists, whether it approved or denied, and
-whether RADAR or a chair made it (metrics 1, 2 and 3).
+Report, per DAR-dataset pair and rolled up per DAR, whether a DAC decision exists, whether it
+approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 
 **Notes**
 
-- Reuse the `ranked_final_votes`/`latest_final_votes` pattern from
-  `SigningOfficialDashboardDAO.java:48-64`, partitioned by `(reference_id, dataset_id)`, keeping the
-  `v.vote IS NOT NULL` filter and the `vote_id` tie-break. Put it in `DarMetricsDAO` as a reusable
-  fragment so ticket 6 can share it.
+- Latest-election fragment in `DarMetricsDAO`, shared with ticket 6: per `(reference_id, dataset_id)`,
+  the newest data-access election (`create_date DESC, election_id DESC`) and its cast
+  `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier elections
+  don't count (Decision 2; see
+  [A DAR-dataset pair can have several elections](#a-dar-dataset-pair-can-have-several-elections)).
 - Switch the study and dataset metrics queries from `LAST_VALUE … ORDER BY v.create_date` to the same
-  fragment, so the study page and this report agree on every pair.
-- Bound the vote ranking inside its subquery to elections on DARs in the requested range. A filter
+  fragment, so the study page and this report agree on every pair. This is visible: those queries
+  list approved pairs only (`last_vote = TRUE`), so a reopened pair with no new vote stops counting
+  as approved on that submission.
+- Bound the ranking inside its subquery to elections on DARs in the requested range. A filter
   outside it can't be pushed in, so the window sorts every election and vote in the table (DT-4178).
 - Original DARs only (`parent_id IS NULL AND submission_date IS NOT NULL`). Exclude canceled and
   archived DARs with `LOWER(data->>'status') IN ('canceled', 'archived')`, keeping NULL status.
-- Each row carries two fields, one per reading of Decision 2:
-  - `decision`: approve, deny or null, from the latest cast vote across all the pair's elections;
-  - `state`: from the latest election only, `DECIDED` if its vote is cast, `PENDING` if open with no
-    cast vote, `CANCELED` if canceled with no cast vote, `NO_ELECTION` if none exists yet.
+- Each pair row carries `state`, from the latest election: `APPROVED` or `DENIED` if its vote is cast,
+  `PENDING` if open with no cast vote, `CANCELED` if canceled with no cast vote, `NO_ELECTION` if none
+  exists yet. Plus the deciding vote's type and `update_date`, null unless decided.
 - Start from `dar_dataset` and left-join elections and votes. A pair waiting on SO approval has no
   election (`DarCollectionService.java:945`, `:1151`) and must still count as undecided.
-- A pair decided, reopened, then canceled reports its old `decision` and `state = CANCELED`.
-- Required date range, optional bucket, paginated rows; per-bucket counts by `state`, `decision` and
-  vote type in SQL.
+- DAR rollup (Decisions 4 and 5), from the pair rows:
+  - `PENDING` while any pair is `PENDING` or `NO_ELECTION`;
+  - otherwise `CANCELED` if every pair is `CANCELED`;
+  - otherwise decided: `APPROVED` if every decided pair approved, `DENIED` if every one denied,
+    `MIXED` if both. Canceled pairs don't affect the outcome;
+  - decided-via `RADAR`, `MANUAL` or `MIXED`, over the decided pairs;
+  - decision date is the latest pair decision.
+- Required date range, optional bucket, paginated rows at both levels; per-bucket counts by state
+  and vote type in SQL.
 - Read `vote.vote` and `vote.type`, not `election.final_access_vote`.
 
 **Acceptance criteria**
 
 - A pair that went denied, approved, denied reports denied.
-- A multi-dataset DAR with one RADAR and one manual decision reports both correctly.
-- A canceled DAR is in neither the decided nor the pending count.
+- A pair decided then reopened with no new vote reports `PENDING`, with no decision timestamp.
+- A pair decided, reopened, then canceled reports `CANCELED`.
 - A pair whose election was canceled by a chair reports `CANCELED`, not pending.
-- A pair decided then reopened reports its old `decision` with `state = PENDING`.
-- An archived DAR and a progress report are excluded.
 - A pair with no election reports `NO_ELECTION` and counts as undecided.
-- A pair with an open election and no cast vote ever reports `state = PENDING`, a null `decision`
-  and a null decision timestamp.
+- A multi-dataset DAR with one RADAR and one manual decision reports both pairs correctly and rolls
+  up as decided via `MIXED`.
+- A DAR with one approved and one denied pair rolls up `MIXED`; with one pending pair, `PENDING`.
+- A DAR with one approved and one canceled pair rolls up `APPROVED`; with all pairs canceled,
+  `CANCELED`.
+- A DAR's decision date is its last pair's decision.
+- A canceled DAR is in no count. An archived DAR and a progress report are excluded.
 - Every row has the DAR's `submission_date`, plus a nullable decision timestamp.
 - Other roles get 403.
 
 **Tests**
 
-- One DAO test per history: single decision, reopened once, reopened with no vote yet, election
-  canceled, decided then reopened then canceled, no election yet.
+- One DAO test per pair history: single decision, reopened and re-decided, reopened with no vote
+  yet, election canceled, decided then reopened then canceled, no election yet.
+- One per DAR rollup: all approved, all denied, mixed, one pending, approved plus canceled, all
+  canceled.
 - A multi-dataset DAR mixing RADAR and manual decisions.
 - Canceled and archived DARs are excluded, whatever the status casing.
 - An uncast vote doesn't win.
-- A vote edited after a later vote was created: the study metrics query and this endpoint agree.
-
-**Out of scope:** DAR-level rollups (Decisions 4 and 5).
+- A reopened pair with no new vote: this endpoint reports it pending, and the study metrics query
+  no longer counts it approved.
 
 ---
 
 ### Ticket 6 (DT-4188): DAC decision turnaround reporting
 
-**Type:** Story · **Size:** 3 · **Depends on:** #3049; shares the latest-vote fragment with ticket 5
+**Type:** Story · **Size:** 3 · **Depends on:** #3049; shares the latest-election fragment with
+ticket 5
 
 Report time from submission to DAC decision (metric 8), `submission_date` to `vote.update_date` on the
-deciding vote.
+deciding vote, per pair and per DAR.
 
 **Notes**
 
-- Whichever of tickets 5 and 6 lands first adds the latest-vote fragment; the other reuses it.
+- Whichever of tickets 5 and 6 lands first adds the latest-election fragment; the other reuses it.
+- A reopened and re-decided pair measures to the new decision; a reopened pair with no new vote is
+  undecided and excluded (Decision 2).
+- A DAR measures to its last pair decision, and only once ticket 5's rollup calls it decided
+  (Decision 4).
 - Exclude deciding votes with a null `update_date` and return the excluded count. Don't fall back to
-  `create_date`: that is when the election opened, so it would understate turnaround.
+  `create_date`: that is when the election opened, so it would understate turnaround. A DAR with any
+  such pair is excluded and counted too.
 - Same population and bounded ranking as ticket 5 (original DARs, canceled and archived excluded,
-  ranking limited to the range inside its subquery). Each row carries
-  ticket 5's `state`, so the dashboard can apply either reading of Decision 2.
-- Required date range, optional bucket, and an optional `state` filter applied before aggregation, so
-  summaries match either reading. Mean, median and mode computed in SQL per bucket; per-pair elapsed
-  times paginated.
+  ranking limited to the range inside its subquery).
+- Required date range, optional bucket, and a `level` of pair or DAR. Mean, median and mode computed
+  in SQL per bucket; elapsed times paginated.
 
 **Acceptance criteria**
 
-- Turnaround for decided pairs within the requested range.
+- Turnaround for decided pairs and decided DARs within the requested range.
+- A reopened and re-decided pair measures to the new decision.
+- A DAR with one pair still pending is excluded; once decided, it measures to its last decision.
 - Null-`update_date` pairs excluded and counted.
-- Filtering by `state` changes the summaries, not only the rows.
-- Mean, median and mode returned per bucket; pairs with no cast vote excluded.
+- Mean, median and mode returned per bucket at both levels.
 - Other roles get 403.
 
 **Tests**
 
 - Known turnaround for a manual and a RADAR decision.
+- A two-dataset DAR decided on different days reports the later day.
+- A reopened and re-decided pair.
 - Null `update_date` excluded and counted.
 - Mean, median and mode against a fixed synthetic set.
 
@@ -626,24 +653,26 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
 
 ### Ticket 8 (DT-4190): Admin DAR analytics dashboard
 
-**Type:** Story · **Size:** 8, split by section if needed · **Depends on:** tickets 4 to 7 deployed;
-Decisions 2 and 3 answered · **Repo:** `duos-ui`
+**Type:** Story · **Size:** 8, split by section if needed · **Depends on:** tickets 4 to 7 and 9
+deployed · **Repo:** `duos-ui`
 
-An admin page showing the decision funnel, turnaround distributions, volume and expiration over time.
+An admin page showing the decision funnel, turnaround distributions, volume, and expiration and
+renewal over time.
 
 **Notes**
 
 - Build on `src/components/dashboard/{ConsoleDashboard,ConsoleDashboardGrid}.tsx`.
 - Sections: decision funnel; DAC turnaround with mean, median and mode; SO approval times as a list
-  of values; volume; expiration. Add the RADAR vs. manual split and an SO turnaround chart once
-  [Data Caveats](#data-caveats) lifts the short-history limit on metrics 3 and 9.
+  of values; volume; expiration and renewal. Add the RADAR vs. manual split and an SO turnaround
+  chart once [Data Caveats](#data-caveats) lifts the short-history limit on metrics 3 and 9.
 - Every time series can be bucketed by day, week, month or quarter, defaulting to quarter.
 - Show caveats next to the figures they affect: institution source, the SO history bounds, and
   ticket 6's excluded count.
 
 **Acceptance criteria**
 
-- The funnel shows one reading of reopened and canceled decisions, per Decisions 2 and 3.
+- The funnel counts DARs as pending, approved, denied, mixed or canceled, per ticket 5's rollup.
+- Pair-level counts are available beside the DAR ones.
 - Only admins can reach the page.
 - Each section shows an empty state when it has no data.
 - Caveats appear on the page, not only in docs.
@@ -657,32 +686,33 @@ An admin page showing the decision funnel, turnaround distributions, volume and 
 
 ---
 
-### Ticket 9 (DT-4191): Record DAR renewal
+### Ticket 9 (DT-4191): DAR renewal reporting
 
-**Type:** Story, conditional · **Size:** 5, re-estimate after Decision 1 · **Depends on:** Decision 1
+**Type:** Story · **Size:** 2 · **Depends on:** #3049
 
-Report renewals under product's definition (metric 11).
+Report renewals (metric 11). A renewal is an approved progress report (Decision 1), so this is
+reporting only, with full history and no schema change.
 
 **Notes**
 
-- If renewal means the existing progress-report flow, this is reporting only: count approved
-  `parent_id` children, excluding closeouts by the reporting definition (see
-  [Closeouts](#closeouts-have-two-definitions)), with full history. No schema change. It matches
-  what the researcher dashboard and the study page already treat as restarting the term.
-- If it means a new request after expiry, add `renewed_from_dar_id` rather than reusing `parent_id`.
-  That is forward-only.
-- If it means a new request, decide whether it extends the original's expiry, and update ticket 7,
-  the researcher dashboard and the study-page expiry from #3049 together.
+- Count progress-report pairs (`parent_id IS NOT NULL`) approved under ticket 5's latest-election
+  fragment, excluding closeouts by the reporting definition (see
+  [Closeouts](#closeouts-have-two-definitions)) and canceled or archived DARs.
+- Count per collection and dataset, dated by the progress report's `submission_date`, which is what
+  ticket 7 restarts the term from. Carry the approving vote's `update_date` too.
+- Required date range on `submission_date`, optional bucket, paginated rows.
 
 **Acceptance criteria**
 
 - Renewals are reportable over time.
-- Progress-report behavior is unchanged.
-- Under the progress-report reading: closeouts are not counted as renewals.
-- Under the new-request reading: a renewed DAR records the DAR it renews, and renewal and a progress
-  report can coexist on one DAR.
+- A closeout, a pending progress report and a denied one aren't renewals.
+- A progress report covering one of two approved datasets counts one renewal.
+- Every row has a timestamp. Other roles get 403.
 
-**Out of scope:** backfilling a new renewal link, which isn't possible.
+**Tests**
+
+- Approved, pending, denied and closeout progress reports.
+- A progress report covering a subset of the parent's datasets.
 
 ---
 
@@ -697,15 +727,15 @@ Report renewals under product's definition (metric 11).
 | 5. DAC decisions | [DT-4187](https://broadworkbench.atlassian.net/browse/DT-4187) | 1, 2, 3 | 5 | — |
 | 6. DAC turnaround | [DT-4188](https://broadworkbench.atlassian.net/browse/DT-4188) | 8 | 3 | shares a fragment with 5 |
 | 7. SO approval and expiration | [DT-4189](https://broadworkbench.atlassian.net/browse/DT-4189) | 9, 10 | 5 | — |
-| 8. Dashboard (`duos-ui`) | [DT-4190](https://broadworkbench.atlassian.net/browse/DT-4190) | all except 11 | 8 | 4–7; Decisions 2, 3 |
-| 9. Renewal | [DT-4191](https://broadworkbench.atlassian.net/browse/DT-4191) | 11 | 5 | Decision 1 |
+| 8. Dashboard (`duos-ui`) | [DT-4190](https://broadworkbench.atlassian.net/browse/DT-4190) | all | 8 | 4–7, 9 |
+| 9. Renewal | [DT-4191](https://broadworkbench.atlassian.net/browse/DT-4191) | 11 | 2 | shares a fragment with 5 |
 
 ## Test Matrix
 
 Across the reporting tickets, cover at least:
 
 - a pair that went denied, approved, denied;
-- a reopened pair with no cast vote;
+- a reopened pair with no cast vote (pending) and one re-decided (the new decision);
 - a multi-dataset DAR mixing RADAR and manual decisions;
 - a RADAR-decided election in both election queries (ticket 2);
 - a canceled or archived DAR (excluded) and a chair-canceled election (its own state);
@@ -713,7 +743,9 @@ Across the reporting tickets, cover at least:
 - each `requires_so_approval` state, and `= false` matching nothing;
 - a deciding vote with a null `update_date`;
 - expiry either side of 365 days, an approved vs. pending progress report, and a closeout;
-- a DAR with no decision, some datasets decided, and all decided;
+- a DAR with no decision, some datasets decided, and all decided, including approved, denied and
+  mixed outcomes;
+- an approved progress report (a renewal) and a closeout (not one);
 - no collaborator name or email in any response;
 - admin and non-admin access to every endpoint.
 
@@ -724,17 +756,17 @@ Synthetic data only. No Mockito `lenient()` stubbing.
 - Changes to DAC voting, RADAR rules, SO approval or cancellation behavior.
 - Decision rollup columns on `data_access_request`.
 - Bulk CSV or warehouse export; a follow-up if the dashboard isn't enough.
-- Backfilling a new renewal link or historical institution.
+- Backfilling historical institution.
+- Dataset-granularity metrics. Product wants them eventually; the per-pair rows here are the base.
 
 ## Definition of Done
 
-- Admin endpoints return flat, timestamped rows for every metric except renewal.
+- Admin endpoints return flat, timestamped rows for every metric.
 - Decision outcome, source and turnaround can be queried over any range of recorded history, with
   excluded rows counted.
 - SO turnaround separates pre-authorization skips from pending approvals and from progress reports.
 - RADAR-decided elections appear in both election queries with a decision date.
 - New DARs record their submitter's institution.
-- The `duos-ui` dashboard shows funnel, turnaround, volume and expiration with caveats beside the
-  figures.
-- Blocking decisions answered, and renewal built or explicitly declined.
+- The `duos-ui` dashboard shows funnel, turnaround, volume, expiration and renewal with caveats
+  beside the figures.
 - Apart from tickets 2 and 3, no existing DAR, voting, SO approval or cancellation behavior has changed.
