@@ -178,7 +178,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'rus' AS rus,
               -- The requester's institution, but never their name: the pages show where a grant
               -- went, not who holds it.
-              i.institution_name
+              -- The recorded name survives only once the institution itself is deleted
+              COALESCE(i.institution_name,
+                  CASE WHEN latest_dar.institution_snapshot_date IS NOT NULL
+                       THEN latest_dar.institution_name END) AS institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that itself
@@ -195,7 +198,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
           LEFT JOIN users u ON u.user_id = latest_dar.user_id
-          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          -- The institution recorded when this submission was made, or the submitter's current one
+          -- for submissions made before that was recorded
+          LEFT JOIN institution i ON i.institution_id =
+              CASE WHEN latest_dar.institution_snapshot_date IS NOT NULL
+                   THEN latest_dar.institution_id ELSE u.institution_id END
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
@@ -277,7 +284,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
               latest_dar.data ->> 'rus' AS rus,
               -- Institution, not name: see the dataset-scoped query above.
-              i.institution_name
+              -- The recorded name survives only once the institution itself is deleted
+              COALESCE(i.institution_name,
+                  CASE WHEN latest_dar.institution_snapshot_date IS NOT NULL
+                       THEN latest_dar.institution_name END) AS institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that itself
@@ -294,7 +304,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
           LEFT JOIN users u ON u.user_id = latest_dar.user_id
-          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          -- The institution recorded when this submission was made, or the submitter's current one
+          -- for submissions made before that was recorded
+          LEFT JOIN institution i ON i.institution_id =
+              CASE WHEN latest_dar.institution_snapshot_date IS NOT NULL
+                   THEN latest_dar.institution_id ELSE u.institution_id END
           -- Newest first by the date the row carries, which is when access began. Ordering by
           -- the sourced DAR's own date instead would float an old grant to the top the moment it
           -- was renewed, and the cards would read out of order.

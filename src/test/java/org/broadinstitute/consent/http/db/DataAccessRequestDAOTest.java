@@ -1235,6 +1235,66 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   // The study-scoped query covers every dataset in the study in one round trip, and must agree
   // with the per-dataset query it replaces.
   @Test
+  void testFindSummaryMetricApprovedDARsReportsTheInstitutionRecordedAtSubmission() {
+    User user = createUserWithInstitution();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            List.of(randomAlphabetic(10)),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    Dataset dataset = createDataset();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+
+    // The researcher moves employer after submitting
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertEquals(
+        recordedName,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .getFirst()
+            .institutionName());
+    assertEquals(
+        recordedName,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId)
+            .getFirst()
+            .institutionName());
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsTheRecordedNameOfADeletedInstitution() {
+    Dataset dataset = createDataset();
+    User user = createUserWithInstitution();
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+    institutionDAO.deleteInstitutionById(user.getInstitutionId());
+
+    assertEquals(
+        recordedName,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .getFirst()
+            .institutionName());
+  }
+
+  @Test
   void testFindSummaryMetricApprovedDARsByStudyId() {
     User user = createUserWithInstitution();
     Date now = new Date();
