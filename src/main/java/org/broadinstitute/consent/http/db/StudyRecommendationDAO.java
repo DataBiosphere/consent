@@ -42,8 +42,36 @@ public interface StudyRecommendationDAO {
    */
   String CARD_FIELDS =
       """
-      , card_datasets AS (
+      , card_data_uses AS (
         SELECT d.dataset_id, d.study_id,
+          CASE WHEN pg_input_is_valid(d.data_use, 'jsonb') THEN d.data_use::jsonb END AS du
+        FROM dataset d
+        WHERE d.study_id IN (SELECT study_id FROM ranked)
+      ), card_disease_terms AS (
+        SELECT u.dataset_id, LOWER(TRIM(t.term_id)) AS term_id
+        FROM card_data_uses u
+        CROSS JOIN LATERAL jsonb_array_elements_text(
+          CASE WHEN jsonb_typeof(u.du -> 'diseaseRestrictions') = 'array'
+            THEN u.du -> 'diseaseRestrictions' END
+        ) AS t(term_id)
+      ), card_labelled_terms AS (
+        -- One pass over the ontology per id column for the whole request, rather than one per
+        -- dataset: each branch is an equi-join the planner can hash, which an OR of both is not
+        SELECT terms.term_id
+        FROM (SELECT DISTINCT term_id FROM card_disease_terms) terms
+        INNER JOIN ontology_index oi ON LOWER(oi.id) = terms.term_id
+        WHERE oi.json_document ->> 'label' ~ '\\S'
+        UNION
+        SELECT terms.term_id
+        FROM (SELECT DISTINCT term_id FROM card_disease_terms) terms
+        INNER JOIN ontology_index oi ON LOWER(oi.obo_id) = terms.term_id
+        WHERE oi.json_document ->> 'label' ~ '\\S'
+      ), card_ds_datasets AS (
+        SELECT DISTINCT dt.dataset_id
+        FROM card_disease_terms dt
+        INNER JOIN card_labelled_terms lt ON lt.term_id = dt.term_id
+      ), card_datasets AS (
+        SELECT u.dataset_id, u.study_id,
           (
             SELECT CASE WHEN dp.property_value ~ '^[+-]?[0-9]+$' THEN
               CASE WHEN dp.property_value::numeric BETWEEN -2147483648 AND 2147483647
@@ -51,14 +79,14 @@ public interface StudyRecommendationDAO {
             END
             FROM dataset_property dp
             INNER JOIN dictionary k ON k.key_id = dp.property_key
-            WHERE dp.dataset_id = d.dataset_id AND LOWER(k.key) = '# of participants'
+            WHERE dp.dataset_id = u.dataset_id AND LOWER(k.key) = '# of participants'
             ORDER BY dp.property_id
             LIMIT 1
           ) AS participant_count,
           (
             SELECT LOWER(TRIM(dp.property_value))
             FROM dataset_property dp
-            WHERE dp.dataset_id = d.dataset_id
+            WHERE dp.dataset_id = u.dataset_id
               AND LOWER(dp.schema_property) IN ('accessmanagement', 'consentgroup.accessmanagement')
               AND LOWER(TRIM(dp.property_value)) IN ('open', 'controlled', 'external')
             ORDER BY LOWER(dp.schema_property) = 'consentgroup.accessmanagement', dp.property_id
@@ -66,24 +94,12 @@ public interface StudyRecommendationDAO {
           ) AS access_type,
           ARRAY_REMOVE(ARRAY[
             CASE WHEN LOWER(u.du ->> 'generalUse') = 'true' THEN 'GRU' END,
-            CASE WHEN jsonb_typeof(u.du -> 'diseaseRestrictions') = 'array' THEN
-              CASE WHEN EXISTS (
-                SELECT 1
-                FROM jsonb_array_elements_text(u.du -> 'diseaseRestrictions') AS t(term_id)
-                INNER JOIN ontology_index oi
-                  ON LOWER(oi.id) = LOWER(TRIM(t.term_id)) OR LOWER(oi.obo_id) = LOWER(TRIM(t.term_id))
-                WHERE oi.json_document ->> 'label' ~ '\\S'
-              ) THEN 'DS' END
-            END,
+            CASE WHEN u.dataset_id IN (SELECT dataset_id FROM card_ds_datasets) THEN 'DS' END,
             CASE WHEN LOWER(u.du ->> 'hmbResearch') = 'true' THEN 'HMB' END,
             CASE WHEN LOWER(u.du ->> 'populationOriginsAncestry') = 'true' THEN 'NPOA' END,
             CASE WHEN u.du ->> 'other' ~ '\\S' THEN 'OTHER' END
           ], NULL) AS data_use_codes
-        FROM dataset d
-        CROSS JOIN LATERAL (
-          SELECT CASE WHEN pg_input_is_valid(d.data_use, 'jsonb') THEN d.data_use::jsonb END AS du
-        ) u
-        WHERE d.study_id IN (SELECT study_id FROM ranked)
+        FROM card_data_uses u
       ), card_dataset_totals AS (
         SELECT cd.study_id, COUNT(*) AS dataset_count,
           ARRAY_AGG(DISTINCT cd.dataset_id ORDER BY cd.dataset_id) AS dataset_ids,
