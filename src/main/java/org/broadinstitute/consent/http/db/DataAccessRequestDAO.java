@@ -146,7 +146,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                       LIMIT 1
                   ) dv ON TRUE
                   WHERE LOWER(e.election_type) = 'dataaccess' AND e.dataset_id = :datasetId
-                  ORDER BY e.reference_id, e.dataset_id, e.create_date DESC, e.election_id DESC
+                  ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dd.dataset_id = :datasetId
@@ -251,7 +251,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                       LIMIT 1
                   ) dv ON TRUE
                   WHERE LOWER(e.election_type) = 'dataaccess'
-                  ORDER BY e.reference_id, e.dataset_id, e.create_date DESC, e.election_id DESC
+                  ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dar.submission_date IS NOT NULL
