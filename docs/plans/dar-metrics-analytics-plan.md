@@ -107,10 +107,10 @@ metrics queries (`findSummaryMetricApprovedDARsByDatasetIdIncludesExpired` and
 when a vote is edited after a later one was created.
 
 Reporting follows none of these. Under Decision 2 a reopen overwrites the prior decision, so the
-pair's latest data-access election decides alone, chosen as
-`findLastElectionByReferenceIdDatasetIdAndType` does (newest `create_date`), with `election_id DESC`
-as a tie-break. Don't key on `archived = false`: it holds only because both reopen paths archive the
-old elections before creating the new one. Its cast `FINAL` or
+pair's latest data-access election decides alone: the highest `election_id`, as the DAC
+dashboard ranks them (`DacDashboardDAO`), so the two pages never pick different elections. Don't
+key on `archived = false`: it holds only because both reopen paths archive the old elections
+before creating the new one. Its cast `FINAL` or
 `RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. The SO and
 researcher dashboards keep the older cast vote, which is right for "does this researcher have access
 now" and is left alone, as are the two access checks: a reopened pair keeps its TDR access and can
@@ -511,10 +511,9 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 **Notes**
 
 - Latest-election fragment in `DarMetricsDAO`, shared with tickets 6, 7 and 9: per
-  `(reference_id, dataset_id)`, the newest data-access election (`create_date DESC,
-  election_id DESC`) and its cast
-  `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier elections
-  don't count (Decision 2; see
+  `(reference_id, dataset_id)`, the newest data-access election (`election_id DESC`) and its
+  cast `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier
+  elections don't count (Decision 2; see
   [A DAR-dataset pair can have several elections](#a-dar-dataset-pair-can-have-several-elections)).
 - Switch the two study and dataset metrics queries (`findSummaryMetricApprovedDARs…IncludesExpired`)
   from `LAST_VALUE … ORDER BY v.create_date` to the same fragment, so the study page and this report
