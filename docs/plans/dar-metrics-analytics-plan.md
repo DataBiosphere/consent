@@ -40,12 +40,10 @@ Answered by product on
 | 3 | How is a chair-canceled election counted? | As its own canceled outcome. | Tickets 5, 8 |
 | 4 | When does a multi-dataset DAR count as decided? | Once every dataset is decided. Metrics will later move to dataset granularity, so per-pair rows stay the base. | Tickets 5, 6 |
 | 5 | How do denials roll up? | Partial approval is its own category: approved, denied or mixed. | Ticket 5 |
+| 6 | Do external collaborators count as researchers on a DAR? | No. They need their own approval and aren't approved with the DAR. | Ticket 4 |
 
 Our reading of Decision 4, not product's: a canceled dataset is closed, so it doesn't hold a DAR
 open or affect its outcome.
-
-Still open, and blocking nothing: should "researchers on a DAR" include external collaborators, who
-are not institution-validated at submission? It only affects ticket 4's response.
 
 ## Background
 
@@ -464,7 +462,8 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
   recorded institution of the submission they already display, falling back to live. They source a
   row from the latest qualifying submission and this endpoint from the original DAR, so the two can
   still differ after an employer change; each is right for its own submission.
-- Collaborator counts are per DAR; don't expose a distinct-person count.
+- Collaborator counts are per DAR; don't expose a distinct-person count. External collaborators
+  aren't counted (Decision 6).
 - Response fields are limited to: reference id, collection id, submitter user id, institution id,
   name and source, `submission_date`, dataset count, and PI, lab staff and internal collaborator
   counts. Nothing else from the DAR `data` JSON.
@@ -489,6 +488,7 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - A renamed institution reports its current name.
 - A progress report recorded with no institution doesn't fall back to the user's current one.
 - PI, lab staff and internal collaborator counts reported separately.
+- A DAR with an external collaborator doesn't count them.
 - A collection with a progress report counts once.
 - The serialised response contains no collaborator name or email.
 - Admin and non-admin resource tests.
