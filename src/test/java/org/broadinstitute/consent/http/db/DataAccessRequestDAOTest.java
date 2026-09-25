@@ -2689,6 +2689,52 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(granted.getReferenceId(), summaries.getFirst().referenceId());
   }
 
+  @Test
+  void testFindSummaryMetricApprovedDARsDropsAPairReopenedWithNoNewVote() {
+    User user = createUserWithInstitution();
+    Integer studyId =
+        studyDAO.insertStudy(
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            randomAlphabetic(20),
+            List.of(randomAlphabetic(10)),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+    Dataset dataset = createDataset();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
+    assertEquals(
+        1,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .size());
+
+    // A reopen archives the approved election and opens one with no vote cast yet
+    List<Integer> earlier =
+        electionDAO
+            .findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), dataset.getDatasetId())
+            .stream()
+            .map(Election::getElectionId)
+            .toList();
+    electionDAO.archiveElectionByIds(earlier, new Date());
+    createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .isEmpty());
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId)
+            .isEmpty());
+  }
+
   private void castFinalVote(String referenceId, Dataset dataset, Date on, boolean approved) {
     Election election = createDataAccessElection(referenceId, dataset.getDatasetId());
     Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
