@@ -1,14 +1,21 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.DarDatasetDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
@@ -19,12 +26,14 @@ import org.jdbi.v3.core.Jdbi;
 public class MetricsService {
 
   private final DataAccessRequestDAO darDAO;
+  private final DarMetricsDAO darMetricsDAO;
   private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
   @Inject
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.darMetricsDAO = jdbi.onDemand(DarMetricsDAO.class);
     this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;
   }
@@ -88,6 +97,26 @@ public class MetricsService {
   public List<StudyRecommendation> getFrequentlyRequestedWith(Integer studyId, User user) {
     requireStudy(studyId, user);
     return recommendationDAO.findFrequentlyRequestedWith(studyId);
+  }
+
+  /**
+   * DAC decisions per DAR-dataset pair on original DARs submitted from {@code from} to {@code to}.
+   */
+  public DecisionReport<DarDatasetDecision> getDarDatasetDecisions(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return DecisionReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countPairDecisions(start, end, bucket.truncUnit()),
+        darMetricsDAO.findPairDecisions(start, end, limit, offset));
+  }
+
+  // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too
+  private static Instant startOfDay(LocalDate date) {
+    return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
   }
 
   /**
