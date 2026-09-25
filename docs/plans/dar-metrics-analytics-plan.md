@@ -307,11 +307,11 @@ don't depend on which backs them, so this can change later without touching the 
 1. **Tickets 1, 2 and 3 first (done).** Ticket 1 set the honest date ranges and checked query cost.
    Tickets 2 and 3 fixed existing problems: ticket 2 was a bug in queries existing code already calls,
    and ticket 3 is forward-only, so every week it waited was a week of institution history lost.
-2. **Tickets 4 to 7 in parallel.** #3049 rewrote
-   `MetricsResource`, `MetricsService` and the metrics queries these tickets extend. Each adds a
-   method to those and to `DarMetricsDAO`; the first to merge creates the DAO. That is a merge
-   conflict, not a dependency.
-3. **Ticket 9** alongside them; it reuses ticket 7's per-pair access rule.
+2. **Tickets 5, 4 and 7 in parallel, ticket 5 first.** #3049 rewrote `MetricsResource`,
+   `MetricsService` and the metrics queries these tickets extend. Ticket 5 builds the
+   latest-election fragment that tickets 6 and 9 reuse. Each ticket adds a method to
+   `DarMetricsDAO`; the first to merge creates the DAO. That is a merge conflict, not a dependency.
+3. **Tickets 6 and 9** once ticket 5 merges.
 4. **Ticket 8** (`duos-ui`) once 4 to 7 and 9 are deployed.
 
 Each endpoint ticket also touches `ConsentModule.java` if it adds a provider, and adds its
@@ -504,8 +504,9 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 
 **Notes**
 
-- Latest-election fragment in `DarMetricsDAO`, shared with ticket 6: per `(reference_id, dataset_id)`,
-  the newest data-access election (`create_date DESC, election_id DESC`) and its cast
+- Latest-election fragment in `DarMetricsDAO`, shared with tickets 6 and 9: per
+  `(reference_id, dataset_id)`, the newest data-access election (`create_date DESC,
+  election_id DESC`) and its cast
   `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier elections
   don't count (Decision 2; see
   [A DAR-dataset pair can have several elections](#a-dar-dataset-pair-can-have-several-elections)).
@@ -566,15 +567,14 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 
 ### Ticket 6 (DT-4188): DAC decision turnaround reporting
 
-**Type:** Story · **Size:** 3 · **Depends on:** #3049; shares the latest-election fragment with
-ticket 5
+**Type:** Story · **Size:** 3 · **Depends on:** ticket 5, for the latest-election fragment
 
 Report time from submission to DAC decision (metric 8), `submission_date` to `vote.update_date` on the
 deciding vote, per pair and per DAR.
 
 **Notes**
 
-- Whichever of tickets 5 and 6 lands first adds the latest-election fragment; the other reuses it.
+- Reuse ticket 5's latest-election fragment.
 - A reopened and re-decided pair measures to the new decision; a reopened pair with no new vote is
   undecided and excluded (Decision 2).
 - A DAR measures to its last pair decision, and only once ticket 5's rollup calls it decided
@@ -688,7 +688,7 @@ renewal over time.
 
 ### Ticket 9 (DT-4191): DAR renewal reporting
 
-**Type:** Story · **Size:** 2 · **Depends on:** #3049
+**Type:** Story · **Size:** 2 · **Depends on:** ticket 5, for the latest-election fragment
 
 Report renewals (metric 11). A renewal is an approved progress report (Decision 1), so this is
 reporting only, with full history and no schema change.
@@ -725,10 +725,10 @@ reporting only, with full history and no schema change.
 | 3. Record institution at submission | [DT-4185](https://broadworkbench.atlassian.net/browse/DT-4185) | 5 (accuracy) | 2 | — |
 | 4. Volume and composition | [DT-4186](https://broadworkbench.atlassian.net/browse/DT-4186) | 4, 5, 6, 7, 12 | 5 | 3 |
 | 5. DAC decisions | [DT-4187](https://broadworkbench.atlassian.net/browse/DT-4187) | 1, 2, 3 | 5 | — |
-| 6. DAC turnaround | [DT-4188](https://broadworkbench.atlassian.net/browse/DT-4188) | 8 | 3 | shares a fragment with 5 |
+| 6. DAC turnaround | [DT-4188](https://broadworkbench.atlassian.net/browse/DT-4188) | 8 | 3 | 5 |
 | 7. SO approval and expiration | [DT-4189](https://broadworkbench.atlassian.net/browse/DT-4189) | 9, 10 | 5 | — |
 | 8. Dashboard (`duos-ui`) | [DT-4190](https://broadworkbench.atlassian.net/browse/DT-4190) | all | 8 | 4–7, 9 |
-| 9. Renewal | [DT-4191](https://broadworkbench.atlassian.net/browse/DT-4191) | 11 | 2 | shares a fragment with 5 |
+| 9. Renewal | [DT-4191](https://broadworkbench.atlassian.net/browse/DT-4191) | 11 | 2 | 5 |
 
 ## Test Matrix
 
