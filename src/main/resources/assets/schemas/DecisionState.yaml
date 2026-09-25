@@ -1,0 +1,7 @@
+type: string
+enum:
+  - APPROVED
+  - DENIED
+  - PENDING
+  - CANCELED
+  - NO_ELECTION

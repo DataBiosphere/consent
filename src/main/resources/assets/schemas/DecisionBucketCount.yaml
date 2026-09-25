@@ -1,0 +1,12 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    description: Start of the submission-date bucket, in milliseconds since the epoch.
+  state:
+    $ref: './DecisionState.yaml'
+  decidedVia:
+    type: [string, 'null']
+    enum: [MANUAL, RADAR, null]
+  count:
+    type: integer

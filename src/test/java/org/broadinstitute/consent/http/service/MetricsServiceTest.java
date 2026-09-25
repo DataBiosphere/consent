@@ -14,11 +14,15 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -48,6 +52,8 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private StudyRecommendationDAO recommendationDAO;
 
+  @Mock private DarMetricsDAO darMetricsDAO;
+
   @Mock private DatasetService datasetService;
 
   private final User user = new User();
@@ -58,6 +64,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   void initService() {
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
+    when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
     service = new MetricsService(jdbi, datasetService);
   }
 
@@ -400,5 +407,24 @@ class MetricsServiceTest extends AbstractTestHelper {
     d.setDatasetId(1);
     d.setName(UUID.randomUUID().toString());
     return d;
+  }
+
+  @Test
+  void pairDecisionsCoverWholeDays() {
+    Instant start = startOfDay(LocalDate.of(2026, 5, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 5, 2));
+    when(darMetricsDAO.countPairDecisions(start, end, "day")).thenReturn(List.of());
+    when(darMetricsDAO.findPairDecisions(start, end, 100, 0)).thenReturn(List.of());
+
+    var report =
+        service.getDarDatasetDecisions(
+            LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 1), MetricsBucket.DAY, 100, 0);
+
+    assertEquals(0, report.total());
+    assertTrue(report.rows().isEmpty());
+  }
+
+  private static Instant startOfDay(LocalDate date) {
+    return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
   }
 }

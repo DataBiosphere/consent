@@ -3,18 +3,25 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonParser;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.service.MetricsService;
@@ -22,6 +29,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -153,6 +162,64 @@ class MetricsResourceTest extends AbstractTestHelper {
             "expired"),
         fields);
     assertFalse(json.toLowerCase().contains("piname"), "No PI name is served with a DAR summary");
+  }
+
+  @Test
+  void darDatasetDecisionsParseTheRangeBucketAndPage() {
+    DecisionReport<?> report =
+        new DecisionReport<>(
+            "2026-01-01", "2026-01-01", MetricsBucket.DAY, 0, List.of(), List.of());
+    when(service.getDarDatasetDecisions(
+            eq(LocalDate.of(2026, 1, 1)),
+            eq(LocalDate.of(2026, 1, 1)),
+            eq(MetricsBucket.DAY),
+            anyInt(),
+            anyInt()))
+        .thenAnswer(i -> report);
+
+    Response response =
+        resource.getDarDatasetDecisions(duosUser, "2026-01-01", "2026-01-01", "day", 100, 0);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      nullValues = "null",
+      value = {
+        "null, 2026-01-01, quarter, 100, 0",
+        "2026-01-01, null, quarter, 100, 0",
+        "01/01/2026, 2026-02-01, quarter, 100, 0",
+        "2026-02-01, 2026-01-01, quarter, 100, 0",
+        "2026-01-01, 2026-02-01, year, 100, 0",
+        "2026-01-01, 2026-02-01, quarter, 0, 0",
+        "2026-01-01, 2026-02-01, quarter, 1001, 0",
+        "2026-01-01, 2026-02-01, quarter, 100, -1"
+      })
+  void decisionReportsRejectBadParameters(
+      String from, String to, String bucket, Integer limit, Integer offset) {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarDatasetDecisions(duosUser, from, to, bucket, limit, offset).getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void decisionReportsAreAdminOnly() throws NoSuchMethodException {
+    for (String name : List.of("getDarDatasetDecisions")) {
+      RolesAllowed roles =
+          MetricsResource.class
+              .getMethod(
+                  name,
+                  DuosUser.class,
+                  String.class,
+                  String.class,
+                  String.class,
+                  Integer.class,
+                  Integer.class)
+              .getAnnotation(RolesAllowed.class);
+      assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+    }
   }
 
   private DarMetricsSummary generateDarMetricsSummary() {
