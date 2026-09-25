@@ -37,7 +37,7 @@ class MetricsTests extends ContainerTests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/api/metrics/dar-dataset-decisions"})
+  @ValueSource(strings = {"/api/metrics/dar-decisions", "/api/metrics/dar-dataset-decisions"})
   void adminGetsTheReport(String path) {
     try (Response response = request(path + RANGE, "ci-admin@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -48,7 +48,7 @@ class MetricsTests extends ContainerTests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/api/metrics/dar-dataset-decisions"})
+  @ValueSource(strings = {"/api/metrics/dar-decisions", "/api/metrics/dar-dataset-decisions"})
   void nonAdminIsForbidden(String path) {
     try (Response response = request(path + RANGE, "ci-researcher@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
@@ -56,7 +56,7 @@ class MetricsTests extends ContainerTests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/api/metrics/dar-dataset-decisions"})
+  @ValueSource(strings = {"/api/metrics/dar-decisions", "/api/metrics/dar-dataset-decisions"})
   void missingRangeIsABadRequest(String path) {
     try (Response response = request(path, "ci-admin@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());

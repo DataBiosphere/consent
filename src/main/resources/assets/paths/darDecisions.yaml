@@ -1,0 +1,66 @@
+get:
+  summary: DAC decisions per DAR
+  operationId: apiMetricsDarDecisionsGet
+  description: |
+    Admin only. DAC decisions rolled up per original DAR submitted in the range. A DAR is decided once every dataset is decided or canceled; the latest election on each dataset overrides earlier ones. Canceled and archived DARs and progress reports are excluded.
+  parameters:
+    - name: from
+      in: query
+      required: true
+      description: First submission date to include, as yyyy-MM-dd.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last submission date to include, as yyyy-MM-dd. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Submission-date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+    - name: limit
+      in: query
+      required: false
+      description: Rows per page, 1 to 1000.
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      required: false
+      description: Rows to skip.
+      schema:
+        type: integer
+        default: 0
+  tags:
+    - Metrics
+    - Admin
+  responses:
+    200:
+      description: Counts per bucket and one page of DARs.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarDecisionReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: Admin only.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -63,6 +64,42 @@ public interface DarMetricsDAO {
       )
       """;
 
+  /**
+   * Rolls pairs up per DAR. A DAR is decided once no pair is pending; canceled pairs don't hold it
+   * open or affect its outcome, and one whose pairs were all canceled is canceled. Its decision
+   * date is the last pair decision, left null when any deciding vote predates decision dates.
+   */
+  String DAR_DECISIONS =
+      PAIR_DECISIONS
+          + """
+          , dar_decisions AS (
+            SELECT reference_id, collection_id, submission_date,
+                   COUNT(*) AS dataset_count,
+                   CASE WHEN BOOL_OR(state IN ('PENDING', 'NO_ELECTION')) THEN 'PENDING'
+                        WHEN BOOL_AND(state = 'CANCELED') THEN 'CANCELED'
+                        WHEN BOOL_AND(state IN ('APPROVED', 'CANCELED')) THEN 'APPROVED'
+                        WHEN BOOL_AND(state IN ('DENIED', 'CANCELED')) THEN 'DENIED'
+                        ELSE 'MIXED' END AS state,
+                   COUNT(*) FILTER (WHERE state IN ('PENDING', 'NO_ELECTION')) AS undecided,
+                   COUNT(DISTINCT decided_via) AS via_count,
+                   MAX(decided_via) AS any_via,
+                   COUNT(*) FILTER (WHERE decided_via IS NOT NULL AND decision_date IS NULL)
+                     AS undated,
+                   MAX(decision_date) AS last_decision
+            FROM pair_decisions
+            GROUP BY reference_id, collection_id, submission_date
+          ),
+          dar_rows AS (
+            SELECT reference_id, collection_id, submission_date, dataset_count, state,
+                   CASE WHEN undecided > 0 OR via_count = 0 THEN NULL
+                        WHEN via_count > 1 THEN 'MIXED'
+                        ELSE any_via END AS decided_via,
+                   CASE WHEN undecided > 0 OR via_count = 0 OR undated > 0 THEN NULL
+                        ELSE last_decision END AS decision_date
+            FROM dar_decisions
+          )
+          """;
+
   @RegisterConstructorMapper(DecisionBucketCount.class)
   @SqlQuery(
       PAIR_DECISIONS
@@ -87,6 +124,35 @@ public interface DarMetricsDAO {
           LIMIT :limit OFFSET :offset
           """)
   List<DarDatasetDecision> findPairDecisions(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  @RegisterConstructorMapper(DecisionBucketCount.class)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start, state, decided_via,
+                 COUNT(*) AS count
+          FROM dar_rows
+          GROUP BY 1, 2, 3
+          ORDER BY 1, 2, 3
+          """)
+  List<DecisionBucketCount> countDarDecisions(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarDecision.class)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT reference_id, collection_id, submission_date, dataset_count, state, decided_via,
+                 decision_date
+          FROM dar_rows
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarDecision> findDarDecisions(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
       @Bind("limit") int limit,
