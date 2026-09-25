@@ -86,13 +86,13 @@ public interface StudyRecommendationDAO {
         WHERE d.study_id IN (SELECT study_id FROM ranked)
       ), card_dataset_totals AS (
         SELECT cd.study_id, COUNT(*) AS dataset_count,
-          ARRAY_AGG(DISTINCT cd.dataset_id) AS dataset_ids,
+          ARRAY_AGG(DISTINCT cd.dataset_id ORDER BY cd.dataset_id) AS dataset_ids,
           SUM(cd.participant_count) AS total_participants,
-          ARRAY_REMOVE(ARRAY_AGG(DISTINCT cd.access_type), NULL) AS access_types
+          ARRAY_REMOVE(ARRAY_AGG(DISTINCT cd.access_type ORDER BY cd.access_type), NULL) AS access_types
         FROM card_datasets cd
         GROUP BY cd.study_id
       ), card_data_use_codes AS (
-        SELECT cd.study_id, ARRAY_AGG(DISTINCT code) AS data_use_codes
+        SELECT cd.study_id, ARRAY_AGG(DISTINCT code ORDER BY code) AS data_use_codes
         FROM card_datasets cd
         CROSS JOIN LATERAL UNNEST(cd.data_use_codes) AS code
         GROUP BY cd.study_id

@@ -35,7 +35,7 @@ properties:
     type: array
     items:
       type: integer
-    description: The dataset ids belonging to the recommended study.
+    description: The dataset ids belonging to the recommended study, in ascending order.
   totalParticipants:
     type: integer
     format: int64
@@ -53,10 +53,10 @@ properties:
     items:
       type: string
       enum: [open, controlled, external]
-    description: The distinct access management values across the study's datasets.
+    description: The distinct access management values across the study's datasets, sorted.
   dataUseCodes:
     type: array
     items:
       type: string
       enum: [GRU, DS, HMB, NPOA, OTHER]
-    description: The distinct primary data use codes across the study's datasets.
+    description: The distinct primary data use codes across the study's datasets, sorted.
