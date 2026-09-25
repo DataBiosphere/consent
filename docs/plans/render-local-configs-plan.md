@@ -524,8 +524,7 @@ the reference. These findings show what changes for a developer who moves to the
    The deployed pod gets it from `consent-proxy-b2c-secrets`. If compose does not set it, the
    proxy rejects valid tokens.
 4. **`consent.yaml` gets the dev values.** Examples: JSON logs, rate limiting on,
-   `cacheExpireMinutes: 1` and the Twilio status URL for SendGrid. Keys that only local copies
-   have, such as `nih.denyEmailPatterns`, go away.
+   `cacheExpireMinutes: 1` and the Twilio status URL for SendGrid.
 5. **The vendored subcharts in a `terra-helmfile` checkout can be stale.** In the test checkout,
    `charts/consent/charts/` had `httpd-proxy-0.55.0`, but the source chart is at `0.57.0`. The
    old `liquibase-migration` package also had no `esolib`, so the render failed. The script must
