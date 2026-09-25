@@ -25,12 +25,13 @@ script writes the files that `config/docker-compose.yaml` needs to start a local
 
 ## The duos-ui Model
 
-`duos-ui` has three scripts in `scripts/`:
+`duos-ui` has four scripts in `scripts/`:
 
 | Script | What it does | Needs |
 |---|---|---|
 | `render-configs.sh` | Writes `server.crt`, `server.key` and `ca-bundle.crt` from the `local-dev` namespace. Optional flags write `.env.local`, `public/config.json` and `site.conf`. | VPN, `gcloud`, `kubectl`, `jq`, `openssl` |
 | `render-site-conf.sh` | Renders `site.conf` from the duos chart template in `terra-helmfile`. It fails if helm syntax remains after the render. | `gh` |
+| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. It checks that the config files exist, and names each missing file with the host command that makes it. It makes no files. | Nothing |
 | `render-accounts.sh` | Writes test service account keys to a gitignored env file. It writes to a temp file first, so a failure keeps the old file. | `gcloud`, `jq` |
 
 The patterns that we copy:
@@ -94,6 +95,7 @@ full chart.
 | `scripts/render-chart-configs.sh` | Runs `helm template` and writes `consent.yaml`, `site.conf` and `oauth2.conf`. It also runs on its own, without the VPN. |
 | `scripts/export-db.sh` | Writes a database dump. It also runs on its own. |
 | `scripts/index-es.sh` | Fills the local `dataset` index from the database. It runs after compose starts. |
+| `scripts/setup-devcontainer.sh` | Checks the config files when the Dev Container starts. It makes no files. |
 | `scripts/templates/local-values.yaml` | Helm values for local development. |
 | `scripts/templates/docker-compose.yaml` | The compose template. |
 
@@ -409,6 +411,70 @@ The token must belong to a user who has the Admin role in the loaded database. W
 this is the developer's dev DUOS account. If the call returns 401 or 403, the script says which
 account `gcloud` used and that this account needs the Admin role.
 
+### Dev Container
+
+The repo has a Dev Container (`.devcontainer/devcontainer.json`, Java 25 with Maven and
+Docker-in-Docker). It does not run a setup script today. `scripts/setup-devcontainer.sh` follows
+the `duos-ui` script: the container makes no config, and the script only checks for it.
+
+The container cannot make the config. It has no VPN, `gcloud`, `kubectl` or `helm`, and the
+developer's Google credentials are on the host. The developer runs `render-configs.sh` on the
+host. The workspace bind mount then makes the files in `config/` available in the container.
+
+The script checks for these files in `config/`:
+
+| File | Made by |
+|---|---|
+| `server.crt`, `server.key`, `ca-bundle.crt` | `render-configs.sh` (no flags) |
+| `consent.yaml`, `site.conf`, `oauth2.conf` | `--write_chart_configs true` |
+| `docker-compose.yaml`, `docker-compose.override.yaml`, `.env` | `--write_compose true` |
+| The dump that `CONSENT_DB_DUMP` in `.env` names | `--export_db true` |
+
+What the script does:
+
+1. Find the repo root from the path of the script, like the other scripts. The `duos-ui` script
+   has a fixed `/workspaces/duos-ui` path. A relative path also works outside the container.
+2. Check each file in the table. Read only the `CONSENT_DB_DUMP=` line from `.env` with `grep`.
+   The script never sources `.env` and never prints a value from it, because `.env` has secrets.
+3. If `openssl` is available, warn when `server.crt` expires in 14 days or less
+   (`openssl x509 -checkend`). The certs rotate every 3 months, and an expired cert is the most
+   frequent cause of a proxy that does not start.
+4. If files are missing, name each one, and print the host command that makes them:
+   `./scripts/render-configs.sh --write_chart_configs true --write_compose true --export_db true`.
+5. Always exit 0. A missing file is a message, not a failure, so the container still starts.
+
+Changes to `.devcontainer/devcontainer.json`:
+
+| Change | Reason |
+|---|---|
+| `"postStartCommand": "./scripts/setup-devcontainer.sh"` | Runs the check each time the container starts. `duos-ui` uses `postCreateCommand`, which runs only once. Consent certs expire, and a check at each start finds an expired cert. |
+
+The team uses two modes, and both must work:
+
+| Mode | Where `docker compose up` runs |
+|---|---|
+| Host | In a terminal on the host. The Dev Container is only an editor, or it is not used. |
+| Container | In the Dev Container, with Docker-in-Docker. |
+
+The same `config/` files serve both modes, through the workspace bind mount. Docker-in-Docker
+resolves the compose bind mounts, such as `./consent.yaml` and `../target`, in the container file
+system. So the compose template does not change. For the container mode, `devcontainer.json`
+also needs these changes:
+
+| Change | Reason |
+|---|---|
+| Mount the host `~/.config/gcloud` read-only at `/home/vscode/.config/gcloud` | The compose template mounts the ADC file from `~/.config/gcloud`. Without the mount, that folder is empty in the container. Read-only, so the container cannot change the host credentials. |
+| `forwardPorts`: 27443, 7777 and 9200 | Docker-in-Docker publishes ports inside the container only. The host needs 27443 for the browser and `index-es.sh`, 7777 for the debugger, and 9200 for the `index-es.sh` reset. |
+
+These changes do no harm in the host mode. The mount needs `~/.config/gcloud` on the host,
+which each developer has after `gcloud auth login`. If a developer runs the stack on the host
+and in the container at the same time, VS Code forwards the ports to other numbers. Run one
+stack at a time.
+
+In both modes, run `render-configs.sh`, `export-db.sh` and `index-es.sh` on the host. The
+container has no `gcloud`. In the container mode, `index-es.sh` reaches the stack through the
+forwarded ports 27443 and 9200.
+
 ### Secrets
 
 | Secret | Today | Plan |
@@ -479,14 +545,17 @@ the reference. These findings show what changes for a developer who moves to the
    `cloud-sql-proxy` v2 in the same change. `db-connect.sh` runs on the host and uses `psql`, so it
    keeps a host proxy on `127.0.0.1`.
 5. Add `scripts/index-es.sh`.
-6. Change each compose command in `DEVNOTES.md` to name both compose files. Replace the
+6. Add `scripts/setup-devcontainer.sh`. In `.devcontainer/devcontainer.json`, add
+   `postStartCommand`, the read-only gcloud mount and `forwardPorts`.
+7. Change each compose command in `DEVNOTES.md` to name both compose files. Replace the
    "Configure" section of `DEVNOTES.md`. It tells developers to copy
    `src/test/resources/consent-config.yml` by hand. Remove the steps for `wait-for-it.sh`, the
    JSON key, `sqlproxy.env` and `tcell_agent.config`.
 
 Ticket 1 can start now. Tickets 2 to 4 can go in any order after ticket 1. Ticket 3 needs the
 output of ticket 2 to test. Ticket 5 needs a running stack from ticket 3 and a dump from ticket 4.
-Ticket 6 goes last.
+Ticket 6 needs the final file list from tickets 1 to 4. Ticket 7 goes last. It also adds a Dev
+Container section to `DEVNOTES.md`, like the one in `duos-ui`.
 
 The `/mcp` proxy location is not part of this plan. If the team wants it, it is a separate
 `terra-helmfile` change. The next render then includes it.
@@ -537,6 +606,14 @@ For each ticket:
     the script stops before the render, and that the error names the line and the key.
 18. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
     difference in the PR.
+19. For ticket 6: start the Dev Container with all files present, with some files missing, and
+    with a cert that expires in less than 14 days. Make sure that the script names each missing
+    file, warns about the cert, prints no `.env` values, and that the container starts each time.
+20. For ticket 6, container mode: run `docker compose up` in the Dev Container. From the host,
+    make sure that the proxy on port 27443, the debugger on port 7777 and `index-es.sh` work.
+    Make sure that the app can read the dev bucket with the mounted ADC file.
+21. For ticket 6, host mode: with the new `devcontainer.json`, run `docker compose up` on the host.
+    Make sure that nothing changed for this mode.
 
 ## Alternatives
 
@@ -558,5 +635,6 @@ The team answered the open questions from the first review:
 | Does anyone use `sqlproxy.env` or `tcell_agent.config`? | No. | The script does not write them. Ticket 5 removes them from the docs. |
 | Does anyone run the app outside compose? | No. The team runs the app with compose from a terminal. | The `-Ddw.*` flags are only in the compose template. No IntelliJ steps. |
 | How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. The script can delete older dumps. | [Data Handling](#data-handling): mode `600`, only the newest dump stays, no sharing. |
+| Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | Ticket 6 supports both modes: the gcloud mount and `forwardPorts` for the container mode, with no change to the host mode. |
 | How does the local `dataset` index get filled? | A script calls the reindex API with a `gcloud auth print-access-token` token. | `scripts/index-es.sh` (ticket 5). |
 | Which `terra-helmfile` commit does the script render? | `master` by default. The team often tests `terra-helmfile` changes with a local consent instance. | `--helmfile_ref` selects a branch. `--helmfile_dir` renders a local checkout with changes that are not committed. |
