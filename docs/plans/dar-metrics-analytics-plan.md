@@ -98,11 +98,13 @@ Reopening a decision archives the previous elections and opens a new one
 `ResearcherDashboardDAO.java:46-68` does the same under different names.
 
 Two other rankings exist. The researcher approvals page ranks by `create_date DESC, vote_id DESC`
-(`ResearcherDashboardDAO.java:70-83`), and the study and dataset metrics queries use
-`LAST_VALUE(v.vote) … ORDER BY v.create_date` with no tie-break (`DataAccessRequestDAO.java:81-84`,
-`:136-138`, `:212-215`, and both queries #3049 adds). They usually agree, but can differ when a vote
-is edited after a later one was created, so the admin report and the study page can disagree on
-those pairs.
+(`ResearcherDashboardDAO.java:70-83`), and four `DataAccessRequestDAO` queries use
+`LAST_VALUE(v.vote) … ORDER BY v.create_date` with no tie-break. Two are the study and dataset
+metrics queries (`findSummaryMetricApprovedDARsByDatasetIdIncludesExpired` and
+`findSummaryMetricApprovedDARsByStudyIdIncludesExpired`). The other two are access checks:
+`findApprovedDARsByDatasetId` lists a dataset's approved users for TDR (`TDRService`), and
+`findDatasetApprovalsByDar` gates creating a progress report. They usually agree, but can differ
+when a vote is edited after a later one was created.
 
 Reporting follows none of these. Under Decision 2 a reopen overwrites the prior decision, so the
 pair's latest data-access election decides alone, chosen as
@@ -111,7 +113,8 @@ as a tie-break. Don't key on `archived = false`: it holds only because both reop
 old elections before creating the new one. Its cast `FINAL` or
 `RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. The SO and
 researcher dashboards keep the older cast vote, which is right for "does this researcher have access
-now" and is left alone.
+now" and is left alone, as are the two access checks: a reopened pair keeps its TDR access and can
+still be renewed until the new election decides.
 
 ### Closeouts have two definitions
 
@@ -204,7 +207,10 @@ nothing. A progress report can cover a subset of the parent's approved datasets
 (`DataAccessRequestService.java:326-332`), so renewing one dataset needn't extend another. The
 researcher dashboard applies this (`ResearcherDashboardDAO.java:111-132`) and drops closed-out
 collections; the study page after #3049 (DT-4130) applies it and ends access on the closeout's filing
-date. Ticket 7 uses the same per-pair rule, with the closeout date as #3049 has it.
+date. Ticket 7 uses the same per-pair rule, with the closeout date as #3049 has it, but reads
+"approved" from ticket 5's latest-election fragment rather than the latest cast vote. That keeps
+expiry, renewal (ticket 9) and the study page in step for a reopened pair; the researcher dashboard,
+which answers who has access now, keeps the latest cast vote.
 
 This reads renewal as continuing review, where an approved progress report restarts the term, and
 Decision 1 confirms it.
@@ -307,11 +313,11 @@ don't depend on which backs them, so this can change later without touching the 
 1. **Tickets 1, 2 and 3 first (done).** Ticket 1 set the honest date ranges and checked query cost.
    Tickets 2 and 3 fixed existing problems: ticket 2 was a bug in queries existing code already calls,
    and ticket 3 is forward-only, so every week it waited was a week of institution history lost.
-2. **Tickets 5, 4 and 7 in parallel, ticket 5 first.** #3049 rewrote `MetricsResource`,
+2. **Tickets 5 and 4 in parallel, ticket 5 first.** #3049 rewrote `MetricsResource`,
    `MetricsService` and the metrics queries these tickets extend. Ticket 5 builds the
-   latest-election fragment that tickets 6 and 9 reuse. Each ticket adds a method to
+   latest-election fragment that tickets 6, 7 and 9 reuse. Each ticket adds a method to
    `DarMetricsDAO`; the first to merge creates the DAO. That is a merge conflict, not a dependency.
-3. **Tickets 6 and 9** once ticket 5 merges.
+3. **Tickets 6, 7 and 9** once ticket 5 merges.
 4. **Ticket 8** (`duos-ui`) once 4 to 7 and 9 are deployed.
 
 Each endpoint ticket also touches `ConsentModule.java` if it adds a provider, and adds its
@@ -504,16 +510,17 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 
 **Notes**
 
-- Latest-election fragment in `DarMetricsDAO`, shared with tickets 6 and 9: per
+- Latest-election fragment in `DarMetricsDAO`, shared with tickets 6, 7 and 9: per
   `(reference_id, dataset_id)`, the newest data-access election (`create_date DESC,
   election_id DESC`) and its cast
   `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier elections
   don't count (Decision 2; see
   [A DAR-dataset pair can have several elections](#a-dar-dataset-pair-can-have-several-elections)).
-- Switch the study and dataset metrics queries from `LAST_VALUE … ORDER BY v.create_date` to the same
-  fragment, so the study page and this report agree on every pair. This is visible: those queries
-  list approved pairs only (`last_vote = TRUE`), so a reopened pair with no new vote stops counting
-  as approved on that submission.
+- Switch the two study and dataset metrics queries (`findSummaryMetricApprovedDARs…IncludesExpired`)
+  from `LAST_VALUE … ORDER BY v.create_date` to the same fragment, so the study page and this report
+  agree on every pair. This is visible: those queries list approved pairs only (`last_vote = TRUE`),
+  so a reopened pair with no new vote stops counting as approved on that submission. Leave the
+  access checks `findApprovedDARsByDatasetId` and `findDatasetApprovalsByDar` alone.
 - Bound the ranking inside its subquery to elections on DARs in the requested range. A filter
   outside it can't be pushed in, so the window sorts every election and vote in the table (DT-4178).
 - Original DARs only (`parent_id IS NULL AND submission_date IS NOT NULL`). Exclude canceled and
@@ -608,7 +615,7 @@ deciding vote, per pair and per DAR.
 
 ### Ticket 7 (DT-4189): SO approval and expiration reporting
 
-**Type:** Story · **Size:** 5 · **Depends on:** #3049
+**Type:** Story · **Size:** 5 · **Depends on:** ticket 5, for the latest-election fragment
 
 Report submission-to-SO-approval time, separate requests that skipped SO review through
 pre-authorization, and count expired DARs (metrics 9 and 10).
@@ -621,7 +628,8 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
   (see [Closeouts](#closeouts-have-two-definitions)).
 - Compute access end per collection and dataset in SQL, by the rule in
   [Expiration](#expiration-is-computed): the newest submission approved on that dataset + 365 days,
-  or the closeout date if earlier. Return the end reason, `EXPIRED` or `CLOSED_OUT`; the study page
+  or the closeout date if earlier. "Approved" means approved in its latest election, per ticket 5's
+  fragment. Return the end reason, `EXPIRED` or `CLOSED_OUT`; the study page
   shows both as "Expired". A collection counts as expired once every dataset's access has ended.
 - Required date range, optional bucket, paginated rows; summaries in SQL.
 - Note in the OpenAPI path spec that skip classification starts 20 May 2026 and approval times start
@@ -636,6 +644,7 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
 - Expiry agrees with `EXPIRATION_DURATION_MILLIS` either side of the boundary.
 - A parent older than 365 days with an approved progress report newer than 365 days isn't expired.
 - A pending progress report doesn't extend access.
+- A progress report approved and then reopened with no new vote doesn't extend access.
 - A closeout ends access on its filing date, reported as `CLOSED_OUT`.
 - Per collection and dataset, the access-end date matches the dataset metrics query.
 - Renewing one dataset doesn't extend another dataset in the same collection.
@@ -726,7 +735,7 @@ reporting only, with full history and no schema change.
 | 4. Volume and composition | [DT-4186](https://broadworkbench.atlassian.net/browse/DT-4186) | 4, 5, 6, 7, 12 | 5 | 3 |
 | 5. DAC decisions | [DT-4187](https://broadworkbench.atlassian.net/browse/DT-4187) | 1, 2, 3 | 5 | — |
 | 6. DAC turnaround | [DT-4188](https://broadworkbench.atlassian.net/browse/DT-4188) | 8 | 3 | 5 |
-| 7. SO approval and expiration | [DT-4189](https://broadworkbench.atlassian.net/browse/DT-4189) | 9, 10 | 5 | — |
+| 7. SO approval and expiration | [DT-4189](https://broadworkbench.atlassian.net/browse/DT-4189) | 9, 10 | 5 | 5 |
 | 8. Dashboard (`duos-ui`) | [DT-4190](https://broadworkbench.atlassian.net/browse/DT-4190) | all | 8 | 4–7, 9 |
 | 9. Renewal | [DT-4191](https://broadworkbench.atlassian.net/browse/DT-4191) | 11 | 2 | 5 |
 
