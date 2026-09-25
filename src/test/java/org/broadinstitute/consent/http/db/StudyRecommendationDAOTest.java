@@ -223,6 +223,44 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
     assertEquals(List.of("GRU"), findRecommendation(similar, wellFormedId).dataUseCodes());
   }
 
+  /**
+   * StudyAssets reads the legacy assets object when a study has no promoted list, matching names
+   * ignoring case. The promotion migration only moved exactly-cased ones, so an Assets row or a
+   * Models key still holds its list there, and the index counts it.
+   */
+  @Test
+  void testRecommendationCardFieldsFallBackToLegacyAssets() {
+    String piName = randomAlphabetic(20);
+    String dataType = randomAlphabetic(20);
+    Integer sourceId = insertStudy(piName, List.of(dataType), true);
+
+    Integer legacyId = insertStudy(piName, List.of(dataType), true);
+    studyDAO.insertStudyProperty(
+        legacyId,
+        "Assets",
+        PropertyType.Json.toString(),
+        "{\"Models\": [{}, {}, {}], \"workspaces\": \"not a list\"}");
+
+    // A promoted list is authoritative even when empty, so a stale legacy copy is not counted
+    Integer promotedId = insertStudy(piName, List.of(dataType), true);
+    studyDAO.insertStudyProperty(promotedId, "models", PropertyType.Json.toString(), "[]");
+    studyDAO.insertStudyProperty(
+        promotedId,
+        "assets",
+        PropertyType.Json.toString(),
+        "{\"models\": [{}], \"workspaces\": [{}, {}]}");
+
+    List<StudyRecommendation> similar = studyRecommendationDAO.findSimilar(sourceId);
+
+    StudyRecommendation legacy = findRecommendation(similar, legacyId);
+    assertEquals(3, legacy.modelCount());
+    assertEquals(0, legacy.workspaceCount());
+    StudyRecommendation promoted = findRecommendation(similar, promotedId);
+    assertEquals(0, promoted.modelCount());
+    // No promoted workspaces row, so that type still comes from the legacy object
+    assertEquals(2, promoted.workspaceCount());
+  }
+
   /** A blank pi_name is not an identity, so blank-PI studies must not match each other. */
   @Test
   void testFindSimilarDoesNotMatchOnBlankPiNames() {

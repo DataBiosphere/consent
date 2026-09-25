@@ -19,16 +19,26 @@ public interface StudyRecommendationDAO {
    * one) and the primary DUO codes TranslationUtil.translateSummary derives from its data use. As
    * there, DS needs a disease restriction the ontology index can label.
    *
-   * <p>Model and workspace counts read only the promoted asset properties: registration writes a
-   * promoted row for every asset list and keeps no list in the legacy assets object, so the legacy
-   * fallback in StudyAssets never supplies one. Those rows are cut down in a MATERIALIZED CTE
-   * before any JSON cast, because String-typed study properties are bare text and the cast would
-   * fail on them if the planner evaluated it ahead of the key filter.
+   * <p>Model and workspace counts follow StudyAssets.findAssetList: the first promoted property for
+   * the type that holds a list is authoritative, even an empty one, and only a study with none
+   * falls back to its legacy assets object. Both names are matched ignoring case, as StudyAssets
+   * does, because the promotion migration moved only an exactly-cased assets.models and so on; an
+   * Assets row or a Models key still holds its list in the legacy object. Should one legacy object
+   * hold a key under two casings, jsonb keeps no source order to pick the first by, so the lowest
+   * spelling wins. Those rows are cut down in a MATERIALIZED CTE before any JSON cast, because
+   * String-typed study properties are bare text and the cast would fail on them if the planner
+   * evaluated it ahead of the key filter.
    *
    * <p>Data use and asset values are text columns, so each is cast only once pg_input_is_valid
    * accepts it, inside a CASE so the planner cannot run the cast first. An empty or malformed value
    * then reads as absent, as DataUseParser and StudyAssets treat it, rather than failing the query
    * and with it every recommendation on the list.
+   *
+   * <p>One known difference from the index: DataUseParser also rejects a whole data use whose JSON
+   * is valid but holds a field of the wrong type, such as an object for {@code other}, and the
+   * index then shows no codes for it, where this still derives codes from the fields that do match.
+   * The application only writes data use by serializing a DataUse, so only a hand-edited row can
+   * reach that state, and matching Gson's field typing in SQL would cost a check on every field.
    */
   String CARD_FIELDS =
       """
@@ -91,14 +101,38 @@ public interface StudyRecommendationDAO {
           CASE WHEN pg_input_is_valid(sp.value, 'jsonb') THEN sp.value::jsonb END AS value
         FROM study_property sp
         WHERE sp.study_id IN (SELECT study_id FROM ranked)
-          AND LOWER(sp.key) IN ('models', 'workspaces')
-      ), card_asset_counts AS (
-        -- The first row per key that holds a list, as StudyAssets reads it
+          AND LOWER(sp.key) IN ('models', 'workspaces', 'assets')
+      ), card_promoted_assets AS (
+        -- The first promoted row per type that holds a list, as StudyAssets reads it
         SELECT DISTINCT ON (ca.study_id, ca.key) ca.study_id, ca.key,
           jsonb_array_length(ca.value) AS asset_count
         FROM card_assets ca
-        WHERE jsonb_typeof(ca.value) = 'array'
+        WHERE ca.key IN ('models', 'workspaces') AND jsonb_typeof(ca.value) = 'array'
         ORDER BY ca.study_id, ca.key, ca.study_property_id
+      ), card_legacy_assets AS (
+        -- The first legacy object with anything in it, as StudyAssets.findLegacyAssets reads it
+        SELECT DISTINCT ON (ca.study_id) ca.study_id, ca.value
+        FROM card_assets ca
+        WHERE ca.key = 'assets' AND jsonb_typeof(ca.value) = 'object' AND ca.value != '{}'::jsonb
+        ORDER BY ca.study_id, ca.study_property_id
+      ), card_legacy_asset_counts AS (
+        -- A legacy value that is not a list counts nothing, as findAssetList reads it
+        SELECT DISTINCT ON (la.study_id, LOWER(kv.key)) la.study_id, LOWER(kv.key) AS key,
+          CASE WHEN jsonb_typeof(kv.value) = 'array' THEN jsonb_array_length(kv.value) ELSE 0 END
+            AS asset_count
+        FROM card_legacy_assets la
+        CROSS JOIN LATERAL jsonb_each(la.value) AS kv
+        WHERE LOWER(kv.key) IN ('models', 'workspaces')
+        ORDER BY la.study_id, LOWER(kv.key), kv.key
+      ), card_asset_counts AS (
+        SELECT pa.study_id, pa.key, pa.asset_count FROM card_promoted_assets pa
+        UNION ALL
+        SELECT la.study_id, la.key, la.asset_count
+        FROM card_legacy_asset_counts la
+        WHERE NOT EXISTS (
+          SELECT 1 FROM card_promoted_assets pa
+          WHERE pa.study_id = la.study_id AND pa.key = la.key
+        )
       )
       SELECT s.study_id, s.name AS study_name, s.description AS study_description, s.pi_name,
         (SELECT sp.value FROM study_property sp WHERE sp.study_id = s.study_id AND sp.key = 'species'
