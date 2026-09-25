@@ -22,11 +22,15 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
@@ -407,6 +411,28 @@ class MetricsServiceTest extends AbstractTestHelper {
     d.setDatasetId(1);
     d.setName(UUID.randomUUID().toString());
     return d;
+  }
+
+  @Test
+  void darDecisionsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    List<DecisionBucketCount> buckets =
+        List.of(
+            new DecisionBucketCount(start, DecisionState.APPROVED, null, 3L),
+            new DecisionBucketCount(start, DecisionState.PENDING, null, 2L));
+    DarDecision row = new DarDecision("ref", 1, start, 1, DecisionState.PENDING, null, null);
+    when(darMetricsDAO.countDarDecisions(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findDarDecisions(start, end, 10, 20)).thenReturn(List.of(row));
+
+    DecisionReport<DarDecision> report =
+        service.getDarDecisions(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(5, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
+    assertEquals("2026-03-31", report.to());
   }
 
   @Test

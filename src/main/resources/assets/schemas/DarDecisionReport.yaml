@@ -1,0 +1,22 @@
+type: object
+properties:
+  from:
+    type: string
+    format: date
+  to:
+    type: string
+    format: date
+  bucket:
+    type: string
+    enum: [DAY, WEEK, MONTH, QUARTER]
+  total:
+    type: integer
+    description: Rows in the range, across all pages.
+  buckets:
+    type: array
+    items:
+      $ref: './DecisionBucketCount.yaml'
+  rows:
+    type: array
+    items:
+      $ref: './DarDecision.yaml'

@@ -165,6 +165,22 @@ class MetricsResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void darDecisionsParseTheRangeBucketAndPage() {
+    DecisionReport<?> report =
+        new DecisionReport<>(
+            "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of(), List.of());
+    when(service.getDarDecisions(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.MONTH, 50, 100))
+        .thenAnswer(i -> report);
+
+    Response response =
+        resource.getDarDecisions(duosUser, "2026-01-01", "2026-03-31", "Month", 50, 100);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @Test
   void darDatasetDecisionsParseTheRangeBucketAndPage() {
     DecisionReport<?> report =
         new DecisionReport<>(
@@ -201,13 +217,16 @@ class MetricsResourceTest extends AbstractTestHelper {
       String from, String to, String bucket, Integer limit, Integer offset) {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarDecisions(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
         resource.getDarDatasetDecisions(duosUser, from, to, bucket, limit, offset).getStatus());
     verifyNoInteractions(service);
   }
 
   @Test
   void decisionReportsAreAdminOnly() throws NoSuchMethodException {
-    for (String name : List.of("getDarDatasetDecisions")) {
+    for (String name : List.of("getDarDecisions", "getDarDatasetDecisions")) {
       RolesAllowed roles =
           MetricsResource.class
               .getMethod(
