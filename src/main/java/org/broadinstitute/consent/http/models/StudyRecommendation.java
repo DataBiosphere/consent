@@ -7,5 +7,13 @@ public record StudyRecommendation(
     String studyName,
     String studyDescription,
     String piName,
+    String species,
+    String phenotype,
+    List<String> dataTypes,
     Long datasetCount,
-    List<Integer> datasetIds) {}
+    List<Integer> datasetIds,
+    Long totalParticipants,
+    Integer modelCount,
+    Integer workspaceCount,
+    List<String> accessTypes,
+    List<String> dataUseCodes) {}
