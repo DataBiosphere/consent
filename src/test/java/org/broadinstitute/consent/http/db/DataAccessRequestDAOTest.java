@@ -1268,6 +1268,25 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindSummaryMetricApprovedDARsFallsBackToAProgressReportsRecordedInstitution() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    Integer collectionId = createDarCollection(user.getUserId());
+    // Submitted before institutions were recorded, then renewed after
+    DataAccessRequest dar = createApprovedDar(user, collectionId, dataset);
+    DataAccessRequest renewal = fileFollowOn(user, collectionId, dar, List.of(dataset), 0, false);
+    dataAccessRequestDAO.updateSubmissionInstitution(
+        renewal.getReferenceId(), user.getInstitutionId());
+    castFinalVote(renewal.getReferenceId(), dataset, new Date(), true);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
   void testFindSummaryMetricApprovedDARsKeepsTheRecordedNameOfADeletedInstitution() {
     User user = createUserWithInstitution();
     Integer studyId = createStudy(user);
