@@ -1233,6 +1233,109 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         summaries.getFirst().institutionName());
   }
 
+  @Test
+  void testFindSummaryMetricApprovedDARsReportsTheInstitutionRecordedAtSubmission() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createApprovedDar(user, createDarCollection(user.getUserId()), dataset);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+
+    // The researcher moves employer after submitting
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsTheOriginalInstitutionAcrossAProgressReport() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    Integer collectionId = createDarCollection(user.getUserId());
+    DataAccessRequest dar = createApprovedDar(user, collectionId, dataset);
+    String originalName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+
+    // Reassigned to another institution, the researcher files a progress report that is approved
+    Integer newInstitutionId = createUserWithInstitution().getInstitutionId();
+    userDAO.updateInstitutionId(user.getUserId(), newInstitutionId);
+    DataAccessRequest renewal = fileFollowOn(user, collectionId, dar, List.of(dataset), 0, false);
+    dataAccessRequestDAO.updateSubmissionInstitution(renewal.getReferenceId(), newInstitutionId);
+    castFinalVote(renewal.getReferenceId(), dataset, new Date(), true);
+
+    assertSummaryInstitutionName(originalName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsFallsBackToAProgressReportsRecordedInstitution() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    Integer collectionId = createDarCollection(user.getUserId());
+    // Submitted before institutions were recorded, then renewed after
+    DataAccessRequest dar = createApprovedDar(user, collectionId, dataset);
+    DataAccessRequest renewal = fileFollowOn(user, collectionId, dar, List.of(dataset), 0, false);
+    dataAccessRequestDAO.updateSubmissionInstitution(
+        renewal.getReferenceId(), user.getInstitutionId());
+    castFinalVote(renewal.getReferenceId(), dataset, new Date(), true);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsTheRecordedNameOfADeletedInstitution() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createApprovedDar(user, createDarCollection(user.getUserId()), dataset);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+    institutionDAO.deleteInstitutionById(user.getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsNoInstitutionRecordedAtSubmission() {
+    User user = createUser();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createApprovedDar(user, createDarCollection(user.getUserId()), dataset);
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), null);
+
+    // Joining an institution later doesn't rewrite where the grant went
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(null, studyId, dataset);
+  }
+
+  private DataAccessRequest createApprovedDar(User user, Integer collectionId, Dataset dataset) {
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
+    return dar;
+  }
+
+  private void assertSummaryInstitutionName(String expected, Integer studyId, Dataset dataset) {
+    assertEquals(
+        expected,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .getFirst()
+            .institutionName());
+    assertEquals(
+        expected,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId)
+            .getFirst()
+            .institutionName());
+  }
+
   // The study-scoped query covers every dataset in the study in one round trip, and must agree
   // with the per-dataset query it replaces.
   @Test

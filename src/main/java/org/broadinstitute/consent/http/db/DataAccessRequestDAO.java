@@ -177,8 +177,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
               latest_dar.data ->> 'rus' AS rus,
               -- The requester's institution, but never their name: the pages show where a grant
-              -- went, not who holds it.
-              i.institution_name
+              -- went, not who holds it. The institution's recorded name shows once it is deleted.
+              COALESCE(i.institution_name, recorded_dar.institution_name) AS institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that itself
@@ -194,8 +194,21 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
-          LEFT JOIN users u ON u.user_id = latest_dar.user_id
-          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          -- The earliest institution recorded in the collection, so a later progress report never
+          -- moves the grant; the original submitter's current one if none was ever recorded
+          LEFT JOIN (
+              SELECT DISTINCT ON (dar.collection_id) dar.collection_id, dar.user_id,
+                  dar.institution_id, dar.institution_name, dar.institution_snapshot_date
+              FROM data_access_request dar
+              INNER JOIN approved_collections ac ON ac.collection_id = dar.collection_id
+              WHERE dar.submission_date IS NOT NULL
+              ORDER BY dar.collection_id, dar.institution_snapshot_date IS NULL, dar.submission_date,
+                  dar.id
+          ) recorded_dar ON recorded_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = COALESCE(recorded_dar.user_id, latest_dar.user_id)
+          LEFT JOIN institution i ON i.institution_id =
+              CASE WHEN recorded_dar.institution_snapshot_date IS NOT NULL
+                   THEN recorded_dar.institution_id ELSE u.institution_id END
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
@@ -273,8 +286,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
               latest_dar.data ->> 'rus' AS rus,
-              -- Institution, not name: see the dataset-scoped query above.
-              i.institution_name
+              -- The requester's institution, never their name: see the dataset-scoped query above
+              COALESCE(i.institution_name, recorded_dar.institution_name) AS institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that itself
@@ -290,8 +303,21 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
-          LEFT JOIN users u ON u.user_id = latest_dar.user_id
-          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          -- The earliest institution recorded in the collection, so a later progress report never
+          -- moves the grant; the original submitter's current one if none was ever recorded
+          LEFT JOIN (
+              SELECT DISTINCT ON (dar.collection_id) dar.collection_id, dar.user_id,
+                  dar.institution_id, dar.institution_name, dar.institution_snapshot_date
+              FROM data_access_request dar
+              INNER JOIN approved_collections ac ON ac.collection_id = dar.collection_id
+              WHERE dar.submission_date IS NOT NULL
+              ORDER BY dar.collection_id, dar.institution_snapshot_date IS NULL, dar.submission_date,
+                  dar.id
+          ) recorded_dar ON recorded_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = COALESCE(recorded_dar.user_id, latest_dar.user_id)
+          LEFT JOIN institution i ON i.institution_id =
+              CASE WHEN recorded_dar.institution_snapshot_date IS NOT NULL
+                   THEN recorded_dar.institution_id ELSE u.institution_id END
           -- Newest first by the date the row carries, which is when access began. Ordering by
           -- the sourced DAR's own date instead would float an old grant to the top the moment it
           -- was renewed, and the cards would read out of order.
