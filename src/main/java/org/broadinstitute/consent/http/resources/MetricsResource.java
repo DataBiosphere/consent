@@ -144,11 +144,17 @@ public class MetricsResource extends Resource {
     if (value == null || value.isBlank()) {
       throw new BadRequestException(name + " is required, as yyyy-MM-dd");
     }
+    LocalDate date;
     try {
-      return LocalDate.parse(value);
+      date = LocalDate.parse(value);
     } catch (DateTimeParseException e) {
       throw new BadRequestException(name + " must be a date in yyyy-MM-dd format");
     }
+    // LocalDate.parse accepts signed years like +999999999, which overflow the range's end
+    if (date.getYear() < 1900 || date.getYear() > 9999) {
+      throw new BadRequestException(name + " must be a date between 1900 and 9999");
+    }
+    return date;
   }
 
   private static LocalDate parseRangeEnd(LocalDate start, String to) {
