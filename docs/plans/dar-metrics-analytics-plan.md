@@ -42,8 +42,9 @@ Answered by product on
 | 5 | How do denials roll up? | Partial approval is its own category: approved, denied or mixed. | Ticket 5 |
 | 6 | Do external collaborators count as researchers on a DAR? | No. They need their own approval and aren't approved with the DAR. | Ticket 4 |
 
-Our reading of Decision 4, not product's: a canceled dataset is closed, so it doesn't hold a DAR
-open or affect its outcome.
+Our reading of Decision 4, not product's: a canceled pair, a dataset whose latest election a chair
+canceled, is closed, so it doesn't hold a DAR open or affect its outcome. Canceled DARs are excluded
+entirely.
 
 ## Background
 
