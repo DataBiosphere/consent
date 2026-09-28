@@ -1152,7 +1152,7 @@ public class DarCollectionService implements ConsentLogger {
       return;
     }
     for (Dataset dataset : classification.autoOpenDatasets) {
-      if (hasOpenElection(latestDar, dataset)) {
+      if (hasCurrentElection(latestDar, dataset)) {
         continue;
       }
 
@@ -1175,14 +1175,22 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
-  /** Checks if there is an open election for the given DAR and dataset. */
-  private boolean hasOpenElection(DataAccessRequest dar, Dataset dataset) {
+  /**
+   * Checks if the given DAR and dataset already have an open election, or one created since the DAR
+   * was submitted, such as a RADAR approval. Older closed elections are left from a canceled
+   * submission.
+   */
+  private boolean hasCurrentElection(DataAccessRequest dar, Dataset dataset) {
     Election existing =
         electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
             dar.getReferenceId(), dataset.getDatasetId(), DATA_ACCESS.getValue());
-
-    return existing != null
-        && ElectionStatus.OPEN.getValue().equalsIgnoreCase(existing.getStatus());
+    if (existing == null) {
+      return false;
+    }
+    return ElectionStatus.OPEN.getValue().equalsIgnoreCase(existing.getStatus())
+        || (dar.getSubmissionDate() != null
+            && existing.getCreateDate() != null
+            && !existing.getCreateDate().before(dar.getSubmissionDate()));
   }
 
   /** Archives old elections for the given DAR and dataset. */

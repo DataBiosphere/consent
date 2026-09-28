@@ -3205,6 +3205,68 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateElectionsAndVotesForAutoOpenDacs_KeepsARadarApprovalOfThisSubmission() {
+    Instant submitted = Instant.now();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(Timestamp.from(submitted));
+    dar.setData(new DataAccessRequestData());
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(10);
+
+    DacUserClassification classification = new DacUserClassification();
+    classification.autoOpenDatasets.add(dataset);
+
+    Election radarElection = new Election();
+    radarElection.setStatus(ElectionStatus.CLOSED.getValue());
+    radarElection.setCreateDate(Date.from(submitted.plusMillis(5)));
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
+            dar.getReferenceId(), dataset.getDatasetId(), ElectionType.DATA_ACCESS.getValue()))
+        .thenReturn(radarElection);
+
+    service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
+
+    verify(electionDAO, never()).findElectionsByReferenceIdAndDatasetId(any(), anyInt());
+    verify(electionDAO, never()).inTransaction(any());
+  }
+
+  @Test
+  void testCreateElectionsAndVotesForAutoOpenDacs_ReplacesAnElectionFromACanceledSubmission() {
+    Instant resubmitted = Instant.now();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(Timestamp.from(resubmitted));
+    dar.setData(new DataAccessRequestData());
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(10);
+
+    DacUserClassification classification = new DacUserClassification();
+    classification.autoOpenDatasets.add(dataset);
+
+    Election earlierElection = new Election();
+    earlierElection.setElectionId(55);
+    earlierElection.setStatus(ElectionStatus.CLOSED.getValue());
+    earlierElection.setCreateDate(Date.from(resubmitted.minusSeconds(86_400)));
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
+            dar.getReferenceId(), dataset.getDatasetId(), ElectionType.DATA_ACCESS.getValue()))
+        .thenReturn(earlierElection);
+    when(electionDAO.findElectionsByReferenceIdAndDatasetId(
+            dar.getReferenceId(), dataset.getDatasetId()))
+        .thenReturn(List.of(earlierElection));
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any())).thenReturn(100);
+    stubInTransactionToExecute();
+
+    service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
+
+    verify(electionDAO).archiveElectionByIds(eq(List.of(55)), any());
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset);
+  }
+
+  @Test
   void testCreateElectionsAndVotesForAutoOpenDacs_ArchivesOldElectionsBeforeCreating() {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
