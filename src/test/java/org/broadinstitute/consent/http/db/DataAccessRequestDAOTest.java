@@ -2691,14 +2691,13 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindSummaryMetricApprovedDARsDropsAPairReopenedWithNoNewVote() {
+  void testFindSummaryMetricApprovedDARsKeepsAPairReopenedWithNoNewVote() {
     StudyDar s = createStudyDar();
     castFinalVote(s.dar().getReferenceId(), s.dataset(), new Date(), true);
-    assertApprovedInBothScopes(s, true);
 
     reopen(s);
 
-    assertApprovedInBothScopes(s, false);
+    assertApprovedInBothScopes(s, true);
   }
 
   @ParameterizedTest
@@ -2744,19 +2743,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
   private StudyDar createStudyDar() {
     User user = createUserWithInstitution();
-    Integer studyId =
-        studyDAO.insertStudy(
-            randomAlphabetic(20),
-            randomAlphabetic(20),
-            randomAlphabetic(20),
-            randomAlphabetic(20),
-            List.of(randomAlphabetic(10)),
-            true,
-            user.getUserId(),
-            Instant.now(),
-            UUID.randomUUID());
-    Dataset dataset = createDataset();
-    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
     DataAccessRequest dar =
         createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());

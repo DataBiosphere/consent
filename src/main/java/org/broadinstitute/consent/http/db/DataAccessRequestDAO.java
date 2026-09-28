@@ -109,7 +109,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * metrics.
    *
    * <p>A collection is included when at least one submitted, non-archived DAR in it was approved on
-   * this dataset by a {@code final} or {@code radar_approve} vote in its latest election. The
+   * this dataset by its most recently cast {@code final} or {@code radar_approve} vote. The
    * approval has to be on this dataset: one DAR can be granted some of the datasets it asks for and
    * denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
    * qualify a collection only on the same terms: a progress report gets its own election and counts
@@ -132,21 +132,17 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
-                  -- The latest election alone decides a pair: a reopen overwrites the earlier
-                  -- decision, so a reopened pair with no new vote is not approved.
+                  -- The most recently cast vote across the pair's elections, as the SO dashboard
+                  -- ranks it, so a reopened pair keeps its grant until the new election decides
                   SELECT DISTINCT ON (e.reference_id, e.dataset_id)
-                      e.reference_id, e.dataset_id, dv.vote AS last_vote
+                      e.reference_id, e.dataset_id, v.vote AS last_vote
                   FROM election e
-                  LEFT JOIN LATERAL (
-                      SELECT v.vote FROM vote v
-                      WHERE v.election_id = e.election_id
-                          AND v.vote IS NOT NULL
-                          AND LOWER(v.type) IN ('final', 'radar_approve')
-                      ORDER BY COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
-                      LIMIT 1
-                  ) dv ON TRUE
+                  INNER JOIN vote v ON v.election_id = e.election_id
+                      AND v.vote IS NOT NULL
+                      AND LOWER(v.type) IN ('final', 'radar_approve')
                   WHERE LOWER(e.election_type) = 'dataaccess' AND e.dataset_id = :datasetId
-                  ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
+                  ORDER BY e.reference_id, e.dataset_id,
+                      COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dd.dataset_id = :datasetId
@@ -234,24 +230,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
               INNER JOIN (
-                  -- The latest election alone decides a pair, as in the dataset-scoped query
+                  -- The most recently cast vote, as in the dataset-scoped query
                   SELECT DISTINCT ON (e.reference_id, e.dataset_id)
-                      e.reference_id, e.dataset_id, dv.vote AS last_vote
+                      e.reference_id, e.dataset_id, v.vote AS last_vote
                   FROM election e
                   -- Bound to the study's datasets here, not after: the outer join to dd.dataset_id
                   -- cannot be pushed in, so without this every dataaccess election in the table is
                   -- ranked to answer for a study with a handful of datasets.
                   INNER JOIN study_datasets sds ON sds.dataset_id = e.dataset_id
-                  LEFT JOIN LATERAL (
-                      SELECT v.vote FROM vote v
-                      WHERE v.election_id = e.election_id
-                          AND v.vote IS NOT NULL
-                          AND LOWER(v.type) IN ('final', 'radar_approve')
-                      ORDER BY COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
-                      LIMIT 1
-                  ) dv ON TRUE
+                  INNER JOIN vote v ON v.election_id = e.election_id
+                      AND v.vote IS NOT NULL
+                      AND LOWER(v.type) IN ('final', 'radar_approve')
                   WHERE LOWER(e.election_type) = 'dataaccess'
-                  ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
+                  ORDER BY e.reference_id, e.dataset_id,
+                      COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dar.submission_date IS NOT NULL
