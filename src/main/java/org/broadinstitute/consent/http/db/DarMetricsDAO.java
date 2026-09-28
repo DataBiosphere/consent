@@ -4,12 +4,17 @@ import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
 import org.broadinstitute.consent.http.models.DarDecision;
+import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
-/** Admin reporting over DAR decisions. Every query is bounded by a submission date range. */
+/**
+ * Admin reporting over DAR decisions and submission volume. Every query is bounded by a submission
+ * date range.
+ */
 public interface DarMetricsDAO {
 
   /**
@@ -153,6 +158,83 @@ public interface DarMetricsDAO {
           LIMIT :limit OFFSET :offset
           """)
   List<DarDecision> findDarDecisions(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * One row per original DAR submitted in [:from, :to). The institution is the one recorded at
+   * submission, falling back to the submitter's current one only for DARs submitted before
+   * submissions recorded it; a recorded null stays null. Its name is read through the id, so an
+   * admin rename shows, and the recorded name is used only once the institution has been deleted.
+   * External collaborators aren't counted: they are approved separately from the DAR.
+   */
+  String DAR_VOLUME =
+      """
+      WITH original_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.user_id, dar.submission_date,
+               CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN dar.institution_id
+                    ELSE u.institution_id END AS institution_id,
+               CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN 'RECORDED'
+                    ELSE 'CURRENT' END AS institution_source,
+               dar.institution_name AS recorded_name,
+               CASE WHEN NULLIF(TRIM(dar.data->>'piName'), '') IS NULL THEN 0 ELSE 1
+                    END AS pi_count,
+               CASE WHEN jsonb_typeof(dar.data->'labCollaborators') = 'array'
+                    THEN jsonb_array_length(dar.data->'labCollaborators') ELSE 0
+                    END AS lab_staff_count,
+               CASE WHEN jsonb_typeof(dar.data->'internalCollaborators') = 'array'
+                    THEN jsonb_array_length(dar.data->'internalCollaborators') ELSE 0
+                    END AS internal_collaborator_count
+        FROM data_access_request dar
+        LEFT JOIN users u ON u.user_id = dar.user_id
+        WHERE dar.parent_id IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      dar_volume AS (
+        SELECT od.reference_id, od.collection_id, od.user_id, od.submission_date,
+               od.institution_id, COALESCE(i.institution_name, od.recorded_name) AS institution_name,
+               od.institution_source,
+               (SELECT COUNT(*) FROM dar_dataset dd WHERE dd.reference_id = od.reference_id)
+                 AS dataset_count,
+               od.pi_count, od.lab_staff_count, od.internal_collaborator_count
+        FROM original_dars od
+        LEFT JOIN institution i ON i.institution_id = od.institution_id
+      )
+      """;
+
+  /** Per-bucket totals; a DAR with no institution isn't counted among the institutions. */
+  @RegisterConstructorMapper(VolumeBucketCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(*) AS dar_count,
+                 COUNT(DISTINCT user_id) AS researcher_count,
+                 COUNT(DISTINCT institution_id) AS institution_count,
+                 SUM(dataset_count) AS dataset_count
+          FROM dar_volume
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<VolumeBucketCount> countDarVolume(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarVolume.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT reference_id, collection_id, user_id, submission_date, institution_id,
+                 institution_name, institution_source, dataset_count, pi_count, lab_staff_count,
+                 internal_collaborator_count
+          FROM dar_volume
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarVolume> findDarVolume(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
       @Bind("limit") int limit,

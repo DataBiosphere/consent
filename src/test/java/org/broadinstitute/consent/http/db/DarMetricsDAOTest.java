@@ -14,12 +14,16 @@ import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
 import org.broadinstitute.consent.http.models.DarDecision;
+import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -288,6 +292,187 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertEquals(1, dao.findDarDecisions(FROM, TO, 1, 0).size());
     assertEquals(1, dao.findDarDecisions(FROM, TO, 1, 1).size());
     assertTrue(dao.findDarDecisions(FROM, TO, 1, 2).isEmpty());
+  }
+
+  @Test
+  void volumeReadsTheInstitutionRecordedAtSubmission() {
+    String dar = createDar(createDataset());
+    Integer recorded = user.getInstitutionId();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, recorded);
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    DarVolume row = onlyVolume();
+    assertEquals(recorded, row.institutionId());
+    assertEquals(InstitutionSource.RECORDED, row.institutionSource());
+    assertEquals(institutionDAO.findInstitutionById(recorded).getName(), row.institutionName());
+  }
+
+  @Test
+  void volumeFallsBackToTheCurrentInstitutionBeforeOneWasRecorded() {
+    createDar(createDataset());
+
+    DarVolume row = onlyVolume();
+    assertEquals(user.getInstitutionId(), row.institutionId());
+    assertEquals(InstitutionSource.CURRENT, row.institutionSource());
+  }
+
+  @Test
+  void aRecordedNullInstitutionDoesNotFallBack() {
+    String dar = createDar(createDataset());
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, null);
+
+    DarVolume row = onlyVolume();
+    assertNull(row.institutionId());
+    assertNull(row.institutionName());
+    assertEquals(InstitutionSource.RECORDED, row.institutionSource());
+  }
+
+  @Test
+  void aRenamedInstitutionReportsItsCurrentName() {
+    String dar = createDar(createDataset());
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, user.getInstitutionId());
+    renameInstitution(user.getInstitutionId(), "Renamed Institute");
+
+    assertEquals("Renamed Institute", onlyVolume().institutionName());
+  }
+
+  @Test
+  void aDeletedInstitutionKeepsItsRecordedName() {
+    String dar = createDar(createDataset());
+    Integer institutionId = user.getInstitutionId();
+    String name = institutionDAO.findInstitutionById(institutionId).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, institutionId);
+    institutionDAO.deleteInstitutionById(institutionId);
+
+    DarVolume row = onlyVolume();
+    assertNull(row.institutionId());
+    assertEquals(name, row.institutionName());
+  }
+
+  @Test
+  void volumeCountsResearchersPerDarWithoutExternalCollaborators() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiName("A PI");
+    data.setLabCollaborators(List.of(collaborator(), collaborator()));
+    data.setInternalCollaborators(List.of(collaborator()));
+    data.setExternalCollaborators(List.of(collaborator(), collaborator(), collaborator()));
+    createDar(data, SUBMITTED, createDataset(), createDataset());
+
+    DarVolume row = onlyVolume();
+    assertEquals(1, row.piCount());
+    assertEquals(2, row.labStaffCount());
+    assertEquals(1, row.internalCollaboratorCount());
+    assertEquals(2, row.datasetCount());
+  }
+
+  @Test
+  void aDarWithNoCollaboratorsOrDatasetsReportsZero() {
+    createDar();
+
+    DarVolume row = onlyVolume();
+    assertEquals(0, row.piCount());
+    assertEquals(0, row.labStaffCount());
+    assertEquals(0, row.internalCollaboratorCount());
+    assertEquals(0, row.datasetCount());
+  }
+
+  @Test
+  void volumeCountsACollectionWithAProgressReportOnce() {
+    Integer dataset = createDataset();
+    String parent = createDar(dataset);
+    var parentDar = dataAccessRequestDAO.findByReferenceId(parent);
+    dataAccessRequestDAO.insertProgressReport(
+        parentDar.getId(),
+        parentDar.getCollectionId(),
+        UUID.randomUUID().toString(),
+        user.getUserId(),
+        new DataAccessRequestData(),
+        "era");
+
+    assertEquals(parent, onlyVolume().referenceId());
+  }
+
+  @Test
+  void volumeTotalsEachBucket() {
+    createDar(createDataset());
+    createDar(createDataset(), createDataset());
+    createDarFor(createUserWithInstitution(), createDataset());
+
+    List<VolumeBucketCount> buckets = dao.countDarVolume(FROM, TO, "quarter");
+    assertEquals(1, buckets.size());
+    assertEquals(3, buckets.getFirst().darCount());
+    assertEquals(2, buckets.getFirst().researcherCount());
+    assertEquals(2, buckets.getFirst().institutionCount());
+    assertEquals(4, buckets.getFirst().datasetCount());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Canceled", "archived"})
+  void volumeExcludesCanceledAndArchivedDars(String status) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setStatus(status);
+    createDar(data, SUBMITTED, createDataset());
+
+    assertTrue(dao.findDarVolume(FROM, TO, 10, 0).isEmpty());
+  }
+
+  @Test
+  void aResearcherWithNoInstitutionIsIncluded() {
+    createDarFor(createUser(), createDataset());
+
+    DarVolume row = onlyVolume();
+    assertNull(row.institutionId());
+    assertEquals(InstitutionSource.CURRENT, row.institutionSource());
+  }
+
+  @Test
+  void volumeExcludesDrafts() {
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), SUBMITTED);
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        UUID.randomUUID().toString(),
+        user.getUserId(),
+        SUBMITTED,
+        null,
+        SUBMITTED,
+        new DataAccessRequestData(),
+        "era");
+
+    assertTrue(dao.findDarVolume(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.countDarVolume(FROM, TO, "quarter").isEmpty());
+  }
+
+  private DarVolume onlyVolume() {
+    List<DarVolume> rows = dao.findDarVolume(FROM, TO, 10, 0);
+    assertEquals(1, rows.size());
+    return rows.getFirst();
+  }
+
+  private static Collaborator collaborator() {
+    return new Collaborator(
+        true, UUID.randomUUID() + "@example.org", null, "Name", null, null, null);
+  }
+
+  private void renameInstitution(Integer institutionId, String name) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    "UPDATE institution SET institution_name = :name WHERE institution_id = :id")
+                .bind("name", name)
+                .bind("id", institutionId)
+                .execute());
+  }
+
+  private String createDarFor(User submitter, Integer... datasetIds) {
+    User saved = user;
+    user = submitter;
+    try {
+      return createDar(datasetIds);
+    } finally {
+      user = saved;
+    }
   }
 
   private enum Outcome {
