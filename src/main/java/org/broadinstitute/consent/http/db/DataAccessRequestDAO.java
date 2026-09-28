@@ -108,10 +108,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * findApprovedDARsByDatasetId}, expired DARs are included so they appear in dataset usage
    * metrics.
    *
-   * <p>A collection is included when at least one submitted, non-archived DAR in it has a terminal
-   * {@code final} or {@code radar_approve} vote on this dataset whose last value is {@code TRUE}.
-   * The approval has to be on this dataset: one DAR can be granted some of the datasets it asks for
-   * and denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
+   * <p>A collection is included when at least one submitted, non-archived DAR in it was approved on
+   * this dataset by its most recently cast {@code final} or {@code radar_approve} vote. The
+   * approval has to be on this dataset: one DAR can be granted some of the datasets it asks for and
+   * denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
    * qualify a collection only on the same terms: a progress report gets its own election and counts
    * once that election approves it, while a closeout has no election at all and so never does.
    * Otherwise either could speak for an approval that was never given.
@@ -132,17 +132,17 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
-                  SELECT DISTINCT e.reference_id, e.dataset_id,
-                      LAST_VALUE(v.vote) OVER(
-                          PARTITION BY e.reference_id, e.dataset_id
-                          ORDER BY v.create_date
-                          RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                      ) last_vote
+                  -- The most recently cast vote across the pair's elections, as the SO dashboard
+                  -- ranks it, so a reopened pair keeps its grant until the new election decides
+                  SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+                      e.reference_id, e.dataset_id, v.vote AS last_vote
                   FROM election e
-                  INNER JOIN vote v ON e.election_id = v.election_id
+                  INNER JOIN vote v ON v.election_id = e.election_id
                       AND v.vote IS NOT NULL
-                      AND LOWER(e.election_type) = 'dataaccess'
                       AND LOWER(v.type) IN ('final', 'radar_approve')
+                  WHERE LOWER(e.election_type) = 'dataaccess' AND e.dataset_id = :datasetId
+                  ORDER BY e.reference_id, e.dataset_id,
+                      COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dd.dataset_id = :datasetId
@@ -230,23 +230,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
               INNER JOIN (
-                  SELECT DISTINCT e.reference_id, e.dataset_id,
-                      LAST_VALUE(v.vote) OVER(
-                          PARTITION BY e.reference_id, e.dataset_id
-                          ORDER BY v.create_date
-                          RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                      ) last_vote
+                  -- The most recently cast vote, as in the dataset-scoped query
+                  SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+                      e.reference_id, e.dataset_id, v.vote AS last_vote
                   FROM election e
-                  -- Bound to the study's datasets inside the window, not after it. The outer join
-                  -- to dd.dataset_id cannot be pushed in here, so without this the window sorts
-                  -- and partitions every dataaccess election and vote in the table to answer for a
-                  -- study with a handful of datasets. The partition is already per dataset, so
-                  -- dropping other datasets' rows leaves every surviving partition untouched.
+                  -- Bound to the study's datasets here, not after: the outer join to dd.dataset_id
+                  -- cannot be pushed in, so without this every dataaccess election in the table is
+                  -- ranked to answer for a study with a handful of datasets.
                   INNER JOIN study_datasets sds ON sds.dataset_id = e.dataset_id
-                  INNER JOIN vote v ON e.election_id = v.election_id
+                  INNER JOIN vote v ON v.election_id = e.election_id
                       AND v.vote IS NOT NULL
-                      AND LOWER(e.election_type) = 'dataaccess'
                       AND LOWER(v.type) IN ('final', 'radar_approve')
+                  WHERE LOWER(e.election_type) = 'dataaccess'
+                  ORDER BY e.reference_id, e.dataset_id,
+                      COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dar.submission_date IS NOT NULL
