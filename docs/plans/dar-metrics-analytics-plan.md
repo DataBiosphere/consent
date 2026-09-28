@@ -111,10 +111,11 @@ pair's latest data-access election decides alone: the highest `election_id`, as 
 dashboard ranks them (`DacDashboardDAO`), so the two pages never pick different elections. Don't
 key on `archived = false`: it holds only because both reopen paths archive the old elections
 before creating the new one. Its cast `FINAL` or
-`RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. The SO and
-researcher dashboards keep the older cast vote, which is right for "does this researcher have access
-now" and is left alone, as are the two access checks: a reopened pair keeps its TDR access and can
-still be renewed until the new election decides.
+`RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. Decision 2
+is scoped to metrics, so everything that answers "does this researcher have access now" keeps the
+older cast vote until the new election decides: the SO and researcher dashboards, the two access
+checks (a reopened pair keeps its TDR access and can still be renewed), and the study and dataset
+pages, which list the grants a dataset has given.
 
 ### Closeouts have two definitions
 
@@ -209,8 +210,8 @@ researcher dashboard applies this (`ResearcherDashboardDAO.java:111-132`) and dr
 collections; the study page after #3049 (DT-4130) applies it and ends access on the closeout's filing
 date. Ticket 7 uses the same per-pair rule, with the closeout date as #3049 has it, but reads
 "approved" from ticket 5's latest-election fragment rather than the latest cast vote. That keeps
-expiry, renewal (ticket 9) and the study page in step for a reopened pair; the researcher dashboard,
-which answers who has access now, keeps the latest cast vote.
+expiry and renewal (ticket 9) in step with the decision report for a reopened pair; the study page
+and researcher dashboard, which answer who has access now, keep the latest cast vote.
 
 This reads renewal as continuing review, where an approved progress report restarts the term, and
 Decision 1 confirms it.
@@ -465,9 +466,10 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - Report the institution's current name through `institution_id`, so an admin rename shows. Use the
   recorded name only when the id is NULL, meaning the institution was deleted after submission.
 - Switch the study and dataset metrics queries, which read `users.institution_id` live, to the
-  recorded institution of the submission they already display, falling back to live. They source a
-  row from the latest qualifying submission and this endpoint from the original DAR, so the two can
-  still differ after an employer change; each is right for its own submission.
+  institution recorded on the collection's original DAR, falling back to live. A progress report
+  filed after an admin reassigns the researcher then can't move the grant to another institution,
+  and the page and this endpoint agree. Whether a grant should follow a reassignment is for
+  product and legal, not these queries.
 - Collaborator counts are per DAR; don't expose a distinct-person count. External collaborators
   aren't counted (Decision 6).
 - Response fields are limited to: reference id, collection id, submitter user id, institution id,
@@ -482,7 +484,8 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - A DAR with no collaborators reports zero.
 - A researcher with no institution is included, not dropped.
 - Each row says whether its institution was recorded at submission or read live.
-- The study and dataset metrics queries report the recorded institution of the submission they show.
+- The study and dataset metrics queries report the institution recorded on the collection's
+  original DAR, whatever later progress reports recorded.
 - Progress reports, closeouts and drafts aren't counted.
 - No collaborator name, email or eRA Commons ID is serialised.
 
@@ -515,11 +518,14 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
   cast `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier
   elections don't count (Decision 2; see
   [A DAR-dataset pair can have several elections](#a-dar-dataset-pair-can-have-several-elections)).
-- Switch the two study and dataset metrics queries (`findSummaryMetricApprovedDARs…IncludesExpired`)
-  from `LAST_VALUE … ORDER BY v.create_date` to the same fragment, so the study page and this report
-  agree on every pair. This is visible: those queries list approved pairs only (`last_vote = TRUE`),
-  so a reopened pair with no new vote stops counting as approved on that submission. Leave the
-  access checks `findApprovedDARsByDatasetId` and `findDatasetApprovalsByDar` alone.
+  Ticket 5 ranks only original DARs submitted in range; tickets 7 and 9 need progress reports and
+  submissions outside the range, so the first of them factors the ranking out to take the DARs to
+  rank as an input CTE.
+- Leave the study and dataset page queries (`findSummaryMetricApprovedDARs…IncludesExpired`) on the
+  latest cast vote, so a reopened pair stays listed until the new election decides. Give them the
+  SO dashboard's ranking (`COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC`) in place
+  of `LAST_VALUE … ORDER BY v.create_date`, which has no tie-break. Leave the access checks
+  `findApprovedDARsByDatasetId` and `findDatasetApprovalsByDar` alone.
 - Bound the ranking inside its subquery to elections on DARs in the requested range. A filter
   outside it can't be pushed in, so the window sorts every election and vote in the table (DT-4178).
 - Original DARs only (`parent_id IS NULL AND submission_date IS NOT NULL`). Exclude canceled and
@@ -567,7 +573,7 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 - Canceled and archived DARs are excluded, whatever the status casing.
 - An uncast vote doesn't win.
 - A reopened pair with no new vote: this endpoint reports it pending, and the study metrics query
-  no longer counts it approved.
+  still counts it approved.
 
 ---
 
@@ -644,8 +650,11 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
 - A parent older than 365 days with an approved progress report newer than 365 days isn't expired.
 - A pending progress report doesn't extend access.
 - A progress report approved and then reopened with no new vote doesn't extend access.
+- A parent reopened with no new vote and no approved progress report on that dataset has no
+  access-end date, so it is neither live nor expired.
 - A closeout ends access on its filing date, reported as `CLOSED_OUT`.
-- Per collection and dataset, the access-end date matches the dataset metrics query.
+- Per collection and dataset, whether access has ended matches the dataset metrics query's
+  `expired`, except for a pair reopened with no new vote, which the study page still lists.
 - Renewing one dataset doesn't extend another dataset in the same collection.
 - Every row has a timestamp. Other roles get 403.
 
@@ -655,7 +664,8 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
   closeout, NULL before 20 May 2026.
 - `= false` returns nothing.
 - Expiry either side of 365 days; a collection kept live by an approved progress report; one not
-  kept live by a pending one; a closeout before 365 days.
+  kept live by a pending one; a closeout before 365 days; a parent reopened with no new vote, with
+  and without an approved progress report.
 
 ---
 
