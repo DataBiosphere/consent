@@ -1022,9 +1022,9 @@ public class DarCollectionService implements ConsentLogger {
 
     if (!latestDar.getRequiresSOApproval()
         || latestDar.getApprovingSigningOfficialUserId() != null) {
-      // Notify users for auto-open DACs
+      // Notify users for auto-open DACs, but only where there is an election to vote on
       notifyUsersForDacs(
-          classification.autoOpenUsers,
+          usersWithOpenElection(classification, latestDar),
           classification.autoOpenDacs,
           classification.autoOpenDatasets,
           latestDar,
@@ -1175,19 +1175,38 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
+  /** Returns the auto-open users in DACs with an open election on one of the DAR's datasets. */
+  private Set<User> usersWithOpenElection(
+      DacUserClassification classification, DataAccessRequest latestDar) {
+    return classification.autoOpenDatasets.stream()
+        .filter(dataset -> isOpen(findLatestElection(latestDar, dataset)))
+        .map(Dataset::getDacId)
+        .distinct()
+        .flatMap(dacId -> filterUsersForDac(classification.autoOpenUsers, dacId).stream())
+        .collect(Collectors.toSet());
+  }
+
+  private Election findLatestElection(DataAccessRequest dar, Dataset dataset) {
+    return electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
+        dar.getReferenceId(), dataset.getDatasetId(), DATA_ACCESS.getValue());
+  }
+
+  private static boolean isOpen(Election election) {
+    return election != null
+        && ElectionStatus.OPEN.getValue().equalsIgnoreCase(election.getStatus());
+  }
+
   /**
    * Checks if the given DAR and dataset already have an open election, or one created since the DAR
    * was submitted, such as a RADAR approval. Older closed elections are left from a canceled
    * submission.
    */
   private boolean hasCurrentElection(DataAccessRequest dar, Dataset dataset) {
-    Election existing =
-        electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
-            dar.getReferenceId(), dataset.getDatasetId(), DATA_ACCESS.getValue());
+    Election existing = findLatestElection(dar, dataset);
     if (existing == null) {
       return false;
     }
-    return ElectionStatus.OPEN.getValue().equalsIgnoreCase(existing.getStatus())
+    return isOpen(existing)
         || (dar.getSubmissionDate() != null
             && existing.getCreateDate() != null
             && !existing.getCreateDate().before(dar.getSubmissionDate()));

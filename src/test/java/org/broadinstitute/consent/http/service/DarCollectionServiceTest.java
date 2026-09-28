@@ -2587,11 +2587,62 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(member));
     when(userDAO.findUserById(any())).thenReturn(new User());
 
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(electionWithStatus(ElectionStatus.OPEN));
+
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService, never()).sendMessage(any(NewDARRequestMessage.class), any());
+  }
+
+  @Test
+  void testSendNewDARCollectionMessage_AutoOpenSkipsADatasetRadarApproved() throws Exception {
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(1);
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(1);
+
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    collection.addDar(dar);
+
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-1");
+
+    User member = new User();
+    member.setUserId(3);
+    member.setInstitutionId(1);
+
+    UserRole memberRole =
+        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    memberRole.setDacId(dac.getDacId());
+    member.setRoles(List.of(memberRole));
+
+    DACAutomationRule rule = mock(DACAutomationRule.class);
+
+    when(rule.ruleType()).thenReturn(DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
+    when(rule.enabledByUserId()).thenReturn(member.getUserId());
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset));
+    when(dacDAO.findDacsForDatasetIds(anyList())).thenReturn(Set.of(dac));
+    when(dacAutomationRuleService.findAllByDacId(anyInt())).thenReturn(List.of(rule));
+    when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(member));
+    when(userDAO.findUserById(any())).thenReturn(new User());
+
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(electionWithStatus(ElectionStatus.CLOSED));
+
+    service.createElectionsForNewDarCollection(1);
+    service.sendNewDARCollectionMessage(1);
+
+    verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
   }
 
   @Test
@@ -2640,6 +2691,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.findAllByDacId(anyInt())).thenReturn(List.of(rule));
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(member));
     when(userDAO.findUserById(any())).thenReturn(new User());
+
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(electionWithStatus(ElectionStatus.OPEN));
 
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
@@ -2879,6 +2933,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(Set.of(member, chair));
     when(userDAO.findUserById(any())).thenReturn(new User());
 
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(electionWithStatus(ElectionStatus.OPEN));
+
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
@@ -3107,6 +3164,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   // Helper to make inTransaction actually execute its callback
+  private static Election electionWithStatus(ElectionStatus status) {
+    Election election = new Election();
+    election.setStatus(status.getValue());
+    return election;
+  }
+
   private void stubInTransactionToExecute() {
     doAnswer(
             invocation -> {
