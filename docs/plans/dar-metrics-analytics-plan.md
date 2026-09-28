@@ -36,7 +36,7 @@ Answered by product on
 | # | Question | Decision | Applied in |
 | --- | --- | --- | --- |
 | 1 | What does "renewal" mean? | The existing progress-report flow. No new column. | Ticket 9 |
-| 2 | Does a reopened decision still count as decided? | No. A reopen overwrites the prior decision, so the pair's latest election alone decides its state. | Tickets 5, 6 |
+| 2 | Does a reopened decision still count as decided? | No, in the reporting endpoints. A reopen overwrites the prior decision, so the pair's latest election alone decides its state. The study pages, dashboards and access checks keep the latest cast vote. | Tickets 5, 6 |
 | 3 | How is a chair-canceled election counted? | As its own canceled outcome. | Tickets 5, 8 |
 | 4 | When does a multi-dataset DAR count as decided? | Once every dataset is decided. Metrics will later move to dataset granularity, so per-pair rows stay the base. | Tickets 5, 6 |
 | 5 | How do denials roll up? | Partial approval is its own category: approved, denied or mixed. | Ticket 5 |
@@ -57,8 +57,10 @@ dashboards
 (`DacDashboardResource`, `SigningOfficialDashboardResource`, `ResearcherDashboardResource`) answer
 "what should this user do next", not "what has happened over time".
 
-In scope: admin reporting endpoints, an admin dashboard in `duos-ui`, two fixes, and renewal
-reporting. Out of scope: any change to how DAC voting, RADAR rules or SO approval behave.
+In scope: admin reporting endpoints, an admin dashboard in `duos-ui`, two fixes, renewal reporting,
+and two changes to the study and dataset pages: the institution recorded at submission (ticket 4)
+and a deterministic vote tie-break (ticket 5). Out of scope: any change to how DAC voting, RADAR
+rules or SO approval behave, apart from DT-4204, an auto-open bug found in review.
 
 ## How the Data Works Today
 
@@ -108,14 +110,14 @@ when a vote is edited after a later one was created.
 
 Reporting follows none of these. Under Decision 2 a reopen overwrites the prior decision, so the
 pair's latest data-access election decides alone: the highest `election_id`, as the DAC
-dashboard ranks them (`DacDashboardDAO`), so the two pages never pick different elections. Don't
+dashboard ranks them (`DacDashboardDAO`). Don't
 key on `archived = false`: it holds only because both reopen paths archive the old elections
 before creating the new one. Its cast `FINAL` or
-`RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. Decision 2
-is scoped to metrics, so everything that answers "does this researcher have access now" keeps the
-older cast vote until the new election decides: the SO and researcher dashboards, the two access
-checks (a reopened pair keeps its TDR access and can still be renewed), and the study and dataset
-pages, which list the grants a dataset has given.
+`RADAR_APPROVE` vote is the decision; with none cast, the pair is pending or canceled. Decision 2 is
+scoped to the reporting endpoints, so everything that answers "does this researcher have access now"
+keeps the older cast vote until the new election decides: the SO and researcher dashboards, the two
+access checks (a reopened pair keeps its TDR access and can still be renewed), and the study and
+dataset pages, which list the grants a dataset has given.
 
 ### Closeouts have two definitions
 
@@ -314,7 +316,7 @@ don't depend on which backs them, so this can change later without touching the 
 1. **Tickets 1, 2 and 3 first (done).** Ticket 1 set the honest date ranges and checked query cost.
    Tickets 2 and 3 fixed existing problems: ticket 2 was a bug in queries existing code already calls,
    and ticket 3 is forward-only, so every week it waited was a week of institution history lost.
-2. **Tickets 5 and 4 in parallel, ticket 5 first.** #3049 rewrote `MetricsResource`,
+2. **Tickets 4 and 5, independent of each other.** #3049 rewrote `MetricsResource`,
    `MetricsService` and the metrics queries these tickets extend. Ticket 5 builds the
    latest-election fragment that tickets 6, 7 and 9 reuse. Each ticket adds a method to
    `DarMetricsDAO`; the first to merge creates the DAO. That is a merge conflict, not a dependency.
@@ -487,7 +489,7 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - The study and dataset metrics queries report the institution recorded on the collection's
   original DAR, whatever later progress reports recorded.
 - Progress reports, closeouts and drafts aren't counted.
-- No collaborator name, email or eRA Commons ID is serialised.
+- No collaborator name, email or eRA Commons ID is serialized.
 
 **Tests**
 
@@ -499,7 +501,7 @@ researchers submitting (metrics 4, 5, 6, 7 and 12).
 - PI, lab staff and internal collaborator counts reported separately.
 - A DAR with an external collaborator doesn't count them.
 - A collection with a progress report counts once.
-- The serialised response contains no collaborator name or email.
+- The serialized response contains no collaborator name or email.
 - Admin and non-admin resource tests.
 
 ---
@@ -515,7 +517,8 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
 
 - Latest-election fragment in `DarMetricsDAO`, shared with tickets 6, 7 and 9: per
   `(reference_id, dataset_id)`, the newest data-access election (`election_id DESC`) and its
-  cast `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, tie-break `vote_id DESC`). Earlier
+  most recently cast `FINAL`/`RADAR_APPROVE` vote (`v.vote IS NOT NULL`, ordered
+  `COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC`). Earlier
   elections don't count (Decision 2; see
   [A DAR-dataset pair can have several elections](#a-dar-dataset-pair-can-have-several-elections)).
   Ticket 5 ranks only original DARs submitted in range; tickets 7 and 9 need progress reports and
@@ -541,7 +544,7 @@ approved or denied, and whether RADAR or a chair made it (metrics 1, 2 and 3).
   - otherwise decided: `APPROVED` if every decided pair approved, `DENIED` if every one denied,
     `MIXED` if both. Canceled pairs don't affect the outcome;
   - decided-via `RADAR`, `MANUAL` or `MIXED`, over the decided pairs;
-  - decision date is the latest pair decision.
+  - decision date is the latest pair decision, or null if any decided pair has no date.
 - Required date range, optional bucket, paginated rows at both levels; per-bucket counts by state
   and vote type in SQL.
 - Read `vote.vote` and `vote.type`, not `election.final_access_vote`.
@@ -787,4 +790,6 @@ Synthetic data only. No Mockito `lenient()` stubbing.
 - New DARs record their submitter's institution.
 - The `duos-ui` dashboard shows funnel, turnaround, volume, expiration and renewal with caveats
   beside the figures.
-- Apart from tickets 2 and 3, no existing DAR, voting, SO approval or cancellation behavior has changed.
+- Apart from tickets 2 and 3, the study and dataset page changes in tickets 4 and 5, and the
+  auto-open fix in DT-4204, no existing DAR, voting, SO approval or cancellation behavior has
+  changed.
