@@ -1,0 +1,11 @@
+type: object
+properties:
+  institutionId:
+    type: [integer, 'null']
+  institutionName:
+    type: [string, 'null']
+  darCount:
+    type: integer
+  researcherCount:
+    type: integer
+    description: Distinct submitters.

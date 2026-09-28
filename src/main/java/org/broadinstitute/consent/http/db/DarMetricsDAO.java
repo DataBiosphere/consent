@@ -6,6 +6,8 @@ import org.broadinstitute.consent.http.models.DarDatasetDecision;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -226,6 +228,37 @@ public interface DarMetricsDAO {
           """)
   List<VolumeBucketCount> countDarVolume(
       @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  /**
+   * DARs and distinct researchers per institution across the range, most DARs first. DARs with no
+   * institution form one group with a null id and name; a deleted institution keeps its own group,
+   * under its recorded name with a null id.
+   */
+  @RegisterConstructorMapper(InstitutionDarCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT institution_id, institution_name,
+                 COUNT(*) AS dar_count, COUNT(DISTINCT user_id) AS researcher_count
+          FROM dar_volume
+          GROUP BY institution_id, institution_name
+          ORDER BY dar_count DESC, institution_name NULLS LAST, institution_id
+          """)
+  List<InstitutionDarCount> countDarsByInstitution(
+      @Bind("from") Instant from, @Bind("to") Instant to);
+
+  /** DARs per submitter across the range, most DARs first. */
+  @RegisterConstructorMapper(ResearcherDarCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT user_id, COUNT(*) AS dar_count
+          FROM dar_volume
+          GROUP BY user_id
+          ORDER BY dar_count DESC, user_id
+          """)
+  List<ResearcherDarCount> countDarsByResearcher(
+      @Bind("from") Instant from, @Bind("to") Instant to);
 
   @RegisterConstructorMapper(DarVolume.class)
   @SqlQuery(

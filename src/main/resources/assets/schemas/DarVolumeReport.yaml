@@ -1,0 +1,32 @@
+type: object
+properties:
+  from:
+    type: string
+    format: date
+  to:
+    type: string
+    format: date
+  bucket:
+    type: string
+    enum: [DAY, WEEK, MONTH, QUARTER]
+  total:
+    type: integer
+    description: DARs in the range, across all pages.
+  buckets:
+    type: array
+    items:
+      $ref: './VolumeBucketCount.yaml'
+  institutions:
+    type: array
+    description: Across the whole range, most DARs first. DARs with no institution form one entry with a null id and name; a deleted institution keeps its own entry, under its recorded name with a null id.
+    items:
+      $ref: './InstitutionDarCount.yaml'
+  researchers:
+    type: array
+    description: DARs per submitter across the whole range, most DARs first.
+    items:
+      $ref: './ResearcherDarCount.yaml'
+  rows:
+    type: array
+    items:
+      $ref: './DarVolume.yaml'

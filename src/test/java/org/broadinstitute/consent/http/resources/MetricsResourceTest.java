@@ -14,17 +14,21 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -245,6 +249,73 @@ class MetricsResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
+  @Test
+  void darVolumeParsesTheRangeBucketAndPage() {
+    VolumeReport report =
+        new VolumeReport(
+            "2026-01-01",
+            "2026-03-31",
+            MetricsBucket.MONTH,
+            0,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of());
+    when(service.getDarVolume(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.MONTH, 50, 100))
+        .thenReturn(report);
+
+    Response response =
+        resource.getDarVolume(duosUser, "2026-01-01", "2026-03-31", "Month", 50, 100);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  /** Compares the whole field set, so a collaborator name or email added under any key fails. */
+  @Test
+  void darVolumeRowsCarryNoCollaboratorDetails() {
+    DarVolume row =
+        new DarVolume(
+            "ref", 1, 2, Instant.EPOCH, 3, "Broad", InstitutionSource.RECORDED, 1, 1, 2, 3);
+    VolumeReport report =
+        new VolumeReport(
+            "2026-01-01",
+            "2026-01-01",
+            MetricsBucket.DAY,
+            1,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(row));
+    when(service.getDarVolume(any(), any(), any(), anyInt(), anyInt())).thenReturn(report);
+
+    Response response = resource.getDarVolume(duosUser, "2026-01-01", "2026-01-01", "day", 100, 0);
+    String json = GsonUtil.getInstance().toJson(response.getEntity());
+    Set<String> fields =
+        JsonParser.parseString(json)
+            .getAsJsonObject()
+            .getAsJsonArray("rows")
+            .get(0)
+            .getAsJsonObject()
+            .keySet();
+
+    assertEquals(
+        Set.of(
+            "referenceId",
+            "collectionId",
+            "userId",
+            "submissionDate",
+            "institutionId",
+            "institutionName",
+            "institutionSource",
+            "datasetCount",
+            "piCount",
+            "labStaffCount",
+            "internalCollaboratorCount"),
+        fields);
+  }
+
   @ParameterizedTest
   @CsvSource(
       nullValues = "null",
@@ -269,12 +340,15 @@ class MetricsResourceTest extends AbstractTestHelper {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
         resource.getDarDatasetDecisions(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarVolume(duosUser, from, to, bucket, limit, offset).getStatus());
     verifyNoInteractions(service);
   }
 
   @Test
   void decisionReportsAreAdminOnly() throws NoSuchMethodException {
-    for (String name : List.of("getDarDecisions", "getDarDatasetDecisions")) {
+    for (String name : List.of("getDarDecisions", "getDarDatasetDecisions", "getDarVolume")) {
       RolesAllowed roles =
           MetricsResource.class
               .getMethod(

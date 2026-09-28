@@ -22,6 +22,8 @@ import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.junit.jupiter.api.BeforeEach;
@@ -452,6 +454,48 @@ class DarMetricsDAOTest extends DAOTestHelper {
 
     assertTrue(dao.findDarVolume(FROM, TO, 10, 0).isEmpty());
     assertTrue(dao.countDarVolume(FROM, TO, "quarter").isEmpty());
+  }
+
+  @Test
+  void volumeCountsDarsPerInstitutionAndResearcher() {
+    createDar(createDataset());
+    createDar(createDataset());
+    User other = createUserWithInstitution();
+    createDarFor(other, createDataset());
+    createDarFor(createUser(), createDataset());
+
+    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO);
+    assertEquals(
+        List.of(user.getInstitutionId(), other.getInstitutionId()),
+        institutions.subList(0, 2).stream().map(InstitutionDarCount::institutionId).toList());
+    assertEquals(2, institutions.getFirst().darCount());
+    assertEquals(1, institutions.getFirst().researcherCount());
+    // DARs with no institution form one group, listed after the named ones
+    InstitutionDarCount none = institutions.getLast();
+    assertEquals(3, institutions.size());
+    assertNull(none.institutionId());
+    assertNull(none.institutionName());
+    assertEquals(1, none.darCount());
+
+    List<ResearcherDarCount> researchers = dao.countDarsByResearcher(FROM, TO);
+    assertEquals(3, researchers.size());
+    assertEquals(user.getUserId(), researchers.getFirst().userId());
+    assertEquals(2, researchers.getFirst().darCount());
+  }
+
+  @Test
+  void aDeletedInstitutionKeepsItsOwnGroup() {
+    String dar = createDar(createDataset());
+    Integer institutionId = user.getInstitutionId();
+    String name = institutionDAO.findInstitutionById(institutionId).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, institutionId);
+    institutionDAO.deleteInstitutionById(institutionId);
+    createDarFor(createUser(), createDataset());
+
+    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO);
+    assertEquals(2, institutions.size());
+    assertEquals(name, institutions.getFirst().institutionName());
+    assertNull(institutions.getLast().institutionName());
   }
 
   private DarVolume onlyVolume() {

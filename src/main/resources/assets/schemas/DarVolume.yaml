@@ -1,0 +1,30 @@
+type: object
+properties:
+  referenceId:
+    type: string
+  collectionId:
+    type: integer
+  userId:
+    type: integer
+    description: The submitter.
+  submissionDate:
+    type: integer
+    description: Milliseconds since the epoch.
+  institutionId:
+    type: [integer, 'null']
+  institutionName:
+    type: [string, 'null']
+    description: The institution's current name, or its recorded name once it has been deleted.
+  institutionSource:
+    type: string
+    enum: [RECORDED, CURRENT]
+    description: RECORDED if the institution was recorded at submission, CURRENT if read from the submitter's profile.
+  datasetCount:
+    type: integer
+  piCount:
+    type: integer
+    description: 1 if the DAR names a PI, else 0.
+  labStaffCount:
+    type: integer
+  internalCollaboratorCount:
+    type: integer
