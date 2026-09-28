@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.User;
@@ -108,6 +109,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar(createDataset());
 
     assertEquals(DecisionState.NO_ELECTION, onlyPair().state());
+    assertEquals(DecisionState.PENDING, onlyDar().state());
   }
 
   @Test
@@ -134,17 +136,57 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertEquals(2, pairs.size());
     assertEquals(DecidedVia.RADAR, pairFor(pairs, radarDataset).decidedVia());
     assertEquals(DecidedVia.MANUAL, pairFor(pairs, manualDataset).decidedVia());
+
+    DarDecision rollup = onlyDar();
+    assertEquals(DecisionState.APPROVED, rollup.state());
+    assertEquals(DecidedVia.MIXED, rollup.decidedVia());
+    assertEquals(DAY_2.toInstant(), rollup.decisionDate());
+    assertEquals(2, rollup.datasetCount());
   }
 
   @Test
-  void undatedDecisionHasNoDecisionDate() {
+  void allApprovedRollsUpApproved() {
+    assertRollup(DecisionState.APPROVED, Outcome.APPROVE, Outcome.APPROVE);
+  }
+
+  @Test
+  void allDeniedRollsUpDenied() {
+    assertRollup(DecisionState.DENIED, Outcome.DENY, Outcome.DENY);
+  }
+
+  @Test
+  void approvedAndDeniedRollsUpMixed() {
+    assertRollup(DecisionState.MIXED, Outcome.APPROVE, Outcome.DENY);
+  }
+
+  @Test
+  void onePendingPairHoldsTheDarPending() {
+    assertRollup(DecisionState.PENDING, Outcome.APPROVE, Outcome.PENDING);
+    assertNull(onlyDar().decidedVia());
+    assertNull(onlyDar().decisionDate());
+  }
+
+  @Test
+  void canceledPairDoesNotAffectTheOutcome() {
+    assertRollup(DecisionState.APPROVED, Outcome.APPROVE, Outcome.CANCEL);
+    assertEquals(DAY_1.toInstant(), onlyDar().decisionDate());
+  }
+
+  @Test
+  void allCanceledRollsUpCanceled() {
+    assertRollup(DecisionState.CANCELED, Outcome.CANCEL, Outcome.CANCEL);
+    assertNull(onlyDar().decidedVia());
+  }
+
+  @Test
+  void undatedDecisionLeavesTheDarDateNull() {
     Integer dataset = createDataset();
     String dar = createDar(dataset);
     Integer electionId = election(dar, dataset, ElectionStatus.CLOSED, DAY_1);
     castVote(electionId, VoteType.FINAL, true, null);
 
-    assertEquals(DecisionState.APPROVED, onlyPair().state());
-    assertNull(onlyPair().decisionDate());
+    assertEquals(DecisionState.APPROVED, onlyDar().state());
+    assertNull(onlyDar().decisionDate());
   }
 
   @ParameterizedTest
@@ -155,7 +197,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar(data, SUBMITTED, createDataset());
 
     assertTrue(dao.findPairDecisions(FROM, TO, 10, 0).isEmpty());
-    assertTrue(dao.countPairDecisions(FROM, TO, "month").isEmpty());
+    assertTrue(dao.countDarDecisions(FROM, TO, "month").isEmpty());
   }
 
   @Test
@@ -210,19 +252,79 @@ class DarMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void darBucketsCountEachDarOnce() {
+    Integer first = createDataset();
+    Integer second = createDataset();
+    String mixed = createDar(first, second);
+    decide(mixed, first, VoteType.FINAL, true, DAY_1);
+    decide(mixed, second, VoteType.RADAR_APPROVE, false, DAY_2);
+    createDar(createDataset());
+
+    List<DecisionBucketCount> buckets = dao.countDarDecisions(FROM, TO, "quarter");
+
+    assertEquals(2, buckets.size());
+    assertEquals(2, buckets.stream().mapToLong(DecisionBucketCount::count).sum());
+    assertTrue(
+        buckets.stream()
+            .anyMatch(
+                b ->
+                    b.state() == DecisionState.MIXED
+                        && b.decidedVia() == DecidedVia.MIXED
+                        && b.count() == 1));
+    assertTrue(
+        buckets.stream()
+            .anyMatch(
+                b ->
+                    b.state() == DecisionState.PENDING
+                        && b.decidedVia() == null
+                        && b.count() == 1));
+  }
+
+  @Test
   void rowsArePaged() {
     createDar(createDataset());
     createDar(createDataset());
 
-    assertEquals(1, dao.findPairDecisions(FROM, TO, 1, 0).size());
-    assertEquals(1, dao.findPairDecisions(FROM, TO, 1, 1).size());
-    assertTrue(dao.findPairDecisions(FROM, TO, 1, 2).isEmpty());
+    assertEquals(1, dao.findDarDecisions(FROM, TO, 1, 0).size());
+    assertEquals(1, dao.findDarDecisions(FROM, TO, 1, 1).size());
+    assertTrue(dao.findDarDecisions(FROM, TO, 1, 2).isEmpty());
+  }
+
+  private enum Outcome {
+    APPROVE,
+    DENY,
+    PENDING,
+    CANCEL
+  }
+
+  private void assertRollup(DecisionState expected, Outcome first, Outcome second) {
+    Integer firstDataset = createDataset();
+    Integer secondDataset = createDataset();
+    String dar = createDar(firstDataset, secondDataset);
+    apply(dar, firstDataset, first);
+    apply(dar, secondDataset, second);
+    assertEquals(expected, onlyDar().state());
+  }
+
+  private void apply(String dar, Integer dataset, Outcome outcome) {
+    switch (outcome) {
+      case APPROVE -> decide(dar, dataset, VoteType.FINAL, true, DAY_1);
+      case DENY -> decide(dar, dataset, VoteType.FINAL, false, DAY_1);
+      case PENDING -> election(dar, dataset, ElectionStatus.OPEN, DAY_1);
+      case CANCEL -> election(dar, dataset, ElectionStatus.CANCELED, DAY_1);
+    }
   }
 
   private DarDatasetDecision onlyPair() {
     List<DarDatasetDecision> pairs = dao.findPairDecisions(FROM, TO, 10, 0);
     assertEquals(1, pairs.size());
     return pairs.getFirst();
+  }
+
+  private DarDecision onlyDar() {
+    List<DarDecision> dars = dao.findDarDecisions(FROM, TO, 10, 0);
+    assertEquals(1, dars.size());
+    return dars.getFirst();
   }
 
   private static DarDatasetDecision pairFor(List<DarDatasetDecision> pairs, Integer datasetId) {

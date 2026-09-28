@@ -1,0 +1,20 @@
+type: object
+properties:
+  referenceId:
+    type: string
+  collectionId:
+    type: integer
+  submissionDate:
+    type: integer
+    description: Milliseconds since the epoch.
+  datasetCount:
+    type: integer
+  state:
+    $ref: './DecisionState.yaml'
+  decidedVia:
+    type: [string, 'null']
+    enum: [MANUAL, RADAR, MIXED, null]
+    description: Null unless decided.
+  decisionDate:
+    type: [integer, 'null']
+    description: When the deciding vote was cast, in milliseconds since the epoch. Null unless decided, and for votes cast before March 2021.
