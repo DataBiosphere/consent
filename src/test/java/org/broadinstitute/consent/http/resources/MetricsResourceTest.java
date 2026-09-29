@@ -276,8 +276,7 @@ class MetricsResourceTest extends AbstractTestHelper {
   @Test
   void darVolumeRowsCarryNoCollaboratorDetails() {
     DarVolume row =
-        new DarVolume(
-            "ref", 1, 2, Instant.EPOCH, 3, "Broad", InstitutionSource.RECORDED, 1, 1, 2, 3);
+        new DarVolume("ref", 1, 2, Instant.EPOCH, 3, "Broad", InstitutionSource.RECORDED, 1, 2, 3);
     VolumeReport report =
         new VolumeReport(
             "2026-01-01",
@@ -310,7 +309,6 @@ class MetricsResourceTest extends AbstractTestHelper {
             "institutionName",
             "institutionSource",
             "datasetCount",
-            "piCount",
             "labStaffCount",
             "internalCollaboratorCount"),
         fields);

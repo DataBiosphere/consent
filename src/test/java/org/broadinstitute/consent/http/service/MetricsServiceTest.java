@@ -473,7 +473,7 @@ class MetricsServiceTest extends AbstractTestHelper {
             new VolumeBucketCount(start, 3L, 2L, 2L, 4L),
             new VolumeBucketCount(end, 1L, 1L, 1L, 1L));
     DarVolume row =
-        new DarVolume("ref", 1, 2, start, 3, "Broad", InstitutionSource.RECORDED, 1, 1, 0, 0);
+        new DarVolume("ref", 1, 2, start, 3, "Broad", InstitutionSource.RECORDED, 1, 0, 0);
     when(darMetricsDAO.countDarVolume(start, end, "quarter")).thenReturn(buckets);
     List<InstitutionDarCount> institutions = List.of(new InstitutionDarCount(3, "Broad", 4L, 3L));
     List<ResearcherDarCount> researchers = List.of(new ResearcherDarCount(2, 4L));

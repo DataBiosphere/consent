@@ -12,6 +12,5 @@ public record DarVolume(
     String institutionName,
     InstitutionSource institutionSource,
     Integer datasetCount,
-    Integer piCount,
     Integer labStaffCount,
     Integer internalCollaboratorCount) {}

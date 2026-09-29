@@ -354,14 +354,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
   @Test
   void volumeCountsResearchersPerDarWithoutExternalCollaborators() {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiName("A PI");
     data.setLabCollaborators(List.of(collaborator(), collaborator()));
     data.setInternalCollaborators(List.of(collaborator()));
     data.setExternalCollaborators(List.of(collaborator(), collaborator(), collaborator()));
     createDar(data, SUBMITTED, createDataset(), createDataset());
 
     DarVolume row = onlyVolume();
-    assertEquals(1, row.piCount());
     assertEquals(2, row.labStaffCount());
     assertEquals(1, row.internalCollaboratorCount());
     assertEquals(2, row.datasetCount());
@@ -372,7 +370,6 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar();
 
     DarVolume row = onlyVolume();
-    assertEquals(0, row.piCount());
     assertEquals(0, row.labStaffCount());
     assertEquals(0, row.internalCollaboratorCount());
     assertEquals(0, row.datasetCount());
@@ -498,6 +495,23 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertNull(institutions.getLast().institutionName());
   }
 
+  @Test
+  void aSubmissionSavedAsOneDarPerDatasetCountsOnce() {
+    String first = createDar(createDataset());
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
+    createDarIn(collectionId, DAY_1, createDataset());
+
+    DarVolume row = onlyVolume();
+    assertEquals(first, row.referenceId());
+    assertEquals(SUBMITTED.toInstant(), row.submissionDate());
+    assertEquals(2, row.datasetCount());
+    VolumeBucketCount bucket = dao.countDarVolume(FROM, TO, "quarter").getFirst();
+    assertEquals(1, bucket.darCount());
+    assertEquals(2, bucket.datasetCount());
+    assertEquals(1, dao.countDarsByInstitution(FROM, TO).getFirst().darCount());
+    assertEquals(1, dao.countDarsByResearcher(FROM, TO).getFirst().darCount());
+  }
+
   private DarVolume onlyVolume() {
     List<DarVolume> rows = dao.findDarVolume(FROM, TO, 10, 0);
     assertEquals(1, rows.size());
@@ -588,6 +602,15 @@ class DarMetricsDAOTest extends DAOTestHelper {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), submitted);
+    return createDarIn(collectionId, data, submitted, datasetIds);
+  }
+
+  private String createDarIn(Integer collectionId, Date submitted, Integer... datasetIds) {
+    return createDarIn(collectionId, new DataAccessRequestData(), submitted, datasetIds);
+  }
+
+  private String createDarIn(
+      Integer collectionId, DataAccessRequestData data, Date submitted, Integer... datasetIds) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, user.getUserId(), submitted, submitted, submitted, data, "era");

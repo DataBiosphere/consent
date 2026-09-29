@@ -2,6 +2,7 @@ type: object
 properties:
   referenceId:
     type: string
+    description: The submission's earliest original DAR; older submissions saved one DAR per dataset.
   collectionId:
     type: integer
   userId:
@@ -21,9 +22,6 @@ properties:
     description: RECORDED if the institution was recorded at submission, CURRENT if read from the submitter's profile.
   datasetCount:
     type: integer
-  piCount:
-    type: integer
-    description: 1 if the DAR names a PI, else 0.
   labStaffCount:
     type: integer
   internalCollaboratorCount:

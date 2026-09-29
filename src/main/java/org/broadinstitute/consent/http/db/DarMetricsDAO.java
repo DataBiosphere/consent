@@ -170,19 +170,20 @@ public interface DarMetricsDAO {
    * submission, falling back to the submitter's current one only for DARs submitted before
    * submissions recorded it; a recorded null stays null. Its name is read through the id, so an
    * admin rename shows, and the recorded name is used only once the institution has been deleted.
-   * External collaborators aren't counted: they are approved separately from the DAR.
+   * External collaborators aren't counted: they are approved separately from the DAR. Before
+   * 2022-07-27 a submission was saved as one DAR per dataset, so each collection's original DARs
+   * count as one submission, reported under its earliest.
    */
   String DAR_VOLUME =
       """
       WITH original_dars AS (
         SELECT dar.reference_id, dar.collection_id, dar.user_id, dar.submission_date,
+               COALESCE(dar.collection_id::text, dar.reference_id) AS submission_key,
                CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN dar.institution_id
                     ELSE u.institution_id END AS institution_id,
                CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN 'RECORDED'
                     ELSE 'CURRENT' END AS institution_source,
                dar.institution_name AS recorded_name,
-               CASE WHEN NULLIF(TRIM(dar.data->>'piName'), '') IS NULL THEN 0 ELSE 1
-                    END AS pi_count,
                CASE WHEN jsonb_typeof(dar.data->'labCollaborators') = 'array'
                     THEN jsonb_array_length(dar.data->'labCollaborators') ELSE 0
                     END AS lab_staff_count,
@@ -197,14 +198,19 @@ public interface DarMetricsDAO {
                OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
       ),
       dar_volume AS (
-        SELECT od.reference_id, od.collection_id, od.user_id, od.submission_date,
+        SELECT DISTINCT ON (od.submission_key)
+               od.reference_id, od.collection_id, od.user_id, od.submission_date,
                od.institution_id, COALESCE(i.institution_name, od.recorded_name) AS institution_name,
                od.institution_source,
-               (SELECT COUNT(*) FROM dar_dataset dd WHERE dd.reference_id = od.reference_id)
-                 AS dataset_count,
-               od.pi_count, od.lab_staff_count, od.internal_collaborator_count
+               (SUM(ds.dataset_count) OVER (PARTITION BY od.submission_key))::int AS dataset_count,
+               od.lab_staff_count, od.internal_collaborator_count
         FROM original_dars od
         LEFT JOIN institution i ON i.institution_id = od.institution_id
+        CROSS JOIN LATERAL (
+          SELECT COUNT(*) AS dataset_count FROM dar_dataset dd
+          WHERE dd.reference_id = od.reference_id
+        ) ds
+        ORDER BY od.submission_key, od.submission_date, od.reference_id
       )
       """;
 
@@ -265,7 +271,7 @@ public interface DarMetricsDAO {
       DAR_VOLUME
           + """
           SELECT reference_id, collection_id, user_id, submission_date, institution_id,
-                 institution_name, institution_source, dataset_count, pi_count, lab_staff_count,
+                 institution_name, institution_source, dataset_count, lab_staff_count,
                  internal_collaborator_count
           FROM dar_volume
           ORDER BY submission_date, reference_id
