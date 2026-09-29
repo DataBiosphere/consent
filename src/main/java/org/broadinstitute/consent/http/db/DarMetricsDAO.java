@@ -206,7 +206,10 @@ public interface DarMetricsDAO {
       )
       """;
 
-  /** Per-bucket totals; a DAR with no institution isn't counted among the institutions. */
+  /**
+   * Per-bucket totals; a DAR with no institution isn't counted among the institutions, and a
+   * deleted one still counts, by its recorded name.
+   */
   @RegisterConstructorMapper(VolumeBucketCount.class)
   @SqlQuery(
       DAR_VOLUME
@@ -214,7 +217,8 @@ public interface DarMetricsDAO {
           SELECT date_trunc(:bucket, submission_date) AS bucket_start,
                  COUNT(*) AS dar_count,
                  COUNT(DISTINCT user_id) AS researcher_count,
-                 COUNT(DISTINCT institution_id) AS institution_count,
+                 COUNT(DISTINCT (institution_id, institution_name))
+                   FILTER (WHERE institution_name IS NOT NULL) AS institution_count,
                  SUM(dataset_count) AS dataset_count
           FROM dar_volume
           GROUP BY 1

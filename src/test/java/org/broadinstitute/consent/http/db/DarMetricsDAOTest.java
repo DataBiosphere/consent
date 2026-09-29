@@ -406,6 +406,16 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertEquals(4, buckets.getFirst().datasetCount());
   }
 
+  @Test
+  void volumeTotalsCountADeletedInstitution() {
+    String dar = createDar(createDataset());
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, user.getInstitutionId());
+    institutionDAO.deleteInstitutionById(user.getInstitutionId());
+    createDarFor(createUser(), createDataset());
+
+    assertEquals(1, dao.countDarVolume(FROM, TO, "quarter").getFirst().institutionCount());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"Canceled", "archived"})
   void volumeExcludesCanceledAndArchivedDars(String status) {
