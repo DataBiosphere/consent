@@ -22,6 +22,8 @@ import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.junit.jupiter.api.BeforeEach;
@@ -180,6 +182,24 @@ class DarMetricsDAOTest extends DAOTestHelper {
   void allCanceledRollsUpCanceled() {
     assertRollup(DecisionState.CANCELED, Outcome.CANCEL, Outcome.CANCEL);
     assertNull(onlyDar().decidedVia());
+  }
+
+  @Test
+  void aSubmissionSavedAsOneDarPerDatasetRollsUpOnce() {
+    Integer firstDataset = createDataset();
+    Integer secondDataset = createDataset();
+    String first = createDar(firstDataset);
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
+    String second = createDarIn(collectionId, DAY_1, secondDataset);
+    decide(first, firstDataset, VoteType.FINAL, true, DAY_2);
+    decide(second, secondDataset, VoteType.FINAL, false, DAY_3);
+
+    DarDecision rollup = onlyDar();
+    assertEquals(first, rollup.referenceId());
+    assertEquals(SUBMITTED.toInstant(), rollup.submissionDate());
+    assertEquals(2, rollup.datasetCount());
+    assertEquals(DecisionState.MIXED, rollup.state());
+    assertEquals(DAY_3.toInstant(), rollup.decisionDate());
   }
 
   @Test
@@ -352,14 +372,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
   @Test
   void volumeCountsResearchersPerDarWithoutExternalCollaborators() {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiName("A PI");
     data.setLabCollaborators(List.of(collaborator(), collaborator()));
     data.setInternalCollaborators(List.of(collaborator()));
     data.setExternalCollaborators(List.of(collaborator(), collaborator(), collaborator()));
     createDar(data, SUBMITTED, createDataset(), createDataset());
 
     DarVolume row = onlyVolume();
-    assertEquals(1, row.piCount());
     assertEquals(2, row.labStaffCount());
     assertEquals(1, row.internalCollaboratorCount());
     assertEquals(2, row.datasetCount());
@@ -370,7 +388,6 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar();
 
     DarVolume row = onlyVolume();
-    assertEquals(0, row.piCount());
     assertEquals(0, row.labStaffCount());
     assertEquals(0, row.internalCollaboratorCount());
     assertEquals(0, row.datasetCount());
@@ -452,6 +469,65 @@ class DarMetricsDAOTest extends DAOTestHelper {
 
     assertTrue(dao.findDarVolume(FROM, TO, 10, 0).isEmpty());
     assertTrue(dao.countDarVolume(FROM, TO, "quarter").isEmpty());
+  }
+
+  @Test
+  void volumeCountsDarsPerInstitutionAndResearcher() {
+    createDar(createDataset());
+    createDar(createDataset());
+    User other = createUserWithInstitution();
+    createDarFor(other, createDataset());
+    createDarFor(createUser(), createDataset());
+
+    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO);
+    assertEquals(
+        List.of(user.getInstitutionId(), other.getInstitutionId()),
+        institutions.subList(0, 2).stream().map(InstitutionDarCount::institutionId).toList());
+    assertEquals(2, institutions.getFirst().darCount());
+    assertEquals(1, institutions.getFirst().researcherCount());
+    // DARs with no institution form one group, listed after the named ones
+    InstitutionDarCount none = institutions.getLast();
+    assertEquals(3, institutions.size());
+    assertNull(none.institutionId());
+    assertNull(none.institutionName());
+    assertEquals(1, none.darCount());
+
+    List<ResearcherDarCount> researchers = dao.countDarsByResearcher(FROM, TO);
+    assertEquals(3, researchers.size());
+    assertEquals(user.getUserId(), researchers.getFirst().userId());
+    assertEquals(2, researchers.getFirst().darCount());
+  }
+
+  @Test
+  void aDeletedInstitutionKeepsItsOwnGroup() {
+    String dar = createDar(createDataset());
+    Integer institutionId = user.getInstitutionId();
+    String name = institutionDAO.findInstitutionById(institutionId).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar, institutionId);
+    institutionDAO.deleteInstitutionById(institutionId);
+    createDarFor(createUser(), createDataset());
+
+    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO);
+    assertEquals(2, institutions.size());
+    assertEquals(name, institutions.getFirst().institutionName());
+    assertNull(institutions.getLast().institutionName());
+  }
+
+  @Test
+  void aSubmissionSavedAsOneDarPerDatasetCountsOnce() {
+    String first = createDar(createDataset());
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
+    createDarIn(collectionId, DAY_1, createDataset());
+
+    DarVolume row = onlyVolume();
+    assertEquals(first, row.referenceId());
+    assertEquals(SUBMITTED.toInstant(), row.submissionDate());
+    assertEquals(2, row.datasetCount());
+    VolumeBucketCount bucket = dao.countDarVolume(FROM, TO, "quarter").getFirst();
+    assertEquals(1, bucket.darCount());
+    assertEquals(2, bucket.datasetCount());
+    assertEquals(1, dao.countDarsByInstitution(FROM, TO).getFirst().darCount());
+    assertEquals(1, dao.countDarsByResearcher(FROM, TO).getFirst().darCount());
   }
 
   private DarVolume onlyVolume() {
@@ -544,6 +620,15 @@ class DarMetricsDAOTest extends DAOTestHelper {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), submitted);
+    return createDarIn(collectionId, data, submitted, datasetIds);
+  }
+
+  private String createDarIn(Integer collectionId, Date submitted, Integer... datasetIds) {
+    return createDarIn(collectionId, new DataAccessRequestData(), submitted, datasetIds);
+  }
+
+  private String createDarIn(
+      Integer collectionId, DataAccessRequestData data, Date submitted, Integer... datasetIds) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, user.getUserId(), submitted, submitted, submitted, data, "era");

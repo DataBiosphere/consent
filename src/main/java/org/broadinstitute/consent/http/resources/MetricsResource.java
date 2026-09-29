@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Locale;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
-import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.service.MetricsService;
@@ -115,7 +114,7 @@ public class MetricsResource extends Resource {
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return decisionReport(from, to, bucket, limit, offset, metricsService::getDarDecisions);
+    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarDecisions);
   }
 
   @GET
@@ -129,21 +128,34 @@ public class MetricsResource extends Resource {
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return decisionReport(from, to, bucket, limit, offset, metricsService::getDarDatasetDecisions);
+    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarDatasetDecisions);
   }
 
-  private interface DecisionReportQuery<T> {
-    DecisionReport<T> run(
-        LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset);
+  @GET
+  @Path("/dar-volume")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDarVolume(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarVolume);
   }
 
-  private <T> Response decisionReport(
+  private interface RangeReportQuery<R> {
+    R run(LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset);
+  }
+
+  private <R> Response rangeReport(
       String from,
       String to,
       String bucket,
       Integer limit,
       Integer offset,
-      DecisionReportQuery<T> query) {
+      RangeReportQuery<R> query) {
     try {
       LocalDate start = parseDate("from", from);
       LocalDate end = parseRangeEnd(start, to);

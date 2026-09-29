@@ -23,21 +23,27 @@ import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
+import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
+import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
@@ -456,6 +462,35 @@ class MetricsServiceTest extends AbstractTestHelper {
 
     assertEquals(0, report.total());
     assertTrue(report.rows().isEmpty());
+  }
+
+  @Test
+  void darVolumeCoversWholeDaysAndTotalsTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    List<VolumeBucketCount> buckets =
+        List.of(
+            new VolumeBucketCount(start, 3L, 2L, 2L, 4L),
+            new VolumeBucketCount(end, 1L, 1L, 1L, 1L));
+    DarVolume row =
+        new DarVolume("ref", 1, 2, start, 3, "Broad", InstitutionSource.RECORDED, 1, 0, 0);
+    when(darMetricsDAO.countDarVolume(start, end, "quarter")).thenReturn(buckets);
+    List<InstitutionDarCount> institutions = List.of(new InstitutionDarCount(3, "Broad", 4L, 3L));
+    List<ResearcherDarCount> researchers = List.of(new ResearcherDarCount(2, 4L));
+    when(darMetricsDAO.findDarVolume(start, end, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countDarsByInstitution(start, end)).thenReturn(institutions);
+    when(darMetricsDAO.countDarsByResearcher(start, end)).thenReturn(researchers);
+
+    VolumeReport report =
+        service.getDarVolume(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(institutions, report.institutions());
+    assertEquals(researchers, report.researchers());
+    assertEquals(List.of(row), report.rows());
+    assertEquals("2026-03-31", report.to());
   }
 
   private static Instant startOfDay(LocalDate date) {

@@ -6,6 +6,8 @@ import org.broadinstitute.consent.http.models.DarDatasetDecision;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -70,15 +72,19 @@ public interface DarMetricsDAO {
       """;
 
   /**
-   * Rolls pairs up per DAR. A DAR is decided once no pair is pending; canceled pairs don't hold it
-   * open or affect its outcome, and one whose pairs were all canceled is canceled. Its decision
-   * date is the last pair decision, left null when any deciding vote predates decision dates.
+   * Rolls pairs up per submission, which before 2022-07-27 was saved as one DAR per dataset, so a
+   * collection's original DARs roll up together under its earliest. A submission is decided once no
+   * pair is pending; canceled pairs don't hold it open or affect its outcome, and one whose pairs
+   * were all canceled is canceled. Its decision date is the last pair decision, left null when any
+   * deciding vote predates decision dates.
    */
   String DAR_DECISIONS =
       PAIR_DECISIONS
           + """
           , dar_decisions AS (
-            SELECT reference_id, collection_id, submission_date,
+            SELECT (ARRAY_AGG(reference_id ORDER BY submission_date, reference_id))[1]
+                     AS reference_id,
+                   collection_id, MIN(submission_date) AS submission_date,
                    COUNT(*) AS dataset_count,
                    CASE WHEN BOOL_OR(state IN ('PENDING', 'NO_ELECTION')) THEN 'PENDING'
                         WHEN BOOL_AND(state = 'CANCELED') THEN 'CANCELED'
@@ -92,7 +98,7 @@ public interface DarMetricsDAO {
                      AS undated,
                    MAX(decision_date) AS last_decision
             FROM pair_decisions
-            GROUP BY reference_id, collection_id, submission_date
+            GROUP BY COALESCE(collection_id::text, reference_id), collection_id
           ),
           dar_rows AS (
             SELECT reference_id, collection_id, submission_date, dataset_count, state,
@@ -168,19 +174,20 @@ public interface DarMetricsDAO {
    * submission, falling back to the submitter's current one only for DARs submitted before
    * submissions recorded it; a recorded null stays null. Its name is read through the id, so an
    * admin rename shows, and the recorded name is used only once the institution has been deleted.
-   * External collaborators aren't counted: they are approved separately from the DAR.
+   * External collaborators aren't counted: they are approved separately from the DAR. Before
+   * 2022-07-27 a submission was saved as one DAR per dataset, so each collection's original DARs
+   * count as one submission, reported under its earliest.
    */
   String DAR_VOLUME =
       """
       WITH original_dars AS (
         SELECT dar.reference_id, dar.collection_id, dar.user_id, dar.submission_date,
+               COALESCE(dar.collection_id::text, dar.reference_id) AS submission_key,
                CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN dar.institution_id
                     ELSE u.institution_id END AS institution_id,
                CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN 'RECORDED'
                     ELSE 'CURRENT' END AS institution_source,
                dar.institution_name AS recorded_name,
-               CASE WHEN NULLIF(TRIM(dar.data->>'piName'), '') IS NULL THEN 0 ELSE 1
-                    END AS pi_count,
                CASE WHEN jsonb_typeof(dar.data->'labCollaborators') = 'array'
                     THEN jsonb_array_length(dar.data->'labCollaborators') ELSE 0
                     END AS lab_staff_count,
@@ -195,14 +202,19 @@ public interface DarMetricsDAO {
                OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
       ),
       dar_volume AS (
-        SELECT od.reference_id, od.collection_id, od.user_id, od.submission_date,
+        SELECT DISTINCT ON (od.submission_key)
+               od.reference_id, od.collection_id, od.user_id, od.submission_date,
                od.institution_id, COALESCE(i.institution_name, od.recorded_name) AS institution_name,
                od.institution_source,
-               (SELECT COUNT(*) FROM dar_dataset dd WHERE dd.reference_id = od.reference_id)
-                 AS dataset_count,
-               od.pi_count, od.lab_staff_count, od.internal_collaborator_count
+               (SUM(ds.dataset_count) OVER (PARTITION BY od.submission_key))::int AS dataset_count,
+               od.lab_staff_count, od.internal_collaborator_count
         FROM original_dars od
         LEFT JOIN institution i ON i.institution_id = od.institution_id
+        CROSS JOIN LATERAL (
+          SELECT COUNT(*) AS dataset_count FROM dar_dataset dd
+          WHERE dd.reference_id = od.reference_id
+        ) ds
+        ORDER BY od.submission_key, od.submission_date, od.reference_id
       )
       """;
 
@@ -227,12 +239,43 @@ public interface DarMetricsDAO {
   List<VolumeBucketCount> countDarVolume(
       @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
 
+  /**
+   * DARs and distinct researchers per institution across the range, most DARs first. DARs with no
+   * institution form one group with a null id and name; a deleted institution keeps its own group,
+   * under its recorded name with a null id.
+   */
+  @RegisterConstructorMapper(InstitutionDarCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT institution_id, institution_name,
+                 COUNT(*) AS dar_count, COUNT(DISTINCT user_id) AS researcher_count
+          FROM dar_volume
+          GROUP BY institution_id, institution_name
+          ORDER BY dar_count DESC, institution_name NULLS LAST, institution_id
+          """)
+  List<InstitutionDarCount> countDarsByInstitution(
+      @Bind("from") Instant from, @Bind("to") Instant to);
+
+  /** DARs per submitter across the range, most DARs first. */
+  @RegisterConstructorMapper(ResearcherDarCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT user_id, COUNT(*) AS dar_count
+          FROM dar_volume
+          GROUP BY user_id
+          ORDER BY dar_count DESC, user_id
+          """)
+  List<ResearcherDarCount> countDarsByResearcher(
+      @Bind("from") Instant from, @Bind("to") Instant to);
+
   @RegisterConstructorMapper(DarVolume.class)
   @SqlQuery(
       DAR_VOLUME
           + """
           SELECT reference_id, collection_id, user_id, submission_date, institution_id,
-                 institution_name, institution_source, dataset_count, pi_count, lab_staff_count,
+                 institution_name, institution_source, dataset_count, lab_staff_count,
                  internal_collaborator_count
           FROM dar_volume
           ORDER BY submission_date, reference_id
