@@ -1,0 +1,9 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    description: Start of the access-end-date bucket, in milliseconds since the epoch.
+  reason:
+    $ref: './AccessEndReason.yaml'
+  count:
+    type: integer

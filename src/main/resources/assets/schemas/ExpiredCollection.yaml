@@ -1,0 +1,11 @@
+type: object
+properties:
+  collectionId:
+    type: integer
+  darCode:
+    type: string
+  accessEnd:
+    type: integer
+    description: When the collection's last access ended, in milliseconds since the epoch.
+  reason:
+    $ref: './AccessEndReason.yaml'

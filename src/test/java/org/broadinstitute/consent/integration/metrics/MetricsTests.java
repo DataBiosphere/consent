@@ -44,7 +44,8 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
-        "/api/metrics/dar-so-approvals"
+        "/api/metrics/dar-so-approvals",
+        "/api/metrics/dar-expirations"
       })
   void adminGetsTheReport(String path) {
     try (Response response = request(path + RANGE, "ci-admin@example.com")) {
@@ -63,7 +64,8 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
-        "/api/metrics/dar-so-approvals"
+        "/api/metrics/dar-so-approvals",
+        "/api/metrics/dar-expirations"
       })
   void nonAdminIsForbidden(String path) {
     try (Response response = request(path + RANGE, "ci-researcher@example.com")) {
@@ -79,7 +81,8 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
-        "/api/metrics/dar-so-approvals"
+        "/api/metrics/dar-so-approvals",
+        "/api/metrics/dar-expirations"
       })
   void missingRangeIsABadRequest(String path) {
     try (Response response = request(path, "ci-admin@example.com")) {

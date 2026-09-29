@@ -1,0 +1,66 @@
+get:
+  summary: DAR collections whose access ended
+  operationId: apiMetricsDarExpirationsGet
+  description: |
+    Admin only. DAR collections whose access has ended, dated in the range by when it last ended; a collection renewed since is live and not reported. Access to a dataset runs 365 days from the newest submission, original DAR or progress report, approved on it in its latest election; a pending progress report, or one reopened with no new vote, extends nothing. A closeout ends the collection's access on its filing date, reported as CLOSED_OUT; the study page shows both reasons as expired. A collection has ended once every dataset's access has. Archived DARs grant no access.
+  parameters:
+    - name: from
+      in: query
+      required: true
+      description: First access-end date to include, as yyyy-MM-dd, from 1900 to 9999.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last access-end date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Access-end-date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+    - name: limit
+      in: query
+      required: false
+      description: Rows per page, 1 to 1000.
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      required: false
+      description: Rows to skip.
+      schema:
+        type: integer
+        default: 0
+  tags:
+    - Metrics
+    - Admin
+  responses:
+    200:
+      description: Counts per bucket and one page of collections.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarExpirationReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: Admin only.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
