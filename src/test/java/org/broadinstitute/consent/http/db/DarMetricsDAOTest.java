@@ -185,6 +185,24 @@ class DarMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void aSubmissionSavedAsOneDarPerDatasetRollsUpOnce() {
+    Integer firstDataset = createDataset();
+    Integer secondDataset = createDataset();
+    String first = createDar(firstDataset);
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
+    String second = createDarIn(collectionId, DAY_1, secondDataset);
+    decide(first, firstDataset, VoteType.FINAL, true, DAY_2);
+    decide(second, secondDataset, VoteType.FINAL, false, DAY_3);
+
+    DarDecision rollup = onlyDar();
+    assertEquals(first, rollup.referenceId());
+    assertEquals(SUBMITTED.toInstant(), rollup.submissionDate());
+    assertEquals(2, rollup.datasetCount());
+    assertEquals(DecisionState.MIXED, rollup.state());
+    assertEquals(DAY_3.toInstant(), rollup.decisionDate());
+  }
+
+  @Test
   void undatedDecisionLeavesTheDarDateNull() {
     Integer dataset = createDataset();
     String dar = createDar(dataset);

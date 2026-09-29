@@ -72,15 +72,19 @@ public interface DarMetricsDAO {
       """;
 
   /**
-   * Rolls pairs up per DAR. A DAR is decided once no pair is pending; canceled pairs don't hold it
-   * open or affect its outcome, and one whose pairs were all canceled is canceled. Its decision
-   * date is the last pair decision, left null when any deciding vote predates decision dates.
+   * Rolls pairs up per submission, which before 2022-07-27 was saved as one DAR per dataset, so a
+   * collection's original DARs roll up together under its earliest. A submission is decided once no
+   * pair is pending; canceled pairs don't hold it open or affect its outcome, and one whose pairs
+   * were all canceled is canceled. Its decision date is the last pair decision, left null when any
+   * deciding vote predates decision dates.
    */
   String DAR_DECISIONS =
       PAIR_DECISIONS
           + """
           , dar_decisions AS (
-            SELECT reference_id, collection_id, submission_date,
+            SELECT (ARRAY_AGG(reference_id ORDER BY submission_date, reference_id))[1]
+                     AS reference_id,
+                   collection_id, MIN(submission_date) AS submission_date,
                    COUNT(*) AS dataset_count,
                    CASE WHEN BOOL_OR(state IN ('PENDING', 'NO_ELECTION')) THEN 'PENDING'
                         WHEN BOOL_AND(state = 'CANCELED') THEN 'CANCELED'
@@ -94,7 +98,7 @@ public interface DarMetricsDAO {
                      AS undated,
                    MAX(decision_date) AS last_decision
             FROM pair_decisions
-            GROUP BY reference_id, collection_id, submission_date
+            GROUP BY COALESCE(collection_id::text, reference_id), collection_id
           ),
           dar_rows AS (
             SELECT reference_id, collection_id, submission_date, dataset_count, state,
