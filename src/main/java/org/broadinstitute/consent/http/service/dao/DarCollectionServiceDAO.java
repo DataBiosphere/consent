@@ -37,7 +37,7 @@ public class DarCollectionServiceDAO {
 
   /// Create DAR-Dataset elections that are available to the user.
   /// - Chairs can only create elections for datasets in their DACs that do not also require SO
-  // approval.
+  ///   approval.
   ///
   /// @param user The User initiating new elections for a data access request
   /// @param dar The DataAccessRequest

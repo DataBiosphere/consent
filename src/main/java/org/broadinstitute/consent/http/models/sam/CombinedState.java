@@ -34,6 +34,8 @@ public class CombinedState {
   }
 
   /// Example response from Sam:
+  ///
+  /// ```json
   /// "samUser": {
   ///   "azureB2CId": "string",
   ///   "createdAt": "2026-02-20T14:09:06.715Z",
@@ -43,6 +45,7 @@ public class CombinedState {
   ///   "id": "string",
   ///   "updatedAt": "2026-02-20T14:09:06.715Z"
   /// }
+  /// ```
   public record SamUser(
       String azureB2CId,
       String createdAt,
@@ -53,12 +56,15 @@ public class CombinedState {
       String updatedAt) {}
 
   /// Example response from Sam:
+  ///
+  /// ```json
   /// "termsOfServiceDetails": {
   ///   "acceptedOn": "2026-02-20T14:09:06.715Z",
   ///   "isCurrentVersion": true,
   ///   "latestAcceptedVersion": "string",
   ///   "permitsSystemUsage": true,
   /// }
+  /// ```
   public record TermsOfServiceDetails(
       String acceptedOn,
       Boolean isCurrentVersion,
