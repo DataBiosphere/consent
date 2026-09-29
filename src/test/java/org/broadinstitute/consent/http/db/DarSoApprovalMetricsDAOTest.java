@@ -138,6 +138,28 @@ class DarSoApprovalMetricsDAOTest extends DAOTestHelper {
     assertNull(bucket.meanDays());
   }
 
+  @Test
+  void aSubmissionSavedAsOneDarPerDatasetCountsOnce() {
+    Instant legacy = Instant.parse("2021-03-01T12:00:00Z");
+    String first = createDar(legacy);
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
+    Date later = Date.from(legacy.plusSeconds(60));
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        UUID.randomUUID().toString(),
+        user.getUserId(),
+        later,
+        later,
+        later,
+        new DataAccessRequestData(),
+        "era");
+
+    SoApproval row = only();
+    assertEquals(first, row.referenceId());
+    assertEquals(legacy, row.submissionDate());
+    assertEquals(1, dao.countSoApprovals(FROM, TO, "quarter").getFirst().count());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"Canceled", "archived"})
   void canceledAndArchivedDarsAreExcluded(String status) {

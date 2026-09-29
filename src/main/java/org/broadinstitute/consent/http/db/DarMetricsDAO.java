@@ -272,13 +272,18 @@ public interface DarMetricsDAO {
    * One row per DAR, progress report or closeout submitted in [:from, :to), with where it stands
    * with its signing official. {@code requires_so_approval} is only ever written true, so NULL is a
    * pre-authorization skip, but only from 20 May 2026, when production first wrote it; closeouts
-   * always go to an SO and stay NULL. Closeout approvals were recorded from 5 June 2025.
+   * always go to an SO and stay NULL. Closeout approvals were recorded from 5 June 2025. Before
+   * 2022-07-27 a submission was saved as one DAR per dataset, so a collection's original DARs count
+   * as one submission, reported under its earliest.
    */
   String SO_APPROVALS =
       """
       WITH so_rows AS (
         SELECT dar.reference_id, dar.collection_id, dar.submission_date, dar.requires_so_approval,
                dar.approving_so_timestamp AS approval_date,
+               CASE WHEN dar.parent_id IS NULL
+                    THEN COALESCE(dar.collection_id::text, dar.reference_id)
+                    ELSE dar.reference_id END AS submission_key,
                CASE WHEN dar.parent_id IS NULL THEN 'ORIGINAL'
                     WHEN dar.data->>'closeoutSupplement' IS NOT NULL THEN 'CLOSEOUT'
                     ELSE 'PROGRESS_REPORT' END AS kind
@@ -286,6 +291,14 @@ public interface DarMetricsDAO {
         WHERE dar.submission_date >= :from AND dar.submission_date < :to
           AND (dar.data->>'status' IS NULL
                OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      submissions AS (
+        SELECT (ARRAY_AGG(reference_id ORDER BY submission_date, reference_id))[1] AS reference_id,
+               MIN(collection_id) AS collection_id, kind, MIN(submission_date) AS submission_date,
+               BOOL_OR(requires_so_approval) AS requires_so_approval,
+               MIN(approval_date) AS approval_date
+        FROM so_rows
+        GROUP BY submission_key, kind
       ),
       so_approvals AS (
         SELECT reference_id, collection_id, kind, submission_date, approval_date,
@@ -298,7 +311,7 @@ public interface DarMetricsDAO {
                CASE WHEN approval_date >= submission_date
                     THEN EXTRACT(EPOCH FROM approval_date - submission_date)::float8 / 86400
                     END AS elapsed_days
-        FROM so_rows
+        FROM submissions
       )
       """;
 
