@@ -2,6 +2,7 @@ type: object
 properties:
   referenceId:
     type: string
+    description: The submission's earliest original DAR; older submissions saved one DAR per dataset.
   collectionId:
     type: integer
   kind:
