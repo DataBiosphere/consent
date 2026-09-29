@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -18,12 +19,15 @@ import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
+import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
+import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.junit.jupiter.api.BeforeEach;
@@ -530,6 +534,153 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertEquals(1, dao.countDarsByResearcher(FROM, TO).getFirst().darCount());
   }
 
+  @Test
+  void turnaroundMeasuresManualAndRadarDecisions() {
+    Integer manualDataset = createDataset();
+    String manual = createDar(manualDataset);
+    decide(manual, manualDataset, VoteType.FINAL, true, DAY_1);
+    Integer radarDataset = createDataset();
+    String radar = createDar(radarDataset);
+    decide(radar, radarDataset, VoteType.RADAR_APPROVE, true, DAY_2);
+
+    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, 10, 0);
+    assertEquals(2, pairs.size());
+    DarDatasetTurnaround manualPair =
+        pairs.stream().filter(p -> p.referenceId().equals(manual)).findFirst().orElseThrow();
+    assertEquals(DecidedVia.MANUAL, manualPair.decidedVia());
+    assertEquals(19.0, manualPair.elapsedDays());
+    assertEquals(DAY_1.toInstant(), manualPair.decisionDate());
+    DarDatasetTurnaround radarPair =
+        pairs.stream().filter(p -> p.referenceId().equals(radar)).findFirst().orElseThrow();
+    assertEquals(DecidedVia.RADAR, radarPair.decidedVia());
+    assertEquals(20.0, radarPair.elapsedDays());
+  }
+
+  @Test
+  void aDarTurnaroundRunsToItsLastPairDecision() {
+    Integer first = createDataset();
+    Integer second = createDataset();
+    String dar = createDar(first, second);
+    decide(dar, first, VoteType.FINAL, true, DAY_1);
+    decide(dar, second, VoteType.FINAL, false, DAY_3);
+
+    DarTurnaround row = onlyDarTurnaround();
+    assertEquals(DAY_3.toInstant(), row.decisionDate());
+    assertEquals(21.0, row.elapsedDays());
+  }
+
+  @Test
+  void aReopenedAndRedecidedPairMeasuresToTheNewDecision() {
+    Integer dataset = createDataset();
+    String dar = createDar(dataset);
+    decide(dar, dataset, VoteType.FINAL, false, DAY_1);
+    reopenAndDecide(dar, dataset, VoteType.FINAL, true, DAY_3);
+
+    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, 10, 0);
+    assertEquals(1, pairs.size());
+    assertEquals(21.0, pairs.getFirst().elapsedDays());
+  }
+
+  @Test
+  void undecidedPairsAndDarsHaveNoTurnaround() {
+    Integer reopened = createDataset();
+    String dar = createDar(reopened);
+    decide(dar, reopened, VoteType.FINAL, true, DAY_1);
+    reopen(dar, reopened, ElectionStatus.OPEN, DAY_2);
+    Integer decided = createDataset();
+    Integer pending = createDataset();
+    String partlyDecided = createDar(decided, pending);
+    decide(partlyDecided, decided, VoteType.FINAL, true, DAY_1);
+    election(partlyDecided, pending, ElectionStatus.OPEN, DAY_1);
+
+    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, 10, 0);
+    assertEquals(List.of(decided), pairs.stream().map(DarDatasetTurnaround::datasetId).toList());
+    assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.countDarTurnaround(FROM, TO, "quarter").isEmpty());
+  }
+
+  @Test
+  void undatedDecisionsAreCountedButNotMeasured() {
+    Integer dated = createDataset();
+    decide(createDar(dated), dated, VoteType.FINAL, true, DAY_1);
+    Integer undated = createDataset();
+    String undatedDar = createDar(undated);
+    castVote(
+        election(undatedDar, undated, ElectionStatus.CLOSED, DAY_1), VoteType.FINAL, true, null);
+
+    assertEquals(1, dao.findPairTurnaround(FROM, TO, 10, 0).size());
+    assertEquals(1, dao.findDarTurnaround(FROM, TO, 10, 0).size());
+    for (TurnaroundBucket bucket :
+        List.of(
+            dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
+            dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
+      assertEquals(1, bucket.count());
+      assertEquals(1, bucket.undated());
+      assertEquals(19.0, bucket.meanDays());
+    }
+  }
+
+  @Test
+  void aDarWithAnyUndatedPairIsCountedButNotMeasured() {
+    Integer dated = createDataset();
+    Integer undated = createDataset();
+    String dar = createDar(dated, undated);
+    decide(dar, dated, VoteType.FINAL, true, DAY_1);
+    castVote(election(dar, undated, ElectionStatus.CLOSED, DAY_1), VoteType.FINAL, true, null);
+
+    assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
+    TurnaroundBucket bucket = dao.countDarTurnaround(FROM, TO, "quarter").getFirst();
+    assertEquals(0, bucket.count());
+    assertEquals(1, bucket.undated());
+    assertNull(bucket.meanDays());
+    assertEquals(1, dao.findPairTurnaround(FROM, TO, 10, 0).size());
+  }
+
+  @Test
+  void theModeGroupsWholeDaysWhileMeanAndMedianKeepFractions() {
+    for (Duration elapsed : List.of(Duration.ofHours(30), Duration.ofHours(42))) {
+      Integer dataset = createDataset();
+      Date on = Date.from(SUBMITTED.toInstant().plus(elapsed));
+      decide(createDar(dataset), dataset, VoteType.FINAL, true, on);
+    }
+
+    TurnaroundBucket bucket = dao.countPairTurnaround(FROM, TO, "quarter").getFirst();
+    assertEquals(1.5, bucket.meanDays());
+    assertEquals(1.5, bucket.medianDays());
+    assertEquals(1, bucket.modeDays());
+  }
+
+  @Test
+  void turnaroundBucketsReportMeanMedianAndMode() {
+    for (int days : List.of(1, 2, 2, 7)) {
+      Integer dataset = createDataset();
+      Date on = Date.from(SUBMITTED.toInstant().plus(Duration.ofDays(days)));
+      decide(createDar(dataset), dataset, VoteType.FINAL, true, on);
+    }
+
+    for (TurnaroundBucket bucket :
+        List.of(
+            dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
+            dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
+      assertEquals(4, bucket.count());
+      assertEquals(0, bucket.undated());
+      assertEquals(3.0, bucket.meanDays());
+      assertEquals(2.0, bucket.medianDays());
+      assertEquals(2, bucket.modeDays());
+    }
+  }
+
+  @Test
+  void aTiedTurnaroundModeIsTheSmallest() {
+    for (int days : List.of(3, 3, 1, 1)) {
+      Integer dataset = createDataset();
+      Date on = Date.from(SUBMITTED.toInstant().plus(Duration.ofDays(days)));
+      decide(createDar(dataset), dataset, VoteType.FINAL, true, on);
+    }
+
+    assertEquals(1, dao.countPairTurnaround(FROM, TO, "quarter").getFirst().modeDays());
+  }
+
   private DarVolume onlyVolume() {
     List<DarVolume> rows = dao.findDarVolume(FROM, TO, 10, 0);
     assertEquals(1, rows.size());
@@ -584,6 +735,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
       case PENDING -> election(dar, dataset, ElectionStatus.OPEN, DAY_1);
       case CANCEL -> election(dar, dataset, ElectionStatus.CANCELED, DAY_1);
     }
+  }
+
+  private DarTurnaround onlyDarTurnaround() {
+    List<DarTurnaround> rows = dao.findDarTurnaround(FROM, TO, 10, 0);
+    assertEquals(1, rows.size());
+    return rows.getFirst();
   }
 
   private DarDatasetDecision onlyPair() {
