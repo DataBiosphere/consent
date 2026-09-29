@@ -2,7 +2,7 @@ get:
   summary: DAC decision turnaround per DAR
   operationId: apiMetricsDarDecisionTurnaroundGet
   description: |
-    Admin only. Days from submission to the last DAC decision, per decided original DAR submitted in the range, rolled up as in dar-decisions. A DAR with a deciding vote cast before March 2021, which has no vote date, is counted in undated rather than measured. Mode is over whole days, the smallest on a tie.
+    Admin only. Days from submission to the last DAC decision, per decided original DAR submitted in the range, rolled up as in dar-decisions. A DAR with a deciding vote cast before March 2021, which has no vote date, or decided before its recorded submission date, is counted in unmeasured rather than measured. Mode is over whole days, the smallest on a tie.
   parameters:
     - name: from
       in: query

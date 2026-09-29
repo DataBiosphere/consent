@@ -7,14 +7,14 @@ import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 /**
  * Turnaround per submission bucket across the whole range, plus one page of the measured rows
  * behind it. {@code total} is the number of measured rows, so a client can page through all of
- * them; {@code undated} decisions are counted apart because they can't be measured.
+ * them; {@code unmeasured} decisions are counted apart because they can't be timed.
  */
 public record TurnaroundReport<T>(
     String from,
     String to,
     MetricsBucket bucket,
     long total,
-    long undated,
+    long unmeasured,
     List<TurnaroundBucket> buckets,
     List<T> rows) {
 
@@ -25,8 +25,8 @@ public record TurnaroundReport<T>(
       List<TurnaroundBucket> buckets,
       List<T> rows) {
     long total = buckets.stream().mapToLong(TurnaroundBucket::count).sum();
-    long undated = buckets.stream().mapToLong(TurnaroundBucket::undated).sum();
+    long unmeasured = buckets.stream().mapToLong(TurnaroundBucket::unmeasured).sum();
     return new TurnaroundReport<>(
-        from.toString(), to.toString(), bucket, total, undated, buckets, rows);
+        from.toString(), to.toString(), bucket, total, unmeasured, buckets, rows);
   }
 }

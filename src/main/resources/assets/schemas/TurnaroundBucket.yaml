@@ -6,9 +6,9 @@ properties:
   count:
     type: integer
     description: Decisions measured.
-  undated:
+  unmeasured:
     type: integer
-    description: Decisions with no vote date, counted but not measured.
+    description: Decisions with no vote date, or one before the submission date, counted but not measured.
   meanDays:
     type: [number, 'null']
   medianDays:

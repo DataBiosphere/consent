@@ -456,7 +456,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void decisionTurnaroundTotalsMeasuredAndUndatedDecisions() {
+  void decisionTurnaroundTotalsMeasuredAndUnmeasuredDecisions() {
     Instant start = startOfDay(LocalDate.of(2026, 1, 1));
     Instant end = startOfDay(LocalDate.of(2026, 7, 1));
     List<TurnaroundBucket> buckets =
@@ -479,7 +479,7 @@ class MetricsServiceTest extends AbstractTestHelper {
         service.getDarDatasetDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
 
     assertEquals(5, dars.total());
-    assertEquals(1, dars.undated());
+    assertEquals(1, dars.unmeasured());
     assertEquals(buckets, dars.buckets());
     assertEquals(List.of(row), dars.rows());
     assertEquals(5, pairs.total());

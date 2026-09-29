@@ -12,9 +12,9 @@ properties:
   total:
     type: integer
     description: Measured rows in the range, across all pages.
-  undated:
+  unmeasured:
     type: integer
-    description: Decided rows with no vote date, not measured.
+    description: Decided rows with no vote date, or one before the submission date, not measured.
   buckets:
     type: array
     items:
