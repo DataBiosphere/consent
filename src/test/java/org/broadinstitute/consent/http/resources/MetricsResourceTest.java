@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
@@ -260,6 +261,22 @@ class MetricsResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void darSoApprovalsParseTheRangeBucketAndPage() {
+    SoApprovalReport report =
+        new SoApprovalReport(
+            "2026-06-01", "2026-06-30", MetricsBucket.WEEK, 0, List.of(), List.of());
+    when(service.getDarSoApprovals(
+            LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), MetricsBucket.WEEK, 25, 50))
+        .thenReturn(report);
+
+    Response response =
+        resource.getDarSoApprovals(duosUser, "2026-06-01", "2026-06-30", "week", 25, 50);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @Test
   void darDatasetDecisionsParseTheRangeBucketAndPage() {
     DecisionReport<?> report =
         new DecisionReport<>(
@@ -378,6 +395,9 @@ class MetricsResourceTest extends AbstractTestHelper {
         resource
             .getDarDatasetDecisionTurnaround(duosUser, from, to, bucket, limit, offset)
             .getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarSoApprovals(duosUser, from, to, bucket, limit, offset).getStatus());
     verifyNoInteractions(service);
   }
 
@@ -389,7 +409,8 @@ class MetricsResourceTest extends AbstractTestHelper {
             "getDarDatasetDecisions",
             "getDarVolume",
             "getDarDecisionTurnaround",
-            "getDarDatasetDecisionTurnaround")) {
+            "getDarDatasetDecisionTurnaround",
+            "getDarSoApprovals")) {
       RolesAllowed roles =
           MetricsResource.class
               .getMethod(

@@ -1,0 +1,66 @@
+get:
+  summary: SO approval of DARs
+  operationId: apiMetricsDarSoApprovalsGet
+  description: |
+    Admin only. Where each DAR, progress report and closeout submitted in the range stands with its signing official, and days from submission to SO approval. SKIPPED is a DAR or progress report that pre-authorization let bypass SO review; closeouts always go to an SO. Skips are classified from 20 May 2026 and closeouts from 5 June 2025; earlier rows without an approval are UNCLASSIFIED. Approval times start June 2026 for original DARs and September 2025 for closeouts. An approval dated before its submission date is counted in unmeasured. Canceled and archived DARs are excluded. Mode is over whole days, the smallest on a tie.
+  parameters:
+    - name: from
+      in: query
+      required: true
+      description: First submission date to include, as yyyy-MM-dd, from 1900 to 9999.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last submission date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Submission-date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+    - name: limit
+      in: query
+      required: false
+      description: Rows per page, 1 to 1000.
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      required: false
+      description: Rows to skip.
+      schema:
+        type: integer
+        default: 0
+  tags:
+    - Metrics
+    - Admin
+  responses:
+    200:
+      description: Counts and approval times per bucket, and one page of DARs.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarSoApprovalReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: Admin only.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error

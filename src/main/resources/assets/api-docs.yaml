@@ -919,6 +919,8 @@ paths:
     $ref: './paths/darDatasetDecisionTurnaround.yaml'
   /api/metrics/dar-volume:
     $ref: './paths/darVolume.yaml'
+  /api/metrics/dar-so-approvals:
+    $ref: './paths/darSoApprovals.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
   /api/metrics/dar-summaries/study/{studyId}:

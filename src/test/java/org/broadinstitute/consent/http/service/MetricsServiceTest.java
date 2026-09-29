@@ -23,10 +23,12 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.DarKind;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
@@ -42,6 +44,9 @@ import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
+import org.broadinstitute.consent.http.models.SoApproval;
+import org.broadinstitute.consent.http.models.SoApprovalBucket;
+import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
@@ -484,6 +489,30 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(List.of(row), dars.rows());
     assertEquals(5, pairs.total());
     assertEquals(List.of(pair), pairs.rows());
+  }
+
+  @Test
+  void soApprovalsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 6, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<SoApprovalBucket> buckets =
+        List.of(
+            new SoApprovalBucket(
+                start, DarKind.ORIGINAL, SoApprovalStatus.APPROVED, 3L, 0L, 2.0, 2.0, 2),
+            new SoApprovalBucket(
+                start, DarKind.CLOSEOUT, SoApprovalStatus.PENDING, 1L, 0L, null, null, null));
+    SoApproval row =
+        new SoApproval("ref", 1, DarKind.ORIGINAL, start, SoApprovalStatus.SKIPPED, null, null);
+    when(darMetricsDAO.countSoApprovals(start, end, "month")).thenReturn(buckets);
+    when(darMetricsDAO.findSoApprovals(start, end, 10, 20)).thenReturn(List.of(row));
+
+    SoApprovalReport report =
+        service.getDarSoApprovals(
+            LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), MetricsBucket.MONTH, 10, 20);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
   }
 
   @Test
