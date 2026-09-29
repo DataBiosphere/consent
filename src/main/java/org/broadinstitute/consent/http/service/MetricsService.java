@@ -12,13 +12,16 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
@@ -127,6 +130,38 @@ public class MetricsService {
         bucket,
         darMetricsDAO.countDarDecisions(start, end, bucket.truncUnit()),
         darMetricsDAO.findDarDecisions(start, end, limit, offset));
+  }
+
+  /**
+   * Time from submission to DAC decision per decided DAR-dataset pair on original DARs submitted
+   * from {@code from} to {@code to}.
+   */
+  public TurnaroundReport<DarDatasetTurnaround> getDarDatasetDecisionTurnaround(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return TurnaroundReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countPairTurnaround(start, end, bucket.truncUnit()),
+        darMetricsDAO.findPairTurnaround(start, end, limit, offset));
+  }
+
+  /**
+   * Time from submission to the last DAC decision per decided original DAR submitted from {@code
+   * from} to {@code to}.
+   */
+  public TurnaroundReport<DarTurnaround> getDarDecisionTurnaround(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return TurnaroundReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countDarTurnaround(start, end, bucket.truncUnit()),
+        darMetricsDAO.findDarTurnaround(start, end, limit, offset));
   }
 
   /**

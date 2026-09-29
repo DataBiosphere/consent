@@ -22,12 +22,15 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -231,6 +234,32 @@ class MetricsResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void decisionTurnaroundReportsParseTheRangeBucketAndPage() {
+    TurnaroundReport<DarTurnaround> dars =
+        new TurnaroundReport<>(
+            "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of(), List.of());
+    TurnaroundReport<DarDatasetTurnaround> pairs =
+        new TurnaroundReport<>(
+            "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of(), List.of());
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    when(service.getDarDecisionTurnaround(from, to, MetricsBucket.MONTH, 50, 100)).thenReturn(dars);
+    when(service.getDarDatasetDecisionTurnaround(from, to, MetricsBucket.MONTH, 50, 100))
+        .thenReturn(pairs);
+
+    Response darResponse =
+        resource.getDarDecisionTurnaround(duosUser, "2026-01-01", "2026-03-31", "month", 50, 100);
+    Response pairResponse =
+        resource.getDarDatasetDecisionTurnaround(
+            duosUser, "2026-01-01", "2026-03-31", "month", 50, 100);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, darResponse.getStatus());
+    assertEquals(dars, darResponse.getEntity());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, pairResponse.getStatus());
+    assertEquals(pairs, pairResponse.getEntity());
+  }
+
+  @Test
   void darDatasetDecisionsParseTheRangeBucketAndPage() {
     DecisionReport<?> report =
         new DecisionReport<>(
@@ -341,12 +370,26 @@ class MetricsResourceTest extends AbstractTestHelper {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
         resource.getDarVolume(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarDecisionTurnaround(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource
+            .getDarDatasetDecisionTurnaround(duosUser, from, to, bucket, limit, offset)
+            .getStatus());
     verifyNoInteractions(service);
   }
 
   @Test
   void decisionReportsAreAdminOnly() throws NoSuchMethodException {
-    for (String name : List.of("getDarDecisions", "getDarDatasetDecisions", "getDarVolume")) {
+    for (String name :
+        List.of(
+            "getDarDecisions",
+            "getDarDatasetDecisions",
+            "getDarVolume",
+            "getDarDecisionTurnaround",
+            "getDarDatasetDecisionTurnaround")) {
       RolesAllowed roles =
           MetricsResource.class
               .getMethod(

@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -22,11 +23,14 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -41,6 +45,8 @@ import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TurnaroundBucket;
+import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.broadinstitute.consent.http.models.VolumeReport;
@@ -447,6 +453,37 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(buckets, report.buckets());
     assertEquals(List.of(row), report.rows());
     assertEquals("2026-03-31", report.to());
+  }
+
+  @Test
+  void decisionTurnaroundTotalsMeasuredAndUndatedDecisions() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<TurnaroundBucket> buckets =
+        List.of(
+            new TurnaroundBucket(start, 3L, 1L, 4.0, 3.0, 3),
+            new TurnaroundBucket(start.plus(Duration.ofDays(90)), 2L, 0L, 1.5, 1.5, 1));
+    DarTurnaround row = new DarTurnaround("ref", 1, start, start, DecidedVia.MANUAL, 0.0);
+    DarDatasetTurnaround pair =
+        new DarDatasetTurnaround("ref", 1, 2, start, start, DecidedVia.RADAR, 0.0);
+    when(darMetricsDAO.countDarTurnaround(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findDarTurnaround(start, end, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countPairTurnaround(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findPairTurnaround(start, end, 10, 20)).thenReturn(List.of(pair));
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 6, 30);
+
+    TurnaroundReport<DarTurnaround> dars =
+        service.getDarDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
+    TurnaroundReport<DarDatasetTurnaround> pairs =
+        service.getDarDatasetDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(5, dars.total());
+    assertEquals(1, dars.undated());
+    assertEquals(buckets, dars.buckets());
+    assertEquals(List.of(row), dars.rows());
+    assertEquals(5, pairs.total());
+    assertEquals(List.of(pair), pairs.rows());
   }
 
   @Test

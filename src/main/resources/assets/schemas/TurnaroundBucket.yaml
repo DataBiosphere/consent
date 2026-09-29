@@ -1,0 +1,18 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    description: Start of the submission-date bucket, in milliseconds since the epoch.
+  count:
+    type: integer
+    description: Decisions measured.
+  undated:
+    type: integer
+    description: Decisions with no vote date, counted but not measured.
+  meanDays:
+    type: [number, 'null']
+  medianDays:
+    type: [number, 'null']
+  modeDays:
+    type: [integer, 'null']
+    description: Most common whole number of days.

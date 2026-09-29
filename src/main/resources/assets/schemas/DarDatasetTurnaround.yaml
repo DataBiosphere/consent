@@ -1,0 +1,19 @@
+type: object
+properties:
+  referenceId:
+    type: string
+  collectionId:
+    type: integer
+  datasetId:
+    type: integer
+  submissionDate:
+    type: integer
+    description: Milliseconds since the epoch.
+  decisionDate:
+    type: integer
+    description: When the deciding vote was cast, in milliseconds since the epoch.
+  decidedVia:
+    type: string
+    enum: [MANUAL, RADAR]
+  elapsedDays:
+    type: number
