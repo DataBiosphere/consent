@@ -173,9 +173,10 @@ public interface DarMetricsDAO {
       @Bind("offset") int offset);
 
   /**
-   * Decided pairs, from submission to the deciding vote. A vote with no update date is kept with a
-   * null elapsed time, so it is counted but not measured: its create date is when the election
-   * opened, which would understate turnaround.
+   * Decided pairs, from submission to the deciding vote. A vote with no update date, or one dated
+   * before a backfilled submission date, is kept with a null elapsed time, so it is counted but not
+   * measured; the vote's create date is when the election opened, which would understate
+   * turnaround.
    */
   String PAIR_TURNAROUND =
       PAIR_DECISIONS
@@ -183,24 +184,26 @@ public interface DarMetricsDAO {
           , turnaround AS (
             SELECT reference_id, collection_id, dataset_id, submission_date, decision_date,
                    decided_via,
-                   EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
-                     AS elapsed_days
+                   CASE WHEN decision_date >= submission_date
+                        THEN EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
+                        END AS elapsed_days
             FROM pair_decisions
             WHERE decided_via IS NOT NULL
           )
           """;
 
   /**
-   * Decided submissions, from submission to their last pair decision. A submission with any undated
-   * deciding vote has no decision date, so it is counted but not measured.
+   * Decided submissions, from submission to their last pair decision. One with any undated deciding
+   * vote, or decided before its submission date, is counted but not measured.
    */
   String DAR_TURNAROUND =
       DAR_DECISIONS
           + """
           , turnaround AS (
             SELECT reference_id, collection_id, submission_date, decision_date, decided_via,
-                   EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
-                     AS elapsed_days
+                   CASE WHEN decision_date >= submission_date
+                        THEN EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
+                        END AS elapsed_days
             FROM dar_rows
             WHERE state IN ('APPROVED', 'DENIED', 'MIXED')
           )
@@ -210,7 +213,7 @@ public interface DarMetricsDAO {
       """
       SELECT date_trunc(:bucket, submission_date) AS bucket_start,
              COUNT(elapsed_days) AS count,
-             COUNT(*) - COUNT(elapsed_days) AS undated,
+             COUNT(*) - COUNT(elapsed_days) AS unmeasured,
              AVG(elapsed_days) AS mean_days,
              PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
              (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days

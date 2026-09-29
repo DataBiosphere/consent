@@ -615,8 +615,25 @@ class DarMetricsDAOTest extends DAOTestHelper {
             dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
             dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
       assertEquals(1, bucket.count());
-      assertEquals(1, bucket.undated());
+      assertEquals(1, bucket.unmeasured());
       assertEquals(19.0, bucket.meanDays());
+    }
+  }
+
+  @Test
+  void aDecisionBeforeTheSubmissionDateIsCountedButNotMeasured() {
+    Integer dataset = createDataset();
+    Date beforeSubmission = Date.from(SUBMITTED.toInstant().minus(Duration.ofDays(1)));
+    decide(createDar(dataset), dataset, VoteType.FINAL, true, beforeSubmission);
+
+    assertTrue(dao.findPairTurnaround(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
+    for (TurnaroundBucket bucket :
+        List.of(
+            dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
+            dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
+      assertEquals(0, bucket.count());
+      assertEquals(1, bucket.unmeasured());
     }
   }
 
@@ -631,7 +648,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
     TurnaroundBucket bucket = dao.countDarTurnaround(FROM, TO, "quarter").getFirst();
     assertEquals(0, bucket.count());
-    assertEquals(1, bucket.undated());
+    assertEquals(1, bucket.unmeasured());
     assertNull(bucket.meanDays());
     assertEquals(1, dao.findPairTurnaround(FROM, TO, 10, 0).size());
   }
@@ -663,7 +680,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
             dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
             dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
       assertEquals(4, bucket.count());
-      assertEquals(0, bucket.undated());
+      assertEquals(0, bucket.unmeasured());
       assertEquals(3.0, bucket.meanDays());
       assertEquals(2.0, bucket.medianDays());
       assertEquals(2, bucket.modeDays());
