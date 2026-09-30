@@ -78,10 +78,10 @@ class DarSoApprovalMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void aDarBeforeSkipsWereRecordedIsUnclassified() {
+  void aDarBeforeSkipsWereRecordedIsNotDetermined() {
     createDar(BEFORE_SKIPS);
 
-    assertEquals(SoApprovalStatus.UNCLASSIFIED, only().status());
+    assertEquals(SoApprovalStatus.NOT_DETERMINED, only().status());
   }
 
   @Test
@@ -118,11 +118,11 @@ class DarSoApprovalMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void aCloseoutBeforeCloseoutApprovalsWereRecordedIsUnclassified() {
+  void aCloseoutBeforeCloseoutApprovalsWereRecordedIsNotDetermined() {
     String closeout =
         createChild(createDar(BEFORE_CLOSEOUT_APPROVALS), closeout(), BEFORE_CLOSEOUT_APPROVALS);
 
-    assertEquals(SoApprovalStatus.UNCLASSIFIED, rowFor(closeout).status());
+    assertEquals(SoApprovalStatus.NOT_DETERMINED, rowFor(closeout).status());
   }
 
   @Test

@@ -304,10 +304,10 @@ public interface DarMetricsDAO {
         SELECT reference_id, collection_id, kind, submission_date, approval_date,
                CASE WHEN approval_date IS NOT NULL THEN 'APPROVED'
                     WHEN kind = 'CLOSEOUT' AND submission_date >= '2025-06-05' THEN 'PENDING'
-                    WHEN kind = 'CLOSEOUT' THEN 'UNCLASSIFIED'
+                    WHEN kind = 'CLOSEOUT' THEN 'NOT_DETERMINED'
                     WHEN requires_so_approval THEN 'PENDING'
                     WHEN submission_date >= '2026-05-20' THEN 'SKIPPED'
-                    ELSE 'UNCLASSIFIED' END AS status,
+                    ELSE 'NOT_DETERMINED' END AS status,
                CASE WHEN approval_date >= submission_date
                     THEN EXTRACT(EPOCH FROM approval_date - submission_date)::float8 / 86400
                     END AS elapsed_days
