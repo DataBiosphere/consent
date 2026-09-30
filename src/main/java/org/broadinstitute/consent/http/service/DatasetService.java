@@ -535,16 +535,33 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findAllDatasetIds();
   }
 
+  /**
+   * The datasets of a study that the caller may read, looked up from the study's dataset ids.
+   *
+   * <p>This is the replacement for the deprecated {@code Study.datasets} property: a study no
+   * longer carries its datasets, so callers that need them ask for them separately. The result is
+   * filtered by {@link #verifyPublicVisibilityAccess(Dataset, User)}, which admits everyone the
+   * study itself admits, so a caller who may read the study sees every dataset in it.
+   *
+   * <p>The study must carry its dataset ids, so load it with {@link #findStudyByIdForRead} or
+   * {@link #findStudy}, which read through {@code StudyDAO.findStudyById}. {@link
+   * #requireReadableStudy} loads study details only, without dataset ids, and passing its result
+   * here returns an empty list.
+   */
+  public List<Dataset> findStudyDatasets(User user, Study study) {
+    if (study.getDatasetIds() == null || study.getDatasetIds().isEmpty()) {
+      return List.of();
+    }
+    return findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()));
+  }
+
   public Study getStudyWithDatasetsById(User user, Integer studyId) {
     try {
       Study study = studyDAO.findStudyById(studyId);
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
-      if (study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
-        List<Dataset> datasets = findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()));
-        study.addDatasets(datasets);
-      }
+      study.addDatasets(findStudyDatasets(user, study));
       return study;
     } catch (NotFoundException nfe) {
       throw nfe;

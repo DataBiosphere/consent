@@ -753,6 +753,46 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindStudyDatasetsNoDatasetIdsSkipsTheLookup() {
+    Study study = new Study();
+    study.setStudyId(1);
+
+    assertEquals(List.of(), datasetService.findStudyDatasets(mockUser, study));
+    verify(datasetDAO, never()).findDatasetsByIdList(any());
+  }
+
+  @Test
+  void testFindStudyDatasetsReturnsTheReadableDatasets() {
+    User user = new User();
+    user.setUserId(7);
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(10, 11));
+    // Created by the caller, so readable on its own.
+    Dataset readable = new Dataset();
+    readable.setDatasetId(10);
+    readable.setCreateUserId(user.getUserId());
+    // Created by someone else, in a study nobody has published, so hidden from the caller.
+    Dataset hidden = new Dataset();
+    hidden.setDatasetId(11);
+    hidden.setCreateUserId(99);
+    hidden.setStudyId(study.getStudyId());
+    Study hiddenStudy = new Study();
+    hiddenStudy.setStudyId(study.getStudyId());
+    hiddenStudy.setCreateUserId(99);
+    hiddenStudy.setPublicVisibility(false);
+    hidden.setStudy(hiddenStudy);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(readable, hidden));
+
+    List<Dataset> result = datasetService.findStudyDatasets(user, study);
+
+    assertEquals(List.of(readable), result);
+    ArgumentCaptor<List<Integer>> ids = ArgumentCaptor.captor();
+    verify(datasetDAO).findDatasetsByIdList(ids.capture());
+    assertEquals(Set.of(10, 11), Set.copyOf(ids.getValue()));
+  }
+
+  @Test
   void testGetStudyWithDatasetsById() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(new Study());
     assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(mockUser, 1));

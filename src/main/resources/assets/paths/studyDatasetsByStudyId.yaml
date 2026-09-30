@@ -1,0 +1,45 @@
+get:
+  operationId: apiDatasetStudyStudyIdDatasetsGet
+  summary: Get the Datasets of a Study
+  description: |
+    Finds the Datasets, with their properties, that belong to the Study specified by id. This is
+    the replacement for the deprecated `datasets` property of the Study payload: read the Study
+    for its `datasetIds`, then read the Datasets here.
+
+    Read access follows the Study: a publicly visible Study is readable by everyone, and a Study
+    that is not is readable only by its creator, its custodians, and admins. A Study the caller may
+    not read is Not Found. The datasets are further filtered by the caller's dataset read access,
+    which admits everyone the Study admits.
+
+    Each Dataset carries its `studyId` but not a nested `study`: the caller already has the Study,
+    and leaving it out keeps this response from embedding the Study the datasets came from.
+  tags:
+    - Study
+  parameters:
+    - name: studyId
+      in: path
+      description: ID of the Study
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: The Datasets of the Study, with properties. Empty when the Study has none.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/Dataset.yaml'
+    401:
+      description: Unauthorized.
+    404:
+      description: Not Found
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Server error
