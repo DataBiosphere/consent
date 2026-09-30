@@ -8,6 +8,8 @@ import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.ExpirationBucket;
+import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.SoApproval;
@@ -346,6 +348,101 @@ public interface DarMetricsDAO {
   List<SoApproval> findSoApprovals(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * DAR collections whose access ended in [:from, :to), and by :asOf. Access to a dataset runs 8760
+   * hours, as {@code EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or
+   * progress report, whose most recently cast final or RADAR vote across its elections approved it,
+   * so a reopen keeps the grant until the new election decides; a closeout filed before the term
+   * runs out ends the whole collection's access on its filing date. Both are as on the study page.
+   * A collection has ended once every dataset's access has. A renewal approved after the range
+   * still counts, so a collection is reported only while its access has ended, dated by when it
+   * last did. Only submissions from a year before :from are ranked, since an older newest approval
+   * ended before the range.
+   */
+  String EXPIRATIONS =
+      """
+      WITH ranked_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.submission_date >= CAST(:from AS timestamp) - INTERVAL '366 days'
+          AND dar.data->>'closeoutSupplement' IS NULL
+          AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
+      ),
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               rd.collection_id, e.dataset_id, rd.submission_date, v.vote
+        FROM ranked_dars rd
+        JOIN dar_dataset dd ON dd.reference_id = rd.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      term_ends AS (
+        SELECT collection_id,
+               MAX(submission_date)::timestamptz + INTERVAL '8760 hours' AS term_end
+        FROM last_votes
+        WHERE vote
+        GROUP BY collection_id, dataset_id
+      ),
+      collection_ends AS (
+        SELECT t.collection_id, MAX(t.term_end) AS term_end,
+               (SELECT MAX(dar.submission_date)::timestamptz FROM data_access_request dar
+                WHERE dar.collection_id = t.collection_id
+                  AND dar.submission_date IS NOT NULL
+                  AND dar.data->>'closeoutSupplement' IS NOT NULL) AS closeout_date
+        FROM term_ends t
+        GROUP BY t.collection_id
+      ),
+      expirations AS (
+        SELECT ce.collection_id, dc.dar_code,
+               LEAST(ce.term_end, ce.closeout_date) AS access_end,
+               CASE WHEN ce.closeout_date < ce.term_end THEN 'CLOSED_OUT' ELSE 'EXPIRED' END
+                 AS reason
+        FROM collection_ends ce
+        JOIN dar_collection dc ON dc.collection_id = ce.collection_id
+      ),
+      ended AS (
+        SELECT * FROM expirations
+        WHERE access_end >= :from AND access_end < :to AND access_end <= :asOf
+      )
+      """;
+
+  @RegisterConstructorMapper(ExpirationBucket.class)
+  @SqlQuery(
+      EXPIRATIONS
+          + """
+          SELECT date_trunc(:bucket, access_end) AS bucket_start, reason, COUNT(*) AS count
+          FROM ended
+          GROUP BY 1, 2
+          ORDER BY 1, 2
+          """)
+  List<ExpirationBucket> countExpirations(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("asOf") Instant asOf,
+      @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(ExpiredCollection.class)
+  @SqlQuery(
+      EXPIRATIONS
+          + """
+          SELECT collection_id, dar_code, access_end, reason
+          FROM ended
+          ORDER BY access_end, collection_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<ExpiredCollection> findExpirations(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("asOf") Instant asOf,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
