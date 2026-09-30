@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DarKind;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
@@ -39,6 +40,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.ExpirationBucket;
+import org.broadinstitute.consent.http.models.ExpirationReport;
+import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
@@ -61,6 +65,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -513,6 +518,32 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(4, report.total());
     assertEquals(buckets, report.buckets());
     assertEquals(List.of(row), report.rows());
+  }
+
+  @Test
+  void expirationsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<ExpirationBucket> buckets =
+        List.of(
+            new ExpirationBucket(start, AccessEndReason.EXPIRED, 3L),
+            new ExpirationBucket(start, AccessEndReason.CLOSED_OUT, 2L));
+    ExpiredCollection row = new ExpiredCollection(1, "DAR-1", start, AccessEndReason.EXPIRED);
+    ArgumentCaptor<Instant> countedAsOf = ArgumentCaptor.forClass(Instant.class);
+    ArgumentCaptor<Instant> foundAsOf = ArgumentCaptor.forClass(Instant.class);
+    when(darMetricsDAO.countExpirations(eq(start), eq(end), countedAsOf.capture(), eq("quarter")))
+        .thenReturn(buckets);
+    when(darMetricsDAO.findExpirations(eq(start), eq(end), foundAsOf.capture(), eq(10), eq(20)))
+        .thenReturn(List.of(row));
+
+    ExpirationReport report =
+        service.getDarExpirations(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(5, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
+    assertEquals(countedAsOf.getValue(), foundAsOf.getValue());
   }
 
   @Test

@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.ExpirationReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
@@ -196,6 +197,20 @@ public class MetricsService {
         bucket,
         darMetricsDAO.countSoApprovals(start, end, bucket.truncUnit()),
         darMetricsDAO.findSoApprovals(start, end, limit, offset));
+  }
+
+  /** DAR collections whose access to their datasets ended from {@code from} to {@code to}. */
+  public ExpirationReport getDarExpirations(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    Instant asOf = Instant.now();
+    return ExpirationReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countExpirations(start, end, asOf, bucket.truncUnit()),
+        darMetricsDAO.findExpirations(start, end, asOf, limit, offset));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too

@@ -188,6 +188,20 @@ public class MetricsResource extends Resource {
     return rangeReport(from, to, bucket, limit, offset, metricsService::getDarSoApprovals);
   }
 
+  @GET
+  @Path("/dar-expirations")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDarExpirations(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarExpirations);
+  }
+
   private interface RangeReportQuery<R> {
     R run(LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset);
   }
