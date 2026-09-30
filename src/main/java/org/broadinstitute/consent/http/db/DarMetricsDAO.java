@@ -352,8 +352,8 @@ public interface DarMetricsDAO {
       @Bind("offset") int offset);
 
   /**
-   * DAR collections whose access ended in [:from, :to), and before now. Access to a dataset runs
-   * 8760 hours, as {@code EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or
+   * DAR collections whose access ended in [:from, :to), and by :asOf. Access to a dataset runs 8760
+   * hours, as {@code EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or
    * progress report, whose most recently cast final or RADAR vote across its elections approved it,
    * so a reopen keeps the grant until the new election decides; a closeout filed before the term
    * runs out ends the whole collection's access on its filing date. Both are as on the study page.
@@ -411,7 +411,7 @@ public interface DarMetricsDAO {
       ),
       ended AS (
         SELECT * FROM expirations
-        WHERE access_end >= :from AND access_end < :to AND access_end <= now()
+        WHERE access_end >= :from AND access_end < :to AND access_end <= :asOf
       )
       """;
 
@@ -425,7 +425,10 @@ public interface DarMetricsDAO {
           ORDER BY 1, 2
           """)
   List<ExpirationBucket> countExpirations(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("asOf") Instant asOf,
+      @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(ExpiredCollection.class)
   @SqlQuery(
@@ -439,6 +442,7 @@ public interface DarMetricsDAO {
   List<ExpiredCollection> findExpirations(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("asOf") Instant asOf,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 

@@ -52,13 +52,23 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void accessEndingAfterAsOfIsNotReported() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(TERM).minus(Duration.ofHours(2));
+    approve(createDar(submitted, dataset), dataset);
+
+    assertTrue(dao.findExpirations(FROM, TO, now.minus(Duration.ofHours(3)), 10, 0).isEmpty());
+    assertEquals(1, dao.findExpirations(FROM, TO, submitted.plus(TERM), 10, 0).size());
+  }
+
+  @Test
   void anApprovedProgressReportKeepsTheCollectionLive() {
     Integer dataset = createDataset();
     String parent = createDar(now.minus(Duration.ofDays(400)), dataset);
     approve(parent, dataset);
     approve(createProgressReport(parent, now.minus(Duration.ofDays(100)), dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -82,7 +92,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(report, dataset);
     election(report, dataset, ElectionStatus.OPEN);
 
-    assertTrue(dao.findExpirations(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -130,7 +140,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     Instant lapsed = submitted.plus(TERM);
     approve(createProgressReport(parent, now.minus(Duration.ofDays(10)), dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, lapsed.plusSeconds(1), 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, lapsed.plusSeconds(1), now, 10, 0).isEmpty());
   }
 
   @Test
@@ -155,7 +165,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(parent, lapsed);
     approve(createProgressReport(parent, now.minus(Duration.ofDays(100)), renewed), renewed);
 
-    assertTrue(dao.findExpirations(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -180,7 +190,9 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     election(report, reopenedReport, ElectionStatus.OPEN);
 
     List<Integer> ended =
-        dao.findExpirations(FROM, TO, 10, 0).stream().map(ExpiredCollection::collectionId).toList();
+        dao.findExpirations(FROM, TO, now, 10, 0).stream()
+            .map(ExpiredCollection::collectionId)
+            .toList();
     for (Integer dataset : List.of(expired, live, closed, reopenedParent, reopenedReport)) {
       var summary =
           dataAccessRequestDAO
@@ -199,8 +211,8 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(createDar(submitted, dataset), dataset);
     Instant end = submitted.plus(TERM);
 
-    assertEquals(1, dao.findExpirations(end, end.plusSeconds(1), 10, 0).size());
-    assertTrue(dao.findExpirations(end.minus(Duration.ofDays(1)), end, 10, 0).isEmpty());
+    assertEquals(1, dao.findExpirations(end, end.plusSeconds(1), now, 10, 0).size());
+    assertTrue(dao.findExpirations(end.minus(Duration.ofDays(1)), end, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -210,7 +222,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     data.setStatus("Archived");
     approve(createDar(data, now.minus(Duration.ofDays(400)), dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -224,7 +236,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(closed, dataset);
     createCloseout(closed, now.minus(Duration.ofDays(10)));
 
-    List<ExpirationBucket> buckets = dao.countExpirations(FROM, TO, "quarter");
+    List<ExpirationBucket> buckets = dao.countExpirations(FROM, TO, now, "quarter");
     assertEquals(
         2,
         buckets.stream()
@@ -240,7 +252,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
   }
 
   private ExpiredCollection only() {
-    List<ExpiredCollection> rows = dao.findExpirations(FROM, TO, 10, 0);
+    List<ExpiredCollection> rows = dao.findExpirations(FROM, TO, now, 10, 0);
     assertEquals(1, rows.size());
     return rows.getFirst();
   }
