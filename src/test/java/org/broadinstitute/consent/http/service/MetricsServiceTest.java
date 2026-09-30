@@ -65,6 +65,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -528,8 +529,12 @@ class MetricsServiceTest extends AbstractTestHelper {
             new ExpirationBucket(start, AccessEndReason.EXPIRED, 3L),
             new ExpirationBucket(start, AccessEndReason.CLOSED_OUT, 2L));
     ExpiredCollection row = new ExpiredCollection(1, "DAR-1", start, AccessEndReason.EXPIRED);
-    when(darMetricsDAO.countExpirations(start, end, "quarter")).thenReturn(buckets);
-    when(darMetricsDAO.findExpirations(start, end, 10, 20)).thenReturn(List.of(row));
+    ArgumentCaptor<Instant> countedAsOf = ArgumentCaptor.forClass(Instant.class);
+    ArgumentCaptor<Instant> foundAsOf = ArgumentCaptor.forClass(Instant.class);
+    when(darMetricsDAO.countExpirations(eq(start), eq(end), countedAsOf.capture(), eq("quarter")))
+        .thenReturn(buckets);
+    when(darMetricsDAO.findExpirations(eq(start), eq(end), foundAsOf.capture(), eq(10), eq(20)))
+        .thenReturn(List.of(row));
 
     ExpirationReport report =
         service.getDarExpirations(
@@ -538,6 +543,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(5, report.total());
     assertEquals(buckets, report.buckets());
     assertEquals(List.of(row), report.rows());
+    assertEquals(countedAsOf.getValue(), foundAsOf.getValue());
   }
 
   @Test
