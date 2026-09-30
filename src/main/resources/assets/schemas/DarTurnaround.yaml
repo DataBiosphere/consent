@@ -1,0 +1,18 @@
+type: object
+properties:
+  referenceId:
+    type: string
+    description: The submission's earliest original DAR; older submissions saved one DAR per dataset.
+  collectionId:
+    type: integer
+  submissionDate:
+    type: integer
+    description: Milliseconds since the epoch.
+  decisionDate:
+    type: integer
+    description: When the deciding vote was cast, in milliseconds since the epoch.
+  decidedVia:
+    type: string
+    enum: [MANUAL, RADAR, MIXED]
+  elapsedDays:
+    type: number

@@ -41,6 +41,8 @@ class MetricsTests extends ContainerTests {
       strings = {
         "/api/metrics/dar-decisions",
         "/api/metrics/dar-dataset-decisions",
+        "/api/metrics/dar-decision-turnaround",
+        "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume"
       })
   void adminGetsTheReport(String path) {
@@ -57,6 +59,8 @@ class MetricsTests extends ContainerTests {
       strings = {
         "/api/metrics/dar-decisions",
         "/api/metrics/dar-dataset-decisions",
+        "/api/metrics/dar-decision-turnaround",
+        "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume"
       })
   void nonAdminIsForbidden(String path) {
@@ -70,6 +74,8 @@ class MetricsTests extends ContainerTests {
       strings = {
         "/api/metrics/dar-decisions",
         "/api/metrics/dar-dataset-decisions",
+        "/api/metrics/dar-decision-turnaround",
+        "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume"
       })
   void missingRangeIsABadRequest(String path) {

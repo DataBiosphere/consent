@@ -132,6 +132,35 @@ public class MetricsResource extends Resource {
   }
 
   @GET
+  @Path("/dar-decision-turnaround")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDarDecisionTurnaround(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarDecisionTurnaround);
+  }
+
+  @GET
+  @Path("/dar-dataset-decision-turnaround")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDarDatasetDecisionTurnaround(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    return rangeReport(
+        from, to, bucket, limit, offset, metricsService::getDarDatasetDecisionTurnaround);
+  }
+
+  @GET
   @Path("/dar-volume")
   @Produces("application/json")
   @RolesAllowed(ADMIN)
