@@ -1,0 +1,2 @@
+type: string
+enum: [APPROVED, PENDING, SKIPPED, NOT_DETERMINED]

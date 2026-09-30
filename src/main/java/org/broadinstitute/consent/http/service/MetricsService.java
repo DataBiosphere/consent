@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
@@ -179,6 +180,22 @@ public class MetricsService {
         darMetricsDAO.countDarsByInstitution(start, end),
         darMetricsDAO.countDarsByResearcher(start, end),
         darMetricsDAO.findDarVolume(start, end, limit, offset));
+  }
+
+  /**
+   * Where original DARs, progress reports and closeouts submitted from {@code from} to {@code to}
+   * stand with their signing official, and how long approval took.
+   */
+  public SoApprovalReport getDarSoApprovals(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return SoApprovalReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countSoApprovals(start, end, bucket.truncUnit()),
+        darMetricsDAO.findSoApprovals(start, end, limit, offset));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too

@@ -1,0 +1,22 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    description: Start of the submission-date bucket, in milliseconds since the epoch.
+  kind:
+    $ref: './DarKind.yaml'
+  status:
+    $ref: './SoApprovalStatus.yaml'
+  count:
+    type: integer
+  unmeasured:
+    type: integer
+    description: Approvals dated before their submission date, counted but not timed.
+  meanDays:
+    type: [number, 'null']
+    description: Null unless approved.
+  medianDays:
+    type: [number, 'null']
+  modeDays:
+    type: [integer, 'null']
+    description: Most common whole number of days.

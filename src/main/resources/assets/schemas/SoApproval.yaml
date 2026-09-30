@@ -1,0 +1,20 @@
+type: object
+properties:
+  referenceId:
+    type: string
+    description: The submission's earliest original DAR; older submissions saved one DAR per dataset.
+  collectionId:
+    type: integer
+  kind:
+    $ref: './DarKind.yaml'
+  submissionDate:
+    type: integer
+    description: Milliseconds since the epoch.
+  status:
+    $ref: './SoApprovalStatus.yaml'
+  approvalDate:
+    type: [integer, 'null']
+    description: When the SO approved, in milliseconds since the epoch. Null unless approved.
+  elapsedDays:
+    type: [number, 'null']
+    description: Null unless approved, and for an approval dated before the submission date.
