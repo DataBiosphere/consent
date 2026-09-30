@@ -3,11 +3,14 @@ package org.broadinstitute.consent.http.db;
 import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
+import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
+import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -164,6 +167,100 @@ public interface DarMetricsDAO {
           LIMIT :limit OFFSET :offset
           """)
   List<DarDecision> findDarDecisions(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Decided pairs, from submission to the deciding vote. A vote with no update date, or one dated
+   * before a backfilled submission date, is kept with a null elapsed time, so it is counted but not
+   * measured; the vote's create date is when the election opened, which would understate
+   * turnaround.
+   */
+  String PAIR_TURNAROUND =
+      PAIR_DECISIONS
+          + """
+          , turnaround AS (
+            SELECT reference_id, collection_id, dataset_id, submission_date, decision_date,
+                   decided_via,
+                   CASE WHEN decision_date >= submission_date
+                        THEN EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
+                        END AS elapsed_days
+            FROM pair_decisions
+            WHERE decided_via IS NOT NULL
+          )
+          """;
+
+  /**
+   * Decided submissions, from submission to their last pair decision. One with any undated deciding
+   * vote, or decided before its submission date, is counted but not measured.
+   */
+  String DAR_TURNAROUND =
+      DAR_DECISIONS
+          + """
+          , turnaround AS (
+            SELECT reference_id, collection_id, submission_date, decision_date, decided_via,
+                   CASE WHEN decision_date >= submission_date
+                        THEN EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
+                        END AS elapsed_days
+            FROM dar_rows
+            WHERE state IN ('APPROVED', 'DENIED', 'MIXED')
+          )
+          """;
+
+  String TURNAROUND_BUCKETS =
+      """
+      SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+             COUNT(elapsed_days) AS count,
+             COUNT(*) - COUNT(elapsed_days) AS unmeasured,
+             AVG(elapsed_days) AS mean_days,
+             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
+             (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
+      FROM turnaround
+      GROUP BY 1
+      ORDER BY 1
+      """;
+
+  @RegisterConstructorMapper(TurnaroundBucket.class)
+  @SqlQuery(PAIR_TURNAROUND + TURNAROUND_BUCKETS)
+  List<TurnaroundBucket> countPairTurnaround(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarDatasetTurnaround.class)
+  @SqlQuery(
+      PAIR_TURNAROUND
+          + """
+          SELECT reference_id, collection_id, dataset_id, submission_date, decision_date,
+                 decided_via, elapsed_days
+          FROM turnaround
+          WHERE elapsed_days IS NOT NULL
+          ORDER BY submission_date, reference_id, dataset_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarDatasetTurnaround> findPairTurnaround(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  @RegisterConstructorMapper(TurnaroundBucket.class)
+  @SqlQuery(DAR_TURNAROUND + TURNAROUND_BUCKETS)
+  List<TurnaroundBucket> countDarTurnaround(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarTurnaround.class)
+  @SqlQuery(
+      DAR_TURNAROUND
+          + """
+          SELECT reference_id, collection_id, submission_date, decision_date, decided_via,
+                 elapsed_days
+          FROM turnaround
+          WHERE elapsed_days IS NOT NULL
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarTurnaround> findDarTurnaround(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
       @Bind("limit") int limit,
