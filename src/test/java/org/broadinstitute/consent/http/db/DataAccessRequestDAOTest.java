@@ -964,6 +964,23 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId()).size());
   }
 
+  @ParameterizedTest
+  @CsvSource({"8759, 1", "8761, 0"})
+  void testFindApprovedDARsByDatasetIdLastsTheExpirationDuration(
+      long submittedHoursAgo, int expected) {
+    Dataset dataset = createDARDAOTestDataset();
+    User user = createUserWithInstitution();
+    Timestamp submitted = Timestamp.from(Instant.now().minus(submittedHoursAgo, ChronoUnit.HOURS));
+    DataAccessRequest dar = createDAR(user, dataset, "DAR-" + randomInt(100, 1000000), submitted);
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+
+    assertEquals(
+        expected, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId()).size());
+  }
+
   @Test
   void testFindAllApprovedDataAccessRequestsByDatasetId_NullSubmissionDate() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
