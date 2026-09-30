@@ -2,7 +2,7 @@ get:
   summary: SO approval of DARs
   operationId: apiMetricsDarSoApprovalsGet
   description: |
-    Admin only. Where each DAR, progress report and closeout submitted in the range stands with its signing official, and days from submission to SO approval. SKIPPED is a DAR or progress report that pre-authorization let bypass SO review; closeouts always go to an SO. Skips are classified from 20 May 2026 and closeouts from 5 June 2025; earlier rows without an approval are UNCLASSIFIED. Approval times start June 2026 for original DARs and September 2025 for closeouts. An approval dated before its submission date is counted in unmeasured. Canceled and archived DARs are excluded. Mode is over whole days, the smallest on a tie.
+    Admin only. Where each DAR, progress report and closeout submitted in the range stands with its signing official, and days from submission to SO approval. SKIPPED is a DAR or progress report that pre-authorization let bypass SO review; closeouts always go to an SO. Skips are classified from 20 May 2026 and closeouts from 5 June 2025; earlier rows without an approval are NOT_DETERMINED. Approval times start June 2026 for original DARs and September 2025 for closeouts. An approval dated before its submission date is counted in unmeasured. Canceled and archived DARs are excluded. Mode is over whole days, the smallest on a tie.
   parameters:
     - name: from
       in: query
