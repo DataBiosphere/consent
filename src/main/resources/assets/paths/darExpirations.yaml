@@ -2,7 +2,7 @@ get:
   summary: DAR collections whose access ended
   operationId: apiMetricsDarExpirationsGet
   description: |
-    Admin only. DAR collections whose access has ended, dated in the range by when it last ended; a collection renewed since is live and not reported. Access to a dataset runs 365 days from the newest submission, original DAR or progress report, approved on it in its latest election; a pending progress report, or one reopened with no new vote, extends nothing. A closeout ends the collection's access on its filing date, reported as CLOSED_OUT; the study page shows both reasons as expired. A collection has ended once every dataset's access has. Archived DARs grant no access.
+    Admin only. DAR collections whose access has ended, dated in the range by when it last ended; a collection renewed since is live and not reported. Access to a dataset runs 365 days from the newest submission, original DAR or progress report, whose most recently cast vote on it approved it; a pending progress report extends nothing, and a reopened one keeps its grant until the new election decides. A closeout filed before the term runs out ends the collection's access on its filing date, reported as CLOSED_OUT; the study page shows both reasons as expired. A collection has ended once every dataset's access has. Archived DARs grant no access.
   parameters:
     - name: from
       in: query
