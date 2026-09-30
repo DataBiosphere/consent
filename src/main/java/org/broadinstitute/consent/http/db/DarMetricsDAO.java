@@ -11,6 +11,8 @@ import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.ExpirationBucket;
 import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.Renewal;
+import org.broadinstitute.consent.http.models.RenewalBucket;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.SoApproval;
 import org.broadinstitute.consent.http.models.SoApprovalBucket;
@@ -559,6 +561,82 @@ public interface DarMetricsDAO {
           LIMIT :limit OFFSET :offset
           """)
   List<DarVolume> findDarVolume(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Defines {@code renewals}: reference_id, collection_id, dataset_id, submission_date,
+   * decided_via, approval_date. One row per dataset approved on a progress report submitted in
+   * [:from, :to), which is a renewal; closeouts and canceled or archived reports aren't. As in
+   * {@link #PAIR_DECISIONS}, a pair's latest data-access election decides it by its cast final or
+   * RADAR vote. approval_date is that vote's update date, null when it predates decision dates.
+   */
+  String RENEWALS =
+      """
+      WITH progress_reports AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.parent_id IS NOT NULL
+          AND dar.data->>'closeoutSupplement' IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      latest_elections AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               e.election_id, e.reference_id, e.dataset_id
+        FROM election e
+        JOIN progress_reports pr ON pr.reference_id = e.reference_id
+        WHERE LOWER(e.election_type) = 'dataaccess'
+        ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
+      ),
+      deciding_votes AS (
+        SELECT DISTINCT ON (v.election_id) v.election_id, v.vote, v.type, v.update_date
+        FROM vote v
+        JOIN latest_elections le ON le.election_id = v.election_id
+        WHERE LOWER(v.type) IN ('final', 'radar_approve') AND v.vote IS NOT NULL
+        ORDER BY v.election_id, COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      renewals AS (
+        SELECT pr.reference_id, pr.collection_id, dd.dataset_id, pr.submission_date,
+               CASE WHEN LOWER(dv.type) = 'radar_approve' THEN 'RADAR' ELSE 'MANUAL' END
+                 AS decided_via,
+               dv.update_date AS approval_date
+        FROM progress_reports pr
+        JOIN dar_dataset dd ON dd.reference_id = pr.reference_id
+        JOIN latest_elections le
+          ON le.reference_id = dd.reference_id AND le.dataset_id = dd.dataset_id
+        JOIN deciding_votes dv ON dv.election_id = le.election_id
+        WHERE dv.vote
+      )
+      """;
+
+  @RegisterConstructorMapper(RenewalBucket.class)
+  @SqlQuery(
+      RENEWALS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(*) AS renewal_count, COUNT(DISTINCT collection_id) AS collection_count
+          FROM renewals
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<RenewalBucket> countRenewals(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(Renewal.class)
+  @SqlQuery(
+      RENEWALS
+          + """
+          SELECT reference_id, collection_id, dataset_id, submission_date, decided_via,
+                 approval_date
+          FROM renewals
+          ORDER BY submission_date, reference_id, dataset_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<Renewal> findRenewals(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
       @Bind("limit") int limit,
