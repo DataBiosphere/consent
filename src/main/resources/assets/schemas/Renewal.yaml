@@ -1,0 +1,18 @@
+type: object
+properties:
+  referenceId:
+    type: string
+    description: The progress report's reference id.
+  collectionId:
+    type: integer
+  datasetId:
+    type: integer
+  submissionDate:
+    type: integer
+    description: When the progress report was submitted, in milliseconds since the epoch.
+  decidedVia:
+    type: string
+    enum: [MANUAL, RADAR]
+  approvalDate:
+    type: integer
+    description: When the approving vote was cast, in milliseconds since the epoch; null if not recorded.
