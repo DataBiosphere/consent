@@ -109,6 +109,22 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void aCollectionRenewedTwiceHasARowPerProgressReport() {
+    Integer dataset = createDataset();
+    String parent = createDar(dataset);
+    approve(parent, dataset);
+    String first = createProgressReport(parent, RENEWED, dataset);
+    approve(first, dataset);
+    String second = createProgressReport(first, RENEWED.plus(Duration.ofDays(30)), dataset);
+    approve(second, dataset);
+
+    List<Renewal> rows = dao.findRenewals(FROM, TO, 10, 0);
+    assertEquals(List.of(first, second), rows.stream().map(Renewal::referenceId).toList());
+    assertEquals(List.of(dataset, dataset), rows.stream().map(Renewal::datasetId).toList());
+    assertEquals(1, dao.countRenewals(FROM, TO, "quarter").getFirst().collectionCount());
+  }
+
+  @Test
   void theLatestElectionDecides() {
     Integer revoked = createDataset();
     String revokedParent = createDar(revoked);
