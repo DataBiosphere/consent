@@ -74,26 +74,39 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void aProgressReportReopenedWithNoNewVoteDoesNotExtendAccess() {
+  void aProgressReportReopenedWithNoNewVoteKeepsItsGrant() {
+    Integer dataset = createDataset();
+    String parent = createDar(now.minus(Duration.ofDays(400)), dataset);
+    approve(parent, dataset);
+    String report = createProgressReport(parent, now.minus(Duration.ofDays(100)), dataset);
+    approve(report, dataset);
+    election(report, dataset, ElectionStatus.OPEN);
+
+    assertTrue(dao.findExpirations(FROM, TO, 10, 0).isEmpty());
+  }
+
+  @Test
+  void aParentReopenedWithNoNewVoteKeepsItsGrant() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    String parent = createDar(submitted, dataset);
+    approve(parent, dataset);
+    election(parent, dataset, ElectionStatus.OPEN);
+
+    assertEquals(submitted.plus(TERM), only().accessEnd());
+  }
+
+  @Test
+  void aProgressReportDeniedOnReopenDoesNotExtendAccess() {
     Integer dataset = createDataset();
     Instant submitted = now.minus(Duration.ofDays(400));
     String parent = createDar(submitted, dataset);
     approve(parent, dataset);
     String report = createProgressReport(parent, now.minus(Duration.ofDays(100)), dataset);
     approve(report, dataset);
-    election(report, dataset, ElectionStatus.OPEN);
+    decide(report, dataset, false);
 
     assertEquals(submitted.plus(TERM), only().accessEnd());
-  }
-
-  @Test
-  void aParentReopenedWithNoNewVoteHasNoAccessEnd() {
-    Integer dataset = createDataset();
-    String parent = createDar(now.minus(Duration.ofDays(400)), dataset);
-    approve(parent, dataset);
-    election(parent, dataset, ElectionStatus.OPEN);
-
-    assertTrue(dao.findExpirations(FROM, TO, 10, 0).isEmpty());
   }
 
   @Test
@@ -155,10 +168,20 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     String closedDar = createDar(now.minus(Duration.ofDays(100)), closed);
     approve(closedDar, closed);
     createCloseout(closedDar, now.minus(Duration.ofDays(10)));
+    Integer reopenedParent = createDataset();
+    String parent = createDar(now.minus(Duration.ofDays(400)), reopenedParent);
+    approve(parent, reopenedParent);
+    election(parent, reopenedParent, ElectionStatus.OPEN);
+    Integer reopenedReport = createDataset();
+    String renewed = createDar(now.minus(Duration.ofDays(400)), reopenedReport);
+    approve(renewed, reopenedReport);
+    String report = createProgressReport(renewed, now.minus(Duration.ofDays(100)), reopenedReport);
+    approve(report, reopenedReport);
+    election(report, reopenedReport, ElectionStatus.OPEN);
 
     List<Integer> ended =
         dao.findExpirations(FROM, TO, 10, 0).stream().map(ExpiredCollection::collectionId).toList();
-    for (Integer dataset : List.of(expired, live, closed)) {
+    for (Integer dataset : List.of(expired, live, closed, reopenedParent, reopenedReport)) {
       var summary =
           dataAccessRequestDAO
               .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset)
@@ -284,9 +307,13 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
   }
 
   private void approve(String referenceId, Integer datasetId) {
+    decide(referenceId, datasetId, true);
+  }
+
+  private void decide(String referenceId, Integer datasetId, boolean vote) {
     Integer electionId = election(referenceId, datasetId, ElectionStatus.CLOSED);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
     Date on = new Date();
-    updateVote(true, "", on, voteId, false, electionId, on, false);
+    updateVote(vote, "", on, voteId, false, electionId, on, false);
   }
 }

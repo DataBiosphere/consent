@@ -27,20 +27,28 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 public interface DarMetricsDAO {
 
   /**
-   * The state of each DAR-dataset pair's latest data-access election, for the DARs in a {@code
-   * ranked_dars} CTE that the query defines first. A reopen archives the earlier elections and
-   * opens a new one, and product counts the reopen as overwriting the earlier decision, so only the
-   * latest election is read. Its cast final or RADAR vote is the decision; with none cast the pair
-   * is pending, or canceled if a chair canceled the election. Elections are ranked only for those
-   * DARs, so the ranking never sorts the whole table.
+   * One row per DAR-dataset pair on an original DAR submitted in [:from, :to), carrying the state
+   * of the pair's latest data-access election. A reopen archives the earlier elections and opens a
+   * new one, and product counts the reopen as overwriting the earlier decision, so only the latest
+   * election is read. Its cast final or RADAR vote is the decision; with none cast the pair is
+   * pending, or canceled if a chair canceled the election. Elections are ranked only for DARs in
+   * range, so the ranking never sorts the whole table.
    */
-  String LATEST_PAIR_DECISIONS =
+  String PAIR_DECISIONS =
       """
+      WITH original_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.parent_id IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
       latest_elections AS (
         SELECT DISTINCT ON (e.reference_id, e.dataset_id)
                e.election_id, e.reference_id, e.dataset_id, e.status
         FROM election e
-        JOIN ranked_dars od ON od.reference_id = e.reference_id
+        JOIN original_dars od ON od.reference_id = e.reference_id
         WHERE LOWER(e.election_type) = 'dataaccess'
         ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
       ),
@@ -62,27 +70,13 @@ public interface DarMetricsDAO {
                     WHEN LOWER(dv.type) = 'radar_approve' THEN 'RADAR'
                     ELSE 'MANUAL' END AS decided_via,
                dv.update_date AS decision_date
-        FROM ranked_dars od
+        FROM original_dars od
         JOIN dar_dataset dd ON dd.reference_id = od.reference_id
         LEFT JOIN latest_elections le
           ON le.reference_id = dd.reference_id AND le.dataset_id = dd.dataset_id
         LEFT JOIN deciding_votes dv ON dv.election_id = le.election_id
       )
       """;
-
-  /** One row per DAR-dataset pair on an original DAR submitted in [:from, :to). */
-  String PAIR_DECISIONS =
-      """
-      WITH ranked_dars AS (
-        SELECT dar.reference_id, dar.collection_id, dar.submission_date
-        FROM data_access_request dar
-        WHERE dar.parent_id IS NULL
-          AND dar.submission_date >= :from AND dar.submission_date < :to
-          AND (dar.data->>'status' IS NULL
-               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
-      ),
-      """
-          + LATEST_PAIR_DECISIONS;
 
   /**
    * Rolls pairs up per submission, which before 2022-07-27 was saved as one DAR per dataset, so a
@@ -360,11 +354,13 @@ public interface DarMetricsDAO {
   /**
    * DAR collections whose access ended in [:from, :to), and before now. Access to a dataset runs
    * 8760 hours, as {@code EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or
-   * progress report, approved on it in its latest election, and a closeout ends the whole
-   * collection's access on its filing date, as on the study page; a collection has ended once every
-   * dataset's access has. A renewal approved after the range still counts, so a collection is
-   * reported only while its access has ended, dated by when it last did. Only submissions from a
-   * year before :from are ranked, since an older newest approval ended before the range.
+   * progress report, whose most recently cast final or RADAR vote across its elections approved it,
+   * so a reopen keeps the grant until the new election decides; a closeout filed before the term
+   * runs out ends the whole collection's access on its filing date. Both are as on the study page.
+   * A collection has ended once every dataset's access has. A renewal approved after the range
+   * still counts, so a collection is reported only while its access has ended, dated by when it
+   * last did. Only submissions from a year before :from are ranked, since an older newest approval
+   * ended before the range.
    */
   String EXPIRATIONS =
       """
@@ -375,38 +371,49 @@ public interface DarMetricsDAO {
           AND dar.data->>'closeoutSupplement' IS NULL
           AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
       ),
-      """
-          + LATEST_PAIR_DECISIONS
-          + """
-          , term_ends AS (
-            SELECT collection_id,
-                   MAX(submission_date)::timestamptz + INTERVAL '8760 hours' AS term_end
-            FROM pair_decisions
-            WHERE state = 'APPROVED'
-            GROUP BY collection_id, dataset_id
-          ),
-          collection_ends AS (
-            SELECT t.collection_id, MAX(t.term_end) AS term_end,
-                   (SELECT MAX(dar.submission_date)::timestamptz FROM data_access_request dar
-                    WHERE dar.collection_id = t.collection_id
-                      AND dar.submission_date IS NOT NULL
-                      AND dar.data->>'closeoutSupplement' IS NOT NULL) AS closeout_date
-            FROM term_ends t
-            GROUP BY t.collection_id
-          ),
-          expirations AS (
-            SELECT ce.collection_id, dc.dar_code,
-                   LEAST(ce.term_end, ce.closeout_date) AS access_end,
-                   CASE WHEN ce.closeout_date < ce.term_end THEN 'CLOSED_OUT' ELSE 'EXPIRED' END
-                     AS reason
-            FROM collection_ends ce
-            JOIN dar_collection dc ON dc.collection_id = ce.collection_id
-          ),
-          ended AS (
-            SELECT * FROM expirations
-            WHERE access_end >= :from AND access_end < :to AND access_end <= now()
-          )
-          """;
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               rd.collection_id, e.dataset_id, rd.submission_date, v.vote
+        FROM ranked_dars rd
+        JOIN dar_dataset dd ON dd.reference_id = rd.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      term_ends AS (
+        SELECT collection_id,
+               MAX(submission_date)::timestamptz + INTERVAL '8760 hours' AS term_end
+        FROM last_votes
+        WHERE vote
+        GROUP BY collection_id, dataset_id
+      ),
+      collection_ends AS (
+        SELECT t.collection_id, MAX(t.term_end) AS term_end,
+               (SELECT MAX(dar.submission_date)::timestamptz FROM data_access_request dar
+                WHERE dar.collection_id = t.collection_id
+                  AND dar.submission_date IS NOT NULL
+                  AND dar.data->>'closeoutSupplement' IS NOT NULL) AS closeout_date
+        FROM term_ends t
+        GROUP BY t.collection_id
+      ),
+      expirations AS (
+        SELECT ce.collection_id, dc.dar_code,
+               LEAST(ce.term_end, ce.closeout_date) AS access_end,
+               CASE WHEN ce.closeout_date < ce.term_end THEN 'CLOSED_OUT' ELSE 'EXPIRED' END
+                 AS reason
+        FROM collection_ends ce
+        JOIN dar_collection dc ON dc.collection_id = ce.collection_id
+      ),
+      ended AS (
+        SELECT * FROM expirations
+        WHERE access_end >= :from AND access_end < :to AND access_end <= now()
+      )
+      """;
 
   @RegisterConstructorMapper(ExpirationBucket.class)
   @SqlQuery(
