@@ -46,7 +46,7 @@ properties:
   daaAssociations:
     type: object
     description: >-
-      `agreements` counts DAAs mapped to at least one DAC; `researchersApproved` counts users
+      `agreements` counts DAAs mapped to at least one DAC that isn't deleted; `researchersApproved` counts users
       whose library card holds one of them.
     required: [agreements, researchersApproved]
     properties:
