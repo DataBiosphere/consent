@@ -965,7 +965,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @CsvSource({"8759, 1", "8761, 0"})
+  @CsvSource({"8759, 1", "8760, 0", "8761, 0"})
   void testFindApprovedDARsByDatasetIdLastsTheExpirationDuration(
       long submittedHoursAgo, int expected) {
     Dataset dataset = createDARDAOTestDataset();

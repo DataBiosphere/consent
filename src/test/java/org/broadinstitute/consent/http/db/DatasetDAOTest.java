@@ -1371,7 +1371,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @CsvSource({"8759, 1", "8761, 0"})
+  @CsvSource({"8759, 1", "8760, 0", "8761, 0"})
   void testGetApprovedDatasetsLastTheExpirationDuration(long submittedHoursAgo, int expected) {
     User user = createUser();
     libraryCardDAO.insertLibraryCard(
