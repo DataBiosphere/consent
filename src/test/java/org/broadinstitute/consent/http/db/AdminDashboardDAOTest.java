@@ -72,6 +72,33 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void breaksASubmissionDateTieByTheNewestDarRow() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    insertSubmittedDar(user, collectionId, createDataset(user), FIXED_DATE);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        FIXED_DATE,
+        FIXED_DATE,
+        FIXED_DATE,
+        canceled,
+        "era-commons-id");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, createDataset(user));
+
+    DashboardDatabaseCounts counts = counts();
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darCanceled());
+  }
+
+  @Test
   void excludesCollectionWhoseLatestSubmissionIsArchived() {
     User user = createUserWithInstitution();
     DataAccessRequestData archived = new DataAccessRequestData();
