@@ -8,7 +8,13 @@ public interface AdminDashboardDAO {
   @RegisterConstructorMapper(DashboardDatabaseCounts.class)
   @SqlQuery(
       """
-      WITH submissions AS (
+      WITH assignable_daas AS (
+        SELECT DISTINCT daa.daa_id
+        FROM data_access_agreement daa
+        JOIN dac_daa dd ON dd.daa_id = daa.daa_id
+        JOIN dac ON dac.dac_id = dd.dac_id AND dac.deleted IS NOT TRUE
+      ),
+      submissions AS (
         SELECT DISTINCT ON (dar.collection_id)
                dar.collection_id, dar.reference_id, dar.data
         FROM data_access_request dar
@@ -67,7 +73,20 @@ public interface AdminDashboardDAO {
         COALESCE((SELECT canceled FROM dar_counts), 0) AS dar_canceled,
         (SELECT COUNT(*) FROM dac WHERE deleted IS NOT TRUE) AS dacs,
         (SELECT COUNT(*) FROM users) AS users,
-        (SELECT COUNT(*) FROM library_card) AS library_cards
+        (SELECT COUNT(*) FROM institution) AS institutions,
+        (SELECT COUNT(*) FROM institution i
+           WHERE NOT EXISTS (
+             SELECT 1 FROM users u
+             JOIN user_role ur ON ur.user_id = u.user_id
+             JOIN roles r ON r.role_id = ur.role_id
+             WHERE u.institution_id = i.institution_id AND r.name = 'SigningOfficial'
+           )) AS institutions_without_signing_official,
+        (SELECT COUNT(*) FROM library_card) AS library_cards,
+        (SELECT COUNT(*) FROM assignable_daas) AS agreements,
+        (SELECT COUNT(DISTINCT lc.user_id)
+           FROM library_card lc
+           JOIN lc_daa ld ON ld.lc_id = lc.id
+           JOIN assignable_daas ad ON ad.daa_id = ld.daa_id) AS researchers_approved
       """)
   DashboardDatabaseCounts getCounts();
 
@@ -77,5 +96,9 @@ public interface AdminDashboardDAO {
       long darCanceled,
       long dacs,
       long users,
-      long libraryCards) {}
+      long institutions,
+      long institutionsWithoutSigningOfficial,
+      long libraryCards,
+      long agreements,
+      long researchersApproved) {}
 }

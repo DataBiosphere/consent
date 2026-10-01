@@ -3,7 +3,9 @@ required:
   - darRequests
   - dacs
   - users
+  - institutions
   - libraryCards
+  - daaAssociations
 properties:
   darRequests:
     type: object
@@ -26,8 +28,26 @@ properties:
     required: [total]
     properties:
       total: { type: integer, format: int64 }
+  institutions:
+    type: object
+    required: [total, withoutSigningOfficial]
+    properties:
+      total: { type: integer, format: int64 }
+      withoutSigningOfficial:
+        type: integer
+        format: int64
+        description: Institutions with no user holding the Signing Official role.
   libraryCards:
     type: object
     required: [total]
     properties:
       total: { type: integer, format: int64 }
+  daaAssociations:
+    type: object
+    description: >-
+      `agreements` counts DAAs mapped to at least one DAC; `researchersApproved` counts users
+      whose library card holds one of them.
+    required: [agreements, researchersApproved]
+    properties:
+      agreements: { type: integer, format: int64 }
+      researchersApproved: { type: integer, format: int64 }

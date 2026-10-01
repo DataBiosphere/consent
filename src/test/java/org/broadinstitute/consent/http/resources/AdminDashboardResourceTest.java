@@ -5,7 +5,9 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary;
+import org.broadinstitute.consent.http.models.AdminDashboardSummary.DaaAssociations;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Dacs;
+import org.broadinstitute.consent.http.models.AdminDashboardSummary.Institutions;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.LibraryCards;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Users;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -36,7 +38,12 @@ class AdminDashboardResourceTest {
   void returnsSummary() {
     AdminDashboardSummary summary =
         new AdminDashboardSummary(
-            new DarRequests(3, 1, 1, 1), new Dacs(2), new Users(9), new LibraryCards(5));
+            new DarRequests(3, 1, 1, 1),
+            new Dacs(2),
+            new Users(9),
+            new Institutions(4, 1),
+            new LibraryCards(5),
+            new DaaAssociations(2, 3));
     when(dashboardService.getSummary()).thenReturn(summary);
 
     Response response = resource.getDashboardSummary(duosUser);

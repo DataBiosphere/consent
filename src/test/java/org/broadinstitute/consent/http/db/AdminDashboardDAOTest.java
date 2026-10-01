@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.db.AdminDashboardDAO.DashboardDatabaseCounts;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
@@ -26,7 +27,9 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     assertEquals(0, counts.darTotal());
     assertEquals(0, counts.dacs());
     assertEquals(0, counts.users());
+    assertEquals(0, counts.institutions());
     assertEquals(0, counts.libraryCards());
+    assertEquals(0, counts.agreements());
   }
 
   @Test
@@ -82,19 +85,55 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void countsDacsUsersAndLibraryCards() {
+  void countsInstitutionsWithoutASigningOfficial() {
+    User signingOfficial = createUserWithInstitution();
+    for (String name : new String[] {"No SO One", "No SO Two"}) {
+      Integer institutionId = insertInstitution(name, signingOfficial.getUserId());
+      createUserWithRole(UserRoles.RESEARCHER.getRoleId(), institutionId);
+    }
+
+    DashboardDatabaseCounts counts = counts();
+
+    assertEquals(3, counts.institutions());
+    assertEquals(2, counts.institutionsWithoutSigningOfficial());
+  }
+
+  @Test
+  void countsDacsUsersLibraryCardsAndDaaAssociations() {
     User user = createUser();
-    dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
+    Integer dacId = dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
     Integer deletedDacId = dacDAO.createDac("Old DAC", "old@example.org", "", user.getUserId());
     dacDAO.deleteDac(deletedDacId, user.getUserId());
-    libraryCardDAO.insertLibraryCard(
-        user.getUserId(), "name", user.getEmail(), user.getUserId(), FIXED_DATE);
+    Integer daaId =
+        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
+    Integer cardId =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(), "name", user.getEmail(), user.getUserId(), FIXED_DATE);
+    libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), cardId, daaId);
 
     DashboardDatabaseCounts counts = counts();
 
     assertEquals(1, counts.dacs());
     assertEquals(1, counts.users());
     assertEquals(1, counts.libraryCards());
+    assertEquals(1, counts.agreements());
+    assertEquals(1, counts.researchersApproved());
+  }
+
+  private Integer insertInstitution(String name, Integer createUserId) {
+    return institutionDAO.insertInstitution(
+        name,
+        "itDirectorName",
+        "itDirectorEmail",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        createUserId,
+        FIXED_DATE);
   }
 
   private Integer createDataset(User user) {

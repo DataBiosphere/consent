@@ -4,7 +4,9 @@ import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.AdminDashboardDAO;
 import org.broadinstitute.consent.http.db.AdminDashboardDAO.DashboardDatabaseCounts;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary;
+import org.broadinstitute.consent.http.models.AdminDashboardSummary.DaaAssociations;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Dacs;
+import org.broadinstitute.consent.http.models.AdminDashboardSummary.Institutions;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.LibraryCards;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Users;
 import org.broadinstitute.consent.http.models.DashboardSummary.DarRequests;
@@ -25,6 +27,8 @@ public class AdminDashboardService {
         new DarRequests(db.darTotal(), db.darApproved(), db.darCanceled(), inProcess),
         new Dacs(db.dacs()),
         new Users(db.users()),
-        new LibraryCards(db.libraryCards()));
+        new Institutions(db.institutions(), db.institutionsWithoutSigningOfficial()),
+        new LibraryCards(db.libraryCards()),
+        new DaaAssociations(db.agreements(), db.researchersApproved()));
   }
 }
