@@ -47,6 +47,9 @@ import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
+import org.broadinstitute.consent.http.models.Renewal;
+import org.broadinstitute.consent.http.models.RenewalBucket;
+import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.SoApproval;
 import org.broadinstitute.consent.http.models.SoApprovalBucket;
@@ -544,6 +547,27 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(buckets, report.buckets());
     assertEquals(List.of(row), report.rows());
     assertEquals(countedAsOf.getValue(), foundAsOf.getValue());
+  }
+
+  @Test
+  void renewalsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<RenewalBucket> buckets =
+        List.of(
+            new RenewalBucket(start, 3L, 2L),
+            new RenewalBucket(start.plus(Duration.ofDays(90)), 1L, 1L));
+    Renewal row = new Renewal("ref", 1, 2, start, DecidedVia.MANUAL, start);
+    when(darMetricsDAO.countRenewals(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findRenewals(start, end, 10, 20)).thenReturn(List.of(row));
+
+    RenewalReport report =
+        service.getDarRenewals(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
   }
 
   @Test
