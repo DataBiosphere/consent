@@ -3,7 +3,9 @@
 ## Status
 
 Proposed. This plan is for team review. No code exists yet. The team answered the first set of
-questions. See [Decisions](#decisions). A test render of the consent chart ran on 2026-09-24
+questions. See [Decisions](#decisions). On 2026-10-01 the plan changed to follow the new `duos-ui`
+Dev Container (DT-4206): the Dev Container renders all config itself, `render-configs.sh` does
+the checks, and tests are kept to a minimum. A test render of the consent chart ran on 2026-09-24
 against a local `terra-helmfile` checkout at `ebe889ffb`. See
 [Test Render Findings](#test-render-findings).
 
@@ -29,9 +31,9 @@ script writes the files that `config/docker-compose.yaml` needs to start a local
 
 | Script | What it does | Needs |
 |---|---|---|
-| `render-configs.sh` | Writes `server.crt`, `server.key` and `ca-bundle.crt` from the `local-dev` namespace. Optional flags write `.env.local`, `public/config.json` and `site.conf`. | VPN, `gcloud`, `kubectl`, `jq`, `openssl` |
+| `render-configs.sh` | Writes `server.crt`, `server.key` and `ca-bundle.crt` from the `local-dev` namespace. Optional flags write `.env.local`, `public/config.json` and `site.conf`. It writes the certs to a staging folder, and moves them into place only after all three succeed. | VPN, `gcloud`, `kubectl`, `jq`, `openssl` |
 | `render-site-conf.sh` | Renders `site.conf` from the duos chart template in `terra-helmfile`. It fails if helm syntax remains after the render. | `gh` |
-| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. It checks that the config files exist, and names each missing file with the host command that makes it. It makes no files. | Nothing |
+| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. If a config file is missing (or always, with `--refresh`), it checks the tools and logins, then runs `render-configs.sh` with every write flag. It always exits 0, and prints the commands that fix a missing login. | `gcloud`, `kubectl`, `gh` in the container |
 | `render-accounts.sh` | Writes test service account keys to a gitignored env file. It writes to a temp file first, so a failure keeps the old file. | `gcloud`, `jq` |
 
 The patterns that we copy:
@@ -45,6 +47,7 @@ The patterns that we copy:
    or edits it by hand.
 7. The script fails with a clear message when a tool, the VPN or an access right is missing.
 8. The script fails if template syntax (`{{`) remains in any output.
+9. The Dev Container installs every tool, and renders all config inside the container.
 
 ### The Rendered Files Are Authoritative
 
@@ -91,11 +94,12 @@ full chart.
 
 | File | Purpose |
 |---|---|
-| `scripts/render-configs.sh` | The entry point. It writes certs by default. Flags turn on the other files. |
+| `scripts/render-configs.sh` | The entry point. It writes certs by default. Flags turn on the other files. It does the tool, login and file checks for all callers. |
 | `scripts/render-chart-configs.sh` | Runs `helm template` and writes `consent.yaml`, `site.conf` and `oauth2.conf`. It also runs on its own, without the VPN. |
 | `scripts/export-db.sh` | Writes a database dump. It also runs on its own. |
 | `scripts/index-es.sh` | Fills the local `dataset` index from the database. It runs after compose starts. |
-| `scripts/setup-devcontainer.sh` | Checks the config files when the Dev Container starts. It makes no files. |
+| `scripts/setup-devcontainer.sh` | Runs `render-configs.sh` when the Dev Container is created. It adds almost no logic of its own. |
+| `.devcontainer/Dockerfile` | Adds `gcloud` and the GKE auth plugin to the Dev Container image. |
 | `scripts/templates/local-values.yaml` | Helm values for local development. |
 | `scripts/templates/docker-compose.yaml` | The compose template. |
 
@@ -115,16 +119,25 @@ Usage: scripts/render-configs.sh [OPTION]...
   --export_db true|false            Write a new database dump. Defaults to false.
   --db_env dev|staging              The environment to export. Defaults to dev. The script refuses prod.
   --fetch_sendgrid true|false       Put the dev SendGrid key in .env. Defaults to false.
+  --all true|false                  Write the certs, the chart configs and the compose files. Also
+                                    export a dump if config/ has no dump. Defaults to false.
+  --only_missing true|false         Skip each step whose files are present and valid. Defaults to false.
   --help                            Show this help.
 ```
 
-The first-time setup command is:
+The first-time setup command, outside the Dev Container, is:
 
 ```bash
-./scripts/render-configs.sh --write_chart_configs true --write_compose true --export_db true
+./scripts/render-configs.sh --all true
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ./scripts/index-es.sh
 ```
+
+In the Dev Container, `setup-devcontainer.sh` runs the first command. See
+[Dev Container](#dev-container).
+
+`--all` never makes a second dump. A dump is large, and the old one stays valid. To make a new
+dump, use `--export_db true`.
 
 `index-es.sh` is a separate step because it needs a running stack. `render-configs.sh` runs before
 compose starts.
@@ -139,6 +152,25 @@ compose:
 ```
 
 To test changes that are not pushed yet, use `--helmfile_dir ~/develop/terra-helmfile`.
+
+### Robust `render-configs.sh`
+
+`render-configs.sh` does all of the checks, so each caller stays small. The `duos-ui`
+`setup-devcontainer.sh` has its own file and login checks. In consent these checks go in
+`render-configs.sh`. Then `setup-devcontainer.sh`, a developer on the host and a developer who
+renders one file all get the same checks and messages.
+
+| Feature | Behavior |
+|---|---|
+| Preflight | Before it writes a file, the script checks what the selected steps need: the tools, the active `gcloud` account, `gh auth status` (only to clone `terra-helmfile`), and the dev cluster (one `kubectl` call with `--request-timeout=15s`, only for steps that read the cluster). It prints every problem at once, each with the command that fixes it. Then it stops with exit code 2. |
+| Exit codes | 0: each selected step succeeded or was skipped. 1: a step failed. 2: a tool, a login or the VPN is missing, and the developer must act. Callers act on the code, not on the text. |
+| Staged writes | Each step writes to a staging folder in `config/`, and moves its files into place only after the step succeeds. A failed step leaves the old files unchanged. A trap removes the staging folder on each exit, also on Ctrl-C. This extends the `duos-ui` cert change to all files. |
+| Independent steps | A failed step does not stop the other steps. Without the VPN, the chart configs still render, because they need only `gh` and `helm`. The certs, the `.env` values from the cluster and the export fail. |
+| `--only_missing` | Skips a step when its files are present and valid. Valid means not empty, and for `server.crt`, not expiring in 14 days or less (`openssl x509 -checkend`). So a plain run also renews certs that expire soon. For the export, valid means that the dump that `CONSENT_DB_DUMP` names exists. |
+| Summary | At the end, one line for each step: written, skipped (present) or failed. Then the next commands, for example `docker compose ... up -d` and `./scripts/index-es.sh`. |
+
+The script reads only the lines that it needs from `config/.env` with `grep`. It never sources
+`.env` and never prints a value from it.
 
 ### Certs
 
@@ -329,8 +361,8 @@ Docker network, the two containers find each other by name on each runtime. The 
 does not need to install `cloud-sql-proxy`.
 
 The access token expires after about one hour. The proxy uses the token only to connect, so a
-dump that takes longer than one hour is a risk only if the proxy must connect again. The
-verification checks the time of a full dev dump.
+dump that takes longer than one hour is a risk only if the proxy must connect again. The PR for
+ticket 4 records the time of a full dev dump.
 
 Why this format: the local Postgres container loads the dump with `psql` and `ON_ERROR_STOP=1`.
 The dumps that developers use today have `Owner: -` on each object, so somebody made them with
@@ -413,67 +445,82 @@ account `gcloud` used and that this account needs the Admin role.
 
 ### Dev Container
 
-The repo has a Dev Container (`.devcontainer/devcontainer.json`, Java 25 with Maven and
-Docker-in-Docker). It does not run a setup script today. `scripts/setup-devcontainer.sh` follows
-the `duos-ui` script: the container makes no config, and the script only checks for it.
+This section follows the `duos-ui` Dev Container (DT-4206). The Dev Container renders all config
+itself. The developer connects the host to the non-split Broad VPN, opens the container, and logs
+in once in the container terminal.
 
-The container cannot make the config. It has no VPN, `gcloud`, `kubectl` or `helm`, and the
-developer's Google credentials are on the host. The developer runs `render-configs.sh` on the
-host. The workspace bind mount then makes the files in `config/` available in the container.
+Consent needs more tools than `duos-ui`: `helm` for the chart render and Docker for the export.
+The container gets each tool from the image or from a Dev Container feature:
 
-The script checks for these files in `config/`:
-
-| File | Made by |
+| Tool | Source |
 |---|---|
-| `server.crt`, `server.key`, `ca-bundle.crt` | `render-configs.sh` (no flags) |
-| `consent.yaml`, `site.conf`, `oauth2.conf` | `--write_chart_configs true` |
-| `docker-compose.yaml`, `docker-compose.override.yaml`, `.env` | `--write_compose true` |
-| The dump that `CONSENT_DB_DUMP` in `.env` names | `--export_db true` |
+| Java 25, Maven | `ghcr.io/devcontainers/features/java:1` (as now) |
+| Docker, Docker Compose | `ghcr.io/devcontainers/features/docker-in-docker:2` (as now). The export runs its proxy and `pg_dump` containers on this daemon. |
+| `gcloud`, GKE auth plugin | `.devcontainer/Dockerfile`, from Google's apt repository, as in `duos-ui` |
+| `kubectl`, `helm` | `ghcr.io/devcontainers/features/kubectl-helm-minikube:1`, with `minikube` set to `none`. `duos-ui` sets `helm` to `none`. Consent pins `helm` to `4.2.3`, the version of the test render. |
+| `gh` | `ghcr.io/devcontainers/features/github-cli:1` |
+| `jq`, `openssl`, `gzip`, `curl` | The base image. If the base image does not have one of them, the Dockerfile installs it. |
 
-What the script does:
-
-1. Find the repo root from the path of the script, like the other scripts. The `duos-ui` script
-   has a fixed `/workspaces/duos-ui` path. A relative path also works outside the container.
-2. Check each file in the table. Read only the `CONSENT_DB_DUMP=` line from `.env` with `grep`.
-   The script never sources `.env` and never prints a value from it, because `.env` has secrets.
-3. If `openssl` is available, warn when `server.crt` expires in 14 days or less
-   (`openssl x509 -checkend`). The certs rotate every 3 months, and an expired cert is the most
-   frequent cause of a proxy that does not start.
-4. If files are missing, name each one, and print the host command that makes them:
-   `./scripts/render-configs.sh --write_chart_configs true --write_compose true --export_db true`.
-5. Always exit 0. A missing file is a message, not a failure, so the container still starts.
-
-Changes to `.devcontainer/devcontainer.json`:
+Changes to `.devcontainer/`:
 
 | Change | Reason |
 |---|---|
-| `"postStartCommand": "./scripts/setup-devcontainer.sh"` | Runs the check each time the container starts. `duos-ui` uses `postCreateCommand`, which runs only once. Consent certs expire, and a check at each start finds an expired cert. |
+| Add `Dockerfile`: `FROM mcr.microsoft.com/devcontainers/java:25`, then `gcloud` and the GKE auth plugin | The same method as `duos-ui`. |
+| `devcontainer.json`: `"build": {"dockerfile": "Dockerfile"}` in place of `image` | Uses the new image. |
+| `devcontainer.json`: add the `github-cli` and `kubectl-helm-minikube` features, and update `devcontainer-lock.json` | The tools in the table. |
+| `devcontainer.json`: `"postCreateCommand": "./scripts/setup-devcontainer.sh"` | The same hook as `duos-ui`. |
+| `devcontainer.json`: `forwardPorts` 27443, 7777 and 9200 | For the container mode. Docker-in-Docker publishes ports inside the container only. |
+
+`setup-devcontainer.sh` is small, because `render-configs.sh` does the checks:
+
+| Call | Runs |
+|---|---|
+| `./scripts/setup-devcontainer.sh` | `render-configs.sh --all true --only_missing true` |
+| `./scripts/setup-devcontainer.sh --refresh` | `render-configs.sh --all true` |
+
+After the call, the script prints one message for the exit code:
+
+| Exit code | Message |
+|---|---|
+| 0 | The summary from `render-configs.sh`, then the next commands. |
+| 2 | "Run the commands above in this terminal, then run `./scripts/setup-devcontainer.sh` again." |
+| Other | "`render-configs.sh` failed. Fix the cause above, then run the script again." |
+
+The script always exits 0, so the container starts when a login is missing. It finds the repo root
+from its own path, as the `duos-ui` script does.
+
+On each new container, the developer logs in once in the container terminal:
+
+```sh
+gcloud auth login --no-launch-browser
+gh auth login
+./scripts/setup-devcontainer.sh
+```
+
+The `gh` account must be able to read `broadinstitute/terra-helmfile`. The logins stay in the
+container, and a rebuild removes them, as in `duos-ui`. `--only_missing` treats a cert that
+expires in 14 days or less as missing, so a plain run renews the certs. `--refresh` makes all
+files again, except the dump.
 
 The team uses two modes, and both must work:
 
-| Mode | Where `docker compose up` runs |
-|---|---|
-| Host | In a terminal on the host. The Dev Container is only an editor, or it is not used. |
-| Container | In the Dev Container, with Docker-in-Docker. |
+| Mode | Where `docker compose up` runs | Where `index-es.sh` runs |
+|---|---|---|
+| Host | In a terminal on the host. The Dev Container renders the files, or the developer runs `render-configs.sh` on the host. | On the host |
+| Container | In the Dev Container, with Docker-in-Docker | In the Dev Container |
 
-The same `config/` files serve both modes, through the workspace bind mount. Docker-in-Docker
-resolves the compose bind mounts, such as `./consent.yaml` and `../target`, in the container file
-system. So the compose template does not change. For the container mode, `devcontainer.json`
-also needs these changes:
+The workspace bind mount makes the same `config/` files available to both modes. `index-es.sh`
+runs where compose runs, because it calls the stack on `localhost`.
 
-| Change | Reason |
-|---|---|
-| Mount the host `~/.config/gcloud` read-only at `/home/vscode/.config/gcloud` | The compose template mounts the ADC file from `~/.config/gcloud`. Without the mount, that folder is empty in the container. Read-only, so the container cannot change the host credentials. |
-| `forwardPorts`: 27443, 7777 and 9200 | Docker-in-Docker publishes ports inside the container only. The host needs 27443 for the browser and `index-es.sh`, 7777 for the debugger, and 9200 for the `index-es.sh` reset. |
+The container mode also needs Application Default Credentials (ADC) in the container, because the
+compose template mounts the ADC file from `~/.config/gcloud`. The preflight warns, but does not
+stop, when `--all` runs in the container and there is no ADC file. The warning gives the command:
+`gcloud auth application-default login --no-launch-browser`. A host-mode developer uses the ADC
+file on the host and can ignore the warning.
 
-These changes do no harm in the host mode. The mount needs `~/.config/gcloud` on the host,
-which each developer has after `gcloud auth login`. If a developer runs the stack on the host
-and in the container at the same time, VS Code forwards the ports to other numbers. Run one
-stack at a time.
-
-In both modes, run `render-configs.sh`, `export-db.sh` and `index-es.sh` on the host. The
-container has no `gcloud`. In the container mode, `index-es.sh` reaches the stack through the
-forwarded ports 27443 and 9200.
+The `duos-ui` combined Dev Container (`.devcontainer/uber`) mounts consent, but it runs only the
+`duos-ui` setup, and it sets `helm` to `none`. To render consent config there, that container needs
+`helm` and a second `postCreateCommand` step. That is a `duos-ui` change, outside this plan.
 
 ### Secrets
 
@@ -507,7 +554,8 @@ The script never prints a secret value. All files that hold a secret get mode `6
 | `jq`, `openssl`, `gzip` | Secrets and files |
 | `curl` | `index-es.sh` |
 
-The script checks each tool at the start and names any tool that is missing.
+The preflight checks each tool that the selected steps need, and names any tool that is missing.
+The Dev Container installs all of them. See [Dev Container](#dev-container).
 
 ## Test Render Findings
 
@@ -532,8 +580,10 @@ the reference. These findings show what changes for a developer who moves to the
 
 ## Tickets
 
-1. Add `scripts/render-configs.sh` with the cert step only. Add a "Render Configs" section to
-   `DEVNOTES.md`. (`DEVNOTES.md` already links to this section, but the section does not exist.)
+1. Add `scripts/render-configs.sh` with the cert step and the base for the other steps: the
+   preflight, the exit codes, staged writes, the step summary, `--all` and `--only_missing`. Add a
+   "Render Configs" section to `DEVNOTES.md`. (`DEVNOTES.md` already links to this section, but
+   the section does not exist.) Each later ticket adds one step to this base.
 2. Add `scripts/render-chart-configs.sh`, `scripts/templates/local-values.yaml` and the
    `--write_chart_configs`, `--helmfile_ref` and `--helmfile_dir` flags.
 3. Add `scripts/templates/docker-compose.yaml`, the `.env` step and the `--write_compose` flag.
@@ -541,8 +591,9 @@ the reference. These findings show what changes for a developer who moves to the
    `cloud-sql-proxy` v2 in the same change. `db-connect.sh` runs on the host and uses `psql`, so it
    keeps a host proxy on `127.0.0.1`.
 5. Add `scripts/index-es.sh`.
-6. Add `scripts/setup-devcontainer.sh`. In `.devcontainer/devcontainer.json`, add
-   `postStartCommand`, the read-only gcloud mount and `forwardPorts`.
+6. Add `.devcontainer/Dockerfile` and `scripts/setup-devcontainer.sh`. In
+   `.devcontainer/devcontainer.json`, add the build, the `github-cli` and `kubectl-helm-minikube`
+   features, `postCreateCommand` and `forwardPorts`. Update `devcontainer-lock.json`.
 7. Change each compose command in `DEVNOTES.md` to name both compose files. Replace the
    "Configure" section of `DEVNOTES.md`. It tells developers to copy
    `src/test/resources/consent-config.yml` by hand. Remove the steps for `wait-for-it.sh`, the
@@ -550,63 +601,27 @@ the reference. These findings show what changes for a developer who moves to the
 
 Ticket 1 can start now. Tickets 2 to 4 can go in any order after ticket 1. Ticket 3 needs the
 output of ticket 2 to test. Ticket 5 needs a running stack from ticket 3 and a dump from ticket 4.
-Ticket 6 needs the final file list from tickets 1 to 4. Ticket 7 goes last. It also adds a Dev
-Container section to `DEVNOTES.md`, like the one in `duos-ui`.
+Ticket 6 can start after ticket 1, with the cert step only. It gets each later step with no
+change. Ticket 7 goes last. It also adds a Dev Container section to `DEVNOTES.md`, like the one in
+`duos-ui`.
 
 ## Verification
 
-The rendered files are the reference, so a difference from an old local copy is not a failure.
-For each ticket:
+Tests are kept to a minimum. The rendered files are the reference, so a difference from an old
+local copy is not a failure. Each ticket runs the checks below that apply to it:
 
-1. Run the script with the output set to a temp directory.
-2. Make sure that each rendered file is the same as the matching configmap key from a direct
-   `helm template` run. The only differences must come from the
+1. **Render:** each rendered file is the same as the matching configmap key from a direct
+   `helm template` run. The only differences come from the
    [list of local changes](#all-local-changes).
-3. Run `docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up`.
-4. Get `/status` and the Swagger page through the proxy on port 27443.
-5. Send one authenticated `/api` request with a dev B2C token. This test checks the audience
-   allow list and `B2C_APPLICATION_ID`.
-6. Make sure that the port-80 redirect and `/oauth2callback` work with the rendered
-   `ServerName localhost`. If they do not work, add `proxy.serverName` to the local values and to
-   the list of local changes.
-7. Run the script a second time. Make sure that it keeps the `.env` values and makes `.bak` files.
-8. For ticket 2: render with `--helmfile_ref` set to a test branch, and with `--helmfile_dir` set to
-   a checkout that has a change that is not committed. Make sure that each change is in the output
-   and that the script prints the source, the commit and `(uncommitted changes)`. Make sure that
-   `git status` in the checkout is the same before and after the run.
-9. For ticket 4: start compose with a new dev dump and a fresh container. Make sure that the load
-   has no errors and that Liquibase reports no pending changes. Do the same with a staging dump.
-10. For ticket 4: run with `--db_env prod`. Make sure that the script stops before it reads a
-    secret or starts the proxy. Then run `render-configs.sh --export_db true --project
-    broad-dsde-prod` with `gcloud config set project broad-dsde-prod`. Make sure that the export
-    still uses `broad-dsde-dev`.
-11. For ticket 4: run the export two times. Make sure that only the second dump stays, that it has
-    mode `600`, and that the script lists a hand-made `.sql` file in `config/` but does not
-    delete it. Then make an export fail, and make sure that the older dump stays.
-12. For ticket 4: run a full export on Colima, on Linux Docker Engine and on Podman. Make sure that
-    `pg_dump` connects to the proxy and writes a complete dump on each one. A name that resolves
-    is not enough. Record the time of the dev dump.
-13. For ticket 4: while the proxy container runs, make sure that `docker port` shows no published
-    ports, and that `ps` on the host does not show the token or the password. After the script
-    exits, and after a failed run, make sure that the container and the network are gone.
-14. For ticket 5: run the script on a new volume and again on a full index. Make sure that the
-    document count is the same as the number of datasets in the database both times.
-15. For ticket 5: make one document fail, for example with a local index that has a conflicting
-    mapping for one field. Make sure that the script fails and shows the failed dataset IDs.
-16. For ticket 3: put a changed value in `config/docker-compose.override.yaml`. Make sure that
-    `docker compose ... config` shows it, and that `--write_compose` does not change the file.
-17. For ticket 2: add a key such as `databasePassword: x` to `local-values.yaml`. Make sure that
-    the script stops before the render, and that the error names the line and the key.
-18. For ticket 5: compare `GET /dataset/_mapping` on local with the dev index once. Record any
-    difference in the PR.
-19. For ticket 6: start the Dev Container with all files present, with some files missing, and
-    with a cert that expires in less than 14 days. Make sure that the script names each missing
-    file, warns about the cert, prints no `.env` values, and that the container starts each time.
-20. For ticket 6, container mode: run `docker compose up` in the Dev Container. From the host,
-    make sure that the proxy on port 27443, the debugger on port 7777 and `index-es.sh` work.
-    Make sure that the app can read the dev bucket with the mounted ADC file.
-21. For ticket 6, host mode: with the new `devcontainer.json`, run `docker compose up` on the host.
-    Make sure that nothing changed for this mode.
+2. **Dev Container, first start:** the setup script asks for the logins. After the logins, a second
+   run writes all files. `docker compose ... up` starts the stack. `/status` and one authenticated
+   `/api` request work through the proxy on port 27443. `index-es.sh` fills the index. Do this one
+   time in each mode: container and host.
+3. **No VPN:** with the VPN off, the setup script exits 0 and names the VPN. The chart configs
+   render. The certs and `.env` stay as they were.
+4. **Rerun:** a second run with `--only_missing true` changes nothing. A run with `--refresh` writes
+   the certs again and keeps the `.env` values.
+5. **Prod:** `--db_env prod` stops before the script reads a secret.
 
 ## Alternatives
 
@@ -628,6 +643,9 @@ The team answered the open questions from the first review:
 | Does anyone use `sqlproxy.env` or `tcell_agent.config`? | No. | The script does not write them. Ticket 5 removes them from the docs. |
 | Does anyone run the app outside compose? | No. The team runs the app with compose from a terminal. | The `-Ddw.*` flags are only in the compose template. No IntelliJ steps. |
 | How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. The script can delete older dumps. | [Data Handling](#data-handling): mode `600`, only the newest dump stays, no sharing. |
-| Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | Ticket 6 supports both modes: the gcloud mount and `forwardPorts` for the container mode, with no change to the host mode. |
+| Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | Ticket 6 supports both modes. `forwardPorts` is for the container mode. The host mode does not change. |
+| Where does the config get rendered? | Inside the Dev Container, as in `duos-ui` (DT-4206). | The Dev Container installs `gcloud`, `kubectl`, `helm` and `gh`. `setup-devcontainer.sh` runs `render-configs.sh`. The host `~/.config/gcloud` mount is not needed. |
+| How much testing? | A minimum. | Five checks in [Verification](#verification). |
+| Where do the checks go? | In `render-configs.sh`, so that `setup-devcontainer.sh` has less to do. | The preflight, exit codes, staged writes, `--all` and `--only_missing` (ticket 1). |
 | How does the local `dataset` index get filled? | A script calls the reindex API with a `gcloud auth print-access-token` token. | `scripts/index-es.sh` (ticket 5). |
 | Which `terra-helmfile` commit does the script render? | `master` by default. The team often tests `terra-helmfile` changes with a local consent instance. | `--helmfile_ref` selects a branch. `--helmfile_dir` renders a local checkout with changes that are not committed. |
