@@ -570,8 +570,9 @@ public interface DarMetricsDAO {
    * Defines {@code renewals}: reference_id, collection_id, dataset_id, submission_date,
    * decided_via, approval_date. One row per dataset approved on a progress report submitted in
    * [:from, :to), which is a renewal; closeouts and canceled or archived reports aren't. As in
-   * {@link #PAIR_DECISIONS}, a pair's latest data-access election decides it by its cast final or
-   * RADAR vote. approval_date is that vote's update date, null when it predates decision dates.
+   * {@link #EXPIRATIONS}, a pair is approved by its most recently cast final or RADAR vote across
+   * its data-access elections, so a reopen keeps the renewal until the new election decides.
+   * approval_date is that vote's update date, null when it predates decision dates.
    */
   String RENEWALS =
       """
@@ -584,32 +585,28 @@ public interface DarMetricsDAO {
           AND (dar.data->>'status' IS NULL
                OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
       ),
-      latest_elections AS (
+      last_votes AS (
         SELECT DISTINCT ON (e.reference_id, e.dataset_id)
-               e.election_id, e.reference_id, e.dataset_id
-        FROM election e
-        JOIN progress_reports pr ON pr.reference_id = e.reference_id
-        WHERE LOWER(e.election_type) = 'dataaccess'
-        ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
-      ),
-      deciding_votes AS (
-        SELECT DISTINCT ON (v.election_id) v.election_id, v.vote, v.type, v.update_date
-        FROM vote v
-        JOIN latest_elections le ON le.election_id = v.election_id
-        WHERE LOWER(v.type) IN ('final', 'radar_approve') AND v.vote IS NOT NULL
-        ORDER BY v.election_id, COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
-      ),
-      renewals AS (
-        SELECT pr.reference_id, pr.collection_id, dd.dataset_id, pr.submission_date,
-               CASE WHEN LOWER(dv.type) = 'radar_approve' THEN 'RADAR' ELSE 'MANUAL' END
-                 AS decided_via,
-               dv.update_date AS approval_date
+               e.reference_id, e.dataset_id, v.vote, v.type, v.update_date
         FROM progress_reports pr
         JOIN dar_dataset dd ON dd.reference_id = pr.reference_id
-        JOIN latest_elections le
-          ON le.reference_id = dd.reference_id AND le.dataset_id = dd.dataset_id
-        JOIN deciding_votes dv ON dv.election_id = le.election_id
-        WHERE dv.vote
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      renewals AS (
+        SELECT pr.reference_id, pr.collection_id, lv.dataset_id, pr.submission_date,
+               CASE WHEN LOWER(lv.type) = 'radar_approve' THEN 'RADAR' ELSE 'MANUAL' END
+                 AS decided_via,
+               lv.update_date AS approval_date
+        FROM progress_reports pr
+        JOIN last_votes lv ON lv.reference_id = pr.reference_id
+        WHERE lv.vote
       )
       """;
 

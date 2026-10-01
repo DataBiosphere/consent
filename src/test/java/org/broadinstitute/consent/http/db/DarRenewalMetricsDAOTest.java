@@ -125,7 +125,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void theLatestElectionDecides() {
+  void theLastVoteCastAcrossElectionsDecides() {
     Integer revoked = createDataset();
     String revokedParent = createDar(revoked);
     approve(revokedParent, revoked);
@@ -143,7 +143,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void aReopenWithNoNewVoteIsNotARenewal() {
+  void aReopenWithNoNewVoteIsStillARenewal() {
     Integer dataset = createDataset();
     String parent = createDar(dataset);
     approve(parent, dataset);
@@ -151,8 +151,8 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     approve(report, dataset);
     election(report, dataset, ElectionStatus.OPEN);
 
-    assertTrue(dao.findRenewals(FROM, TO, 10, 0).isEmpty());
-    assertTrue(dao.countRenewals(FROM, TO, "month").isEmpty());
+    assertEquals(report, only().referenceId());
+    assertEquals(1, dao.countRenewals(FROM, TO, "month").getFirst().renewalCount());
   }
 
   @Test
