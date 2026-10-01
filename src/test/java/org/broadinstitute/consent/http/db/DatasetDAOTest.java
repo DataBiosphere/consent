@@ -60,6 +60,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -1367,6 +1368,32 @@ class DatasetDAOTest extends DAOTestHelper {
 
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(0, approvedDatasets.size());
+  }
+
+  @ParameterizedTest
+  @CsvSource({"8759, 1", "8760, 0", "8761, 0"})
+  void testGetApprovedDatasetsLastTheExpirationDuration(long submittedHoursAgo, int expected) {
+    User user = createUser();
+    libraryCardDAO.insertLibraryCard(
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    Dataset dataset = createDataset(true);
+    Dac dac = insertDac();
+    DarCollection collection =
+        createDarCollectionWithDatasets(dac.getDacId(), user, List.of(dataset));
+    String referenceId = collection.getDars().keySet().iterator().next();
+    createDataAccessElectionWithVotes(
+        referenceId, dataset.getDatasetId(), user.getUserId(), true, VoteType.FINAL);
+    Timestamp submitted = Timestamp.from(Instant.now().minus(submittedHoursAgo, ChronoUnit.HOURS));
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE data_access_request SET submission_date = :on WHERE reference_id = :ref")
+                .bind("on", submitted)
+                .bind("ref", referenceId)
+                .execute());
+
+    assertEquals(expected, datasetDAO.getApprovedDatasets(user.getUserId()).size());
   }
 
   @Test

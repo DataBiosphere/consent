@@ -91,7 +91,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                     AND LOWER(e.election_type) = 'dataaccess'
                     AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
       WHERE dd.dataset_id = :datasetId
-      AND dar.submission_date > now() - interval '1 year'
+      AND dar.submission_date > now() - interval '8760 hours'
       AND final_access_vote.last_vote = TRUE
       AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       -- Exclude DARs that have a closeoutSupplement
