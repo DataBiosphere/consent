@@ -1,0 +1,642 @@
+package org.broadinstitute.consent.http.db;
+
+import java.time.Instant;
+import java.util.List;
+import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
+import org.broadinstitute.consent.http.models.DarDecision;
+import org.broadinstitute.consent.http.models.DarTurnaround;
+import org.broadinstitute.consent.http.models.DarVolume;
+import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.ExpirationBucket;
+import org.broadinstitute.consent.http.models.ExpiredCollection;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.Renewal;
+import org.broadinstitute.consent.http.models.RenewalBucket;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
+import org.broadinstitute.consent.http.models.SoApproval;
+import org.broadinstitute.consent.http.models.SoApprovalBucket;
+import org.broadinstitute.consent.http.models.TurnaroundBucket;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+
+/**
+ * Admin reporting over DAR decisions, turnaround, SO approval, expiration and submission volume.
+ * Each query is one base fragment, which defines the CTE its javadoc names, then its own SELECT.
+ */
+public interface DarMetricsDAO {
+
+  /**
+   * Defines {@code pair_decisions}: reference_id, collection_id, dataset_id, submission_date,
+   * state, decided_via, decision_date, elapsed_days. One row per DAR-dataset pair on an original
+   * DAR submitted in [:from, :to), carrying the state of the pair's latest data-access election. A
+   * reopen archives the earlier elections and opens a new one, and product counts the reopen as
+   * overwriting the earlier decision, so only the latest election is read. Its cast final or RADAR
+   * vote is the decision; with none cast the pair is pending, or canceled if a chair canceled the
+   * election. Elections are ranked only for DARs in range, so the ranking never sorts the whole
+   * table. elapsed_days, submission to decision, is null for a vote with no update date or one
+   * dated before a backfilled submission date: the vote's create date is when the election opened,
+   * which would understate turnaround.
+   */
+  String PAIR_DECISIONS =
+      """
+      WITH original_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.parent_id IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      latest_elections AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               e.election_id, e.reference_id, e.dataset_id, e.status
+        FROM election e
+        JOIN original_dars od ON od.reference_id = e.reference_id
+        WHERE LOWER(e.election_type) = 'dataaccess'
+        ORDER BY e.reference_id, e.dataset_id, e.election_id DESC
+      ),
+      deciding_votes AS (
+        SELECT DISTINCT ON (v.election_id) v.election_id, v.vote, v.type, v.update_date
+        FROM vote v
+        JOIN latest_elections le ON le.election_id = v.election_id
+        WHERE LOWER(v.type) IN ('final', 'radar_approve') AND v.vote IS NOT NULL
+        ORDER BY v.election_id, COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      pair_decisions AS (
+        SELECT od.reference_id, od.collection_id, dd.dataset_id, od.submission_date,
+               CASE WHEN dv.vote THEN 'APPROVED'
+                    WHEN NOT dv.vote THEN 'DENIED'
+                    WHEN le.election_id IS NULL THEN 'NO_ELECTION'
+                    WHEN LOWER(le.status) = 'canceled' THEN 'CANCELED'
+                    ELSE 'PENDING' END AS state,
+               CASE WHEN dv.vote IS NULL THEN NULL
+                    WHEN LOWER(dv.type) = 'radar_approve' THEN 'RADAR'
+                    ELSE 'MANUAL' END AS decided_via,
+               dv.update_date AS decision_date,
+               CASE WHEN dv.update_date >= od.submission_date
+                    THEN EXTRACT(EPOCH FROM dv.update_date - od.submission_date)::float8 / 86400
+                    END AS elapsed_days
+        FROM original_dars od
+        JOIN dar_dataset dd ON dd.reference_id = od.reference_id
+        LEFT JOIN latest_elections le
+          ON le.reference_id = dd.reference_id AND le.dataset_id = dd.dataset_id
+        LEFT JOIN deciding_votes dv ON dv.election_id = le.election_id
+      )
+      """;
+
+  /**
+   * {@link #PAIR_DECISIONS} plus {@code dar_rows}: reference_id, collection_id, submission_date,
+   * dataset_count, state, decided_via, decision_date, elapsed_days. Rolls pairs up per submission,
+   * which before 2022-07-27 was saved as one DAR per dataset, so a collection's original DARs roll
+   * up together under its earliest. A submission is decided once no pair is pending; canceled pairs
+   * don't hold it open or affect its outcome, and one whose pairs were all canceled is canceled.
+   * Its decision date is the last pair decision, left null when any deciding vote predates decision
+   * dates, and elapsed_days is null when the decision date is null or precedes the submission.
+   */
+  String DAR_DECISIONS =
+      PAIR_DECISIONS
+          + """
+          , dar_decisions AS (
+            SELECT (ARRAY_AGG(reference_id ORDER BY submission_date, reference_id))[1]
+                     AS reference_id,
+                   collection_id, MIN(submission_date) AS submission_date,
+                   COUNT(*) AS dataset_count,
+                   CASE WHEN BOOL_OR(state IN ('PENDING', 'NO_ELECTION')) THEN 'PENDING'
+                        WHEN BOOL_AND(state = 'CANCELED') THEN 'CANCELED'
+                        WHEN BOOL_AND(state IN ('APPROVED', 'CANCELED')) THEN 'APPROVED'
+                        WHEN BOOL_AND(state IN ('DENIED', 'CANCELED')) THEN 'DENIED'
+                        ELSE 'MIXED' END AS state,
+                   COUNT(*) FILTER (WHERE state IN ('PENDING', 'NO_ELECTION')) AS undecided,
+                   COUNT(DISTINCT decided_via) AS via_count,
+                   MAX(decided_via) AS any_via,
+                   COUNT(*) FILTER (WHERE decided_via IS NOT NULL AND decision_date IS NULL)
+                     AS undated,
+                   MAX(decision_date) AS last_decision
+            FROM pair_decisions
+            GROUP BY COALESCE(collection_id::text, reference_id), collection_id
+          ),
+          dar_rows AS (
+            SELECT reference_id, collection_id, submission_date, dataset_count, state,
+                   CASE WHEN undecided > 0 OR via_count = 0 THEN NULL
+                        WHEN via_count > 1 THEN 'MIXED'
+                        ELSE any_via END AS decided_via,
+                   CASE WHEN undecided > 0 OR via_count = 0 OR undated > 0 THEN NULL
+                        ELSE last_decision END AS decision_date,
+                   CASE WHEN undecided = 0 AND via_count > 0 AND undated = 0
+                             AND last_decision >= submission_date
+                        THEN EXTRACT(EPOCH FROM last_decision - submission_date)::float8 / 86400
+                        END AS elapsed_days
+            FROM dar_decisions
+          )
+          """;
+
+  @RegisterConstructorMapper(DecisionBucketCount.class)
+  @SqlQuery(
+      PAIR_DECISIONS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start, state, decided_via,
+                 COUNT(*) AS count
+          FROM pair_decisions
+          GROUP BY 1, 2, 3
+          ORDER BY 1, 2, 3
+          """)
+  List<DecisionBucketCount> countPairDecisions(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarDatasetDecision.class)
+  @SqlQuery(
+      PAIR_DECISIONS
+          + """
+          SELECT reference_id, collection_id, dataset_id, submission_date, state, decided_via,
+                 decision_date
+          FROM pair_decisions
+          ORDER BY submission_date, reference_id, dataset_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarDatasetDecision> findPairDecisions(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  @RegisterConstructorMapper(DecisionBucketCount.class)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start, state, decided_via,
+                 COUNT(*) AS count
+          FROM dar_rows
+          GROUP BY 1, 2, 3
+          ORDER BY 1, 2, 3
+          """)
+  List<DecisionBucketCount> countDarDecisions(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarDecision.class)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT reference_id, collection_id, submission_date, dataset_count, state, decided_via,
+                 decision_date
+          FROM dar_rows
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarDecision> findDarDecisions(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /** Turnaround over decided pairs; one with no elapsed time is counted as unmeasured. */
+  @RegisterConstructorMapper(TurnaroundBucket.class)
+  @SqlQuery(
+      PAIR_DECISIONS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(elapsed_days) AS count,
+                 COUNT(*) - COUNT(elapsed_days) AS unmeasured,
+                 AVG(elapsed_days) AS mean_days,
+                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
+                 (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
+          FROM pair_decisions
+          WHERE decided_via IS NOT NULL
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<TurnaroundBucket> countPairTurnaround(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarDatasetTurnaround.class)
+  @SqlQuery(
+      PAIR_DECISIONS
+          + """
+          SELECT reference_id, collection_id, dataset_id, submission_date, decision_date,
+                 decided_via, elapsed_days
+          FROM pair_decisions
+          WHERE elapsed_days IS NOT NULL
+          ORDER BY submission_date, reference_id, dataset_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarDatasetTurnaround> findPairTurnaround(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /** Turnaround over decided submissions; one with no elapsed time is counted as unmeasured. */
+  @RegisterConstructorMapper(TurnaroundBucket.class)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(elapsed_days) AS count,
+                 COUNT(*) - COUNT(elapsed_days) AS unmeasured,
+                 AVG(elapsed_days) AS mean_days,
+                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
+                 (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
+          FROM dar_rows
+          WHERE state IN ('APPROVED', 'DENIED', 'MIXED')
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<TurnaroundBucket> countDarTurnaround(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(DarTurnaround.class)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT reference_id, collection_id, submission_date, decision_date, decided_via,
+                 elapsed_days
+          FROM dar_rows
+          WHERE elapsed_days IS NOT NULL
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarTurnaround> findDarTurnaround(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Defines {@code so_approvals}: reference_id, collection_id, kind, submission_date,
+   * approval_date, status, elapsed_days. One row per DAR, progress report or closeout submitted in
+   * [:from, :to), with where it stands with its signing official. {@code requires_so_approval} is
+   * only ever written true, so NULL is a pre-authorization skip, but only from 20 May 2026, when
+   * production first wrote it; closeouts always go to an SO and stay NULL. Closeout approvals were
+   * recorded from 5 June 2025. Before 2022-07-27 a submission was saved as one DAR per dataset, so
+   * a collection's original DARs count as one submission, reported under its earliest.
+   */
+  String SO_APPROVALS =
+      """
+      WITH recorded_from AS (
+        SELECT TIMESTAMP '2025-06-05' AS closeout_approval,
+               TIMESTAMP '2026-05-20' AS so_requirement
+      ),
+      so_rows AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date, dar.requires_so_approval,
+               dar.approving_so_timestamp AS approval_date,
+               CASE WHEN dar.parent_id IS NULL
+                    THEN COALESCE(dar.collection_id::text, dar.reference_id)
+                    ELSE dar.reference_id END AS submission_key,
+               CASE WHEN dar.parent_id IS NULL THEN 'ORIGINAL'
+                    WHEN dar.data->>'closeoutSupplement' IS NOT NULL THEN 'CLOSEOUT'
+                    ELSE 'PROGRESS_REPORT' END AS kind
+        FROM data_access_request dar
+        WHERE dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      submissions AS (
+        SELECT (ARRAY_AGG(reference_id ORDER BY submission_date, reference_id))[1] AS reference_id,
+               MIN(collection_id) AS collection_id, kind, MIN(submission_date) AS submission_date,
+               BOOL_OR(requires_so_approval) AS requires_so_approval,
+               MIN(approval_date) AS approval_date
+        FROM so_rows
+        GROUP BY submission_key, kind
+      ),
+      so_approvals AS (
+        SELECT reference_id, collection_id, kind, submission_date, approval_date,
+               CASE WHEN approval_date IS NOT NULL THEN 'APPROVED'
+                    WHEN kind = 'CLOSEOUT' AND submission_date >= r.closeout_approval
+                      THEN 'PENDING'
+                    WHEN kind = 'CLOSEOUT' THEN 'NOT_DETERMINED'
+                    WHEN requires_so_approval THEN 'PENDING'
+                    WHEN submission_date >= r.so_requirement THEN 'SKIPPED'
+                    ELSE 'NOT_DETERMINED' END AS status,
+               CASE WHEN approval_date >= submission_date
+                    THEN EXTRACT(EPOCH FROM approval_date - submission_date)::float8 / 86400
+                    END AS elapsed_days
+        FROM submissions
+        CROSS JOIN recorded_from r
+      )
+      """;
+
+  @RegisterConstructorMapper(SoApprovalBucket.class)
+  @SqlQuery(
+      SO_APPROVALS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start, kind, status,
+                 COUNT(*) AS count,
+                 COUNT(*) FILTER (WHERE status = 'APPROVED' AND elapsed_days IS NULL)
+                   AS unmeasured,
+                 AVG(elapsed_days) AS mean_days,
+                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
+                 (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
+          FROM so_approvals
+          GROUP BY 1, 2, 3
+          ORDER BY 1, 2, 3
+          """)
+  List<SoApprovalBucket> countSoApprovals(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(SoApproval.class)
+  @SqlQuery(
+      SO_APPROVALS
+          + """
+          SELECT reference_id, collection_id, kind, submission_date, status, approval_date,
+                 elapsed_days
+          FROM so_approvals
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<SoApproval> findSoApprovals(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Defines {@code ended}: collection_id, dar_code, access_end, reason. DAR collections whose
+   * access ended in [:from, :to), and by :asOf. Access to a dataset runs 8760 hours, as {@code
+   * EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or progress report,
+   * whose most recently cast final or RADAR vote across its elections approved it, so a reopen
+   * keeps the grant until the new election decides; a closeout filed before the term runs out ends
+   * the whole collection's access on its filing date. Both are as on the study page. A collection
+   * has ended once every dataset's access has. A renewal approved after the range still counts, so
+   * a collection is reported only while its access has ended, dated by when it last did. Only
+   * submissions from a year before :from are ranked, since an older newest approval ended before
+   * the range.
+   */
+  String EXPIRATIONS =
+      """
+      WITH ranked_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.submission_date >= CAST(:from AS timestamp) - INTERVAL '366 days'
+          AND dar.data->>'closeoutSupplement' IS NULL
+          AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
+      ),
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               rd.collection_id, e.dataset_id, rd.submission_date, v.vote
+        FROM ranked_dars rd
+        JOIN dar_dataset dd ON dd.reference_id = rd.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      term_ends AS (
+        SELECT collection_id,
+               MAX(submission_date)::timestamptz + INTERVAL '8760 hours' AS term_end
+        FROM last_votes
+        WHERE vote
+        GROUP BY collection_id, dataset_id
+      ),
+      collection_ends AS (
+        SELECT t.collection_id, MAX(t.term_end) AS term_end,
+               (SELECT MAX(dar.submission_date)::timestamptz FROM data_access_request dar
+                WHERE dar.collection_id = t.collection_id
+                  AND dar.submission_date IS NOT NULL
+                  AND dar.data->>'closeoutSupplement' IS NOT NULL) AS closeout_date
+        FROM term_ends t
+        GROUP BY t.collection_id
+      ),
+      expirations AS (
+        SELECT ce.collection_id, dc.dar_code,
+               LEAST(ce.term_end, ce.closeout_date) AS access_end,
+               CASE WHEN ce.closeout_date < ce.term_end THEN 'CLOSED_OUT' ELSE 'EXPIRED' END
+                 AS reason
+        FROM collection_ends ce
+        JOIN dar_collection dc ON dc.collection_id = ce.collection_id
+      ),
+      ended AS (
+        SELECT * FROM expirations
+        WHERE access_end >= :from AND access_end < :to AND access_end <= :asOf
+      )
+      """;
+
+  @RegisterConstructorMapper(ExpirationBucket.class)
+  @SqlQuery(
+      EXPIRATIONS
+          + """
+          SELECT date_trunc(:bucket, access_end) AS bucket_start, reason, COUNT(*) AS count
+          FROM ended
+          GROUP BY 1, 2
+          ORDER BY 1, 2
+          """)
+  List<ExpirationBucket> countExpirations(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("asOf") Instant asOf,
+      @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(ExpiredCollection.class)
+  @SqlQuery(
+      EXPIRATIONS
+          + """
+          SELECT collection_id, dar_code, access_end, reason
+          FROM ended
+          ORDER BY access_end, collection_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<ExpiredCollection> findExpirations(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("asOf") Instant asOf,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Defines {@code dar_volume}: reference_id, collection_id, user_id, submission_date,
+   * institution_id, institution_name, institution_source, dataset_count, lab_staff_count,
+   * internal_collaborator_count. One row per original DAR submitted in [:from, :to). The
+   * institution is the one recorded at submission, falling back to the submitter's current one only
+   * for DARs submitted before submissions recorded it; a recorded null stays null. Its name is read
+   * through the id, so an admin rename shows, and the recorded name is used only once the
+   * institution has been deleted. External collaborators aren't counted: they are approved
+   * separately from the DAR. Before 2022-07-27 a submission was saved as one DAR per dataset, so
+   * each collection's original DARs count as one submission, reported under its earliest.
+   */
+  String DAR_VOLUME =
+      """
+      WITH original_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.user_id, dar.submission_date,
+               COALESCE(dar.collection_id::text, dar.reference_id) AS submission_key,
+               CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN dar.institution_id
+                    ELSE u.institution_id END AS institution_id,
+               CASE WHEN dar.institution_snapshot_date IS NOT NULL THEN 'RECORDED'
+                    ELSE 'CURRENT' END AS institution_source,
+               dar.institution_name AS recorded_name,
+               CASE WHEN jsonb_typeof(dar.data->'labCollaborators') = 'array'
+                    THEN jsonb_array_length(dar.data->'labCollaborators') ELSE 0
+                    END AS lab_staff_count,
+               CASE WHEN jsonb_typeof(dar.data->'internalCollaborators') = 'array'
+                    THEN jsonb_array_length(dar.data->'internalCollaborators') ELSE 0
+                    END AS internal_collaborator_count
+        FROM data_access_request dar
+        LEFT JOIN users u ON u.user_id = dar.user_id
+        WHERE dar.parent_id IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      dar_volume AS (
+        SELECT DISTINCT ON (od.submission_key)
+               od.reference_id, od.collection_id, od.user_id, od.submission_date,
+               od.institution_id, COALESCE(i.institution_name, od.recorded_name) AS institution_name,
+               od.institution_source,
+               (SUM(ds.dataset_count) OVER (PARTITION BY od.submission_key))::int AS dataset_count,
+               od.lab_staff_count, od.internal_collaborator_count
+        FROM original_dars od
+        LEFT JOIN institution i ON i.institution_id = od.institution_id
+        CROSS JOIN LATERAL (
+          SELECT COUNT(*) AS dataset_count FROM dar_dataset dd
+          WHERE dd.reference_id = od.reference_id
+        ) ds
+        ORDER BY od.submission_key, od.submission_date, od.reference_id
+      )
+      """;
+
+  /**
+   * Per-bucket totals; a DAR with no institution isn't counted among the institutions, and a
+   * deleted one still counts, by its recorded name.
+   */
+  @RegisterConstructorMapper(VolumeBucketCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(*) AS dar_count,
+                 COUNT(DISTINCT user_id) AS researcher_count,
+                 COUNT(DISTINCT (institution_id, institution_name))
+                   FILTER (WHERE institution_name IS NOT NULL) AS institution_count,
+                 SUM(dataset_count) AS dataset_count
+          FROM dar_volume
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<VolumeBucketCount> countDarVolume(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  /**
+   * DARs and distinct researchers per institution across the range, most DARs first. DARs with no
+   * institution form one group with a null id and name; a deleted institution keeps its own group,
+   * under its recorded name with a null id.
+   */
+  @RegisterConstructorMapper(InstitutionDarCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT institution_id, institution_name,
+                 COUNT(*) AS dar_count, COUNT(DISTINCT user_id) AS researcher_count
+          FROM dar_volume
+          GROUP BY institution_id, institution_name
+          ORDER BY dar_count DESC, institution_name NULLS LAST, institution_id
+          """)
+  List<InstitutionDarCount> countDarsByInstitution(
+      @Bind("from") Instant from, @Bind("to") Instant to);
+
+  /** DARs per submitter across the range, most DARs first. */
+  @RegisterConstructorMapper(ResearcherDarCount.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT user_id, COUNT(*) AS dar_count
+          FROM dar_volume
+          GROUP BY user_id
+          ORDER BY dar_count DESC, user_id
+          """)
+  List<ResearcherDarCount> countDarsByResearcher(
+      @Bind("from") Instant from, @Bind("to") Instant to);
+
+  @RegisterConstructorMapper(DarVolume.class)
+  @SqlQuery(
+      DAR_VOLUME
+          + """
+          SELECT reference_id, collection_id, user_id, submission_date, institution_id,
+                 institution_name, institution_source, dataset_count, lab_staff_count,
+                 internal_collaborator_count
+          FROM dar_volume
+          ORDER BY submission_date, reference_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<DarVolume> findDarVolume(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Defines {@code renewals}: reference_id, collection_id, dataset_id, submission_date,
+   * decided_via, approval_date. One row per dataset approved on a progress report submitted in
+   * [:from, :to), which is a renewal; closeouts and canceled or archived reports aren't. As in
+   * {@link #EXPIRATIONS}, a pair is approved by its most recently cast final or RADAR vote across
+   * its data-access elections, so a reopen keeps the renewal until the new election decides.
+   * approval_date is that vote's update date, null when it predates decision dates.
+   */
+  String RENEWALS =
+      """
+      WITH progress_reports AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.parent_id IS NOT NULL
+          AND dar.data->>'closeoutSupplement' IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               e.reference_id, e.dataset_id, v.vote, v.type, v.update_date
+        FROM progress_reports pr
+        JOIN dar_dataset dd ON dd.reference_id = pr.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      renewals AS (
+        SELECT pr.reference_id, pr.collection_id, lv.dataset_id, pr.submission_date,
+               CASE WHEN LOWER(lv.type) = 'radar_approve' THEN 'RADAR' ELSE 'MANUAL' END
+                 AS decided_via,
+               lv.update_date AS approval_date
+        FROM progress_reports pr
+        JOIN last_votes lv ON lv.reference_id = pr.reference_id
+        WHERE lv.vote
+      )
+      """;
+
+  @RegisterConstructorMapper(RenewalBucket.class)
+  @SqlQuery(
+      RENEWALS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(*) AS renewal_count, COUNT(DISTINCT collection_id) AS collection_count
+          FROM renewals
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<RenewalBucket> countRenewals(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(Renewal.class)
+  @SqlQuery(
+      RENEWALS
+          + """
+          SELECT reference_id, collection_id, dataset_id, submission_date, decided_via,
+                 approval_date
+          FROM renewals
+          ORDER BY submission_date, reference_id, dataset_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<Renewal> findRenewals(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+}

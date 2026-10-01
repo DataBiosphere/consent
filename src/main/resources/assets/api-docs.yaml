@@ -909,6 +909,22 @@ paths:
           description: Server error.
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
+  /api/metrics/dar-decisions:
+    $ref: './paths/darDecisions.yaml'
+  /api/metrics/dar-dataset-decisions:
+    $ref: './paths/darDatasetDecisions.yaml'
+  /api/metrics/dar-decision-turnaround:
+    $ref: './paths/darDecisionTurnaround.yaml'
+  /api/metrics/dar-dataset-decision-turnaround:
+    $ref: './paths/darDatasetDecisionTurnaround.yaml'
+  /api/metrics/dar-volume:
+    $ref: './paths/darVolume.yaml'
+  /api/metrics/dar-so-approvals:
+    $ref: './paths/darSoApprovals.yaml'
+  /api/metrics/dar-expirations:
+    $ref: './paths/darExpirations.yaml'
+  /api/metrics/dar-renewals:
+    $ref: './paths/darRenewals.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
   /api/metrics/dar-summaries/study/{studyId}:

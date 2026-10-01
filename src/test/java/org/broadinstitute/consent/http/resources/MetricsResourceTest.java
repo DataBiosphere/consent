@@ -3,25 +3,45 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonParser;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.InstitutionSource;
+import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarTurnaround;
+import org.broadinstitute.consent.http.models.DarVolume;
+import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.ExpirationReport;
+import org.broadinstitute.consent.http.models.RenewalReport;
+import org.broadinstitute.consent.http.models.SoApprovalReport;
+import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TurnaroundReport;
+import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -121,6 +141,51 @@ class MetricsResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
+  /** The UI renders a study card from each recommendation, so every card field is served. */
+  @Test
+  void testRecommendationsCarryStudyCardFields() {
+    StudyRecommendation recommendation =
+        new StudyRecommendation(
+            2,
+            "Study",
+            "Description",
+            "PI",
+            "Human",
+            "Cancer",
+            List.of("Genomic"),
+            1L,
+            List.of(3),
+            100L,
+            1,
+            2,
+            List.of("open"),
+            List.of("GRU", "HMB"));
+    when(service.getSimilarStudies(any(), any())).thenReturn(List.of(recommendation));
+
+    Response response = resource.getSimilarStudies(duosUser, 1);
+    String json = GsonUtil.getInstance().toJson(response.getEntity());
+    Set<String> fields =
+        JsonParser.parseString(json).getAsJsonArray().get(0).getAsJsonObject().keySet();
+
+    assertEquals(
+        Set.of(
+            "studyId",
+            "studyName",
+            "studyDescription",
+            "piName",
+            "species",
+            "phenotype",
+            "dataTypes",
+            "datasetCount",
+            "datasetIds",
+            "totalParticipants",
+            "modelCount",
+            "workspaceCount",
+            "accessTypes",
+            "dataUseCodes"),
+        fields);
+  }
+
   /**
    * The requester's name is not in this payload, and the assertion is on the serialized response so
    * that it can still fail: pinning it to a record component would only restate the shape of a type
@@ -153,6 +218,253 @@ class MetricsResourceTest extends AbstractTestHelper {
             "expired"),
         fields);
     assertFalse(json.toLowerCase().contains("piname"), "No PI name is served with a DAR summary");
+  }
+
+  @Test
+  void darDecisionsParseTheRangeBucketAndPage() {
+    DecisionReport<?> report =
+        new DecisionReport<>(
+            "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of(), List.of());
+    when(service.getDarDecisions(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.MONTH, 50, 100))
+        .thenAnswer(i -> report);
+
+    Response response =
+        resource.getDarDecisions(duosUser, "2026-01-01", "2026-03-31", "Month", 50, 100);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @Test
+  void decisionTurnaroundReportsParseTheRangeBucketAndPage() {
+    TurnaroundReport<DarTurnaround> dars =
+        new TurnaroundReport<>(
+            "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of(), List.of());
+    TurnaroundReport<DarDatasetTurnaround> pairs =
+        new TurnaroundReport<>(
+            "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of(), List.of());
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    when(service.getDarDecisionTurnaround(from, to, MetricsBucket.MONTH, 50, 100)).thenReturn(dars);
+    when(service.getDarDatasetDecisionTurnaround(from, to, MetricsBucket.MONTH, 50, 100))
+        .thenReturn(pairs);
+
+    Response darResponse =
+        resource.getDarDecisionTurnaround(duosUser, "2026-01-01", "2026-03-31", "month", 50, 100);
+    Response pairResponse =
+        resource.getDarDatasetDecisionTurnaround(
+            duosUser, "2026-01-01", "2026-03-31", "month", 50, 100);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, darResponse.getStatus());
+    assertEquals(dars, darResponse.getEntity());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, pairResponse.getStatus());
+    assertEquals(pairs, pairResponse.getEntity());
+  }
+
+  @Test
+  void darSoApprovalsParseTheRangeBucketAndPage() {
+    SoApprovalReport report =
+        new SoApprovalReport(
+            "2026-06-01", "2026-06-30", MetricsBucket.WEEK, 0, List.of(), List.of());
+    when(service.getDarSoApprovals(
+            LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), MetricsBucket.WEEK, 25, 50))
+        .thenReturn(report);
+
+    Response response =
+        resource.getDarSoApprovals(duosUser, "2026-06-01", "2026-06-30", "week", 25, 50);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @Test
+  void darRenewalsParseTheRangeBucketAndPage() {
+    RenewalReport report =
+        new RenewalReport("2026-01-01", "2026-06-30", MetricsBucket.MONTH, 0, List.of(), List.of());
+    when(service.getDarRenewals(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.MONTH, 25, 50))
+        .thenReturn(report);
+
+    Response response =
+        resource.getDarRenewals(duosUser, "2026-01-01", "2026-06-30", "month", 25, 50);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @Test
+  void darExpirationsParseTheRangeBucketAndPage() {
+    ExpirationReport report =
+        new ExpirationReport(
+            "2026-01-01", "2026-06-30", MetricsBucket.MONTH, 0, List.of(), List.of());
+    when(service.getDarExpirations(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.MONTH, 25, 50))
+        .thenReturn(report);
+
+    Response response =
+        resource.getDarExpirations(duosUser, "2026-01-01", "2026-06-30", "month", 25, 50);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @Test
+  void darDatasetDecisionsParseTheRangeBucketAndPage() {
+    DecisionReport<?> report =
+        new DecisionReport<>(
+            "2026-01-01", "2026-01-01", MetricsBucket.DAY, 0, List.of(), List.of());
+    when(service.getDarDatasetDecisions(
+            eq(LocalDate.of(2026, 1, 1)),
+            eq(LocalDate.of(2026, 1, 1)),
+            eq(MetricsBucket.DAY),
+            anyInt(),
+            anyInt()))
+        .thenAnswer(i -> report);
+
+    Response response =
+        resource.getDarDatasetDecisions(duosUser, "2026-01-01", "2026-01-01", "day", 100, 0);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void darVolumeParsesTheRangeBucketAndPage() {
+    VolumeReport report =
+        new VolumeReport(
+            "2026-01-01",
+            "2026-03-31",
+            MetricsBucket.MONTH,
+            0,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of());
+    when(service.getDarVolume(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.MONTH, 50, 100))
+        .thenReturn(report);
+
+    Response response =
+        resource.getDarVolume(duosUser, "2026-01-01", "2026-03-31", "Month", 50, 100);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  /** Compares the whole field set, so a collaborator name or email added under any key fails. */
+  @Test
+  void darVolumeRowsCarryNoCollaboratorDetails() {
+    DarVolume row =
+        new DarVolume("ref", 1, 2, Instant.EPOCH, 3, "Broad", InstitutionSource.RECORDED, 1, 2, 3);
+    VolumeReport report =
+        new VolumeReport(
+            "2026-01-01",
+            "2026-01-01",
+            MetricsBucket.DAY,
+            1,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(row));
+    when(service.getDarVolume(any(), any(), any(), anyInt(), anyInt())).thenReturn(report);
+
+    Response response = resource.getDarVolume(duosUser, "2026-01-01", "2026-01-01", "day", 100, 0);
+    String json = GsonUtil.getInstance().toJson(response.getEntity());
+    Set<String> fields =
+        JsonParser.parseString(json)
+            .getAsJsonObject()
+            .getAsJsonArray("rows")
+            .get(0)
+            .getAsJsonObject()
+            .keySet();
+
+    assertEquals(
+        Set.of(
+            "referenceId",
+            "collectionId",
+            "userId",
+            "submissionDate",
+            "institutionId",
+            "institutionName",
+            "institutionSource",
+            "datasetCount",
+            "labStaffCount",
+            "internalCollaboratorCount"),
+        fields);
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      nullValues = "null",
+      value = {
+        "null, 2026-01-01, quarter, 100, 0",
+        "'  ', 2026-01-01, quarter, 100, 0",
+        "2026-01-01, null, quarter, 100, 0",
+        "01/01/2026, 2026-02-01, quarter, 100, 0",
+        "1899-12-31, 2026-02-01, quarter, 100, 0",
+        "2026-01-01, +999999999-12-31, quarter, 100, 0",
+        "2026-02-01, 2026-01-01, quarter, 100, 0",
+        "2026-01-01, 2026-02-01, year, 100, 0",
+        "2026-01-01, 2026-02-01, quarter, 0, 0",
+        "2026-01-01, 2026-02-01, quarter, 1001, 0",
+        "2026-01-01, 2026-02-01, quarter, 100, -1"
+      })
+  void decisionReportsRejectBadParameters(
+      String from, String to, String bucket, Integer limit, Integer offset) {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarDecisions(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarDatasetDecisions(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarVolume(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarDecisionTurnaround(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource
+            .getDarDatasetDecisionTurnaround(duosUser, from, to, bucket, limit, offset)
+            .getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarSoApprovals(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarExpirations(duosUser, from, to, bucket, limit, offset).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarRenewals(duosUser, from, to, bucket, limit, offset).getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void decisionReportsAreAdminOnly() throws NoSuchMethodException {
+    for (String name :
+        List.of(
+            "getDarDecisions",
+            "getDarDatasetDecisions",
+            "getDarVolume",
+            "getDarDecisionTurnaround",
+            "getDarDatasetDecisionTurnaround",
+            "getDarSoApprovals",
+            "getDarExpirations",
+            "getDarRenewals")) {
+      RolesAllowed roles =
+          MetricsResource.class
+              .getMethod(
+                  name,
+                  DuosUser.class,
+                  String.class,
+                  String.class,
+                  String.class,
+                  Integer.class,
+                  Integer.class)
+              .getAnnotation(RolesAllowed.class);
+      assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+    }
   }
 
   private DarMetricsSummary generateDarMetricsSummary() {

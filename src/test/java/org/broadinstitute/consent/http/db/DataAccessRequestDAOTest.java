@@ -43,6 +43,7 @@ import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -963,6 +964,23 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId()).size());
   }
 
+  @ParameterizedTest
+  @CsvSource({"8759, 1", "8760, 0", "8761, 0"})
+  void testFindApprovedDARsByDatasetIdLastsTheExpirationDuration(
+      long submittedHoursAgo, int expected) {
+    Dataset dataset = createDARDAOTestDataset();
+    User user = createUserWithInstitution();
+    Timestamp submitted = Timestamp.from(Instant.now().minus(submittedHoursAgo, ChronoUnit.HOURS));
+    DataAccessRequest dar = createDAR(user, dataset, "DAR-" + randomInt(100, 1000000), submitted);
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+
+    assertEquals(
+        expected, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId()).size());
+  }
+
   @Test
   void testFindAllApprovedDataAccessRequestsByDatasetId_NullSubmissionDate() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
@@ -1230,6 +1248,109 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(
         institutionDAO.findInstitutionById(user.getInstitutionId()).getName(),
         summaries.getFirst().institutionName());
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsReportsTheInstitutionRecordedAtSubmission() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createApprovedDar(user, createDarCollection(user.getUserId()), dataset);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+
+    // The researcher moves employer after submitting
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsTheOriginalInstitutionAcrossAProgressReport() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    Integer collectionId = createDarCollection(user.getUserId());
+    DataAccessRequest dar = createApprovedDar(user, collectionId, dataset);
+    String originalName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+
+    // Reassigned to another institution, the researcher files a progress report that is approved
+    Integer newInstitutionId = createUserWithInstitution().getInstitutionId();
+    userDAO.updateInstitutionId(user.getUserId(), newInstitutionId);
+    DataAccessRequest renewal = fileFollowOn(user, collectionId, dar, List.of(dataset), 0, false);
+    dataAccessRequestDAO.updateSubmissionInstitution(renewal.getReferenceId(), newInstitutionId);
+    castFinalVote(renewal.getReferenceId(), dataset, new Date(), true);
+
+    assertSummaryInstitutionName(originalName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsFallsBackToAProgressReportsRecordedInstitution() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    Integer collectionId = createDarCollection(user.getUserId());
+    // Submitted before institutions were recorded, then renewed after
+    DataAccessRequest dar = createApprovedDar(user, collectionId, dataset);
+    DataAccessRequest renewal = fileFollowOn(user, collectionId, dar, List.of(dataset), 0, false);
+    dataAccessRequestDAO.updateSubmissionInstitution(
+        renewal.getReferenceId(), user.getInstitutionId());
+    castFinalVote(renewal.getReferenceId(), dataset, new Date(), true);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsTheRecordedNameOfADeletedInstitution() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createApprovedDar(user, createDarCollection(user.getUserId()), dataset);
+    String recordedName = institutionDAO.findInstitutionById(user.getInstitutionId()).getName();
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+    institutionDAO.deleteInstitutionById(user.getInstitutionId());
+
+    assertSummaryInstitutionName(recordedName, studyId, dataset);
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsNoInstitutionRecordedAtSubmission() {
+    User user = createUser();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createApprovedDar(user, createDarCollection(user.getUserId()), dataset);
+    dataAccessRequestDAO.updateSubmissionInstitution(dar.getReferenceId(), null);
+
+    // Joining an institution later doesn't rewrite where the grant went
+    userDAO.updateInstitutionId(user.getUserId(), createUserWithInstitution().getInstitutionId());
+
+    assertSummaryInstitutionName(null, studyId, dataset);
+  }
+
+  private DataAccessRequest createApprovedDar(User user, Integer collectionId, Dataset dataset) {
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
+    return dar;
+  }
+
+  private void assertSummaryInstitutionName(String expected, Integer studyId, Dataset dataset) {
+    assertEquals(
+        expected,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .getFirst()
+            .institutionName());
+    assertEquals(
+        expected,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId)
+            .getFirst()
+            .institutionName());
   }
 
   // The study-scoped query covers every dataset in the study in one round trip, and must agree
@@ -2687,6 +2808,96 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     assertEquals(1, summaries.size(), "only the DAR approved on the study's own dataset");
     assertEquals(granted.getReferenceId(), summaries.getFirst().referenceId());
+  }
+
+  @Test
+  void testFindSummaryMetricApprovedDARsKeepsAPairReopenedWithNoNewVote() {
+    StudyDar s = createStudyDar();
+    castFinalVote(s.dar().getReferenceId(), s.dataset(), new Date(), true);
+
+    reopen(s);
+
+    assertApprovedInBothScopes(s, true);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"true, true", "false, true", "true, false"})
+  void testFindSummaryMetricApprovedDARsFollowsTheReopenedElectionsDecision(
+      boolean earlierApproved, boolean latestApproved) {
+    StudyDar s = createStudyDar();
+    castFinalVote(s.dar().getReferenceId(), s.dataset(), new Date(), earlierApproved);
+
+    castFinalVote(reopen(s), s.dataset(), new Date(), latestApproved);
+
+    assertApprovedInBothScopes(s, latestApproved);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testFindSummaryMetricApprovedDARsReadsTheLastCastFinalVote(boolean lastCast) {
+    StudyDar s = createStudyDar();
+    Election election =
+        createDataAccessElection(s.dar().getReferenceId(), s.dataset().getDatasetId());
+    Date opened = new Date();
+    Date later = new Date(opened.getTime() + 60_000);
+    // Every chair's FINAL vote is created when the election opens; the one cast last decides
+    Vote castLast = createFinalVote(createUser().getUserId(), election.getElectionId());
+    Vote castFirst = createFinalVote(createUser().getUserId(), election.getElectionId());
+    createFinalVote(createUser().getUserId(), election.getElectionId());
+    updateVote(
+        lastCast, "", later, castLast.getVoteId(), false, election.getElectionId(), opened, false);
+    updateVote(
+        !lastCast,
+        "",
+        opened,
+        castFirst.getVoteId(),
+        false,
+        election.getElectionId(),
+        opened,
+        false);
+
+    assertApprovedInBothScopes(s, lastCast);
+  }
+
+  private record StudyDar(Integer studyId, Dataset dataset, DataAccessRequest dar) {}
+
+  private StudyDar createStudyDar() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar =
+        createDataAccessRequest(user.getUserId(), createDarCollection(user.getUserId()));
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    return new StudyDar(studyId, dataset, dar);
+  }
+
+  /** Archives the pair's elections and opens a new one with no vote cast, as a reopen does. */
+  private Election reopen(StudyDar s) {
+    List<Integer> earlier =
+        electionDAO
+            .findElectionsByReferenceIdAndDatasetId(
+                s.dar().getReferenceId(), s.dataset().getDatasetId())
+            .stream()
+            .map(Election::getElectionId)
+            .toList();
+    electionDAO.archiveElectionByIds(earlier, new Date());
+    return createDataAccessElection(s.dar().getReferenceId(), s.dataset().getDatasetId());
+  }
+
+  private void assertApprovedInBothScopes(StudyDar s, boolean approved) {
+    int expected = approved ? 1 : 0;
+    assertEquals(
+        expected,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(s.dataset().getDatasetId())
+            .size(),
+        "dataset scope");
+    assertEquals(
+        expected,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(s.studyId())
+            .size(),
+        "study scope");
   }
 
   private void castFinalVote(String referenceId, Dataset dataset, Date on, boolean approved) {

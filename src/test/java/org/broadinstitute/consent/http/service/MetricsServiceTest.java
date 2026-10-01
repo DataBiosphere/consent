@@ -13,29 +13,62 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.AccessEndReason;
+import org.broadinstitute.consent.http.enumeration.DarKind;
+import org.broadinstitute.consent.http.enumeration.DecidedVia;
+import org.broadinstitute.consent.http.enumeration.DecisionState;
+import org.broadinstitute.consent.http.enumeration.InstitutionSource;
+import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
+import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarTurnaround;
+import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.ExpirationBucket;
+import org.broadinstitute.consent.http.models.ExpirationReport;
+import org.broadinstitute.consent.http.models.ExpiredCollection;
+import org.broadinstitute.consent.http.models.InstitutionDarCount;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
+import org.broadinstitute.consent.http.models.Renewal;
+import org.broadinstitute.consent.http.models.RenewalBucket;
+import org.broadinstitute.consent.http.models.RenewalReport;
+import org.broadinstitute.consent.http.models.ResearcherDarCount;
+import org.broadinstitute.consent.http.models.SoApproval;
+import org.broadinstitute.consent.http.models.SoApprovalBucket;
+import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TurnaroundBucket;
+import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
+import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -48,6 +81,8 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private StudyRecommendationDAO recommendationDAO;
 
+  @Mock private DarMetricsDAO darMetricsDAO;
+
   @Mock private DatasetService datasetService;
 
   private final User user = new User();
@@ -58,6 +93,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   void initService() {
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
+    when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
     service = new MetricsService(jdbi, datasetService);
   }
 
@@ -390,8 +426,16 @@ class MetricsServiceTest extends AbstractTestHelper {
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
         UUID.randomUUID().toString(),
+        "Human",
+        UUID.randomUUID().toString(),
+        List.of("Genomic"),
         1L,
-        List.of(randomInt(1, 100)));
+        List.of(randomInt(1, 100)),
+        100L,
+        0,
+        0,
+        List.of("open"),
+        List.of("GRU"));
   }
 
   private Dataset generateDataset() {
@@ -400,5 +444,177 @@ class MetricsServiceTest extends AbstractTestHelper {
     d.setDatasetId(1);
     d.setName(UUID.randomUUID().toString());
     return d;
+  }
+
+  @Test
+  void darDecisionsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    List<DecisionBucketCount> buckets =
+        List.of(
+            new DecisionBucketCount(start, DecisionState.APPROVED, null, 3L),
+            new DecisionBucketCount(start, DecisionState.PENDING, null, 2L));
+    DarDecision row = new DarDecision("ref", 1, start, 1, DecisionState.PENDING, null, null);
+    when(darMetricsDAO.countDarDecisions(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findDarDecisions(start, end, 10, 20)).thenReturn(List.of(row));
+
+    DecisionReport<DarDecision> report =
+        service.getDarDecisions(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(5, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
+    assertEquals("2026-03-31", report.to());
+  }
+
+  @Test
+  void decisionTurnaroundTotalsMeasuredAndUnmeasuredDecisions() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<TurnaroundBucket> buckets =
+        List.of(
+            new TurnaroundBucket(start, 3L, 1L, 4.0, 3.0, 3),
+            new TurnaroundBucket(start.plus(Duration.ofDays(90)), 2L, 0L, 1.5, 1.5, 1));
+    DarTurnaround row = new DarTurnaround("ref", 1, start, start, DecidedVia.MANUAL, 0.0);
+    DarDatasetTurnaround pair =
+        new DarDatasetTurnaround("ref", 1, 2, start, start, DecidedVia.RADAR, 0.0);
+    when(darMetricsDAO.countDarTurnaround(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findDarTurnaround(start, end, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countPairTurnaround(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findPairTurnaround(start, end, 10, 20)).thenReturn(List.of(pair));
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 6, 30);
+
+    TurnaroundReport<DarTurnaround> dars =
+        service.getDarDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
+    TurnaroundReport<DarDatasetTurnaround> pairs =
+        service.getDarDatasetDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(5, dars.total());
+    assertEquals(1, dars.unmeasured());
+    assertEquals(buckets, dars.buckets());
+    assertEquals(List.of(row), dars.rows());
+    assertEquals(5, pairs.total());
+    assertEquals(List.of(pair), pairs.rows());
+  }
+
+  @Test
+  void soApprovalsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 6, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<SoApprovalBucket> buckets =
+        List.of(
+            new SoApprovalBucket(
+                start, DarKind.ORIGINAL, SoApprovalStatus.APPROVED, 3L, 0L, 2.0, 2.0, 2),
+            new SoApprovalBucket(
+                start, DarKind.CLOSEOUT, SoApprovalStatus.PENDING, 1L, 0L, null, null, null));
+    SoApproval row =
+        new SoApproval("ref", 1, DarKind.ORIGINAL, start, SoApprovalStatus.SKIPPED, null, null);
+    when(darMetricsDAO.countSoApprovals(start, end, "month")).thenReturn(buckets);
+    when(darMetricsDAO.findSoApprovals(start, end, 10, 20)).thenReturn(List.of(row));
+
+    SoApprovalReport report =
+        service.getDarSoApprovals(
+            LocalDate.of(2026, 6, 1), LocalDate.of(2026, 6, 30), MetricsBucket.MONTH, 10, 20);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
+  }
+
+  @Test
+  void expirationsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<ExpirationBucket> buckets =
+        List.of(
+            new ExpirationBucket(start, AccessEndReason.EXPIRED, 3L),
+            new ExpirationBucket(start, AccessEndReason.CLOSED_OUT, 2L));
+    ExpiredCollection row = new ExpiredCollection(1, "DAR-1", start, AccessEndReason.EXPIRED);
+    ArgumentCaptor<Instant> countedAsOf = ArgumentCaptor.forClass(Instant.class);
+    ArgumentCaptor<Instant> foundAsOf = ArgumentCaptor.forClass(Instant.class);
+    when(darMetricsDAO.countExpirations(eq(start), eq(end), countedAsOf.capture(), eq("quarter")))
+        .thenReturn(buckets);
+    when(darMetricsDAO.findExpirations(eq(start), eq(end), foundAsOf.capture(), eq(10), eq(20)))
+        .thenReturn(List.of(row));
+
+    ExpirationReport report =
+        service.getDarExpirations(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(5, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
+    assertEquals(countedAsOf.getValue(), foundAsOf.getValue());
+  }
+
+  @Test
+  void renewalsCoverWholeDaysAndTotalTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 7, 1));
+    List<RenewalBucket> buckets =
+        List.of(
+            new RenewalBucket(start, 3L, 2L),
+            new RenewalBucket(start.plus(Duration.ofDays(90)), 1L, 1L));
+    Renewal row = new Renewal("ref", 1, 2, start, DecidedVia.MANUAL, start);
+    when(darMetricsDAO.countRenewals(start, end, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findRenewals(start, end, 10, 20)).thenReturn(List.of(row));
+
+    RenewalReport report =
+        service.getDarRenewals(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(List.of(row), report.rows());
+  }
+
+  @Test
+  void pairDecisionsCoverWholeDays() {
+    Instant start = startOfDay(LocalDate.of(2026, 5, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 5, 2));
+    when(darMetricsDAO.countPairDecisions(start, end, "day")).thenReturn(List.of());
+    when(darMetricsDAO.findPairDecisions(start, end, 100, 0)).thenReturn(List.of());
+
+    var report =
+        service.getDarDatasetDecisions(
+            LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 1), MetricsBucket.DAY, 100, 0);
+
+    assertEquals(0, report.total());
+    assertTrue(report.rows().isEmpty());
+  }
+
+  @Test
+  void darVolumeCoversWholeDaysAndTotalsTheBuckets() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    List<VolumeBucketCount> buckets =
+        List.of(
+            new VolumeBucketCount(start, 3L, 2L, 2L, 4L),
+            new VolumeBucketCount(end, 1L, 1L, 1L, 1L));
+    DarVolume row =
+        new DarVolume("ref", 1, 2, start, 3, "Broad", InstitutionSource.RECORDED, 1, 0, 0);
+    when(darMetricsDAO.countDarVolume(start, end, "quarter")).thenReturn(buckets);
+    List<InstitutionDarCount> institutions = List.of(new InstitutionDarCount(3, "Broad", 4L, 3L));
+    List<ResearcherDarCount> researchers = List.of(new ResearcherDarCount(2, 4L));
+    when(darMetricsDAO.findDarVolume(start, end, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countDarsByInstitution(start, end)).thenReturn(institutions);
+    when(darMetricsDAO.countDarsByResearcher(start, end)).thenReturn(researchers);
+
+    VolumeReport report =
+        service.getDarVolume(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.QUARTER, 10, 20);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertEquals(institutions, report.institutions());
+    assertEquals(researchers, report.researchers());
+    assertEquals(List.of(row), report.rows());
+    assertEquals("2026-03-31", report.to());
+  }
+
+  private static Instant startOfDay(LocalDate date) {
+    return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
   }
 }

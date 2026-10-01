@@ -1,0 +1,66 @@
+get:
+  summary: DAR submission volume
+  operationId: apiMetricsDarVolumeGet
+  description: |
+    Admin only. One row per original DAR submitted in the range, with its dataset count and its PI, lab staff and internal collaborator counts; external collaborators aren't counted. The institution is the one recorded at submission (`institutionSource` RECORDED), or the submitter's current one for DARs submitted before submissions recorded it (CURRENT). A DAR recorded with no institution reports null. Canceled and archived DARs, progress reports and drafts are excluded. Also returns DARs per institution and per researcher across the whole range.
+  parameters:
+    - name: from
+      in: query
+      required: true
+      description: First submission date to include, as yyyy-MM-dd, from 1900 to 9999.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last submission date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Submission-date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+    - name: limit
+      in: query
+      required: false
+      description: Rows per page, 1 to 1000.
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      required: false
+      description: Rows to skip.
+      schema:
+        type: integer
+        default: 0
+  tags:
+    - Metrics
+    - Admin
+  responses:
+    200:
+      description: Counts per bucket, per institution and per researcher, and one page of DARs.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarVolumeReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: Admin only.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error

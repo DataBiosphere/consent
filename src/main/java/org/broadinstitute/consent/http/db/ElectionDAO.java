@@ -298,7 +298,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       WHERE v.vote IS NULL
         AND dc.dar_code IS NOT NULL
         AND ee.entity_reference_id IS NULL
-        AND dar.submission_date > NOW() - make_interval(years => 1)
+        AND dar.submission_date > NOW() - make_interval(hours => 8760)
       GROUP BY u.user_id, dc.dar_code, dc.collection_id
 """)
   List<UserVoteReminder> findElectionReminders(

@@ -91,7 +91,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                     AND LOWER(e.election_type) = 'dataaccess'
                     AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
       WHERE dd.dataset_id = :datasetId
-      AND dar.submission_date > now() - interval '1 year'
+      AND dar.submission_date > now() - interval '8760 hours'
       AND final_access_vote.last_vote = TRUE
       AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       -- Exclude DARs that have a closeoutSupplement
@@ -108,10 +108,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * findApprovedDARsByDatasetId}, expired DARs are included so they appear in dataset usage
    * metrics.
    *
-   * <p>A collection is included when at least one submitted, non-archived DAR in it has a terminal
-   * {@code final} or {@code radar_approve} vote on this dataset whose last value is {@code TRUE}.
-   * The approval has to be on this dataset: one DAR can be granted some of the datasets it asks for
-   * and denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
+   * <p>A collection is included when at least one submitted, non-archived DAR in it was approved on
+   * this dataset by its most recently cast {@code final} or {@code radar_approve} vote. The
+   * approval has to be on this dataset: one DAR can be granted some of the datasets it asks for and
+   * denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
    * qualify a collection only on the same terms: a progress report gets its own election and counts
    * once that election approves it, while a closeout has no election at all and so never does.
    * Otherwise either could speak for an approval that was never given.
@@ -132,17 +132,17 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
-                  SELECT DISTINCT e.reference_id, e.dataset_id,
-                      LAST_VALUE(v.vote) OVER(
-                          PARTITION BY e.reference_id, e.dataset_id
-                          ORDER BY v.create_date
-                          RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                      ) last_vote
+                  -- The most recently cast vote across the pair's elections, as the SO dashboard
+                  -- ranks it, so a reopened pair keeps its grant until the new election decides
+                  SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+                      e.reference_id, e.dataset_id, v.vote AS last_vote
                   FROM election e
-                  INNER JOIN vote v ON e.election_id = v.election_id
+                  INNER JOIN vote v ON v.election_id = e.election_id
                       AND v.vote IS NOT NULL
-                      AND LOWER(e.election_type) = 'dataaccess'
                       AND LOWER(v.type) IN ('final', 'radar_approve')
+                  WHERE LOWER(e.election_type) = 'dataaccess' AND e.dataset_id = :datasetId
+                  ORDER BY e.reference_id, e.dataset_id,
+                      COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dd.dataset_id = :datasetId
@@ -177,8 +177,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
               latest_dar.data ->> 'rus' AS rus,
               -- The requester's institution, but never their name: the pages show where a grant
-              -- went, not who holds it.
-              i.institution_name
+              -- went, not who holds it. The institution's recorded name shows once it is deleted.
+              COALESCE(i.institution_name, recorded_dar.institution_name) AS institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that itself
@@ -194,8 +194,21 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
-          LEFT JOIN users u ON u.user_id = latest_dar.user_id
-          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          -- The earliest institution recorded in the collection, so a later progress report never
+          -- moves the grant; the original submitter's current one if none was ever recorded
+          LEFT JOIN (
+              SELECT DISTINCT ON (dar.collection_id) dar.collection_id, dar.user_id,
+                  dar.institution_id, dar.institution_name, dar.institution_snapshot_date
+              FROM data_access_request dar
+              INNER JOIN approved_collections ac ON ac.collection_id = dar.collection_id
+              WHERE dar.submission_date IS NOT NULL
+              ORDER BY dar.collection_id, dar.institution_snapshot_date IS NULL, dar.submission_date,
+                  dar.id
+          ) recorded_dar ON recorded_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = COALESCE(recorded_dar.user_id, latest_dar.user_id)
+          LEFT JOIN institution i ON i.institution_id =
+              CASE WHEN recorded_dar.institution_snapshot_date IS NOT NULL
+                   THEN recorded_dar.institution_id ELSE u.institution_id END
           ORDER BY c.dar_code
       """)
   List<DarMetricsSummary> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
@@ -230,23 +243,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
               INNER JOIN (
-                  SELECT DISTINCT e.reference_id, e.dataset_id,
-                      LAST_VALUE(v.vote) OVER(
-                          PARTITION BY e.reference_id, e.dataset_id
-                          ORDER BY v.create_date
-                          RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                      ) last_vote
+                  -- The most recently cast vote, as in the dataset-scoped query
+                  SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+                      e.reference_id, e.dataset_id, v.vote AS last_vote
                   FROM election e
-                  -- Bound to the study's datasets inside the window, not after it. The outer join
-                  -- to dd.dataset_id cannot be pushed in here, so without this the window sorts
-                  -- and partitions every dataaccess election and vote in the table to answer for a
-                  -- study with a handful of datasets. The partition is already per dataset, so
-                  -- dropping other datasets' rows leaves every surviving partition untouched.
+                  -- Bound to the study's datasets here, not after: the outer join to dd.dataset_id
+                  -- cannot be pushed in, so without this every dataaccess election in the table is
+                  -- ranked to answer for a study with a handful of datasets.
                   INNER JOIN study_datasets sds ON sds.dataset_id = e.dataset_id
-                  INNER JOIN vote v ON e.election_id = v.election_id
+                  INNER JOIN vote v ON v.election_id = e.election_id
                       AND v.vote IS NOT NULL
-                      AND LOWER(e.election_type) = 'dataaccess'
                       AND LOWER(v.type) IN ('final', 'radar_approve')
+                  WHERE LOWER(e.election_type) = 'dataaccess'
+                  ORDER BY e.reference_id, e.dataset_id,
+                      COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
               ) final_access_vote ON final_access_vote.reference_id = dar.reference_id
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dar.submission_date IS NOT NULL
@@ -276,8 +286,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               latest_dar.data ->> 'projectTitle' AS project_title,
               latest_dar.data ->> 'nonTechRus' AS non_tech_rus,
               latest_dar.data ->> 'rus' AS rus,
-              -- Institution, not name: see the dataset-scoped query above.
-              i.institution_name
+              -- The requester's institution, never their name: see the dataset-scoped query above
+              COALESCE(i.institution_name, recorded_dar.institution_name) AS institution_name
           FROM dar_collection c
           INNER JOIN approved_collections ON c.collection_id = approved_collections.collection_id
           -- Source the summary from the most recently submitted DAR in the collection that itself
@@ -293,8 +303,21 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           LEFT JOIN closeouts ON closeouts.collection_id = c.collection_id
-          LEFT JOIN users u ON u.user_id = latest_dar.user_id
-          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          -- The earliest institution recorded in the collection, so a later progress report never
+          -- moves the grant; the original submitter's current one if none was ever recorded
+          LEFT JOIN (
+              SELECT DISTINCT ON (dar.collection_id) dar.collection_id, dar.user_id,
+                  dar.institution_id, dar.institution_name, dar.institution_snapshot_date
+              FROM data_access_request dar
+              INNER JOIN approved_collections ac ON ac.collection_id = dar.collection_id
+              WHERE dar.submission_date IS NOT NULL
+              ORDER BY dar.collection_id, dar.institution_snapshot_date IS NULL, dar.submission_date,
+                  dar.id
+          ) recorded_dar ON recorded_dar.collection_id = c.collection_id
+          LEFT JOIN users u ON u.user_id = COALESCE(recorded_dar.user_id, latest_dar.user_id)
+          LEFT JOIN institution i ON i.institution_id =
+              CASE WHEN recorded_dar.institution_snapshot_date IS NOT NULL
+                   THEN recorded_dar.institution_id ELSE u.institution_id END
           -- Newest first by the date the row carries, which is when access began. Ordering by
           -- the sourced DAR's own date instead would float an old grant to the top the moment it
           -- was renewed, and the cards would read out of order.

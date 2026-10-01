@@ -1,0 +1,16 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    description: Start of the submission-date bucket, in milliseconds since the epoch.
+  darCount:
+    type: integer
+  researcherCount:
+    type: integer
+    description: Distinct submitters.
+  institutionCount:
+    type: integer
+    description: Distinct institutions; DARs with none aren't counted.
+  datasetCount:
+    type: integer
+    description: Datasets requested, summed over the DARs.

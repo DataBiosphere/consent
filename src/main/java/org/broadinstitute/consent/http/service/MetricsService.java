@@ -1,17 +1,32 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.DarDatasetDecision;
+import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
+import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
+import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.ExpirationReport;
+import org.broadinstitute.consent.http.models.RenewalReport;
+import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
@@ -19,12 +34,14 @@ import org.jdbi.v3.core.Jdbi;
 public class MetricsService {
 
   private final DataAccessRequestDAO darDAO;
+  private final DarMetricsDAO darMetricsDAO;
   private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
   @Inject
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.darMetricsDAO = jdbi.onDemand(DarMetricsDAO.class);
     this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;
   }
@@ -88,6 +105,131 @@ public class MetricsService {
   public List<StudyRecommendation> getFrequentlyRequestedWith(Integer studyId, User user) {
     requireStudy(studyId, user);
     return recommendationDAO.findFrequentlyRequestedWith(studyId);
+  }
+
+  /**
+   * DAC decisions per DAR-dataset pair on original DARs submitted from {@code from} to {@code to}.
+   */
+  public DecisionReport<DarDatasetDecision> getDarDatasetDecisions(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return DecisionReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countPairDecisions(start, end, bucket.truncUnit()),
+        darMetricsDAO.findPairDecisions(start, end, limit, offset));
+  }
+
+  /** DAC decisions rolled up per original DAR submitted from {@code from} to {@code to}. */
+  public DecisionReport<DarDecision> getDarDecisions(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return DecisionReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countDarDecisions(start, end, bucket.truncUnit()),
+        darMetricsDAO.findDarDecisions(start, end, limit, offset));
+  }
+
+  /**
+   * Time from submission to DAC decision per decided DAR-dataset pair on original DARs submitted
+   * from {@code from} to {@code to}.
+   */
+  public TurnaroundReport<DarDatasetTurnaround> getDarDatasetDecisionTurnaround(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return TurnaroundReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countPairTurnaround(start, end, bucket.truncUnit()),
+        darMetricsDAO.findPairTurnaround(start, end, limit, offset));
+  }
+
+  /**
+   * Time from submission to the last DAC decision per decided original DAR submitted from {@code
+   * from} to {@code to}.
+   */
+  public TurnaroundReport<DarTurnaround> getDarDecisionTurnaround(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return TurnaroundReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countDarTurnaround(start, end, bucket.truncUnit()),
+        darMetricsDAO.findDarTurnaround(start, end, limit, offset));
+  }
+
+  /**
+   * Submission volume and composition of original DARs submitted from {@code from} to {@code to}.
+   */
+  public VolumeReport getDarVolume(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return VolumeReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countDarVolume(start, end, bucket.truncUnit()),
+        darMetricsDAO.countDarsByInstitution(start, end),
+        darMetricsDAO.countDarsByResearcher(start, end),
+        darMetricsDAO.findDarVolume(start, end, limit, offset));
+  }
+
+  /**
+   * Where original DARs, progress reports and closeouts submitted from {@code from} to {@code to}
+   * stand with their signing official, and how long approval took.
+   */
+  public SoApprovalReport getDarSoApprovals(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return SoApprovalReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countSoApprovals(start, end, bucket.truncUnit()),
+        darMetricsDAO.findSoApprovals(start, end, limit, offset));
+  }
+
+  /** DAR collections whose access to their datasets ended from {@code from} to {@code to}. */
+  public ExpirationReport getDarExpirations(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    Instant asOf = Instant.now();
+    return ExpirationReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countExpirations(start, end, asOf, bucket.truncUnit()),
+        darMetricsDAO.findExpirations(start, end, asOf, limit, offset));
+  }
+
+  /** Datasets renewed by progress reports submitted from {@code from} to {@code to}. */
+  public RenewalReport getDarRenewals(
+      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return RenewalReport.of(
+        from,
+        to,
+        bucket,
+        darMetricsDAO.countRenewals(start, end, bucket.truncUnit()),
+        darMetricsDAO.findRenewals(start, end, limit, offset));
+  }
+
+  // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too
+  private static Instant startOfDay(LocalDate date) {
+    return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
   }
 
   /**
