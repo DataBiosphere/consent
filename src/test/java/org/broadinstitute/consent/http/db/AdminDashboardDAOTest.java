@@ -30,6 +30,8 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     assertEquals(0, counts.institutions());
     assertEquals(0, counts.libraryCards());
     assertEquals(0, counts.agreements());
+    assertEquals(0, counts.institutionsWithoutSigningOfficial());
+    assertEquals(0, counts.researchersApproved());
   }
 
   @Test
@@ -130,6 +132,10 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId = dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
     Integer deletedDacId = dacDAO.createDac("Old DAC", "old@example.org", "", user.getUserId());
+    Integer deletedDaaId =
+        daaDAO.createDaa(
+            user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), deletedDacId);
+    daaDAO.createDacDaaRelation(deletedDacId, deletedDaaId, user.getUserId());
     dacDAO.deleteDac(deletedDacId, user.getUserId());
     Integer daaId =
         daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
