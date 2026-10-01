@@ -2,7 +2,9 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.AdminDashboardDAO.DashboardDatabaseCounts;
@@ -10,8 +12,10 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.AdminDashboardSummary.Metrics;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.AdminDashboardService;
 import org.junit.jupiter.api.Test;
 
 class AdminDashboardDAOTest extends DAOTestHelper {
@@ -119,6 +123,26 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     assertEquals(1, counts.libraryCards());
     assertEquals(1, counts.agreements());
     assertEquals(1, counts.researchersApproved());
+  }
+
+  @Test
+  void metricsCountTheWholeWindowAcrossAQuarterBoundary() {
+    User user = createUserWithInstitution();
+    Integer datasetId = createDataset(user);
+    for (String submitted : new String[] {"2026-09-01T12:00:00Z", "2026-10-15T12:00:00Z"}) {
+      Integer collectionId =
+          darCollectionDAO.insertDarCollection(
+              "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+      insertSubmittedDar(user, collectionId, datasetId, Date.from(Instant.parse(submitted)));
+    }
+    Clock clock = Clock.fixed(Instant.parse("2026-11-15T12:00:00Z"), ZoneOffset.UTC);
+
+    Metrics metrics = new AdminDashboardService(jdbi, clock).getSummary().metrics();
+
+    assertEquals("2026-08-18", metrics.from());
+    assertEquals(2, metrics.volume().dars());
+    assertEquals(1, metrics.volume().researchers());
+    assertEquals(2, metrics.decisions().submitted());
   }
 
   private Integer insertInstitution(String name, Integer createUserId) {
