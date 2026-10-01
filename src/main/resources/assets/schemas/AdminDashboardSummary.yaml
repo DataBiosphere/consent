@@ -83,8 +83,8 @@ properties:
         properties:
           decided: { type: integer, format: int64 }
           unmeasured: { type: integer, format: int64 }
-          medianDays: { type: number, format: double }
-          modeDays: { type: integer }
+          medianDays: { type: number, format: double, nullable: true }
+          modeDays: { type: integer, nullable: true }
       soApprovals:
         type: object
         required: [approved, pending, skipped]
