@@ -2,7 +2,7 @@ get:
   summary: DAR renewals
   operationId: apiMetricsDarRenewalsGet
   description: |
-    Admin only. Renewals submitted in the range, one row per progress report and dataset approved on it, dated by the report's submission, when that dataset's term restarts; a collection renewed twice in the range has two rows per dataset. A pair's latest election decides it, so a reopen with no new vote isn't a renewal until the new election approves. Closeouts, and pending, denied, canceled and archived progress reports, aren't renewals. approvalDate is null for a vote cast before March 2021, when vote dates started being recorded.
+    Admin only. Renewals submitted in the range, one row per progress report and dataset approved on it, dated by the report's submission, when that dataset's term restarts; a collection renewed twice in the range has two rows per dataset. A pair is approved by its latest cast vote across elections, as for expirations and on the study page, so a reopen with no new vote stays a renewal until the new election decides. Closeouts, and pending, denied, canceled and archived progress reports, aren't renewals. approvalDate is null for a vote cast before March 2021, when vote dates started being recorded.
   parameters:
     - name: from
       in: query

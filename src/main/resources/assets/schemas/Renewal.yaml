@@ -14,5 +14,5 @@ properties:
     type: string
     enum: [MANUAL, RADAR]
   approvalDate:
-    type: integer
+    type: [integer, 'null']
     description: When the approving vote was cast, in milliseconds since the epoch; null if not recorded.
