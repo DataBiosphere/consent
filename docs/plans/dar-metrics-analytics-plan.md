@@ -211,10 +211,10 @@ nothing. A progress report can cover a subset of the parent's approved datasets
 (`DataAccessRequestService.java:326-332`), so renewing one dataset needn't extend another. The
 researcher dashboard applies this (`ResearcherDashboardDAO.java:111-132`) and drops closed-out
 collections; the study page after #3049 (DT-4130) applies it and ends access on the closeout's filing
-date. Ticket 7 uses the same per-pair rule, with the closeout date as #3049 has it, but reads
-"approved" from ticket 5's latest-election fragment rather than the latest cast vote. That keeps
-expiry and renewal (ticket 9) in step with the decision report for a reopened pair; the study page
-and researcher dashboard, which answer who has access now, keep the latest cast vote.
+date. Ticket 7 uses the same per-pair rule, with the closeout date as #3049 has it, and reads
+"approved" from the latest cast vote across a pair's elections, as the study page does, so a reopen
+keeps the grant until the new election decides. Renewal (ticket 9) reads it the same way, so expiry
+and renewal stay in step; only the decision reports let a reopen overwrite the decision.
 
 This reads renewal as continuing review, where an approved progress report restarts the term, and
 Decision 1 confirms it.
@@ -637,8 +637,8 @@ pre-authorization, and count expired DARs (metrics 9 and 10).
   (see [Closeouts](#closeouts-have-two-definitions)).
 - Compute access end per collection and dataset in SQL, by the rule in
   [Expiration](#expiration-is-computed): the newest submission approved on that dataset + 365 days,
-  or the closeout date if earlier. "Approved" means approved in its latest election, per ticket 5's
-  fragment. Return the end reason, `EXPIRED` or `CLOSED_OUT`; the study page
+  or the closeout date if earlier. "Approved" means approved by the latest cast vote across the
+  pair's elections, as on the study page. Return the end reason, `EXPIRED` or `CLOSED_OUT`; the study page
   shows both as "Expired". A collection counts as expired once every dataset's access has ended.
 - Required date range, optional bucket, paginated rows; summaries in SQL.
 - Note in the OpenAPI path spec that skip classification starts 20 May 2026 and approval times start
@@ -710,15 +710,15 @@ renewal over time.
 
 ### Ticket 9 (DT-4191): DAR renewal reporting
 
-**Type:** Story · **Size:** 2 · **Depends on:** ticket 5, for the latest-election fragment
+**Type:** Story · **Size:** 2 · **Depends on:** ticket 7, for the access rule
 
 Report renewals (metric 11). A renewal is an approved progress report (Decision 1), so this is
 reporting only, with full history and no schema change.
 
 **Notes**
 
-- Count progress-report pairs (`parent_id IS NOT NULL`) approved under ticket 5's latest-election
-  fragment, excluding closeouts by the reporting definition (see
+- Count progress-report pairs (`parent_id IS NOT NULL`) approved by their latest cast vote, as in
+  ticket 7, excluding closeouts by the reporting definition (see
   [Closeouts](#closeouts-have-two-definitions)) and canceled or archived DARs.
 - Count per collection and dataset, dated by the progress report's `submission_date`, which is what
   ticket 7 restarts the term from. Carry the approving vote's `update_date` too.

@@ -11,6 +11,8 @@ import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.ExpirationBucket;
 import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.Renewal;
+import org.broadinstitute.consent.http.models.RenewalBucket;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
 import org.broadinstitute.consent.http.models.SoApproval;
 import org.broadinstitute.consent.http.models.SoApprovalBucket;
@@ -560,6 +562,79 @@ public interface DarMetricsDAO {
           LIMIT :limit OFFSET :offset
           """)
   List<DarVolume> findDarVolume(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("limit") int limit,
+      @Bind("offset") int offset);
+
+  /**
+   * Defines {@code renewals}: reference_id, collection_id, dataset_id, submission_date,
+   * decided_via, approval_date. One row per dataset approved on a progress report submitted in
+   * [:from, :to), which is a renewal; closeouts and canceled or archived reports aren't. As in
+   * {@link #EXPIRATIONS}, a pair is approved by its most recently cast final or RADAR vote across
+   * its data-access elections, so a reopen keeps the renewal until the new election decides.
+   * approval_date is that vote's update date, null when it predates decision dates.
+   */
+  String RENEWALS =
+      """
+      WITH progress_reports AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.parent_id IS NOT NULL
+          AND dar.data->>'closeoutSupplement' IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               e.reference_id, e.dataset_id, v.vote, v.type, v.update_date
+        FROM progress_reports pr
+        JOIN dar_dataset dd ON dd.reference_id = pr.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      renewals AS (
+        SELECT pr.reference_id, pr.collection_id, lv.dataset_id, pr.submission_date,
+               CASE WHEN LOWER(lv.type) = 'radar_approve' THEN 'RADAR' ELSE 'MANUAL' END
+                 AS decided_via,
+               lv.update_date AS approval_date
+        FROM progress_reports pr
+        JOIN last_votes lv ON lv.reference_id = pr.reference_id
+        WHERE lv.vote
+      )
+      """;
+
+  @RegisterConstructorMapper(RenewalBucket.class)
+  @SqlQuery(
+      RENEWALS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(*) AS renewal_count, COUNT(DISTINCT collection_id) AS collection_count
+          FROM renewals
+          GROUP BY 1
+          ORDER BY 1
+          """)
+  List<RenewalBucket> countRenewals(
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+
+  @RegisterConstructorMapper(Renewal.class)
+  @SqlQuery(
+      RENEWALS
+          + """
+          SELECT reference_id, collection_id, dataset_id, submission_date, decided_via,
+                 approval_date
+          FROM renewals
+          ORDER BY submission_date, reference_id, dataset_id
+          LIMIT :limit OFFSET :offset
+          """)
+  List<Renewal> findRenewals(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
       @Bind("limit") int limit,
