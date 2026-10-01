@@ -21,18 +21,22 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 /**
- * Admin reporting over DAR decisions and submission volume. Every query is bounded by a submission
- * date range.
+ * Admin reporting over DAR decisions, turnaround, SO approval, expiration and submission volume.
+ * Each query is one base fragment, which defines the CTE its javadoc names, then its own SELECT.
  */
 public interface DarMetricsDAO {
 
   /**
-   * One row per DAR-dataset pair on an original DAR submitted in [:from, :to), carrying the state
-   * of the pair's latest data-access election. A reopen archives the earlier elections and opens a
-   * new one, and product counts the reopen as overwriting the earlier decision, so only the latest
-   * election is read. Its cast final or RADAR vote is the decision; with none cast the pair is
-   * pending, or canceled if a chair canceled the election. Elections are ranked only for DARs in
-   * range, so the ranking never sorts the whole table.
+   * Defines {@code pair_decisions}: reference_id, collection_id, dataset_id, submission_date,
+   * state, decided_via, decision_date, elapsed_days. One row per DAR-dataset pair on an original
+   * DAR submitted in [:from, :to), carrying the state of the pair's latest data-access election. A
+   * reopen archives the earlier elections and opens a new one, and product counts the reopen as
+   * overwriting the earlier decision, so only the latest election is read. Its cast final or RADAR
+   * vote is the decision; with none cast the pair is pending, or canceled if a chair canceled the
+   * election. Elections are ranked only for DARs in range, so the ranking never sorts the whole
+   * table. elapsed_days, submission to decision, is null for a vote with no update date or one
+   * dated before a backfilled submission date: the vote's create date is when the election opened,
+   * which would understate turnaround.
    */
   String PAIR_DECISIONS =
       """
@@ -69,7 +73,10 @@ public interface DarMetricsDAO {
                CASE WHEN dv.vote IS NULL THEN NULL
                     WHEN LOWER(dv.type) = 'radar_approve' THEN 'RADAR'
                     ELSE 'MANUAL' END AS decided_via,
-               dv.update_date AS decision_date
+               dv.update_date AS decision_date,
+               CASE WHEN dv.update_date >= od.submission_date
+                    THEN EXTRACT(EPOCH FROM dv.update_date - od.submission_date)::float8 / 86400
+                    END AS elapsed_days
         FROM original_dars od
         JOIN dar_dataset dd ON dd.reference_id = od.reference_id
         LEFT JOIN latest_elections le
@@ -79,11 +86,13 @@ public interface DarMetricsDAO {
       """;
 
   /**
-   * Rolls pairs up per submission, which before 2022-07-27 was saved as one DAR per dataset, so a
-   * collection's original DARs roll up together under its earliest. A submission is decided once no
-   * pair is pending; canceled pairs don't hold it open or affect its outcome, and one whose pairs
-   * were all canceled is canceled. Its decision date is the last pair decision, left null when any
-   * deciding vote predates decision dates.
+   * {@link #PAIR_DECISIONS} plus {@code dar_rows}: reference_id, collection_id, submission_date,
+   * dataset_count, state, decided_via, decision_date, elapsed_days. Rolls pairs up per submission,
+   * which before 2022-07-27 was saved as one DAR per dataset, so a collection's original DARs roll
+   * up together under its earliest. A submission is decided once no pair is pending; canceled pairs
+   * don't hold it open or affect its outcome, and one whose pairs were all canceled is canceled.
+   * Its decision date is the last pair decision, left null when any deciding vote predates decision
+   * dates, and elapsed_days is null when the decision date is null or precedes the submission.
    */
   String DAR_DECISIONS =
       PAIR_DECISIONS
@@ -113,7 +122,11 @@ public interface DarMetricsDAO {
                         WHEN via_count > 1 THEN 'MIXED'
                         ELSE any_via END AS decided_via,
                    CASE WHEN undecided > 0 OR via_count = 0 OR undated > 0 THEN NULL
-                        ELSE last_decision END AS decision_date
+                        ELSE last_decision END AS decision_date,
+                   CASE WHEN undecided = 0 AND via_count > 0 AND undated = 0
+                             AND last_decision >= submission_date
+                        THEN EXTRACT(EPOCH FROM last_decision - submission_date)::float8 / 86400
+                        END AS elapsed_days
             FROM dar_decisions
           )
           """;
@@ -176,68 +189,32 @@ public interface DarMetricsDAO {
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
-  /**
-   * Decided pairs, from submission to the deciding vote. A vote with no update date, or one dated
-   * before a backfilled submission date, is kept with a null elapsed time, so it is counted but not
-   * measured; the vote's create date is when the election opened, which would understate
-   * turnaround.
-   */
-  String PAIR_TURNAROUND =
+  /** Turnaround over decided pairs; one with no elapsed time is counted as unmeasured. */
+  @RegisterConstructorMapper(TurnaroundBucket.class)
+  @SqlQuery(
       PAIR_DECISIONS
           + """
-          , turnaround AS (
-            SELECT reference_id, collection_id, dataset_id, submission_date, decision_date,
-                   decided_via,
-                   CASE WHEN decision_date >= submission_date
-                        THEN EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
-                        END AS elapsed_days
-            FROM pair_decisions
-            WHERE decided_via IS NOT NULL
-          )
-          """;
-
-  /**
-   * Decided submissions, from submission to their last pair decision. One with any undated deciding
-   * vote, or decided before its submission date, is counted but not measured.
-   */
-  String DAR_TURNAROUND =
-      DAR_DECISIONS
-          + """
-          , turnaround AS (
-            SELECT reference_id, collection_id, submission_date, decision_date, decided_via,
-                   CASE WHEN decision_date >= submission_date
-                        THEN EXTRACT(EPOCH FROM decision_date - submission_date)::float8 / 86400
-                        END AS elapsed_days
-            FROM dar_rows
-            WHERE state IN ('APPROVED', 'DENIED', 'MIXED')
-          )
-          """;
-
-  String TURNAROUND_BUCKETS =
-      """
-      SELECT date_trunc(:bucket, submission_date) AS bucket_start,
-             COUNT(elapsed_days) AS count,
-             COUNT(*) - COUNT(elapsed_days) AS unmeasured,
-             AVG(elapsed_days) AS mean_days,
-             PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
-             (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
-      FROM turnaround
-      GROUP BY 1
-      ORDER BY 1
-      """;
-
-  @RegisterConstructorMapper(TurnaroundBucket.class)
-  @SqlQuery(PAIR_TURNAROUND + TURNAROUND_BUCKETS)
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(elapsed_days) AS count,
+                 COUNT(*) - COUNT(elapsed_days) AS unmeasured,
+                 AVG(elapsed_days) AS mean_days,
+                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
+                 (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
+          FROM pair_decisions
+          WHERE decided_via IS NOT NULL
+          GROUP BY 1
+          ORDER BY 1
+          """)
   List<TurnaroundBucket> countPairTurnaround(
       @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(DarDatasetTurnaround.class)
   @SqlQuery(
-      PAIR_TURNAROUND
+      PAIR_DECISIONS
           + """
           SELECT reference_id, collection_id, dataset_id, submission_date, decision_date,
                  decided_via, elapsed_days
-          FROM turnaround
+          FROM pair_decisions
           WHERE elapsed_days IS NOT NULL
           ORDER BY submission_date, reference_id, dataset_id
           LIMIT :limit OFFSET :offset
@@ -248,18 +225,32 @@ public interface DarMetricsDAO {
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
+  /** Turnaround over decided submissions; one with no elapsed time is counted as unmeasured. */
   @RegisterConstructorMapper(TurnaroundBucket.class)
-  @SqlQuery(DAR_TURNAROUND + TURNAROUND_BUCKETS)
+  @SqlQuery(
+      DAR_DECISIONS
+          + """
+          SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+                 COUNT(elapsed_days) AS count,
+                 COUNT(*) - COUNT(elapsed_days) AS unmeasured,
+                 AVG(elapsed_days) AS mean_days,
+                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY elapsed_days) AS median_days,
+                 (MODE() WITHIN GROUP (ORDER BY FLOOR(elapsed_days)))::int AS mode_days
+          FROM dar_rows
+          WHERE state IN ('APPROVED', 'DENIED', 'MIXED')
+          GROUP BY 1
+          ORDER BY 1
+          """)
   List<TurnaroundBucket> countDarTurnaround(
       @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(DarTurnaround.class)
   @SqlQuery(
-      DAR_TURNAROUND
+      DAR_DECISIONS
           + """
           SELECT reference_id, collection_id, submission_date, decision_date, decided_via,
                  elapsed_days
-          FROM turnaround
+          FROM dar_rows
           WHERE elapsed_days IS NOT NULL
           ORDER BY submission_date, reference_id
           LIMIT :limit OFFSET :offset
@@ -271,16 +262,21 @@ public interface DarMetricsDAO {
       @Bind("offset") int offset);
 
   /**
-   * One row per DAR, progress report or closeout submitted in [:from, :to), with where it stands
-   * with its signing official. {@code requires_so_approval} is only ever written true, so NULL is a
-   * pre-authorization skip, but only from 20 May 2026, when production first wrote it; closeouts
-   * always go to an SO and stay NULL. Closeout approvals were recorded from 5 June 2025. Before
-   * 2022-07-27 a submission was saved as one DAR per dataset, so a collection's original DARs count
-   * as one submission, reported under its earliest.
+   * Defines {@code so_approvals}: reference_id, collection_id, kind, submission_date,
+   * approval_date, status, elapsed_days. One row per DAR, progress report or closeout submitted in
+   * [:from, :to), with where it stands with its signing official. {@code requires_so_approval} is
+   * only ever written true, so NULL is a pre-authorization skip, but only from 20 May 2026, when
+   * production first wrote it; closeouts always go to an SO and stay NULL. Closeout approvals were
+   * recorded from 5 June 2025. Before 2022-07-27 a submission was saved as one DAR per dataset, so
+   * a collection's original DARs count as one submission, reported under its earliest.
    */
   String SO_APPROVALS =
       """
-      WITH so_rows AS (
+      WITH recorded_from AS (
+        SELECT TIMESTAMP '2025-06-05' AS closeout_approval,
+               TIMESTAMP '2026-05-20' AS so_requirement
+      ),
+      so_rows AS (
         SELECT dar.reference_id, dar.collection_id, dar.submission_date, dar.requires_so_approval,
                dar.approving_so_timestamp AS approval_date,
                CASE WHEN dar.parent_id IS NULL
@@ -305,15 +301,17 @@ public interface DarMetricsDAO {
       so_approvals AS (
         SELECT reference_id, collection_id, kind, submission_date, approval_date,
                CASE WHEN approval_date IS NOT NULL THEN 'APPROVED'
-                    WHEN kind = 'CLOSEOUT' AND submission_date >= '2025-06-05' THEN 'PENDING'
+                    WHEN kind = 'CLOSEOUT' AND submission_date >= r.closeout_approval
+                      THEN 'PENDING'
                     WHEN kind = 'CLOSEOUT' THEN 'NOT_DETERMINED'
                     WHEN requires_so_approval THEN 'PENDING'
-                    WHEN submission_date >= '2026-05-20' THEN 'SKIPPED'
+                    WHEN submission_date >= r.so_requirement THEN 'SKIPPED'
                     ELSE 'NOT_DETERMINED' END AS status,
                CASE WHEN approval_date >= submission_date
                     THEN EXTRACT(EPOCH FROM approval_date - submission_date)::float8 / 86400
                     END AS elapsed_days
         FROM submissions
+        CROSS JOIN recorded_from r
       )
       """;
 
@@ -352,15 +350,16 @@ public interface DarMetricsDAO {
       @Bind("offset") int offset);
 
   /**
-   * DAR collections whose access ended in [:from, :to), and by :asOf. Access to a dataset runs 8760
-   * hours, as {@code EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or
-   * progress report, whose most recently cast final or RADAR vote across its elections approved it,
-   * so a reopen keeps the grant until the new election decides; a closeout filed before the term
-   * runs out ends the whole collection's access on its filing date. Both are as on the study page.
-   * A collection has ended once every dataset's access has. A renewal approved after the range
-   * still counts, so a collection is reported only while its access has ended, dated by when it
-   * last did. Only submissions from a year before :from are ranked, since an older newest approval
-   * ended before the range.
+   * Defines {@code ended}: collection_id, dar_code, access_end, reason. DAR collections whose
+   * access ended in [:from, :to), and by :asOf. Access to a dataset runs 8760 hours, as {@code
+   * EXPIRATION_DURATION_MILLIS} does, from the newest submission, original or progress report,
+   * whose most recently cast final or RADAR vote across its elections approved it, so a reopen
+   * keeps the grant until the new election decides; a closeout filed before the term runs out ends
+   * the whole collection's access on its filing date. Both are as on the study page. A collection
+   * has ended once every dataset's access has. A renewal approved after the range still counts, so
+   * a collection is reported only while its access has ended, dated by when it last did. Only
+   * submissions from a year before :from are ranked, since an older newest approval ended before
+   * the range.
    */
   String EXPIRATIONS =
       """
@@ -447,13 +446,15 @@ public interface DarMetricsDAO {
       @Bind("offset") int offset);
 
   /**
-   * One row per original DAR submitted in [:from, :to). The institution is the one recorded at
-   * submission, falling back to the submitter's current one only for DARs submitted before
-   * submissions recorded it; a recorded null stays null. Its name is read through the id, so an
-   * admin rename shows, and the recorded name is used only once the institution has been deleted.
-   * External collaborators aren't counted: they are approved separately from the DAR. Before
-   * 2022-07-27 a submission was saved as one DAR per dataset, so each collection's original DARs
-   * count as one submission, reported under its earliest.
+   * Defines {@code dar_volume}: reference_id, collection_id, user_id, submission_date,
+   * institution_id, institution_name, institution_source, dataset_count, lab_staff_count,
+   * internal_collaborator_count. One row per original DAR submitted in [:from, :to). The
+   * institution is the one recorded at submission, falling back to the submitter's current one only
+   * for DARs submitted before submissions recorded it; a recorded null stays null. Its name is read
+   * through the id, so an admin rename shows, and the recorded name is used only once the
+   * institution has been deleted. External collaborators aren't counted: they are approved
+   * separately from the DAR. Before 2022-07-27 a submission was saved as one DAR per dataset, so
+   * each collection's original DARs count as one submission, reported under its earliest.
    */
   String DAR_VOLUME =
       """
