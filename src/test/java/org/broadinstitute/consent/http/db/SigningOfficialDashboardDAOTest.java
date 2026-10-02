@@ -143,6 +143,26 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void breaksASubmissionDateTieByTheNewestDarRow() {
+    User user = createUserWithInstitution();
+    Integer datasetId = createDataset(user);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), FIXED_DATE);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    insertSubmittedDar(user, collectionId, datasetId, canceled, FIXED_DATE);
+
+    DashboardDatabaseCounts counts =
+        jdbi.onDemand(SigningOfficialDashboardDAO.class)
+            .getCounts(user.getInstitutionId(), user.getUserId().toString(), user.getEmail());
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darCanceled());
+  }
+
+  @Test
   void countsApprovalTotalRegardlessOfWhetherTheSoAlreadyActioned() {
     User user = createUserWithInstitution();
     Integer datasetId = createDataset(user);
