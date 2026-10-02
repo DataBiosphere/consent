@@ -100,7 +100,9 @@ class MetricsTests extends ContainerTests {
     try (Response response = request("/api/admin/dashboard-summary", "ci-admin@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       String body = response.readEntity(String.class);
-      assertTrue(body.contains("\"darRequests\""), body);
+      for (String key : new String[] {"darRequests", "dacs", "users", "libraryCards"}) {
+        assertTrue(body.contains("\"" + key + "\""), body);
+      }
     }
   }
 
