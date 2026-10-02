@@ -115,8 +115,8 @@ scope here and is noted so nobody expects the schema graph to be cycle-free afte
 the study creator, its custodians, and everyone when the study is publicly visible. Anyone who can
 open a private study on the edit form can therefore read every dataset in it, so the existing
 `GET /api/dataset/batch?ids=` (which returns 404 if any requested id is filtered out) would not
-fail for the edit form. A dedicated endpoint is still recommended below, but for parallel fetching,
-URL length, and a single membership snapshot, not for correctness.
+fail for the edit form. A dedicated endpoint is still recommended below, but for parallel fetching
+and URL length, not for correctness.
 
 ## Rollout
 
@@ -138,12 +138,15 @@ not required for this change.
 
 - `schemas/Study.yaml`: mark `datasets` `deprecated: true`; point the description at
   `datasetIds` and the new endpoint.
-- `DatasetService`: add `findStudyDatasets(User, Study)` wrapping the existing
-  `findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()))`, which applies
-  `verifyPublicVisibilityAccess`. `findDatasetsByIds` takes a `List<Integer>` and
-  `Study.getDatasetIds()` returns a `Set<Integer>`, so the ids are copied into a list, as
-  `getStudyWithDatasetsById` already does. A study with no dataset ids returns an empty list
-  without a query.
+- `DatasetService`: add `findStudyDatasets(User, Study)`. It reads the datasets with
+  `datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()))`; the DAO takes a
+  collection and `Study.getDatasetIds()` returns a `Set<Integer>`, so the ids are copied into a
+  list, as `getStudyWithDatasetsById` already does. When the caller may read the study, every
+  dataset still in it is returned; otherwise each dataset goes through
+  `verifyPublicVisibilityAccess`. Deciding from the loaded study avoids reading the same study
+  again per dataset. A study with no dataset ids returns an empty list without a query.
+- `getStudyWithDatasetsById` keeps the deprecated list unset for a study with no datasets, so the
+  study GET payload does not change before PR 3.
 - Add `GET /api/dataset/study/{studyId}/datasets` on `StudyResource`, operationId
   `apiDatasetStudyStudyIdDatasetsGet`, new file under `assets/paths/`. Load the study with
   `DatasetService.findStudyByIdForRead`, which reads through `StudyDAO.findStudyById` and so fills
@@ -280,6 +283,16 @@ A Copilot review of the plan PR then found:
 - Removing a response property is a breaking API change, and `CONTRIBUTING.md` describes Comms
   coordination and an api-users notice before release. This was considered and confirmed not
   required for this change, so it is not a gate.
+
+Reviews of the PR branches with Codex and Claude then found:
+
+- The plan gave "a single membership snapshot" as a reason for the new endpoint, but the endpoint
+  reads the study's dataset ids and then the datasets in two steps, as the study GET always has.
+  The claim is dropped. Only the admin-only conversion endpoint moves an existing dataset into a
+  study, and a dataset that moved between the two reads is decided by its new study.
+- The remaining findings were low severity and are fixed on the branches: the study GET's empty
+  list, the repeated study reads, a failed post-commit read in the update emails, and several
+  tests that could not fail.
 
 ## Definition of Done
 
