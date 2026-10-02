@@ -207,6 +207,55 @@ class StudyResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testGetStudyDatasets() {
+    Dataset ds1 = new Dataset();
+    ds1.setDatasetId(1);
+    Dataset ds2 = new Dataset();
+    ds2.setDatasetId(2);
+    Study study = new Study();
+    study.setStudyId(12345);
+    study.addDatasetIds(Set.of(1, 2));
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findStudyByIdForRead(user, study.getStudyId())).thenReturn(study);
+    when(datasetService.findStudyDatasets(user, study)).thenReturn(List.of(ds1, ds2));
+
+    try (var response = resource.getStudyDatasets(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(List.of(ds1, ds2), response.getEntity());
+    }
+  }
+
+  @Test
+  void testGetStudyDatasetsNoDatasets() {
+    Study study = new Study();
+    study.setStudyId(12345);
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findStudyByIdForRead(user, study.getStudyId())).thenReturn(study);
+    when(datasetService.findStudyDatasets(user, study)).thenReturn(List.of());
+
+    try (var response = resource.getStudyDatasets(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(List.of(), response.getEntity());
+    }
+  }
+
+  /**
+   * A study the caller may not read is absent, not an empty list: the datasets read must not
+   * confirm that a hidden study exists when the study read itself would not.
+   */
+  @Test
+  void testGetStudyDatasetsHiddenStudyIsNotFound() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findStudyByIdForRead(user, 1))
+        .thenThrow(new NotFoundException("Entity not found"));
+
+    try (var response = resource.getStudyDatasets(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      verify(datasetService, never()).findStudyDatasets(any(), any());
+    }
+  }
+
+  @Test
   void testGetRegistrationFromStudy() {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);

@@ -753,9 +753,129 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindStudyDatasetsNoDatasetIdsSkipsTheLookup() {
+    Study study = new Study();
+    study.setStudyId(1);
+
+    assertEquals(List.of(), datasetService.findStudyDatasets(mockUser, study));
+    verify(datasetDAO, never()).findDatasetsByIdList(any());
+  }
+
+  private static Dataset datasetInStudy(int datasetId, Integer studyId, int createUserId) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    dataset.setStudyId(studyId);
+    dataset.setCreateUserId(createUserId);
+    return dataset;
+  }
+
+  private static Study privateStudy(int studyId, int createUserId, Set<Integer> datasetIds) {
+    Study study = new Study();
+    study.setStudyId(studyId);
+    study.setCreateUserId(createUserId);
+    study.setPublicVisibility(false);
+    study.addDatasetIds(datasetIds);
+    return study;
+  }
+
+  /**
+   * A custodian of a private study reads every dataset in it, including ones they did not create,
+   * and the study already loaded decides it: none of the datasets reads the study again.
+   */
+  @Test
+  void testFindStudyDatasetsCustodianReadsEveryDatasetWithoutRereadingTheStudy() {
+    User custodian = new User();
+    custodian.setUserId(7);
+    custodian.setEmail("custodian@example.org");
+    Study study = privateStudy(1, 99, Set.of(10, 11));
+    StudyProperty custodians = new StudyProperty();
+    custodians.setKey(dataCustodianEmail);
+    custodians.setType(PropertyType.Json);
+    custodians.setValue(GsonUtil.getInstance().toJson(List.of(custodian.getEmail())));
+    study.addProperty(custodians);
+    List<Dataset> datasets = List.of(datasetInStudy(10, 1, 99), datasetInStudy(11, 1, 98));
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(datasets);
+
+    assertEquals(datasets, datasetService.findStudyDatasets(custodian, study));
+    verify(studyDAO, never()).findStudyDetailsById(any());
+  }
+
+  /** Anyone reads every dataset of a published study, whoever created them. */
+  @Test
+  void testFindStudyDatasetsPublicStudyIsReadableByAnyone() {
+    User viewer = new User();
+    viewer.setUserId(7);
+    Study study = privateStudy(1, 99, Set.of(10, 11));
+    study.setPublicVisibility(true);
+    List<Dataset> datasets = List.of(datasetInStudy(10, 1, 99), datasetInStudy(11, 1, 98));
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(datasets);
+
+    assertEquals(datasets, datasetService.findStudyDatasets(viewer, study));
+    verify(studyDAO, never()).findStudyDetailsById(any());
+  }
+
+  /**
+   * When the caller may not read the study, each dataset is decided on its own, through the same
+   * study lookup a single dataset read uses: the caller keeps the dataset they created and loses
+   * the rest.
+   */
+  @Test
+  void testFindStudyDatasetsUnreadableStudyKeepsOnlyTheCallersOwnDatasets() {
+    User user = new User();
+    user.setUserId(7);
+    Study study = privateStudy(1, 99, Set.of(10, 11));
+    Dataset own = datasetInStudy(10, 1, user.getUserId());
+    Dataset others = datasetInStudy(11, 1, 98);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(own, others));
+    when(studyDAO.findStudyDetailsById(1)).thenReturn(privateStudy(1, 99, Set.of()));
+
+    assertEquals(List.of(own), datasetService.findStudyDatasets(user, study));
+    ArgumentCaptor<List<Integer>> ids = ArgumentCaptor.captor();
+    verify(datasetDAO).findDatasetsByIdList(ids.capture());
+    assertEquals(Set.of(10, 11), Set.copyOf(ids.getValue()));
+  }
+
+  /**
+   * A dataset that moved to another study after the ids were read is no longer one of this study's
+   * datasets. It is left out even when the caller could read it, here because they created it, and
+   * without looking up the study it moved to.
+   */
+  @Test
+  void testFindStudyDatasetsLeavesOutADatasetThatMovedEvenIfReadable() {
+    User viewer = new User();
+    viewer.setUserId(7);
+    Study study = privateStudy(1, 99, Set.of(10, 11));
+    study.setPublicVisibility(true);
+    Dataset stays = datasetInStudy(10, 1, 99);
+    Dataset moved = datasetInStudy(11, 2, viewer.getUserId());
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(stays, moved));
+
+    assertEquals(List.of(stays), datasetService.findStudyDatasets(viewer, study));
+    verify(studyDAO, never()).findStudyDetailsById(any());
+  }
+
+  @Test
   void testGetStudyWithDatasetsById() {
-    when(studyDAO.findStudyById(anyInt())).thenReturn(new Study());
-    assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(mockUser, 1));
+    Study study = privateStudy(1, 99, Set.of(10));
+    study.setPublicVisibility(true);
+    Dataset dataset = datasetInStudy(10, 1, 99);
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset));
+
+    Study result = datasetService.getStudyWithDatasetsById(mockUser, 1);
+
+    assertEquals(Set.of(dataset), result.getDatasets());
+  }
+
+  /** A study with no datasets leaves the deprecated list unset, so the response omits the key. */
+  @Test
+  void testGetStudyWithDatasetsByIdNoDatasetsLeavesTheListUnset() {
+    Study study = privateStudy(1, 99, Set.of());
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+
+    Study result = datasetService.getStudyWithDatasetsById(mockUser, 1);
+
+    assertFalse(GsonUtil.getInstance().toJsonTree(result).getAsJsonObject().has("datasets"));
   }
 
   @Test
