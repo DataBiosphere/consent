@@ -520,14 +520,27 @@ public class DatasetRegistrationService implements ConsentLogger {
    * chair was ever told about a consent group added on update. Existing consent groups cannot be
    * removed on update, so the inserts are exactly the new datasets.
    *
+   * <p>The update has already committed when this runs. A failed read here is logged and sends no
+   * emails rather than failing a request whose change is already stored, which would also skip the
+   * caller's reindex of the study.
+   *
    * @param result The outcome of the study update
-   * @return The datasets the update created, or an empty list when it created none
+   * @return The datasets the update created, or an empty list when it created none or they could
+   *     not be read
    */
   public List<Dataset> createdDatasetsFromUpdate(DatasetServiceDAO.StudyUpdateResult result) {
     if (result.insertedDatasetIds().isEmpty()) {
       return List.of();
     }
-    return datasetDAO.findDatasetsByIdList(result.insertedDatasetIds());
+    try {
+      return datasetDAO.findDatasetsByIdList(result.insertedDatasetIds());
+    } catch (Exception e) {
+      logException(
+          "Unable to read the datasets a study update created; no DAC chair emails sent: %s"
+              .formatted(result.insertedDatasetIds()),
+          e);
+      return List.of();
+    }
   }
 
   /**

@@ -444,6 +444,58 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(study, returned);
   }
 
+  /** Each chair of the inserted dataset's DAC gets one email. */
+  @Test
+  void testStudyUpdateNewDatasetEmailsEveryChairOfItsDac() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    Dataset inserted = new Dataset();
+    inserted.setDatasetId(5);
+    inserted.setDacId(1);
+    inserted.setCreateUser(new User());
+    User firstChair = new User();
+    firstChair.setChairpersonRole();
+    User secondChair = new User();
+    secondChair.setChairpersonRole();
+    User member = new User();
+    member.setMemberRole();
+    Dac dac = mock();
+
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(new Study(), List.of(inserted.getDatasetId())));
+    when(datasetDAO.findDatasetsByIdList(List.of(inserted.getDatasetId())))
+        .thenReturn(List.of(inserted));
+    when(dacDAO.findById(1)).thenReturn(dac);
+    when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(firstChair, secondChair, member));
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    verify(emailService, times(2)).sendMessage(any(DatasetSubmittedMessage.class), any());
+  }
+
+  /**
+   * The update has committed before the created datasets are read. A failed read sends no email and
+   * still returns the updated study, rather than failing a request whose change is stored.
+   */
+  @Test
+  void testStudyUpdateCreatedDatasetReadFailureStillReturnsTheStudy() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    Study study = new Study();
+
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(study, List.of(5)));
+    when(datasetDAO.findDatasetsByIdList(List.of(5))).thenThrow(new RuntimeException("db down"));
+
+    Study returned =
+        datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals(study, returned);
+    verify(emailService, never()).sendMessage(any(), any());
+  }
+
   @Test
   void testStudyUpdateWithNoNewDatasetsSendsNoEmail() throws Exception {
     User user = mock();
