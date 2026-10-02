@@ -123,19 +123,37 @@ URL length, and a single membership snapshot, not for correctness.
 Three PRs, each gated on the previous deploy. The UI reads `study.datasets` today, so removing the
 field before the UI ships would empty every consent group on the edit form.
 
-Gate: PR 1 deployed everywhere -> PR 2 deployed and observed -> PR 3.
+Gates, in order:
 
-**Open question (decision).** Do generated clients of the OpenAPI spec exist outside duos-ui? The
-only evidence is the legacy-`operationId` note in `docs/ai/prompts/openapi-spec.md`, which keeps
-old ids "for backward compatibility with generated clients". If they exist, someone must own the
-deprecation window between PR 1 and PR 3 and set its length.
+1. PR 1 deployed to every environment.
+2. PR 2 deployed and observed: the data-submission edit form loads existing studies with their
+   consent groups.
+3. Breaking-change notice, per `CONTRIBUTING.md` ("Breaking API changes"). PR 3 removes the
+   `datasets` property from the `GET /api/dataset/study/{studyId}` response, which is a breaking
+   change for any consumer that reads it, whether or not they use a generated client. Before PR 3
+   is released:
+   - Identify consumers of the study GET beyond duos-ui, starting with the generated clients the
+     legacy-`operationId` note in `docs/ai/prompts/openapi-spec.md` refers to.
+   - Check in with Comms on the change and its impact, and agree a deprecation window, counted
+     from PR 1's deploy, since that is when `datasets` is marked deprecated and the replacement
+     endpoint exists.
+   - Send an email, with Comms sign-off on the wording, to api-users@firecloud.org at least a few
+     days before the release. It says that `datasets` is removed from the study GET and that
+     callers should read `datasetIds` and fetch `GET /api/dataset/study/{studyId}/datasets`.
+4. PR 3 released once the window has passed.
+
+**Open decision.** Who owns gate 3, and how long the deprecation window is.
 
 ### PR 1: consent, additive `[DT-4225][1/3]`
 
 - `schemas/Study.yaml`: mark `datasets` `deprecated: true`; point the description at
   `datasetIds` and the new endpoint.
 - `DatasetService`: add `findStudyDatasets(User, Study)` wrapping the existing
-  `findDatasetsByIds(user, study.getDatasetIds())`, which applies `verifyPublicVisibilityAccess`.
+  `findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()))`, which applies
+  `verifyPublicVisibilityAccess`. `findDatasetsByIds` takes a `List<Integer>` and
+  `Study.getDatasetIds()` returns a `Set<Integer>`, so the ids are copied into a list, as
+  `getStudyWithDatasetsById` already does. A study with no dataset ids returns an empty list
+  without a query.
 - Add `GET /api/dataset/study/{studyId}/datasets` on `StudyResource`, operationId
   `apiDatasetStudyStudyIdDatasetsGet`, new file under `assets/paths/`. Load the study with
   `DatasetService.findStudyByIdForRead`, which reads through `StudyDAO.findStudyById` and so fills
@@ -204,8 +222,11 @@ deprecation window between PR 1 and PR 3 and set its length.
 
 - `StudyResourceTest`: all eight `getDatasets`/`addDatasets` call sites (lines 224, 351, 424, 451,
   467, 500, 516, 586 at the pinned revision).
-- `DatasetRegistrationServiceTest`: the update-email block around line 424 and the
-  `createdDatasetsFromUpdatedStudy` block around line 557.
+- `DatasetRegistrationServiceTest`: all nine `Study.getDatasets()` stubs, each of which stops
+  compiling when the method is removed. Lines 434, 572 and 589 are the update-email block and the
+  `createdDatasetsFromUpdatedStudy` cases, which are rewritten. Lines 1070, 1097, 1141, 1181, 1216
+  and 1239 pair a mocked `updateStudy` return with an empty `getDatasets()`; they return a
+  `StudyUpdateResult` with no inserted ids instead.
 - `StudyUpdateRequestValidatorTest`: the rename-check cases around line 243 and the helper at
   line 471.
 - `DatasetServiceDAOTest`: the `deleteStudy` case around line 1001 (Testcontainers; runs locally).
@@ -260,6 +281,15 @@ The second review also found:
 - PR 1 named `requireReadableStudy` as the loader, which would have returned `[]` for a readable
   study. The plan now names `findStudyByIdForRead`.
 
+A Copilot review of the plan PR then found:
+
+- The `findStudyDatasets` sketch passed the `Set` from `getDatasetIds()` to a method taking a
+  `List`, which does not compile. The plan now copies the ids into a list.
+- The test matrix listed two of the nine `Study.getDatasets()` stubs in
+  `DatasetRegistrationServiceTest`. It now lists all nine.
+- Removing a response property is a breaking API change, and `CONTRIBUTING.md` requires Comms
+  coordination and an api-users notice before release. That is now an explicit gate before PR 3.
+
 ## Definition of Done
 
 - `Study.yaml` no longer references `Dataset.yaml`; the spec validator passes.
@@ -270,4 +300,5 @@ The second review also found:
 - Study deletion rejects an in-use dataset before touching the search index, and otherwise keeps
   its index-then-rows order.
 - A test pins what a delete failing partway through a study leaves behind.
+- The breaking-change notice for PR 3 was sent, with Comms sign-off, before PR 3's release.
 - A study update that inserts consent groups emails the DAC chairs, with tests.
