@@ -16,7 +16,7 @@
     <maven.version>3.9.11</maven.version>
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>5.0.2</dropwizard.version>
-    <logback.version>1.5.37</logback.version>
+    <logback.version>1.6.5</logback.version>
     <postgres.version>42.7.13</postgres.version>
     <surefire.version>3.6.0</surefire.version>
     <swagger.ui.version>5.32.15</swagger.ui.version>
@@ -527,6 +527,12 @@
         <groupId>org.conscrypt</groupId>
         <artifactId>conscrypt-openjdk-uber</artifactId>
         <version>2.7.0</version>
+      </dependency>
+      <!-- Security update for the 2.x databind that sendgrid-java uses. -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.21.7</version>
       </dependency>
       <!--
        See https://broadworkbench.atlassian.net/browse/DT-3748
