@@ -836,21 +836,22 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   /**
-   * A dataset that moved to another study after the ids were read is not admitted on this study's
-   * authority; it is decided against the study it now belongs to.
+   * A dataset that moved to another study after the ids were read is no longer one of this study's
+   * datasets. It is left out even when the caller could read it, here because they created it, and
+   * without looking up the study it moved to.
    */
   @Test
-  void testFindStudyDatasetsDatasetThatMovedIsDecidedByItsNewStudy() {
+  void testFindStudyDatasetsLeavesOutADatasetThatMovedEvenIfReadable() {
     User viewer = new User();
     viewer.setUserId(7);
     Study study = privateStudy(1, 99, Set.of(10, 11));
     study.setPublicVisibility(true);
     Dataset stays = datasetInStudy(10, 1, 99);
-    Dataset moved = datasetInStudy(11, 2, 98);
+    Dataset moved = datasetInStudy(11, 2, viewer.getUserId());
     when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(stays, moved));
-    when(studyDAO.findStudyDetailsById(2)).thenReturn(privateStudy(2, 98, Set.of()));
 
     assertEquals(List.of(stays), datasetService.findStudyDatasets(viewer, study));
+    verify(studyDAO, never()).findStudyDetailsById(any());
   }
 
   @Test

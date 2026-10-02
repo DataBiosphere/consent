@@ -554,16 +554,17 @@ public class DatasetService implements ConsentLogger {
     }
     List<Dataset> datasets =
         datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
+    // Only datasets still in this study are its datasets. One that moved to another study after the
+    // ids were read is left out, however readable its new study is.
+    //
     // The datasets come back without their study attached, so filtering each one on its own reads
     // the same study again per dataset. The study is already loaded: when the caller may read it,
-    // every dataset that still belongs to it is readable for the same reason. A dataset whose
-    // study changed since the ids were read is not one of those, and is decided on its own.
+    // every dataset still in it is readable for the same reason. Otherwise each is decided on its
+    // own, which still lets a caller see a dataset they created.
     boolean studyReadable = canReadStudy(user, study);
     return datasets.stream()
-        .filter(
-            d ->
-                (studyReadable && Objects.equals(d.getStudyId(), study.getStudyId()))
-                    || verifyPublicVisibilityAccess(d, user) != null)
+        .filter(d -> Objects.equals(d.getStudyId(), study.getStudyId()))
+        .filter(d -> studyReadable || verifyPublicVisibilityAccess(d, user) != null)
         .toList();
   }
 
