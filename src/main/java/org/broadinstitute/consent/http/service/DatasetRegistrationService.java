@@ -189,9 +189,10 @@ public class DatasetRegistrationService implements ConsentLogger {
             studyProps,
             uploadFiles);
 
-    Study updatedStudy = datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
-    sendDatasetSubmittedEmails(createdDatasetsFromUpdatedStudy(updatedStudy, datasetUpdates));
-    return updatedStudy;
+    DatasetServiceDAO.StudyUpdateResult result =
+        datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
+    sendDatasetSubmittedEmails(createdDatasetsFromUpdate(result));
+    return result.study();
   }
 
   /**
@@ -512,25 +513,34 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   /**
-   * Extracts the datasets that were created from the given study update by subtracting the updated
-   * datasets from the list of datasets in the study.
+   * The datasets a study update created, loaded from the ids the update's inserts returned.
    *
-   * @param updatedStudy The study that was updated
-   * @param datasetUpdates The list of datasets that were updated in the study
-   * @return The list of datasets that were created from updated study
+   * <p>This used to subtract the updated datasets from the study's datasets, but the updated study
+   * is read back with its dataset ids only, so the subtraction always came out empty and no DAC
+   * chair was ever told about a consent group added on update. Existing consent groups cannot be
+   * removed on update, so the inserts are exactly the new datasets.
+   *
+   * <p>The update has already committed when this runs. A failed read here is logged and sends no
+   * emails rather than failing a request whose change is already stored, which would also skip the
+   * caller's reindex of the study.
+   *
+   * @param result The outcome of the study update
+   * @return The datasets the update created, or an empty list when it created none or they could
+   *     not be read
    */
-  public List<Dataset> createdDatasetsFromUpdatedStudy(
-      Study updatedStudy, List<DatasetServiceDAO.DatasetUpdate> datasetUpdates) {
-    List<Integer> datasetUpdateIds =
-        (datasetUpdates == null)
-            ? List.of()
-            : datasetUpdates.stream().map(DatasetServiceDAO.DatasetUpdate::datasetId).toList();
-    if (updatedStudy.getDatasets() == null) {
+  public List<Dataset> createdDatasetsFromUpdate(DatasetServiceDAO.StudyUpdateResult result) {
+    if (result.insertedDatasetIds().isEmpty()) {
       return List.of();
     }
-    return updatedStudy.getDatasets().stream()
-        .filter(dataset -> !datasetUpdateIds.contains(dataset.getDatasetId()))
-        .toList();
+    try {
+      return datasetDAO.findDatasetsByIdList(result.insertedDatasetIds());
+    } catch (Exception e) {
+      logException(
+          "Unable to read the datasets a study update created; no DAC chair emails sent: %s"
+              .formatted(result.insertedDatasetIds()),
+          e);
+      return List.of();
+    }
   }
 
   /**

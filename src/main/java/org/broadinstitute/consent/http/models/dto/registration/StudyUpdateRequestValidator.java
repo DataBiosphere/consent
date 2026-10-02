@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.collections4.SetUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -24,15 +24,21 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
    *
    * <p>Note: dataSubmitterUserId is excluded from StudyUpdateRequest by design and cannot be
    * changed through this endpoint; submitter immutability is enforced structurally.
+   *
+   * @param existingStudy The study as stored
+   * @param existingDatasets The study's stored datasets, which the consent-group rename check
+   *     compares submitted names against
+   * @param registration The submitted update
    */
-  public boolean validate(Study existingStudy, StudyUpdateRequest registration) {
+  public boolean validate(
+      Study existingStudy, List<Dataset> existingDatasets, StudyUpdateRequest registration) {
     validateStudyNameUniqueness(existingStudy, registration);
     validateRequiredFields(registration);
     validateConditionalFields(registration);
     validateEmailFields(registration);
     validateDateFields(registration);
     validateConsentGroupMembership(existingStudy, registration);
-    validateConsentGroupNameChanges(existingStudy, registration);
+    validateConsentGroupNameChanges(existingDatasets, registration);
     validateConsentGroupRemoval(existingStudy, registration);
     validateNewConsentGroups(registration.getConsentGroups());
     return true;
@@ -83,7 +89,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
   }
 
   private void validateConsentGroupNameChanges(
-      Study existingStudy, StudyUpdateRequest registration) {
+      List<Dataset> existingDatasets, StudyUpdateRequest registration) {
     if (registration.getConsentGroups() == null) {
       return;
     }
@@ -94,7 +100,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
             .filter(
                 cg -> {
                   Optional<Dataset> dataset =
-                      SetUtils.emptyIfNull(existingStudy.getDatasets()).stream()
+                      ListUtils.emptyIfNull(existingDatasets).stream()
                           .filter(d -> d.getDatasetId().equals(cg.getDatasetId()))
                           .findFirst();
                   if (dataset.isEmpty()) {

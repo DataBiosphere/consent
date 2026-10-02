@@ -44,15 +44,8 @@ properties:
     items:
       type: integer
       format: int32
-    description: The ids of all of the datasets related to this study.
-  datasets:
-    type: array
-    deprecated: true
-    items:
-      $ref: './Dataset.yaml'
     description: |
-      Deprecated and scheduled for removal. Only the study GET includes this list; other Study
-      payloads omit it. Use `datasetIds`, and fetch the datasets themselves from
+      The ids of all of the datasets related to this study. The datasets themselves are read from
       `GET /api/dataset/study/{studyId}/datasets`.
   properties:
     type: array
