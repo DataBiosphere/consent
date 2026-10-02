@@ -5,9 +5,12 @@
 Proposed. Every code reference below was verified against `consent` `develop` at `75193914` and
 `duos-ui` `develop` at `b11e26ee`. The plan was reviewed independently with the Codex CLI in
 read-only mode against both repositories; each of its material findings was re-checked against
-the code before being folded in (see [Review findings](#review-findings)).
+the code before being folded in (see [Review findings](#review-findings)). A second review
+corrected several of those findings; the corrections are recorded in the same section.
 
-Ticket: DT-3723.
+Ticket: DT-3723. Implementation branches: `otchet-dt-3723-1-study-datasets-endpoint` (consent),
+`otchet-dt-3723-2-study-datasets-fetch` (duos-ui), and `otchet-dt-3723-3-remove-study-datasets`
+(consent, based on the PR 1 branch).
 
 ## Objective
 
@@ -24,12 +27,13 @@ re-embed the study is the direction that recurses without bound.
 
 ### What the API serializes today
 
-Only `GET /api/dataset/study/{studyId}` populates a non-empty `datasets` list, through
-`DatasetService.getStudyWithDatasetsById`. However, `Study.getDatasets()` returns `Set.of()` when
-the field is null, so every serialized `Study` emits `datasets: []`: the study PATCH (including its
-304 body), the registration PUT, the conversion PUT, the custodians PUT, and the `study` nested
-inside every `Dataset` response. Removal is therefore a property removal on every Study payload,
-not just the loss of populated data on one endpoint.
+Only `GET /api/dataset/study/{studyId}` includes a `datasets` list, which
+`DatasetService.getStudyWithDatasetsById` fills. Responses are written by `JerseyGsonProvider`
+through `GsonUtil.getInstance()`, which reads fields rather than getters and does not serialize
+nulls. The field stays null everywhere else, so the study PATCH, the registration PUT, the
+conversion PUT, the custodians PUT, and the `study` nested inside `Dataset` responses omit the key
+entirely. `Study.getDatasets()` returning `Set.of()` for a null field affects Java callers only,
+never the wire. The removal therefore changes the study GET response and nothing else on the wire.
 
 The runtime payload is already acyclic. `DatasetDAO.assembleDataset` attaches a study that carries
 only `datasetIds`, so `Dataset.study` never re-embeds datasets. Only the schema is cyclic.
@@ -68,19 +72,32 @@ Two type declarations: `Study` in `src/types/model.ts` declares `datasets: Datas
 The study details page reads its datasets from Elasticsearch through `useStudyDetailsData` and is
 unaffected. No Cypress or JSON fixtures carry `study.datasets`.
 
-### Latent bug: study-update emails never fire
+### Study-update emails have never been sent
 
 `DatasetServiceDAO.updateStudy` returns `studyDAO.findStudyById(...)`, and `assembleStudy` fills
-only `datasetIds`. So `createdDatasetsFromUpdatedStudy` always sees an empty set and
-`sendDatasetSubmittedEmails` never runs on a study update. `DatasetRegistrationServiceTest` (the
-test around line 424) asserts that the emails go out; it passes only because it mocks
-`getDatasets()`. This plan restores the intended behavior as part of rewriting the method.
+only `datasetIds`. So `createdDatasetsFromUpdatedStudy` always sees an empty set, and
+`sendDatasetSubmittedEmails` is called with an empty list and sends nothing on a study update.
+This has been true since the emails were added in #2210 (`5de8c31f`): the study reducer then also
+filled only dataset ids, and with `getDatasets()` returning null the method threw after the update
+had committed.
+
+`testStudyUpdateNewDatasetEmails` in `DatasetRegistrationServiceTest` does not show otherwise. It
+verifies only that `sendDatasetSubmittedEmails(any())` is called, which happens on every update
+even with an empty list, so it would pass without its `getDatasets()` mock. Sending these emails
+is therefore new behavior for DAC chairs, not restored behavior.
 
 ### Deletion order
 
 `DatasetService.deleteStudy` deletes the Elasticsearch document for every dataset id **before**
-calling `DatasetServiceDAO.deleteStudy`. Today the deletable guard lives in the resource, ahead of
-both. Any move of the guard must keep it ahead of the index deletion.
+calling `DatasetServiceDAO.deleteStudy`, and an index connection error stops the request with a
+500 before any rows are deleted. Today the deletable guard lives in the resource, ahead of both.
+Any move of the guard must keep it ahead of the index deletion. That is the only constraint: the
+index-then-rows order itself does not need to change.
+
+`DatasetServiceDAO.deleteStudy` calls `deleteDataset` once per dataset, and each call opens its
+own handle and commits. A failure partway through a study therefore keeps the datasets already
+deleted, while the study and the remaining datasets stay. The outer handle's rollback does not
+undo the inner commits. This plan does not change that, but pins it with a test.
 
 ### Remaining schema cycles
 
@@ -116,9 +133,13 @@ deprecation window between PR 1 and PR 3 and set its length.
 - `DatasetService`: add `findStudyDatasets(User, Study)` wrapping the existing
   `findDatasetsByIds(user, study.getDatasetIds())`, which applies `verifyPublicVisibilityAccess`.
 - Add `GET /api/dataset/study/{studyId}/datasets` on `StudyResource`, operationId
-  `apiDatasetStudyStudyIdDatasetsGet`, new file under `assets/paths/`. It must call
-  `requireReadableStudy` first and return 404 for an unreadable study; it must never return `[]`
-  for a study the caller cannot see.
+  `apiDatasetStudyStudyIdDatasetsGet`, new file under `assets/paths/`. Load the study with
+  `DatasetService.findStudyByIdForRead`, which reads through `StudyDAO.findStudyById` and so fills
+  `datasetIds`, and returns 404 for a study the caller cannot read. Do not use
+  `DatasetService.requireReadableStudy`: it loads with `findStudyDetailsById`, which leaves
+  `datasetIds` empty, so `findStudyDatasets` would return `[]` for a readable study. The endpoint
+  must never return `[]` for a study the caller cannot see. `findStudyDatasets` documents this
+  precondition.
 - Alternative with no backend change: the UI calls `/api/dataset/batch` with the study's
   `datasetIds` and short-circuits on an empty list. Semantics match for the edit form (see the
   access rule above).
@@ -128,10 +149,11 @@ deprecation window between PR 1 and PR 3 and set its length.
 - `src/libs/ajax/Study.ts`: add `getDatasets(studyId)` for the new endpoint (or reuse
   `DataSet.getDatasetsByIds`).
 - `DataSubmissionFormV2.onLoadFormData`: fetch the study and its datasets in parallel and pass
-  both to `buildConsentGroupsFromStudy(study, datasets)`. `onUpdateStudyError` reuses the loader
-  and inherits the change.
-- `v2-common-functions.tsx`: change `buildConsentGroupsFromStudy` to take the datasets
-  explicitly.
+  the datasets to the consent-group builder. `onUpdateStudyError` reuses the loader and inherits
+  the change.
+- `v2-common-functions.tsx`: `buildConsentGroupsFromStudy(study)` becomes
+  `buildConsentGroupsFromDatasets(datasets)`. It never read the study itself, so it takes only
+  the datasets.
 - Remove `datasets` from both `Study` interfaces: the required one in `src/types/model.ts` and
   the optional one in `v2-models.tsx`. Removing the required field also fixes the nested
   `Dataset.study` mocks.
@@ -140,8 +162,8 @@ deprecation window between PR 1 and PR 3 and set its length.
   `DataSubmissionFormV2.modes.spec.tsx`, `DataSubmissionFormV2.spec.tsx` (the mocked function
   signature), `test/libs/ajax/DataSet.spec.ts`, and the shared-type mocks in
   `DacProfile.spec.tsx`, `BucketUtils.spec.ts`, `VotingHistory.spec.tsx`, `DAC.spec.ts`, and
-  `ProgressReportApplication.spec.tsx`. Add a unit test for the new
-  `buildConsentGroupsFromStudy` signature.
+  `ProgressReportApplication.spec.tsx`, plus `DatasetUtils.spec.ts`, which the type check found. Add
+  unit tests for `buildConsentGroupsFromDatasets` and for the new fetch.
 
 ### PR 3: consent, removal `[DT-3723][3/3]`
 
@@ -153,13 +175,14 @@ deprecation window between PR 1 and PR 3 and set its length.
   `updateStudyByRegistration` fetch the list and pass it to
   `DatasetRegistrationSchemaV1Builder.build(study, datasets)` and to a new `List<Dataset>`
   parameter on `StudyUpdateRequestValidator` for the consent-group rename check.
-- Deletion, reordered: authorize -> load **all** datasets unfiltered through
+- Deletion: authorize -> load **all** datasets unfiltered through
   `datasetDAO.findDatasetsByIdList(study.getDatasetIds())` -> enforce all-deletable (400) ->
-  delete in the database -> delete from Elasticsearch. The guard moves out of the resource into
-  `DatasetService.deleteStudy`, ahead of the index deletion, and runs against the full list rather
-  than the caller-visible subset. `DatasetServiceDAO.deleteStudy` takes the list (or loads it).
-  If the transaction is meant to be atomic, attach the DAOs to the same handle and test rollback;
-  today the on-demand DAOs run outside the manually managed handle.
+  delete from Elasticsearch -> delete in the database. The guard moves out of the resource into
+  `DatasetService.deleteStudy`, ahead of the index deletion. The index-then-rows order and the
+  500 on an index connection error are unchanged. Loading unfiltered is not a behavior change:
+  only admins and the study creator pass the delete ownership check, and both can read every
+  dataset in the study. `DatasetServiceDAO.deleteStudy` takes the list. Its per-dataset commits
+  are unchanged and pinned by a test; making the delete atomic is out of scope.
 - Emails: `DatasetServiceDAO.updateStudy` currently returns `Study`, which is the PUT response
   body. Change it to return a record `StudyUpdateResult(Study study, List<Integer>
   insertedDatasetIds)`, collecting the ids that `executeInsertDatasetWithFiles` already returns.
@@ -167,8 +190,8 @@ deprecation window between PR 1 and PR 3 and set its length.
   `updateStudyFromRegistration` keeps returning the `Study` for the response and loads exactly the
   inserted datasets after commit for `sendDatasetSubmittedEmails`. Dataset removal is already
   blocked by `validateConsentGroupRemoval`, so inserts are the only new datasets.
-  **Behavior change (decision):** DAC chairs start receiving "dataset submitted" emails on study
-  update, as the existing test already expects.
+  **New behavior (decision, approved):** DAC chairs start receiving "dataset submitted" emails
+  when a study update adds consent groups. They have never received them since #2210.
 - `ElasticSearchService` and `VoteService`: no change.
 
 ## Test Matrix
@@ -183,29 +206,36 @@ deprecation window between PR 1 and PR 3 and set its length.
   line 471.
 - `DatasetServiceDAOTest`: the `deleteStudy` case around line 1001 (Testcontainers; runs locally).
 - `DatasetServiceTest`: `getStudyWithDatasetsById` cases and `deleteStudy` delegation around
-  line 733.
+  line 733. The delete cases cover: index entries removed before the rows, an in-use dataset
+  rejected with neither the index nor the rows touched, a study with no datasets, and an index
+  connection error stopping the delete before the rows.
 - `DatasetResourceTest`: `createMockStudy` builds the literal Java cycle
   (`dataset.setStudy(study); study.addDatasets(...)`); replace it with a helper that returns the
-  study and dataset as a pair. Used at lines 952, 975, and 1493.
-- New: email cases (no inserts -> no email; N inserts -> one notification per new dataset per
-  chair; existing datasets only -> none; DAC with no chairs -> no failure). A delete-order case
-  proving a study with an in-use dataset leaves the index untouched. A contract test that a
-  serialized `Study` has no `datasets` key.
+  dataset carrying its study. Used at lines 952, 975, and 1493.
+- `DatasetServiceDAOTest`, new: a delete that fails partway through a study. A match row on the
+  second dataset blocks its delete through the `match_entity` foreign key, which the deletable
+  flag does not check. The test asserts the first dataset is gone and the second dataset and the
+  study remain.
+- New: email cases that assert on what is sent, not only that the sender is called. An update
+  with inserts emails about exactly the inserted datasets; one with none sends nothing. The
+  existing per-chair cases cover the DAC side. A contract test that a serialized `Study` has no
+  `datasets` key and that a dataset's nested study does not embed it again.
 - OpenAPI: the Maven `validate` phase runs the `openapi-generator-maven-plugin`
   `validate-openapi-spec` execution. Optionally add a schema-graph cycle assertion that excludes
   the known `Dac`/`DataAccessAgreement` cycle.
 
 ### duos-ui
 
-- The spec files listed under PR 2, plus a new unit test for `buildConsentGroupsFromStudy(study,
-  datasets)`.
+- The spec files listed under PR 2, plus unit tests for `buildConsentGroupsFromDatasets` and the
+  new datasets fetch.
 
 ## Review findings
 
 The plan was reviewed with the Codex CLI. These findings changed it and were each verified against
 the code:
 
-- Every Study payload serializes `datasets: []`, not only the study GET.
+- ~~Every Study payload serializes `datasets: []`, not only the study GET.~~ Corrected by the
+  second review: Gson reads fields and drops nulls, so only the study GET includes the key.
 - The shared `Study` type in `src/types/model.ts` declares `datasets` as required.
 - `DatasetService.deleteStudy` removes Elasticsearch documents before the DAO runs, so the
   deletable guard cannot simply move into the DAO.
@@ -213,7 +243,18 @@ the code:
 - `Dac.yaml` and `DataAccessAgreement.yaml` form a cycle that survives this change.
 - The batch endpoint is functionally sufficient for the edit form because study readers can read
   every dataset in the study; the dedicated endpoint is a convenience, not a correctness fix.
-- The email fix restores behavior an existing test already asserts.
+- ~~The email fix restores behavior an existing test already asserts.~~ Corrected by the second
+  review: the test asserts only that the sender is called, and the emails have never been sent
+  on update since #2210, so this is new behavior.
+
+The second review also found:
+
+- `docs/plans/README.md` did not list this plan.
+- PR 3 had reordered deletion to rows first, then index, and logged index failures instead of
+  failing. Only the guard's position mattered, so the original order is restored.
+- The test matrix had no case for a delete that fails partway through a study.
+- PR 1 named `requireReadableStudy` as the loader, which would have returned `[]` for a readable
+  study. The plan now names `findStudyByIdForRead`.
 
 ## Definition of Done
 
@@ -222,5 +263,7 @@ the code:
   `Study.getDatasets`.
 - The data-submission edit form rebuilds consent groups from a separate dataset fetch.
 - Neither duos-ui `Study` interface declares `datasets`.
-- Study deletion rejects an in-use dataset before touching the search index.
+- Study deletion rejects an in-use dataset before touching the search index, and otherwise keeps
+  its index-then-rows order.
+- A test pins what a delete failing partway through a study leaves behind.
 - A study update that inserts consent groups emails the DAC chairs, with tests.
