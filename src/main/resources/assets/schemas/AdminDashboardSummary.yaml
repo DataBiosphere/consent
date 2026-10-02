@@ -80,7 +80,7 @@ properties:
       turnaround:
         type: object
         description: >-
-          `medianDays` and `modeDays` cover decisions with a usable vote date, and are omitted
+          `medianDays` and `modeDays` cover decisions with a usable vote date, and are null
           when there are none; `unmeasured` counts the rest.
         required: [decided, unmeasured]
         properties:
