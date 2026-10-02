@@ -528,6 +528,12 @@
         <artifactId>conscrypt-openjdk-uber</artifactId>
         <version>2.7.0</version>
       </dependency>
+      <!-- Security update; sendgrid-java pulls in an older 2.x databind. -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.21.7</version>
+      </dependency>
       <!--
        See https://broadworkbench.atlassian.net/browse/DT-3748
        Pin tools.jackson.core:jackson-databind to 3.1.4 to address a reported security issue in 3.1.1
