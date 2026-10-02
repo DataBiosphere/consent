@@ -70,12 +70,73 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
     insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+        user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")), canceled);
     insertSubmittedDar(
         user, collectionId, datasetId, Date.from(Instant.parse("2026-02-01T00:00:00Z")));
 
-    assertEquals(1, counts().darTotal());
+    DashboardDatabaseCounts counts = counts();
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(0, counts.darCanceled());
+  }
+
+  @Test
+  void dropsACollectionWhoseNewerSubmissionIsArchived() {
+    User user = createUserWithInstitution();
+    Integer datasetId = createDataset(user);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    DataAccessRequestData archived = new DataAccessRequestData();
+    archived.setStatus("Archived");
+    insertSubmittedDar(
+        user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+    insertSubmittedDar(
+        user, collectionId, datasetId, Date.from(Instant.parse("2026-02-01T00:00:00Z")), archived);
+
+    assertEquals(0, counts().darTotal());
+  }
+
+  @Test
+  void countsADarApprovedOnlyWhenEveryDatasetIsApproved() {
+    User user = createUserWithInstitution();
+    Integer first = createDataset(user);
+    Integer second = createDataset(user);
+    String referenceId = createSubmittedDar(user, first, new DataAccessRequestData());
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, second);
+    castFinalVote(user, referenceId, first, true);
+
+    assertEquals(0, counts().darApproved());
+
+    castVote(user, referenceId, second, true, VoteType.RADAR_APPROVE, FIXED_DATE);
+
+    assertEquals(1, counts().darApproved());
+  }
+
+  @Test
+  void decidesADatasetByItsNewestVote() {
+    User user = createUserWithInstitution();
+    Integer datasetId = createDataset(user);
+    String referenceId = createSubmittedDar(user, datasetId, new DataAccessRequestData());
+    castVote(
+        user,
+        referenceId,
+        datasetId,
+        true,
+        VoteType.FINAL,
+        Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+    castVote(
+        user,
+        referenceId,
+        datasetId,
+        false,
+        VoteType.FINAL,
+        Date.from(Instant.parse("2026-02-01T00:00:00Z")));
+
+    assertEquals(0, counts().darApproved());
   }
 
   @Test
@@ -182,6 +243,16 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   }
 
   private void castFinalVote(User user, String referenceId, Integer datasetId, boolean approve) {
+    castVote(user, referenceId, datasetId, approve, VoteType.FINAL, FIXED_DATE);
+  }
+
+  private void castVote(
+      User user,
+      String referenceId,
+      Integer datasetId,
+      boolean approve,
+      VoteType type,
+      Date castDate) {
     Integer electionId =
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
@@ -189,8 +260,8 @@ class AdminDashboardDAOTest extends DAOTestHelper {
             FIXED_DATE,
             referenceId,
             datasetId);
-    Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
-    updateVote(approve, "rationale", FIXED_DATE, voteId, false, electionId, FIXED_DATE, false);
+    Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, type.getValue());
+    updateVote(approve, "rationale", castDate, voteId, false, electionId, castDate, false);
   }
 
   private String createSubmittedDar(User user, Integer datasetId, DataAccessRequestData data) {
@@ -213,6 +284,15 @@ class AdminDashboardDAOTest extends DAOTestHelper {
 
   private void insertSubmittedDar(
       User user, Integer collectionId, Integer datasetId, Date submissionDate) {
+    insertSubmittedDar(user, collectionId, datasetId, submissionDate, new DataAccessRequestData());
+  }
+
+  private void insertSubmittedDar(
+      User user,
+      Integer collectionId,
+      Integer datasetId,
+      Date submissionDate,
+      DataAccessRequestData data) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId,
@@ -221,7 +301,7 @@ class AdminDashboardDAOTest extends DAOTestHelper {
         FIXED_DATE,
         submissionDate,
         FIXED_DATE,
-        new DataAccessRequestData(),
+        data,
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
   }
