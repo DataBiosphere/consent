@@ -43,7 +43,8 @@ class AdminDashboardResourceTest {
             new Users(9),
             new Institutions(4, 1),
             new LibraryCards(5),
-            new DaaAssociations(2, 3));
+            new DaaAssociations(2, 3),
+            null);
     when(dashboardService.getSummary()).thenReturn(summary);
 
     Response response = resource.getDashboardSummary(duosUser);
