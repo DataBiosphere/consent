@@ -56,7 +56,9 @@ properties:
     type: object
     description: >-
       Headline figures for the last 90 days, from the same queries as the /api/metrics reports
-      over `from` to `to`.
+      over `from` to `to`. Decisions, turnaround, SO approvals and volume cover DARs submitted in
+      the window, in their current state; expirations are dated by when access ended, and renewals
+      by the progress report's submission.
     required: [from, to, decisions, turnaround, soApprovals, volume, expiration]
     properties:
       from: { type: string, format: date }
@@ -90,6 +92,9 @@ properties:
             type: [integer, 'null']
       soApprovals:
         type: object
+        description: >-
+          Original DARs, progress reports and closeouts submitted in the window, by SO status;
+          not-determined submissions are left out.
         required: [approved, pending, skipped]
         properties:
           approved: { type: integer, format: int64 }
