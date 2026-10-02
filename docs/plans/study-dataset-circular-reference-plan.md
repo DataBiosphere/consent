@@ -8,9 +8,13 @@ read-only mode against both repositories; each of its material findings was re-c
 the code before being folded in (see [Review findings](#review-findings)). A second review
 corrected several of those findings; the corrections are recorded in the same section.
 
-Ticket: DT-3723. Implementation branches: `otchet-dt-3723-1-study-datasets-endpoint` (consent),
-`otchet-dt-3723-2-study-datasets-fetch` (duos-ui), and `otchet-dt-3723-3-remove-study-datasets`
-(consent, based on the PR 1 branch).
+Ticket: DT-3723, split into one ticket per PR:
+
+| PR | Ticket | Repo | Branch |
+| --- | --- | --- | --- |
+| 1 of 3 | DT-4225 | consent | `otchet-dt-4225-study-datasets-endpoint` |
+| 2 of 3 | DT-4226 | duos-ui | `otchet-dt-4226-study-datasets-fetch` |
+| 3 of 3 | DT-4227 | consent | `otchet-dt-4227-remove-study-datasets`, based on the PR 1 branch |
 
 ## Objective
 
@@ -126,7 +130,7 @@ only evidence is the legacy-`operationId` note in `docs/ai/prompts/openapi-spec.
 old ids "for backward compatibility with generated clients". If they exist, someone must own the
 deprecation window between PR 1 and PR 3 and set its length.
 
-### PR 1: consent, additive `[DT-3723][1/3]`
+### PR 1: consent, additive `[DT-4225][1/3]`
 
 - `schemas/Study.yaml`: mark `datasets` `deprecated: true`; point the description at
   `datasetIds` and the new endpoint.
@@ -144,7 +148,7 @@ deprecation window between PR 1 and PR 3 and set its length.
   `datasetIds` and short-circuits on an empty list. Semantics match for the edit form (see the
   access rule above).
 
-### PR 2: duos-ui `[DT-3723][2/3]`
+### PR 2: duos-ui `[DT-4226][2/3]`
 
 - `src/libs/ajax/Study.ts`: add `getDatasets(studyId)` for the new endpoint (or reuse
   `DataSet.getDatasetsByIds`).
@@ -165,7 +169,7 @@ deprecation window between PR 1 and PR 3 and set its length.
   `ProgressReportApplication.spec.tsx`, plus `DatasetUtils.spec.ts`, which the type check found. Add
   unit tests for `buildConsentGroupsFromDatasets` and for the new fetch.
 
-### PR 3: consent, removal `[DT-3723][3/3]`
+### PR 3: consent, removal `[DT-4227][3/3]`
 
 - `Study.java`: delete the `datasets` field, `addDatasets`, and `getDatasets`.
   `schemas/Study.yaml`: delete the property.
