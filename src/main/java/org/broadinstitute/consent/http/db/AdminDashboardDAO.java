@@ -13,7 +13,7 @@ public interface AdminDashboardDAO {
                dar.collection_id, dar.reference_id, dar.data
         FROM data_access_request dar
         WHERE dar.submission_date IS NOT NULL
-        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
+        ORDER BY dar.collection_id, dar.submission_date DESC
       ),
       -- Archived collections drop out entirely. Filtering before the DISTINCT ON would instead
       -- substitute an older submission for a collection whose latest submission is archived.
