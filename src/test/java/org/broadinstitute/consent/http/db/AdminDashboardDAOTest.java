@@ -59,27 +59,24 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void countsACollectionOnceFromItsLatestSubmission() {
+  void excludesCollectionWhoseLatestSubmissionIsArchived() {
     User user = createUserWithInstitution();
     Integer datasetId = createDataset(user);
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
-    insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")));
-    insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-02-01T00:00:00Z")));
-
-    assertEquals(1, counts().darTotal());
-  }
-
-  @Test
-  void excludesCollectionWhoseLatestSubmissionIsArchived() {
-    User user = createUserWithInstitution();
     DataAccessRequestData archived = new DataAccessRequestData();
     archived.setStatus("Archived");
-    createSubmittedDar(user, createDataset(user), archived);
+    insertSubmittedDar(
+        user,
+        collectionId,
+        datasetId,
+        Date.from(Instant.parse("2026-01-01T00:00:00Z")),
+        new DataAccessRequestData());
+    insertSubmittedDar(
+        user, collectionId, datasetId, Date.from(Instant.parse("2026-02-01T00:00:00Z")), archived);
 
+    // Filtering archived rows before picking the latest would count the January submission.
     assertEquals(0, counts().darTotal());
   }
 
@@ -140,7 +137,11 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   }
 
   private void insertSubmittedDar(
-      User user, Integer collectionId, Integer datasetId, Date submissionDate) {
+      User user,
+      Integer collectionId,
+      Integer datasetId,
+      Date submissionDate,
+      DataAccessRequestData data) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId,
@@ -149,7 +150,7 @@ class AdminDashboardDAOTest extends DAOTestHelper {
         FIXED_DATE,
         submissionDate,
         FIXED_DATE,
-        new DataAccessRequestData(),
+        data,
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
   }
