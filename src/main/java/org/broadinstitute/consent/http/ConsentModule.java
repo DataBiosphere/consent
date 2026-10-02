@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.AdminDashboardService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -486,6 +487,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private DashboardSearchService providesDashboardSearchService(
       ElasticSearchService elasticSearchService) {
     return new DashboardSearchService(elasticSearchService);
+  }
+
+  @Provides
+  @Singleton
+  private AdminDashboardService providesAdminDashboardService(Jdbi jdbi) {
+    return new AdminDashboardService(jdbi);
   }
 
   @Provides

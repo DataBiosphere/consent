@@ -1,0 +1,33 @@
+type: object
+required:
+  - darRequests
+  - dacs
+  - users
+  - libraryCards
+properties:
+  darRequests:
+    type: object
+    description: >-
+      One per DAR collection, counted from its latest submission; archived collections are left
+      out. `inProcess` is everything not yet fully approved or canceled.
+    required: [total, approved, canceled, inProcess]
+    properties:
+      total: { type: integer, format: int64 }
+      approved: { type: integer, format: int64 }
+      canceled: { type: integer, format: int64 }
+      inProcess: { type: integer, format: int64 }
+  dacs:
+    type: object
+    required: [total]
+    properties:
+      total: { type: integer, format: int64 }
+  users:
+    type: object
+    required: [total]
+    properties:
+      total: { type: integer, format: int64 }
+  libraryCards:
+    type: object
+    required: [total]
+    properties:
+      total: { type: integer, format: int64 }
