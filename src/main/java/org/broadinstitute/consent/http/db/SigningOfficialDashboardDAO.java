@@ -36,7 +36,7 @@ public interface SigningOfficialDashboardDAO {
         JOIN users u ON u.user_id = c.create_user_id
         WHERE dar.submission_date IS NOT NULL
           AND u.institution_id = :institutionId
-        ORDER BY dar.collection_id, dar.submission_date DESC
+        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
       ),
       -- Archived collections drop out entirely. Filtering before the DISTINCT ON would instead
       -- substitute an older submission for a collection whose latest submission is archived.
