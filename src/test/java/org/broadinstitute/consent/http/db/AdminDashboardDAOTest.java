@@ -76,10 +76,14 @@ class AdminDashboardDAOTest extends DAOTestHelper {
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
     DataAccessRequestData canceled = new DataAccessRequestData();
     canceled.setStatus("Canceled");
-    insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")), canceled);
-    insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-02-01T00:00:00Z")));
+    String original =
+        insertSubmittedDar(
+            user,
+            collectionId,
+            datasetId,
+            Date.from(Instant.parse("2026-01-01T00:00:00Z")),
+            canceled);
+    insertProgressReport(user, collectionId, original, datasetId, new DataAccessRequestData());
 
     DashboardDatabaseCounts counts = counts();
 
@@ -127,30 +131,50 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void breaksASubmissionDateTieByTheNewestDarRow() {
+  void decidesAPre2022SubmissionByEveryOriginalDar() {
     User user = createUserWithInstitution();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
-    insertSubmittedDar(user, collectionId, createDataset(user), FIXED_DATE);
-    DataAccessRequestData canceled = new DataAccessRequestData();
-    canceled.setStatus("Canceled");
-    String referenceId = UUID.randomUUID().toString();
-    dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        FIXED_DATE,
-        FIXED_DATE,
-        FIXED_DATE,
-        canceled,
-        "era-commons-id");
-    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, createDataset(user));
+    Integer denied = createDataset(user);
+    Integer approved = createDataset(user);
+    castFinalVote(
+        user,
+        insertSubmittedDar(
+            user, collectionId, denied, Date.from(Instant.parse("2020-01-01T00:00:00Z"))),
+        denied,
+        false);
+    castFinalVote(
+        user,
+        insertSubmittedDar(
+            user, collectionId, approved, Date.from(Instant.parse("2020-01-01T00:00:05Z"))),
+        approved,
+        true);
 
     DashboardDatabaseCounts counts = counts();
 
     assertEquals(1, counts.darTotal());
-    assertEquals(1, counts.darCanceled());
+    assertEquals(0, counts.darApproved());
+  }
+
+  @Test
+  void ignoresACanceledOriginalDarOfAPre2022Submission() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    Integer approved = createDataset(user);
+    castFinalVote(
+        user, insertSubmittedDar(user, collectionId, approved, FIXED_DATE), approved, true);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    insertSubmittedDar(user, collectionId, createDataset(user), FIXED_DATE, canceled);
+
+    DashboardDatabaseCounts counts = counts();
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darApproved());
+    assertEquals(0, counts.darCanceled());
   }
 
   @Test
@@ -162,12 +186,12 @@ class AdminDashboardDAOTest extends DAOTestHelper {
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
     DataAccessRequestData archived = new DataAccessRequestData();
     archived.setStatus("Archived");
-    insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")));
-    insertSubmittedDar(
-        user, collectionId, datasetId, Date.from(Instant.parse("2026-02-01T00:00:00Z")), archived);
+    String original =
+        insertSubmittedDar(
+            user, collectionId, datasetId, Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+    insertProgressReport(user, collectionId, original, datasetId, archived);
 
-    // Filtering archived rows before picking the latest would count the January submission.
+    // Filtering archived rows before picking the latest would count the original submission.
     assertEquals(0, counts().darTotal());
   }
 
@@ -297,12 +321,13 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     return referenceId;
   }
 
-  private void insertSubmittedDar(
+  private String insertSubmittedDar(
       User user, Integer collectionId, Integer datasetId, Date submissionDate) {
-    insertSubmittedDar(user, collectionId, datasetId, submissionDate, new DataAccessRequestData());
+    return insertSubmittedDar(
+        user, collectionId, datasetId, submissionDate, new DataAccessRequestData());
   }
 
-  private void insertSubmittedDar(
+  private String insertSubmittedDar(
       User user,
       Integer collectionId,
       Integer datasetId,
@@ -316,6 +341,24 @@ class AdminDashboardDAOTest extends DAOTestHelper {
         FIXED_DATE,
         submissionDate,
         FIXED_DATE,
+        data,
+        "era-commons-id");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return referenceId;
+  }
+
+  private void insertProgressReport(
+      User user,
+      Integer collectionId,
+      String parentReferenceId,
+      Integer datasetId,
+      DataAccessRequestData data) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dataAccessRequestDAO.findByReferenceId(parentReferenceId).getId(),
+        collectionId,
+        referenceId,
+        user.getUserId(),
         data,
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);

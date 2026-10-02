@@ -11,8 +11,9 @@ properties:
   darRequests:
     type: object
     description: >-
-      One per DAR collection, counted from its latest submission; archived collections are left
-      out. `inProcess` is everything not yet fully approved or canceled.
+      One per DAR collection, counted from its latest submission, whose pre-2022 per-dataset DARs
+      count together; archived DARs are left out. `inProcess` is everything not yet fully approved
+      or canceled.
     required: [total, approved, canceled, inProcess]
     properties:
       total: { type: integer, format: int64 }
