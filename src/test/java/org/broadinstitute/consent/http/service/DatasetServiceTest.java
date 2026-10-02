@@ -776,9 +776,12 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     datasetService.deleteStudy(study, user);
 
+    // The ids come from a HashSet, so the two index deletes may happen in either order. What the
+    // contract fixes is that both happen, and that both come before the rows are deleted.
+    verify(elasticSearchService).deleteIndex(1, user.getUserId());
+    verify(elasticSearchService).deleteIndex(2, user.getUserId());
     InOrder order = inOrder(elasticSearchService, datasetServiceDAO);
-    order.verify(elasticSearchService).deleteIndex(1, user.getUserId());
-    order.verify(elasticSearchService).deleteIndex(2, user.getUserId());
+    order.verify(elasticSearchService, times(2)).deleteIndex(any(), eq(user.getUserId()));
     order.verify(datasetServiceDAO).deleteStudy(study, datasets, user);
   }
 
