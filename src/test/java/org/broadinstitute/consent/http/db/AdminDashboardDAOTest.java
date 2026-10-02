@@ -25,6 +25,8 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     DashboardDatabaseCounts counts = counts();
 
     assertEquals(0, counts.darTotal());
+    assertEquals(0, counts.darApproved());
+    assertEquals(0, counts.darCanceled());
     assertEquals(0, counts.dacs());
     assertEquals(0, counts.users());
     assertEquals(0, counts.institutions());
