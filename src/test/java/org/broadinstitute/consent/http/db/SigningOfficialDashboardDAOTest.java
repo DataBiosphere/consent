@@ -129,17 +129,80 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
     Date earlier = Date.from(Instant.parse("2026-01-01T00:00:00Z"));
-    Date later = Date.from(Instant.parse("2026-02-01T00:00:00Z"));
-    insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), earlier);
+    String original =
+        insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), earlier);
     DataAccessRequestData archived = new DataAccessRequestData();
     archived.setStatus("Archived");
-    insertSubmittedDar(user, collectionId, datasetId, archived, later);
+    insertProgressReport(user, collectionId, original, datasetId, archived);
 
     DashboardDatabaseCounts counts =
         jdbi.onDemand(SigningOfficialDashboardDAO.class)
             .getCounts(user.getInstitutionId(), user.getUserId().toString(), user.getEmail());
 
     assertEquals(0, counts.darTotal());
+  }
+
+  @Test
+  void decidesAPre2022SubmissionByEveryOriginalDar() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    Integer denied = createDataset(user);
+    Integer approved = createDataset(user);
+    DataAccessRequestData closeout = new DataAccessRequestData();
+    closeout.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
+    castFinalVote(
+        user,
+        insertSubmittedDar(
+            user, collectionId, denied, closeout, Date.from(Instant.parse("2020-01-01T00:00:00Z"))),
+        denied,
+        false);
+    castFinalVote(
+        user,
+        insertSubmittedDar(
+            user,
+            collectionId,
+            approved,
+            new DataAccessRequestData(),
+            Date.from(Instant.parse("2020-01-01T00:00:05Z"))),
+        approved,
+        true);
+
+    DashboardDatabaseCounts counts =
+        jdbi.onDemand(SigningOfficialDashboardDAO.class)
+            .getCounts(user.getInstitutionId(), user.getUserId().toString(), user.getEmail());
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(0, counts.darApproved());
+    assertEquals(1, counts.approvalTotal());
+    assertEquals(1, counts.awaitingSoAction());
+  }
+
+  @Test
+  void ignoresACanceledOriginalDarOfAPre2022Submission() {
+    User user = createUserWithInstitution();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    Integer approved = createDataset(user);
+    castFinalVote(
+        user,
+        insertSubmittedDar(user, collectionId, approved, new DataAccessRequestData(), FIXED_DATE),
+        approved,
+        true);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    insertSubmittedDar(user, collectionId, createDataset(user), canceled, FIXED_DATE);
+
+    DashboardDatabaseCounts counts =
+        jdbi.onDemand(SigningOfficialDashboardDAO.class)
+            .getCounts(user.getInstitutionId(), user.getUserId().toString(), user.getEmail());
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darApproved());
+    assertEquals(0, counts.darCanceled());
   }
 
   @Test
@@ -179,7 +242,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
 
   private Integer createDataset(User user) {
     return datasetDAO.insertDataset(
-        "Dashboard dataset",
+        "Dashboard dataset " + UUID.randomUUID(),
         FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
@@ -212,6 +275,35 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
+  }
+
+  private void insertProgressReport(
+      User user,
+      Integer collectionId,
+      String parentReferenceId,
+      Integer datasetId,
+      DataAccessRequestData data) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dataAccessRequestDAO.findByReferenceId(parentReferenceId).getId(),
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        data,
+        "era-commons-id");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+  }
+
+  private void castFinalVote(User user, String referenceId, Integer datasetId, boolean approve) {
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            FIXED_DATE,
+            referenceId,
+            datasetId);
+    Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
+    updateVote(approve, "rationale", FIXED_DATE, voteId, false, electionId, FIXED_DATE, false);
   }
 
   @Test

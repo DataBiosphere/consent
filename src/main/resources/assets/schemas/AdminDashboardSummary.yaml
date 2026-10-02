@@ -3,13 +3,16 @@ required:
   - darRequests
   - dacs
   - users
+  - institutions
   - libraryCards
+  - daaAssociations
 properties:
   darRequests:
     type: object
     description: >-
-      One per DAR collection, counted from its latest submission; archived collections are left
-      out. `inProcess` is everything not yet fully approved or canceled.
+      One per DAR collection, counted from its latest submission, whose pre-2022 per-dataset DARs
+      count together; archived DARs are left out. `inProcess` is everything not yet fully approved
+      or canceled.
     required: [total, approved, canceled, inProcess]
     properties:
       total: { type: integer, format: int64 }
@@ -26,8 +29,26 @@ properties:
     required: [total]
     properties:
       total: { type: integer, format: int64 }
+  institutions:
+    type: object
+    required: [total, withoutSigningOfficial]
+    properties:
+      total: { type: integer, format: int64 }
+      withoutSigningOfficial:
+        type: integer
+        format: int64
+        description: Institutions with no user holding the Signing Official role.
   libraryCards:
     type: object
     required: [total]
     properties:
       total: { type: integer, format: int64 }
+  daaAssociations:
+    type: object
+    description: >-
+      `agreements` counts DAAs mapped to at least one DAC that isn't deleted; `researchersApproved` counts users
+      whose library card holds one of them.
+    required: [agreements, researchersApproved]
+    properties:
+      agreements: { type: integer, format: int64 }
+      researchersApproved: { type: integer, format: int64 }
