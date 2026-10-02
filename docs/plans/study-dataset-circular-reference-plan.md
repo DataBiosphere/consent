@@ -128,21 +128,11 @@ Gates, in order:
 1. PR 1 deployed to every environment.
 2. PR 2 deployed and observed: the data-submission edit form loads existing studies with their
    consent groups.
-3. Breaking-change notice, per `CONTRIBUTING.md` ("Breaking API changes"). PR 3 removes the
-   `datasets` property from the `GET /api/dataset/study/{studyId}` response, which is a breaking
-   change for any consumer that reads it, whether or not they use a generated client. Before PR 3
-   is released:
-   - Identify consumers of the study GET beyond duos-ui, starting with the generated clients the
-     legacy-`operationId` note in `docs/ai/prompts/openapi-spec.md` refers to.
-   - Check in with Comms on the change and its impact, and agree a deprecation window, counted
-     from PR 1's deploy, since that is when `datasets` is marked deprecated and the replacement
-     endpoint exists.
-   - Send an email, with Comms sign-off on the wording, to api-users@firecloud.org at least a few
-     days before the release. It says that `datasets` is removed from the study GET and that
-     callers should read `datasetIds` and fetch `GET /api/dataset/study/{studyId}/datasets`.
-4. PR 3 released once the window has passed.
+3. PR 3 released.
 
-**Open decision.** Who owns gate 3, and how long the deprecation window is.
+PR 3 removes the `datasets` property from the `GET /api/dataset/study/{studyId}` response. The
+breaking-change notice to API users that `CONTRIBUTING.md` describes was considered and confirmed
+not required for this change.
 
 ### PR 1: consent, additive `[DT-4225][1/3]`
 
@@ -287,8 +277,9 @@ A Copilot review of the plan PR then found:
   `List`, which does not compile. The plan now copies the ids into a list.
 - The test matrix listed two of the nine `Study.getDatasets()` stubs in
   `DatasetRegistrationServiceTest`. It now lists all nine.
-- Removing a response property is a breaking API change, and `CONTRIBUTING.md` requires Comms
-  coordination and an api-users notice before release. That is now an explicit gate before PR 3.
+- Removing a response property is a breaking API change, and `CONTRIBUTING.md` describes Comms
+  coordination and an api-users notice before release. This was considered and confirmed not
+  required for this change, so it is not a gate.
 
 ## Definition of Done
 
@@ -300,5 +291,4 @@ A Copilot review of the plan PR then found:
 - Study deletion rejects an in-use dataset before touching the search index, and otherwise keeps
   its index-then-rows order.
 - A test pins what a delete failing partway through a study leaves behind.
-- The breaking-change notice for PR 3 was sent, with Comms sign-off, before PR 3's release.
 - A study update that inserts consent groups emails the DAC chairs, with tests.
