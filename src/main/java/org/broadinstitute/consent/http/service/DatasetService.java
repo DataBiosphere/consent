@@ -552,7 +552,19 @@ public class DatasetService implements ConsentLogger {
     if (study.getDatasetIds() == null || study.getDatasetIds().isEmpty()) {
       return List.of();
     }
-    return findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()));
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
+    // The datasets come back without their study attached, so filtering each one on its own reads
+    // the same study again per dataset. The study is already loaded: when the caller may read it,
+    // every dataset that still belongs to it is readable for the same reason. A dataset whose
+    // study changed since the ids were read is not one of those, and is decided on its own.
+    boolean studyReadable = canReadStudy(user, study);
+    return datasets.stream()
+        .filter(
+            d ->
+                (studyReadable && Objects.equals(d.getStudyId(), study.getStudyId()))
+                    || verifyPublicVisibilityAccess(d, user) != null)
+        .toList();
   }
 
   public Study getStudyWithDatasetsById(User user, Integer studyId) {
@@ -561,7 +573,12 @@ public class DatasetService implements ConsentLogger {
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
-      study.addDatasets(findStudyDatasets(user, study));
+      List<Dataset> datasets = findStudyDatasets(user, study);
+      // Leave the deprecated list unset for a study with no datasets, so the response omits the
+      // key exactly as it did before, rather than starting to send an empty list.
+      if (!datasets.isEmpty()) {
+        study.addDatasets(datasets);
+      }
       return study;
     } catch (NotFoundException nfe) {
       throw nfe;
