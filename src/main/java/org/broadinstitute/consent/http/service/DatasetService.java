@@ -408,7 +408,24 @@ public class DatasetService implements ConsentLogger {
     }
   }
 
+  /**
+   * Deletes a study and all of its datasets, provided none of them is in use.
+   *
+   * <p>The datasets are read without the caller's visibility filter, so the deletable check covers
+   * every dataset in the study. It runs before anything is removed, so a study with an in-use
+   * dataset keeps both its rows and its search documents. Past the check, the order is unchanged:
+   * the search documents go first, then the rows.
+   *
+   * @throws BadRequestException if any dataset in the study is in use
+   */
   public void deleteStudy(Study study, User user) throws Exception {
+    List<Dataset> datasets =
+        study.getDatasetIds().isEmpty()
+            ? List.of()
+            : datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+    if (!datasets.stream().allMatch(d -> Boolean.TRUE.equals(d.getDeletable()))) {
+      throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
+    }
     study
         .getDatasetIds()
         .forEach(
@@ -423,7 +440,7 @@ public class DatasetService implements ConsentLogger {
                 throw new RuntimeException(e);
               }
             });
-    datasetServiceDAO.deleteStudy(study, user);
+    datasetServiceDAO.deleteStudy(study, datasets, user);
   }
 
   public Study findStudy(Integer studyId) {
@@ -565,27 +582,6 @@ public class DatasetService implements ConsentLogger {
                 (studyReadable && Objects.equals(d.getStudyId(), study.getStudyId()))
                     || verifyPublicVisibilityAccess(d, user) != null)
         .toList();
-  }
-
-  public Study getStudyWithDatasetsById(User user, Integer studyId) {
-    try {
-      Study study = studyDAO.findStudyById(studyId);
-      if (study == null) {
-        throw new NotFoundException("Study not found");
-      }
-      List<Dataset> datasets = findStudyDatasets(user, study);
-      // Leave the deprecated list unset for a study with no datasets, so the response omits the
-      // key exactly as it did before, rather than starting to send an empty list.
-      if (!datasets.isEmpty()) {
-        study.addDatasets(datasets);
-      }
-      return study;
-    } catch (NotFoundException nfe) {
-      throw nfe;
-    } catch (Exception e) {
-      logException(e);
-      throw e;
-    }
   }
 
   public List<ApprovedDataset> getApprovedDatasets(User user) {

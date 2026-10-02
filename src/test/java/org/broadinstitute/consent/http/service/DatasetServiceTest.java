@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -29,6 +30,7 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -80,6 +82,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -720,36 +723,93 @@ class DatasetServiceTest extends AbstractTestHelper {
     verify(datasetServiceDAO).deleteDataset(dataset, mockUser.getUserId());
   }
 
+  private static Dataset deletableDataset(int datasetId, boolean deletable) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    dataset.setDeletable(deletable);
+    return dataset;
+  }
+
   @ParameterizedTest
   @ValueSource(ints = {200, 500})
   void testDeleteStudy(int status) throws Exception {
     Study study = new Study();
     study.setStudyId(1);
     study.addDatasetIds(Set.of(1));
+    List<Dataset> datasets = List.of(deletableDataset(1, true));
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds())).thenReturn(datasets);
     Response response = mock(Response.class);
     when(response.getStatus()).thenReturn(status);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
 
-    datasetService.deleteStudy(study, mockUser);
-    verify(datasetServiceDAO).deleteStudy(study, mockUser);
+    // An unsuccessful index response is logged and the delete goes ahead.
+    assertDoesNotThrow(() -> datasetService.deleteStudy(study, mockUser));
+    verify(datasetServiceDAO).deleteStudy(study, datasets, mockUser);
+  }
+
+  /** As before this change, an index connection failure stops the delete before any rows go. */
+  @Test
+  void testDeleteStudyIndexConnectionFailureLeavesTheRows() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1));
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds()))
+        .thenReturn(List.of(deletableDataset(1, true)));
+    when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException("down"));
+
+    assertThrows(RuntimeException.class, () -> datasetService.deleteStudy(study, mockUser));
+    verify(datasetServiceDAO, never()).deleteStudy(any(), any(), any());
   }
 
   @Test
-  void testDeleteStudyDeletesEachDatasetFromIndex() throws Exception {
+  void testDeleteStudyDeletesEachDatasetFromIndexBeforeTheRows() throws Exception {
     Study study = new Study();
     study.setStudyId(1);
     study.addDatasetIds(Set.of(1, 2));
     User user = new User();
     user.setUserId(10);
+    List<Dataset> datasets = List.of(deletableDataset(1, true), deletableDataset(2, true));
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds())).thenReturn(datasets);
     Response response = mock(Response.class);
     when(response.getStatus()).thenReturn(200);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
 
     datasetService.deleteStudy(study, user);
 
-    verify(elasticSearchService).deleteIndex(1, user.getUserId());
-    verify(elasticSearchService).deleteIndex(2, user.getUserId());
-    verify(datasetServiceDAO).deleteStudy(study, user);
+    InOrder order = inOrder(elasticSearchService, datasetServiceDAO);
+    order.verify(elasticSearchService).deleteIndex(1, user.getUserId());
+    order.verify(elasticSearchService).deleteIndex(2, user.getUserId());
+    order.verify(datasetServiceDAO).deleteStudy(study, datasets, user);
+  }
+
+  /**
+   * A study with any dataset in use is rejected before anything is removed: neither its rows nor
+   * its search documents are touched.
+   */
+  @Test
+  void testDeleteStudyWithAnInUseDatasetTouchesNothing() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1, 2));
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds()))
+        .thenReturn(List.of(deletableDataset(1, true), deletableDataset(2, false)));
+
+    assertThrows(BadRequestException.class, () -> datasetService.deleteStudy(study, mockUser));
+
+    verify(datasetServiceDAO, never()).deleteStudy(any(), any(), any());
+    verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testDeleteStudyWithNoDatasets() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+
+    datasetService.deleteStudy(study, mockUser);
+
+    verify(datasetDAO, never()).findDatasetsByIdList(any());
+    verify(datasetServiceDAO).deleteStudy(study, List.of(), mockUser);
+    verifyNoInteractions(elasticSearchService);
   }
 
   @Test
@@ -851,43 +911,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(studyDAO.findStudyDetailsById(2)).thenReturn(privateStudy(2, 98, Set.of()));
 
     assertEquals(List.of(stays), datasetService.findStudyDatasets(viewer, study));
-  }
-
-  @Test
-  void testGetStudyWithDatasetsById() {
-    Study study = privateStudy(1, 99, Set.of(10));
-    study.setPublicVisibility(true);
-    Dataset dataset = datasetInStudy(10, 1, 99);
-    when(studyDAO.findStudyById(1)).thenReturn(study);
-    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset));
-
-    Study result = datasetService.getStudyWithDatasetsById(mockUser, 1);
-
-    assertEquals(Set.of(dataset), result.getDatasets());
-  }
-
-  /** A study with no datasets leaves the deprecated list unset, so the response omits the key. */
-  @Test
-  void testGetStudyWithDatasetsByIdNoDatasetsLeavesTheListUnset() {
-    Study study = privateStudy(1, 99, Set.of());
-    when(studyDAO.findStudyById(1)).thenReturn(study);
-
-    Study result = datasetService.getStudyWithDatasetsById(mockUser, 1);
-
-    assertFalse(GsonUtil.getInstance().toJsonTree(result).getAsJsonObject().has("datasets"));
-  }
-
-  @Test
-  void testGetStudyWithDatasetsByIdNFE() {
-    when(studyDAO.findStudyById(anyInt())).thenReturn(null);
-    assertThrows(
-        NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(mockUser, 1));
-  }
-
-  @Test
-  void testGetStudyWithDatasetsByIdGeneralException() {
-    when(studyDAO.findStudyById(anyInt())).thenThrow(new RuntimeException("General Exception"));
-    assertThrows(Exception.class, () -> datasetService.getStudyWithDatasetsById(mockUser, 1));
   }
 
   @Test

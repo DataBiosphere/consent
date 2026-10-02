@@ -37,16 +37,23 @@ class StudyUpdateRequestValidatorTest {
   @Mock private DatasetService datasetService;
   private StudyUpdateRequestValidator validator;
 
+  /**
+   * The stored datasets of the study under test. A study lists only its dataset ids, so the
+   * validator is handed the datasets alongside it; {@link #createMockStudy()} fills this in.
+   */
+  private List<Dataset> datasets;
+
   @BeforeEach
   void setUp() {
     validator = new StudyUpdateRequestValidator(datasetService);
+    datasets = new ArrayList<>();
   }
 
   @Test
   void testValidate_valid() {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
-    assertTrue(validator.validate(study, registration));
+    assertTrue(validator.validate(study, datasets, registration));
   }
 
   // ── Study name uniqueness ────────────────────────────────────────────────
@@ -57,7 +64,7 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setStudyName(null);
     // null name — uniqueness check is skipped entirely, no service call needed
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -65,7 +72,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setStudyName("   ");
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
     verify(datasetService, never()).findAllStudyNames();
   }
 
@@ -74,7 +82,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     // name unchanged — service must not be called, so no stub needed
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
     verify(datasetService, never()).findAllStudyNames();
   }
 
@@ -84,7 +92,7 @@ class StudyUpdateRequestValidatorTest {
     when(datasetService.findAllStudyNames()).thenReturn(Set.of(study.getName()));
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setStudyName("A Brand New Name");
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -94,7 +102,8 @@ class StudyUpdateRequestValidatorTest {
     when(datasetService.findAllStudyNames()).thenReturn(Set.of(study.getName(), takenName));
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setStudyName(takenName);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   // ── Required fields ──────────────────────────────────────────────────────
@@ -105,7 +114,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     mutate.accept(registration);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   static Stream<Consumer<StudyUpdateRequest>> invalidRegistrationMutations() {
@@ -128,7 +138,8 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -138,7 +149,8 @@ class StudyUpdateRequestValidatorTest {
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -149,7 +161,8 @@ class StudyUpdateRequestValidatorTest {
     registration.setDbGaPPhsID(RandomStringUtils.secureStrong().nextAlphabetic(8));
     registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -159,7 +172,8 @@ class StudyUpdateRequestValidatorTest {
     registration.setNihAnvilUse(
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -170,7 +184,8 @@ class StudyUpdateRequestValidatorTest {
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(RandomUtils.secureStrong().randomInt(1, 100));
     registration.setNihGrantContractNumber(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   // ── Consent group membership ─────────────────────────────────────────────
@@ -181,7 +196,8 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     // Force a datasetId that is not in the study (mock study uses IDs in 10–99)
     registration.getConsentGroups().get(0).setDatasetId(10000);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -189,7 +205,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     // datasetId already matches the study dataset from createValidRegistration
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── Consent group name changes ───────────────────────────────────────────
@@ -197,32 +213,33 @@ class StudyUpdateRequestValidatorTest {
   @Test
   void testValidate_consentGroupNameChange_blocked_whenSubmittedNameDiffers() {
     Study study = createMockStudy();
-    study.getDatasets().forEach(d -> d.setName("Existing Name"));
+    datasets.forEach(d -> d.setName("Existing Name"));
     StudyUpdateRequest registration = createValidRegistration(study);
     // createValidRegistration uses a random name which differs from "Existing Name"
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
   void testValidate_consentGroupNameChange_allowed_whenSubmittedNameMatchesStored() {
     Study study = createMockStudy();
     String storedName = "Existing Name";
-    study.getDatasets().forEach(d -> d.setName(storedName));
+    datasets.forEach(d -> d.setName(storedName));
     StudyUpdateRequest registration = createValidRegistration(study);
     // Round-trip: submitted name == stored name — should not be treated as a rename
     registration.getConsentGroups().forEach(cg -> cg.setConsentGroupName(storedName));
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   @Test
   void testValidate_consentGroupNameChange_allowed_whenDatasetNotInDatasets() {
-    // datasetId is in getDatasetIds() (membership passes) but getDatasets() is empty,
+    // datasetId is in getDatasetIds() (membership passes) but no stored dataset is passed,
     // so dataset lookup returns empty — the return false; branch is exercised
     Study study = new Study();
     study.setName(RandomStringUtils.secureStrong().nextAlphabetic(10));
     int datasetId = RandomUtils.secureStrong().randomInt(10, 99);
     study.addDatasetIds(Set.of(datasetId));
-    // intentionally no datasets added via addDatasets()
+    // intentionally no stored datasets: the datasets list stays empty
 
     StudyUpdateRequest registration = createValidRegistration(study);
     ConsentGroupRequest cg =
@@ -234,7 +251,7 @@ class StudyUpdateRequestValidatorTest {
     if (registration.getConsentGroups().isEmpty()) {
       registration.setConsentGroups(new ArrayList<>(List.of(cg)));
     }
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   @ParameterizedTest
@@ -242,9 +259,9 @@ class StudyUpdateRequestValidatorTest {
   @ValueSource(strings = {""})
   void testValidate_consentGroupNameChange_allowed_whenStoredNameIsNullOrBlank(String storedName) {
     Study study = createMockStudy();
-    study.getDatasets().forEach(d -> d.setName(storedName));
+    datasets.forEach(d -> d.setName(storedName));
     StudyUpdateRequest registration = createValidRegistration(study);
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── Consent group removal ────────────────────────────────────────────────
@@ -259,12 +276,13 @@ class StudyUpdateRequestValidatorTest {
     extraDataset.setName("");
     extraDataset.setDatasetId(10000);
     extraDataset.setDacId(RandomUtils.secureStrong().randomInt(1, 100));
-    study.getDatasets().add(extraDataset);
+    datasets.add(extraDataset);
     List<Integer> ids = new ArrayList<>(study.getDatasetIds());
     ids.add(extraDataset.getDatasetId());
     study.addDatasetIds(new HashSet<>(ids));
 
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -273,7 +291,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setConsentGroups(List.of());
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── New consent group validation ─────────────────────────────────────────
@@ -290,7 +308,7 @@ class StudyUpdateRequestValidatorTest {
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
     registration.setConsentGroups(groups);
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   @ParameterizedTest
@@ -306,7 +324,8 @@ class StudyUpdateRequestValidatorTest {
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
     registration.setConsentGroups(groups);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   static Stream<Consumer<ConsentGroupRequest>> invalidNewConsentGroupMutations() {
@@ -330,7 +349,7 @@ class StudyUpdateRequestValidatorTest {
     existingCg.setAccessManagement(null);
     existingCg.setGeneralResearchUse(null);
     // datasetId is already set (from createValidRegistration)
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── Conditional fields (update path) ────────────────────────────────────
@@ -341,7 +360,8 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSR(true);
     registration.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -350,7 +370,8 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setAlternativeDataSharingPlan(true);
     registration.setAlternativeDataSharingPlanExplanation(null);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -361,7 +382,8 @@ class StudyUpdateRequestValidatorTest {
     registration.setAlternativeDataSharingPlanExplanation(
         RandomStringUtils.secureStrong().nextAlphabetic(10));
     registration.setAlternativeDataSharingPlanReasons(List.of());
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   // ── Email validation (update path) ──────────────────────────────────────
@@ -371,7 +393,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setPiEmail("not-an-email");
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @ParameterizedTest
@@ -381,7 +404,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setPiEmail(email);
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -389,7 +412,8 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setDataCustodianEmail(List.of("valid@example.com", "not-an-email"));
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -397,7 +421,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setDataCustodianEmail(List.of("a@example.com", "b@example.org"));
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── Date validation (update path) ───────────────────────────────────────
@@ -413,7 +437,7 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setEmbargoReleaseDate("2025-01-15");
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── morDate in new consent groups (update path) ──────────────────────────
@@ -430,7 +454,8 @@ class StudyUpdateRequestValidatorTest {
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
     registration.setConsentGroups(groups);
-    assertThrows(BadRequestException.class, () -> validator.validate(study, registration));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   @Test
@@ -445,7 +470,7 @@ class StudyUpdateRequestValidatorTest {
     List<ConsentGroupRequest> groups = new ArrayList<>(registration.getConsentGroups());
     groups.add(newCg);
     registration.setConsentGroups(groups);
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── Null consent groups ──────────────────────────────────────────────────
@@ -456,7 +481,7 @@ class StudyUpdateRequestValidatorTest {
     StudyUpdateRequest registration = createValidRegistration(study);
     registration.setConsentGroups(null);
     // null consent groups skips membership, name-change, removal, and new-group checks
-    assertDoesNotThrow(() -> validator.validate(study, registration));
+    assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -468,7 +493,7 @@ class StudyUpdateRequestValidatorTest {
     dataset.setName("");
     dataset.setDatasetId(RandomUtils.secureStrong().randomInt(10, 99));
     dataset.setDacId(RandomUtils.secureStrong().randomInt(1, 100));
-    study.addDatasets(List.of(dataset));
+    datasets.add(dataset);
     study.addDatasetIds(Set.of(dataset.getDatasetId()));
     return study;
   }
@@ -484,7 +509,7 @@ class StudyUpdateRequestValidatorTest {
     registration.setPiName(RandomStringUtils.secureStrong().nextAlphabetic(10));
 
     List<ConsentGroupRequest> consentGroups =
-        study.getDatasets().stream()
+        datasets.stream()
             .map(
                 d -> {
                   ConsentGroupRequest cg = new ConsentGroupRequest();

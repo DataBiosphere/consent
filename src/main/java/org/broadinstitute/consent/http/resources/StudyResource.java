@@ -139,8 +139,9 @@ public class StudyResource extends Resource {
   @Timed
   public Response getStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
-      requireReadableStudy(study, duosUser.getUser());
+      // The study lists its dataset ids; the datasets themselves are read from
+      // GET /api/dataset/study/{studyId}/datasets.
+      Study study = datasetService.findStudyByIdForRead(duosUser.getUser(), studyId);
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -210,7 +211,7 @@ public class StudyResource extends Resource {
   public Response deleteStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
       final User user = duosUser.getUser();
-      Study study = datasetService.getStudyWithDatasetsById(user, studyId);
+      Study study = datasetService.findStudy(studyId);
 
       if (Objects.isNull(study)) {
         throw new NotFoundException("Study not found");
@@ -222,12 +223,7 @@ public class StudyResource extends Resource {
         throw new NotFoundException("Study not found");
       }
 
-      boolean deletable =
-          (study.getDatasets() == null || study.getDatasets().isEmpty())
-              || study.getDatasets().stream().allMatch(Dataset::getDeletable);
-      if (!deletable) {
-        throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
-      }
+      // Rejects a study with any in-use dataset before deleting anything.
       datasetService.deleteStudy(study, user);
       return Response.ok().build();
     } catch (Exception e) {
@@ -243,10 +239,9 @@ public class StudyResource extends Resource {
   public Response getRegistrationFromStudy(
       @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
-      requireReadableStudy(study, duosUser.getUser());
-      List<Dataset> datasets =
-          Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
+      User user = duosUser.getUser();
+      Study study = datasetService.findStudyByIdForRead(user, studyId);
+      List<Dataset> datasets = datasetService.findStudyDatasets(user, study);
       DatasetRegistrationSchemaV1 registration =
           new DatasetRegistrationSchemaV1Builder().build(study, datasets);
       String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
@@ -273,10 +268,10 @@ public class StudyResource extends Resource {
       @FormDataParam("dataset") String json) {
     try {
       User user = duosUser.getUser();
-      // Fetch datasets with the study so update-time consent-group-rename validation can
-      // compare submitted names against the stored dataset names (see
-      // StudyUpdateRequestValidator#validateConsentGroupNameChanges).
-      Study existingStudy = datasetService.getStudyWithDatasetsById(user, studyId);
+      Study existingStudy = datasetService.findStudy(studyId);
+      if (existingStudy == null) {
+        throw new NotFoundException("Study not found");
+      }
       boolean canUpdateStudy = datasetService.isCreatorCustodianOrAdmin(user, existingStudy);
       if (!canUpdateStudy) {
         throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
@@ -284,8 +279,11 @@ public class StudyResource extends Resource {
 
       // Manually validate the request from an editing context. Validation enforces
       // create-context rules that don't apply for editing purposes.
+      // The stored datasets let the validator compare submitted consent-group names against the
+      // stored ones (see StudyUpdateRequestValidator#validateConsentGroupNameChanges).
+      List<Dataset> existingDatasets = datasetService.findStudyDatasets(user, existingStudy);
       StudyUpdateValidationResult validationResult =
-          validateRegistrationUpdate(json, existingStudy);
+          validateRegistrationUpdate(json, existingStudy, existingDatasets);
       StudyUpdateRequest registration = validationResult.registration();
 
       if (validationResult.valid()) {
@@ -314,7 +312,8 @@ public class StudyResource extends Resource {
    * Validates that the payload deserializes to a non-null {@link StudyUpdateRequest}, then runs the
    * {@link StudyUpdateRequestValidator} as the authoritative validator against it.
    */
-  private StudyUpdateValidationResult validateRegistrationUpdate(String json, Study existingStudy) {
+  private StudyUpdateValidationResult validateRegistrationUpdate(
+      String json, Study existingStudy, List<Dataset> existingDatasets) {
     StudyUpdateRequest request;
     try {
       request = objectMapper.readValue(json, StudyUpdateRequest.class);
@@ -325,7 +324,7 @@ public class StudyResource extends Resource {
       throw new BadRequestException("Invalid registration payload");
     }
 
-    boolean valid = studyUpdateRequestValidator.validate(existingStudy, request);
+    boolean valid = studyUpdateRequestValidator.validate(existingStudy, existingDatasets, request);
     return new StudyUpdateValidationResult(request, valid);
   }
 

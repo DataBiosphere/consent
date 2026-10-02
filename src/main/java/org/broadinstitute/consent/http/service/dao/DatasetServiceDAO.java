@@ -81,22 +81,24 @@ public class DatasetServiceDAO implements ConsentLogger {
         });
   }
 
-  public void deleteStudy(Study study, User user) throws Exception {
+  /**
+   * Deletes a study and the given datasets, which the caller loads and checks for deletability. A
+   * study does not carry its datasets, so they are passed alongside it.
+   */
+  public void deleteStudy(Study study, List<Dataset> datasets, User user) throws Exception {
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
-          study
-              .getDatasets()
-              .forEach(
-                  d -> {
-                    try {
-                      deleteDataset(d, user.getUserId());
-                    } catch (Exception e) {
-                      handle.rollback();
-                      logException(e);
-                      throw new DatasetDeletionException(e);
-                    }
-                  });
+          datasets.forEach(
+              d -> {
+                try {
+                  deleteDataset(d, user.getUserId());
+                } catch (Exception e) {
+                  handle.rollback();
+                  logException(e);
+                  throw new DatasetDeletionException(e);
+                }
+              });
           try {
             studyDAO.deleteStudyByStudyId(study.getStudyId());
           } catch (Exception e) {
@@ -258,11 +260,19 @@ public class DatasetServiceDAO implements ConsentLogger {
     return studyId;
   }
 
-  public Study updateStudy(
+  /**
+   * Updates a study, updates its existing datasets, and inserts its new ones in one transaction.
+   *
+   * @return The updated study, and the ids of the datasets the update inserted. A study lists only
+   *     its dataset ids, so the inserted ids are the only way to tell new datasets from old ones
+   *     without a second read racing concurrent writes.
+   */
+  public StudyUpdateResult updateStudy(
       StudyUpdate studyUpdate,
       List<DatasetUpdate> datasetUpdates,
       List<DatasetServiceDAO.DatasetInsert> datasetInserts)
       throws SQLException {
+    List<Integer> insertedDatasetIds = new ArrayList<>();
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
@@ -279,19 +289,22 @@ public class DatasetServiceDAO implements ConsentLogger {
                 false);
           }
           for (DatasetServiceDAO.DatasetInsert insert : datasetInserts) {
-            executeInsertDatasetWithFiles(
-                handle,
-                insert.name,
-                insert.dacId,
-                studyUpdate.studyId,
-                insert.dataUse,
-                studyUpdate.userId,
-                insert.props,
-                insert.files);
+            Integer insertedId =
+                executeInsertDatasetWithFiles(
+                    handle,
+                    insert.name,
+                    insert.dacId,
+                    studyUpdate.studyId,
+                    insert.dataUse,
+                    studyUpdate.userId,
+                    insert.props,
+                    insert.files);
+            insertedDatasetIds.add(insertedId);
           }
           handle.commit();
         });
-    return studyDAO.findStudyById(studyUpdate.studyId);
+    return new StudyUpdateResult(
+        studyDAO.findStudyById(studyUpdate.studyId), List.copyOf(insertedDatasetIds));
   }
 
   private void executeUpdateStudyReplaceProps(Handle handle, StudyUpdate update) {
@@ -840,6 +853,9 @@ public class DatasetServiceDAO implements ConsentLogger {
       Integer userId,
       List<StudyProperty> props,
       List<FileStorageObject> files) {}
+
+  /** The outcome of {@link #updateStudy}: the updated study and the ids of inserted datasets. */
+  public record StudyUpdateResult(Study study, List<Integer> insertedDatasetIds) {}
 
   // Helper methods to generate DatasetProperty deletes
 

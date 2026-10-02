@@ -948,8 +948,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetRegistrationFromDatasetIdentifier() {
-    Study study = createMockStudy();
-    Dataset dataset = study.getDatasets().stream().findFirst().orElse(null);
+    Dataset dataset = createMockDatasetInStudy();
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
 
@@ -971,8 +970,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetRegistrationFromDatasetIdentifierDatasetNotFound() {
-    Study study = createMockStudy();
-    Dataset dataset = study.getDatasets().stream().findFirst().orElse(null);
+    Dataset dataset = createMockDatasetInStudy();
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(null);
 
@@ -1456,10 +1454,11 @@ class DatasetResourceTest extends AbstractTestHelper {
     return String.format(format, user.getUserId());
   }
 
-  /*
-   * Study mock
+  /**
+   * A dataset that carries its study, as the single-dataset reads return it. The study lists the
+   * dataset by id only: a study no longer embeds its datasets.
    */
-  private Study createMockStudy() {
+  private Dataset createMockDatasetInStudy() {
     Dataset dataset = createMockDataset();
 
     Study study = new Study();
@@ -1489,9 +1488,9 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
     study.addProperties(phenotypeProperty, speciesProperty, dataCustodianEmailProperty);
+    dataset.setStudyId(study.getStudyId());
     dataset.setStudy(study);
-    study.addDatasets(List.of(dataset));
-    return study;
+    return dataset;
   }
 
   private Dataset createMockDataset() {

@@ -40,9 +40,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -74,7 +72,7 @@ import org.broadinstitute.consent.http.models.dto.registration.RegistrationReque
 import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequest;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
-import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdateResult;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -426,16 +424,38 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     User user = mock();
     StudyUpdateRequest schema =
         createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
-    Study study = mock();
-    Set<Dataset> datasets = Set.of(new Dataset());
+    Study study = new Study();
+    Dataset inserted = new Dataset();
+    inserted.setDatasetId(5);
+    inserted.setDacId(1);
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
-    when(datasetServiceDAO.updateStudy(any(), any(), any())).thenReturn(study);
-    when(study.getDatasets()).thenReturn(datasets);
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(study, List.of(inserted.getDatasetId())));
+    when(datasetDAO.findDatasetsByIdList(List.of(inserted.getDatasetId())))
+        .thenReturn(List.of(inserted));
 
     DatasetRegistrationService registrationSpy = spy(datasetRegistrationService);
-    registrationSpy.updateStudyFromRegistration(1, schema, user, Map.of());
-    verify(registrationSpy, times(1)).sendDatasetSubmittedEmails(any());
+    Study returned = registrationSpy.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    // The inserted dataset is what the DAC chairs are told about, and the study is still the
+    // response.
+    verify(registrationSpy, times(1)).sendDatasetSubmittedEmails(List.of(inserted));
+    assertEquals(study, returned);
+  }
+
+  @Test
+  void testStudyUpdateWithNoNewDatasetsSendsNoEmail() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(new Study(), List.of()));
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    verify(emailService, never()).sendMessage(any(), any());
   }
 
   @Test
@@ -555,41 +575,35 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreatedDatasetsFromUpdatedStudy() {
-    Study study = mock();
-    Set<Dataset> allDatasets =
-        Stream.of(1, 2, 3, 4, 5)
-            .map(
-                i -> {
-                  Dataset dataset = new Dataset();
-                  dataset.setDatasetId(i);
-                  return dataset;
-                })
-            .collect(Collectors.toSet());
-    List<DatasetUpdate> updatedDatasets =
-        Stream.of(3, 4).map(i -> new DatasetUpdate(i, "update", 1, 1, null, null)).toList();
-
-    when(study.getDatasets()).thenReturn(allDatasets);
+  void testCreatedDatasetsFromUpdateLoadsTheInsertedDatasets() {
+    Dataset first = new Dataset();
+    first.setDatasetId(1);
+    Dataset second = new Dataset();
+    second.setDatasetId(2);
+    when(datasetDAO.findDatasetsByIdList(List.of(1, 2))).thenReturn(List.of(first, second));
 
     List<Dataset> datasets =
-        datasetRegistrationService.createdDatasetsFromUpdatedStudy(study, updatedDatasets);
+        datasetRegistrationService.createdDatasetsFromUpdate(
+            new StudyUpdateResult(new Study(), List.of(1, 2)));
 
-    assertEquals(3, datasets.size());
-
-    List<Integer> expectedIds = List.of(1, 2, 5);
-    List<Integer> actualIds = datasets.stream().map(Dataset::getDatasetId).toList();
-
-    assertEquals(expectedIds, actualIds);
+    assertEquals(List.of(first, second), datasets);
   }
 
+  /**
+   * The updated study lists every dataset id, old and new. Only the inserted ids name new datasets,
+   * so an update that inserted nothing reads nothing and reports nothing.
+   */
   @Test
-  void testCreatedDatasetsFromUpdatedStudyNoDatasets() {
-    Study study = mock();
-    List<DatasetUpdate> updatedDatasets = null;
-    when(study.getDatasets()).thenReturn(null);
+  void testCreatedDatasetsFromUpdateNoInserts() {
+    Study study = new Study();
+    study.addDatasetIds(Set.of(3, 4));
+
     List<Dataset> datasets =
-        datasetRegistrationService.createdDatasetsFromUpdatedStudy(study, updatedDatasets);
+        datasetRegistrationService.createdDatasetsFromUpdate(
+            new StudyUpdateResult(study, List.of()));
+
     assertTrue(datasets.isEmpty());
+    verify(datasetDAO, never()).findDatasetsByIdList(any());
   }
 
   @Test
@@ -1066,8 +1080,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
         ArgumentCaptor.forClass(DatasetServiceDAO.StudyUpdate.class);
     when(datasetServiceDAO.updateStudy(studyUpdateCaptor.capture(), any(), any()))
-        .thenReturn(study);
-    when(study.getDatasets()).thenReturn(Set.of());
+        .thenReturn(new StudyUpdateResult(study, List.of()));
 
     datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
 
@@ -1093,8 +1106,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
         ArgumentCaptor.forClass(DatasetServiceDAO.StudyUpdate.class);
     when(datasetServiceDAO.updateStudy(studyUpdateCaptor.capture(), any(), any()))
-        .thenReturn(study);
-    when(study.getDatasets()).thenReturn(Set.of());
+        .thenReturn(new StudyUpdateResult(study, List.of()));
 
     datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
 
@@ -1137,8 +1149,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
         ArgumentCaptor.forClass(List.class);
     when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
-        .thenReturn(study);
-    when(study.getDatasets()).thenReturn(Set.of());
+        .thenReturn(new StudyUpdateResult(study, List.of()));
 
     datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
 
@@ -1177,8 +1188,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
         ArgumentCaptor.forClass(List.class);
     when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
-        .thenReturn(study);
-    when(study.getDatasets()).thenReturn(Set.of());
+        .thenReturn(new StudyUpdateResult(study, List.of()));
 
     datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
 
@@ -1212,8 +1222,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     ArgumentCaptor<List<DatasetServiceDAO.DatasetUpdate>> datasetUpdateCaptor =
         ArgumentCaptor.forClass(List.class);
     when(datasetServiceDAO.updateStudy(any(), datasetUpdateCaptor.capture(), any()))
-        .thenReturn(study);
-    when(study.getDatasets()).thenReturn(Set.of());
+        .thenReturn(new StudyUpdateResult(study, List.of()));
 
     datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
 
@@ -1235,8 +1244,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schema.setPublicVisibility(true);
     schema.setConsentGroups(null);
 
-    when(datasetServiceDAO.updateStudy(any(), any(), any())).thenReturn(study);
-    when(study.getDatasets()).thenReturn(Set.of());
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(study, List.of()));
 
     assertDoesNotThrow(
         () -> datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of()));
