@@ -120,6 +120,19 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void breaksASubmissionDateTieByTheLaterDar() {
+    User user = createUser();
+    Integer datasetId = createDataset(user);
+    Integer collectionId = createCollection(user);
+    insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), FIXED_DATE);
+    DataAccessRequestData archived = new DataAccessRequestData();
+    archived.setStatus("Archived");
+    insertSubmittedDar(user, collectionId, datasetId, archived, FIXED_DATE);
+
+    assertEquals(0, getCounts(user).darTotal());
+  }
+
+  @Test
   void countsApprovalsOlderThanAYearAsExpiredInsteadOfDroppingThem() {
     User user = createUser();
     giveLibraryCard(user);

@@ -36,7 +36,7 @@ public interface DacDashboardDAO {
         FROM data_access_request dar
         WHERE dar.submission_date IS NOT NULL
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-        ORDER BY dar.collection_id, dar.submission_date DESC
+        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
       ),
       relevant_datasets AS (
         SELECT DISTINCT ld.collection_id, ld.reference_id, ld.closeout, dd.dataset_id,

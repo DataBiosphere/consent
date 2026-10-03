@@ -142,6 +142,21 @@ class DacDashboardDAOTest extends DAOTestHelper {
     assertEquals(3, counts.awaitingMyVote());
   }
 
+  @Test
+  void breaksASubmissionDateTieByTheLaterDar() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dacId);
+    User researcher = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), researcher.getUserId(), FIXED_DATE);
+    insertDar(researcher, collectionId, createDataset(owner, createDac(owner)), FIXED_DATE);
+    insertDar(researcher, collectionId, createDataset(owner, dacId), FIXED_DATE);
+
+    assertEquals(1, getCounts(chair).darTotal());
+  }
+
   private DashboardDatabaseCounts getCounts(User user) {
     return jdbi.onDemand(DacDashboardDAO.class)
         .getCounts(
@@ -189,6 +204,21 @@ class DacDashboardDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     datasetIdsByReferenceId.put(referenceId, datasetId);
     return referenceId;
+  }
+
+  private void insertDar(
+      User researcher, Integer collectionId, Integer datasetId, Date submissionDate) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        researcher.getUserId(),
+        FIXED_DATE,
+        submissionDate,
+        FIXED_DATE,
+        new DataAccessRequestData(),
+        "synthetic-era-id");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
   }
 
   private Integer datasetIdFor(String referenceId) {
