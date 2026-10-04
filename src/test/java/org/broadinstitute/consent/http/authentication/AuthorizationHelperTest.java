@@ -20,6 +20,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -251,10 +252,32 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   /** Test that in the case of a missing email header, we throw an exception. */
   @Test
   void testAuthenticateGetUserWithStatusInfMissingEmailClaimsThrows() {
-    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
-    headerCache.loadCache(bearerToken, headerMap);
+    // loadCache refuses claims without an email, so place the entry in the cache directly.
+    headerCache.cache.put(bearerToken, Map.of(ClaimsCache.OAUTH2_CLAIM_access_token, bearerToken));
 
     assertThrows(NotAuthorizedException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
+  }
+
+  /** A request without claims is not cached, so the authenticators find no entry for it. */
+  @Test
+  void testAuthenticateAfterClaimlessRequestFindsNoEntry() {
+    headerCache.loadCache(bearerToken, headerMap);
+
+    assertFalse(oAuthAuthenticator.authenticate(bearerToken).isPresent());
+    assertFalse(duosUserAuthenticator.authenticate(bearerToken).isPresent());
+  }
+
+  /**
+   * A claimless request, such as a call to /status, must not block a later request with the same
+   * token that carries the claims.
+   */
+  @Test
+  void testAuthenticateSucceedsAfterClaimlessRequest() {
+    headerCache.loadCache(bearerToken, headerMap);
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerCache.loadCache(bearerToken, headerMap);
+
+    assertTrue(oAuthAuthenticator.authenticate(bearerToken).isPresent());
   }
 
   /** Test that if the name is "unknown" in the header, we use the email as the name */
