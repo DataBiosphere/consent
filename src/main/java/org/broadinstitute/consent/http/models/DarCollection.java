@@ -121,7 +121,9 @@ public class DarCollection {
 
   public DataAccessRequest getMostRecentDar() {
     return dars.values().stream()
-        .max(Comparator.comparing(DataAccessRequest::getSubmissionDate))
+        .max(
+            Comparator.comparing(DataAccessRequest::getSubmissionDate)
+                .thenComparing(DataAccessRequest::getId))
         .orElse(null);
   }
 

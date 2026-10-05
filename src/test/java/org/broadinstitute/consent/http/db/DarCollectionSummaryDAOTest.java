@@ -951,6 +951,58 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = {"admin", "researcher", "SO", "DAC", "dacCollectionId", "collectionId"})
+  void testGetDarCollectionSummaryBreaksASubmissionDateTieByTheLaterDar(String type) {
+    User user = createUserWithInstitution();
+    Integer userId = user.getUserId();
+    Dac dac = createDac();
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    Dataset dataset = createDatasetWithDac(userId, dac.getDacId());
+    Integer collectionId = createDarCollection(userId);
+    insertSubmittedDar(collectionId, userId, dataset.getDatasetId());
+    String laterReferenceId = insertSubmittedDar(collectionId, userId, dataset.getDatasetId());
+
+    DarCollectionSummary summary =
+        switch (type) {
+          case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin().get(0);
+          case "researcher" ->
+              darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId).get(0);
+          case "SO" ->
+              darCollectionSummaryDAO
+                  .getDarCollectionSummariesForSO(user.getInstitutionId())
+                  .get(0);
+          case "DAC" ->
+              darCollectionSummaryDAO
+                  .getDarCollectionSummariesForDACRole(
+                      chair.getUserId(), UserRoles.CHAIRPERSON.getRoleId())
+                  .get(0);
+          case "dacCollectionId" ->
+              darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
+                  userId, List.of(dataset.getDatasetId()), collectionId);
+          case "collectionId" ->
+              darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          default -> throw new IllegalArgumentException("Invalid type: " + type);
+        };
+
+    assertEquals(laterReferenceId, summary.getLatestReferenceId());
+  }
+
+  private String insertSubmittedDar(Integer collectionId, Integer userId, Integer datasetId) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        FIXED_DATE,
+        FIXED_DATE,
+        FIXED_DATE,
+        new DataAccessRequestData(),
+        randomAlphabetic(10));
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return referenceId;
+  }
+
+  @ParameterizedTest
   @ValueSource(strings = {"DAC", "CollectionId"})
   void testGetDarCollectionSummaryTwoDataAccessRequestsForDACsWithVotes(String type) {
     // create a DAC and chairperson for the dataset for the DAC Chair test
