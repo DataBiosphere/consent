@@ -1,0 +1,52 @@
+get:
+  summary: Institutions created over time
+  operationId: apiMetricsInstitutionsGet
+  description: |
+    Admin only. Institutions created in the range, per bucket of their create date.
+  parameters:
+    - name: from
+      in: query
+      required: true
+      description: First create date to include, as yyyy-MM-dd, from 1900 to 9999.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last create date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Create-date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+  tags:
+    - Metrics
+    - Admin
+  responses:
+    200:
+      description: The total and counts per bucket.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/InstitutionReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: Admin only.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error

@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
@@ -20,12 +21,14 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.ExpirationReport;
+import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserReport;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
@@ -35,6 +38,7 @@ public class MetricsService {
 
   private final DataAccessRequestDAO darDAO;
   private final DarMetricsDAO darMetricsDAO;
+  private final AccountMetricsDAO accountMetricsDAO;
   private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
@@ -42,6 +46,7 @@ public class MetricsService {
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.darMetricsDAO = jdbi.onDemand(DarMetricsDAO.class);
+    this.accountMetricsDAO = jdbi.onDemand(AccountMetricsDAO.class);
     this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;
   }
@@ -225,6 +230,29 @@ public class MetricsService {
         bucket,
         darMetricsDAO.countRenewals(start, end, bucket.truncUnit()),
         darMetricsDAO.findRenewals(start, end, limit, offset));
+  }
+
+  /** Users created from {@code from} to {@code to}, per bucket and per role they hold now. */
+  public UserReport getUsers(LocalDate from, LocalDate to, MetricsBucket bucket) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return UserReport.of(
+        from,
+        to,
+        bucket,
+        accountMetricsDAO.countUsersCreated(start, end, bucket.truncUnit()),
+        accountMetricsDAO.countUsersByRole(start, end));
+  }
+
+  /** Institutions created from {@code from} to {@code to}, per bucket. */
+  public InstitutionReport getInstitutions(LocalDate from, LocalDate to, MetricsBucket bucket) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return InstitutionReport.of(
+        from,
+        to,
+        bucket,
+        accountMetricsDAO.countInstitutionsCreated(start, end, bucket.truncUnit()));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too

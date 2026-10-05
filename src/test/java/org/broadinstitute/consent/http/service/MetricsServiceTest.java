@@ -20,6 +20,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
@@ -30,6 +31,7 @@ import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
+import org.broadinstitute.consent.http.models.CreatedBucket;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
@@ -44,6 +46,7 @@ import org.broadinstitute.consent.http.models.ExpirationBucket;
 import org.broadinstitute.consent.http.models.ExpirationReport;
 import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
+import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
@@ -51,6 +54,7 @@ import org.broadinstitute.consent.http.models.Renewal;
 import org.broadinstitute.consent.http.models.RenewalBucket;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.ResearcherDarCount;
+import org.broadinstitute.consent.http.models.RoleUserCount;
 import org.broadinstitute.consent.http.models.SoApproval;
 import org.broadinstitute.consent.http.models.SoApprovalBucket;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
@@ -60,6 +64,7 @@ import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserReport;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
@@ -83,6 +88,8 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private DarMetricsDAO darMetricsDAO;
 
+  @Mock private AccountMetricsDAO accountMetricsDAO;
+
   @Mock private DatasetService datasetService;
 
   private final User user = new User();
@@ -94,6 +101,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
+    when(jdbi.onDemand(AccountMetricsDAO.class)).thenReturn(accountMetricsDAO);
     service = new MetricsService(jdbi, datasetService);
   }
 
@@ -616,5 +624,31 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   private static Instant startOfDay(LocalDate date) {
     return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
+  }
+
+  @Test
+  void usersAndInstitutionsTotalTheirBucketsOverTheWholeLastDay() {
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    Instant start = from.atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant end = LocalDate.of(2026, 4, 1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+    List<CreatedBucket> users =
+        List.of(new CreatedBucket(start, 3), new CreatedBucket(start.plusSeconds(86400 * 31L), 2));
+    List<CreatedBucket> institutions = List.of(new CreatedBucket(start, 1));
+    List<RoleUserCount> roles = List.of(new RoleUserCount("Researcher", 5));
+    when(accountMetricsDAO.countUsersCreated(start, end, "month")).thenReturn(users);
+    when(accountMetricsDAO.countUsersByRole(start, end)).thenReturn(roles);
+    when(accountMetricsDAO.countInstitutionsCreated(start, end, "month")).thenReturn(institutions);
+
+    UserReport userReport = service.getUsers(from, to, MetricsBucket.MONTH);
+    InstitutionReport institutionReport = service.getInstitutions(from, to, MetricsBucket.MONTH);
+
+    assertEquals("2026-01-01", userReport.from());
+    assertEquals("2026-03-31", userReport.to());
+    assertEquals(5, userReport.total());
+    assertEquals(users, userReport.buckets());
+    assertEquals(roles, userReport.roles());
+    assertEquals(1, institutionReport.total());
+    assertEquals(institutions, institutionReport.buckets());
   }
 }
