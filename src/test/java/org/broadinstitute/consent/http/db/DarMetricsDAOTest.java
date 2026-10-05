@@ -775,15 +775,20 @@ class DarMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void aDacScopedSubmissionSavedAsOneDarPerDatasetCountsOnceUnderItsEarliest() {
+  void aDacScopedSubmissionSavedAsOneDarPerDatasetCountsOnceUnderItsEarliestDarInScope() {
     Integer dac = createDac();
     String first = createDar(createDataset(createDac()));
     Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
-    createDarIn(collectionId, DAY_1, createDataset(dac));
+    String inScope = createDarIn(collectionId, DAY_1, createDataset(dac));
+    createDarIn(collectionId, DAY_2, createDataset(dac));
 
     List<DarVolume> rows = dao.findDarVolume(FROM, TO, List.of(dac), 10, 0);
-    assertEquals(List.of(first), rows.stream().map(DarVolume::referenceId).toList());
-    assertEquals(1, rows.getFirst().datasetCount());
+    assertEquals(List.of(inScope), rows.stream().map(DarVolume::referenceId).toList());
+    assertEquals(DAY_1.toInstant(), rows.getFirst().submissionDate());
+    assertEquals(2, rows.getFirst().datasetCount());
+    String decided = dao.findDarDecisions(FROM, TO, List.of(dac), 10, 0).getFirst().referenceId();
+    assertEquals(inScope, decided);
+    assertEquals(first, onlyVolume().referenceId());
   }
 
   private DarVolume onlyVolume() {

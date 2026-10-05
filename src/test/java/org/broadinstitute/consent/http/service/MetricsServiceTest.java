@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
@@ -62,6 +63,7 @@ import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
@@ -76,6 +78,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MetricsServiceTest extends AbstractTestHelper {
+
+  private static final List<Integer> DACS = List.of(4, 6);
 
   @Mock private Jdbi jdbi;
 
@@ -457,12 +461,17 @@ class MetricsServiceTest extends AbstractTestHelper {
             new DecisionBucketCount(start, DecisionState.APPROVED, null, 3L),
             new DecisionBucketCount(start, DecisionState.PENDING, null, 2L));
     DarDecision row = new DarDecision("ref", 1, start, 1, DecisionState.PENDING, null, null);
-    when(darMetricsDAO.countDarDecisions(start, end, ALL_DACS, "quarter")).thenReturn(buckets);
-    when(darMetricsDAO.findDarDecisions(start, end, ALL_DACS, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countDarDecisions(start, end, DACS, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findDarDecisions(start, end, DACS, 10, 20)).thenReturn(List.of(row));
 
     DecisionReport<DarDecision> report =
         service.getDarDecisions(
-            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.QUARTER, 10, 20);
+            LocalDate.of(2026, 1, 1),
+            LocalDate.of(2026, 3, 31),
+            DACS,
+            MetricsBucket.QUARTER,
+            10,
+            20);
 
     assertEquals(5, report.total());
     assertEquals(buckets, report.buckets());
@@ -481,17 +490,17 @@ class MetricsServiceTest extends AbstractTestHelper {
     DarTurnaround row = new DarTurnaround("ref", 1, start, start, DecidedVia.MANUAL, 0.0);
     DarDatasetTurnaround pair =
         new DarDatasetTurnaround("ref", 1, 2, start, start, DecidedVia.RADAR, 0.0);
-    when(darMetricsDAO.countDarTurnaround(start, end, ALL_DACS, "quarter")).thenReturn(buckets);
-    when(darMetricsDAO.findDarTurnaround(start, end, ALL_DACS, 10, 20)).thenReturn(List.of(row));
-    when(darMetricsDAO.countPairTurnaround(start, end, ALL_DACS, "quarter")).thenReturn(buckets);
-    when(darMetricsDAO.findPairTurnaround(start, end, ALL_DACS, 10, 20)).thenReturn(List.of(pair));
+    when(darMetricsDAO.countDarTurnaround(start, end, DACS, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findDarTurnaround(start, end, DACS, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countPairTurnaround(start, end, DACS, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findPairTurnaround(start, end, DACS, 10, 20)).thenReturn(List.of(pair));
     LocalDate from = LocalDate.of(2026, 1, 1);
     LocalDate to = LocalDate.of(2026, 6, 30);
 
     TurnaroundReport<DarTurnaround> dars =
-        service.getDarDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
+        service.getDarDecisionTurnaround(from, to, DACS, MetricsBucket.QUARTER, 10, 20);
     TurnaroundReport<DarDatasetTurnaround> pairs =
-        service.getDarDatasetDecisionTurnaround(from, to, MetricsBucket.QUARTER, 10, 20);
+        service.getDarDatasetDecisionTurnaround(from, to, DACS, MetricsBucket.QUARTER, 10, 20);
 
     assertEquals(5, dars.total());
     assertEquals(1, dars.unmeasured());
@@ -537,15 +546,20 @@ class MetricsServiceTest extends AbstractTestHelper {
     ArgumentCaptor<Instant> countedAsOf = ArgumentCaptor.forClass(Instant.class);
     ArgumentCaptor<Instant> foundAsOf = ArgumentCaptor.forClass(Instant.class);
     when(darMetricsDAO.countExpirations(
-            eq(start), eq(end), isNull(), countedAsOf.capture(), eq("quarter")))
+            eq(start), eq(end), eq(DACS), countedAsOf.capture(), eq("quarter")))
         .thenReturn(buckets);
     when(darMetricsDAO.findExpirations(
-            eq(start), eq(end), isNull(), foundAsOf.capture(), eq(10), eq(20)))
+            eq(start), eq(end), eq(DACS), foundAsOf.capture(), eq(10), eq(20)))
         .thenReturn(List.of(row));
 
     ExpirationReport report =
         service.getDarExpirations(
-            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.QUARTER, 10, 20);
+            LocalDate.of(2026, 1, 1),
+            LocalDate.of(2026, 6, 30),
+            DACS,
+            MetricsBucket.QUARTER,
+            10,
+            20);
 
     assertEquals(5, report.total());
     assertEquals(buckets, report.buckets());
@@ -562,12 +576,17 @@ class MetricsServiceTest extends AbstractTestHelper {
             new RenewalBucket(start, 3L, 2L),
             new RenewalBucket(start.plus(Duration.ofDays(90)), 1L, 1L));
     Renewal row = new Renewal("ref", 1, 2, start, DecidedVia.MANUAL, start);
-    when(darMetricsDAO.countRenewals(start, end, ALL_DACS, "quarter")).thenReturn(buckets);
-    when(darMetricsDAO.findRenewals(start, end, ALL_DACS, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countRenewals(start, end, DACS, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.findRenewals(start, end, DACS, 10, 20)).thenReturn(List.of(row));
 
     RenewalReport report =
         service.getDarRenewals(
-            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), MetricsBucket.QUARTER, 10, 20);
+            LocalDate.of(2026, 1, 1),
+            LocalDate.of(2026, 6, 30),
+            DACS,
+            MetricsBucket.QUARTER,
+            10,
+            20);
 
     assertEquals(4, report.total());
     assertEquals(buckets, report.buckets());
@@ -578,12 +597,12 @@ class MetricsServiceTest extends AbstractTestHelper {
   void pairDecisionsCoverWholeDays() {
     Instant start = startOfDay(LocalDate.of(2026, 5, 1));
     Instant end = startOfDay(LocalDate.of(2026, 5, 2));
-    when(darMetricsDAO.countPairDecisions(start, end, ALL_DACS, "day")).thenReturn(List.of());
-    when(darMetricsDAO.findPairDecisions(start, end, ALL_DACS, 100, 0)).thenReturn(List.of());
+    when(darMetricsDAO.countPairDecisions(start, end, DACS, "day")).thenReturn(List.of());
+    when(darMetricsDAO.findPairDecisions(start, end, DACS, 100, 0)).thenReturn(List.of());
 
     var report =
         service.getDarDatasetDecisions(
-            LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 1), MetricsBucket.DAY, 100, 0);
+            LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 1), DACS, MetricsBucket.DAY, 100, 0);
 
     assertEquals(0, report.total());
     assertTrue(report.rows().isEmpty());
@@ -599,16 +618,21 @@ class MetricsServiceTest extends AbstractTestHelper {
             new VolumeBucketCount(end, 1L, 1L, 1L, 1L));
     DarVolume row =
         new DarVolume("ref", 1, 2, start, 3, "Broad", InstitutionSource.RECORDED, 1, 0, 0);
-    when(darMetricsDAO.countDarVolume(start, end, ALL_DACS, "quarter")).thenReturn(buckets);
+    when(darMetricsDAO.countDarVolume(start, end, DACS, "quarter")).thenReturn(buckets);
     List<InstitutionDarCount> institutions = List.of(new InstitutionDarCount(3, "Broad", 4L, 3L));
     List<ResearcherDarCount> researchers = List.of(new ResearcherDarCount(2, 4L));
-    when(darMetricsDAO.findDarVolume(start, end, ALL_DACS, 10, 20)).thenReturn(List.of(row));
-    when(darMetricsDAO.countDarsByInstitution(start, end, ALL_DACS)).thenReturn(institutions);
-    when(darMetricsDAO.countDarsByResearcher(start, end, ALL_DACS)).thenReturn(researchers);
+    when(darMetricsDAO.findDarVolume(start, end, DACS, 10, 20)).thenReturn(List.of(row));
+    when(darMetricsDAO.countDarsByInstitution(start, end, DACS)).thenReturn(institutions);
+    when(darMetricsDAO.countDarsByResearcher(start, end, DACS)).thenReturn(researchers);
 
     VolumeReport report =
         service.getDarVolume(
-            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.QUARTER, 10, 20);
+            LocalDate.of(2026, 1, 1),
+            LocalDate.of(2026, 3, 31),
+            DACS,
+            MetricsBucket.QUARTER,
+            10,
+            20);
 
     assertEquals(4, report.total());
     assertEquals(buckets, report.buckets());
@@ -620,5 +644,41 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   private static Instant startOfDay(LocalDate date) {
     return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
+  }
+
+  @Test
+  void anAdminNamingNoDacReadsEveryDac() {
+    assertEquals(ALL_DACS, service.resolveDacScope(userWithRoles(UserRoles.Admin()), List.of()));
+    assertEquals(List.of(9), service.resolveDacScope(userWithRoles(UserRoles.Admin()), List.of(9)));
+  }
+
+  @Test
+  void aChairOrMemberNamingNoDacReadsTheirOwn() {
+    User user =
+        userWithRoles(
+            dacRole(UserRoles.CHAIRPERSON, 4),
+            dacRole(UserRoles.MEMBER, 6),
+            dacRole(UserRoles.MEMBER, 4),
+            UserRoles.Researcher());
+
+    assertEquals(List.of(4, 6), service.resolveDacScope(user, List.of()));
+    assertEquals(List.of(6), service.resolveDacScope(user, List.of(6)));
+  }
+
+  @Test
+  void aDacTheUserIsNotOnIsForbidden() {
+    User user = userWithRoles(dacRole(UserRoles.MEMBER, 4));
+
+    assertThrows(ForbiddenException.class, () -> service.resolveDacScope(user, List.of(4, 5)));
+  }
+
+  private static User userWithRoles(UserRole... roles) {
+    User user = new User();
+    user.setRoles(new ArrayList<>(List.of(roles)));
+    return user;
+  }
+
+  private static UserRole dacRole(UserRoles role, Integer dacId) {
+    return new UserRole(null, null, role.getRoleId(), role.getRoleName(), dacId);
   }
 }

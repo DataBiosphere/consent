@@ -499,7 +499,7 @@ public interface DarMetricsDAO {
    * separately from the DAR. Before 2022-07-27 a submission was saved as one DAR per dataset, so
    * each collection's original DARs count as one submission, reported under its earliest. Scoped to
    * DACs, a DAR counts only if it requests a dataset {@link #IN_DAC_SCOPE}, and dataset_count
-   * counts only those.
+   * counts only those; a collection is reported under its earliest DAR that does.
    */
   String DAR_VOLUME =
       """
@@ -540,7 +540,9 @@ public interface DarMetricsDAO {
           + IN_DAC_SCOPE
           + """
             ) ds
-            ORDER BY od.submission_key, od.submission_date, od.reference_id
+            ORDER BY od.submission_key,
+                     CAST(:dacIds AS int[]) IS NOT NULL AND ds.dataset_count = 0,
+                     od.submission_date, od.reference_id
           ),
           dar_volume AS (
             SELECT * FROM submissions
