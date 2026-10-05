@@ -514,7 +514,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private DacDashboardService providesDacDashboardService(
       Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
-    return new DacDashboardService(jdbi, dashboardSearchService, executorService);
+    return new DacDashboardService(
+        jdbi, dashboardSearchService, executorService, Clock.systemDefaultZone());
   }
 
   @Provides

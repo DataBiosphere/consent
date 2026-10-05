@@ -1311,6 +1311,8 @@ components:
       $ref: './schemas/SigningOfficialDashboardSummary.yaml'
     AdminDashboardSummary:
       $ref: './schemas/AdminDashboardSummary.yaml'
+    DashboardMetrics:
+      $ref: './schemas/DashboardMetrics.yaml'
     DacDatasetExternalizationRequest:
       $ref: './schemas/DacDatasetExternalizationRequest.yaml'
     DacDatasetExternalizationResponse:

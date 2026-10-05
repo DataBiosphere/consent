@@ -4,6 +4,7 @@ required:
   - dacs
   - dacDatasets
   - dataLibrary
+  - metrics
 properties:
   darRequests:
     type: object
@@ -42,3 +43,5 @@ properties:
       datasets: { type: integer, format: int64 }
       models: { type: integer, format: int64 }
       workspaces: { type: integer, format: int64 }
+  metrics:
+    $ref: './DashboardMetrics.yaml'

@@ -18,15 +18,15 @@ import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.DaaAssociations;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Dacs;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.Decisions;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.Expiration;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Institutions;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.LibraryCards;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.Metrics;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.SoApprovals;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.Turnaround;
 import org.broadinstitute.consent.http.models.AdminDashboardSummary.Users;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.Volume;
+import org.broadinstitute.consent.http.models.DashboardMetrics;
+import org.broadinstitute.consent.http.models.DashboardMetrics.Decisions;
+import org.broadinstitute.consent.http.models.DashboardMetrics.Expiration;
+import org.broadinstitute.consent.http.models.DashboardMetrics.SoApprovals;
+import org.broadinstitute.consent.http.models.DashboardMetrics.Turnaround;
+import org.broadinstitute.consent.http.models.DashboardMetrics.Volume;
 import org.broadinstitute.consent.http.models.DashboardSummary.DarRequests;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.ExpirationBucket;
@@ -101,7 +101,7 @@ class AdminDashboardServiceTest {
             new Institutions(7, 2),
             new LibraryCards(30),
             new DaaAssociations(5, 12),
-            new Metrics(
+            new DashboardMetrics(
                 "2026-07-04",
                 "2026-10-01",
                 new Decisions(10, 2, 4, 1, 1, 2),

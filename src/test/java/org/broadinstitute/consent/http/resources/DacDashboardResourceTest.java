@@ -43,7 +43,8 @@ class DacDashboardResourceTest {
             new DarRequests(8, 3, 5, 2),
             new Dacs(4),
             new DacDatasets(6),
-            new DataLibrary(7, 8, 9, 10));
+            new DataLibrary(7, 8, 9, 10),
+            null);
     when(dashboardService.getSummary(user)).thenReturn(summary);
 
     Response response = resource.getDashboardSummary(duosUser);
