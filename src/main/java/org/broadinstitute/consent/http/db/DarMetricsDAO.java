@@ -28,9 +28,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
  */
 public interface DarMetricsDAO {
 
-  /** The dacIds that leave a report unscoped, over every DAC's datasets. */
-  List<Integer> ALL_DACS = null;
-
   /**
    * Whether {@code dd.dataset_id} belongs to one of :dacIds; with :dacIds null, every dataset does.
    * A dataset counts toward the DAC it belongs to now, since elections don't record their DAC.

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,6 +36,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class DarMetricsDAOTest extends DAOTestHelper {
+
+  private static final List<Integer> ALL_DACS = null;
 
   private static final Instant FROM = Instant.parse("2000-01-01T00:00:00Z");
   private static final Instant TO = Instant.parse("2100-01-01T00:00:00Z");

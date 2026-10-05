@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -76,6 +75,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class MetricsServiceTest extends AbstractTestHelper {
+
+  private static final List<Integer> ALL_DACS = null;
 
   @Mock private Jdbi jdbi;
 

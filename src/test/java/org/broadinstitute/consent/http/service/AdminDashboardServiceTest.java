@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +43,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AdminDashboardServiceTest {
+
+  private static final List<Integer> ALL_DACS = null;
   private static final Instant NOW = Instant.parse("2026-10-01T15:00:00Z");
   private static final Instant START = Instant.parse("2026-07-04T00:00:00Z");
   private static final Instant END = Instant.parse("2026-10-02T00:00:00Z");
