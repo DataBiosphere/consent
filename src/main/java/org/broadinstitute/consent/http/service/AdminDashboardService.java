@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
+
 import com.google.inject.Inject;
 import java.time.Clock;
 import java.time.Instant;
@@ -71,13 +73,16 @@ public class AdminDashboardService {
     Instant start = from.atStartOfDay(clock.getZone()).toInstant();
     Instant end = to.plusDays(1).atStartOfDay(clock.getZone()).toInstant();
 
-    List<DecisionBucketCount> decisions = darMetricsDAO.countDarDecisions(start, end, WHOLE_WINDOW);
-    List<TurnaroundBucket> turnaround = darMetricsDAO.countDarTurnaround(start, end, WHOLE_WINDOW);
+    List<DecisionBucketCount> decisions =
+        darMetricsDAO.countDarDecisions(start, end, ALL_DACS, WHOLE_WINDOW);
+    List<TurnaroundBucket> turnaround =
+        darMetricsDAO.countDarTurnaround(start, end, ALL_DACS, WHOLE_WINDOW);
     List<SoApprovalBucket> soApprovals = darMetricsDAO.countSoApprovals(start, end, WHOLE_WINDOW);
-    List<VolumeBucketCount> volume = darMetricsDAO.countDarVolume(start, end, WHOLE_WINDOW);
+    List<VolumeBucketCount> volume =
+        darMetricsDAO.countDarVolume(start, end, ALL_DACS, WHOLE_WINDOW);
     List<ExpirationBucket> expirations =
-        darMetricsDAO.countExpirations(start, end, clock.instant(), WHOLE_WINDOW);
-    List<RenewalBucket> renewals = darMetricsDAO.countRenewals(start, end, WHOLE_WINDOW);
+        darMetricsDAO.countExpirations(start, end, ALL_DACS, clock.instant(), WHOLE_WINDOW);
+    List<RenewalBucket> renewals = darMetricsDAO.countRenewals(start, end, ALL_DACS, WHOLE_WINDOW);
 
     TurnaroundBucket window = turnaround.isEmpty() ? null : turnaround.getFirst();
     return new Metrics(

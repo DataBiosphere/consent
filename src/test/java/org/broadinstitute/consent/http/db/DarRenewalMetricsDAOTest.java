@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,7 +65,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     Integer dataset = createDataset();
     approve(createDar(dataset), dataset);
 
-    assertTrue(dao.findRenewals(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findRenewals(FROM, TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -78,7 +79,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     approve(deniedParent, denied);
     decide(createProgressReport(deniedParent, RENEWED, denied), denied, VoteType.FINAL, false);
 
-    assertTrue(dao.findRenewals(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findRenewals(FROM, TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -93,7 +94,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(closeout, dataset);
     approve(closeout, dataset);
 
-    assertTrue(dao.findRenewals(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findRenewals(FROM, TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -118,10 +119,10 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     String second = createProgressReport(first, RENEWED.plus(Duration.ofDays(30)), dataset);
     approve(second, dataset);
 
-    List<Renewal> rows = dao.findRenewals(FROM, TO, 10, 0);
+    List<Renewal> rows = dao.findRenewals(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(List.of(first, second), rows.stream().map(Renewal::referenceId).toList());
     assertEquals(List.of(dataset, dataset), rows.stream().map(Renewal::datasetId).toList());
-    assertEquals(1, dao.countRenewals(FROM, TO, "quarter").getFirst().collectionCount());
+    assertEquals(1, dao.countRenewals(FROM, TO, ALL_DACS, "quarter").getFirst().collectionCount());
   }
 
   @Test
@@ -152,7 +153,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     election(report, dataset, ElectionStatus.OPEN);
 
     assertEquals(report, only().referenceId());
-    assertEquals(1, dao.countRenewals(FROM, TO, "month").getFirst().renewalCount());
+    assertEquals(1, dao.countRenewals(FROM, TO, ALL_DACS, "month").getFirst().renewalCount());
   }
 
   @Test
@@ -165,7 +166,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     castVote(electionId, VoteType.FINAL, true, VOTED);
     castVote(electionId, VoteType.FINAL, false, Date.from(VOTED.toInstant().plusSeconds(60)));
 
-    assertTrue(dao.findRenewals(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findRenewals(FROM, TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -203,7 +204,7 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(report, dataset);
     approve(report, dataset);
 
-    assertTrue(dao.findRenewals(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findRenewals(FROM, TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -213,8 +214,8 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     approve(parent, dataset);
     approve(createProgressReport(parent, RENEWED, dataset), dataset);
 
-    assertEquals(1, dao.findRenewals(RENEWED, RENEWED.plusSeconds(1), 10, 0).size());
-    assertTrue(dao.findRenewals(SUBMITTED, RENEWED, 10, 0).isEmpty());
+    assertEquals(1, dao.findRenewals(RENEWED, RENEWED.plusSeconds(1), ALL_DACS, 10, 0).size());
+    assertTrue(dao.findRenewals(SUBMITTED, RENEWED, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -233,26 +234,52 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
     approve(oneDataset, third);
     approve(createProgressReport(oneDataset, RENEWED.plus(Duration.ofDays(3)), third), third);
 
-    List<RenewalBucket> buckets = dao.countRenewals(FROM, TO, "month");
+    List<RenewalBucket> buckets = dao.countRenewals(FROM, TO, ALL_DACS, "month");
     assertEquals(1, buckets.size());
     assertEquals(3, buckets.getFirst().renewalCount());
     assertEquals(2, buckets.getFirst().collectionCount());
   }
 
+  @Test
+  void aDacScopeReadsOnlyThatDacsRenewals() {
+    Integer dac = createDac();
+    Integer inScope = createDataset(dac);
+    Integer outOfScope = createDataset(createDac());
+    String parent = createDar(inScope, outOfScope);
+    String report = createProgressReport(parent, RENEWED, inScope);
+    dataAccessRequestDAO.insertDARDatasetRelation(report, outOfScope);
+    approve(report, inScope);
+    approve(report, outOfScope);
+
+    List<Renewal> rows = dao.findRenewals(FROM, TO, List.of(dac), 10, 0);
+    assertEquals(List.of(inScope), rows.stream().map(Renewal::datasetId).toList());
+    assertEquals(1, dao.countRenewals(FROM, TO, List.of(dac), "quarter").getFirst().renewalCount());
+    assertEquals(2, dao.findRenewals(FROM, TO, ALL_DACS, 10, 0).size());
+  }
+
   private Renewal only() {
-    List<Renewal> rows = dao.findRenewals(FROM, TO, 10, 0);
+    List<Renewal> rows = dao.findRenewals(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(1, rows.size());
     return rows.getFirst();
   }
 
+  private Integer createDac() {
+    return dacDAO.createDac(
+        "DAC " + UUID.randomUUID(), UUID.randomUUID().toString(), user.getUserId());
+  }
+
   private Integer createDataset() {
+    return createDataset(null);
+  }
+
+  private Integer createDataset(Integer dacId) {
     return datasetDAO.insertDataset(
         "Dataset " + UUID.randomUUID(),
         FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",
-        null);
+        dacId);
   }
 
   private String createDar(Integer... datasetIds) {

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
+
 import com.google.inject.Inject;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -118,8 +120,8 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countPairDecisions(start, end, bucket.truncUnit()),
-        darMetricsDAO.findPairDecisions(start, end, limit, offset));
+        darMetricsDAO.countPairDecisions(start, end, ALL_DACS, bucket.truncUnit()),
+        darMetricsDAO.findPairDecisions(start, end, ALL_DACS, limit, offset));
   }
 
   /** DAC decisions rolled up per original DAR submitted from {@code from} to {@code to}. */
@@ -131,8 +133,8 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countDarDecisions(start, end, bucket.truncUnit()),
-        darMetricsDAO.findDarDecisions(start, end, limit, offset));
+        darMetricsDAO.countDarDecisions(start, end, ALL_DACS, bucket.truncUnit()),
+        darMetricsDAO.findDarDecisions(start, end, ALL_DACS, limit, offset));
   }
 
   /**
@@ -147,8 +149,8 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countPairTurnaround(start, end, bucket.truncUnit()),
-        darMetricsDAO.findPairTurnaround(start, end, limit, offset));
+        darMetricsDAO.countPairTurnaround(start, end, ALL_DACS, bucket.truncUnit()),
+        darMetricsDAO.findPairTurnaround(start, end, ALL_DACS, limit, offset));
   }
 
   /**
@@ -163,8 +165,8 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countDarTurnaround(start, end, bucket.truncUnit()),
-        darMetricsDAO.findDarTurnaround(start, end, limit, offset));
+        darMetricsDAO.countDarTurnaround(start, end, ALL_DACS, bucket.truncUnit()),
+        darMetricsDAO.findDarTurnaround(start, end, ALL_DACS, limit, offset));
   }
 
   /**
@@ -178,10 +180,10 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countDarVolume(start, end, bucket.truncUnit()),
-        darMetricsDAO.countDarsByInstitution(start, end),
-        darMetricsDAO.countDarsByResearcher(start, end),
-        darMetricsDAO.findDarVolume(start, end, limit, offset));
+        darMetricsDAO.countDarVolume(start, end, ALL_DACS, bucket.truncUnit()),
+        darMetricsDAO.countDarsByInstitution(start, end, ALL_DACS),
+        darMetricsDAO.countDarsByResearcher(start, end, ALL_DACS),
+        darMetricsDAO.findDarVolume(start, end, ALL_DACS, limit, offset));
   }
 
   /**
@@ -210,8 +212,8 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countExpirations(start, end, asOf, bucket.truncUnit()),
-        darMetricsDAO.findExpirations(start, end, asOf, limit, offset));
+        darMetricsDAO.countExpirations(start, end, ALL_DACS, asOf, bucket.truncUnit()),
+        darMetricsDAO.findExpirations(start, end, ALL_DACS, asOf, limit, offset));
   }
 
   /** Datasets renewed by progress reports submitted from {@code from} to {@code to}. */
@@ -223,8 +225,8 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countRenewals(start, end, bucket.truncUnit()),
-        darMetricsDAO.findRenewals(start, end, limit, offset));
+        darMetricsDAO.countRenewals(start, end, ALL_DACS, bucket.truncUnit()),
+        darMetricsDAO.findRenewals(start, end, ALL_DACS, limit, offset));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too

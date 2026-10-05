@@ -28,6 +28,20 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
  */
 public interface DarMetricsDAO {
 
+  /** The dacIds that leave a report unscoped, over every DAC's datasets. */
+  List<Integer> ALL_DACS = null;
+
+  /**
+   * Whether {@code dd.dataset_id} belongs to one of :dacIds; with :dacIds null, every dataset does.
+   * A dataset counts toward the DAC it belongs to now, since elections don't record their DAC.
+   */
+  String IN_DAC_SCOPE =
+      """
+      (CAST(:dacIds AS int[]) IS NULL
+       OR dd.dataset_id IN (SELECT dataset_id FROM dataset
+                            WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
+      """;
+
   /**
    * Defines {@code pair_decisions}: reference_id, collection_id, dataset_id, submission_date,
    * state, decided_via, decision_date, elapsed_days. One row per DAR-dataset pair on an original
@@ -38,7 +52,7 @@ public interface DarMetricsDAO {
    * election. Elections are ranked only for DARs in range, so the ranking never sorts the whole
    * table. elapsed_days, submission to decision, is null for a vote with no update date or one
    * dated before a backfilled submission date: the vote's create date is when the election opened,
-   * which would understate turnaround.
+   * which would understate turnaround. Only pairs on a dataset {@link #IN_DAC_SCOPE} are read.
    */
   String PAIR_DECISIONS =
       """
@@ -84,8 +98,12 @@ public interface DarMetricsDAO {
         LEFT JOIN latest_elections le
           ON le.reference_id = dd.reference_id AND le.dataset_id = dd.dataset_id
         LEFT JOIN deciding_votes dv ON dv.election_id = le.election_id
-      )
-      """;
+        WHERE
+      """
+          + IN_DAC_SCOPE
+          + """
+          )
+          """;
 
   /**
    * {@link #PAIR_DECISIONS} plus {@code dar_rows}: reference_id, collection_id, submission_date,
@@ -95,6 +113,7 @@ public interface DarMetricsDAO {
    * don't hold it open or affect its outcome, and one whose pairs were all canceled is canceled.
    * Its decision date is the last pair decision, left null when any deciding vote predates decision
    * dates, and elapsed_days is null when the decision date is null or precedes the submission.
+   * Scoped to a DAC, a submission carries that DAC's decision alone.
    */
   String DAR_DECISIONS =
       PAIR_DECISIONS
@@ -144,7 +163,10 @@ public interface DarMetricsDAO {
           ORDER BY 1, 2, 3
           """)
   List<DecisionBucketCount> countPairDecisions(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(DarDatasetDecision.class)
   @SqlQuery(
@@ -159,6 +181,7 @@ public interface DarMetricsDAO {
   List<DarDatasetDecision> findPairDecisions(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
@@ -173,7 +196,10 @@ public interface DarMetricsDAO {
           ORDER BY 1, 2, 3
           """)
   List<DecisionBucketCount> countDarDecisions(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(DarDecision.class)
   @SqlQuery(
@@ -188,6 +214,7 @@ public interface DarMetricsDAO {
   List<DarDecision> findDarDecisions(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
@@ -208,7 +235,10 @@ public interface DarMetricsDAO {
           ORDER BY 1
           """)
   List<TurnaroundBucket> countPairTurnaround(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(DarDatasetTurnaround.class)
   @SqlQuery(
@@ -224,6 +254,7 @@ public interface DarMetricsDAO {
   List<DarDatasetTurnaround> findPairTurnaround(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
@@ -244,7 +275,10 @@ public interface DarMetricsDAO {
           ORDER BY 1
           """)
   List<TurnaroundBucket> countDarTurnaround(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(DarTurnaround.class)
   @SqlQuery(
@@ -260,6 +294,7 @@ public interface DarMetricsDAO {
   List<DarTurnaround> findDarTurnaround(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
@@ -361,7 +396,7 @@ public interface DarMetricsDAO {
    * has ended once every dataset's access has. A renewal approved after the range still counts, so
    * a collection is reported only while its access has ended, dated by when it last did. Only
    * submissions from a year before :from are ranked, since an older newest approval ended before
-   * the range.
+   * the range. Only datasets {@link #IN_DAC_SCOPE} are read.
    */
   String EXPIRATIONS =
       """
@@ -383,6 +418,10 @@ public interface DarMetricsDAO {
         JOIN vote v
           ON v.election_id = e.election_id AND v.vote IS NOT NULL
          AND LOWER(v.type) IN ('final', 'radar_approve')
+        WHERE
+      """
+          + IN_DAC_SCOPE
+          + """
         ORDER BY e.reference_id, e.dataset_id,
                  COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
       ),
@@ -428,6 +467,7 @@ public interface DarMetricsDAO {
   List<ExpirationBucket> countExpirations(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("asOf") Instant asOf,
       @Bind("bucket") String bucket);
 
@@ -443,6 +483,7 @@ public interface DarMetricsDAO {
   List<ExpiredCollection> findExpirations(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("asOf") Instant asOf,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
@@ -456,7 +497,9 @@ public interface DarMetricsDAO {
    * through the id, so an admin rename shows, and the recorded name is used only once the
    * institution has been deleted. External collaborators aren't counted: they are approved
    * separately from the DAR. Before 2022-07-27 a submission was saved as one DAR per dataset, so
-   * each collection's original DARs count as one submission, reported under its earliest.
+   * each collection's original DARs count as one submission, reported under its earliest. Scoped to
+   * DACs, a DAR counts only if it requests a dataset {@link #IN_DAC_SCOPE}, and dataset_count
+   * counts only those.
    */
   String DAR_VOLUME =
       """
@@ -481,7 +524,7 @@ public interface DarMetricsDAO {
           AND (dar.data->>'status' IS NULL
                OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
       ),
-      dar_volume AS (
+      submissions AS (
         SELECT DISTINCT ON (od.submission_key)
                od.reference_id, od.collection_id, od.user_id, od.submission_date,
                od.institution_id, COALESCE(i.institution_name, od.recorded_name) AS institution_name,
@@ -492,11 +535,18 @@ public interface DarMetricsDAO {
         LEFT JOIN institution i ON i.institution_id = od.institution_id
         CROSS JOIN LATERAL (
           SELECT COUNT(*) AS dataset_count FROM dar_dataset dd
-          WHERE dd.reference_id = od.reference_id
-        ) ds
-        ORDER BY od.submission_key, od.submission_date, od.reference_id
-      )
-      """;
+          WHERE dd.reference_id = od.reference_id AND
+      """
+          + IN_DAC_SCOPE
+          + """
+            ) ds
+            ORDER BY od.submission_key, od.submission_date, od.reference_id
+          ),
+          dar_volume AS (
+            SELECT * FROM submissions
+            WHERE CAST(:dacIds AS int[]) IS NULL OR dataset_count > 0
+          )
+          """;
 
   /**
    * Per-bucket totals; a DAR with no institution isn't counted among the institutions, and a
@@ -517,7 +567,10 @@ public interface DarMetricsDAO {
           ORDER BY 1
           """)
   List<VolumeBucketCount> countDarVolume(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   /**
    * DARs and distinct researchers per institution across the range, most DARs first. DARs with no
@@ -535,7 +588,7 @@ public interface DarMetricsDAO {
           ORDER BY dar_count DESC, institution_name NULLS LAST, institution_id
           """)
   List<InstitutionDarCount> countDarsByInstitution(
-      @Bind("from") Instant from, @Bind("to") Instant to);
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("dacIds") List<Integer> dacIds);
 
   /** DARs per submitter across the range, most DARs first. */
   @RegisterConstructorMapper(ResearcherDarCount.class)
@@ -548,7 +601,7 @@ public interface DarMetricsDAO {
           ORDER BY dar_count DESC, user_id
           """)
   List<ResearcherDarCount> countDarsByResearcher(
-      @Bind("from") Instant from, @Bind("to") Instant to);
+      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("dacIds") List<Integer> dacIds);
 
   @RegisterConstructorMapper(DarVolume.class)
   @SqlQuery(
@@ -564,6 +617,7 @@ public interface DarMetricsDAO {
   List<DarVolume> findDarVolume(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 
@@ -573,7 +627,8 @@ public interface DarMetricsDAO {
    * [:from, :to), which is a renewal; closeouts and canceled or archived reports aren't. As in
    * {@link #EXPIRATIONS}, a pair is approved by its most recently cast final or RADAR vote across
    * its data-access elections, so a reopen keeps the renewal until the new election decides.
-   * approval_date is that vote's update date, null when it predates decision dates.
+   * approval_date is that vote's update date, null when it predates decision dates. Only datasets
+   * {@link #IN_DAC_SCOPE} are read.
    */
   String RENEWALS =
       """
@@ -597,6 +652,10 @@ public interface DarMetricsDAO {
         JOIN vote v
           ON v.election_id = e.election_id AND v.vote IS NOT NULL
          AND LOWER(v.type) IN ('final', 'radar_approve')
+        WHERE
+      """
+          + IN_DAC_SCOPE
+          + """
         ORDER BY e.reference_id, e.dataset_id,
                  COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
       ),
@@ -622,7 +681,10 @@ public interface DarMetricsDAO {
           ORDER BY 1
           """)
   List<RenewalBucket> countRenewals(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   @RegisterConstructorMapper(Renewal.class)
   @SqlQuery(
@@ -637,6 +699,7 @@ public interface DarMetricsDAO {
   List<Renewal> findRenewals(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
       @Bind("limit") int limit,
       @Bind("offset") int offset);
 }
