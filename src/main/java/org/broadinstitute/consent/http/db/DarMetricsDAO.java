@@ -25,19 +25,10 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 /**
  * Admin reporting over DAR decisions, turnaround, SO approval, expiration and submission volume.
  * Each query is one base fragment, which defines the CTE its javadoc names, then its own SELECT.
+ * :dacIds scopes a query to datasets now in those DACs, null to every dataset; a dataset's history
+ * follows it between DACs, since elections don't record their DAC.
  */
 public interface DarMetricsDAO {
-
-  /**
-   * Whether {@code dd.dataset_id} belongs to one of :dacIds; with :dacIds null, every dataset does.
-   * A dataset counts toward the DAC it belongs to now, since elections don't record their DAC.
-   */
-  String IN_DAC_SCOPE =
-      """
-      (CAST(:dacIds AS int[]) IS NULL
-       OR dd.dataset_id IN (SELECT dataset_id FROM dataset
-                            WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
-      """;
 
   /**
    * Defines {@code pair_decisions}: reference_id, collection_id, dataset_id, submission_date,
@@ -49,7 +40,7 @@ public interface DarMetricsDAO {
    * election. Elections are ranked only for DARs in range, so the ranking never sorts the whole
    * table. elapsed_days, submission to decision, is null for a vote with no update date or one
    * dated before a backfilled submission date: the vote's create date is when the election opened,
-   * which would understate turnaround. Only pairs on a dataset {@link #IN_DAC_SCOPE} are read.
+   * which would understate turnaround. Only pairs on a dataset in :dacIds are read.
    */
   String PAIR_DECISIONS =
       """
@@ -95,12 +86,11 @@ public interface DarMetricsDAO {
         LEFT JOIN latest_elections le
           ON le.reference_id = dd.reference_id AND le.dataset_id = dd.dataset_id
         LEFT JOIN deciding_votes dv ON dv.election_id = le.election_id
-        WHERE
-      """
-          + IN_DAC_SCOPE
-          + """
-          )
-          """;
+        WHERE (CAST(:dacIds AS int[]) IS NULL
+               OR dd.dataset_id IN (SELECT dataset_id FROM dataset
+                                    WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
+      )
+      """;
 
   /**
    * {@link #PAIR_DECISIONS} plus {@code dar_rows}: reference_id, collection_id, submission_date,
@@ -393,7 +383,7 @@ public interface DarMetricsDAO {
    * has ended once every dataset's access has. A renewal approved after the range still counts, so
    * a collection is reported only while its access has ended, dated by when it last did. Only
    * submissions from a year before :from are ranked, since an older newest approval ended before
-   * the range. Only datasets {@link #IN_DAC_SCOPE} are read.
+   * the range. Only datasets in :dacIds are read.
    */
   String EXPIRATIONS =
       """
@@ -415,10 +405,9 @@ public interface DarMetricsDAO {
         JOIN vote v
           ON v.election_id = e.election_id AND v.vote IS NOT NULL
          AND LOWER(v.type) IN ('final', 'radar_approve')
-        WHERE
-      """
-          + IN_DAC_SCOPE
-          + """
+        WHERE (CAST(:dacIds AS int[]) IS NULL
+               OR dd.dataset_id IN (SELECT dataset_id FROM dataset
+                                    WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
         ORDER BY e.reference_id, e.dataset_id,
                  COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
       ),
@@ -495,8 +484,8 @@ public interface DarMetricsDAO {
    * institution has been deleted. External collaborators aren't counted: they are approved
    * separately from the DAR. Before 2022-07-27 a submission was saved as one DAR per dataset, so
    * each collection's original DARs count as one submission, reported under its earliest. Scoped to
-   * DACs, a DAR counts only if it requests a dataset {@link #IN_DAC_SCOPE}, and dataset_count
-   * counts only those.
+   * DACs, a DAR counts only if it requests a dataset in :dacIds, and dataset_count counts only
+   * those.
    */
   String DAR_VOLUME =
       """
@@ -532,18 +521,18 @@ public interface DarMetricsDAO {
         LEFT JOIN institution i ON i.institution_id = od.institution_id
         CROSS JOIN LATERAL (
           SELECT COUNT(*) AS dataset_count FROM dar_dataset dd
-          WHERE dd.reference_id = od.reference_id AND
-      """
-          + IN_DAC_SCOPE
-          + """
-            ) ds
-            ORDER BY od.submission_key, od.submission_date, od.reference_id
-          ),
-          dar_volume AS (
-            SELECT * FROM submissions
-            WHERE CAST(:dacIds AS int[]) IS NULL OR dataset_count > 0
-          )
-          """;
+          WHERE dd.reference_id = od.reference_id
+            AND (CAST(:dacIds AS int[]) IS NULL
+                 OR dd.dataset_id IN (SELECT dataset_id FROM dataset
+                                      WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
+        ) ds
+        ORDER BY od.submission_key, od.submission_date, od.reference_id
+      ),
+      dar_volume AS (
+        SELECT * FROM submissions
+        WHERE CAST(:dacIds AS int[]) IS NULL OR dataset_count > 0
+      )
+      """;
 
   /**
    * Per-bucket totals; a DAR with no institution isn't counted among the institutions, and a
@@ -625,7 +614,7 @@ public interface DarMetricsDAO {
    * {@link #EXPIRATIONS}, a pair is approved by its most recently cast final or RADAR vote across
    * its data-access elections, so a reopen keeps the renewal until the new election decides.
    * approval_date is that vote's update date, null when it predates decision dates. Only datasets
-   * {@link #IN_DAC_SCOPE} are read.
+   * in :dacIds are read.
    */
   String RENEWALS =
       """
@@ -649,10 +638,9 @@ public interface DarMetricsDAO {
         JOIN vote v
           ON v.election_id = e.election_id AND v.vote IS NOT NULL
          AND LOWER(v.type) IN ('final', 'radar_approve')
-        WHERE
-      """
-          + IN_DAC_SCOPE
-          + """
+        WHERE (CAST(:dacIds AS int[]) IS NULL
+               OR dd.dataset_id IN (SELECT dataset_id FROM dataset
+                                    WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
         ORDER BY e.reference_id, e.dataset_id,
                  COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
       ),
