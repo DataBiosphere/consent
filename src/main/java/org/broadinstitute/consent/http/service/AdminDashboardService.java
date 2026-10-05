@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
-
 import com.google.inject.Inject;
 import java.time.Clock;
 import java.time.Instant;
@@ -42,6 +40,9 @@ public class AdminDashboardService {
   // date_trunc to a millennium puts the whole window in one bucket, so the reporting queries
   // return window-wide medians and distinct counts rather than per-bucket ones.
   private static final String WHOLE_WINDOW = "millennium";
+
+  // null reads every DAC's datasets; see DarMetricsDAO.IN_DAC_SCOPE
+  private static final List<Integer> ALL_DACS = null;
 
   private final AdminDashboardDAO dashboardDAO;
   private final DarMetricsDAO darMetricsDAO;

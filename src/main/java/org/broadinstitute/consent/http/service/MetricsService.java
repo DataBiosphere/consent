@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.db.DarMetricsDAO.ALL_DACS;
 import static org.broadinstitute.consent.http.enumeration.UserRoles.ADMIN;
 import static org.broadinstitute.consent.http.enumeration.UserRoles.CHAIRPERSON;
 import static org.broadinstitute.consent.http.enumeration.UserRoles.MEMBER;
@@ -39,6 +38,9 @@ import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
 
 public class MetricsService {
+
+  // null reads every DAC's datasets; see DarMetricsDAO.IN_DAC_SCOPE
+  private static final List<Integer> ALL_DACS = null;
 
   private final DataAccessRequestDAO darDAO;
   private final DarMetricsDAO darMetricsDAO;
