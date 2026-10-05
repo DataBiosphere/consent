@@ -593,6 +593,8 @@ paths:
     $ref: './paths/findAllDatasetNames.yaml'
   /api/dataset/study/{studyId}:
     $ref: './paths/studyById.yaml'
+  /api/dataset/study/{studyId}/datasets:
+    $ref: './paths/studyDatasetsByStudyId.yaml'
   /api/dataset/study/convert/{datasetIdentifier}:
     $ref: './paths/studyConvertByIdentifier.yaml'
   /api/dataset/study/{studyId}/custodians:
