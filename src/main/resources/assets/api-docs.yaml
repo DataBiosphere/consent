@@ -929,6 +929,10 @@ paths:
     $ref: './paths/darExpirations.yaml'
   /api/metrics/dar-renewals:
     $ref: './paths/darRenewals.yaml'
+  /api/metrics/users:
+    $ref: './paths/metricsUsers.yaml'
+  /api/metrics/institutions:
+    $ref: './paths/metricsInstitutions.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
   /api/metrics/dar-summaries/study/{studyId}:

@@ -1,0 +1,31 @@
+type: object
+properties:
+  from:
+    type: string
+    format: date
+  to:
+    type: string
+    format: date
+  bucket:
+    type: string
+    enum: [DAY, WEEK, MONTH, QUARTER]
+  total:
+    type: integer
+    description: Users created in the range.
+  buckets:
+    type: array
+    description: Users created per bucket; a bucket with none is left out.
+    items:
+      $ref: './CreatedBucket.yaml'
+  roles:
+    type: array
+    description: >-
+      Users created in the range, per role they hold now, most first. A user counts once per role,
+      so the counts can sum past total; a user with no role isn't listed.
+    items:
+      type: object
+      properties:
+        role:
+          type: string
+        userCount:
+          type: integer

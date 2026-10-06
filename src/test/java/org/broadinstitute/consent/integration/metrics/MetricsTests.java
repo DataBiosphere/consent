@@ -69,6 +69,8 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-so-approvals",
         "/api/metrics/dar-expirations",
         "/api/metrics/dar-renewals",
+        "/api/metrics/users",
+        "/api/metrics/institutions",
         "/api/admin/dashboard-summary"
       })
   void nonAdminIsForbidden(String path) {
@@ -122,11 +124,24 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-volume",
         "/api/metrics/dar-so-approvals",
         "/api/metrics/dar-expirations",
-        "/api/metrics/dar-renewals"
+        "/api/metrics/dar-renewals",
+        "/api/metrics/users",
+        "/api/metrics/institutions"
       })
   void missingRangeIsABadRequest(String path) {
     try (Response response = request(path, "ci-admin@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/metrics/users", "/api/metrics/institutions"})
+  void adminGetsAccountsCreated(String path) {
+    try (Response response = request(path + RANGE, "ci-admin@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      String body = response.readEntity(String.class);
+      assertTrue(body.contains("\"bucket\":\"MONTH\""), body);
+      assertTrue(body.contains("\"total\""), body);
     }
   }
 
