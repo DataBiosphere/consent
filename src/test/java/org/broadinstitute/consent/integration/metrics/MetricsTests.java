@@ -87,6 +87,41 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
+        "/api/metrics/dar-expirations",
+        "/api/metrics/dar-renewals"
+      })
+  void dacChairsAndMembersGetTheirDacsReport(String path) {
+    for (String email : new String[] {"ci-chair@example.com", "ci-member@example.com"}) {
+      try (Response response = request(path + RANGE, email)) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus(), email);
+      }
+    }
+  }
+
+  @Test
+  void aDacTheMemberIsNotOnIsForbidden() {
+    try (Response response =
+        request("/api/metrics/dar-decisions" + RANGE + "&dacId=0", "ci-member@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void soApprovalsStayAdminOnly() {
+    try (Response response =
+        request("/api/metrics/dar-so-approvals" + RANGE, "ci-chair@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "/api/metrics/dar-decisions",
+        "/api/metrics/dar-dataset-decisions",
+        "/api/metrics/dar-decision-turnaround",
+        "/api/metrics/dar-dataset-decision-turnaround",
+        "/api/metrics/dar-volume",
         "/api/metrics/dar-so-approvals",
         "/api/metrics/dar-expirations",
         "/api/metrics/dar-renewals",

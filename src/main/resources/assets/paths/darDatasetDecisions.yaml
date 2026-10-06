@@ -2,7 +2,7 @@ get:
   summary: DAC decisions per DAR and dataset
   operationId: apiMetricsDarDatasetDecisionsGet
   description: |
-    Admin only. The DAC decision on each dataset of each original DAR submitted in the range, from its latest election. Canceled and archived DARs and progress reports are excluded.
+    Admins, and DAC chairs and members for their DACs (see dacId). The DAC decision on each dataset of each original DAR submitted in the range, from its latest election. Canceled and archived DARs and progress reports are excluded.
   parameters:
     - name: from
       in: query
@@ -40,9 +40,20 @@ get:
       schema:
         type: integer
         default: 0
+    - name: dacId
+      in: query
+      required: false
+      description: Repeatable. Limits the report to datasets in these DACs, which a chair or member must be on. Without it, an admin reads every DAC and a chair or member their own.
+      schema:
+        type: array
+        items:
+          type: integer
+      style: form
+      explode: true
   tags:
     - Metrics
     - Admin
+    - DAC
   responses:
     200:
       description: Counts per bucket and one page of DAR-dataset pairs.
@@ -55,7 +66,7 @@ get:
     401:
       description: Unauthorized.
     403:
-      description: Admin only.
+      description: Not an admin, chair or member, or not on a requested DAC.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

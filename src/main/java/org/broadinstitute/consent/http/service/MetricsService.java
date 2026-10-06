@@ -1,6 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.enumeration.UserRoles.ADMIN;
+import static org.broadinstitute.consent.http.enumeration.UserRoles.CHAIRPERSON;
+import static org.broadinstitute.consent.http.enumeration.UserRoles.MEMBER;
+
 import com.google.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -29,6 +34,7 @@ import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserReport;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
@@ -116,31 +122,68 @@ public class MetricsService {
   }
 
   /**
+   * The DACs a DAR report reads for this user. An admin reads every DAC unless naming some. A chair
+   * or member reads the DACs they hold that role on, or the named ones if they hold it on each.
+   */
+  public List<Integer> resolveDacScope(User user, List<Integer> dacIds) {
+    if (user.hasUserRole(ADMIN)) {
+      return dacIds.isEmpty() ? ALL_DACS : dacIds;
+    }
+    List<Integer> own =
+        Objects.requireNonNullElse(user.getRoles(), List.<UserRole>of()).stream()
+            .filter(
+                r ->
+                    CHAIRPERSON.getRoleId().equals(r.getRoleId())
+                        || MEMBER.getRoleId().equals(r.getRoleId()))
+            .map(UserRole::getDacId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    if (dacIds.isEmpty()) {
+      return own;
+    }
+    if (!own.containsAll(dacIds)) {
+      throw new ForbiddenException("Not a chair or member of every requested DAC");
+    }
+    return dacIds;
+  }
+
+  /**
    * DAC decisions per DAR-dataset pair on original DARs submitted from {@code from} to {@code to}.
    */
   public DecisionReport<DarDatasetDecision> getDarDatasetDecisions(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return DecisionReport.of(
         from,
         to,
         bucket,
-        darMetricsDAO.countPairDecisions(start, end, ALL_DACS, bucket.truncUnit()),
-        darMetricsDAO.findPairDecisions(start, end, ALL_DACS, limit, offset));
+        darMetricsDAO.countPairDecisions(start, end, dacIds, bucket.truncUnit()),
+        darMetricsDAO.findPairDecisions(start, end, dacIds, limit, offset));
   }
 
   /** DAC decisions rolled up per original DAR submitted from {@code from} to {@code to}. */
   public DecisionReport<DarDecision> getDarDecisions(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return DecisionReport.of(
         from,
         to,
         bucket,
-        darMetricsDAO.countDarDecisions(start, end, ALL_DACS, bucket.truncUnit()),
-        darMetricsDAO.findDarDecisions(start, end, ALL_DACS, limit, offset));
+        darMetricsDAO.countDarDecisions(start, end, dacIds, bucket.truncUnit()),
+        darMetricsDAO.findDarDecisions(start, end, dacIds, limit, offset));
   }
 
   /**
@@ -148,15 +191,20 @@ public class MetricsService {
    * from {@code from} to {@code to}.
    */
   public TurnaroundReport<DarDatasetTurnaround> getDarDatasetDecisionTurnaround(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return TurnaroundReport.of(
         from,
         to,
         bucket,
-        darMetricsDAO.countPairTurnaround(start, end, ALL_DACS, bucket.truncUnit()),
-        darMetricsDAO.findPairTurnaround(start, end, ALL_DACS, limit, offset));
+        darMetricsDAO.countPairTurnaround(start, end, dacIds, bucket.truncUnit()),
+        darMetricsDAO.findPairTurnaround(start, end, dacIds, limit, offset));
   }
 
   /**
@@ -164,32 +212,42 @@ public class MetricsService {
    * from} to {@code to}.
    */
   public TurnaroundReport<DarTurnaround> getDarDecisionTurnaround(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return TurnaroundReport.of(
         from,
         to,
         bucket,
-        darMetricsDAO.countDarTurnaround(start, end, ALL_DACS, bucket.truncUnit()),
-        darMetricsDAO.findDarTurnaround(start, end, ALL_DACS, limit, offset));
+        darMetricsDAO.countDarTurnaround(start, end, dacIds, bucket.truncUnit()),
+        darMetricsDAO.findDarTurnaround(start, end, dacIds, limit, offset));
   }
 
   /**
    * Submission volume and composition of original DARs submitted from {@code from} to {@code to}.
    */
   public VolumeReport getDarVolume(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return VolumeReport.of(
         from,
         to,
         bucket,
-        darMetricsDAO.countDarVolume(start, end, ALL_DACS, bucket.truncUnit()),
-        darMetricsDAO.countDarsByInstitution(start, end, ALL_DACS),
-        darMetricsDAO.countDarsByResearcher(start, end, ALL_DACS),
-        darMetricsDAO.findDarVolume(start, end, ALL_DACS, limit, offset));
+        darMetricsDAO.countDarVolume(start, end, dacIds, bucket.truncUnit()),
+        darMetricsDAO.countDarsByInstitution(start, end, dacIds),
+        darMetricsDAO.countDarsByResearcher(start, end, dacIds),
+        darMetricsDAO.findDarVolume(start, end, dacIds, limit, offset));
   }
 
   /**
@@ -210,7 +268,12 @@ public class MetricsService {
 
   /** DAR collections whose access to their datasets ended from {@code from} to {@code to}. */
   public ExpirationReport getDarExpirations(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     Instant asOf = Instant.now();
@@ -218,21 +281,26 @@ public class MetricsService {
         from,
         to,
         bucket,
-        darMetricsDAO.countExpirations(start, end, ALL_DACS, asOf, bucket.truncUnit()),
-        darMetricsDAO.findExpirations(start, end, ALL_DACS, asOf, limit, offset));
+        darMetricsDAO.countExpirations(start, end, dacIds, asOf, bucket.truncUnit()),
+        darMetricsDAO.findExpirations(start, end, dacIds, asOf, limit, offset));
   }
 
   /** Datasets renewed by progress reports submitted from {@code from} to {@code to}. */
   public RenewalReport getDarRenewals(
-      LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset) {
+      LocalDate from,
+      LocalDate to,
+      List<Integer> dacIds,
+      MetricsBucket bucket,
+      int limit,
+      int offset) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return RenewalReport.of(
         from,
         to,
         bucket,
-        darMetricsDAO.countRenewals(start, end, ALL_DACS, bucket.truncUnit()),
-        darMetricsDAO.findRenewals(start, end, ALL_DACS, limit, offset));
+        darMetricsDAO.countRenewals(start, end, dacIds, bucket.truncUnit()),
+        darMetricsDAO.findRenewals(start, end, dacIds, limit, offset));
   }
 
   /** Users created from {@code from} to {@code to}, per bucket and per role they hold now. */
