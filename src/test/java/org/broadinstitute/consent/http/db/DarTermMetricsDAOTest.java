@@ -78,7 +78,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   void countsATermCitedByIriAndByOboIdOnceAndBreaksTiesByLabel() throws Exception {
     OntologyTerm indexed = new OntologyTerm(CANCER, "v1", "MONDO");
     indexed.setLabel("malignant neoplasm");
-    indexed.setOboId("MONDO:0004992");
+    indexed.setOboId("MONDO_0004992");
     indexed.setUsable(true);
     ontologyDAO.batchInsertTerms(List.of(indexed), user.getUserId());
     dar(IN_RANGE, null, term(CANCER, "cancer"));

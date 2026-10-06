@@ -12,7 +12,8 @@ public interface DarTermMetricsDAO {
 
   /**
    * The terms cited by the most original DARs submitted in [:from, :to), most first, leaving out
-   * canceled and archived DARs. A cited id matches an indexed term's id or OBO id, trimmed and
+   * canceled and archived DARs. A cited id matches an indexed term's id, or its OBO id, which the
+   * importer stores with an underscore for the CURIE's colon. Both match trimmed and
    * case-insensitively, as OntologyDAO's lookups do, and a DAR counts once per term however often
    * it cites it. The id and label are the indexed term's, the label only if the term is usable;
    * otherwise they're the ones the most DARs recorded.
@@ -48,7 +49,8 @@ public interface DarTermMetricsDAO {
                CASE WHEN oi.usable THEN oi.label END AS indexed_label
         FROM cited c
         LEFT JOIN ontology_index oi
-          ON LOWER(TRIM(oi.id)) = c.norm_id OR LOWER(TRIM(oi.obo_id)) = c.norm_id
+          ON LOWER(TRIM(oi.id)) = c.norm_id
+          OR LOWER(TRIM(oi.obo_id)) = REPLACE(c.norm_id, ':', '_')
         ORDER BY c.reference_id, COALESCE(LOWER(oi.id), c.norm_id), c.term_id
       )
       SELECT COALESCE(MIN(indexed_id), MODE() WITHIN GROUP (ORDER BY term_id)) AS id,
