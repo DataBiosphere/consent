@@ -31,9 +31,13 @@ public interface DarTermMetricsDAO {
         SELECT od.reference_id,
                TRIM(term ->> 'id') AS term_id,
                LOWER(TRIM(term ->> 'id')) AS norm_id,
-               REPLACE(REGEXP_REPLACE(LOWER(TRIM(term ->> 'id')),
-                                      '^https?://purl[.]obolibrary[.]org/obo/', ''),
-                       ':', '_') AS unindexed_key,
+               CASE
+                 WHEN LOWER(TRIM(term ->> 'id')) ~ '^https?://purl[.]obolibrary[.]org/obo/[a-z]+_[a-z0-9]+$'
+                   THEN REGEXP_REPLACE(LOWER(TRIM(term ->> 'id')), '^.*/obo/', '')
+                 WHEN LOWER(TRIM(term ->> 'id')) ~ '^[a-z]+:[a-z0-9]+$'
+                   THEN REPLACE(LOWER(TRIM(term ->> 'id')), ':', '_')
+                 ELSE LOWER(TRIM(term ->> 'id'))
+               END AS unindexed_key,
                NULLIF(TRIM(term ->> 'label'), '') AS label
         FROM original_dars od
         CROSS JOIN jsonb_array_elements(od.data -> 'ontologies') AS term

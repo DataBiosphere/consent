@@ -117,6 +117,18 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void keepsUnindexedIdsThatArentOboIdsApart() {
+    dar(IN_RANGE, null, term("urn:term:a_b", "first"));
+    dar(IN_RANGE, null, term("urn_term_a:b", "second"));
+
+    assertEquals(
+        List.of(
+            new TermDarCount("urn:term:a_b", "first", 1),
+            new TermDarCount("urn_term_a:b", "second", 1)),
+        dao.findTopTerms(FROM, TO, 10));
+  }
+
+  @Test
   void ignoresTheLabelOfAnUnusableIndexedTerm() {
     OntologyTerm obsolete = new OntologyTerm(ASTHMA, "v1", "MONDO");
     obsolete.setLabel("obsolete asthma");
