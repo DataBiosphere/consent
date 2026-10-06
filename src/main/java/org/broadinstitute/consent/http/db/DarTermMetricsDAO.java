@@ -39,19 +39,34 @@ public interface DarTermMetricsDAO {
         CROSS JOIN jsonb_array_elements(od.data -> 'ontologies') AS term
         WHERE jsonb_typeof(term) = 'object' AND NULLIF(TRIM(term ->> 'id'), '') IS NOT NULL
       ),
+      cited_ids AS (
+        SELECT DISTINCT norm_id FROM cited
+      ),
+      matches AS (
+        SELECT ci.norm_id, oi.id, oi.label, oi.usable, 1 AS preference
+        FROM cited_ids ci
+        JOIN ontology_index oi ON LOWER(TRIM(oi.id)) = ci.norm_id
+        UNION ALL
+        SELECT ci.norm_id, oi.id, oi.label, oi.usable, 2 AS preference
+        FROM cited_ids ci
+        JOIN ontology_index oi ON LOWER(TRIM(oi.obo_id)) = REPLACE(ci.norm_id, ':', '_')
+      ),
+      indexed AS (
+        SELECT DISTINCT ON (norm_id) norm_id, id, label, usable
+        FROM matches
+        ORDER BY norm_id, preference, id
+      ),
       dar_terms AS (
-        SELECT DISTINCT ON (c.reference_id, COALESCE(LOWER(oi.id), c.norm_id))
+        SELECT DISTINCT ON (c.reference_id, COALESCE(LOWER(i.id), c.norm_id))
                c.reference_id,
-               COALESCE(LOWER(oi.id), c.norm_id) AS term_key,
+               COALESCE(LOWER(i.id), c.norm_id) AS term_key,
                c.term_id,
                c.label,
-               oi.id AS indexed_id,
-               CASE WHEN oi.usable THEN oi.label END AS indexed_label
+               i.id AS indexed_id,
+               CASE WHEN i.usable THEN i.label END AS indexed_label
         FROM cited c
-        LEFT JOIN ontology_index oi
-          ON LOWER(TRIM(oi.id)) = c.norm_id
-          OR LOWER(TRIM(oi.obo_id)) = REPLACE(c.norm_id, ':', '_')
-        ORDER BY c.reference_id, COALESCE(LOWER(oi.id), c.norm_id), c.term_id
+        LEFT JOIN indexed i ON i.norm_id = c.norm_id
+        ORDER BY c.reference_id, COALESCE(LOWER(i.id), c.norm_id), c.term_id
       )
       SELECT COALESCE(MIN(indexed_id), MODE() WITHIN GROUP (ORDER BY term_id)) AS id,
              COALESCE(MIN(indexed_label), MODE() WITHIN GROUP (ORDER BY label)) AS label,

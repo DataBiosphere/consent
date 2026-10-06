@@ -62,7 +62,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void prefersTheIndexedLabelAndKeepsTheLimit() throws Exception {
+  void prefersTheIndexedLabelAndKeepsTheLimit() {
     OntologyTerm indexed = new OntologyTerm(DIABETES, "v1", "MONDO");
     indexed.setLabel("diabetes mellitus");
     indexed.setUsable(true);
@@ -75,7 +75,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void countsATermCitedByIriAndByOboIdOnceAndBreaksTiesByLabel() throws Exception {
+  void countsATermCitedByIriAndByOboIdOnceAndBreaksTiesByLabel() {
     OntologyTerm indexed = new OntologyTerm(CANCER, "v1", "MONDO");
     indexed.setLabel("malignant neoplasm");
     indexed.setOboId("MONDO_0004992");
@@ -95,7 +95,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void ignoresTheLabelOfAnUnusableIndexedTerm() throws Exception {
+  void ignoresTheLabelOfAnUnusableIndexedTerm() {
     OntologyTerm obsolete = new OntologyTerm(ASTHMA, "v1", "MONDO");
     obsolete.setLabel("obsolete asthma");
     obsolete.setUsable(false);
