@@ -41,7 +41,7 @@ public class AdminDashboardService {
   // return window-wide medians and distinct counts rather than per-bucket ones.
   private static final String WHOLE_WINDOW = "millennium";
 
-  // null reads every DAC's datasets; see DarMetricsDAO.IN_DAC_SCOPE
+  // null reads every DAC's datasets
   private static final List<Integer> ALL_DACS = null;
 
   private final AdminDashboardDAO dashboardDAO;

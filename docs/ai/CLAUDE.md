@@ -58,3 +58,10 @@ builds a second instance with its own `jdbi.onDemand` DAOs. Declare the dependen
 parameter instead. Adding a new service means adding a provider here — a service that is
 only JIT-bound (constructed by Guice without a declared provider) is unscoped, so a second
 injection point silently creates a second instance.
+
+## DAO SQL
+
+Write each `@SqlQuery` as one contiguous text block that reads top to bottom. Don't build SQL by
+concatenating shared `String` constants, and never splice one into the middle of a clause; repeat
+a short predicate or CTE in each query instead. Reviewers have found composed fragments too hard
+to verify. The base-fragment chains already in `DarMetricsDAO` predate this rule; don't extend them.
