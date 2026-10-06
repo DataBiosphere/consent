@@ -147,6 +147,28 @@ public class StudyResource extends Resource {
     }
   }
 
+  /**
+   * The study's datasets, as a separate read from the study itself. The {@code datasets} property
+   * on the study payload is deprecated in favor of this endpoint so that Study and Dataset no
+   * longer embed each other.
+   */
+  @GET
+  @Path("/{studyId}/datasets")
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  @Timed
+  public Response getStudyDatasets(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
+    try {
+      User user = duosUser.getUser();
+      // Read access to the study is decided first, so a hidden study is absent here exactly as it
+      // is on the study GET, rather than answering with an empty list that confirms it exists.
+      Study study = datasetService.findStudyByIdForRead(user, studyId);
+      return Response.ok(datasetService.findStudyDatasets(user, study)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @PATCH
   @Path("/{studyId}")
   @Consumes({MediaType.APPLICATION_JSON})
