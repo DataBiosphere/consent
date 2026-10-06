@@ -95,6 +95,15 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void countsAnUnindexedTermCitedByIriAndByCurieOnce() {
+    dar(IN_RANGE, null, term(CANCER, "cancer"));
+    dar(IN_RANGE, null, term(CANCER, "cancer"));
+    dar(IN_RANGE, null, term("MONDO:0004992", "cancer"));
+
+    assertEquals(List.of(new TermDarCount(CANCER, "cancer", 3)), dao.findTopTerms(FROM, TO, 10));
+  }
+
+  @Test
   void ignoresTheLabelOfAnUnusableIndexedTerm() {
     OntologyTerm obsolete = new OntologyTerm(ASTHMA, "v1", "MONDO");
     obsolete.setLabel("obsolete asthma");

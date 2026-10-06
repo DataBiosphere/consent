@@ -11,12 +11,9 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 public interface DarTermMetricsDAO {
 
   /**
-   * The terms cited by the most original DARs submitted in [:from, :to), most first, leaving out
-   * canceled and archived DARs. A cited id matches an indexed term's id, or its OBO id, which the
-   * importer stores with an underscore for the CURIE's colon. Both match trimmed and
-   * case-insensitively, as OntologyDAO's lookups do, and a DAR counts once per term however often
-   * it cites it. The id and label are the indexed term's, the label only if the term is usable;
-   * otherwise they're the ones the most DARs recorded.
+   * The terms cited by the most original DARs submitted in [:from, :to), excluding canceled and
+   * archived DARs, each DAR counted once per term. Ids match as the ontology reconciliation query
+   * does, with a CURIE also matching the underscored OBO id the importer stores.
    */
   @RegisterConstructorMapper(TermDarCount.class)
   @SqlQuery(
@@ -34,6 +31,9 @@ public interface DarTermMetricsDAO {
         SELECT od.reference_id,
                TRIM(term ->> 'id') AS term_id,
                LOWER(TRIM(term ->> 'id')) AS norm_id,
+               REPLACE(REGEXP_REPLACE(LOWER(TRIM(term ->> 'id')),
+                                      '^https?://purl[.]obolibrary[.]org/obo/', ''),
+                       ':', '_') AS unindexed_key,
                NULLIF(TRIM(term ->> 'label'), '') AS label
         FROM original_dars od
         CROSS JOIN jsonb_array_elements(od.data -> 'ontologies') AS term
@@ -57,16 +57,16 @@ public interface DarTermMetricsDAO {
         ORDER BY norm_id, preference, id
       ),
       dar_terms AS (
-        SELECT DISTINCT ON (c.reference_id, COALESCE(LOWER(i.id), c.norm_id))
+        SELECT DISTINCT ON (c.reference_id, COALESCE(LOWER(i.id), c.unindexed_key))
                c.reference_id,
-               COALESCE(LOWER(i.id), c.norm_id) AS term_key,
+               COALESCE(LOWER(i.id), c.unindexed_key) AS term_key,
                c.term_id,
                c.label,
                i.id AS indexed_id,
                CASE WHEN i.usable THEN i.label END AS indexed_label
         FROM cited c
         LEFT JOIN indexed i ON i.norm_id = c.norm_id
-        ORDER BY c.reference_id, COALESCE(LOWER(i.id), c.norm_id), c.term_id
+        ORDER BY c.reference_id, COALESCE(LOWER(i.id), c.unindexed_key), c.term_id
       )
       SELECT COALESCE(MIN(indexed_id), MODE() WITHIN GROUP (ORDER BY term_id)) AS id,
              COALESCE(MIN(indexed_label), MODE() WITHIN GROUP (ORDER BY label)) AS label,
