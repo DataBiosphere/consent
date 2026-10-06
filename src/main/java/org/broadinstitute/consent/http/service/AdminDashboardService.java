@@ -16,7 +16,7 @@ import org.broadinstitute.consent.http.models.DashboardSummary.DarRequests;
 import org.jdbi.v3.core.Jdbi;
 
 public class AdminDashboardService {
-  // null reads every DAC's datasets; see DarMetricsDAO.IN_DAC_SCOPE
+  // null reads every DAC's datasets
   private static final List<Integer> ALL_DACS = null;
 
   private final AdminDashboardDAO dashboardDAO;
