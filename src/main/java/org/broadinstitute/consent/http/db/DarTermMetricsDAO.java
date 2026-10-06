@@ -13,7 +13,7 @@ public interface DarTermMetricsDAO {
   /**
    * The terms cited by the most original DARs submitted in [:from, :to), excluding canceled and
    * archived DARs, each DAR counted once per term. Ids match as the ontology reconciliation query
-   * does, with a CURIE also matching the underscored OBO id the importer stores.
+   * does, with a CURIE or OBO IRI also matching the underscored OBO id the importer stores.
    */
   @RegisterConstructorMapper(TermDarCount.class)
   @SqlQuery(
@@ -40,7 +40,7 @@ public interface DarTermMetricsDAO {
         WHERE jsonb_typeof(term) = 'object' AND NULLIF(TRIM(term ->> 'id'), '') IS NOT NULL
       ),
       cited_ids AS (
-        SELECT DISTINCT norm_id FROM cited
+        SELECT DISTINCT norm_id, unindexed_key FROM cited
       ),
       matches AS (
         SELECT ci.norm_id, oi.id, oi.label, oi.usable, 1 AS preference
@@ -49,7 +49,7 @@ public interface DarTermMetricsDAO {
         UNION ALL
         SELECT ci.norm_id, oi.id, oi.label, oi.usable, 2 AS preference
         FROM cited_ids ci
-        JOIN ontology_index oi ON LOWER(TRIM(oi.obo_id)) = REPLACE(ci.norm_id, ':', '_')
+        JOIN ontology_index oi ON LOWER(TRIM(oi.obo_id)) = ci.unindexed_key
       ),
       indexed AS (
         SELECT DISTINCT ON (norm_id) norm_id, id, label, usable

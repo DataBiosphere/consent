@@ -95,6 +95,19 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void matchesAnIriVariantToTheIndexedOboId() {
+    OntologyTerm indexed = new OntologyTerm(CANCER, "v1", "MONDO");
+    indexed.setLabel("malignant neoplasm");
+    indexed.setOboId("MONDO_0004992");
+    indexed.setUsable(true);
+    ontologyDAO.batchInsertTerms(List.of(indexed), user.getUserId());
+    dar(IN_RANGE, null, term(CANCER.replace("http:", "https:"), "cancer"));
+
+    assertEquals(
+        List.of(new TermDarCount(CANCER, "malignant neoplasm", 1)), dao.findTopTerms(FROM, TO, 10));
+  }
+
+  @Test
   void countsAnUnindexedTermCitedByIriAndByCurieOnce() {
     dar(IN_RANGE, null, term(CANCER, "cancer"));
     dar(IN_RANGE, null, term(CANCER, "cancer"));
