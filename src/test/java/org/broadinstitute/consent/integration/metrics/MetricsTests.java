@@ -71,6 +71,7 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-renewals",
         "/api/metrics/users",
         "/api/metrics/institutions",
+        "/api/metrics/elections",
         "/api/admin/dashboard-summary"
       })
   void nonAdminIsForbidden(String path) {
@@ -126,7 +127,8 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-expirations",
         "/api/metrics/dar-renewals",
         "/api/metrics/users",
-        "/api/metrics/institutions"
+        "/api/metrics/institutions",
+        "/api/metrics/elections"
       })
   void missingRangeIsABadRequest(String path) {
     try (Response response = request(path, "ci-admin@example.com")) {
@@ -142,6 +144,16 @@ class MetricsTests extends ContainerTests {
       String body = response.readEntity(String.class);
       assertTrue(body.contains("\"bucket\":\"MONTH\""), body);
       assertTrue(body.contains("\"total\""), body);
+    }
+  }
+
+  @Test
+  void adminGetsElectionsAndVotes() {
+    try (Response response = request("/api/metrics/elections" + RANGE, "ci-admin@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      String body = response.readEntity(String.class);
+      assertTrue(body.contains("\"electionsOpened\""), body);
+      assertTrue(body.contains("\"votesCast\""), body);
     }
   }
 

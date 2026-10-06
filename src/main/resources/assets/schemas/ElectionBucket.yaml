@@ -1,0 +1,12 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    format: int64
+    description: Epoch millis.
+  status:
+    type: string
+    description: The election's status now.
+    enum: [Open, Closed, Canceled, Final, PendingApproval]
+  count:
+    type: integer

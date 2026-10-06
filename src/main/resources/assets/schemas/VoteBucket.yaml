@@ -1,0 +1,12 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    format: int64
+    description: Epoch millis.
+  type:
+    type: string
+    description: Vote type.
+    enum: [DAC, FINAL, RADAR_APPROVE, AGREEMENT, Chairperson]
+  count:
+    type: integer
