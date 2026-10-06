@@ -25,6 +25,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
   private static final Instant TO = startOf(LocalDate.of(2027, 1, 1));
   private static final Instant Q1 = FROM;
   private static final Instant Q2 = startOf(LocalDate.of(2026, 4, 1));
+  private static final String LEGACY_RP_TYPE = "RP";
 
   private ElectionMetricsDAO dao;
   private Integer userId;
@@ -65,7 +66,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
     election(ElectionStatus.OPEN, LocalDateTime.of(2026, 1, 1, 0, 0));
     election(ElectionStatus.OPEN, LocalDateTime.of(2027, 1, 1, 0, 0));
     electionDAO.insertElection(
-        ElectionType.RP.getValue(),
+        LEGACY_RP_TYPE,
         ElectionStatus.OPEN.getValue(),
         at(LocalDateTime.of(2026, 6, 1, 12, 0)),
         UUID.randomUUID().toString(),
