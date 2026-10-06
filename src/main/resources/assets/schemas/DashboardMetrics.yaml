@@ -1,0 +1,63 @@
+type: object
+description: >-
+  Headline figures for the last 90 days, from the same queries as the /api/metrics reports
+  over `from` to `to`. Decisions, turnaround, SO approvals and volume cover DARs submitted in
+  the window, in their current state; expirations are dated by when access ended, and renewals
+  by the progress report's submission. On the DAC dashboard they cover the caller's DACs'
+  datasets, as the reports do with `dacId`, and `soApprovals` is omitted.
+required: [from, to, decisions, turnaround, volume, expiration]
+properties:
+  from: { type: string, format: date }
+  to: { type: string, format: date }
+  decisions:
+    type: object
+    description: >-
+      `mixed` DARs were approved for some datasets and denied for others; the five states sum
+      to `submitted`.
+    required: [submitted, pending, approved, denied, mixed, canceled]
+    properties:
+      submitted: { type: integer, format: int64 }
+      pending: { type: integer, format: int64 }
+      approved: { type: integer, format: int64 }
+      denied: { type: integer, format: int64 }
+      mixed: { type: integer, format: int64 }
+      canceled: { type: integer, format: int64 }
+  turnaround:
+    type: object
+    description: >-
+      `medianDays` and `modeDays` cover decisions with a usable vote date, and are null
+      when there are none; `unmeasured` counts the rest.
+    required: [decided, unmeasured]
+    properties:
+      decided: { type: integer, format: int64 }
+      unmeasured: { type: integer, format: int64 }
+      medianDays:
+        type: [number, 'null']
+        format: double
+      modeDays:
+        type: [integer, 'null']
+  soApprovals:
+    type: object
+    description: >-
+      Original DARs, progress reports and closeouts submitted in the window, by SO status;
+      not-determined submissions are left out.
+    required: [approved, pending, skipped]
+    properties:
+      approved: { type: integer, format: int64 }
+      pending: { type: integer, format: int64 }
+      skipped: { type: integer, format: int64 }
+  volume:
+    type: object
+    required: [dars, researchers, institutions]
+    properties:
+      dars: { type: integer, format: int64 }
+      researchers: { type: integer, format: int64 }
+      institutions: { type: integer, format: int64 }
+  expiration:
+    type: object
+    description: All three count DAR collections.
+    required: [expired, closedOut, renewals]
+    properties:
+      expired: { type: integer, format: int64 }
+      closedOut: { type: integer, format: int64 }
+      renewals: { type: integer, format: int64 }

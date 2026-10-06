@@ -12,7 +12,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.AdminDashboardSummary.Metrics;
+import org.broadinstitute.consent.http.models.DashboardMetrics;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.AdminDashboardService;
@@ -248,7 +248,7 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     }
     Clock clock = Clock.fixed(Instant.parse("2026-11-15T12:00:00Z"), ZoneOffset.UTC);
 
-    Metrics metrics = new AdminDashboardService(jdbi, clock).getSummary().metrics();
+    DashboardMetrics metrics = new AdminDashboardService(jdbi, clock).getSummary().metrics();
 
     assertEquals("2026-08-18", metrics.from());
     assertEquals(2, metrics.volume().dars());
