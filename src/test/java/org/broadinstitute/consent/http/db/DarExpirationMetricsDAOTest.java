@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 
 class DarExpirationMetricsDAOTest extends DAOTestHelper {
 
+  private static final List<Integer> ALL_DACS = null;
+
   private static final Instant FROM = Instant.parse("2000-01-01T00:00:00Z");
   private static final Instant TO = Instant.parse("2100-01-01T00:00:00Z");
   private static final Duration TERM = Duration.ofDays(365);
@@ -57,8 +59,9 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     Instant submitted = now.minus(TERM).minus(Duration.ofHours(2));
     approve(createDar(submitted, dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, TO, now.minus(Duration.ofHours(3)), 10, 0).isEmpty());
-    assertEquals(1, dao.findExpirations(FROM, TO, submitted.plus(TERM), 10, 0).size());
+    assertTrue(
+        dao.findExpirations(FROM, TO, ALL_DACS, now.minus(Duration.ofHours(3)), 10, 0).isEmpty());
+    assertEquals(1, dao.findExpirations(FROM, TO, ALL_DACS, submitted.plus(TERM), 10, 0).size());
   }
 
   @Test
@@ -68,7 +71,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(parent, dataset);
     approve(createProgressReport(parent, now.minus(Duration.ofDays(100)), dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -92,7 +95,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(report, dataset);
     election(report, dataset, ElectionStatus.OPEN);
 
-    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -140,7 +143,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     Instant lapsed = submitted.plus(TERM);
     approve(createProgressReport(parent, now.minus(Duration.ofDays(10)), dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, lapsed.plusSeconds(1), now, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, lapsed.plusSeconds(1), ALL_DACS, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -165,7 +168,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(parent, lapsed);
     approve(createProgressReport(parent, now.minus(Duration.ofDays(100)), renewed), renewed);
 
-    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -190,7 +193,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     election(report, reopenedReport, ElectionStatus.OPEN);
 
     List<Integer> ended =
-        dao.findExpirations(FROM, TO, now, 10, 0).stream()
+        dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).stream()
             .map(ExpiredCollection::collectionId)
             .toList();
     for (Integer dataset : List.of(expired, live, closed, reopenedParent, reopenedReport)) {
@@ -211,8 +214,9 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(createDar(submitted, dataset), dataset);
     Instant end = submitted.plus(TERM);
 
-    assertEquals(1, dao.findExpirations(end, end.plusSeconds(1), now, 10, 0).size());
-    assertTrue(dao.findExpirations(end.minus(Duration.ofDays(1)), end, now, 10, 0).isEmpty());
+    assertEquals(1, dao.findExpirations(end, end.plusSeconds(1), ALL_DACS, now, 10, 0).size());
+    assertTrue(
+        dao.findExpirations(end.minus(Duration.ofDays(1)), end, ALL_DACS, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -222,7 +226,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     data.setStatus("Archived");
     approve(createDar(data, now.minus(Duration.ofDays(400)), dataset), dataset);
 
-    assertTrue(dao.findExpirations(FROM, TO, now, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).isEmpty());
   }
 
   @Test
@@ -236,7 +240,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
     approve(closed, dataset);
     createCloseout(closed, now.minus(Duration.ofDays(10)));
 
-    List<ExpirationBucket> buckets = dao.countExpirations(FROM, TO, now, "quarter");
+    List<ExpirationBucket> buckets = dao.countExpirations(FROM, TO, ALL_DACS, now, "quarter");
     assertEquals(
         2,
         buckets.stream()
@@ -251,20 +255,49 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
             .sum());
   }
 
+  @Test
+  void aDacScopedCollectionEndsWhenThatDacsDatasetsDo() {
+    Integer dac = createDac();
+    Integer otherDac = createDac();
+    Integer lapsed = createDataset(dac);
+    Integer renewed = createDataset(otherDac);
+    Instant submitted = now.minus(Duration.ofDays(400));
+    String parent = createDar(submitted, lapsed, renewed);
+    approve(parent, lapsed);
+    approve(parent, renewed);
+    approve(createProgressReport(parent, now.minus(Duration.ofDays(100)), renewed), renewed);
+
+    assertTrue(dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).isEmpty());
+    assertTrue(dao.findExpirations(FROM, TO, List.of(otherDac), now, 10, 0).isEmpty());
+    List<ExpiredCollection> rows = dao.findExpirations(FROM, TO, List.of(dac), now, 10, 0);
+    assertEquals(1, rows.size());
+    assertEquals(submitted.plus(TERM), rows.getFirst().accessEnd());
+    assertEquals(1, dao.countExpirations(FROM, TO, List.of(dac), now, "quarter").size());
+  }
+
   private ExpiredCollection only() {
-    List<ExpiredCollection> rows = dao.findExpirations(FROM, TO, now, 10, 0);
+    List<ExpiredCollection> rows = dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0);
     assertEquals(1, rows.size());
     return rows.getFirst();
   }
 
+  private Integer createDac() {
+    return dacDAO.createDac(
+        "DAC " + UUID.randomUUID(), UUID.randomUUID().toString(), user.getUserId());
+  }
+
   private Integer createDataset() {
+    return createDataset(null);
+  }
+
+  private Integer createDataset(Integer dacId) {
     return datasetDAO.insertDataset(
         "Dataset " + UUID.randomUUID(),
         FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",
-        null);
+        dacId);
   }
 
   private String createDar(Instant submitted, Integer... datasetIds) {

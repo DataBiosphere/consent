@@ -37,6 +37,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class DarMetricsDAOTest extends DAOTestHelper {
 
+  private static final List<Integer> ALL_DACS = null;
+
   private static final Instant FROM = Instant.parse("2000-01-01T00:00:00Z");
   private static final Instant TO = Instant.parse("2100-01-01T00:00:00Z");
   private static final Date SUBMITTED = Date.from(Instant.parse("2026-02-10T00:00:00Z"));
@@ -142,7 +144,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     decide(dar, radarDataset, VoteType.RADAR_APPROVE, true, DAY_1);
     decide(dar, manualDataset, VoteType.FINAL, true, DAY_2);
 
-    List<DarDatasetDecision> pairs = dao.findPairDecisions(FROM, TO, 10, 0);
+    List<DarDatasetDecision> pairs = dao.findPairDecisions(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(2, pairs.size());
     assertEquals(DecidedVia.RADAR, pairFor(pairs, radarDataset).decidedVia());
     assertEquals(DecidedVia.MANUAL, pairFor(pairs, manualDataset).decidedVia());
@@ -224,8 +226,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
     data.setStatus(status);
     createDar(data, SUBMITTED, createDataset());
 
-    assertTrue(dao.findPairDecisions(FROM, TO, 10, 0).isEmpty());
-    assertTrue(dao.countDarDecisions(FROM, TO, "month").isEmpty());
+    assertTrue(dao.findPairDecisions(FROM, TO, ALL_DACS, 10, 0).isEmpty());
+    assertTrue(dao.countDarDecisions(FROM, TO, ALL_DACS, "month").isEmpty());
   }
 
   @Test
@@ -247,8 +249,9 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar(new DataAccessRequestData(), SUBMITTED, createDataset());
 
     Instant submitted = SUBMITTED.toInstant();
-    assertEquals(1, dao.findPairDecisions(submitted, submitted.plusSeconds(1), 10, 0).size());
-    assertTrue(dao.findPairDecisions(submitted.plusSeconds(1), TO, 10, 0).isEmpty());
+    assertEquals(
+        1, dao.findPairDecisions(submitted, submitted.plusSeconds(1), ALL_DACS, 10, 0).size());
+    assertTrue(dao.findPairDecisions(submitted.plusSeconds(1), TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -258,7 +261,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     String dar = createDar(first, second);
     decide(dar, first, VoteType.RADAR_APPROVE, true, DAY_1);
 
-    List<DecisionBucketCount> buckets = dao.countPairDecisions(FROM, TO, "month");
+    List<DecisionBucketCount> buckets = dao.countPairDecisions(FROM, TO, ALL_DACS, "month");
     assertEquals(2, buckets.size());
     // submission_date has no zone, so buckets start on the server's local calendar
     Instant february = LocalDate.of(2026, 2, 1).atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -288,7 +291,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     decide(mixed, second, VoteType.RADAR_APPROVE, false, DAY_2);
     createDar(createDataset());
 
-    List<DecisionBucketCount> buckets = dao.countDarDecisions(FROM, TO, "quarter");
+    List<DecisionBucketCount> buckets = dao.countDarDecisions(FROM, TO, ALL_DACS, "quarter");
 
     assertEquals(2, buckets.size());
     assertEquals(2, buckets.stream().mapToLong(DecisionBucketCount::count).sum());
@@ -313,9 +316,9 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar(createDataset());
     createDar(createDataset());
 
-    assertEquals(1, dao.findDarDecisions(FROM, TO, 1, 0).size());
-    assertEquals(1, dao.findDarDecisions(FROM, TO, 1, 1).size());
-    assertTrue(dao.findDarDecisions(FROM, TO, 1, 2).isEmpty());
+    assertEquals(1, dao.findDarDecisions(FROM, TO, ALL_DACS, 1, 0).size());
+    assertEquals(1, dao.findDarDecisions(FROM, TO, ALL_DACS, 1, 1).size());
+    assertTrue(dao.findDarDecisions(FROM, TO, ALL_DACS, 1, 2).isEmpty());
   }
 
   @Test
@@ -419,7 +422,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDar(createDataset(), createDataset());
     createDarFor(createUserWithInstitution(), createDataset());
 
-    List<VolumeBucketCount> buckets = dao.countDarVolume(FROM, TO, "quarter");
+    List<VolumeBucketCount> buckets = dao.countDarVolume(FROM, TO, ALL_DACS, "quarter");
     assertEquals(1, buckets.size());
     assertEquals(3, buckets.getFirst().darCount());
     assertEquals(2, buckets.getFirst().researcherCount());
@@ -434,7 +437,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
     institutionDAO.deleteInstitutionById(user.getInstitutionId());
     createDarFor(createUser(), createDataset());
 
-    assertEquals(1, dao.countDarVolume(FROM, TO, "quarter").getFirst().institutionCount());
+    assertEquals(
+        1, dao.countDarVolume(FROM, TO, ALL_DACS, "quarter").getFirst().institutionCount());
   }
 
   @ParameterizedTest
@@ -444,7 +448,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     data.setStatus(status);
     createDar(data, SUBMITTED, createDataset());
 
-    assertTrue(dao.findDarVolume(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findDarVolume(FROM, TO, ALL_DACS, 10, 0).isEmpty());
   }
 
   @Test
@@ -471,8 +475,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
         new DataAccessRequestData(),
         "era");
 
-    assertTrue(dao.findDarVolume(FROM, TO, 10, 0).isEmpty());
-    assertTrue(dao.countDarVolume(FROM, TO, "quarter").isEmpty());
+    assertTrue(dao.findDarVolume(FROM, TO, ALL_DACS, 10, 0).isEmpty());
+    assertTrue(dao.countDarVolume(FROM, TO, ALL_DACS, "quarter").isEmpty());
   }
 
   @Test
@@ -483,7 +487,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     createDarFor(other, createDataset());
     createDarFor(createUser(), createDataset());
 
-    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO);
+    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO, ALL_DACS);
     assertEquals(
         List.of(user.getInstitutionId(), other.getInstitutionId()),
         institutions.subList(0, 2).stream().map(InstitutionDarCount::institutionId).toList());
@@ -496,7 +500,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertNull(none.institutionName());
     assertEquals(1, none.darCount());
 
-    List<ResearcherDarCount> researchers = dao.countDarsByResearcher(FROM, TO);
+    List<ResearcherDarCount> researchers = dao.countDarsByResearcher(FROM, TO, ALL_DACS);
     assertEquals(3, researchers.size());
     assertEquals(user.getUserId(), researchers.getFirst().userId());
     assertEquals(2, researchers.getFirst().darCount());
@@ -511,7 +515,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     institutionDAO.deleteInstitutionById(institutionId);
     createDarFor(createUser(), createDataset());
 
-    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO);
+    List<InstitutionDarCount> institutions = dao.countDarsByInstitution(FROM, TO, ALL_DACS);
     assertEquals(2, institutions.size());
     assertEquals(name, institutions.getFirst().institutionName());
     assertNull(institutions.getLast().institutionName());
@@ -527,11 +531,11 @@ class DarMetricsDAOTest extends DAOTestHelper {
     assertEquals(first, row.referenceId());
     assertEquals(SUBMITTED.toInstant(), row.submissionDate());
     assertEquals(2, row.datasetCount());
-    VolumeBucketCount bucket = dao.countDarVolume(FROM, TO, "quarter").getFirst();
+    VolumeBucketCount bucket = dao.countDarVolume(FROM, TO, ALL_DACS, "quarter").getFirst();
     assertEquals(1, bucket.darCount());
     assertEquals(2, bucket.datasetCount());
-    assertEquals(1, dao.countDarsByInstitution(FROM, TO).getFirst().darCount());
-    assertEquals(1, dao.countDarsByResearcher(FROM, TO).getFirst().darCount());
+    assertEquals(1, dao.countDarsByInstitution(FROM, TO, ALL_DACS).getFirst().darCount());
+    assertEquals(1, dao.countDarsByResearcher(FROM, TO, ALL_DACS).getFirst().darCount());
   }
 
   @Test
@@ -543,7 +547,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     String radar = createDar(radarDataset);
     decide(radar, radarDataset, VoteType.RADAR_APPROVE, true, DAY_2);
 
-    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, 10, 0);
+    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(2, pairs.size());
     DarDatasetTurnaround manualPair =
         pairs.stream().filter(p -> p.referenceId().equals(manual)).findFirst().orElseThrow();
@@ -576,7 +580,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
     decide(dar, dataset, VoteType.FINAL, false, DAY_1);
     reopenAndDecide(dar, dataset, VoteType.FINAL, true, DAY_3);
 
-    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, 10, 0);
+    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(1, pairs.size());
     assertEquals(21.0, pairs.getFirst().elapsedDays());
   }
@@ -593,10 +597,10 @@ class DarMetricsDAOTest extends DAOTestHelper {
     decide(partlyDecided, decided, VoteType.FINAL, true, DAY_1);
     election(partlyDecided, pending, ElectionStatus.OPEN, DAY_1);
 
-    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, 10, 0);
+    List<DarDatasetTurnaround> pairs = dao.findPairTurnaround(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(List.of(decided), pairs.stream().map(DarDatasetTurnaround::datasetId).toList());
-    assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
-    assertTrue(dao.countDarTurnaround(FROM, TO, "quarter").isEmpty());
+    assertTrue(dao.findDarTurnaround(FROM, TO, ALL_DACS, 10, 0).isEmpty());
+    assertTrue(dao.countDarTurnaround(FROM, TO, ALL_DACS, "quarter").isEmpty());
   }
 
   @Test
@@ -608,12 +612,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
     castVote(
         election(undatedDar, undated, ElectionStatus.CLOSED, DAY_1), VoteType.FINAL, true, null);
 
-    assertEquals(1, dao.findPairTurnaround(FROM, TO, 10, 0).size());
-    assertEquals(1, dao.findDarTurnaround(FROM, TO, 10, 0).size());
+    assertEquals(1, dao.findPairTurnaround(FROM, TO, ALL_DACS, 10, 0).size());
+    assertEquals(1, dao.findDarTurnaround(FROM, TO, ALL_DACS, 10, 0).size());
     for (TurnaroundBucket bucket :
         List.of(
-            dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
-            dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
+            dao.countPairTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst(),
+            dao.countDarTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst())) {
       assertEquals(1, bucket.count());
       assertEquals(1, bucket.unmeasured());
       assertEquals(19.0, bucket.meanDays());
@@ -626,12 +630,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
     Date beforeSubmission = Date.from(SUBMITTED.toInstant().minus(Duration.ofDays(1)));
     decide(createDar(dataset), dataset, VoteType.FINAL, true, beforeSubmission);
 
-    assertTrue(dao.findPairTurnaround(FROM, TO, 10, 0).isEmpty());
-    assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
+    assertTrue(dao.findPairTurnaround(FROM, TO, ALL_DACS, 10, 0).isEmpty());
+    assertTrue(dao.findDarTurnaround(FROM, TO, ALL_DACS, 10, 0).isEmpty());
     for (TurnaroundBucket bucket :
         List.of(
-            dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
-            dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
+            dao.countPairTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst(),
+            dao.countDarTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst())) {
       assertEquals(0, bucket.count());
       assertEquals(1, bucket.unmeasured());
     }
@@ -645,12 +649,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
     decide(dar, dated, VoteType.FINAL, true, DAY_1);
     castVote(election(dar, undated, ElectionStatus.CLOSED, DAY_1), VoteType.FINAL, true, null);
 
-    assertTrue(dao.findDarTurnaround(FROM, TO, 10, 0).isEmpty());
-    TurnaroundBucket bucket = dao.countDarTurnaround(FROM, TO, "quarter").getFirst();
+    assertTrue(dao.findDarTurnaround(FROM, TO, ALL_DACS, 10, 0).isEmpty());
+    TurnaroundBucket bucket = dao.countDarTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst();
     assertEquals(0, bucket.count());
     assertEquals(1, bucket.unmeasured());
     assertNull(bucket.meanDays());
-    assertEquals(1, dao.findPairTurnaround(FROM, TO, 10, 0).size());
+    assertEquals(1, dao.findPairTurnaround(FROM, TO, ALL_DACS, 10, 0).size());
   }
 
   @Test
@@ -661,7 +665,7 @@ class DarMetricsDAOTest extends DAOTestHelper {
       decide(createDar(dataset), dataset, VoteType.FINAL, true, on);
     }
 
-    TurnaroundBucket bucket = dao.countPairTurnaround(FROM, TO, "quarter").getFirst();
+    TurnaroundBucket bucket = dao.countPairTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst();
     assertEquals(1.5, bucket.meanDays());
     assertEquals(1.5, bucket.medianDays());
     assertEquals(1, bucket.modeDays());
@@ -677,8 +681,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
 
     for (TurnaroundBucket bucket :
         List.of(
-            dao.countPairTurnaround(FROM, TO, "quarter").getFirst(),
-            dao.countDarTurnaround(FROM, TO, "quarter").getFirst())) {
+            dao.countPairTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst(),
+            dao.countDarTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst())) {
       assertEquals(4, bucket.count());
       assertEquals(0, bucket.unmeasured());
       assertEquals(3.0, bucket.meanDays());
@@ -695,11 +699,96 @@ class DarMetricsDAOTest extends DAOTestHelper {
       decide(createDar(dataset), dataset, VoteType.FINAL, true, on);
     }
 
-    assertEquals(1, dao.countPairTurnaround(FROM, TO, "quarter").getFirst().modeDays());
+    assertEquals(1, dao.countPairTurnaround(FROM, TO, ALL_DACS, "quarter").getFirst().modeDays());
+  }
+
+  @Test
+  void aDacScopeReadsOnlyThatDacsPairs() {
+    Integer firstDac = createDac();
+    Integer secondDac = createDac();
+    Integer approved = createDataset(firstDac);
+    Integer denied = createDataset(secondDac);
+    String dar = createDar(approved, denied);
+    decide(dar, approved, VoteType.FINAL, true, DAY_1);
+    decide(dar, denied, VoteType.FINAL, false, DAY_3);
+
+    List<DarDatasetDecision> pairs = dao.findPairDecisions(FROM, TO, List.of(firstDac), 10, 0);
+    assertEquals(List.of(approved), pairs.stream().map(DarDatasetDecision::datasetId).toList());
+
+    DarDecision first = dao.findDarDecisions(FROM, TO, List.of(firstDac), 10, 0).getFirst();
+    assertEquals(DecisionState.APPROVED, first.state());
+    assertEquals(DAY_1.toInstant(), first.decisionDate());
+    assertEquals(1, first.datasetCount());
+    DarDecision second = dao.findDarDecisions(FROM, TO, List.of(secondDac), 10, 0).getFirst();
+    assertEquals(DecisionState.DENIED, second.state());
+    assertEquals(DAY_3.toInstant(), second.decisionDate());
+    assertEquals(DecisionState.MIXED, onlyDar().state());
+    DarDecision both =
+        dao.findDarDecisions(FROM, TO, List.of(firstDac, secondDac), 10, 0).getFirst();
+    assertEquals(DecisionState.MIXED, both.state());
+  }
+
+  @Test
+  void aDacScopedTurnaroundRunsToThatDacsLastDecision() {
+    Integer dac = createDac();
+    Integer early = createDataset(dac);
+    Integer late = createDataset(createDac());
+    String dar = createDar(early, late);
+    decide(dar, early, VoteType.FINAL, true, DAY_1);
+    decide(dar, late, VoteType.FINAL, true, DAY_3);
+
+    DarTurnaround row = dao.findDarTurnaround(FROM, TO, List.of(dac), 10, 0).getFirst();
+    assertEquals(DAY_1.toInstant(), row.decisionDate());
+    assertEquals(1, dao.findPairTurnaround(FROM, TO, List.of(dac), 10, 0).size());
+    TurnaroundBucket bucket = dao.countDarTurnaround(FROM, TO, List.of(dac), "quarter").getFirst();
+    assertEquals(1, bucket.count());
+    assertEquals(19, bucket.modeDays());
+  }
+
+  @Test
+  void noDacsInScopeReadsNothing() {
+    Integer dataset = createDataset(createDac());
+    decide(createDar(dataset), dataset, VoteType.FINAL, true, DAY_1);
+
+    assertTrue(dao.findPairDecisions(FROM, TO, List.of(), 10, 0).isEmpty());
+    assertTrue(dao.countDarDecisions(FROM, TO, List.of(), "quarter").isEmpty());
+    assertTrue(dao.findDarVolume(FROM, TO, List.of(), 10, 0).isEmpty());
+    assertTrue(dao.findPairDecisions(FROM, TO, List.of(createDac()), 10, 0).isEmpty());
+  }
+
+  @Test
+  void volumeScopedToADacCountsOnlyDarsRequestingItsDatasets() {
+    Integer dac = createDac();
+    Integer otherDac = createDac();
+    String inScope = createDar(createDataset(dac), createDataset(otherDac), createDataset(dac));
+    createDar(createDataset(otherDac));
+    createDar();
+
+    List<DarVolume> rows = dao.findDarVolume(FROM, TO, List.of(dac), 10, 0);
+    assertEquals(List.of(inScope), rows.stream().map(DarVolume::referenceId).toList());
+    assertEquals(2, rows.getFirst().datasetCount());
+    VolumeBucketCount bucket = dao.countDarVolume(FROM, TO, List.of(dac), "quarter").getFirst();
+    assertEquals(1, bucket.darCount());
+    assertEquals(2, bucket.datasetCount());
+    assertEquals(1, dao.countDarsByInstitution(FROM, TO, List.of(dac)).getFirst().darCount());
+    assertEquals(1, dao.countDarsByResearcher(FROM, TO, List.of(dac)).getFirst().darCount());
+    assertEquals(3, dao.findDarVolume(FROM, TO, ALL_DACS, 10, 0).size());
+  }
+
+  @Test
+  void aDacScopedSubmissionSavedAsOneDarPerDatasetCountsOnceUnderItsEarliest() {
+    Integer dac = createDac();
+    String first = createDar(createDataset(createDac()));
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(first).getCollectionId();
+    createDarIn(collectionId, DAY_1, createDataset(dac));
+
+    List<DarVolume> rows = dao.findDarVolume(FROM, TO, List.of(dac), 10, 0);
+    assertEquals(List.of(first), rows.stream().map(DarVolume::referenceId).toList());
+    assertEquals(1, rows.getFirst().datasetCount());
   }
 
   private DarVolume onlyVolume() {
-    List<DarVolume> rows = dao.findDarVolume(FROM, TO, 10, 0);
+    List<DarVolume> rows = dao.findDarVolume(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(1, rows.size());
     return rows.getFirst();
   }
@@ -755,19 +844,19 @@ class DarMetricsDAOTest extends DAOTestHelper {
   }
 
   private DarTurnaround onlyDarTurnaround() {
-    List<DarTurnaround> rows = dao.findDarTurnaround(FROM, TO, 10, 0);
+    List<DarTurnaround> rows = dao.findDarTurnaround(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(1, rows.size());
     return rows.getFirst();
   }
 
   private DarDatasetDecision onlyPair() {
-    List<DarDatasetDecision> pairs = dao.findPairDecisions(FROM, TO, 10, 0);
+    List<DarDatasetDecision> pairs = dao.findPairDecisions(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(1, pairs.size());
     return pairs.getFirst();
   }
 
   private DarDecision onlyDar() {
-    List<DarDecision> dars = dao.findDarDecisions(FROM, TO, 10, 0);
+    List<DarDecision> dars = dao.findDarDecisions(FROM, TO, ALL_DACS, 10, 0);
     assertEquals(1, dars.size());
     return dars.getFirst();
   }
@@ -776,14 +865,23 @@ class DarMetricsDAOTest extends DAOTestHelper {
     return pairs.stream().filter(p -> p.datasetId().equals(datasetId)).findFirst().orElseThrow();
   }
 
+  private Integer createDac() {
+    return dacDAO.createDac(
+        "DAC " + UUID.randomUUID(), UUID.randomUUID().toString(), user.getUserId());
+  }
+
   private Integer createDataset() {
+    return createDataset(null);
+  }
+
+  private Integer createDataset(Integer dacId) {
     return datasetDAO.insertDataset(
         "Dataset " + UUID.randomUUID(),
         FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",
-        null);
+        dacId);
   }
 
   private String createDar(Integer... datasetIds) {

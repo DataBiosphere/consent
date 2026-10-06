@@ -43,6 +43,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AdminDashboardServiceTest {
+
+  private static final List<Integer> ALL_DACS = null;
   private static final Instant NOW = Instant.parse("2026-10-01T15:00:00Z");
   private static final Instant START = Instant.parse("2026-07-04T00:00:00Z");
   private static final Instant END = Instant.parse("2026-10-02T00:00:00Z");
@@ -65,7 +67,7 @@ class AdminDashboardServiceTest {
 
   @Test
   void mapsCountsAndTheLastNinetyDaysOfMetrics() {
-    when(darMetricsDAO.countDarDecisions(START, END, WINDOW))
+    when(darMetricsDAO.countDarDecisions(START, END, ALL_DACS, WINDOW))
         .thenReturn(
             List.of(
                 new DecisionBucketCount(START, DecisionState.APPROVED, DecidedVia.MANUAL, 3L),
@@ -74,7 +76,7 @@ class AdminDashboardServiceTest {
                 new DecisionBucketCount(START, DecisionState.PENDING, null, 2L),
                 new DecisionBucketCount(START, DecisionState.MIXED, DecidedVia.MANUAL, 1L),
                 new DecisionBucketCount(START, DecisionState.CANCELED, null, 2L)));
-    when(darMetricsDAO.countDarTurnaround(START, END, WINDOW))
+    when(darMetricsDAO.countDarTurnaround(START, END, ALL_DACS, WINDOW))
         .thenReturn(List.of(new TurnaroundBucket(START, 5L, 2L, 14.2, 12.5, 9)));
     when(darMetricsDAO.countSoApprovals(START, END, WINDOW))
         .thenReturn(
@@ -82,11 +84,11 @@ class AdminDashboardServiceTest {
                 soBucket(DarKind.ORIGINAL, SoApprovalStatus.APPROVED, 2),
                 soBucket(DarKind.CLOSEOUT, SoApprovalStatus.APPROVED, 1),
                 soBucket(DarKind.ORIGINAL, SoApprovalStatus.SKIPPED, 4)));
-    when(darMetricsDAO.countDarVolume(START, END, WINDOW))
+    when(darMetricsDAO.countDarVolume(START, END, ALL_DACS, WINDOW))
         .thenReturn(List.of(new VolumeBucketCount(START, 7L, 6L, 3L, 9L)));
-    when(darMetricsDAO.countExpirations(START, END, NOW, WINDOW))
+    when(darMetricsDAO.countExpirations(START, END, ALL_DACS, NOW, WINDOW))
         .thenReturn(List.of(new ExpirationBucket(START, AccessEndReason.CLOSED_OUT, 2L)));
-    when(darMetricsDAO.countRenewals(START, END, WINDOW))
+    when(darMetricsDAO.countRenewals(START, END, ALL_DACS, WINDOW))
         .thenReturn(List.of(new RenewalBucket(START, 5L, 2L)));
 
     AdminDashboardSummary summary = service.getSummary();
@@ -112,12 +114,12 @@ class AdminDashboardServiceTest {
 
   @Test
   void leavesTurnaroundStatisticsEmptyWhenNothingWasDecided() {
-    when(darMetricsDAO.countDarDecisions(START, END, WINDOW)).thenReturn(List.of());
-    when(darMetricsDAO.countDarTurnaround(START, END, WINDOW)).thenReturn(List.of());
+    when(darMetricsDAO.countDarDecisions(START, END, ALL_DACS, WINDOW)).thenReturn(List.of());
+    when(darMetricsDAO.countDarTurnaround(START, END, ALL_DACS, WINDOW)).thenReturn(List.of());
     when(darMetricsDAO.countSoApprovals(START, END, WINDOW)).thenReturn(List.of());
-    when(darMetricsDAO.countDarVolume(START, END, WINDOW)).thenReturn(List.of());
-    when(darMetricsDAO.countExpirations(START, END, NOW, WINDOW)).thenReturn(List.of());
-    when(darMetricsDAO.countRenewals(START, END, WINDOW)).thenReturn(List.of());
+    when(darMetricsDAO.countDarVolume(START, END, ALL_DACS, WINDOW)).thenReturn(List.of());
+    when(darMetricsDAO.countExpirations(START, END, ALL_DACS, NOW, WINDOW)).thenReturn(List.of());
+    when(darMetricsDAO.countRenewals(START, END, ALL_DACS, WINDOW)).thenReturn(List.of());
 
     assertEquals(new Turnaround(0, 0, null, null), service.getSummary().metrics().turnaround());
   }
