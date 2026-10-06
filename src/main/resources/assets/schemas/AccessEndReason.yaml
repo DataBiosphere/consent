@@ -1,0 +1,2 @@
+type: string
+enum: [EXPIRED, CLOSED_OUT]

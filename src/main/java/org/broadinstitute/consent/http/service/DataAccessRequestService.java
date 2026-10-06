@@ -70,7 +70,7 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
-  public static final String EXPIRE_NOTICE_INTERVAL = "1 year";
+  public static final String EXPIRE_NOTICE_INTERVAL = "8760 hours";
   public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
       """
   All listed personnel must share the same institutional affiliation and have a library card.  The following list of \

@@ -15,6 +15,7 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
@@ -93,9 +94,8 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
    */
   @Test
   void testAuthenticateMissingEmailThrows() {
-    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
-    // No email header — intentionally omitted
-    claimsCache.loadCache(bearerToken, headerMap);
+    // No email claim. loadCache refuses such claims, so place the entry in the cache directly.
+    claimsCache.cache.put(bearerToken, Map.of(ClaimsCache.OAUTH2_CLAIM_access_token, bearerToken));
 
     assertThrows(NotAuthorizedException.class, () -> authenticator.authenticate(bearerToken));
   }

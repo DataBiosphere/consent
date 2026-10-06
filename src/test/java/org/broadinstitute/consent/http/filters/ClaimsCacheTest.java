@@ -81,28 +81,50 @@ class ClaimsCacheTest {
   }
 
   @Test
-  void testLoadCacheWithNullHeaderValueListOmitsKey() {
+  void testLoadCacheWithNullHeaderValueListDoesNotCache() {
     Set<Map.Entry<String, List<String>>> entries = new HashSet<>();
     entries.add(new AbstractMap.SimpleEntry<>(ClaimsCache.OAUTH2_CLAIM_email, null));
     when(mockHeaders.entrySet()).thenReturn(entries);
 
     claimsCache.loadCache("test-token", mockHeaders);
 
-    Map<String, String> cached = claimsCache.cache.getIfPresent("test-token");
-    assertNotNull(cached);
-    assertFalse(cached.containsKey(ClaimsCache.OAUTH2_CLAIM_email));
+    assertNull(claimsCache.cache.getIfPresent("test-token"));
   }
 
   @Test
-  void testLoadCacheWithEmptyHeaderValueListOmitsKey() {
+  void testLoadCacheWithEmptyHeaderValueListDoesNotCache() {
     MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
     headers.put(ClaimsCache.OAUTH2_CLAIM_email, List.of());
 
     claimsCache.loadCache("test-token", headers);
 
+    assertNull(claimsCache.cache.getIfPresent("test-token"));
+  }
+
+  /** A request without claims, such as a public path the proxy does not authenticate. */
+  @Test
+  void testLoadCacheWithoutEmailClaimDoesNotCache() {
+    MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
+    headers.add("Authorization", "Bearer token");
+    headers.add(ClaimsCache.OAUTH2_CLAIM_name, "Test User");
+
+    claimsCache.loadCache("test-token", headers);
+
+    assertNull(claimsCache.cache.getIfPresent("test-token"));
+  }
+
+  /** A claimless first request must not block the claims of a later request with the token. */
+  @Test
+  void testLoadCacheStoresClaimsAfterClaimlessRequest() {
+    claimsCache.loadCache("test-token", new MultivaluedHashMap<>());
+
+    MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
+    headers.add(ClaimsCache.OAUTH2_CLAIM_email, "test@example.com");
+    claimsCache.loadCache("test-token", headers);
+
     Map<String, String> cached = claimsCache.cache.getIfPresent("test-token");
     assertNotNull(cached);
-    assertFalse(cached.containsKey(ClaimsCache.OAUTH2_CLAIM_email));
+    assertEquals("test@example.com", cached.get(ClaimsCache.OAUTH2_CLAIM_email));
   }
 
   @Test

@@ -26,15 +26,22 @@ public class ClaimsCache {
     cache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
   }
 
+  /**
+   * Cache the claims of the first request that carries a token with an email claim. A request
+   * without one, such as a call to a public path that the proxy does not authenticate, stores
+   * nothing. Otherwise its empty entry would stay for the whole expiry window and fail every later
+   * authenticated request with the same token.
+   */
   public void loadCache(String token, MultivaluedMap<String, String> headers) {
     try {
-      this.cache.get(
-          token,
-          () ->
-              headers.entrySet().stream()
-                  .filter(e -> e.getKey().startsWith("OAUTH2_CLAIM"))
-                  .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
-                  .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().get(0))));
+      Map<String, String> claims =
+          headers.entrySet().stream()
+              .filter(e -> e.getKey().startsWith("OAUTH2_CLAIM"))
+              .filter(e -> e.getValue() != null && !e.getValue().isEmpty())
+              .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().get(0)));
+      if (claims.containsKey(OAUTH2_CLAIM_email)) {
+        this.cache.get(token, () -> claims);
+      }
     } catch (Exception _) {
       // header map is caller-supplied; a failure here means no cache entry is stored
     }

@@ -12,6 +12,7 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.ws.rs.client.Client;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.AdminDashboardService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -490,6 +492,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
+  private AdminDashboardService providesAdminDashboardService(Jdbi jdbi) {
+    return new AdminDashboardService(jdbi, Clock.systemDefaultZone());
+  }
+
+  @Provides
+  @Singleton
   private ResearcherDashboardService providesResearcherDashboardService(
       Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
     return new ResearcherDashboardService(jdbi, dashboardSearchService, executorService);
@@ -506,7 +514,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private DacDashboardService providesDacDashboardService(
       Jdbi jdbi, DashboardSearchService dashboardSearchService, ExecutorService executorService) {
-    return new DacDashboardService(jdbi, dashboardSearchService, executorService);
+    return new DacDashboardService(
+        jdbi, dashboardSearchService, executorService, Clock.systemDefaultZone());
   }
 
   @Provides

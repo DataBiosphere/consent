@@ -32,6 +32,8 @@ paths:
     $ref: './paths/researcherDashboardSummary.yaml'
   /api/signing-official/dashboard-summary:
     $ref: './paths/signingOfficialDashboardSummary.yaml'
+  /api/admin/dashboard-summary:
+    $ref: './paths/adminDashboardSummary.yaml'
   /api/collections/{collectionId}:
     $ref: './paths/collection.yaml'
   /api/collections/{collectionId}/electionHistory:
@@ -923,6 +925,14 @@ paths:
     $ref: './paths/darVolume.yaml'
   /api/metrics/dar-so-approvals:
     $ref: './paths/darSoApprovals.yaml'
+  /api/metrics/dar-expirations:
+    $ref: './paths/darExpirations.yaml'
+  /api/metrics/dar-renewals:
+    $ref: './paths/darRenewals.yaml'
+  /api/metrics/users:
+    $ref: './paths/metricsUsers.yaml'
+  /api/metrics/institutions:
+    $ref: './paths/metricsInstitutions.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
   /api/metrics/dar-summaries/study/{studyId}:
@@ -1305,6 +1315,10 @@ components:
       $ref: './schemas/ResearcherDashboardSummary.yaml'
     SigningOfficialDashboardSummary:
       $ref: './schemas/SigningOfficialDashboardSummary.yaml'
+    AdminDashboardSummary:
+      $ref: './schemas/AdminDashboardSummary.yaml'
+    DashboardMetrics:
+      $ref: './schemas/DashboardMetrics.yaml'
     DacDatasetExternalizationRequest:
       $ref: './schemas/DacDatasetExternalizationRequest.yaml'
     DacDatasetExternalizationResponse:

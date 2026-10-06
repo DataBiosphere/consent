@@ -1,0 +1,11 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    description: Start of the submission-date bucket, in milliseconds since the epoch.
+  renewalCount:
+    type: integer
+    description: Renewals, one per progress report and dataset approved on it.
+  collectionCount:
+    type: integer
+    description: Distinct collections renewed.

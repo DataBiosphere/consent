@@ -2,23 +2,35 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.DacDashboardDAO;
 import org.broadinstitute.consent.http.db.DacDashboardDAO.DashboardDatabaseCounts;
+import org.broadinstitute.consent.http.db.DarMetricsDAO;
+import org.broadinstitute.consent.http.enumeration.DecidedVia;
+import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DacDashboardSummary;
+import org.broadinstitute.consent.http.models.DashboardMetrics;
+import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.Jdbi;
@@ -35,6 +47,7 @@ class DacDashboardServiceTest {
 
   @Mock private Jdbi jdbi;
   @Mock private DacDashboardDAO dashboardDAO;
+  @Mock private DarMetricsDAO darMetricsDAO;
   @Mock private ElasticSearchService elasticSearchService;
 
   private ExecutorService executorService;
@@ -44,9 +57,13 @@ class DacDashboardServiceTest {
   void setUp() {
     executorService = MoreExecutors.newDirectExecutorService();
     when(jdbi.onDemand(DacDashboardDAO.class)).thenReturn(dashboardDAO);
+    when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
     service =
         new DacDashboardService(
-            jdbi, new DashboardSearchService(elasticSearchService), executorService);
+            jdbi,
+            new DashboardSearchService(elasticSearchService),
+            executorService,
+            Clock.fixed(Instant.parse("2026-10-01T15:00:00Z"), ZoneOffset.UTC));
   }
 
   @AfterEach
@@ -86,6 +103,31 @@ class DacDashboardServiceTest {
     assertTrue(query.contains("\"dacId\": [42,43]"));
     assertTrue(query.contains("\"study.publicVisibility\": true"));
     assertTrue(query.contains("\"minimum_should_match\": 1"));
+  }
+
+  @Test
+  void scopesTheMetricsToTheCallersDacsWithoutSoApprovals() throws Exception {
+    User user = userWithRole(UserRoles.CHAIRPERSON, 10, 42);
+    UserRole memberRole = UserRoles.Member();
+    memberRole.setDacId(43);
+    user.getRoles().add(memberRole);
+    when(dashboardDAO.getCounts(
+            10, UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId()))
+        .thenReturn(new DashboardDatabaseCounts(5, 8, 3, 2));
+    when(elasticSearchService.searchDatasetsStream(anyString())).thenReturn(emptySearchResponse(0));
+    Instant start = Instant.parse("2026-07-04T00:00:00Z");
+    Instant end = Instant.parse("2026-10-02T00:00:00Z");
+    when(darMetricsDAO.countDarDecisions(start, end, List.of(42, 43), "millennium"))
+        .thenReturn(
+            List.of(new DecisionBucketCount(start, DecisionState.APPROVED, DecidedVia.MANUAL, 4L)));
+
+    DashboardMetrics metrics = service.getSummary(user).metrics();
+
+    assertEquals("2026-07-04", metrics.from());
+    assertEquals("2026-10-01", metrics.to());
+    assertEquals(4, metrics.decisions().approved());
+    assertNull(metrics.soApprovals());
+    verify(darMetricsDAO, never()).countSoApprovals(any(), any(), any());
   }
 
   @Test

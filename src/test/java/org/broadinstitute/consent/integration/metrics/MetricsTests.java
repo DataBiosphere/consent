@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.UUID;
 import org.broadinstitute.consent.integration.ContainerTests;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -44,7 +45,9 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
-        "/api/metrics/dar-so-approvals"
+        "/api/metrics/dar-so-approvals",
+        "/api/metrics/dar-expirations",
+        "/api/metrics/dar-renewals"
       })
   void adminGetsTheReport(String path) {
     try (Response response = request(path + RANGE, "ci-admin@example.com")) {
@@ -63,7 +66,12 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
-        "/api/metrics/dar-so-approvals"
+        "/api/metrics/dar-so-approvals",
+        "/api/metrics/dar-expirations",
+        "/api/metrics/dar-renewals",
+        "/api/metrics/users",
+        "/api/metrics/institutions",
+        "/api/admin/dashboard-summary"
       })
   void nonAdminIsForbidden(String path) {
     try (Response response = request(path + RANGE, "ci-researcher@example.com")) {
@@ -79,11 +87,72 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-decision-turnaround",
         "/api/metrics/dar-dataset-decision-turnaround",
         "/api/metrics/dar-volume",
-        "/api/metrics/dar-so-approvals"
+        "/api/metrics/dar-expirations",
+        "/api/metrics/dar-renewals"
+      })
+  void dacChairsAndMembersGetTheirDacsReport(String path) {
+    for (String email : new String[] {"ci-chair@example.com", "ci-member@example.com"}) {
+      try (Response response = request(path + RANGE, email)) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus(), email);
+      }
+    }
+  }
+
+  @Test
+  void aDacTheMemberIsNotOnIsForbidden() {
+    try (Response response =
+        request("/api/metrics/dar-decisions" + RANGE + "&dacId=0", "ci-member@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void soApprovalsStayAdminOnly() {
+    try (Response response =
+        request("/api/metrics/dar-so-approvals" + RANGE, "ci-chair@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "/api/metrics/dar-decisions",
+        "/api/metrics/dar-dataset-decisions",
+        "/api/metrics/dar-decision-turnaround",
+        "/api/metrics/dar-dataset-decision-turnaround",
+        "/api/metrics/dar-volume",
+        "/api/metrics/dar-so-approvals",
+        "/api/metrics/dar-expirations",
+        "/api/metrics/dar-renewals",
+        "/api/metrics/users",
+        "/api/metrics/institutions"
       })
   void missingRangeIsABadRequest(String path) {
     try (Response response = request(path, "ci-admin@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/metrics/users", "/api/metrics/institutions"})
+  void adminGetsAccountsCreated(String path) {
+    try (Response response = request(path + RANGE, "ci-admin@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      String body = response.readEntity(String.class);
+      assertTrue(body.contains("\"bucket\":\"MONTH\""), body);
+      assertTrue(body.contains("\"total\""), body);
+    }
+  }
+
+  @Test
+  void adminGetsTheDashboardSummary() {
+    try (Response response = request("/api/admin/dashboard-summary", "ci-admin@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      String body = response.readEntity(String.class);
+      for (String key : new String[] {"darRequests", "dacs", "users", "libraryCards"}) {
+        assertTrue(body.contains("\"" + key + "\""), body);
+      }
     }
   }
 

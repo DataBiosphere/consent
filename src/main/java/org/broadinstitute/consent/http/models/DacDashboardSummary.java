@@ -3,7 +3,11 @@ package org.broadinstitute.consent.http.models;
 import org.broadinstitute.consent.http.models.DashboardSummary.DataLibrary;
 
 public record DacDashboardSummary(
-    DarRequests darRequests, Dacs dacs, DacDatasets dacDatasets, DataLibrary dataLibrary) {
+    DarRequests darRequests,
+    Dacs dacs,
+    DacDatasets dacDatasets,
+    DataLibrary dataLibrary,
+    DashboardMetrics metrics) {
 
   /**
    * Mirrors the DAC DAR Requests page. A completed collection is counted as approved; everything

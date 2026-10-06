@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -106,72 +107,99 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/dar-decisions")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDarDecisions(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarDecisions);
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
+    return rangeReport(
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarDecisions);
   }
 
   @GET
   @Path("/dar-dataset-decisions")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDarDatasetDecisions(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarDatasetDecisions);
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
+    return rangeReport(
+        dacScope(user, dacIds),
+        from,
+        to,
+        bucket,
+        limit,
+        offset,
+        metricsService::getDarDatasetDecisions);
   }
 
   @GET
   @Path("/dar-decision-turnaround")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDarDecisionTurnaround(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarDecisionTurnaround);
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
+    return rangeReport(
+        dacScope(user, dacIds),
+        from,
+        to,
+        bucket,
+        limit,
+        offset,
+        metricsService::getDarDecisionTurnaround);
   }
 
   @GET
   @Path("/dar-dataset-decision-turnaround")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDarDatasetDecisionTurnaround(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        from, to, bucket, limit, offset, metricsService::getDarDatasetDecisionTurnaround);
+        dacScope(user, dacIds),
+        from,
+        to,
+        bucket,
+        limit,
+        offset,
+        metricsService::getDarDatasetDecisionTurnaround);
   }
 
   @GET
   @Path("/dar-volume")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDarVolume(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarVolume);
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
+    return rangeReport(
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarVolume);
   }
 
   @GET
@@ -185,14 +213,104 @@ public class MetricsResource extends Resource {
       @DefaultValue("quarter") @QueryParam("bucket") String bucket,
       @DefaultValue("100") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    return rangeReport(from, to, bucket, limit, offset, metricsService::getDarSoApprovals);
+    return rangeReport(
+        List::of,
+        from,
+        to,
+        bucket,
+        limit,
+        offset,
+        (start, end, dacIds, b, l, o) -> metricsService.getDarSoApprovals(start, end, b, l, o));
+  }
+
+  @GET
+  @Path("/dar-expirations")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+  public Response getDarExpirations(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
+    return rangeReport(
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarExpirations);
+  }
+
+  @GET
+  @Path("/dar-renewals")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+  public Response getDarRenewals(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @DefaultValue("100") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("dacId") List<String> dacIds) {
+    return rangeReport(
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarRenewals);
+  }
+
+  @GET
+  @Path("/users")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getUsers(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getUsers);
+  }
+
+  @GET
+  @Path("/institutions")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getInstitutions(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getInstitutions);
+  }
+
+  private interface CreatedReportQuery<R> {
+    R run(LocalDate from, LocalDate to, MetricsBucket bucket);
+  }
+
+  /** A range report with no rows to page, so no limit or offset. */
+  private <R> Response createdReport(
+      String from, String to, String bucket, CreatedReportQuery<R> query) {
+    try {
+      LocalDate start = parseDate("from", from);
+      LocalDate end = parseRangeEnd(start, to);
+      return Response.ok(query.run(start, end, parseBucket(bucket))).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   private interface RangeReportQuery<R> {
-    R run(LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset);
+    R run(
+        LocalDate from,
+        LocalDate to,
+        List<Integer> dacIds,
+        MetricsBucket bucket,
+        int limit,
+        int offset);
+  }
+
+  private Supplier<List<Integer>> dacScope(DuosUser user, List<String> dacIds) {
+    return () -> metricsService.resolveDacScope(user.getUser(), parseDacIds(dacIds));
   }
 
   private <R> Response rangeReport(
+      Supplier<List<Integer>> dacScope,
       String from,
       String to,
       String bucket,
@@ -202,10 +320,19 @@ public class MetricsResource extends Resource {
     try {
       LocalDate start = parseDate("from", from);
       LocalDate end = parseRangeEnd(start, to);
+      MetricsBucket unit = parseBucket(bucket);
       validatePage(limit, offset);
-      return Response.ok(query.run(start, end, parseBucket(bucket), limit, offset)).build();
+      return Response.ok(query.run(start, end, dacScope.get(), unit, limit, offset)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private static List<Integer> parseDacIds(List<String> dacIds) {
+    try {
+      return dacIds.stream().map(Integer::valueOf).distinct().toList();
+    } catch (NumberFormatException e) {
+      throw new BadRequestException("dacId must be an integer");
     }
   }
 

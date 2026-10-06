@@ -1,0 +1,21 @@
+get:
+  summary: Get Admin dashboard statistics
+  operationId: getAdminDashboardSummary
+  description: >-
+    Counts for the Admin Console Dashboard tiles. `darRequests` follows the Signing Official
+    summary's definitions across every institution.
+  tags:
+    - Admin
+  responses:
+    200:
+      description: Dashboard counts across all institutions
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/AdminDashboardSummary.yaml'
+    401:
+      description: Unauthorized
+    403:
+      description: The user does not have the Admin role
+    500:
+      description: Unable to aggregate dashboard statistics

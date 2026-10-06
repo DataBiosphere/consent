@@ -27,23 +27,40 @@ public interface SigningOfficialDashboardDAO {
         JOIN dac_daa dd ON dd.daa_id = daa.daa_id
         JOIN dac ON dac.dac_id = dd.dac_id AND dac.deleted IS NOT TRUE
       ),
-      institution_submissions AS (
+      latest_submissions AS (
         SELECT DISTINCT ON (dar.collection_id)
-               dar.collection_id, dar.reference_id, dar.requires_so_approval,
-               dar.approving_so_id, dar.data
+               dar.collection_id, dar.reference_id, dar.parent_id
         FROM data_access_request dar
         JOIN dar_collection c ON c.collection_id = dar.collection_id
         JOIN users u ON u.user_id = c.create_user_id
         WHERE dar.submission_date IS NOT NULL
           AND u.institution_id = :institutionId
-        ORDER BY dar.collection_id, dar.submission_date DESC
+        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
       ),
-      -- Archived collections drop out entirely. Filtering before the DISTINCT ON would instead
-      -- substitute an older submission for a collection whose latest submission is archived.
+      -- Before 2022-07-27 a submission was saved as one original DAR per dataset, so a latest
+      -- original brings in its siblings; their backfilled submission dates need not match.
+      -- Archived DARs drop out after the DISTINCT ON so they never surface an older submission.
       latest_dar AS (
-        SELECT collection_id, reference_id, requires_so_approval, approving_so_id, data
-        FROM institution_submissions
-        WHERE data->>'status' IS NULL OR LOWER(data->>'status') != 'archived'
+        SELECT ls.collection_id, dar.reference_id,
+               COALESCE(LOWER(dar.data->>'status') = 'canceled', FALSE) AS canceled,
+               -- Needs SO involvement, actioned or not.
+               (dar.requires_so_approval
+                  OR (dar.data->'closeoutSupplement' IS NOT NULL
+                      AND dar.data->'closeoutSupplement' != 'null'::jsonb)) AS needs_so,
+               -- The subset of needs_so this SO can still act on.
+               ((dar.requires_so_approval AND dar.approving_so_id IS NULL
+                   AND LOWER(dar.data->>'signingOfficialEmail') = LOWER(:userEmail))
+                  OR (dar.data->'closeoutSupplement' IS NOT NULL
+                      AND dar.data->'closeoutSupplement' != 'null'::jsonb
+                      AND dar.approving_so_id IS NULL
+                      AND dar.data->'closeoutSupplement'->>'signingOfficialId' = :userId))
+                 AS awaiting_so
+        FROM latest_submissions ls
+        JOIN data_access_request dar ON dar.collection_id = ls.collection_id
+        WHERE (dar.reference_id = ls.reference_id
+               OR (ls.parent_id IS NULL AND dar.parent_id IS NULL
+                   AND dar.submission_date IS NOT NULL))
+          AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
       ),
       ranked_final_votes AS (
         SELECT e.reference_id, e.dataset_id, v.vote,
@@ -63,45 +80,29 @@ public interface SigningOfficialDashboardDAO {
         FROM ranked_final_votes
         WHERE recency = 1
       ),
-      -- Grouped by collection_id alone so the aggregate never has to hash whole DAR documents.
-      dataset_vote_counts AS (
+      -- A canceled sibling neither holds a submission back nor decides it.
+      institution_dars AS (
         SELECT ld.collection_id,
-               COUNT(DISTINCT dd.dataset_id) AS dataset_count,
-               COUNT(DISTINCT lfv.dataset_id) FILTER (WHERE lfv.vote) AS approved_dataset_count
+               BOOL_AND(ld.canceled) AS canceled,
+               BOOL_OR(ld.needs_so) AS needs_so,
+               BOOL_OR(ld.awaiting_so) AS awaiting_so,
+               COUNT(DISTINCT dd.dataset_id) FILTER (WHERE NOT ld.canceled) AS dataset_count,
+               COUNT(DISTINCT lfv.dataset_id) FILTER (WHERE lfv.vote AND NOT ld.canceled)
+                 AS approved_dataset_count
         FROM latest_dar ld
         JOIN dar_dataset dd ON dd.reference_id = ld.reference_id
         LEFT JOIN latest_final_votes lfv
           ON lfv.reference_id = ld.reference_id AND lfv.dataset_id = dd.dataset_id
         GROUP BY ld.collection_id
       ),
-      institution_dars AS (
-        SELECT ld.collection_id, ld.requires_so_approval, ld.approving_so_id, ld.data,
-               dvc.dataset_count, dvc.approved_dataset_count
-        FROM latest_dar ld
-        JOIN dataset_vote_counts dvc ON dvc.collection_id = ld.collection_id
-      ),
       dar_counts AS (
         SELECT COUNT(*) AS total,
                COUNT(*) FILTER (
                  WHERE dataset_count > 0 AND approved_dataset_count >= dataset_count
-                   AND LOWER(data->>'status') IS DISTINCT FROM 'canceled'
                ) AS approved,
-               COUNT(*) FILTER (WHERE LOWER(data->>'status') = 'canceled') AS canceled,
-               -- Every DAR at the institution that needs SO involvement, actioned or not.
-               -- awaiting_so_action below is the subset this SO can still act on.
-               COUNT(*) FILTER (
-                 WHERE requires_so_approval
-                    OR (data->'closeoutSupplement' IS NOT NULL
-                        AND data->'closeoutSupplement' != 'null'::jsonb)
-               ) AS approval_total,
-               COUNT(*) FILTER (
-                 WHERE (requires_so_approval AND approving_so_id IS NULL
-                          AND LOWER(data->>'signingOfficialEmail') = LOWER(:userEmail))
-                    OR (data->'closeoutSupplement' IS NOT NULL
-                        AND data->'closeoutSupplement' != 'null'::jsonb
-                        AND approving_so_id IS NULL
-                        AND data->'closeoutSupplement'->>'signingOfficialId' = :userId)
-               ) AS awaiting_so_action
+               COUNT(*) FILTER (WHERE canceled) AS canceled,
+               COUNT(*) FILTER (WHERE needs_so) AS approval_total,
+               COUNT(*) FILTER (WHERE awaiting_so) AS awaiting_so_action
         FROM institution_dars
       )
       SELECT

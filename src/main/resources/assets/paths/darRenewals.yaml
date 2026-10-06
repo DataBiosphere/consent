@@ -1,0 +1,77 @@
+get:
+  summary: DAR renewals
+  operationId: apiMetricsDarRenewalsGet
+  description: |
+    Admins, and DAC chairs and members for their DACs (see dacId). Renewals submitted in the range, one row per progress report and dataset approved on it, dated by the report's submission, when that dataset's term restarts; a collection renewed twice in the range has two rows per dataset. A pair is approved by its latest cast vote across elections, as for expirations and on the study page, so a reopen with no new vote stays a renewal until the new election decides. Closeouts, and pending, denied, canceled and archived progress reports, aren't renewals. approvalDate is null for a vote cast before March 2021, when vote dates started being recorded.
+  parameters:
+    - name: from
+      in: query
+      required: true
+      description: First submission date to include, as yyyy-MM-dd, from 1900 to 9999.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last submission date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Submission-date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+    - name: limit
+      in: query
+      required: false
+      description: Rows per page, 1 to 1000.
+      schema:
+        type: integer
+        default: 100
+    - name: offset
+      in: query
+      required: false
+      description: Rows to skip.
+      schema:
+        type: integer
+        default: 0
+    - name: dacId
+      in: query
+      required: false
+      description: Repeatable. Limits the report to datasets in these DACs, which a chair or member must be on. Without it, an admin reads every DAC and a chair or member their own.
+      schema:
+        type: array
+        items:
+          type: integer
+      style: form
+      explode: true
+  tags:
+    - Metrics
+    - Admin
+    - DAC
+  responses:
+    200:
+      description: Counts per bucket and one page of renewals.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarRenewalReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: Not an admin, chair or member, or not on a requested DAC.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
