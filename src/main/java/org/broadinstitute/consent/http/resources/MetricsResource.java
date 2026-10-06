@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -116,7 +117,7 @@ public class MetricsResource extends Resource {
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        user, from, to, bucket, limit, offset, dacIds, metricsService::getDarDecisions);
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarDecisions);
   }
 
   @GET
@@ -132,7 +133,13 @@ public class MetricsResource extends Resource {
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        user, from, to, bucket, limit, offset, dacIds, metricsService::getDarDatasetDecisions);
+        dacScope(user, dacIds),
+        from,
+        to,
+        bucket,
+        limit,
+        offset,
+        metricsService::getDarDatasetDecisions);
   }
 
   @GET
@@ -148,7 +155,13 @@ public class MetricsResource extends Resource {
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        user, from, to, bucket, limit, offset, dacIds, metricsService::getDarDecisionTurnaround);
+        dacScope(user, dacIds),
+        from,
+        to,
+        bucket,
+        limit,
+        offset,
+        metricsService::getDarDecisionTurnaround);
   }
 
   @GET
@@ -164,13 +177,12 @@ public class MetricsResource extends Resource {
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        user,
+        dacScope(user, dacIds),
         from,
         to,
         bucket,
         limit,
         offset,
-        dacIds,
         metricsService::getDarDatasetDecisionTurnaround);
   }
 
@@ -186,7 +198,8 @@ public class MetricsResource extends Resource {
       @DefaultValue("100") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
-    return rangeReport(user, from, to, bucket, limit, offset, dacIds, metricsService::getDarVolume);
+    return rangeReport(
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarVolume);
   }
 
   @GET
@@ -201,13 +214,12 @@ public class MetricsResource extends Resource {
       @DefaultValue("100") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
     return rangeReport(
-        user,
+        List::of,
         from,
         to,
         bucket,
         limit,
         offset,
-        List.of(),
         (start, end, dacIds, b, l, o) -> metricsService.getDarSoApprovals(start, end, b, l, o));
   }
 
@@ -224,7 +236,7 @@ public class MetricsResource extends Resource {
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        user, from, to, bucket, limit, offset, dacIds, metricsService::getDarExpirations);
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarExpirations);
   }
 
   @GET
@@ -240,7 +252,7 @@ public class MetricsResource extends Resource {
       @DefaultValue("0") @QueryParam("offset") Integer offset,
       @QueryParam("dacId") List<String> dacIds) {
     return rangeReport(
-        user, from, to, bucket, limit, offset, dacIds, metricsService::getDarRenewals);
+        dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarRenewals);
   }
 
   @GET
@@ -293,22 +305,24 @@ public class MetricsResource extends Resource {
         int offset);
   }
 
+  private Supplier<List<Integer>> dacScope(DuosUser user, List<String> dacIds) {
+    return () -> metricsService.resolveDacScope(user.getUser(), parseDacIds(dacIds));
+  }
+
   private <R> Response rangeReport(
-      DuosUser user,
+      Supplier<List<Integer>> dacScope,
       String from,
       String to,
       String bucket,
       Integer limit,
       Integer offset,
-      List<String> dacIds,
       RangeReportQuery<R> query) {
     try {
       LocalDate start = parseDate("from", from);
       LocalDate end = parseRangeEnd(start, to);
       MetricsBucket unit = parseBucket(bucket);
       validatePage(limit, offset);
-      List<Integer> scope = metricsService.resolveDacScope(user.getUser(), parseDacIds(dacIds));
-      return Response.ok(query.run(start, end, scope, unit, limit, offset)).build();
+      return Response.ok(query.run(start, end, dacScope.get(), unit, limit, offset)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

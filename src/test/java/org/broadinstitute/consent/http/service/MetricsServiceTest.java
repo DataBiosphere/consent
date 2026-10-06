@@ -662,22 +662,23 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Test
   void aChairOrMemberNamingNoDacReadsTheirOwn() {
-    User user =
+    User chair =
         userWithRoles(
             dacRole(UserRoles.CHAIRPERSON, 4),
             dacRole(UserRoles.MEMBER, 6),
             dacRole(UserRoles.MEMBER, 4),
             UserRoles.Researcher());
 
-    assertEquals(List.of(4, 6), service.resolveDacScope(user, List.of()));
-    assertEquals(List.of(6), service.resolveDacScope(user, List.of(6)));
+    assertEquals(List.of(4, 6), service.resolveDacScope(chair, List.of()));
+    assertEquals(List.of(6), service.resolveDacScope(chair, List.of(6)));
   }
 
   @Test
   void aDacTheUserIsNotOnIsForbidden() {
-    User user = userWithRoles(dacRole(UserRoles.MEMBER, 4));
+    User member = userWithRoles(dacRole(UserRoles.MEMBER, 4));
+    List<Integer> requested = List.of(4, 5);
 
-    assertThrows(ForbiddenException.class, () -> service.resolveDacScope(user, List.of(4, 5)));
+    assertThrows(ForbiddenException.class, () -> service.resolveDacScope(member, requested));
   }
 
   private static User userWithRoles(UserRole... roles) {
