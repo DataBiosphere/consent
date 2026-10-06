@@ -216,6 +216,46 @@ public class MetricsResource extends Resource {
     return rangeReport(from, to, bucket, limit, offset, metricsService::getDarRenewals);
   }
 
+  @GET
+  @Path("/users")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getUsers(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getUsers);
+  }
+
+  @GET
+  @Path("/institutions")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getInstitutions(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getInstitutions);
+  }
+
+  private interface CreatedReportQuery<R> {
+    R run(LocalDate from, LocalDate to, MetricsBucket bucket);
+  }
+
+  /** A range report with no rows to page, so no limit or offset. */
+  private <R> Response createdReport(
+      String from, String to, String bucket, CreatedReportQuery<R> query) {
+    try {
+      LocalDate start = parseDate("from", from);
+      LocalDate end = parseRangeEnd(start, to);
+      return Response.ok(query.run(start, end, parseBucket(bucket))).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private interface RangeReportQuery<R> {
     R run(LocalDate from, LocalDate to, MetricsBucket bucket, int limit, int offset);
   }

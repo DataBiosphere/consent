@@ -29,11 +29,13 @@ import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.ExpirationReport;
+import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
+import org.broadinstitute.consent.http.models.UserReport;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -462,6 +464,56 @@ class MetricsResourceTest extends AbstractTestHelper {
                   String.class,
                   Integer.class,
                   Integer.class)
+              .getAnnotation(RolesAllowed.class);
+      assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+    }
+  }
+
+  @Test
+  void usersAndInstitutionsParseTheRangeAndBucket() {
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    UserReport users =
+        new UserReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of(), List.of());
+    InstitutionReport institutions =
+        new InstitutionReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
+    when(service.getUsers(from, to, MetricsBucket.MONTH)).thenReturn(users);
+    when(service.getInstitutions(from, to, MetricsBucket.MONTH)).thenReturn(institutions);
+
+    Response userResponse = resource.getUsers(duosUser, "2026-01-01", "2026-03-31", "Month");
+    Response institutionResponse =
+        resource.getInstitutions(duosUser, "2026-01-01", "2026-03-31", "month");
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, userResponse.getStatus());
+    assertEquals(users, userResponse.getEntity());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, institutionResponse.getStatus());
+    assertEquals(institutions, institutionResponse.getEntity());
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      nullValues = "null",
+      value = {
+        "null, 2026-01-01, quarter",
+        "2026-02-01, 2026-01-01, quarter",
+        "2026-01-01, 2026-02-01, year"
+      })
+  void usersAndInstitutionsRejectBadParameters(String from, String to, String bucket) {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getUsers(duosUser, from, to, bucket).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getInstitutions(duosUser, from, to, bucket).getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void usersAndInstitutionsAreAdminOnly() throws NoSuchMethodException {
+    for (String name : List.of("getUsers", "getInstitutions")) {
+      RolesAllowed roles =
+          MetricsResource.class
+              .getMethod(name, DuosUser.class, String.class, String.class, String.class)
               .getAnnotation(RolesAllowed.class);
       assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
     }
