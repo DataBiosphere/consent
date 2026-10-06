@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
+import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
@@ -63,6 +64,8 @@ import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TermDarCount;
+import org.broadinstitute.consent.http.models.TermReport;
 import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
@@ -96,6 +99,8 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private AccountMetricsDAO accountMetricsDAO;
 
+  @Mock private DarTermMetricsDAO darTermMetricsDAO;
+
   @Mock private DatasetService datasetService;
 
   private final User user = new User();
@@ -108,6 +113,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
     when(jdbi.onDemand(AccountMetricsDAO.class)).thenReturn(accountMetricsDAO);
+    when(jdbi.onDemand(DarTermMetricsDAO.class)).thenReturn(darTermMetricsDAO);
     service = new MetricsService(jdbi, datasetService);
   }
 
@@ -715,5 +721,19 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(roles, userReport.roles());
     assertEquals(1, institutionReport.total());
     assertEquals(institutions, institutionReport.buckets());
+  }
+
+  @Test
+  void darTermsCoverTheWholeLastDay() {
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    Instant start = from.atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant end = LocalDate.of(2026, 4, 1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+    List<TermDarCount> terms = List.of(new TermDarCount("MONDO_0004992", "cancer", 3));
+    when(darTermMetricsDAO.findTopTerms(start, end, 5)).thenReturn(terms);
+
+    TermReport report = service.getDarTerms(from, to, 5);
+
+    assertEquals(new TermReport("2026-01-01", "2026-03-31", terms), report);
   }
 }

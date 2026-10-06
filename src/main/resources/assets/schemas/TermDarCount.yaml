@@ -1,0 +1,12 @@
+type: object
+properties:
+  id:
+    type: string
+    description: The indexed term's id, or the id most DARs cite when the term isn't indexed.
+  label:
+    type: string
+    description: The indexed term's label if it's usable, or else the label most DARs recorded.
+  darCount:
+    type: integer
+    format: int64
+    description: DARs citing the term.

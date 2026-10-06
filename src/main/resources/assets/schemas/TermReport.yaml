@@ -1,0 +1,13 @@
+type: object
+properties:
+  from:
+    type: string
+    format: date
+  to:
+    type: string
+    format: date
+  terms:
+    type: array
+    description: The most cited terms, most first.
+    items:
+      $ref: './TermDarCount.yaml'
