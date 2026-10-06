@@ -535,14 +535,49 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findAllDatasetIds();
   }
 
+  /**
+   * The datasets of a study that the caller may read, looked up from the study's dataset ids.
+   *
+   * <p>This is the replacement for the deprecated {@code Study.datasets} property: a study no
+   * longer carries its datasets, so callers that need them ask for them separately. The result is
+   * filtered by {@link #verifyPublicVisibilityAccess(Dataset, User)}, which admits everyone the
+   * study itself admits, so a caller who may read the study sees every dataset in it.
+   *
+   * <p>The study must carry its dataset ids, so load it with {@link #findStudyByIdForRead} or
+   * {@link #findStudy}, which read through {@code StudyDAO.findStudyById}. {@link
+   * #requireReadableStudy} loads study details only, without dataset ids, and passing its result
+   * here returns an empty list.
+   */
+  public List<Dataset> findStudyDatasets(User user, Study study) {
+    if (study.getDatasetIds() == null || study.getDatasetIds().isEmpty()) {
+      return List.of();
+    }
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
+    // Only datasets still in this study are its datasets. One that moved to another study after the
+    // ids were read is left out, however readable its new study is.
+    //
+    // The datasets come back without their study attached, so filtering each one on its own reads
+    // the same study again per dataset. The study is already loaded: when the caller may read it,
+    // every dataset still in it is readable for the same reason. Otherwise each is decided on its
+    // own, which still lets a caller see a dataset they created.
+    boolean studyReadable = canReadStudy(user, study);
+    return datasets.stream()
+        .filter(d -> Objects.equals(d.getStudyId(), study.getStudyId()))
+        .filter(d -> studyReadable || verifyPublicVisibilityAccess(d, user) != null)
+        .toList();
+  }
+
   public Study getStudyWithDatasetsById(User user, Integer studyId) {
     try {
       Study study = studyDAO.findStudyById(studyId);
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
-      if (study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
-        List<Dataset> datasets = findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()));
+      List<Dataset> datasets = findStudyDatasets(user, study);
+      // Leave the deprecated list unset for a study with no datasets, so the response omits the
+      // key exactly as it did before, rather than starting to send an empty list.
+      if (!datasets.isEmpty()) {
         study.addDatasets(datasets);
       }
       return study;
