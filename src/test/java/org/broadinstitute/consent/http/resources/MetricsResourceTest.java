@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DarVolume;
+import org.broadinstitute.consent.http.models.DatasetReport;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.ExpirationReport;
@@ -35,6 +36,7 @@ import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
+import org.broadinstitute.consent.http.models.StudyReport;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.UserReport;
@@ -610,6 +612,55 @@ class MetricsResourceTest extends AbstractTestHelper {
   @Test
   void usersAndInstitutionsAreAdminOnly() throws NoSuchMethodException {
     for (String name : List.of("getUsers", "getInstitutions")) {
+      RolesAllowed roles =
+          MetricsResource.class
+              .getMethod(name, DuosUser.class, String.class, String.class, String.class)
+              .getAnnotation(RolesAllowed.class);
+      assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+    }
+  }
+
+  @Test
+  void datasetsAndStudiesParseTheRangeAndBucket() {
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    DatasetReport datasets =
+        new DatasetReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of());
+    StudyReport studies =
+        new StudyReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
+    when(service.getDatasets(from, to, MetricsBucket.MONTH)).thenReturn(datasets);
+    when(service.getStudies(from, to, MetricsBucket.MONTH)).thenReturn(studies);
+
+    Response datasetResponse = resource.getDatasets(duosUser, "2026-01-01", "2026-03-31", "Month");
+    Response studyResponse = resource.getStudies(duosUser, "2026-01-01", "2026-03-31", "month");
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, datasetResponse.getStatus());
+    assertEquals(datasets, datasetResponse.getEntity());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, studyResponse.getStatus());
+    assertEquals(studies, studyResponse.getEntity());
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      nullValues = "null",
+      value = {
+        "null, 2026-01-01, quarter",
+        "2026-02-01, 2026-01-01, quarter",
+        "2026-01-01, 2026-02-01, year"
+      })
+  void datasetsAndStudiesRejectBadParameters(String from, String to, String bucket) {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDatasets(duosUser, from, to, bucket).getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getStudies(duosUser, from, to, bucket).getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void datasetsAndStudiesAreAdminOnly() throws NoSuchMethodException {
+    for (String name : List.of("getDatasets", "getStudies")) {
       RolesAllowed roles =
           MetricsResource.class
               .getMethod(name, DuosUser.class, String.class, String.class, String.class)

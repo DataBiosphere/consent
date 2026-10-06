@@ -1,0 +1,22 @@
+type: object
+properties:
+  from:
+    type: string
+    format: date
+  to:
+    type: string
+    format: date
+  bucket:
+    type: string
+    enum: [DAY, WEEK, MONTH, QUARTER]
+  total:
+    type: integer
+    description: Datasets created in the range.
+  dacApproved:
+    type: integer
+    description: Datasets created in the range that the DAC has approved now.
+  buckets:
+    type: array
+    description: Datasets created per bucket; a bucket with none is left out.
+    items:
+      $ref: './DatasetBucket.yaml'
