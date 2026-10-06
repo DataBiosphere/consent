@@ -51,11 +51,13 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
     dataset(LocalDateTime.of(2025, 12, 31, 23, 59));
     dataset(LocalDateTime.of(2026, 1, 1, 0, 0));
     dataset(LocalDateTime.of(2027, 1, 1, 0, 0));
+    study(LocalDateTime.of(2025, 12, 31, 23, 59));
+    study(LocalDateTime.of(2026, 1, 1, 0, 0));
     study(LocalDateTime.of(2027, 1, 1, 0, 0));
 
     assertEquals(
         List.of(new DatasetBucket(FROM, 1, 0)), dao.countDatasetsCreated(FROM, TO, "quarter"));
-    assertTrue(dao.countStudiesCreated(FROM, TO, "quarter").isEmpty());
+    assertEquals(List.of(new CreatedBucket(FROM, 1)), dao.countStudiesCreated(FROM, TO, "quarter"));
   }
 
   @Test
@@ -69,6 +71,19 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
     assertEquals(
         List.of(new DatasetBucket(startOf(LocalDate.of(2026, 4, 1)), 4, 2)),
         dao.countDatasetsCreated(FROM, TO, "quarter"));
+  }
+
+  @Test
+  void skipsALegacyDatasetWithNoCreateDate() {
+    Integer legacy = dataset(LocalDateTime.of(2026, 6, 1, 12, 0));
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate("UPDATE dataset SET create_date = NULL WHERE dataset_id = :id")
+                .bind("id", legacy)
+                .execute());
+
+    assertTrue(dao.countDatasetsCreated(FROM, TO, "quarter").isEmpty());
   }
 
   private static Instant startOf(LocalDate date) {

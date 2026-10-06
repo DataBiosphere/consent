@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.CreatedBucket;
+import org.broadinstitute.consent.http.models.CreatedReport;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
@@ -51,7 +52,6 @@ import org.broadinstitute.consent.http.models.ExpirationBucket;
 import org.broadinstitute.consent.http.models.ExpirationReport;
 import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
-import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
@@ -65,7 +65,6 @@ import org.broadinstitute.consent.http.models.SoApprovalBucket;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
-import org.broadinstitute.consent.http.models.StudyReport;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
@@ -713,7 +712,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(accountMetricsDAO.countInstitutionsCreated(start, end, "month")).thenReturn(institutions);
 
     UserReport userReport = service.getUsers(from, to, MetricsBucket.MONTH);
-    InstitutionReport institutionReport = service.getInstitutions(from, to, MetricsBucket.MONTH);
+    CreatedReport institutionReport = service.getInstitutions(from, to, MetricsBucket.MONTH);
 
     assertEquals("2026-01-01", userReport.from());
     assertEquals("2026-03-31", userReport.to());
@@ -739,7 +738,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(datasetMetricsDAO.countStudiesCreated(start, end, "month")).thenReturn(studies);
 
     DatasetReport datasetReport = service.getDatasets(from, to, MetricsBucket.MONTH);
-    StudyReport studyReport = service.getStudies(from, to, MetricsBucket.MONTH);
+    CreatedReport studyReport = service.getStudies(from, to, MetricsBucket.MONTH);
 
     assertEquals("2026-01-01", datasetReport.from());
     assertEquals("2026-03-31", datasetReport.to());

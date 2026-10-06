@@ -24,6 +24,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.CreatedReport;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DarTurnaround;
@@ -32,11 +33,9 @@ import org.broadinstitute.consent.http.models.DatasetReport;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.ExpirationReport;
-import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
-import org.broadinstitute.consent.http.models.StudyReport;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.UserReport;
@@ -576,8 +575,8 @@ class MetricsResourceTest extends AbstractTestHelper {
     LocalDate to = LocalDate.of(2026, 3, 31);
     UserReport users =
         new UserReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of(), List.of());
-    InstitutionReport institutions =
-        new InstitutionReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
+    CreatedReport institutions =
+        new CreatedReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
     when(service.getUsers(from, to, MetricsBucket.MONTH)).thenReturn(users);
     when(service.getInstitutions(from, to, MetricsBucket.MONTH)).thenReturn(institutions);
 
@@ -626,8 +625,8 @@ class MetricsResourceTest extends AbstractTestHelper {
     LocalDate to = LocalDate.of(2026, 3, 31);
     DatasetReport datasets =
         new DatasetReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of());
-    StudyReport studies =
-        new StudyReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
+    CreatedReport studies =
+        new CreatedReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
     when(service.getDatasets(from, to, MetricsBucket.MONTH)).thenReturn(datasets);
     when(service.getStudies(from, to, MetricsBucket.MONTH)).thenReturn(studies);
 

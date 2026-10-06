@@ -152,15 +152,9 @@ class MetricsTests extends ContainerTests {
       String body = response.readEntity(String.class);
       assertTrue(body.contains("\"bucket\":\"MONTH\""), body);
       assertTrue(body.contains("\"total\""), body);
-    }
-  }
-
-  @Test
-  void adminGetsDatasetApprovals() {
-    try (Response response = request("/api/metrics/datasets" + RANGE, "ci-admin@example.com")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      String body = response.readEntity(String.class);
-      assertTrue(body.contains("\"dacApproved\""), body);
+      if (path.endsWith("/datasets")) {
+        assertTrue(body.contains("\"dacApproved\""), body);
+      }
     }
   }
 

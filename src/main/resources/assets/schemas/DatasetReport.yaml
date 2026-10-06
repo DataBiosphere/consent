@@ -11,7 +11,7 @@ properties:
     enum: [DAY, WEEK, MONTH, QUARTER]
   total:
     type: integer
-    description: Datasets created in the range.
+    description: Datasets created in the range, including ones with no DAC that aren't subject to DAC review.
   dacApproved:
     type: integer
     description: Datasets created in the range that the DAC has approved now.

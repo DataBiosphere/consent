@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
+import org.broadinstitute.consent.http.models.CreatedReport;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
@@ -28,11 +29,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetReport;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.ExpirationReport;
-import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
-import org.broadinstitute.consent.http.models.StudyReport;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
@@ -321,10 +320,10 @@ public class MetricsService {
   }
 
   /** Institutions created from {@code from} to {@code to}, per bucket. */
-  public InstitutionReport getInstitutions(LocalDate from, LocalDate to, MetricsBucket bucket) {
+  public CreatedReport getInstitutions(LocalDate from, LocalDate to, MetricsBucket bucket) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
-    return InstitutionReport.of(
+    return CreatedReport.of(
         from,
         to,
         bucket,
@@ -342,10 +341,10 @@ public class MetricsService {
   }
 
   /** Studies created from {@code from} to {@code to}, per bucket. */
-  public StudyReport getStudies(LocalDate from, LocalDate to, MetricsBucket bucket) {
+  public CreatedReport getStudies(LocalDate from, LocalDate to, MetricsBucket bucket) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
-    return StudyReport.of(
+    return CreatedReport.of(
         from, to, bucket, datasetMetricsDAO.countStudiesCreated(start, end, bucket.truncUnit()));
   }
 

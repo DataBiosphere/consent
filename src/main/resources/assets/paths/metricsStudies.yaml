@@ -3,6 +3,7 @@ get:
   operationId: apiMetricsStudiesGet
   description: |
     Admin only. Studies created in the range, per bucket of their create date.
+    A deleted study isn't counted.
   parameters:
     - name: from
       in: query
@@ -35,7 +36,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../schemas/StudyReport.yaml'
+            $ref: '../schemas/CreatedReport.yaml'
     400:
       description: Missing or invalid query parameter.
     401:

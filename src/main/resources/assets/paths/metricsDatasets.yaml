@@ -4,7 +4,7 @@ get:
   description: |
     Admin only. Datasets created in the range, per bucket of their create date, and how many of
     those the DAC has approved now.
-    A legacy dataset with no create date isn't counted.
+    A legacy dataset with no create date isn't counted, nor is a deleted one.
   parameters:
     - name: from
       in: query
