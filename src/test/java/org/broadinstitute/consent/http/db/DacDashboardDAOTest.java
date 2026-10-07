@@ -157,6 +157,56 @@ class DacDashboardDAOTest extends DAOTestHelper {
     assertEquals(1, getCounts(chair).darTotal());
   }
 
+  @Test
+  void countsAPre2022SubmissionWhoseLatestOriginalDarIsInAnotherDac() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dacId);
+    User researcher = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), researcher.getUserId(), FIXED_DATE);
+    Integer chairDataset = createDataset(owner, dacId);
+    String chairDar =
+        insertDar(
+            researcher,
+            collectionId,
+            chairDataset,
+            Date.from(Instant.parse("2020-01-01T00:00:00Z")));
+    createElection(chairDar, chairDataset, ElectionStatus.OPEN);
+    insertDar(
+        researcher,
+        collectionId,
+        createDataset(owner, createDac(owner)),
+        Date.from(Instant.parse("2020-01-01T00:00:05Z")));
+
+    DashboardDatabaseCounts counts = getCounts(chair);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.awaitingMyVote());
+  }
+
+  @Test
+  void ignoresACanceledOriginalDarOfAPre2022Submission() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dacId);
+    User researcher = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), researcher.getUserId(), FIXED_DATE);
+    String canceled = insertDar(researcher, collectionId, createDataset(owner, dacId), FIXED_DATE);
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(canceled));
+    Integer decidedDataset = createDataset(owner, dacId);
+    String decided = insertDar(researcher, collectionId, decidedDataset, FIXED_DATE);
+    createElection(decided, decidedDataset, ElectionStatus.CLOSED);
+
+    DashboardDatabaseCounts counts = getCounts(chair);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darApproved());
+  }
+
   private DashboardDatabaseCounts getCounts(User user) {
     return jdbi.onDemand(DacDashboardDAO.class)
         .getCounts(
@@ -206,7 +256,7 @@ class DacDashboardDAOTest extends DAOTestHelper {
     return referenceId;
   }
 
-  private void insertDar(
+  private String insertDar(
       User researcher, Integer collectionId, Integer datasetId, Date submissionDate) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
@@ -219,6 +269,7 @@ class DacDashboardDAOTest extends DAOTestHelper {
         new DataAccessRequestData(),
         "synthetic-era-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return referenceId;
   }
 
   private Integer datasetIdFor(String referenceId) {

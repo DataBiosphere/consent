@@ -11,10 +11,10 @@ public interface DacDashboardDAO {
    *
    * <p>DAR scope and status deliberately mirror {@link
    * DarCollectionSummaryDAO#getDarCollectionSummariesForDACRole}: all of the caller's DAC roles,
-   * the latest submitted non-archived DAR, and the latest active or terminal data-access election
-   * for each dataset. Collections spanning more than one of the caller's role scopes are counted
-   * once. A collection is complete only when every relevant dataset has an election and none is
-   * open.
+   * the latest submitted non-archived DAR with any pre-2022 sibling DARs, and the latest active or
+   * terminal data-access election for each dataset. Collections spanning more than one of the
+   * caller's role scopes are counted once. A collection is complete only when every relevant
+   * dataset has an election and none is open.
    */
   @RegisterConstructorMapper(DashboardDatabaseCounts.class)
   @SqlQuery(
@@ -30,13 +30,24 @@ public interface DacDashboardDAO {
           AND ur.dac_id IS NOT NULL
         GROUP BY ur.dac_id
       ),
-      latest_dar AS (
+      latest_submissions AS (
         SELECT DISTINCT ON (dar.collection_id)
-               dar.collection_id, dar.reference_id, dar.data->'closeoutSupplement' AS closeout
+               dar.collection_id, dar.reference_id, dar.parent_id
         FROM data_access_request dar
         WHERE dar.submission_date IS NOT NULL
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
         ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
+      ),
+      -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+      latest_dar AS (
+        SELECT ls.collection_id, dar.reference_id, dar.data->'closeoutSupplement' AS closeout
+        FROM latest_submissions ls
+        JOIN data_access_request dar ON dar.collection_id = ls.collection_id
+        WHERE dar.reference_id = ls.reference_id
+           OR (ls.parent_id IS NULL AND dar.parent_id IS NULL
+               AND dar.submission_date IS NOT NULL
+               AND (dar.data->>'status' IS NULL
+                    OR LOWER(dar.data->>'status') NOT IN ('archived', 'canceled')))
       ),
       relevant_datasets AS (
         SELECT DISTINCT ld.collection_id, ld.reference_id, ld.closeout, dd.dataset_id,

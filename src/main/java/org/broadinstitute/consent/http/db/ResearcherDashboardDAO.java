@@ -20,7 +20,7 @@ public interface ResearcherDashboardDAO {
       """
       WITH researcher_submissions AS (
         SELECT DISTINCT ON (dar.collection_id)
-               dar.collection_id, dar.reference_id, dar.data
+               dar.collection_id, dar.reference_id, dar.parent_id
         FROM data_access_request dar
         JOIN dar_collection c ON c.collection_id = dar.collection_id
         WHERE dar.submission_date IS NOT NULL
@@ -29,10 +29,17 @@ public interface ResearcherDashboardDAO {
       ),
       -- Filtering before the DISTINCT ON would substitute an older submission for a collection
       -- whose latest submission is archived, instead of dropping the collection.
+      -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
       latest_dar AS (
-        SELECT collection_id, reference_id, data
-        FROM researcher_submissions
-        WHERE data->>'status' IS NULL OR LOWER(data->>'status') != 'archived'
+        SELECT rs.collection_id, dar.reference_id,
+               COALESCE(LOWER(dar.data->>'status') = 'canceled', FALSE) AS canceled
+        FROM researcher_submissions rs
+        JOIN data_access_request dar ON dar.collection_id = rs.collection_id
+        WHERE (dar.reference_id = rs.reference_id
+               OR (rs.parent_id IS NULL AND dar.parent_id IS NULL
+                   AND dar.submission_date IS NOT NULL
+                   AND LOWER(COALESCE(dar.data->>'status', '')) != 'canceled'))
+          AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
       ),
       -- Every submitted DAR, not just the latest per collection: an approval granted on an
       -- earlier submission still governs access until it expires.
@@ -82,30 +89,26 @@ public interface ResearcherDashboardDAO {
         ) ranked
         WHERE recency = 1
       ),
-      -- Grouped by collection_id alone so the aggregate never hashes whole DAR documents.
+      -- A canceled DAR neither holds its submission back nor decides it.
       dataset_vote_counts AS (
         SELECT ld.collection_id,
-               COUNT(DISTINCT dd.dataset_id) AS dataset_count,
-               COUNT(DISTINCT lfv.dataset_id) FILTER (WHERE lfv.vote) AS approved_dataset_count
+               BOOL_AND(ld.canceled) AS canceled,
+               COUNT(DISTINCT dd.dataset_id) FILTER (WHERE NOT ld.canceled) AS dataset_count,
+               COUNT(DISTINCT lfv.dataset_id) FILTER (WHERE lfv.vote AND NOT ld.canceled)
+                 AS approved_dataset_count
         FROM latest_dar ld
         JOIN dar_dataset dd ON dd.reference_id = ld.reference_id
         LEFT JOIN latest_final_votes lfv
           ON lfv.reference_id = ld.reference_id AND lfv.dataset_id = dd.dataset_id
         GROUP BY ld.collection_id
       ),
-      researcher_dars AS (
-        SELECT ld.collection_id, ld.data, dvc.dataset_count, dvc.approved_dataset_count
-        FROM latest_dar ld
-        JOIN dataset_vote_counts dvc ON dvc.collection_id = ld.collection_id
-      ),
       dar_counts AS (
         SELECT COUNT(*) AS total,
                COUNT(*) FILTER (
                  WHERE dataset_count > 0 AND approved_dataset_count >= dataset_count
-                   AND LOWER(data->>'status') IS DISTINCT FROM 'canceled'
                ) AS approved,
-               COUNT(*) FILTER (WHERE LOWER(data->>'status') = 'canceled') AS canceled
-        FROM researcher_dars
+               COUNT(*) FILTER (WHERE canceled) AS canceled
+        FROM dataset_vote_counts
       ),
       -- One row per approved dataset per DAR, as the My Dataset Approvals page lists them.
       -- A closed-out collection no longer grants access, so it drops out.
