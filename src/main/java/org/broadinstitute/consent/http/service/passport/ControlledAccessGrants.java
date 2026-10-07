@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service.passport;
 
+import java.time.Instant;
 import java.util.Calendar;
-import java.util.Date;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 
 /**
@@ -32,12 +32,12 @@ public class ControlledAccessGrants implements VisaClaimType {
       calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
       return PassportService.getEpochSeconds(calendar.toInstant());
     }
-    // If there is no expiration date, we will use the current time as the asserted time.
-    return PassportService.getEpochSeconds(new Date().toInstant());
+    // If there is no expiration date, use the current time as the asserted time.
+    return PassportService.getEpochSeconds(Instant.now());
   }
 
   @Override
-  public String value() {
+  public Object value() {
     return String.format(
         "%s/dataset/%s", PassportService.ISS, approvedDataset.getDatasetIdentifier());
   }

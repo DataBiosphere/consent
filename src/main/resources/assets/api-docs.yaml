@@ -945,6 +945,8 @@ paths:
     $ref: './paths/studyFrequentlyRequestedWith.yaml'
   /api/passport/userinfo:
     $ref: './paths/passportUserInfo.yaml'
+  /api/passport/dataset/{datasetIdentifier}:
+    $ref: './paths/passportDataset.yaml'
   /api/user:
     $ref: './paths/user.yaml'
   /api/user/me:

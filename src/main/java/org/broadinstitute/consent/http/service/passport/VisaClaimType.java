@@ -5,7 +5,7 @@ public interface VisaClaimType {
 
   Long asserted();
 
-  String value();
+  Object value();
 
   String source();
 
