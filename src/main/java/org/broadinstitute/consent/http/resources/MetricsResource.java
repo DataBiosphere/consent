@@ -303,6 +303,18 @@ public class MetricsResource extends Resource {
     return createdReport(from, to, bucket, metricsService::getStudies);
   }
 
+  @GET
+  @Path("/elections")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getElections(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getElections);
+  }
+
   private interface CreatedReportQuery<R> {
     R run(LocalDate from, LocalDate to, MetricsBucket bucket);
   }

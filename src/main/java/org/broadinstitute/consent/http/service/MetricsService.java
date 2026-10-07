@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
+import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.CreatedReport;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetReport;
 import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.ElectionReport;
 import org.broadinstitute.consent.http.models.ExpirationReport;
 import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
@@ -51,6 +53,7 @@ public class MetricsService {
   private final DarMetricsDAO darMetricsDAO;
   private final AccountMetricsDAO accountMetricsDAO;
   private final DatasetMetricsDAO datasetMetricsDAO;
+  private final ElectionMetricsDAO electionMetricsDAO;
   private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
@@ -60,6 +63,7 @@ public class MetricsService {
     this.darMetricsDAO = jdbi.onDemand(DarMetricsDAO.class);
     this.accountMetricsDAO = jdbi.onDemand(AccountMetricsDAO.class);
     this.datasetMetricsDAO = jdbi.onDemand(DatasetMetricsDAO.class);
+    this.electionMetricsDAO = jdbi.onDemand(ElectionMetricsDAO.class);
     this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;
   }
@@ -346,6 +350,18 @@ public class MetricsService {
     Instant end = startOfDay(to.plusDays(1));
     return CreatedReport.of(
         from, to, bucket, datasetMetricsDAO.countStudiesCreated(start, end, bucket.truncUnit()));
+  }
+
+  /** Data access elections opened, and votes cast, from {@code from} to {@code to}, per bucket. */
+  public ElectionReport getElections(LocalDate from, LocalDate to, MetricsBucket bucket) {
+    Instant start = startOfDay(from);
+    Instant end = startOfDay(to.plusDays(1));
+    return ElectionReport.of(
+        from,
+        to,
+        bucket,
+        electionMetricsDAO.countElectionsOpened(start, end, bucket.truncUnit()),
+        electionMetricsDAO.countVotesCast(start, end, bucket.truncUnit()));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too
