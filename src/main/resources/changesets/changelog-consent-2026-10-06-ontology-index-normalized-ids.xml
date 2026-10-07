@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Term lookups match ids trimmed and case-insensitively, which the plain id and obo_id indexes
+    can't serve. Recovery notes for a failed CONCURRENTLY build:
+    changelog-consent-2026-08-07-so-dashboard-indices.xml.
+  -->
+  <changeSet id="changelog-consent-2026-10-06-ontology-index-normalized-id" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ontology_index_normalized_id ON ontology_index (LOWER(TRIM(id)))</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_ontology_index_normalized_id</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-10-06-ontology-index-normalized-obo-id" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_ontology_index_normalized_obo_id ON ontology_index (LOWER(TRIM(obo_id)))</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_ontology_index_normalized_obo_id</sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

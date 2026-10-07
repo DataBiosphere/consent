@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
+import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
 import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
@@ -35,6 +36,7 @@ import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TermReport;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserReport;
@@ -54,6 +56,7 @@ public class MetricsService {
   private final AccountMetricsDAO accountMetricsDAO;
   private final DatasetMetricsDAO datasetMetricsDAO;
   private final ElectionMetricsDAO electionMetricsDAO;
+  private final DarTermMetricsDAO darTermMetricsDAO;
   private final StudyRecommendationDAO recommendationDAO;
   private final DatasetService datasetService;
 
@@ -64,6 +67,7 @@ public class MetricsService {
     this.accountMetricsDAO = jdbi.onDemand(AccountMetricsDAO.class);
     this.datasetMetricsDAO = jdbi.onDemand(DatasetMetricsDAO.class);
     this.electionMetricsDAO = jdbi.onDemand(ElectionMetricsDAO.class);
+    this.darTermMetricsDAO = jdbi.onDemand(DarTermMetricsDAO.class);
     this.recommendationDAO = jdbi.onDemand(StudyRecommendationDAO.class);
     this.datasetService = datasetService;
   }
@@ -362,6 +366,17 @@ public class MetricsService {
         bucket,
         electionMetricsDAO.countElectionsOpened(start, end, bucket.truncUnit()),
         electionMetricsDAO.countVotesCast(start, end, bucket.truncUnit()));
+  }
+
+  /**
+   * The {@code limit} ontology terms cited by the most DARs submitted from {@code from} to {@code
+   * to}.
+   */
+  public TermReport getDarTerms(LocalDate from, LocalDate to, int limit) {
+    return new TermReport(
+        from.toString(),
+        to.toString(),
+        darTermMetricsDAO.findTopTerms(startOfDay(from), startOfDay(to.plusDays(1)), limit));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too

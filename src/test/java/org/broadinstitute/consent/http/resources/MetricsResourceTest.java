@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.RenewalReport;
 import org.broadinstitute.consent.http.models.SoApprovalReport;
 import org.broadinstitute.consent.http.models.StudyRecommendation;
 import org.broadinstitute.consent.http.models.StudyResearchOutputs;
+import org.broadinstitute.consent.http.models.TermReport;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.UserReport;
 import org.broadinstitute.consent.http.models.VolumeReport;
@@ -704,6 +705,38 @@ class MetricsResourceTest extends AbstractTestHelper {
     RolesAllowed roles =
         MetricsResource.class
             .getMethod("getElections", DuosUser.class, String.class, String.class, String.class)
+            .getAnnotation(RolesAllowed.class);
+    assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+  }
+
+  @Test
+  void darTermsParseTheRangeAndLimit() {
+    TermReport report = new TermReport("2026-01-01", "2026-03-31", List.of());
+    when(service.getDarTerms(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), 5))
+        .thenReturn(report);
+
+    Response response = resource.getDarTerms(duosUser, "2026-01-01", "2026-03-31", 5);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(report, response.getEntity());
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      nullValues = "null",
+      value = {"null, 2026-01-01, 10", "2026-02-01, 2026-01-01, 10", "2026-01-01, 2026-02-01, 0"})
+  void darTermsRejectBadParameters(String from, String to, Integer limit) {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarTerms(duosUser, from, to, limit).getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void darTermsAreAdminOnly() throws NoSuchMethodException {
+    RolesAllowed roles =
+        MetricsResource.class
+            .getMethod("getDarTerms", DuosUser.class, String.class, String.class, Integer.class)
             .getAnnotation(RolesAllowed.class);
     assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
   }

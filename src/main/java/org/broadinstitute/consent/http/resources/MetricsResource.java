@@ -315,6 +315,25 @@ public class MetricsResource extends Resource {
     return createdReport(from, to, bucket, metricsService::getElections);
   }
 
+  @GET
+  @Path("/dar-terms")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDarTerms(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("10") @QueryParam("limit") Integer limit) {
+    try {
+      LocalDate start = parseDate("from", from);
+      LocalDate end = parseRangeEnd(start, to);
+      validatePage(limit, 0);
+      return Response.ok(metricsService.getDarTerms(start, end, limit)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private interface CreatedReportQuery<R> {
     R run(LocalDate from, LocalDate to, MetricsBucket bucket);
   }
