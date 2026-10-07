@@ -177,6 +177,23 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void countsAPre2022SubmissionWithArchivedAndCanceledOriginalsAsCanceled() {
+    User user = createUser();
+    Integer collectionId = createCollection(user);
+    DataAccessRequestData archived = new DataAccessRequestData();
+    archived.setStatus("Archived");
+    insertSubmittedDar(user, collectionId, createDataset(user), archived, FIXED_DATE);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    insertSubmittedDar(user, collectionId, createDataset(user), canceled, FIXED_DATE);
+
+    DashboardDatabaseCounts counts = getCounts(user);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darCanceled());
+  }
+
+  @Test
   void breaksASubmissionDateTieByTheLaterDar() {
     User user = createUser();
     Integer datasetId = createDataset(user);

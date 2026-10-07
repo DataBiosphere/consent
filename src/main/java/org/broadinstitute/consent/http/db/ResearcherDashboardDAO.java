@@ -25,14 +25,11 @@ public interface ResearcherDashboardDAO {
         JOIN dar_collection c ON c.collection_id = dar.collection_id
         WHERE dar.submission_date IS NOT NULL
           AND c.create_user_id = :userId
-        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
-        ORDER BY dar.collection_id,
-                 (dar.parent_id IS NULL AND LOWER(dar.data->>'status') IS NOT DISTINCT FROM 'canceled'),
-                 dar.submission_date DESC, dar.id DESC
+        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
       ),
       -- Filtering before the DISTINCT ON would substitute an older submission for a collection
       -- whose latest submission is archived, instead of dropping the collection.
-      -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+      -- A pre-2022 submission is one original DAR per dataset, so read its siblings too.
       latest_dar AS (
         SELECT rs.collection_id, dar.reference_id,
                COALESCE(LOWER(dar.data->>'status') = 'canceled', FALSE) AS canceled
@@ -40,8 +37,7 @@ public interface ResearcherDashboardDAO {
         JOIN data_access_request dar ON dar.collection_id = rs.collection_id
         WHERE (dar.reference_id = rs.reference_id
                OR (rs.parent_id IS NULL AND dar.parent_id IS NULL
-                   AND dar.submission_date IS NOT NULL
-                   AND LOWER(COALESCE(dar.data->>'status', '')) != 'canceled'))
+                   AND dar.submission_date IS NOT NULL))
           AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
       ),
       -- Every submitted DAR, not just the latest per collection: an approval granted on an
