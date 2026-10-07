@@ -105,18 +105,92 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer datasetId = createDataset(user);
     Integer collectionId = createCollection(user);
-    insertSubmittedDar(
-        user,
-        collectionId,
-        datasetId,
-        new DataAccessRequestData(),
-        Date.from(Instant.parse("2026-01-01T00:00:00Z")));
+    String original =
+        insertSubmittedDar(
+            user,
+            collectionId,
+            datasetId,
+            new DataAccessRequestData(),
+            Date.from(Instant.parse("2026-01-01T00:00:00Z")));
     DataAccessRequestData archived = new DataAccessRequestData();
     archived.setStatus("Archived");
-    insertSubmittedDar(
-        user, collectionId, datasetId, archived, Date.from(Instant.parse("2026-02-01T00:00:00Z")));
+    insertProgressReport(user, collectionId, original, datasetId, archived);
 
     assertEquals(0, getCounts(user).darTotal());
+  }
+
+  @Test
+  void decidesAPre2022SubmissionByEveryOriginalDar() {
+    User user = createUser();
+    Integer collectionId = createCollection(user);
+    Integer denied = createDataset(user);
+    Integer approved = createDataset(user);
+    approve(
+        user,
+        insertSubmittedDar(
+            user,
+            collectionId,
+            denied,
+            new DataAccessRequestData(),
+            Date.from(Instant.parse("2020-01-01T00:00:00Z"))),
+        denied,
+        VoteType.FINAL,
+        false);
+    approve(
+        user,
+        insertSubmittedDar(
+            user,
+            collectionId,
+            approved,
+            new DataAccessRequestData(),
+            Date.from(Instant.parse("2020-01-01T00:00:05Z"))),
+        approved,
+        VoteType.FINAL,
+        true);
+
+    DashboardDatabaseCounts counts = getCounts(user);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(0, counts.darApproved());
+  }
+
+  @Test
+  void ignoresACanceledOriginalDarOfAPre2022Submission() {
+    User user = createUser();
+    Integer collectionId = createCollection(user);
+    Integer approved = createDataset(user);
+    approve(
+        user,
+        insertSubmittedDar(user, collectionId, approved, new DataAccessRequestData(), FIXED_DATE),
+        approved,
+        VoteType.FINAL,
+        true);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    insertSubmittedDar(user, collectionId, createDataset(user), canceled, FIXED_DATE);
+
+    DashboardDatabaseCounts counts = getCounts(user);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darApproved());
+    assertEquals(0, counts.darCanceled());
+  }
+
+  @Test
+  void countsAPre2022SubmissionWithArchivedAndCanceledOriginalsAsCanceled() {
+    User user = createUser();
+    Integer collectionId = createCollection(user);
+    DataAccessRequestData archived = new DataAccessRequestData();
+    archived.setStatus("Archived");
+    insertSubmittedDar(user, collectionId, createDataset(user), archived, FIXED_DATE);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    insertSubmittedDar(user, collectionId, createDataset(user), canceled, FIXED_DATE);
+
+    DashboardDatabaseCounts counts = getCounts(user);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darCanceled());
   }
 
   @Test
@@ -124,10 +198,19 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer datasetId = createDataset(user);
     Integer collectionId = createCollection(user);
-    insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), FIXED_DATE);
+    String original =
+        insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), FIXED_DATE);
     DataAccessRequestData archived = new DataAccessRequestData();
     archived.setStatus("Archived");
-    insertSubmittedDar(user, collectionId, datasetId, archived, FIXED_DATE);
+    String report = insertProgressReport(user, collectionId, original, datasetId, archived);
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE data_access_request SET submission_date = :at WHERE reference_id = :id")
+                .bind("at", FIXED_DATE)
+                .bind("id", report)
+                .execute());
 
     assertEquals(0, getCounts(user).darTotal());
   }
@@ -437,6 +520,24 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         FIXED_DATE, // createDate
         submissionDate,
         FIXED_DATE, // updateDate
+        data,
+        "era-commons-id");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return referenceId;
+  }
+
+  private String insertProgressReport(
+      User user,
+      Integer collectionId,
+      String parentReferenceId,
+      Integer datasetId,
+      DataAccessRequestData data) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dataAccessRequestDAO.findByReferenceId(parentReferenceId).getId(),
+        collectionId,
+        referenceId,
+        user.getUserId(),
         data,
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);

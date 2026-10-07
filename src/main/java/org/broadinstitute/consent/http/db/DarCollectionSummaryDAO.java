@@ -43,7 +43,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         FROM data_access_request
         WHERE submission_date IS NOT NULL
         AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-        ORDER BY collection_id, submission_date DESC, id DESC
+        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+        ORDER BY collection_id,
+                 (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                 submission_date DESC, id DESC
       ),
       -- All non-archived submitted DARs per collection, pre-aggregated so the main query
       -- does not need to fan out per DAR and re-collapse with a GROUP BY.
@@ -71,9 +74,17 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         d.dac_name AS dac_name,
         cri.reference_ids AS reference_ids
       FROM latest_dar
+      -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+      INNER JOIN data_access_request sd
+        ON sd.collection_id = latest_dar.collection_id
+        AND (sd.reference_id = latest_dar.reference_id
+             OR (latest_dar.parent_id IS NULL AND sd.parent_id IS NULL
+                 AND sd.submission_date IS NOT NULL
+                 AND (sd.data->>'status' IS NULL
+                      OR LOWER(sd.data->>'status') NOT IN ('archived', 'canceled'))))
       -- Restrict DARs to the datasets available to the DAC User
       INNER JOIN dar_dataset dd
-        ON dd.reference_id = latest_dar.reference_id
+        ON dd.reference_id = sd.reference_id
       INNER JOIN dac_datasets d
         ON d.dataset_id = dd.dataset_id
       INNER JOIN dar_collection c
@@ -92,7 +103,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         WHERE LOWER(election.election_type) = 'dataaccess'
         AND LOWER(election.status) IN ('open', 'closed', 'canceled')
       ) AS e
-        ON e.reference_id = latest_dar.reference_id
+        ON e.reference_id = sd.reference_id
         AND e.dataset_id = dd.dataset_id
         AND e.latest = e.election_id
       -- Votes for DAC User
@@ -140,8 +151,19 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 FROM data_access_request
                 WHERE submission_date IS NOT NULL
                 AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-                ORDER BY collection_id, submission_date DESC, id DESC
+                -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+                ORDER BY collection_id,
+                         (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                         submission_date DESC, id DESC
               ) latest_dar ON latest_dar.collection_id = c.collection_id
+              -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+              INNER JOIN data_access_request sd
+                ON sd.collection_id = latest_dar.collection_id
+                AND (sd.reference_id = latest_dar.reference_id
+                     OR (latest_dar.parent_id IS NULL AND sd.parent_id IS NULL
+                         AND sd.submission_date IS NOT NULL
+                         AND (sd.data->>'status' IS NULL
+                              OR LOWER(sd.data->>'status') NOT IN ('archived', 'canceled'))))
               INNER JOIN data_access_request dar_all
                ON dar_all.collection_id = c.collection_id
                AND dar_all.submission_date IS NOT NULL
@@ -151,9 +173,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 FROM election
                 WHERE LOWER(election.election_type) = 'dataaccess'
                 ) AS e
-              ON e.reference_id = latest_dar.reference_id
+              ON e.reference_id = sd.reference_id
               INNER JOIN dar_dataset dd
-              ON latest_dar.reference_id = dd.reference_id
+              ON sd.reference_id = dd.reference_id
               LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
               LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
               WHERE u.institution_id = :institutionId
@@ -201,8 +223,19 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               FROM data_access_request
               WHERE submission_date IS NOT NULL
               AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-              ORDER BY collection_id, submission_date DESC, id DESC
+              -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+              ORDER BY collection_id,
+                       (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                       submission_date DESC, id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+          INNER JOIN data_access_request sd
+            ON sd.collection_id = latest_dar.collection_id
+            AND (sd.reference_id = latest_dar.reference_id
+                 OR (latest_dar.parent_id IS NULL AND sd.parent_id IS NULL
+                     AND sd.submission_date IS NOT NULL
+                     AND (sd.data->>'status' IS NULL
+                          OR LOWER(sd.data->>'status') NOT IN ('archived', 'canceled'))))
           INNER JOIN data_access_request dar_all
               ON dar_all.collection_id = c.collection_id
               AND dar_all.submission_date IS NOT NULL
@@ -211,8 +244,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                   SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
                   FROM election
                   WHERE LOWER(election.election_type) = 'dataaccess'
-                ) AS e ON e.reference_id = latest_dar.reference_id
-          INNER JOIN dar_dataset dd ON latest_dar.reference_id = dd.reference_id
+                ) AS e ON e.reference_id = sd.reference_id
+          INNER JOIN dar_dataset dd ON sd.reference_id = dd.reference_id
           LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
           LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
           WHERE (e.latest = e.election_id OR e.election_id IS NULL)
@@ -261,8 +294,19 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                FROM data_access_request
                WHERE submission_date IS NOT NULL
                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-               ORDER BY collection_id, submission_date DESC, id DESC
+               -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+               ORDER BY collection_id,
+                        (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                        submission_date DESC, id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
+          -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+          INNER JOIN data_access_request sd
+            ON sd.collection_id = latest_dar.collection_id
+            AND (sd.reference_id = latest_dar.reference_id
+                 OR (latest_dar.parent_id IS NULL AND sd.parent_id IS NULL
+                     AND sd.submission_date IS NOT NULL
+                     AND (sd.data->>'status' IS NULL
+                          OR LOWER(sd.data->>'status') NOT IN ('archived', 'canceled'))))
           INNER JOIN
               data_access_request dar_all
               ON dar_all.collection_id = c.collection_id
@@ -272,9 +316,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
               FROM election
               WHERE LOWER(election.election_type) = 'dataaccess'
-          ) AS e ON e.reference_id = latest_dar.reference_id
+          ) AS e ON e.reference_id = sd.reference_id
           INNER JOIN
-              dar_dataset dd ON latest_dar.reference_id = dd.reference_id
+              dar_dataset dd ON sd.reference_id = dd.reference_id
           LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
           LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
           WHERE
@@ -317,8 +361,19 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         FROM data_access_request
         WHERE submission_date IS NOT NULL
         AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-        ORDER BY collection_id, submission_date DESC, id DESC
+        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+        ORDER BY collection_id,
+                 (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                 submission_date DESC, id DESC
       ) latest_dar ON latest_dar.collection_id = c.collection_id
+      -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+      INNER JOIN data_access_request sd
+        ON sd.collection_id = latest_dar.collection_id
+        AND (sd.reference_id = latest_dar.reference_id
+             OR (latest_dar.parent_id IS NULL AND sd.parent_id IS NULL
+                 AND sd.submission_date IS NOT NULL
+                 AND (sd.data->>'status' IS NULL
+                      OR LOWER(sd.data->>'status') NOT IN ('archived', 'canceled'))))
       INNER JOIN
         data_access_request dar_all ON dar_all.collection_id = c.collection_id
         AND dar_all.submission_date IS NOT NULL
@@ -330,11 +385,11 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         AND LOWER(election.status) IN ('open', 'closed', 'canceled')
         AND election.dataset_id IN (<datasetIds>)
       ) AS e
-        ON e.reference_id = latest_dar.reference_id
+        ON e.reference_id = sd.reference_id
       LEFT JOIN vote v
         ON e.election_id = v.election_id
       INNER JOIN dar_dataset dd
-        ON latest_dar.reference_id = dd.reference_id
+        ON sd.reference_id = dd.reference_id
       LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
       LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
       WHERE c.collection_id= :collectionId
@@ -382,8 +437,19 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                FROM data_access_request
                WHERE submission_date IS NOT NULL
                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-               ORDER BY collection_id, submission_date DESC, id DESC
+               -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+               ORDER BY collection_id,
+                        (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                        submission_date DESC, id DESC
               ) latest_dar ON latest_dar.collection_id = c.collection_id
+              -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
+              INNER JOIN data_access_request sd
+                ON sd.collection_id = latest_dar.collection_id
+                AND (sd.reference_id = latest_dar.reference_id
+                     OR (latest_dar.parent_id IS NULL AND sd.parent_id IS NULL
+                         AND sd.submission_date IS NOT NULL
+                         AND (sd.data->>'status' IS NULL
+                              OR LOWER(sd.data->>'status') NOT IN ('archived', 'canceled'))))
               INNER JOIN
                data_access_request dar_all ON dar_all.collection_id = c.collection_id
                AND dar_all.submission_date IS NOT NULL
@@ -393,9 +459,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 FROM election
                 WHERE LOWER(election.election_type) = 'dataaccess'
               ) AS e
-              ON e.reference_id = latest_dar.reference_id
+              ON e.reference_id = sd.reference_id
               INNER JOIN dar_dataset dd
-              ON latest_dar.reference_id = dd.reference_id
+              ON sd.reference_id = dd.reference_id
               LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
               LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
               WHERE c.collection_id = :collectionId

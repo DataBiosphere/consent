@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -985,6 +986,66 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         };
 
     assertEquals(laterReferenceId, summary.getLatestReferenceId());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"admin", "researcher", "SO", "DAC", "dacCollectionId", "collectionId"})
+  void testGetDarCollectionSummaryReadsEveryOriginalDarOfAPre2022Submission(String type) {
+    User user = createUserWithInstitution();
+    Integer userId = user.getUserId();
+    Dac dac = createDac();
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    Dataset canceledDataset = createDatasetWithDac(userId, dac.getDacId());
+    Dataset first = createDatasetWithDac(userId, dac.getDacId());
+    Dataset second = createDatasetWithDac(userId, dac.getDacId());
+    Integer collectionId = createDarCollection(userId);
+    String canceledDar = insertSubmittedDar(collectionId, userId, canceledDataset.getDatasetId());
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(canceledDar));
+    String firstDar = insertSubmittedDar(collectionId, userId, first.getDatasetId());
+    String secondDar = insertSubmittedDar(collectionId, userId, second.getDatasetId());
+    Dataset canceledLastDataset = createDatasetWithDac(userId, dac.getDacId());
+    String canceledLastDar =
+        insertSubmittedDar(collectionId, userId, canceledLastDataset.getDatasetId());
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(canceledLastDar));
+    Election firstElection =
+        createElection(ElectionStatus.CLOSED.getValue(), firstDar, first.getDatasetId());
+    Election secondElection =
+        createElection(ElectionStatus.OPEN.getValue(), secondDar, second.getDatasetId());
+
+    DarCollectionSummary summary =
+        switch (type) {
+          case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin().get(0);
+          case "researcher" ->
+              darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId).get(0);
+          case "SO" ->
+              darCollectionSummaryDAO
+                  .getDarCollectionSummariesForSO(user.getInstitutionId())
+                  .get(0);
+          case "DAC" ->
+              darCollectionSummaryDAO
+                  .getDarCollectionSummariesForDACRole(
+                      chair.getUserId(), UserRoles.CHAIRPERSON.getRoleId())
+                  .get(0);
+          case "dacCollectionId" ->
+              darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
+                  userId,
+                  List.of(
+                      canceledDataset.getDatasetId(),
+                      first.getDatasetId(),
+                      second.getDatasetId(),
+                      canceledLastDataset.getDatasetId()),
+                  collectionId);
+          case "collectionId" ->
+              darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
+          default -> throw new IllegalArgumentException("Invalid type: " + type);
+        };
+
+    assertEquals(secondDar, summary.getLatestReferenceId());
+    assertEquals(Set.of(first.getDatasetId(), second.getDatasetId()), summary.getDatasetIds());
+    assertEquals(
+        Set.of(firstElection.getElectionId(), secondElection.getElectionId()),
+        summary.getElections().keySet());
+    assertFalse(summary.getDarStatuses().containsValue("Canceled"));
   }
 
   private String insertSubmittedDar(Integer collectionId, Integer userId, Integer datasetId) {
