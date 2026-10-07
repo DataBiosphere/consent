@@ -341,19 +341,27 @@ public class MetricsService {
   /**
    * Datasets created from {@code from} to {@code to}, per bucket, with how many are approved now.
    */
-  public DatasetReport getDatasets(LocalDate from, LocalDate to, MetricsBucket bucket) {
+  public DatasetReport getDatasets(
+      LocalDate from, LocalDate to, List<Integer> dacIds, MetricsBucket bucket) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return DatasetReport.of(
-        from, to, bucket, datasetMetricsDAO.countDatasetsCreated(start, end, bucket.truncUnit()));
+        from,
+        to,
+        bucket,
+        datasetMetricsDAO.countDatasetsCreated(start, end, dacIds, bucket.truncUnit()));
   }
 
   /** Studies created from {@code from} to {@code to}, per bucket. */
-  public CreatedReport getStudies(LocalDate from, LocalDate to, MetricsBucket bucket) {
+  public CreatedReport getStudies(
+      LocalDate from, LocalDate to, List<Integer> dacIds, MetricsBucket bucket) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return CreatedReport.of(
-        from, to, bucket, datasetMetricsDAO.countStudiesCreated(start, end, bucket.truncUnit()));
+        from,
+        to,
+        bucket,
+        datasetMetricsDAO.countStudiesCreated(start, end, dacIds, bucket.truncUnit()));
   }
 
   /** Data access elections opened, and votes cast, from {@code from} to {@code to}, per bucket. */

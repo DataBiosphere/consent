@@ -40,10 +40,10 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
         List.of(
             new DatasetBucket(startOf(LocalDate.of(2026, 1, 1)), 1, 0),
             new DatasetBucket(startOf(LocalDate.of(2026, 4, 1)), 2, 0)),
-        dao.countDatasetsCreated(FROM, TO, "quarter"));
+        dao.countDatasetsCreated(FROM, TO, null, "quarter"));
     assertEquals(
         List.of(new CreatedBucket(startOf(LocalDate.of(2026, 1, 1)), 1)),
-        dao.countStudiesCreated(FROM, TO, "quarter"));
+        dao.countStudiesCreated(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -56,8 +56,10 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
     study(LocalDateTime.of(2027, 1, 1, 0, 0));
 
     assertEquals(
-        List.of(new DatasetBucket(FROM, 1, 0)), dao.countDatasetsCreated(FROM, TO, "quarter"));
-    assertEquals(List.of(new CreatedBucket(FROM, 1)), dao.countStudiesCreated(FROM, TO, "quarter"));
+        List.of(new DatasetBucket(FROM, 1, 0)),
+        dao.countDatasetsCreated(FROM, TO, null, "quarter"));
+    assertEquals(
+        List.of(new CreatedBucket(FROM, 1)), dao.countStudiesCreated(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -70,7 +72,7 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
 
     assertEquals(
         List.of(new DatasetBucket(startOf(LocalDate.of(2026, 4, 1)), 4, 2)),
-        dao.countDatasetsCreated(FROM, TO, "quarter"));
+        dao.countDatasetsCreated(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -83,7 +85,37 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
                 .bind("id", legacy)
                 .execute());
 
-    assertTrue(dao.countDatasetsCreated(FROM, TO, "quarter").isEmpty());
+    assertTrue(dao.countDatasetsCreated(FROM, TO, null, "quarter").isEmpty());
+  }
+
+  @Test
+  void scopesDatasetsAndStudiesToTheDacsTheirDatasetsAreNowIn() {
+    LocalDateTime created = LocalDateTime.of(2026, 6, 1, 12, 0);
+    Integer dacA = dac();
+    Integer dacB = dac();
+    Integer studyA = study(created);
+    Integer studyB = study(created);
+    datasetDAO.updateStudyId(dataset(created, dacA), studyA);
+    datasetDAO.updateStudyId(dataset(created, dacA), studyA);
+    datasetDAO.updateStudyId(dataset(created, dacB), studyB);
+    dataset(created);
+    study(created);
+    Instant quarter = startOf(LocalDate.of(2026, 4, 1));
+
+    assertEquals(
+        List.of(new DatasetBucket(quarter, 2, 0)),
+        dao.countDatasetsCreated(FROM, TO, List.of(dacA), "quarter"));
+    assertEquals(
+        List.of(new CreatedBucket(quarter, 1)),
+        dao.countStudiesCreated(FROM, TO, List.of(dacA), "quarter"));
+    assertEquals(
+        List.of(new DatasetBucket(quarter, 3, 0)),
+        dao.countDatasetsCreated(FROM, TO, List.of(dacA, dacB), "quarter"));
+    assertEquals(
+        List.of(new CreatedBucket(quarter, 2)),
+        dao.countStudiesCreated(FROM, TO, List.of(dacA, dacB), "quarter"));
+    assertTrue(dao.countDatasetsCreated(FROM, TO, List.of(), "quarter").isEmpty());
+    assertTrue(dao.countStudiesCreated(FROM, TO, List.of(), "quarter").isEmpty());
   }
 
   private static Instant startOf(LocalDate date) {
@@ -95,21 +127,29 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer dataset(LocalDateTime created) {
+    return dataset(created, null);
+  }
+
+  private Integer dataset(LocalDateTime created, Integer dacId) {
     return datasetDAO.insertDataset(
         "Dataset " + UUID.randomUUID(),
         Timestamp.from(at(created)),
         userId,
         UUID.randomUUID().toString(),
         "{}",
-        null);
+        dacId);
+  }
+
+  private Integer dac() {
+    return dacDAO.createDac("DAC " + UUID.randomUUID(), UUID.randomUUID().toString(), userId);
   }
 
   private void approve(Integer datasetId, boolean approved) {
     datasetDAO.updateDatasetApproval(approved, Instant.now(), userId, datasetId);
   }
 
-  private void study(LocalDateTime created) {
-    studyDAO.insertStudy(
+  private Integer study(LocalDateTime created) {
+    return studyDAO.insertStudy(
         "Study " + UUID.randomUUID(),
         "description",
         "PI",
