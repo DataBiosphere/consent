@@ -1,0 +1,11 @@
+type: object
+properties:
+  bucketStart:
+    type: integer
+    format: int64
+    description: Epoch millis.
+  count:
+    type: integer
+  dacApproved:
+    type: integer
+    description: Datasets in the bucket that the DAC has approved now.

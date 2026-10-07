@@ -442,6 +442,24 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteStudyByIdWithoutProperties() {
+    Integer id =
+        studyDAO.insertStudy(
+            RandomStringUtils.randomAlphabetic(20),
+            RandomStringUtils.randomAlphabetic(20),
+            RandomStringUtils.randomAlphabetic(20),
+            null,
+            List.of(),
+            true,
+            createUser().getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
+
+    studyDAO.deleteStudyByStudyId(id);
+    assertNull(studyDAO.findStudyById(id));
+  }
+
+  @Test
   void testDeleteStudyPropertiesById() {
     Study study = insertStudyWithProperties();
     Integer id = study.getStudyId();
