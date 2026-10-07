@@ -707,14 +707,16 @@ class MetricsResourceTest extends AbstractTestHelper {
 
   @Test
   void electionsParseTheRangeAndBucket() {
+    when(service.resolveDacScope(any(), eq(List.of()))).thenReturn(SCOPE);
     ElectionReport report =
         new ElectionReport(
             "2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of(), List.of());
     when(service.getElections(
-            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), MetricsBucket.MONTH))
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), SCOPE, MetricsBucket.MONTH))
         .thenReturn(report);
 
-    Response response = resource.getElections(duosUser, "2026-01-01", "2026-03-31", "Month");
+    Response response =
+        resource.getElections(duosUser, "2026-01-01", "2026-03-31", "Month", List.of());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(report, response.getEntity());
@@ -731,26 +733,18 @@ class MetricsResourceTest extends AbstractTestHelper {
   void electionsRejectBadParameters(String from, String to, String bucket) {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
-        resource.getElections(duosUser, from, to, bucket).getStatus());
+        resource.getElections(duosUser, from, to, bucket, List.of()).getStatus());
     verifyNoInteractions(service);
   }
 
   @Test
-  void electionsAreAdminOnly() throws NoSuchMethodException {
-    RolesAllowed roles =
-        MetricsResource.class
-            .getMethod("getElections", DuosUser.class, String.class, String.class, String.class)
-            .getAnnotation(RolesAllowed.class);
-    assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
-  }
-
-  @Test
   void darTermsParseTheRangeAndLimit() {
+    when(service.resolveDacScope(any(), eq(List.of()))).thenReturn(SCOPE);
     TermReport report = new TermReport("2026-01-01", "2026-03-31", List.of());
-    when(service.getDarTerms(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), 5))
+    when(service.getDarTerms(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), SCOPE, 5))
         .thenReturn(report);
 
-    Response response = resource.getDarTerms(duosUser, "2026-01-01", "2026-03-31", 5);
+    Response response = resource.getDarTerms(duosUser, "2026-01-01", "2026-03-31", 5, List.of());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(report, response.getEntity());
@@ -763,17 +757,63 @@ class MetricsResourceTest extends AbstractTestHelper {
   void darTermsRejectBadParameters(String from, String to, Integer limit) {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
-        resource.getDarTerms(duosUser, from, to, limit).getStatus());
+        resource.getDarTerms(duosUser, from, to, limit, List.of()).getStatus());
     verifyNoInteractions(service);
   }
 
   @Test
-  void darTermsAreAdminOnly() throws NoSuchMethodException {
-    RolesAllowed roles =
-        MetricsResource.class
-            .getMethod("getDarTerms", DuosUser.class, String.class, String.class, Integer.class)
-            .getAnnotation(RolesAllowed.class);
-    assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+  void electionsAndDarTermsForbidADacTheCallerIsNotOn() {
+    when(service.resolveDacScope(any(), eq(List.of(9)))).thenThrow(new ForbiddenException());
+
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_FORBIDDEN,
+        resource
+            .getElections(duosUser, "2026-01-01", "2026-03-31", "quarter", List.of("9"))
+            .getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_FORBIDDEN,
+        resource.getDarTerms(duosUser, "2026-01-01", "2026-03-31", 10, List.of("9")).getStatus());
+  }
+
+  @Test
+  void electionsAndDarTermsRejectANonIntegerDacId() {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource
+            .getElections(duosUser, "2026-01-01", "2026-03-31", "quarter", List.of("x"))
+            .getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource.getDarTerms(duosUser, "2026-01-01", "2026-03-31", 10, List.of("x")).getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void electionsAndDarTermsAdmitChairsAndMembers() throws NoSuchMethodException {
+    List<RolesAllowed> roles =
+        List.of(
+            MetricsResource.class
+                .getMethod(
+                    "getElections",
+                    DuosUser.class,
+                    String.class,
+                    String.class,
+                    String.class,
+                    List.class)
+                .getAnnotation(RolesAllowed.class),
+            MetricsResource.class
+                .getMethod(
+                    "getDarTerms",
+                    DuosUser.class,
+                    String.class,
+                    String.class,
+                    Integer.class,
+                    List.class)
+                .getAnnotation(RolesAllowed.class));
+    for (RolesAllowed allowed : roles) {
+      assertEquals(
+          List.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.MEMBER), List.of(allowed.value()));
+    }
   }
 
   private DarMetricsSummary generateDarMetricsSummary() {

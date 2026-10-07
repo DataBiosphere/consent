@@ -94,7 +94,9 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-expirations",
         "/api/metrics/dar-renewals",
         "/api/metrics/datasets",
-        "/api/metrics/studies"
+        "/api/metrics/studies",
+        "/api/metrics/elections",
+        "/api/metrics/dar-terms"
       })
   void dacChairsAndMembersGetTheirDacsReport(String path) {
     for (String email : new String[] {"ci-chair@example.com", "ci-member@example.com"}) {

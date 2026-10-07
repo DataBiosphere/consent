@@ -35,14 +35,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
   void setUpDao() {
     dao = jdbi.onDemand(ElectionMetricsDAO.class);
     userId = createUser().getUserId();
-    datasetId =
-        datasetDAO.insertDataset(
-            "Dataset " + UUID.randomUUID(),
-            Timestamp.from(Instant.now()),
-            userId,
-            UUID.randomUUID().toString(),
-            "{}",
-            null);
+    datasetId = dataset(null);
   }
 
   @Test
@@ -57,7 +50,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
             new ElectionBucket(Q1, ElectionStatus.CLOSED.getValue(), 1),
             new ElectionBucket(Q2, ElectionStatus.CANCELED.getValue(), 1),
             new ElectionBucket(Q2, ElectionStatus.OPEN.getValue(), 2)),
-        dao.countElectionsOpened(FROM, TO, "quarter"));
+        dao.countElectionsOpened(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -74,7 +67,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
 
     assertEquals(
         List.of(new ElectionBucket(Q1, ElectionStatus.OPEN.getValue(), 1)),
-        dao.countElectionsOpened(FROM, TO, "quarter"));
+        dao.countElectionsOpened(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -90,7 +83,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
             new VoteBucket(Q1, VoteType.DAC.getValue(), 1),
             new VoteBucket(Q2, VoteType.DAC.getValue(), 1),
             new VoteBucket(Q2, VoteType.FINAL.getValue(), 1)),
-        dao.countVotesCast(FROM, TO, "quarter"));
+        dao.countVotesCast(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -101,7 +94,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
     updateVote(null, "", at(updated), voteId, false, electionId, at(updated), false);
 
-    assertTrue(dao.countVotesCast(FROM, TO, "quarter").isEmpty());
+    assertTrue(dao.countVotesCast(FROM, TO, null, "quarter").isEmpty());
   }
 
   @Test
@@ -117,7 +110,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
 
     assertEquals(
         List.of(new ElectionBucket(Q2, ElectionStatus.CANCELED.getValue(), 2)),
-        dao.countElectionsOpened(FROM, TO, "quarter"));
+        dao.countElectionsOpened(FROM, TO, null, "quarter"));
   }
 
   @Test
@@ -129,7 +122,37 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
 
     assertEquals(
         List.of(new VoteBucket(Q1, VoteType.CHAIRPERSON.getValue(), 1)),
-        dao.countVotesCast(FROM, TO, "quarter"));
+        dao.countVotesCast(FROM, TO, null, "quarter"));
+  }
+
+  @Test
+  void scopesElectionsAndVotesToTheDacsTheirDatasetsAreNowIn() {
+    LocalDateTime opened = LocalDateTime.of(2026, 6, 1, 12, 0);
+    Integer dacA = dac();
+    Integer dacB = dac();
+    Integer inA = election(ElectionStatus.OPEN, opened, dataset(dacA));
+    Integer inB = election(ElectionStatus.OPEN, opened, dataset(dacB));
+    election(ElectionStatus.OPEN, opened);
+    cast(inA, VoteType.DAC, opened);
+    cast(inB, VoteType.DAC, opened);
+    cast(inB, VoteType.FINAL, opened);
+
+    assertEquals(
+        List.of(new ElectionBucket(Q2, ElectionStatus.OPEN.getValue(), 1)),
+        dao.countElectionsOpened(FROM, TO, List.of(dacA), "quarter"));
+    assertEquals(
+        List.of(new VoteBucket(Q2, VoteType.DAC.getValue(), 1)),
+        dao.countVotesCast(FROM, TO, List.of(dacA), "quarter"));
+    assertEquals(
+        List.of(new ElectionBucket(Q2, ElectionStatus.OPEN.getValue(), 2)),
+        dao.countElectionsOpened(FROM, TO, List.of(dacA, dacB), "quarter"));
+    assertEquals(
+        List.of(
+            new VoteBucket(Q2, VoteType.DAC.getValue(), 2),
+            new VoteBucket(Q2, VoteType.FINAL.getValue(), 1)),
+        dao.countVotesCast(FROM, TO, List.of(dacA, dacB), "quarter"));
+    assertTrue(dao.countElectionsOpened(FROM, TO, List.of(), "quarter").isEmpty());
+    assertTrue(dao.countVotesCast(FROM, TO, List.of(), "quarter").isEmpty());
   }
 
   private static Instant startOf(LocalDate date) {
@@ -141,12 +164,30 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer election(ElectionStatus status, LocalDateTime created) {
+    return election(status, created, datasetId);
+  }
+
+  private Integer election(ElectionStatus status, LocalDateTime created, Integer onDataset) {
     return electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
         status.getValue(),
         at(created),
         UUID.randomUUID().toString(),
-        datasetId);
+        onDataset);
+  }
+
+  private Integer dataset(Integer dacId) {
+    return datasetDAO.insertDataset(
+        "Dataset " + UUID.randomUUID(),
+        Timestamp.from(Instant.now()),
+        userId,
+        UUID.randomUUID().toString(),
+        "{}",
+        dacId);
+  }
+
+  private Integer dac() {
+    return dacDAO.createDac("DAC " + UUID.randomUUID(), UUID.randomUUID().toString(), userId);
   }
 
   private void cast(Integer electionId, VoteType type, LocalDateTime castAt) {

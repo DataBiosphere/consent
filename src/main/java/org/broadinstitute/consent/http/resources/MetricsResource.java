@@ -308,29 +308,32 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/elections")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getElections(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
-      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
-    return createdReport(from, to, bucket, metricsService::getElections);
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @QueryParam("dacId") List<String> dacIds) {
+    return createdReport(dacScope(user, dacIds), from, to, bucket, metricsService::getElections);
   }
 
   @GET
   @Path("/dar-terms")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDarTerms(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
-      @DefaultValue("10") @QueryParam("limit") Integer limit) {
+      @DefaultValue("10") @QueryParam("limit") Integer limit,
+      @QueryParam("dacId") List<String> dacIds) {
     try {
       LocalDate start = parseDate("from", from);
       LocalDate end = parseRangeEnd(start, to);
       validatePage(limit, 0);
-      return Response.ok(metricsService.getDarTerms(start, end, limit)).build();
+      List<Integer> scope = metricsService.resolveDacScope(user.getUser(), parseDacIds(dacIds));
+      return Response.ok(metricsService.getDarTerms(start, end, scope, limit)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

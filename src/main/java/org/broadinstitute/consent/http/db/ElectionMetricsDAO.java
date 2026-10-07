@@ -9,8 +9,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 /**
- * Admin reporting on DAC activity volume over data access elections in [:from, :to). Decision
- * outcomes are DarMetricsDAO's; these count elections opened and votes cast.
+ * Reporting on DAC activity volume over data access elections in [:from, :to). Decision outcomes
+ * are DarMetricsDAO's; these count elections opened and votes cast. :dacIds scopes a query to
+ * elections on datasets now in those DACs, null to every dataset.
  */
 public interface ElectionMetricsDAO {
 
@@ -34,11 +35,17 @@ public interface ElectionMetricsDAO {
       FROM election
       WHERE LOWER(election_type) = 'dataaccess'
         AND create_date >= :from AND create_date < :to
+        AND (CAST(:dacIds AS int[]) IS NULL
+             OR dataset_id IN (SELECT dataset_id FROM dataset
+                               WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
       GROUP BY 1, 2
       ORDER BY 1, 2
       """)
   List<ElectionBucket> countElectionsOpened(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 
   /**
    * Votes cast per bucket and VoteType, dated by when they were last cast, or created when that
@@ -57,9 +64,15 @@ public interface ElectionMetricsDAO {
         AND v.vote IS NOT NULL
         AND COALESCE(v.update_date, v.create_date) >= :from
         AND COALESCE(v.update_date, v.create_date) < :to
+        AND (CAST(:dacIds AS int[]) IS NULL
+             OR e.dataset_id IN (SELECT dataset_id FROM dataset
+                                 WHERE dac_id = ANY(CAST(:dacIds AS int[]))))
       GROUP BY 1, 2
       ORDER BY 1, 2
       """)
   List<VoteBucket> countVotesCast(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("bucket") String bucket);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("bucket") String bucket);
 }

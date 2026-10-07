@@ -7,7 +7,7 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
-/** Admin reporting on the ontology terms DARs cite in their research use statements. */
+/** Reporting on the ontology terms DARs cite in their research use statements. */
 public interface DarTermMetricsDAO {
 
   /**
@@ -15,7 +15,8 @@ public interface DarTermMetricsDAO {
    * DARs, each submission counted once per term. Before 2022-07-27 a submission was saved as one
    * DAR per dataset, so a collection's original DARs count as one. Ids match as the ontology
    * reconciliation query does, with a CURIE or OBO IRI also matching the underscored OBO id the
-   * importer stores.
+   * importer stores. Only DARs requesting a dataset now in :dacIds are read, or every DAR when it's
+   * null.
    */
   @RegisterConstructorMapper(TermDarCount.class)
   @SqlQuery(
@@ -28,6 +29,11 @@ public interface DarTermMetricsDAO {
           AND (dar.data->>'status' IS NULL
                OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
           AND jsonb_typeof(dar.data -> 'ontologies') = 'array'
+          AND (CAST(:dacIds AS int[]) IS NULL
+               OR EXISTS (SELECT 1 FROM dar_dataset dd
+                          WHERE dd.reference_id = dar.reference_id
+                            AND dd.dataset_id IN (SELECT dataset_id FROM dataset
+                                                  WHERE dac_id = ANY(CAST(:dacIds AS int[])))))
       ),
       cited AS (
         SELECT od.submission_key,
@@ -83,5 +89,8 @@ public interface DarTermMetricsDAO {
       LIMIT :limit
       """)
   List<TermDarCount> findTopTerms(
-      @Bind("from") Instant from, @Bind("to") Instant to, @Bind("limit") int limit);
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("dacIds") List<Integer> dacIds,
+      @Bind("limit") int limit);
 }

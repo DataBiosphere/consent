@@ -774,10 +774,11 @@ class MetricsServiceTest extends AbstractTestHelper {
         List.of(new ElectionBucket(start, "Open", 2), new ElectionBucket(start, "Canceled", 1));
     List<VoteBucket> votes =
         List.of(new VoteBucket(start, "DAC", 5), new VoteBucket(start, "FINAL", 2));
-    when(electionMetricsDAO.countElectionsOpened(start, end, "month")).thenReturn(elections);
-    when(electionMetricsDAO.countVotesCast(start, end, "month")).thenReturn(votes);
+    when(electionMetricsDAO.countElectionsOpened(start, end, List.of(7), "month"))
+        .thenReturn(elections);
+    when(electionMetricsDAO.countVotesCast(start, end, List.of(7), "month")).thenReturn(votes);
 
-    ElectionReport report = service.getElections(from, to, MetricsBucket.MONTH);
+    ElectionReport report = service.getElections(from, to, List.of(7), MetricsBucket.MONTH);
 
     assertEquals("2026-01-01", report.from());
     assertEquals("2026-03-31", report.to());
@@ -794,9 +795,9 @@ class MetricsServiceTest extends AbstractTestHelper {
     Instant start = from.atStartOfDay(ZoneId.systemDefault()).toInstant();
     Instant end = LocalDate.of(2026, 4, 1).atStartOfDay(ZoneId.systemDefault()).toInstant();
     List<TermDarCount> terms = List.of(new TermDarCount("MONDO_0004992", "cancer", 3));
-    when(darTermMetricsDAO.findTopTerms(start, end, 5)).thenReturn(terms);
+    when(darTermMetricsDAO.findTopTerms(start, end, List.of(7), 5)).thenReturn(terms);
 
-    TermReport report = service.getDarTerms(from, to, 5);
+    TermReport report = service.getDarTerms(from, to, List.of(7), 5);
 
     assertEquals(new TermReport("2026-01-01", "2026-03-31", terms), report);
   }

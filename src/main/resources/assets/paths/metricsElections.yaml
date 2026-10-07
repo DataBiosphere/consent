@@ -2,10 +2,11 @@ get:
   summary: Data access elections and votes over time
   operationId: apiMetricsElectionsGet
   description: |
-    Admin only. DAC activity volume: data access elections opened in the range, per bucket of
-    their create date and by the status they have now, and votes cast in the range, per bucket of
-    when they were last cast and by vote type. Uncast votes aren't counted, and a changed vote
-    counts once, when it last changed.
+    Admins, and DAC chairs and members for their DACs (see dacId). DAC activity volume: data
+    access elections opened in the range, per bucket of their create date and by the status they
+    have now, and votes cast in the range, per bucket of when they were last cast and by vote type.
+    Uncast votes aren't counted, and a changed vote counts once, when it last changed. Scoped to
+    DACs, only elections on datasets now in them, and those elections' votes.
   parameters:
     - name: from
       in: query
@@ -29,9 +30,20 @@ get:
         type: string
         enum: [day, week, month, quarter]
         default: quarter
+    - name: dacId
+      in: query
+      required: false
+      description: Repeatable. Limits the report to elections on datasets in these DACs, which a chair or member must be on. Without it, an admin reads every DAC and a chair or member their own.
+      schema:
+        type: array
+        items:
+          type: integer
+      style: form
+      explode: true
   tags:
     - Metrics
     - Admin
+    - DAC
   responses:
     200:
       description: The totals and counts per bucket.
@@ -44,7 +56,7 @@ get:
     401:
       description: Unauthorized.
     403:
-      description: Admin only.
+      description: Not an admin, chair or member, or not on a requested DAC.
     429:
       description: Too Many Requests - rate limit exceeded
       content:
