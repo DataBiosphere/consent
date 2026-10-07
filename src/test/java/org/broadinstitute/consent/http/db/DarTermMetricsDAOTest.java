@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -47,7 +48,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
             new TermDarCount(CANCER, "cancer", 3),
             new TermDarCount(DIABETES, "diabetes", 2),
             new TermDarCount(ASTHMA, "asthma", 1)),
-        dao.findTopTerms(FROM, TO, 10));
+        dao.findTopTerms(FROM, TO, null, 10));
   }
 
   @Test
@@ -58,7 +59,8 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     dar(IN_RANGE, "archived", term(DIABETES, "diabetes"));
     progressReport(parent, term(ASTHMA, "asthma"));
 
-    assertEquals(List.of(new TermDarCount(CANCER, "cancer", 1)), dao.findTopTerms(FROM, TO, 10));
+    assertEquals(
+        List.of(new TermDarCount(CANCER, "cancer", 1)), dao.findTopTerms(FROM, TO, null, 10));
   }
 
   @Test
@@ -71,7 +73,8 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     dar(IN_RANGE, null, term(DIABETES, "diabetes"));
 
     assertEquals(
-        List.of(new TermDarCount(DIABETES, "diabetes mellitus", 2)), dao.findTopTerms(FROM, TO, 1));
+        List.of(new TermDarCount(DIABETES, "diabetes mellitus", 2)),
+        dao.findTopTerms(FROM, TO, null, 1));
   }
 
   @Test
@@ -91,7 +94,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
             new TermDarCount(ASTHMA, "asthma", 2),
             new TermDarCount(DIABETES, "diabetes", 2),
             new TermDarCount(CANCER, "malignant neoplasm", 2)),
-        dao.findTopTerms(FROM, TO, 10));
+        dao.findTopTerms(FROM, TO, null, 10));
   }
 
   @Test
@@ -104,7 +107,8 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     dar(IN_RANGE, null, term(CANCER.replace("http:", "https:"), "cancer"));
 
     assertEquals(
-        List.of(new TermDarCount(CANCER, "malignant neoplasm", 1)), dao.findTopTerms(FROM, TO, 10));
+        List.of(new TermDarCount(CANCER, "malignant neoplasm", 1)),
+        dao.findTopTerms(FROM, TO, null, 10));
   }
 
   @Test
@@ -113,7 +117,8 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     dar(IN_RANGE, null, term(CANCER, "cancer"));
     dar(IN_RANGE, null, term("MONDO:0004992", "cancer"));
 
-    assertEquals(List.of(new TermDarCount(CANCER, "cancer", 3)), dao.findTopTerms(FROM, TO, 10));
+    assertEquals(
+        List.of(new TermDarCount(CANCER, "cancer", 3)), dao.findTopTerms(FROM, TO, null, 10));
   }
 
   @Test
@@ -125,7 +130,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
         List.of(
             new TermDarCount("urn:term:a_b", "first", 1),
             new TermDarCount("urn_term_a:b", "second", 1)),
-        dao.findTopTerms(FROM, TO, 10));
+        dao.findTopTerms(FROM, TO, null, 10));
   }
 
   @Test
@@ -136,7 +141,31 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     ontologyDAO.batchInsertTerms(List.of(obsolete), user.getUserId());
     dar(IN_RANGE, null, term(ASTHMA, "asthma"));
 
-    assertEquals(List.of(new TermDarCount(ASTHMA, "asthma", 1)), dao.findTopTerms(FROM, TO, 10));
+    assertEquals(
+        List.of(new TermDarCount(ASTHMA, "asthma", 1)), dao.findTopTerms(FROM, TO, null, 10));
+  }
+
+  @Test
+  void scopesToDarsRequestingADatasetNowInTheDacs() {
+    Integer dacA = dac();
+    Integer dacB = dac();
+    Integer inA = dataset(dacA);
+    Integer inB = dataset(dacB);
+    request(dar(IN_RANGE, null, term(CANCER, "cancer")), inA);
+    request(dar(IN_RANGE, null, term(CANCER, "cancer"), term(DIABETES, "diabetes")), inB);
+    request(dar(IN_RANGE, null, term(ASTHMA, "asthma")), inA, inB);
+    dar(IN_RANGE, null, term(DIABETES, "diabetes"));
+
+    assertEquals(
+        List.of(new TermDarCount(ASTHMA, "asthma", 1), new TermDarCount(CANCER, "cancer", 1)),
+        dao.findTopTerms(FROM, TO, List.of(dacA), 10));
+    assertEquals(
+        List.of(
+            new TermDarCount(CANCER, "cancer", 2),
+            new TermDarCount(ASTHMA, "asthma", 1),
+            new TermDarCount(DIABETES, "diabetes", 1)),
+        dao.findTopTerms(FROM, TO, List.of(dacA, dacB), 10));
+    assertEquals(List.of(), dao.findTopTerms(FROM, TO, List.of(), 10));
   }
 
   @Test
@@ -152,7 +181,7 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
 
     assertEquals(
         List.of(new TermDarCount(CANCER, "cancer", 2), new TermDarCount(ASTHMA, "asthma", 1)),
-        dao.findTopTerms(FROM, TO, 10));
+        dao.findTopTerms(FROM, TO, null, 10));
   }
 
   private static Instant startOf(LocalDate date) {
@@ -181,6 +210,27 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, user.getUserId(), submitted, submitted, submitted, data, "era");
     return referenceId;
+  }
+
+  private void request(String referenceId, Integer... datasetIds) {
+    for (Integer datasetId : datasetIds) {
+      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    }
+  }
+
+  private Integer dataset(Integer dacId) {
+    return datasetDAO.insertDataset(
+        "Dataset " + UUID.randomUUID(),
+        new Timestamp(IN_RANGE.getTime()),
+        user.getUserId(),
+        UUID.randomUUID().toString(),
+        "{}",
+        dacId);
+  }
+
+  private Integer dac() {
+    return dacDAO.createDac(
+        "DAC " + UUID.randomUUID(), UUID.randomUUID().toString(), user.getUserId());
   }
 
   private void progressReport(String parent, OntologyEntry... terms) {

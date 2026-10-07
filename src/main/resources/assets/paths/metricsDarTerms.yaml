@@ -2,10 +2,11 @@ get:
   summary: Ontology terms most cited by DARs
   operationId: apiMetricsDarTermsGet
   description: |
-    Admin only. The ontology terms cited by the most DAR submissions in the range, most first,
-    from each DAR's research use statement. Progress reports, and canceled and archived DARs,
-    aren't counted, and a submission counts once per term however often it cites it, including
-    one saved before 2022-07-27 as one DAR per dataset.
+    Admins, and DAC chairs and members for their DACs (see dacId). The ontology terms cited by the
+    most DAR submissions in the range, most first, from each DAR's research use statement. Progress
+    reports, and canceled and archived DARs, aren't counted, and a submission counts once per term
+    however often it cites it, including one saved before 2022-07-27 as one DAR per dataset. Scoped
+    to DACs, only DARs requesting one of their datasets.
   parameters:
     - name: from
       in: query
@@ -28,9 +29,20 @@ get:
       schema:
         type: integer
         default: 10
+    - name: dacId
+      in: query
+      required: false
+      description: Repeatable. Limits the report to DARs requesting datasets in these DACs, which a chair or member must be on. Without it, an admin reads every DAC and a chair or member their own.
+      schema:
+        type: array
+        items:
+          type: integer
+      style: form
+      explode: true
   tags:
     - Metrics
     - Admin
+    - DAC
   responses:
     200:
       description: The top terms.
@@ -43,7 +55,7 @@ get:
     401:
       description: Unauthorized.
     403:
-      description: Admin only.
+      description: Not an admin, chair or member, or not on a requested DAC.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

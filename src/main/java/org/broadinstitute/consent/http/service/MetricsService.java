@@ -365,26 +365,28 @@ public class MetricsService {
   }
 
   /** Data access elections opened, and votes cast, from {@code from} to {@code to}, per bucket. */
-  public ElectionReport getElections(LocalDate from, LocalDate to, MetricsBucket bucket) {
+  public ElectionReport getElections(
+      LocalDate from, LocalDate to, List<Integer> dacIds, MetricsBucket bucket) {
     Instant start = startOfDay(from);
     Instant end = startOfDay(to.plusDays(1));
     return ElectionReport.of(
         from,
         to,
         bucket,
-        electionMetricsDAO.countElectionsOpened(start, end, bucket.truncUnit()),
-        electionMetricsDAO.countVotesCast(start, end, bucket.truncUnit()));
+        electionMetricsDAO.countElectionsOpened(start, end, dacIds, bucket.truncUnit()),
+        electionMetricsDAO.countVotesCast(start, end, dacIds, bucket.truncUnit()));
   }
 
   /**
    * The {@code limit} ontology terms cited by the most DARs submitted from {@code from} to {@code
    * to}.
    */
-  public TermReport getDarTerms(LocalDate from, LocalDate to, int limit) {
+  public TermReport getDarTerms(LocalDate from, LocalDate to, List<Integer> dacIds, int limit) {
     return new TermReport(
         from.toString(),
         to.toString(),
-        darTermMetricsDAO.findTopTerms(startOfDay(from), startOfDay(to.plusDays(1)), limit));
+        darTermMetricsDAO.findTopTerms(
+            startOfDay(from), startOfDay(to.plusDays(1)), dacIds, limit));
   }
 
   // submission_date is stored without a zone in the server's zone, which date_trunc buckets in too
