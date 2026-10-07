@@ -139,6 +139,22 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     assertEquals(List.of(new TermDarCount(ASTHMA, "asthma", 1)), dao.findTopTerms(FROM, TO, 10));
   }
 
+  @Test
+  void countsALegacySubmissionSavedAsOneDarPerDatasetOnce() {
+    Integer legacy =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), IN_RANGE);
+    for (int i = 0; i < 3; i++) {
+      dar(legacy, IN_RANGE, null, term(ASTHMA, "asthma"));
+    }
+    dar(IN_RANGE, null, term(CANCER, "cancer"));
+    dar(IN_RANGE, null, term(CANCER, "cancer"));
+
+    assertEquals(
+        List.of(new TermDarCount(CANCER, "cancer", 2), new TermDarCount(ASTHMA, "asthma", 1)),
+        dao.findTopTerms(FROM, TO, 10));
+  }
+
   private static Instant startOf(LocalDate date) {
     return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
   }
@@ -151,12 +167,16 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   private String dar(Date submitted, String status, OntologyEntry... terms) {
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setOntologies(Arrays.asList(terms));
-    data.setStatus(status);
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), user.getUserId(), submitted);
+    return dar(collectionId, submitted, status, terms);
+  }
+
+  private String dar(Integer collectionId, Date submitted, String status, OntologyEntry... terms) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setOntologies(Arrays.asList(terms));
+    data.setStatus(status);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, user.getUserId(), submitted, submitted, submitted, data, "era");
