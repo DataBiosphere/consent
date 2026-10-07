@@ -2,9 +2,10 @@ get:
   summary: Ontology terms most cited by DARs
   operationId: apiMetricsDarTermsGet
   description: |
-    Admin only. The ontology terms cited by the most DARs submitted in the range, most first,
+    Admin only. The ontology terms cited by the most DAR submissions in the range, most first,
     from each DAR's research use statement. Progress reports, and canceled and archived DARs,
-    aren't counted, and a DAR counts once per term however often it cites it.
+    aren't counted, and a submission counts once per term however often it cites it, including
+    one saved before 2022-07-27 as one DAR per dataset.
   parameters:
     - name: from
       in: query

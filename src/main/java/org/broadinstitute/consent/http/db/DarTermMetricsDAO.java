@@ -11,15 +11,17 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 public interface DarTermMetricsDAO {
 
   /**
-   * The terms cited by the most original DARs submitted in [:from, :to), excluding canceled and
-   * archived DARs, each DAR counted once per term. Ids match as the ontology reconciliation query
-   * does, with a CURIE or OBO IRI also matching the underscored OBO id the importer stores.
+   * The terms cited by the most DAR submissions in [:from, :to), excluding canceled and archived
+   * DARs, each submission counted once per term. Before 2022-07-27 a submission was saved as one
+   * DAR per dataset, so a collection's original DARs count as one. Ids match as the ontology
+   * reconciliation query does, with a CURIE or OBO IRI also matching the underscored OBO id the
+   * importer stores.
    */
   @RegisterConstructorMapper(TermDarCount.class)
   @SqlQuery(
       """
       WITH original_dars AS (
-        SELECT dar.reference_id, dar.data
+        SELECT COALESCE(dar.collection_id::text, dar.reference_id) AS submission_key, dar.data
         FROM data_access_request dar
         WHERE dar.parent_id IS NULL
           AND dar.submission_date >= :from AND dar.submission_date < :to
@@ -28,7 +30,7 @@ public interface DarTermMetricsDAO {
           AND jsonb_typeof(dar.data -> 'ontologies') = 'array'
       ),
       cited AS (
-        SELECT od.reference_id,
+        SELECT od.submission_key,
                TRIM(term ->> 'id') AS term_id,
                LOWER(TRIM(term ->> 'id')) AS norm_id,
                CASE
@@ -61,8 +63,8 @@ public interface DarTermMetricsDAO {
         ORDER BY norm_id, preference, id
       ),
       dar_terms AS (
-        SELECT DISTINCT ON (c.reference_id, COALESCE(LOWER(i.id), c.unindexed_key))
-               c.reference_id,
+        SELECT DISTINCT ON (c.submission_key, COALESCE(LOWER(i.id), c.unindexed_key))
+               c.submission_key,
                COALESCE(LOWER(i.id), c.unindexed_key) AS term_key,
                c.term_id,
                c.label,
@@ -70,7 +72,7 @@ public interface DarTermMetricsDAO {
                CASE WHEN i.usable THEN i.label END AS indexed_label
         FROM cited c
         LEFT JOIN indexed i ON i.norm_id = c.norm_id
-        ORDER BY c.reference_id, COALESCE(LOWER(i.id), c.unindexed_key), c.term_id
+        ORDER BY c.submission_key, COALESCE(LOWER(i.id), c.unindexed_key), c.term_id
       )
       SELECT COALESCE(MIN(indexed_id), MODE() WITHIN GROUP (ORDER BY term_id)) AS id,
              COALESCE(MIN(indexed_label), MODE() WITHIN GROUP (ORDER BY label)) AS label,

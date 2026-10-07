@@ -9,4 +9,4 @@ properties:
   darCount:
     type: integer
     format: int64
-    description: DARs citing the term.
+    description: DAR submissions citing the term.
