@@ -36,7 +36,10 @@ public interface DacDashboardDAO {
         FROM data_access_request dar
         WHERE dar.submission_date IS NOT NULL
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
+        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+        ORDER BY dar.collection_id,
+                 (dar.parent_id IS NULL AND LOWER(dar.data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                 dar.submission_date DESC, dar.id DESC
       ),
       -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
       latest_dar AS (

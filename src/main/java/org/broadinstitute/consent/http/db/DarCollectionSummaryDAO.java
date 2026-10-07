@@ -43,7 +43,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         FROM data_access_request
         WHERE submission_date IS NOT NULL
         AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-        ORDER BY collection_id, submission_date DESC, id DESC
+        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+        ORDER BY collection_id,
+                 (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                 submission_date DESC, id DESC
       ),
       -- All non-archived submitted DARs per collection, pre-aggregated so the main query
       -- does not need to fan out per DAR and re-collapse with a GROUP BY.
@@ -148,7 +151,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 FROM data_access_request
                 WHERE submission_date IS NOT NULL
                 AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-                ORDER BY collection_id, submission_date DESC, id DESC
+                -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+                ORDER BY collection_id,
+                         (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                         submission_date DESC, id DESC
               ) latest_dar ON latest_dar.collection_id = c.collection_id
               -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
               INNER JOIN data_access_request sd
@@ -217,7 +223,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               FROM data_access_request
               WHERE submission_date IS NOT NULL
               AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-              ORDER BY collection_id, submission_date DESC, id DESC
+              -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+              ORDER BY collection_id,
+                       (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                       submission_date DESC, id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
           INNER JOIN data_access_request sd
@@ -285,7 +294,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                FROM data_access_request
                WHERE submission_date IS NOT NULL
                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-               ORDER BY collection_id, submission_date DESC, id DESC
+               -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+               ORDER BY collection_id,
+                        (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                        submission_date DESC, id DESC
           ) latest_dar ON latest_dar.collection_id = c.collection_id
           -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
           INNER JOIN data_access_request sd
@@ -349,7 +361,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         FROM data_access_request
         WHERE submission_date IS NOT NULL
         AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-        ORDER BY collection_id, submission_date DESC, id DESC
+        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+        ORDER BY collection_id,
+                 (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                 submission_date DESC, id DESC
       ) latest_dar ON latest_dar.collection_id = c.collection_id
       -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
       INNER JOIN data_access_request sd
@@ -422,7 +437,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                FROM data_access_request
                WHERE submission_date IS NOT NULL
                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
-               ORDER BY collection_id, submission_date DESC, id DESC
+               -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+               ORDER BY collection_id,
+                        (parent_id IS NULL AND LOWER(data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                        submission_date DESC, id DESC
               ) latest_dar ON latest_dar.collection_id = c.collection_id
               -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
               INNER JOIN data_access_request sd

@@ -207,6 +207,27 @@ class DacDashboardDAOTest extends DAOTestHelper {
     assertEquals(1, counts.darApproved());
   }
 
+  @Test
+  void ignoresACanceledLatestOriginalDarOfAPre2022Submission() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dacId);
+    User researcher = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), researcher.getUserId(), FIXED_DATE);
+    Integer decidedDataset = createDataset(owner, dacId);
+    String decided = insertDar(researcher, collectionId, decidedDataset, FIXED_DATE);
+    createElection(decided, decidedDataset, ElectionStatus.CLOSED);
+    String canceled = insertDar(researcher, collectionId, createDataset(owner, dacId), FIXED_DATE);
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(canceled));
+
+    DashboardDatabaseCounts counts = getCounts(chair);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(1, counts.darApproved());
+  }
+
   private DashboardDatabaseCounts getCounts(User user) {
     return jdbi.onDemand(DacDashboardDAO.class)
         .getCounts(

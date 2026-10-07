@@ -25,7 +25,10 @@ public interface ResearcherDashboardDAO {
         JOIN dar_collection c ON c.collection_id = dar.collection_id
         WHERE dar.submission_date IS NOT NULL
           AND c.create_user_id = :userId
-        ORDER BY dar.collection_id, dar.submission_date DESC, dar.id DESC
+        -- An active original DAR anchors a pre-2022 submission over a canceled sibling.
+        ORDER BY dar.collection_id,
+                 (dar.parent_id IS NULL AND LOWER(dar.data->>'status') IS NOT DISTINCT FROM 'canceled'),
+                 dar.submission_date DESC, dar.id DESC
       ),
       -- Filtering before the DISTINCT ON would substitute an older submission for a collection
       -- whose latest submission is archived, instead of dropping the collection.

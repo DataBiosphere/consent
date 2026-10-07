@@ -1003,6 +1003,10 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.cancelByReferenceIds(List.of(canceledDar));
     String firstDar = insertSubmittedDar(collectionId, userId, first.getDatasetId());
     String secondDar = insertSubmittedDar(collectionId, userId, second.getDatasetId());
+    Dataset canceledLastDataset = createDatasetWithDac(userId, dac.getDacId());
+    String canceledLastDar =
+        insertSubmittedDar(collectionId, userId, canceledLastDataset.getDatasetId());
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(canceledLastDar));
     Election firstElection =
         createElection(ElectionStatus.CLOSED.getValue(), firstDar, first.getDatasetId());
     Election secondElection =
@@ -1026,7 +1030,10 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
               darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
                   userId,
                   List.of(
-                      canceledDataset.getDatasetId(), first.getDatasetId(), second.getDatasetId()),
+                      canceledDataset.getDatasetId(),
+                      first.getDatasetId(),
+                      second.getDatasetId(),
+                      canceledLastDataset.getDatasetId()),
                   collectionId);
           case "collectionId" ->
               darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
@@ -1038,6 +1045,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertEquals(
         Set.of(firstElection.getElectionId(), secondElection.getElectionId()),
         summary.getElections().keySet());
+    assertFalse(summary.getDarStatuses().containsValue("Canceled"));
   }
 
   private String insertSubmittedDar(Integer collectionId, Integer userId, Integer datasetId) {
