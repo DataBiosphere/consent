@@ -2,8 +2,10 @@ get:
   summary: Studies created over time
   operationId: apiMetricsStudiesGet
   description: |
-    Admin only. Studies created in the range, per bucket of their create date.
-    A deleted study isn't counted.
+    Admins, and DAC chairs and members for their DACs (see dacId). Studies created in the range,
+    per bucket of their create date.
+    A deleted study isn't counted. Scoped to DACs, a study counts when one of its datasets is now
+    in them.
   parameters:
     - name: from
       in: query
@@ -27,9 +29,20 @@ get:
         type: string
         enum: [day, week, month, quarter]
         default: quarter
+    - name: dacId
+      in: query
+      required: false
+      description: Repeatable. Limits the report to studies with a dataset in these DACs, which a chair or member must be on. Without it, an admin reads every DAC and a chair or member their own.
+      schema:
+        type: array
+        items:
+          type: integer
+      style: form
+      explode: true
   tags:
     - Metrics
     - Admin
+    - DAC
   responses:
     200:
       description: The total and counts per bucket.
@@ -42,7 +55,7 @@ get:
     401:
       description: Unauthorized.
     403:
-      description: Admin only.
+      description: Not an admin, chair or member, or not on a requested DAC.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

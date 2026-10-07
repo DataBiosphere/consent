@@ -629,11 +629,14 @@ class MetricsResourceTest extends AbstractTestHelper {
         new DatasetReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, 0, List.of());
     CreatedReport studies =
         new CreatedReport("2026-01-01", "2026-03-31", MetricsBucket.MONTH, 0, List.of());
-    when(service.getDatasets(from, to, MetricsBucket.MONTH)).thenReturn(datasets);
-    when(service.getStudies(from, to, MetricsBucket.MONTH)).thenReturn(studies);
+    when(service.resolveDacScope(any(), eq(List.of()))).thenReturn(SCOPE);
+    when(service.getDatasets(from, to, SCOPE, MetricsBucket.MONTH)).thenReturn(datasets);
+    when(service.getStudies(from, to, SCOPE, MetricsBucket.MONTH)).thenReturn(studies);
 
-    Response datasetResponse = resource.getDatasets(duosUser, "2026-01-01", "2026-03-31", "Month");
-    Response studyResponse = resource.getStudies(duosUser, "2026-01-01", "2026-03-31", "month");
+    Response datasetResponse =
+        resource.getDatasets(duosUser, "2026-01-01", "2026-03-31", "Month", List.of());
+    Response studyResponse =
+        resource.getStudies(duosUser, "2026-01-01", "2026-03-31", "month", List.of());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, datasetResponse.getStatus());
     assertEquals(datasets, datasetResponse.getEntity());
@@ -652,21 +655,53 @@ class MetricsResourceTest extends AbstractTestHelper {
   void datasetsAndStudiesRejectBadParameters(String from, String to, String bucket) {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
-        resource.getDatasets(duosUser, from, to, bucket).getStatus());
+        resource.getDatasets(duosUser, from, to, bucket, List.of()).getStatus());
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
-        resource.getStudies(duosUser, from, to, bucket).getStatus());
+        resource.getStudies(duosUser, from, to, bucket, List.of()).getStatus());
     verifyNoInteractions(service);
   }
 
   @Test
-  void datasetsAndStudiesAreAdminOnly() throws NoSuchMethodException {
+  void datasetsAndStudiesForbidADacTheCallerIsNotOn() {
+    when(service.resolveDacScope(any(), eq(List.of(9)))).thenThrow(new ForbiddenException());
+
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_FORBIDDEN,
+        resource
+            .getDatasets(duosUser, "2026-01-01", "2026-03-31", "quarter", List.of("9"))
+            .getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_FORBIDDEN,
+        resource
+            .getStudies(duosUser, "2026-01-01", "2026-03-31", "quarter", List.of("9"))
+            .getStatus());
+  }
+
+  @Test
+  void datasetsAndStudiesRejectANonIntegerDacId() {
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource
+            .getDatasets(duosUser, "2026-01-01", "2026-03-31", "quarter", List.of("x"))
+            .getStatus());
+    assertEquals(
+        HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
+        resource
+            .getStudies(duosUser, "2026-01-01", "2026-03-31", "quarter", List.of("x"))
+            .getStatus());
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void datasetsAndStudiesAdmitChairsAndMembers() throws NoSuchMethodException {
     for (String name : List.of("getDatasets", "getStudies")) {
       RolesAllowed roles =
           MetricsResource.class
-              .getMethod(name, DuosUser.class, String.class, String.class, String.class)
+              .getMethod(name, DuosUser.class, String.class, String.class, String.class, List.class)
               .getAnnotation(RolesAllowed.class);
-      assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+      assertEquals(
+          List.of(Resource.ADMIN, Resource.CHAIRPERSON, Resource.MEMBER), List.of(roles.value()));
     }
   }
 

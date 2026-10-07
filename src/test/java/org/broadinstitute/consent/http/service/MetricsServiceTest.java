@@ -747,11 +747,13 @@ class MetricsServiceTest extends AbstractTestHelper {
             new DatasetBucket(start, 3, 1),
             new DatasetBucket(start.plusSeconds(86400 * 31L), 2, 2));
     List<CreatedBucket> studies = List.of(new CreatedBucket(start, 1));
-    when(datasetMetricsDAO.countDatasetsCreated(start, end, "month")).thenReturn(datasets);
-    when(datasetMetricsDAO.countStudiesCreated(start, end, "month")).thenReturn(studies);
+    when(datasetMetricsDAO.countDatasetsCreated(start, end, List.of(7), "month"))
+        .thenReturn(datasets);
+    when(datasetMetricsDAO.countStudiesCreated(start, end, List.of(7), "month"))
+        .thenReturn(studies);
 
-    DatasetReport datasetReport = service.getDatasets(from, to, MetricsBucket.MONTH);
-    CreatedReport studyReport = service.getStudies(from, to, MetricsBucket.MONTH);
+    DatasetReport datasetReport = service.getDatasets(from, to, List.of(7), MetricsBucket.MONTH);
+    CreatedReport studyReport = service.getStudies(from, to, List.of(7), MetricsBucket.MONTH);
 
     assertEquals("2026-01-01", datasetReport.from());
     assertEquals("2026-03-31", datasetReport.to());

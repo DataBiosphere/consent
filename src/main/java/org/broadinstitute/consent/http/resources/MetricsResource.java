@@ -282,25 +282,27 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/datasets")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getDatasets(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
-      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
-    return createdReport(from, to, bucket, metricsService::getDatasets);
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @QueryParam("dacId") List<String> dacIds) {
+    return createdReport(dacScope(user, dacIds), from, to, bucket, metricsService::getDatasets);
   }
 
   @GET
   @Path("/studies")
   @Produces("application/json")
-  @RolesAllowed(ADMIN)
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getStudies(
       @Auth DuosUser user,
       @QueryParam("from") String from,
       @QueryParam("to") String to,
-      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
-    return createdReport(from, to, bucket, metricsService::getStudies);
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket,
+      @QueryParam("dacId") List<String> dacIds) {
+    return createdReport(dacScope(user, dacIds), from, to, bucket, metricsService::getStudies);
   }
 
   @GET
@@ -336,6 +338,21 @@ public class MetricsResource extends Resource {
 
   private interface CreatedReportQuery<R> {
     R run(LocalDate from, LocalDate to, MetricsBucket bucket);
+  }
+
+  private interface ScopedCreatedReportQuery<R> {
+    R run(LocalDate from, LocalDate to, List<Integer> dacIds, MetricsBucket bucket);
+  }
+
+  /** A DAC-scoped report with no rows to page; the scope resolves only once the range parses. */
+  private <R> Response createdReport(
+      Supplier<List<Integer>> dacScope,
+      String from,
+      String to,
+      String bucket,
+      ScopedCreatedReportQuery<R> query) {
+    return createdReport(
+        from, to, bucket, (start, end, unit) -> query.run(start, end, dacScope.get(), unit));
   }
 
   /** A range report with no rows to page, so no limit or offset. */
