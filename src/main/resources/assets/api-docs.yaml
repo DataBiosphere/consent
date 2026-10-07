@@ -933,6 +933,10 @@ paths:
     $ref: './paths/metricsUsers.yaml'
   /api/metrics/institutions:
     $ref: './paths/metricsInstitutions.yaml'
+  /api/metrics/datasets:
+    $ref: './paths/metricsDatasets.yaml'
+  /api/metrics/studies:
+    $ref: './paths/metricsStudies.yaml'
   /api/metrics/elections:
     $ref: './paths/metricsElections.yaml'
   /api/metrics/dar-summaries/{datasetId}:

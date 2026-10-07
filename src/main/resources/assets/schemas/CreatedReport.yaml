@@ -11,9 +11,9 @@ properties:
     enum: [DAY, WEEK, MONTH, QUARTER]
   total:
     type: integer
-    description: Institutions created in the range.
+    description: Records created in the range.
   buckets:
     type: array
-    description: Institutions created per bucket; a bucket with none is left out.
+    description: Records created per bucket; a bucket with none is left out.
     items:
       $ref: './CreatedBucket.yaml'

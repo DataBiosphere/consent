@@ -1,8 +1,9 @@
 get:
-  summary: Institutions created over time
-  operationId: apiMetricsInstitutionsGet
+  summary: Studies created over time
+  operationId: apiMetricsStudiesGet
   description: |
-    Admin only. Institutions created in the range, per bucket of their create date.
+    Admin only. Studies created in the range, per bucket of their create date.
+    A deleted study isn't counted.
   parameters:
     - name: from
       in: query

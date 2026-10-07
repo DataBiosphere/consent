@@ -213,9 +213,9 @@ public interface StudyDAO extends Transactional<StudyDAO> {
   @SqlUpdate(
       """
           WITH property_deletes AS (
-              DELETE from study_property where study_id = :studyId returning study_id
+              DELETE from study_property where study_id = :studyId
           )
-          DELETE FROM study WHERE study_id in (select study_id from property_deletes)
+          DELETE FROM study WHERE study_id = :studyId
       """)
   void deleteStudyByStudyId(@Bind("studyId") Integer studyId);
 
