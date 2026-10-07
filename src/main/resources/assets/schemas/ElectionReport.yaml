@@ -1,0 +1,27 @@
+type: object
+properties:
+  from:
+    type: string
+    format: date
+  to:
+    type: string
+    format: date
+  bucket:
+    type: string
+    enum: [DAY, WEEK, MONTH, QUARTER]
+  electionsOpened:
+    type: integer
+    description: Data access elections opened in the range.
+  votesCast:
+    type: integer
+    description: Votes cast in the range on data access elections.
+  elections:
+    type: array
+    description: Elections opened per bucket and status; a bucket with none is left out.
+    items:
+      $ref: './ElectionBucket.yaml'
+  votes:
+    type: array
+    description: Votes cast per bucket and vote type; a bucket with none is left out.
+    items:
+      $ref: './VoteBucket.yaml'

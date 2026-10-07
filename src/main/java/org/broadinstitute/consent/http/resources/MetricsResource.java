@@ -280,6 +280,42 @@ public class MetricsResource extends Resource {
   }
 
   @GET
+  @Path("/datasets")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getDatasets(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getDatasets);
+  }
+
+  @GET
+  @Path("/studies")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getStudies(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getStudies);
+  }
+
+  @GET
+  @Path("/elections")
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  public Response getElections(
+      @Auth DuosUser user,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return createdReport(from, to, bucket, metricsService::getElections);
+  }
+
+  @GET
   @Path("/dar-terms")
   @Produces("application/json")
   @RolesAllowed(ADMIN)

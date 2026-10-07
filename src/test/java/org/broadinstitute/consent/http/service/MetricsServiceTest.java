@@ -25,6 +25,8 @@ import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
+import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DarKind;
@@ -35,6 +37,7 @@ import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.enumeration.SoApprovalStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.CreatedBucket;
+import org.broadinstitute.consent.http.models.CreatedReport;
 import org.broadinstitute.consent.http.models.DarDatasetTurnaround;
 import org.broadinstitute.consent.http.models.DarDecision;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
@@ -43,13 +46,16 @@ import org.broadinstitute.consent.http.models.DarVolume;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetBucket;
+import org.broadinstitute.consent.http.models.DatasetReport;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
 import org.broadinstitute.consent.http.models.DecisionReport;
+import org.broadinstitute.consent.http.models.ElectionBucket;
+import org.broadinstitute.consent.http.models.ElectionReport;
 import org.broadinstitute.consent.http.models.ExpirationBucket;
 import org.broadinstitute.consent.http.models.ExpirationReport;
 import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.InstitutionDarCount;
-import org.broadinstitute.consent.http.models.InstitutionReport;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.Presentation;
 import org.broadinstitute.consent.http.models.Publication;
@@ -73,6 +79,7 @@ import org.broadinstitute.consent.http.models.UserReport;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.broadinstitute.consent.http.models.VolumeReport;
+import org.broadinstitute.consent.http.models.VoteBucket;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
 import org.jdbi.v3.core.Jdbi;
@@ -99,6 +106,10 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock private AccountMetricsDAO accountMetricsDAO;
 
+  @Mock private DatasetMetricsDAO datasetMetricsDAO;
+
+  @Mock private ElectionMetricsDAO electionMetricsDAO;
+
   @Mock private DarTermMetricsDAO darTermMetricsDAO;
 
   @Mock private DatasetService datasetService;
@@ -113,6 +124,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
     when(jdbi.onDemand(AccountMetricsDAO.class)).thenReturn(accountMetricsDAO);
+    when(jdbi.onDemand(DatasetMetricsDAO.class)).thenReturn(datasetMetricsDAO);
+    when(jdbi.onDemand(ElectionMetricsDAO.class)).thenReturn(electionMetricsDAO);
     when(jdbi.onDemand(DarTermMetricsDAO.class)).thenReturn(darTermMetricsDAO);
     service = new MetricsService(jdbi, datasetService);
   }
@@ -712,7 +725,7 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(accountMetricsDAO.countInstitutionsCreated(start, end, "month")).thenReturn(institutions);
 
     UserReport userReport = service.getUsers(from, to, MetricsBucket.MONTH);
-    InstitutionReport institutionReport = service.getInstitutions(from, to, MetricsBucket.MONTH);
+    CreatedReport institutionReport = service.getInstitutions(from, to, MetricsBucket.MONTH);
 
     assertEquals("2026-01-01", userReport.from());
     assertEquals("2026-03-31", userReport.to());
@@ -721,6 +734,55 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(roles, userReport.roles());
     assertEquals(1, institutionReport.total());
     assertEquals(institutions, institutionReport.buckets());
+  }
+
+  @Test
+  void datasetsAndStudiesTotalTheirBucketsOverTheWholeLastDay() {
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    Instant start = from.atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant end = LocalDate.of(2026, 4, 1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+    List<DatasetBucket> datasets =
+        List.of(
+            new DatasetBucket(start, 3, 1),
+            new DatasetBucket(start.plusSeconds(86400 * 31L), 2, 2));
+    List<CreatedBucket> studies = List.of(new CreatedBucket(start, 1));
+    when(datasetMetricsDAO.countDatasetsCreated(start, end, "month")).thenReturn(datasets);
+    when(datasetMetricsDAO.countStudiesCreated(start, end, "month")).thenReturn(studies);
+
+    DatasetReport datasetReport = service.getDatasets(from, to, MetricsBucket.MONTH);
+    CreatedReport studyReport = service.getStudies(from, to, MetricsBucket.MONTH);
+
+    assertEquals("2026-01-01", datasetReport.from());
+    assertEquals("2026-03-31", datasetReport.to());
+    assertEquals(5, datasetReport.total());
+    assertEquals(3, datasetReport.dacApproved());
+    assertEquals(datasets, datasetReport.buckets());
+    assertEquals(1, studyReport.total());
+    assertEquals(studies, studyReport.buckets());
+  }
+
+  @Test
+  void electionsTotalTheElectionsOpenedAndVotesCastOverTheWholeLastDay() {
+    LocalDate from = LocalDate.of(2026, 1, 1);
+    LocalDate to = LocalDate.of(2026, 3, 31);
+    Instant start = from.atStartOfDay(ZoneId.systemDefault()).toInstant();
+    Instant end = LocalDate.of(2026, 4, 1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+    List<ElectionBucket> elections =
+        List.of(new ElectionBucket(start, "Open", 2), new ElectionBucket(start, "Canceled", 1));
+    List<VoteBucket> votes =
+        List.of(new VoteBucket(start, "DAC", 5), new VoteBucket(start, "FINAL", 2));
+    when(electionMetricsDAO.countElectionsOpened(start, end, "month")).thenReturn(elections);
+    when(electionMetricsDAO.countVotesCast(start, end, "month")).thenReturn(votes);
+
+    ElectionReport report = service.getElections(from, to, MetricsBucket.MONTH);
+
+    assertEquals("2026-01-01", report.from());
+    assertEquals("2026-03-31", report.to());
+    assertEquals(3, report.electionsOpened());
+    assertEquals(7, report.votesCast());
+    assertEquals(elections, report.elections());
+    assertEquals(votes, report.votes());
   }
 
   @Test

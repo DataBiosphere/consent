@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!--
+    Indices supporting the admin metrics reports that bucket by a date. Each is built CONCURRENTLY
+    in its own changeSet, as in changelog-consent-2026-08-07-so-dashboard-indices.xml, which
+    explains the locking and the INVALID-index caveat.
+  -->
+
+  <changeSet id="changelog-consent-2026-10-06-metrics-date-indexes-election-create-date" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_election_create_date ON election (create_date)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_election_create_date</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-10-06-metrics-date-indexes-vote-cast-date" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_vote_cast_date ON vote ((COALESCE(update_date, create_date))) WHERE vote IS NOT NULL</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_vote_cast_date</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-10-06-metrics-date-indexes-users-create-date" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_create_date ON users (create_date)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_users_create_date</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-10-06-metrics-date-indexes-institution-create-date" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_institution_create_date ON institution (create_date)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_institution_create_date</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-10-06-metrics-date-indexes-dataset-create-date" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dataset_create_date ON dataset (create_date)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_dataset_create_date</sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="changelog-consent-2026-10-06-metrics-date-indexes-study-create-date" author="kmarete"
+    runInTransaction="false">
+    <sql>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_study_create_date ON study (create_date)</sql>
+    <rollback>
+      <sql>DROP INDEX CONCURRENTLY IF EXISTS idx_study_create_date</sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

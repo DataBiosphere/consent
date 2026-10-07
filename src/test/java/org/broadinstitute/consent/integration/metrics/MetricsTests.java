@@ -71,6 +71,9 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-renewals",
         "/api/metrics/users",
         "/api/metrics/institutions",
+        "/api/metrics/datasets",
+        "/api/metrics/studies",
+        "/api/metrics/elections",
         "/api/metrics/dar-terms",
         "/api/admin/dashboard-summary"
       })
@@ -128,6 +131,9 @@ class MetricsTests extends ContainerTests {
         "/api/metrics/dar-renewals",
         "/api/metrics/users",
         "/api/metrics/institutions",
+        "/api/metrics/datasets",
+        "/api/metrics/studies",
+        "/api/metrics/elections",
         "/api/metrics/dar-terms"
       })
   void missingRangeIsABadRequest(String path) {
@@ -137,13 +143,32 @@ class MetricsTests extends ContainerTests {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/api/metrics/users", "/api/metrics/institutions"})
-  void adminGetsAccountsCreated(String path) {
+  @ValueSource(
+      strings = {
+        "/api/metrics/users",
+        "/api/metrics/institutions",
+        "/api/metrics/datasets",
+        "/api/metrics/studies"
+      })
+  void adminGetsRecordsCreated(String path) {
     try (Response response = request(path + RANGE, "ci-admin@example.com")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       String body = response.readEntity(String.class);
       assertTrue(body.contains("\"bucket\":\"MONTH\""), body);
       assertTrue(body.contains("\"total\""), body);
+      if (path.endsWith("/datasets")) {
+        assertTrue(body.contains("\"dacApproved\""), body);
+      }
+    }
+  }
+
+  @Test
+  void adminGetsElectionsAndVotes() {
+    try (Response response = request("/api/metrics/elections" + RANGE, "ci-admin@example.com")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      String body = response.readEntity(String.class);
+      assertTrue(body.contains("\"electionsOpened\""), body);
+      assertTrue(body.contains("\"votesCast\""), body);
     }
   }
 

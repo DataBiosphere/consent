@@ -1,27 +1,30 @@
 get:
-  summary: Institutions created over time
-  operationId: apiMetricsInstitutionsGet
+  summary: Data access elections and votes over time
+  operationId: apiMetricsElectionsGet
   description: |
-    Admin only. Institutions created in the range, per bucket of their create date.
+    Admin only. DAC activity volume: data access elections opened in the range, per bucket of
+    their create date and by the status they have now, and votes cast in the range, per bucket of
+    when they were last cast and by vote type. Uncast votes aren't counted, and a changed vote
+    counts once, when it last changed.
   parameters:
     - name: from
       in: query
       required: true
-      description: First create date to include, as yyyy-MM-dd, from 1900 to 9999.
+      description: First date to include, as yyyy-MM-dd, from 1900 to 9999.
       schema:
         type: string
         format: date
     - name: to
       in: query
       required: true
-      description: Last create date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      description: Last date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
       schema:
         type: string
         format: date
     - name: bucket
       in: query
       required: false
-      description: Create-date bucket for the counts.
+      description: Date bucket for the counts.
       schema:
         type: string
         enum: [day, week, month, quarter]
@@ -31,11 +34,11 @@ get:
     - Admin
   responses:
     200:
-      description: The total and counts per bucket.
+      description: The totals and counts per bucket.
       content:
         application/json:
           schema:
-            $ref: '../schemas/CreatedReport.yaml'
+            $ref: '../schemas/ElectionReport.yaml'
     400:
       description: Missing or invalid query parameter.
     401:

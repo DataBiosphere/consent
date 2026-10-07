@@ -1,8 +1,10 @@
 get:
-  summary: Institutions created over time
-  operationId: apiMetricsInstitutionsGet
+  summary: Datasets created over time
+  operationId: apiMetricsDatasetsGet
   description: |
-    Admin only. Institutions created in the range, per bucket of their create date.
+    Admin only. Datasets created in the range, per bucket of their create date, and how many of
+    those the DAC has approved now.
+    A legacy dataset with no create date isn't counted, nor is a deleted one.
   parameters:
     - name: from
       in: query
@@ -31,11 +33,11 @@ get:
     - Admin
   responses:
     200:
-      description: The total and counts per bucket.
+      description: The totals and counts per bucket.
       content:
         application/json:
           schema:
-            $ref: '../schemas/CreatedReport.yaml'
+            $ref: '../schemas/DatasetReport.yaml'
     400:
       description: Missing or invalid query parameter.
     401:
