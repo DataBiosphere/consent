@@ -9,6 +9,8 @@
 # Two traps that this guards against:
 #   - jq -j prints a missing or null .password as the text "null", which is not empty.
 #   - $(...) drops trailing newlines, so a password that ends in a newline would change.
+# PW and U are the results. The script that sources this file reads them.
+# shellcheck disable=SC2034
 parse_creds() {
   local json=$1 raw_len kept_len
   PW=""; U=""

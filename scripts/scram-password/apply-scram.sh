@@ -68,6 +68,8 @@ rollback() {
   echo "after rollback: $(probe 2>&1)"
 }
 
+# Runs from the EXIT trap below, so ShellCheck cannot see the call.
+# shellcheck disable=SC2329
 cleanup() {
   if [ "$PENDING_ROLLBACK" = 1 ]; then
     echo "stopped before the result was verified - ROLLING BACK to the MD5 verifier"
