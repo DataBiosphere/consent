@@ -20,7 +20,6 @@ public class Study {
   private String piWebsiteUrl;
   private List<String> dataTypes;
   private final Set<Integer> datasetIds = new HashSet<>();
-  private Set<Dataset> datasets;
   private final Set<StudyProperty> properties = new HashSet<>();
   private FileStorageObject alternativeDataSharingPlan;
   private Date createDate;
@@ -148,14 +147,6 @@ public class Study {
 
   public void addDatasetId(Integer datasetId) {
     this.datasetIds.add(datasetId);
-  }
-
-  public void addDatasets(List<Dataset> datasetList) {
-    this.datasets = new HashSet<>(datasetList);
-  }
-
-  public Set<Dataset> getDatasets() {
-    return datasets == null ? Set.of() : datasets;
   }
 
   public Date getCreateDate() {

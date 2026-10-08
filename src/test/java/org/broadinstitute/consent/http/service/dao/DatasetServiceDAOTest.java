@@ -11,6 +11,7 @@ import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 import static org.broadinstitute.consent.http.models.StudyPatchBuilder.patch;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.BadRequestException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +35,7 @@ import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.Dac;
@@ -45,6 +48,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -55,6 +59,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInse
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdateResult;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -667,7 +672,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.copyOf(study.getProperties()),
             List.of());
 
-    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of()).study();
     assertEquals(newStudyName, updatedStudy.getName());
     assertEquals(newStudyDescription, updatedStudy.getDescription());
     assertEquals(newPIName, updatedStudy.getPiName());
@@ -715,7 +720,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.of(newProp, prop1),
             List.of());
 
-    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
+    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of()).study();
     // Updated prop
     Optional<StudyProperty> updatedProp1 =
         updatedStudy.getProperties().stream()
@@ -783,8 +788,15 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.of(),
             List.of());
 
-    Study updatedStudy =
+    StudyUpdateResult result =
         serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of(datasetInsert));
+    Study updatedStudy = result.study();
+    // Exactly the inserted consent group is reported as new; the updated one is not.
+    assertEquals(1, result.insertedDatasetIds().size());
+    Integer insertedId = result.insertedDatasetIds().getFirst();
+    assertTrue(updatedStudy.getDatasetIds().contains(insertedId));
+    assertNotEquals(dataset.getDatasetId(), insertedId);
+    assertEquals(newInsertName, datasetDAO.findDatasetById(insertedId).getDatasetName());
     List<Dataset> updatedDatasets =
         datasetDAO.findDatasetsByIdList(new ArrayList<>(updatedStudy.getDatasetIds()));
     assertTrue(updatedDatasets.contains(dataset));
@@ -864,7 +876,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.copyOf(datasetForUpdate.getProperties()),
             List.of(updatedFso2));
 
-    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of());
+    Study updatedStudy =
+        serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of()).study();
     assertNotNull(updatedStudy.getAlternativeDataSharingPlan());
     assertEquals(
         updatedFso1.getFileName(), updatedStudy.getAlternativeDataSharingPlan().getFileName());
@@ -954,7 +967,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             List.copyOf(study.getProperties()),
             List.of(updatedFso1, updatedFso2));
 
-    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of());
+    Study updatedStudy =
+        serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of()).study();
     assertNotNull(updatedStudy.getAlternativeDataSharingPlan());
     assertEquals(
         updatedFso1.getFileName(), updatedStudy.getAlternativeDataSharingPlan().getFileName());
@@ -1000,9 +1014,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     List<Dataset> datasets =
         datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
-    study.addDatasets(datasets);
 
-    serviceDAO.deleteStudy(study, createUser());
+    serviceDAO.deleteStudy(study, datasets, createUser());
     Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
     assertNull(deletedStudy);
 
@@ -1022,6 +1035,42 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             });
   }
 
+  /**
+   * Pins today's partial-failure behavior. Each dataset is deleted in its own handle, which commits
+   * on its own, so a failure partway through the study keeps the datasets already deleted and
+   * leaves the study and the remaining datasets in place.
+   */
+  @Test
+  void testDeleteStudyFailingPartwayKeepsEarlierDatasetDeletes() throws Exception {
+    Study study = createStudy(null, null, null);
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds())).stream()
+            .sorted(Comparator.comparing(Dataset::getDatasetId))
+            .toList();
+    assertEquals(2, datasets.size());
+    Dataset first = datasets.getFirst();
+    Dataset second = datasets.getLast();
+    // A match row references the second dataset. Its foreign key blocks the delete, and the
+    // deletable flag, which looks only at DAR membership, does not see it.
+    Match match = new Match();
+    match.setDatasetId(second.getDatasetId());
+    match.setPurpose(UUID.randomUUID().toString());
+    match.setMatch(true);
+    match.setFailed(false);
+    match.setAbstain(false);
+    match.setCreateDate(new Date());
+    match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
+    matchDAO.insertMatch(match);
+    User user = createUser();
+
+    assertThrows(
+        DatasetDeletionException.class, () -> serviceDAO.deleteStudy(study, datasets, user));
+
+    assertNull(datasetDAO.findDatasetById(first.getDatasetId()));
+    assertNotNull(datasetDAO.findDatasetById(second.getDatasetId()));
+    assertNotNull(studyDAO.findStudyById(study.getStudyId()));
+  }
+
   @Test
   void testDeleteStudyWithNoDatasets() throws Exception {
     // Registration process creates a study and dataset with properties
@@ -1035,7 +1084,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
               datasetDAO.deleteDatasetById(id);
             });
     // Ensure that study deletion succeeds
-    serviceDAO.deleteStudy(study, createUser());
+    serviceDAO.deleteStudy(study, List.of(), createUser());
     Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
     assertNull(deletedStudy);
   }
