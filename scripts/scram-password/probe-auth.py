@@ -36,9 +36,13 @@ def main() -> int:
     host, port, user, db = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
     body = b"user\0" + user.encode() + b"\0database\0" + db.encode() + b"\0\0"
     msg = struct.pack("!ii", 8 + len(body), 196608) + body
-    with socket.create_connection((host, port), timeout=10) as s:
-        s.sendall(msg)
-        head = recv_exact(s, 9)
+    try:
+        with socket.create_connection((host, port), timeout=10) as s:
+            s.sendall(msg)
+            head = recv_exact(s, 9)
+    except OSError as e:  # includes timeouts
+        print(f"probe failed: {e}")
+        return 3
     if len(head) < 9 or head[0:1] != b"R":
         print(f"unexpected reply: {head!r}")
         return 2

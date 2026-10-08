@@ -17,6 +17,8 @@
 #                            (default 50). Use 0 to rehearse a missing confirmation.
 #   SCRAM_TEST_PAUSE=N       wait N whole seconds after the ALTER is sent, to rehearse an
 #                            interrupt (send the script TERM or INT during the pause)
+#   VERIFY_TIMEOUT           seconds to wait for the verification login (default 15). A login
+#                            that stalls counts as a failed verification, and so rolls back.
 #
 # Safety net: one authenticated psql session stays open during the change. Open
 # sessions stay valid after ALTER ROLE, so if the new SCRAM login fails, the script
@@ -25,6 +27,8 @@
 #
 # Interrupts: after the ALTER is sent and before the result is verified, any exit
 # (INT, TERM, HUP, or an error) first tries to put the MD5 verifier back.
+# Bash runs a signal trap only when the current step ends. Every step has a time limit
+# (the probe 10 s, the verification login VERIFY_TIMEOUT), so a signal waits at most that long.
 #
 # Exit codes: 0 success, 1 stopped before any change, 2 verification failed and
 # the script tried to roll back (check the output), 129/130/143 interrupted (HUP/INT/TERM).
@@ -39,6 +43,8 @@ WORK=$(mktemp -d "${TMPDIR:-/tmp}/scram.XXXXXX") || exit 1
 FIFO="$WORK/held.fifo"; OUT="$WORK/held.out"; PSQLPID=""
 # 1 from just before the ALTER is sent until the result is verified or rolled back.
 PENDING_ROLLBACK=0
+
+pause() { python3 -c 'import time;time.sleep(0.2)'; }
 
 rollback() {
   PENDING_ROLLBACK=0
@@ -67,7 +73,15 @@ cleanup() {
     { printf '\\q\n' >&3; } 2>/dev/null
   fi
   { exec 3>&-; } 2>/dev/null
-  [ -n "$PSQLPID" ] && wait "$PSQLPID" 2>/dev/null
+  if [ -n "$PSQLPID" ]; then
+    # Give the held psql about 3 s to quit. A hung psql must not hang the cleanup.
+    local i
+    for ((i = 0; i < 15; i++)); do kill -0 "$PSQLPID" 2>/dev/null || break; pause; done
+    if kill -0 "$PSQLPID" 2>/dev/null; then
+      kill "$PSQLPID" 2>/dev/null; pause; kill -9 "$PSQLPID" 2>/dev/null
+    fi
+    wait "$PSQLPID" 2>/dev/null
+  fi
   rm -rf "$WORK"
 }
 # The held psql session can die (for example, a bad password). A write to its pipe
@@ -91,6 +105,21 @@ CONN="host=127.0.0.1 port=$PORT dbname=$DB user=$U sslmode=disable"
 export PGPASSWORD=$PW
 probe() { python3 "$HERE/probe-auth.py" 127.0.0.1 "$PORT" "$U" "$DB"; }
 
+# bounded SECONDS CMD...: run CMD and print its output. Give up after SECONDS, print
+# TIMEOUT and return 124. This covers connect, authentication and the query.
+bounded() {
+  local secs=$1; shift
+  python3 -c 'import subprocess, sys
+secs = float(sys.argv[1])
+try:
+    r = subprocess.run(sys.argv[2:], stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=secs)
+except subprocess.TimeoutExpired:
+    print("TIMEOUT: no answer in %s s" % sys.argv[1])
+    sys.exit(124)
+sys.stdout.write(r.stdout + r.stderr)
+sys.exit(r.returncode)' "$secs" "$@"
+}
+
 BEFORE=$(probe); echo "before: $BEFORE"
 case "$BEFORE" in *"authType 5"*) ;; *) echo "expected MD5 before the change - stopping, nothing changed"; exit 1;; esac
 
@@ -103,8 +132,6 @@ MD5H="md5$(printf '%s%s' "$PW" "$U" | python3 -c 'import sys,hashlib;print(hashl
 PSQLPID=$!
 exec 3>"$FIFO"
 
-pause() { python3 -c 'import time;time.sleep(0.2)'; }
-
 waitfor() { # waitfor TEXT MINIMUM_COUNT [TRIES]: wait for text in the held session output
   local i tries=${3:-50}
   for ((i = 0; i < tries; i++)); do
@@ -114,13 +141,13 @@ waitfor() { # waitfor TEXT MINIMUM_COUNT [TRIES]: wait for text in the held sess
   return 1
 }
 
-waitprobe() { # waitprobe TEXT: wait until the probe output contains TEXT
-  local i
-  for ((i = 0; i < 50; i++)); do
+waitprobe() { # waitprobe TEXT [SECONDS]: wait until the probe output contains TEXT (default 30 s)
+  local end=$((SECONDS + ${2:-30}))
+  while :; do
     case "$(probe 2>&1)" in *"$1"*) return 0;; esac
+    [ "$SECONDS" -ge "$end" ] && return 1
     pause
   done
-  return 1
 }
 
 printf "select 'held-session-ok';\n" >&3
@@ -142,7 +169,7 @@ else
 fi
 
 AFTER=$(probe); echo "after:  $AFTER"
-LOGIN=$("$PSQL" -tA "$CONN" -c "select 'new-login-ok as '||current_user" 2>&1 | grep -v -i "deprecat")
+LOGIN=$(bounded "${VERIFY_TIMEOUT:-15}" "$PSQL" -tA "$CONN" -c "select 'new-login-ok as '||current_user" | grep -v -i "deprecat")
 echo "new login: $LOGIN"
 case "$AFTER" in *"authType 10"*) P_OK=1;; *) P_OK=0;; esac
 case "$LOGIN" in *new-login-ok*) L_OK=1;; *) L_OK=0;; esac

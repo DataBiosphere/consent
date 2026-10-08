@@ -145,10 +145,12 @@ Do these steps for one environment at a time. Do dev first.
       The change may still apply. After this point, the script does not stop before step 4. A signal is the
       one exception (see item 6).
    4. It probes again (must be 10) and makes a new login with the same password.
+      Both steps have a time limit (the probe 10 s, the login 15 s). A stalled step counts as a failure.
    5. If either check fails, it uses the open session to put the MD5 verifier back.
       It confirms the rollback with the probe (must be 5). It exits with code 2.
    6. If the script stops after step 3 and before step 4 ends (Ctrl+C, a TERM or HUP signal, or an error),
-      it also puts the MD5 verifier back before it exits.
+      it also puts the MD5 verifier back before it exits. Bash handles a signal when the current step ends,
+      so a signal can wait for the time limit of that step.
 
    Exit codes: 0 success, 1 stopped before any change, 2 verification failed and rollback ran,
    129, 130 or 143 interrupted (HUP, INT or TERM). After an interrupt, read the output and probe the role.
@@ -235,6 +237,7 @@ CREDS_CMD='printf "{\"username\":\"consent\",\"password\":\"<test password>\"}"'
   bash apply-scram.sh test <local port>
 SCRAM_TEST_FORCE_FAIL=1 CREDS_CMD=... bash apply-scram.sh test <local port>   # tests the rollback
 ALTER_CONFIRM_TRIES=0 CREDS_CMD=... bash apply-scram.sh test <local port>     # tests a missing confirmation
+VERIFY_TIMEOUT=3 PSQL=<a psql wrapper that sleeps on the login> ...             # tests a stalled login
 ```
 
 **On a clone of the instance.** A clone copies the roles and their hashes.
