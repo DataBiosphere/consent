@@ -1,0 +1,40 @@
+#!/bin/bash
+# Reads a password on stdin and prints its SCRAM-SHA-256 verifier.
+# Exits non-zero, and prints nothing on stdout, unless the output is a real
+# verifier. Without this check, a libpq failure makes pg-scram print "(null)"
+# with exit 0, and Postgres would store that string as the new password.
+#
+# The pg-scram binary comes from PG_SCRAM_BIN, then from this directory, then
+# from the PATH. See README.md for how to build it.
+set -euo pipefail
+
+HERE=$(cd "$(dirname "$0")" && pwd)
+if [[ -n "${PG_SCRAM_BIN:-}" ]]; then
+  BIN="$PG_SCRAM_BIN"
+elif [[ -x "$HERE/pg-scram" ]]; then
+  BIN="$HERE/pg-scram"
+elif command -v pg-scram >/dev/null 2>&1; then
+  BIN=$(command -v pg-scram)
+else
+  echo "scram-hash: pg-scram not found (see README.md)" >&2
+  exit 1
+fi
+
+IFS= read -r -d '' PW || true   # whole stdin, no trailing-newline logic
+if [[ -z "$PW" ]]; then
+  echo "scram-hash: empty password on stdin" >&2
+  exit 1
+fi
+
+# printf is a shell built-in, so the password never reaches a process list.
+OUT=$(printf '%s' "$PW" | "$BIN" --no-trim) || {
+  echo "scram-hash: pg-scram failed" >&2
+  exit 1
+}
+
+# Verifier format: SCRAM-SHA-256$<iterations>:<salt>$<StoredKey>:<ServerKey>
+if [[ ! "$OUT" =~ ^SCRAM-SHA-256\$[0-9]+:[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$ ]]; then
+  echo "scram-hash: output is not a SCRAM verifier" >&2
+  exit 1
+fi
+printf '%s' "$OUT"

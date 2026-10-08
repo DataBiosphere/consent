@@ -1,0 +1,245 @@
+# Set the consent database role to a SCRAM password
+
+Tickets: [DT-4237](https://broadworkbench.atlassian.net/browse/DT-4237) (dev and these scripts),
+[DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244) (staging),
+[DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245) (prod)
+
+## Why
+
+The DUOS server runs Node in FIPS mode. FIPS mode does not allow MD5.
+The `consent` role in the Cloud SQL instances stores its password as an MD5 hash.
+The databases began on Postgres 9 and moved in place to 11 and then to 16.
+An in-place upgrade keeps old MD5 hashes. Postgres 16 itself defaults to SCRAM.
+
+An MD5 role makes the server ask for an MD5 login. The `pg` library then fails with:
+
+```text
+Unrecognized algorithm name
+Connection terminated unexpectedly
+```
+
+Nothing shows this failure while the BFF is off, because no request queries the database.
+When the BFF is on, every login fails.
+
+The fix is to store a SCRAM-SHA-256 hash of the **same** password. The password does not change.
+You do not rotate the secret. Consent uses the `pgjdbc` driver, which supports SCRAM.
+The Liquibase job runs from the consent image with the same driver.
+
+The Terraform for the consent database does not manage this role or its password.
+A later `terraform apply` does not undo the change.
+
+## Files
+
+| File | Purpose |
+|---|---|
+| `apply-scram.sh` | Runs the change. It checks the result and rolls back on failure. |
+| `scram-hash` | Reads a password on stdin. Prints its SCRAM verifier. Refuses any output that is not a verifier. |
+| `probe-auth.py` | Asks the server which login method it wants. It sends no password. |
+| `node-connect-test.js` | Tests a login with the same `pg` library and FIPS Node as DUOS. |
+
+## What you need
+
+- `gcloud` with access to the project, and `gcloud auth application-default login` done
+- the Cloud SQL Client role on the project
+- `jq`, `python3`, `docker`, and `psql` version 10 or later
+- for steps that use `kubectl`: the VPN
+- the `pg-scram` binary (next section)
+
+## Build pg-scram
+
+[`fboulnois/pg-scram`](https://github.com/fboulnois/pg-scram) is a program of about 30 lines.
+It calls libpq `PQencryptPasswordConn` to make the SCRAM verifier. It needs no database.
+The project has not changed since 2022. Build it from the pinned commit.
+Do not commit the binary.
+
+```shell
+COMMIT=68a8861af6112588db2190bd625394c92e1585ec
+gh api "repos/fboulnois/pg-scram/contents/main.c?ref=$COMMIT" --jq .content | base64 --decode > main.c
+shasum -a 256 main.c   # must print d98bde7c1d80bb0df159dd278f46211423db8e16f432ed317191b50fe80de08d
+cc -I"$(pg_config --includedir)" main.c -o pg-scram -L"$(pg_config --libdir)" -lpq
+```
+
+On macOS with Postgres.app, add `/Applications/Postgres.app/Contents/Versions/latest/bin` to the `PATH` first.
+
+If libpq fails, `pg-scram` prints `(null)` and exits 0. Postgres would then store `(null)` as the password.
+Always use `scram-hash`. It checks that the output is a real verifier.
+
+## Environments
+
+Do the procedure for dev, then staging, then prod. This README uses these placeholders:
+
+| Placeholder | Meaning |
+|---|---|
+| `<project>` | The GCP project of the environment |
+| `<instance>` | The Cloud SQL instance of the consent database |
+| `<namespace>` | The Kubernetes namespace of the environment |
+| `<consent deployment>` | The Kubernetes deployment that runs consent |
+| `<duos deployment>`, `<duos container>` | The deployment and the container that run the DUOS server |
+
+The connection name is `<project>:us-central1:<instance>`.
+The secret `consent-postgres-creds` in each project holds the user, the password, and the instance name.
+Read the instance name from the secret. This README does not list instance names.
+
+```shell
+gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -r .instance_name
+```
+
+The secret has no `db` field. The database name is `consent`.
+
+## Procedure
+
+Do these steps for one environment at a time. Do dev first.
+
+1. **Find old clients.** An old client (libpq below 10, or `pgjdbc` below 42.2) cannot do SCRAM.
+   List the clients that logged in as `consent` in the last 30 days:
+
+   ```shell
+   gcloud logging read 'resource.type="cloudsql_database"
+     AND resource.labels.database_id="<project>:<instance>"
+     AND logName="projects/<project>/logs/cloudsql.googleapis.com%2Fpostgres.log"
+     AND textPayload:"connection authorized" AND NOT textPayload:"user=cloudsql"' \
+     --project <project> --freshness=30d --limit=50000 --format='value(textPayload)' \
+     | sed -E 's/^.*connection authorized: //; s/ SSL.*$//' | sort | uniq -c | sort -rn
+   ```
+
+   The Cloud SQL logs show `host=[local]` for every connection, so you cannot map a client to a pod.
+   Most logins have no `application_name`. Look for a named tool that you do not expect.
+
+2. **Prod only: take an on-demand backup.**
+
+   ```shell
+   gcloud sql backups create --instance=<instance> --project=<project>
+   ```
+
+3. **Start a Cloud SQL Auth Proxy on your laptop.** It binds to loopback only.
+
+   ```shell
+   docker run -d --name scram-proxy -p 127.0.0.1:5434:5432 \
+     -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/adc.json \
+     -v "$HOME/.config/gcloud/application_default_credentials.json:/secrets/adc.json:ro" \
+     gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0-alpine \
+     --address 0.0.0.0 --port 5432 <project>:us-central1:<instance>
+   ```
+
+4. **Probe.** The result must be MD5. If it is SCRAM, stop. The role is already fixed.
+
+   ```shell
+   python3 scripts/scram-password/probe-auth.py 127.0.0.1 5434 consent consent
+   # authType 5: MD5
+   ```
+
+5. **Run the change.** The script reads the password from Secret Manager.
+   The password stays in shell variables and pipes.
+
+   ```shell
+   PG_SCRAM_BIN=./pg-scram bash scripts/scram-password/apply-scram.sh <project> 5434
+   ```
+
+   The script does these things:
+
+   1. It stops if the probe is not MD5.
+   2. It opens one `psql` session and keeps it open.
+   3. It sets `ALTER ROLE consent PASSWORD '<SCRAM verifier>'`. The server sees only the hash.
+   4. It probes again (must be 10) and makes a new login with the same password.
+   5. If either check fails, it uses the open session to put the MD5 verifier back. It exits with code 2.
+
+   Exit codes: 0 success, 1 stopped before any change, 2 verification failed and rollback ran.
+
+6. **Test the DUOS pod.** The result must be `OK {"current_user":"consent"}`.
+
+   ```shell
+   kubectl -n <namespace> exec -i deploy/<duos deployment> -c <duos container> -- sh -c \
+     'node - "$(ls -d /usr/src/app/server/node_modules/.pnpm/pg@*/node_modules/pg | head -1)"' \
+     < scripts/scram-password/node-connect-test.js
+   ```
+
+7. **Restart consent.** Open connections stay valid. A restart makes every connection a new one.
+
+   ```shell
+   kubectl -n <namespace> rollout restart deployment/<consent deployment>
+   kubectl -n <namespace> rollout status deployment/<consent deployment> --timeout=540s
+   curl -s https://consent.dsde-<env>.broadinstitute.org/status | jq -r '.systems | to_entries[] | "\(.key): \(.value.healthy)"'
+   ```
+
+   `postgresql` must be healthy. The `degraded` flag can come from `sendgrid`, which does not use the database.
+   Check that the new pods log no `password authentication`, `SCRAM`, `FATAL` or `SQLException` lines.
+   The Liquibase job runs at the next consent deploy. It uses the same driver.
+
+8. **Check the Cloud SQL logs for the password.** Search for the real value. Print only counts.
+
+   ```shell
+   gcloud logging read 'resource.type="cloudsql_database"
+     AND resource.labels.database_id="<project>:<instance>"' \
+     --project <project> --freshness=3h --limit=60000 --format=json > logs.json
+   PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
+   grep -F -c -f <(printf '%s' "$PW") logs.json        # must print 0
+   grep -F -c 'SCRAM-SHA-256$' logs.json               # must print 0
+   grep -i -E -c 'alter (role|user)' logs.json         # must print 0
+   unset PW; rm logs.json
+   ```
+
+   The change is not logged, because the instances set no `log_statement`.
+   If a statement fails, `log_min_error_statement = error` logs its text. The text holds only the hash.
+
+9. **Clean up.**
+
+   ```shell
+   docker rm -f scram-proxy
+   ```
+
+## Roll back by hand
+
+`apply-scram.sh` rolls back by itself. To roll back later, set the MD5 verifier.
+The verifier is `md5` followed by the MD5 of the password and the role name. Postgres 16 still accepts it.
+The old hash cannot be read, and you do not need it. The verifier comes from the same password.
+
+```shell
+PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
+MD5H="md5$(printf '%s%s' "$PW" consent | python3 -c 'import sys,hashlib;print(hashlib.md5(sys.stdin.buffer.read()).hexdigest())')"
+printf "ALTER ROLE consent PASSWORD '%s';\n" "$MD5H" \
+  | PGPASSWORD=$PW psql -v ON_ERROR_STOP=1 -f - "host=127.0.0.1 port=5434 dbname=consent user=consent sslmode=disable"
+```
+
+## Rehearse first
+
+**On a local container.** The script reads the credentials from `CREDS_CMD` when you set it.
+Start a `postgres:16` container with `POSTGRES_HOST_AUTH_METHOD=md5`. Create an MD5 role with
+`SET password_encryption='md5'; CREATE ROLE consent LOGIN PASSWORD '<test password>'`.
+Then run:
+
+```shell
+CREDS_CMD='printf "{\"username\":\"consent\",\"password\":\"<test password>\"}"' \
+  bash apply-scram.sh test <local port>
+SCRAM_TEST_FORCE_FAIL=1 CREDS_CMD=... bash apply-scram.sh test <local port>   # tests the rollback
+```
+
+**On a clone of the instance.** A clone copies the roles and their hashes.
+
+```shell
+gcloud sql instances clone <instance> <instance>-scram-test --project <project>
+# test, then delete it. Turn deletion protection off first:
+gcloud sql instances patch <instance>-scram-test --no-deletion-protection --project <project>
+gcloud sql instances delete <instance>-scram-test --project <project>
+```
+
+The clone inherits deletion protection. A deleted instance name cannot be reused for about a week.
+A clone of prod holds prod data. Use a backup for prod instead.
+
+## Known problems
+
+- The secret has no `db` field. Use the database name `consent`.
+- The Bash tool of some agents runs zsh. It has no `PIPESTATUS`. Capture exit codes directly.
+- Docker Desktop cannot mount a file from `/private/tmp`. Pass the script on stdin, as in step 6.
+- Do not pass the password as `docker run -e DUOS_DB_PASSWORD=$PW`. It shows in the process list.
+  Run `export DUOS_DB_PASSWORD` and then `docker run -e DUOS_DB_PASSWORD`.
+- Cloud SQL may deny reads of `pg_authid`. Use `probe-auth.py` to see the stored hash type.
+- `gcloud sql instances patch` has no `--update-labels` option in the tested version.
+- A local DUOS stack against a database needs `https://` redirect URIs. With `http://` the sign-in lands on the deployed site.
+
+## Results
+
+| Date | Environment | Result |
+|---|---|---|
+| 2026-10-08 | dev | Probe 5 to 10. The connect test in the DUOS pod passed. Consent restarted with no login errors. `GET /api/user/me` worked. The Cloud SQL logs had no password or hash. |
+| | staging | not done. Tracked in [DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244). |
+| | prod | not done. Tracked in [DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245). |
