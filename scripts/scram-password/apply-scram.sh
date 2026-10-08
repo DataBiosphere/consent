@@ -19,6 +19,8 @@
 #                            interrupt (send the script TERM or INT during the pause)
 #   VERIFY_TIMEOUT           seconds to wait for the verification login (default 15). A login
 #                            that stalls counts as a failed verification, and so rolls back.
+#   ROLLBACK_WAIT            seconds to wait for the rollback to run (default 30). The rollback
+#                            waits behind a blocked ALTER on the same session.
 #
 # Safety net: one authenticated psql session stays open during the change. Open
 # sessions stay valid after ALTER ROLE, so if the new SCRAM login fails, the script
@@ -36,6 +38,8 @@ set -u
 PROJECT=${1:?usage: apply-scram.sh PROJECT PORT}
 PORT=${2:?usage: apply-scram.sh PROJECT PORT}
 HERE=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=lib.sh
+. "$HERE/lib.sh"
 PSQL=${PSQL:-psql}
 DB=${DB:-consent}
 
@@ -49,9 +53,11 @@ pause() { python3 -c 'import time;time.sleep(0.2)'; }
 rollback() {
   PENDING_ROLLBACK=0
   if [ -n "$PSQLPID" ] && kill -0 "$PSQLPID" 2>/dev/null; then
-    { printf "ALTER ROLE %s PASSWORD '%s';\n" "$U" "$MD5H" >&3; } 2>/dev/null
-    # Confirm with the probe, not with the output count: the first ALTER may be unconfirmed.
-    if waitprobe "authType 5"; then
+    # The held session runs its commands in order. Queue a marker behind the rollback, and
+    # wait for the marker before the probe. The first ALTER may still be blocked, and the
+    # probe shows MD5 while it is. Only the marker proves that BOTH ALTER commands have run.
+    { printf "ALTER ROLE %s PASSWORD '%s';\n" "$U" "$MD5H" >&3; printf "select 'rollback-ordered';\n" >&3; } 2>/dev/null
+    if waitfor "rollback-ordered" 1 $(( ${ROLLBACK_WAIT:-30} * 5 )) && waitprobe "authType 5" 10; then
       echo "rollback applied"
     else
       echo "ROLLBACK DID NOT CONFIRM - check by hand"
@@ -99,8 +105,9 @@ else
   CREDS=$(gcloud --project "$PROJECT" secrets versions access latest --secret=consent-postgres-creds) \
     || { echo "cannot read the secret"; exit 1; }
 fi
-PW=$(printf '%s' "$CREDS" | jq -j .password); U=$(printf '%s' "$CREDS" | jq -r .username); unset CREDS
-[ -n "$PW" ] && [[ "$U" =~ ^[a-z_][a-z0-9_]*$ ]] || { echo "bad credential fields"; exit 1; }
+parse_creds "$CREDS" || { echo "bad credential fields"; exit 1; }
+unset CREDS
+[[ "$U" =~ ^[a-z_][a-z0-9_]*$ ]] || { echo "bad credential fields"; exit 1; }
 CONN="host=127.0.0.1 port=$PORT dbname=$DB user=$U sslmode=disable"
 probe() { python3 "$HERE/probe-auth.py" 127.0.0.1 "$PORT" "$U" "$DB"; }
 

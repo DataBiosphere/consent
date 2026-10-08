@@ -18,6 +18,10 @@ PROJECT=${1:?usage: check-logs.sh PROJECT INSTANCE [FRESHNESS]}
 INSTANCE=${2:?usage: check-logs.sh PROJECT INSTANCE [FRESHNESS]}
 FRESHNESS=${3:-3h}
 
+HERE=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=lib.sh
+. "$HERE/lib.sh"
+
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/scramlogs.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 
@@ -28,8 +32,9 @@ gcloud logging read "resource.type=\"cloudsql_database\"
   --project "$PROJECT" --freshness="$FRESHNESS" --format=json > "$WORK/logs.json"
 [ "$(jq length "$WORK/logs.json")" -gt 0 ] || { echo "no log entries: the log read failed"; exit 1; }
 
-PW=$(gcloud --project "$PROJECT" secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
-[ -n "$PW" ] || { echo "empty password: the secret read failed"; exit 1; }
+CREDS=$(gcloud --project "$PROJECT" secrets versions access latest --secret=consent-postgres-creds)
+parse_creds "$CREDS" || { echo "bad password in the secret: the audit cannot search for it"; exit 1; }
+unset CREDS
 export PW
 
 python3 - "$WORK/logs.json" <<'PY'

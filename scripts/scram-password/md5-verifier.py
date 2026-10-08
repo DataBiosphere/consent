@@ -15,6 +15,16 @@ import re
 import sys
 
 
+def md5_hex(data: bytes) -> str:
+    try:
+        # A FIPS Python refuses MD5 unless the call says it is not for security.
+        return hashlib.md5(data, usedforsecurity=False).hexdigest()
+    except TypeError:  # Python before 3.9 has no usedforsecurity argument
+        # This call can raise ValueError too. The caller catches it, because the
+        # call to md5_hex() sits inside the caller's try block.
+        return hashlib.md5(data).hexdigest()
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print(__doc__, file=sys.stderr)
@@ -25,10 +35,7 @@ def main() -> int:
         return 1
     data = password + sys.argv[1].encode()
     try:
-        # A FIPS Python refuses MD5 unless the call says it is not for security.
-        digest = hashlib.md5(data, usedforsecurity=False).hexdigest()
-    except TypeError:  # Python before 3.9 has no usedforsecurity argument
-        digest = hashlib.md5(data).hexdigest()
+        digest = md5_hex(data)
     except ValueError as e:  # MD5 is blocked
         print(f"md5-verifier: MD5 is not available: {e}", file=sys.stderr)
         return 1

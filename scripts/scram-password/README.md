@@ -35,6 +35,7 @@ A later `terraform apply` does not undo the change.
 | `apply-scram.sh` | Runs the change. It checks the result and rolls back on failure. |
 | `scram-hash` | Reads a password on stdin. Prints its SCRAM verifier. Refuses any output that does not have the exact shape of a verifier (a 16-byte salt and two 32-byte keys in canonical Base64). |
 | `check-logs.sh` | Searches the Cloud SQL logs for the password and for hash text. Prints counts only. |
+| `lib.sh` | Shared check of the credentials JSON. A null, missing or empty password stops the scripts. |
 | `md5-verifier.py` | Prints the MD5 verifier of a role from its password on stdin. Used for the rollback. |
 | `probe-auth.py` | Asks the server which login method it wants. It sends no password. |
 | `node-connect-test.js` | Tests a login with the same `pg` library and FIPS Node as DUOS. |
@@ -160,7 +161,9 @@ Do these steps for one environment at a time. Do dev first.
    4. It probes again (must be 10) and makes a new login with the same password.
       Both steps have a time limit (the probe 10 s, the login 15 s). A stalled step counts as a failure.
    5. If either check fails, it uses the open session to put the MD5 verifier back.
-      It confirms the rollback with the probe (must be 5). It exits with code 2.
+      It queues a marker behind the rollback on the same session and waits for it, so that the confirmation comes
+      after both `ALTER` commands ran. A first `ALTER` that is still blocked cannot make the probe look clean.
+      Then it confirms with the probe (must be 5). It exits with code 2.
    6. If the script stops after step 3 and before step 4 ends (Ctrl+C, a TERM or HUP signal, or an error),
       it also puts the MD5 verifier back before it exits. Bash handles a signal when the current step ends,
       so a signal can wait for the time limit of that step.
@@ -214,15 +217,16 @@ Do these steps for one environment at a time. Do dev first.
 `apply-scram.sh` rolls back by itself. To roll back later, set the MD5 verifier.
 The verifier is `md5` followed by the MD5 of the password and the role name. Postgres 16 still accepts it.
 The old hash cannot be read, and you do not need it. The verifier comes from the same password.
-The block checks the password and the verifier before it runs the `ALTER`. Postgres treats a string that is not
+The block checks the password (a non-empty string, with no trailing newline) and the verifier before it runs the `ALTER`. Postgres treats a string that is not
 a verifier as a plaintext password, so a failed helper must never reach the `ALTER`.
 Use `psql -X`, so a local `~/.psqlrc` (for example `\set AUTOCOMMIT off`) cannot change the result.
 
 ```shell
 (
   set -euo pipefail
-  PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
-  [ -n "$PW" ] || { echo "empty password: the secret read failed - nothing changed"; exit 1; }
+  . scripts/scram-password/lib.sh
+  parse_creds "$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds)" \
+    || { echo "bad password in the secret - nothing changed"; exit 1; }
   MD5H=$(printf '%s' "$PW" | python3 scripts/scram-password/md5-verifier.py consent)
   [[ "$MD5H" =~ ^md5[0-9a-f]{32}$ ]] || { echo "bad MD5 verifier - nothing changed"; exit 1; }
   printf "ALTER ROLE consent PASSWORD '%s';\n" "$MD5H" \
