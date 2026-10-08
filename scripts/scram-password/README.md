@@ -43,6 +43,9 @@ A later `terraform apply` does not undo the change.
 - `gcloud` with access to the project, and `gcloud auth application-default login` done
 - the Cloud SQL Client role on the project
 - `jq`, `python3`, `docker`, and `psql` version 10 or later
+- to build `pg-scram` (next section): the GitHub CLI `gh` with a login (`gh auth login`), `base64`, `shasum`,
+  a C compiler (`cc`), and the libpq headers and library, with `pg_config` on the `PATH`
+  (for example Postgres.app on macOS, or the `libpq-dev` package on Debian)
 - for steps that use `kubectl`: the VPN
 - the `pg-scram` binary (next section). `scram-hash` finds it in `scripts/scram-password`, or in `PG_SCRAM_BIN`, or on the `PATH`.
 
@@ -218,14 +221,15 @@ printf "ALTER ROLE consent PASSWORD '%s';\n" "$MD5H" \
 **On a local container.** The script reads the credentials from `CREDS_CMD` when you set it.
 Start a `postgres:16` container with `POSTGRES_HOST_AUTH_METHOD=md5`. Create an MD5 role with
 `SET password_encryption='md5'; CREATE ROLE consent LOGIN PASSWORD '<test password>'`.
-Then run:
+Then run these commands from the repository root:
 
 ```shell
 CREDS_CMD='printf "{\"username\":\"consent\",\"password\":\"<test password>\"}"' \
-  bash apply-scram.sh test <local port>
-SCRAM_TEST_FORCE_FAIL=1 CREDS_CMD=... bash apply-scram.sh test <local port>   # tests the rollback
-ALTER_CONFIRM_TRIES=0 CREDS_CMD=... bash apply-scram.sh test <local port>     # tests a missing confirmation
-VERIFY_TIMEOUT=3 PSQL=<a psql wrapper that sleeps on the login> ...             # tests a stalled login
+  bash scripts/scram-password/apply-scram.sh test <local port>
+SCRAM_TEST_FORCE_FAIL=1 CREDS_CMD=... bash scripts/scram-password/apply-scram.sh test <local port>   # tests the rollback
+ALTER_CONFIRM_TRIES=0 CREDS_CMD=... bash scripts/scram-password/apply-scram.sh test <local port>   # tests a missing confirmation
+VERIFY_TIMEOUT=3 PSQL=<a psql wrapper that sleeps on the login> CREDS_CMD=... \
+  bash scripts/scram-password/apply-scram.sh test <local port>                                   # tests a stalled login
 ```
 
 **On a clone of the instance.** A clone copies the roles and their hashes.
