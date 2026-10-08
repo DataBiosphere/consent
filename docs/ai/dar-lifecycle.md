@@ -96,10 +96,20 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
   never match.
 - A closeout applies to the **whole collection**: compare on `collection_id`, not on the
   closeout's own `dar_dataset` rows.
-- Apply it everywhere grants are computed: `DataAccessRequestDAO` (`hasSubmittedCloseout*`,
-  `findApprovedDARsByDatasetId`, `findDatasetApprovalsByDar`, the `closeouts` CTEs),
-  `DatasetDAO.getApprovedDatasets`, and `ResearcherDashboardDAO`. When you add a new grant or
-  approval query, add the predicate there too, and add a test with a real closeout.
+- When a query **projects** the supplement (rather than filtering on it), gate the column on
+  the parent: `CASE WHEN dar.parent_id IS NOT NULL THEN dar.data ->> 'closeoutSupplement' END`.
+  Callers such as `DarCollectionService` treat a non-null `closeout` as "closed out".
+- Every query that detects a closeout applies this rule. Keep it that way:
+  - Grants and approvals: `DataAccessRequestDAO` (`hasSubmittedCloseout*`,
+    `findApprovedDARsByDatasetId`, `findDatasetApprovalsByDar`, the `closeouts` CTEs),
+    `DatasetDAO.getApprovedDatasets`, `ResearcherDashboardDAO`.
+  - Collection summaries and dashboards: `DarCollectionSummaryDAO` (the `closeout` column),
+    `DacDashboardDAO` (`has_closeout`), `SigningOfficialDashboardDAO` (`needs_so`,
+    `awaiting_so`).
+  - Metrics: `DarMetricsDAO` (`EXPIRATIONS`, the SO-approval `kind`, `RENEWALS`).
+- When you add a query that detects a closeout, apply the rule. Test it with a real closeout
+  (a progress report with a parent) **and** with a supplement on an original DAR, which must not
+  close anything.
 
 ## Concurrency
 

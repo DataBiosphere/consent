@@ -70,7 +70,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         v.create_date as v_create_date,v.update_date as v_update_date, v.type as v_type,
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
-        latest_dar.data ->> 'closeoutSupplement' AS closeout,
+        CASE WHEN latest_dar.parent_id IS NOT NULL
+          THEN latest_dar.data ->> 'closeoutSupplement' END AS closeout,
         d.dac_name AS dac_name,
         cri.reference_ids AS reference_ids
       FROM latest_dar
@@ -138,7 +139,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                dac.name AS dac_name,
                latest_dar.data ->> 'projectTitle' AS name,
                latest_dar.data ->> 'status' AS dar_status,
-               latest_dar.data ->> 'closeoutSupplement' AS closeout,
+               CASE WHEN latest_dar.parent_id IS NOT NULL
+          THEN latest_dar.data ->> 'closeoutSupplement' END AS closeout,
                latest_dar.data ->> 'signingOfficialEmail' AS signingOfficialEmail,
                ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
@@ -212,7 +214,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               dd.dataset_id AS dd_datasetid,
               latest_dar.data ->> 'projectTitle' AS name,
               latest_dar.data ->> 'status' AS dar_status,
-              latest_dar.data ->> 'closeoutSupplement' AS closeout,
+              CASE WHEN latest_dar.parent_id IS NOT NULL
+          THEN latest_dar.data ->> 'closeoutSupplement' END AS closeout,
               dac.name AS dac_name,
               ARRAY_AGG(dar_all.reference_id) AS reference_ids
           FROM dar_collection c
@@ -281,7 +284,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               dac.name AS dac_name,
               latest_dar.data ->> 'projectTitle' AS name,
               latest_dar.data ->> 'status' AS dar_status,
-              latest_dar.data ->> 'closeoutSupplement' AS closeout,
+              CASE WHEN latest_dar.parent_id IS NOT NULL
+          THEN latest_dar.data ->> 'closeoutSupplement' END AS closeout,
               ARRAY_AGG(dar_all.reference_id) AS reference_ids
           FROM
               dar_collection c
@@ -348,7 +352,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         v.user_id as v_user_id, v.vote as v_vote, v.election_id as v_election_id, v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type,
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
-        latest_dar.data ->> 'closeoutSupplement' AS closeout,
+        CASE WHEN latest_dar.parent_id IS NOT NULL
+          THEN latest_dar.data ->> 'closeoutSupplement' END AS closeout,
         dac.name AS dac_name,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
@@ -425,7 +430,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 dac.name AS dac_name,
                 latest_dar.data ->> 'projectTitle' AS name,
                 latest_dar.data ->> 'status' AS dar_status,
-                latest_dar.data ->> 'closeoutSupplement' AS closeout,
+                CASE WHEN latest_dar.parent_id IS NOT NULL
+          THEN latest_dar.data ->> 'closeoutSupplement' END AS closeout,
                 ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u

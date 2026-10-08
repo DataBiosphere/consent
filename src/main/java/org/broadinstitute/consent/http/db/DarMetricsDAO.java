@@ -391,7 +391,7 @@ public interface DarMetricsDAO {
         SELECT dar.reference_id, dar.collection_id, dar.submission_date
         FROM data_access_request dar
         WHERE dar.submission_date >= CAST(:from AS timestamp) - INTERVAL '366 days'
-          AND dar.data->>'closeoutSupplement' IS NULL
+          AND (dar.parent_id IS NULL OR dar.data->>'closeoutSupplement' IS NULL)
           AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
       ),
       last_votes AS (
@@ -423,6 +423,7 @@ public interface DarMetricsDAO {
                (SELECT MAX(dar.submission_date)::timestamptz FROM data_access_request dar
                 WHERE dar.collection_id = t.collection_id
                   AND dar.submission_date IS NOT NULL
+                  AND dar.parent_id IS NOT NULL
                   AND dar.data->>'closeoutSupplement' IS NOT NULL) AS closeout_date
         FROM term_ends t
         GROUP BY t.collection_id

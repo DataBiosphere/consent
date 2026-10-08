@@ -43,7 +43,10 @@ public interface DacDashboardDAO {
       ),
       -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
       latest_dar AS (
-        SELECT ls.collection_id, dar.reference_id, dar.data->'closeoutSupplement' AS closeout
+        SELECT ls.collection_id, dar.reference_id,
+               -- Only a progress report can close out a collection.
+               CASE WHEN dar.parent_id IS NOT NULL THEN dar.data->'closeoutSupplement' END
+                 AS closeout
         FROM latest_submissions ls
         JOIN data_access_request dar ON dar.collection_id = ls.collection_id
         WHERE dar.reference_id = ls.reference_id
