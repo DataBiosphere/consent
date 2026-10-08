@@ -25,6 +25,9 @@ import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -165,30 +168,13 @@ class MailResourceTest extends AbstractTestHelper {
     assertEquals(200, response.getStatus());
   }
 
-  @Test
-  void test_MailResource_summary_invalid_start_date() {
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {"55/11/2021", "05/11/2021garbage"})
+  void test_MailResource_summary_unusable_start_date(String start) {
     initResource();
     Response response =
-        mailResource.getEmailSummaryByDateRange(duosUser, "55/11/2021", "05/11/2022", null, null);
-    assertEquals(400, response.getStatus());
-    verifyNoInteractions(emailService);
-  }
-
-  @Test
-  void test_MailResource_summary_trailing_text_after_date() {
-    initResource();
-    Response response =
-        mailResource.getEmailSummaryByDateRange(
-            duosUser, "05/11/2021garbage", "05/11/2022", null, null);
-    assertEquals(400, response.getStatus());
-    verifyNoInteractions(emailService);
-  }
-
-  @Test
-  void test_MailResource_summary_missing_start_date() {
-    initResource();
-    Response response =
-        mailResource.getEmailSummaryByDateRange(duosUser, null, "05/11/2022", null, null);
+        mailResource.getEmailSummaryByDateRange(duosUser, start, "05/11/2022", null, null);
     assertEquals(400, response.getStatus());
     verifyNoInteractions(emailService);
   }
