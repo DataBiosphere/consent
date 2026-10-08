@@ -15,6 +15,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -118,22 +119,28 @@ public class MailResource {
     if (StringUtils.isBlank(start)) {
       throw new ParseException("start is required", 0);
     }
-    return dateFormat().parse(start);
+    return parseDate(start);
   }
 
   private Date parseEndDate(String end) throws ParseException {
     return StringUtils.isNotBlank(end)
-        ? dateFormat().parse(end)
+        ? parseDate(end)
         : Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
   }
 
-  // A new instance per call, since SimpleDateFormat is not thread-safe.
-  private DateFormat dateFormat() {
+  private Date parseDate(String date) throws ParseException {
+    // A new instance per call, since SimpleDateFormat is not thread-safe.
     DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
     // if df.setLenient(false) were not set, dates like 55/97/2022 would parse and the year would be
     // advanced.
     df.setLenient(false);
-    return df;
+    ParsePosition position = new ParsePosition(0);
+    Date parsed = df.parse(date, position);
+    // parse(String) stops at the date and ignores anything after it, such as 05/11/2021garbage.
+    if (parsed == null || position.getIndex() != date.length()) {
+      throw new ParseException(date, position.getErrorIndex());
+    }
+    return parsed;
   }
 
   private Response invalidDateResponse() {

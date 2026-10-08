@@ -158,6 +158,16 @@ class MailResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void test_MailResource_summary_trailing_text_after_date() {
+    initResource();
+    Response response =
+        mailResource.getEmailSummaryByDateRange(
+            duosUser, "05/11/2021garbage", "05/11/2022", null, null);
+    assertEquals(400, response.getStatus());
+    verifyNoInteractions(emailService);
+  }
+
+  @Test
   void test_MailResource_summary_missing_start_date() {
     initResource();
     Response response =

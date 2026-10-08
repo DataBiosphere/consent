@@ -5,10 +5,10 @@ properties:
     type: integer
     description: ID of the email that was sent
   entityReferenceId:
-    type: string
+    type: [string, 'null']
     description: Reference to the entity the email concerns, such as a DAR code or dataset identifier, depending on the email type
   voteId:
-    type: integer
+    type: [integer, 'null']
     description: ID of associated vote
   userId:
     type: integer
@@ -17,11 +17,11 @@ properties:
     type: integer
     description: The type of email message that was sent
   dateSent:
-    type: integer
+    type: [integer, 'null']
     format: int64
     description: Time the email was sent, in epoch milliseconds
   sendgridStatus:
-    type: integer
+    type: [integer, 'null']
     description: The sendgrid response status code
   createDate:
     type: integer

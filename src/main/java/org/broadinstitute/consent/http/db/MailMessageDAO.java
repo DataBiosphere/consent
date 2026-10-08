@@ -83,7 +83,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       """
       SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, sendgrid_status, create_date
       FROM email_entity e
-      WHERE create_date BETWEEN SYMMETRIC :start AND :end
+      WHERE create_date >= LEAST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
+        AND create_date < GREATEST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
       ORDER BY create_date DESC, email_entity_id DESC
       OFFSET :offset
       LIMIT :limit

@@ -478,6 +478,30 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFetchSummariesByCreateDate_excludes_the_end_instant_in_either_order() {
+    Instant end = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    Instant start = end.minus(1, ChronoUnit.HOURS);
+    MailMessage inside = generateMessage(end.minus(1, ChronoUnit.MINUTES));
+    generateMessage(end);
+
+    List<Integer> forward =
+        mailMessageDAO
+            .fetchMessageSummariesByCreateDate(Date.from(start), Date.from(end), 10, 0)
+            .stream()
+            .map(MailMessageSummary::emailId)
+            .toList();
+    List<Integer> reversed =
+        mailMessageDAO
+            .fetchMessageSummariesByCreateDate(Date.from(end), Date.from(start), 10, 0)
+            .stream()
+            .map(MailMessageSummary::emailId)
+            .toList();
+
+    assertEquals(List.of(inside.emailId()), forward);
+    assertEquals(forward, reversed);
+  }
+
+  @Test
   void testFetchSummariesByCreateDate_keeps_null_vote_and_status() {
     Instant now = Instant.now();
     mailMessageDAO.insert(
