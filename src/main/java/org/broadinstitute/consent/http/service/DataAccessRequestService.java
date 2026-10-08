@@ -322,16 +322,24 @@ public class DataAccessRequestService implements ConsentLogger {
       DataAccessRequest progressReport,
       DataAccessRequest parentDar,
       ContainerRequest request) {
+    if (dataAccessRequestDAO.hasSubmittedCloseout(parentDar.getCollectionId())) {
+      throw new BadRequestException("Cannot create a progress report for a closed out collection");
+    }
+    if (progressReport.getIsCloseoutProgressReport()) {
+      progressReport.setDatasetIds(
+          dataAccessRequestDAO.findDatasetIdsByCollectionId(parentDar.getCollectionId()));
+    }
     validateProgressReport(user, progressReport, parentDar);
 
     String referenceId = progressReport.getReferenceId();
     List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
-    Set<Integer> darDatasetIds =
-        dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
-
-    if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
-      throw new BadRequestException(
-          "Progress report can only be created for approved datasets in the parent DAR");
+    if (!progressReport.getIsCloseoutProgressReport()) {
+      Set<Integer> darDatasetIds =
+          dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
+      if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
+        throw new BadRequestException(
+            "Progress report can only be created for approved datasets in the parent DAR");
+      }
     }
     boolean userIsPreAuthedForDaas =
         isUserPreAuthorizedForAllDaas(user, progressReport.getDatasetIds());
@@ -486,7 +494,8 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getDatasetIds().isEmpty()) {
       throw new BadRequestException("At least one dataset is required");
     }
-    if (!Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
+    if (!progressReport.getIsCloseoutProgressReport()
+        && !Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
       throw new BadRequestException(
           "Progress report can only be created for datasets in the parent DAR");
     }
@@ -528,7 +537,10 @@ public class DataAccessRequestService implements ConsentLogger {
     if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
-    validateRequestDatasetsAreApproved(dar);
+    // Closing existing grants must remain possible if a dataset's registration approval changes.
+    if (!dar.getIsCloseoutProgressReport()) {
+      validateRequestDatasetsAreApproved(dar);
+    }
     userService.validateActiveERACredentials(user);
   }
 

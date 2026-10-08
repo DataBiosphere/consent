@@ -53,3 +53,14 @@ For API changes, include all of the following:
 ---
 
 Keep this file updated as new patterns emerge.
+
+## Collection Closeouts
+
+Closeout progress reports automatically include all datasets from submitted requests in the
+collection, including datasets omitted from later progress reports. The API ignores the submitted
+dataset selection for a closeout. Dataset registration approval is not required to terminate
+existing grants. Submission terminates collection grants immediately, without
+waiting for signing official approval or DAC acknowledgement. Closed out collections cannot be
+voted on, reopened, cancelled, or renewed through another progress report.
+
+The duos-ui closeout form must display the full collection dataset list without removal controls.

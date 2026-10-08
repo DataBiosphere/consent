@@ -239,6 +239,11 @@ public class DarCollectionService implements ConsentLogger {
       List<DarCollectionSummary> summaries, Integer userId) {
     summaries.forEach(
         s -> {
+          if (s.getCloseoutSupplement() != null) {
+            s.getActions().clear();
+            s.setStatus(DarCollectionStatus.COMPLETE.getValue());
+            return;
+          }
           Collection<Election> elections = s.getElections().values();
           int electionCount = elections.size();
           // if there are no elections present, unreviewed
@@ -787,6 +792,9 @@ public class DarCollectionService implements ConsentLogger {
     if (role != UserRoles.CHAIRPERSON && role != UserRoles.RESEARCHER) {
       throw new ForbiddenException(CANCEL_ROLE_ERROR);
     }
+    if (role == UserRoles.CHAIRPERSON) {
+      validateCollectionIsNotClosedOut(collection.getDarCollectionId());
+    }
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn(
@@ -817,6 +825,7 @@ public class DarCollectionService implements ConsentLogger {
     if (!user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
+    validateCollectionIsNotClosedOut(collection.getDarCollectionId());
     DarCollectionSummary summary =
         darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(
             collection.getDarCollectionId());
@@ -918,6 +927,7 @@ public class DarCollectionService implements ConsentLogger {
           "DAR Collection ID: [%s] does not have any associated DAR ids"
               .formatted(collection.getDarCollectionId()));
     }
+    validateCollectionIsNotClosedOut(collection.getDarCollectionId());
     List<Integer> darDatasetIds = dar.getDatasetIds();
     if (darDatasetIds.isEmpty()) {
       throw new BadRequestException(CREATE_ELECTION_DATASET_ERROR);
@@ -995,6 +1005,12 @@ public class DarCollectionService implements ConsentLogger {
         });
   }
 
+  private void validateCollectionIsNotClosedOut(Integer collectionId) {
+    if (dataAccessRequestDAO.hasSubmittedCloseout(collectionId)) {
+      throw new ConsentConflictException("Cannot act on a closed out collection.");
+    }
+  }
+
   /** Creates elections for a new DAR collection. */
   public void createElectionsForNewDarCollection(Integer collectionId) {
     DarCollectionContext context = getDarCollectionContext(collectionId);
@@ -1002,6 +1018,7 @@ public class DarCollectionService implements ConsentLogger {
       return;
     }
 
+    validateCollectionIsNotClosedOut(collectionId);
     // Create elections and votes for auto-open DACs
     createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
   }

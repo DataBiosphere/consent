@@ -583,6 +583,27 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void closedOutCollectionCannotBeReopenedOrCancelled() throws Exception {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DarCollection collection = createMockCollections().getFirst();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId("synthetic-original-dar");
+    dar.setDatasetIds(List.of(10));
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(collection.getDarCollectionId()))
+        .thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createElectionsForDarCollection(chair, collection));
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.cancelDarCollectionByRole(chair, collection, UserRoles.CHAIRPERSON));
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
+  @Test
   void testCreateElectionsForDarCollection() throws Exception {
     User user = new User();
     user.setEmail("email");
@@ -2429,6 +2450,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertTrue(
         summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedActions, summaryResult.getActions());
+
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    DarCollectionSummary closedOutSummary =
+        service.getSummaryForRoleByCollectionId(user, UserRoles.MEMBER, collectionId);
+    assertTrue(closedOutSummary.getActions().isEmpty());
   }
 
   @Test

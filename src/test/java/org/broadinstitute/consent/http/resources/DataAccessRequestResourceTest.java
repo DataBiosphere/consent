@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -471,6 +473,39 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
             ethicsFile.getRight())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  @Test
+  void testPostCloseoutReturnsAllDatasetsWithoutCreatingElections() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    DataAccessRequest closeout = generateDataAccessRequest();
+    closeout.setParentId(parentDar.getId());
+    closeout.setDatasetIds(List.of(1, 2, 3));
+    closeout.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
+        .thenReturn(closeout);
+    when(datasetService.findDatasetsByIds(user, List.of(1, 2, 3))).thenReturn(List.of());
+
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUse());
+    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser,
+            request,
+            "synthetic-parent",
+            "{\"datasetIds\":[1],\"closeoutSupplement\":{\"reasons\":[\"Completed\"],\"signingOfficialId\":2}}",
+            null,
+            null,
+            null,
+            null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(List.of(1.0, 2.0, 3.0), ((Map<?, ?>) response.getEntity()).get("datasetIds"));
+    }
+    verify(darCollectionService, never()).createElectionsForNewDarCollection(any());
   }
 
   @Test

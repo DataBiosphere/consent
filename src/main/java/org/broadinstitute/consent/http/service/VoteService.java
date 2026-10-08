@@ -588,6 +588,17 @@ public class VoteService implements ConsentLogger {
     List<Election> elections =
         electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList());
 
+    List<String> referenceIds =
+        elections.stream()
+            .map(Election::getReferenceId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    if (!referenceIds.isEmpty()
+        && dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(referenceIds)) {
+      throw new ConsentConflictException("Cannot vote on a closed out collection.");
+    }
+
     // If there are any DataAccess elections in a non-open state, throw an error
     List<Election> nonOpenAccessElections =
         elections.stream()

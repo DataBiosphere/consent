@@ -1180,6 +1180,25 @@ class VoteServiceTest extends AbstractTestHelper {
     return v;
   }
 
+  @Test
+  void testCannotVoteOnEarlierDarAfterCollectionCloseout() {
+    Vote vote = new Vote();
+    vote.setElectionId(10);
+    Election election = new Election();
+    election.setReferenceId("synthetic-original-dar");
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(
+            List.of("synthetic-original-dar")))
+        .thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateVotesWithValue(List.of(vote), true, "synthetic rationale", new User()));
+    verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
+  }
+
   // validateVotesCanUpdate tests
 
   @Test
