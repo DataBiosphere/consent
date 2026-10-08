@@ -43,20 +43,21 @@ A later `terraform apply` does not undo the change.
 - the Cloud SQL Client role on the project
 - `jq`, `python3`, `docker`, and `psql` version 10 or later
 - for steps that use `kubectl`: the VPN
-- the `pg-scram` binary (next section)
+- the `pg-scram` binary (next section). `scram-hash` finds it in `scripts/scram-password`, or in `PG_SCRAM_BIN`, or on the `PATH`.
 
 ## Build pg-scram
 
 [`fboulnois/pg-scram`](https://github.com/fboulnois/pg-scram) is a program of about 30 lines.
 It calls libpq `PQencryptPasswordConn` to make the SCRAM verifier. It needs no database.
 The project has not changed since 2022. Build it from the pinned commit.
-Do not commit the binary.
+Run the commands from the repository root. They write `main.c` and `pg-scram` into
+`scripts/scram-password`, where the `.gitignore` of that directory ignores them. Do not commit them.
 
 ```shell
 COMMIT=68a8861af6112588db2190bd625394c92e1585ec
-gh api "repos/fboulnois/pg-scram/contents/main.c?ref=$COMMIT" --jq .content | base64 --decode > main.c
-shasum -a 256 main.c   # must print d98bde7c1d80bb0df159dd278f46211423db8e16f432ed317191b50fe80de08d
-cc -I"$(pg_config --includedir)" main.c -o pg-scram -L"$(pg_config --libdir)" -lpq
+gh api "repos/fboulnois/pg-scram/contents/main.c?ref=$COMMIT" --jq .content | base64 --decode > scripts/scram-password/main.c
+shasum -a 256 scripts/scram-password/main.c   # must print d98bde7c1d80bb0df159dd278f46211423db8e16f432ed317191b50fe80de08d
+cc -I"$(pg_config --includedir)" scripts/scram-password/main.c -o scripts/scram-password/pg-scram -L"$(pg_config --libdir)" -lpq
 ```
 
 On macOS with Postgres.app, add `/Applications/Postgres.app/Contents/Versions/latest/bin` to the `PATH` first.
@@ -132,7 +133,7 @@ Do these steps for one environment at a time. Do dev first.
    The password stays in shell variables and pipes.
 
    ```shell
-   PG_SCRAM_BIN=./pg-scram bash scripts/scram-password/apply-scram.sh <project> 5434
+   bash scripts/scram-password/apply-scram.sh <project> 5434
    ```
 
    The script does these things:
@@ -141,12 +142,16 @@ Do these steps for one environment at a time. Do dev first.
    2. It opens one `psql` session and keeps it open.
    3. It sets `ALTER ROLE consent PASSWORD '<SCRAM verifier>'`. The server sees only the hash.
       If the script does not see the confirmation in time, it prints a warning and goes on to step 4.
-      The change may still apply. After this point, the script never exits before step 4.
+      The change may still apply. After this point, the script does not stop before step 4. A signal is the
+      one exception (see item 6).
    4. It probes again (must be 10) and makes a new login with the same password.
    5. If either check fails, it uses the open session to put the MD5 verifier back.
       It confirms the rollback with the probe (must be 5). It exits with code 2.
+   6. If the script stops after step 3 and before step 4 ends (Ctrl+C, a TERM or HUP signal, or an error),
+      it also puts the MD5 verifier back before it exits.
 
-   Exit codes: 0 success, 1 stopped before any change, 2 verification failed and rollback ran.
+   Exit codes: 0 success, 1 stopped before any change, 2 verification failed and rollback ran,
+   129, 130 or 143 interrupted (HUP, INT or TERM). After an interrupt, read the output and probe the role.
 
 6. **Test the DUOS pod.** The result must be `OK {"current_user":"consent"}`.
 
@@ -171,15 +176,30 @@ Do these steps for one environment at a time. Do dev first.
 8. **Check the Cloud SQL logs for the password.** Search for the real value. Print only counts.
 
    ```shell
-   gcloud logging read 'resource.type="cloudsql_database"
-     AND resource.labels.database_id="<project>:<instance>"' \
-     --project <project> --freshness=3h --limit=60000 --format=json > logs.json
-   PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
-   grep -F -c -f <(printf '%s' "$PW") logs.json        # must print 0
-   grep -F -c 'SCRAM-SHA-256$' logs.json               # must print 0
-   grep -i -E -c 'alter (role|user)' logs.json         # must print 0
-   unset PW; rm logs.json
+   (
+     set -euo pipefail
+     trap 'rm -f logs.json' EXIT
+     gcloud logging read 'resource.type="cloudsql_database"
+       AND resource.labels.database_id="<project>:<instance>"' \
+       --project <project> --freshness=3h --limit=60000 --format=json > logs.json
+     [ "$(jq length logs.json)" -gt 0 ] || { echo "no log entries: the log read failed"; exit 1; }
+     PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
+     [ -n "$PW" ] || { echo "empty password: the secret read failed"; exit 1; }
+     bad=0
+     check() { # check LABEL GREP_ARGS...: every count must be 0
+       local label=$1 n; shift
+       n=$(grep -c "$@" logs.json || true)
+       echo "$label: $n"; [ "$n" = 0 ] || bad=1
+     }
+     check "plaintext password" -F -f <(printf '%s' "$PW")
+     check "SCRAM verifier" -F 'SCRAM-SHA-256$'
+     check "ALTER ROLE text" -i -E 'alter (role|user)'
+     [ "$bad" = 0 ] && echo "clean" || { echo "FOUND SENSITIVE TEXT"; exit 1; }
+   )
    ```
+
+   The block stops with an error if a read fails, so a failed read cannot look like a clean result.
+   Every count must be 0.
 
    The change is not logged, because the instances set no `log_statement`.
    If a statement fails, `log_min_error_statement = error` logs its text. The text holds only the hash.
