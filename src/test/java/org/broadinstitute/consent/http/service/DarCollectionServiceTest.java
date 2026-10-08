@@ -28,7 +28,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -595,7 +594,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void closedOutCollectionCannotBeReopenedOrCancelled() throws Exception {
+  void closedOutCollectionCannotBeReopenedOrCancelled() {
     User chair = new User();
     chair.setChairpersonRoleWithDAC(1);
     DarCollection collection = createMockCollections().getFirst();
@@ -616,7 +615,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void electionCreationRechecksCloseoutUnderLock() throws Exception {
+  void electionCreationRechecksCloseoutUnderLock() {
     User chair = new User();
     chair.setChairpersonRoleWithDAC(1);
     DataAccessRequest dar = new DataAccessRequest();
@@ -729,7 +728,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() throws Exception {
+  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() {
     User user = new User();
     user.setUserId(1);
     user.setEmail("email");
@@ -977,8 +976,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed()
-      throws SQLException {
+  void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -1034,7 +1032,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() throws SQLException {
+  void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -1461,6 +1459,40 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     // DAC member votes are only ever shown to the DAC that casts them.
     assertTrue(groups.getFirst().votes().isEmpty());
     verify(voteDAO, never()).findDacVotesWithNamesByElectionIds(any());
+  }
+
+  @ParameterizedTest
+  @EnumSource(
+      value = UserRoles.class,
+      names = {"ADMIN", "SIGNINGOFFICIAL", "CHAIRPERSON", "MEMBER", "RESEARCHER"})
+  void closedOutCollectionIsCompleteForEveryRole(UserRoles role) {
+    User user = new User();
+    user.setUserId(1);
+    user.setInstitutionId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Closeout"), "Closeout", 1));
+    Election openElection = new Election();
+    openElection.setElectionId(1);
+    openElection.setStatus(ElectionStatus.OPEN.getValue());
+    summary.addElection(openElection);
+    List<DarCollectionSummary> source = List.of(summary);
+    switch (role) {
+      case ADMIN ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(source);
+      case SIGNINGOFFICIAL ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(1)).thenReturn(source);
+      case RESEARCHER ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(1))
+              .thenReturn(source);
+      default ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(1, role.getRoleId()))
+              .thenReturn(source);
+    }
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, role);
+
+    assertEquals(DarCollectionStatus.COMPLETE.getValue(), summaries.getFirst().getStatus());
   }
 
   @Test

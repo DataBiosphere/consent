@@ -67,7 +67,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       SELECT EXISTS (
           SELECT 1 FROM data_access_request
           WHERE collection_id = :collectionId AND submission_date IS NOT NULL
-              AND data ->> 'closeoutSupplement' IS NOT NULL
+              AND parent_id IS NOT NULL AND data ->> 'closeoutSupplement' IS NOT NULL
       )
       """)
   boolean hasSubmittedCloseout(@Bind("collectionId") Integer collectionId);
@@ -78,6 +78,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           SELECT 1 FROM data_access_request dar
           INNER JOIN data_access_request closeout ON closeout.collection_id = dar.collection_id
           WHERE dar.reference_id IN (<referenceIds>) AND closeout.submission_date IS NOT NULL
+              AND closeout.parent_id IS NOT NULL
               AND closeout.data ->> 'closeoutSupplement' IS NOT NULL
       )
       """)
@@ -148,7 +149,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       AND dar.collection_id NOT IN (
         SELECT DISTINCT collection_id
         FROM data_access_request
-        WHERE submission_date IS NOT NULL AND data ->> 'closeoutSupplement' IS NOT NULL)
+        WHERE submission_date IS NOT NULL AND parent_id IS NOT NULL
+          AND data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
@@ -213,6 +215,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
               FROM data_access_request dar
               WHERE dar.submission_date IS NOT NULL
+                  AND dar.parent_id IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
               GROUP BY dar.collection_id
           )
@@ -323,6 +326,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
               FROM data_access_request dar
               WHERE dar.submission_date IS NOT NULL
+                  AND dar.parent_id IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
               GROUP BY dar.collection_id
           )
@@ -457,7 +461,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         AND dar.collection_id NOT IN (
           SELECT DISTINCT collection_id
           FROM data_access_request
-          WHERE submission_date IS NOT NULL AND data ->> 'closeoutSupplement' IS NOT NULL)
+          WHERE submission_date IS NOT NULL AND parent_id IS NOT NULL
+            AND data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId);
 

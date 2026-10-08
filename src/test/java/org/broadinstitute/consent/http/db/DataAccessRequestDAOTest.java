@@ -1942,7 +1942,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testCollectionDatasetsAndGrantsIgnoreUnsubmittedCloseout() {
+  void testCollectionDatasetsAndGrantsIgnoreDraftDarWithCloseoutSupplement() {
     StudyDar grant = createStudyDar();
     castFinalVote(grant.dar().getReferenceId(), grant.dataset(), new Date(), true);
     Integer collectionId = grant.dar().getCollectionId();
@@ -1983,6 +1983,36 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findDatasetApprovalsByDar(grant.dar().getReferenceId()));
     assertEquals(
         1, dataAccessRequestDAO.findApprovedDARsByDatasetId(grant.dataset().getDatasetId()).size());
+  }
+
+  @Test
+  void testSubmittedOriginalDarWithCloseoutSupplementIsNotACloseout() {
+    StudyDar grant = createStudyDar();
+    castFinalVote(grant.dar().getReferenceId(), grant.dataset(), new Date(), true);
+    Integer collectionId = grant.dar().getCollectionId();
+    // Only a progress report (non-null parent_id) can close out a collection.
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Completed"), "", grant.dar().getUserId()));
+    String referenceId = "synthetic-original-with-closeout";
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        grant.dar().getUserId(),
+        new Date(),
+        new Date(),
+        new Date(),
+        data,
+        "synthetic-era");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, grant.dataset().getDatasetId());
+
+    assertFalse(dataAccessRequestDAO.hasSubmittedCloseout(collectionId));
+    assertFalse(
+        dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(
+            List.of(grant.dar().getReferenceId())));
+    assertEquals(
+        Set.of(grant.dataset().getDatasetId()),
+        dataAccessRequestDAO.findDatasetApprovalsByDar(grant.dar().getReferenceId()));
   }
 
   /**

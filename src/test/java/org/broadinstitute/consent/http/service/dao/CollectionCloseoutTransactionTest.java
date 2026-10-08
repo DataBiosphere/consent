@@ -95,10 +95,11 @@ class CollectionCloseoutTransactionTest extends DAOTestHelper {
     Vote vote = createFinalVote(user.getUserId(), electionId);
     String originalStatus = electionDAO.findElectionById(electionId).getStatus();
     VoteServiceDAO voteServiceDAO = new VoteServiceDAO(jdbi);
+    Integer collectionId = dar.getCollectionId();
 
     assertThrows(
         IllegalStateException.class,
-        () -> writeVoteThenRollBack(dar.getCollectionId(), vote, voteServiceDAO));
+        () -> writeVoteThenRollBack(collectionId, vote, voteServiceDAO));
 
     assertNull(voteDAO.findVoteById(vote.getVoteId()).getVote());
     assertEquals(originalStatus, electionDAO.findElectionById(electionId).getStatus());

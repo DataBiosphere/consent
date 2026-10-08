@@ -67,4 +67,5 @@ The duos-ui closeout form must display the full collection dataset list without 
 
 Closeout submission, election mutations, and vote updates serialize on the same collection row.
 Each workflow checks for submitted closeouts after acquiring the lock and retains it until commit.
-Draft closeouts do not terminate grants or hide approved datasets.
+Only a progress report (non-null `parent_id`) can close out a collection, and progress reports are
+never drafts. Original DAR submissions that carry a closeout supplement are rejected.

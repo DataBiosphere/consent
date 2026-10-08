@@ -610,6 +610,11 @@ public class DataAccessRequestService implements ConsentLogger {
   public void validateDar(User user, DataAccessRequest dar) {
     validateCommonDarAndProgressReportElements(user, dar);
 
+    // Closeout queries key on the supplement, so only a progress report may carry one.
+    if (dar.getData().getCloseoutSupplement() != null) {
+      throw new BadRequestException("A closeout can only be submitted as a progress report.");
+    }
+
     if (!Objects.equals(user.getEmail(), dar.getData().getPiEmail())
         || !Objects.equals(user.getDisplayName(), dar.getData().getPiName())) {
       throw new BadRequestException(

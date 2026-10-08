@@ -250,7 +250,7 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void draftCloseoutPreservesApprovalsUntilSubmitted() {
+  void closeoutSupplementOnOriginalDarPreservesApprovals() {
     User user = createUser();
     giveLibraryCard(user);
     Integer datasetId = createDataset(user);
@@ -259,21 +259,16 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         insertSubmittedDar(
             user, collectionId, datasetId, new DataAccessRequestData(), recentDate(5));
     approve(user, approved, datasetId, VoteType.FINAL, true);
+    // Progress reports are never drafts, so only a parent-linked report can close out. A
+    // supplement on an original DAR, draft or submitted, must not end the grant.
     DataAccessRequestData closeout = new DataAccessRequestData();
     closeout.setCloseoutSupplement(
         new CloseoutSupplement(List.of("Completed"), "", user.getUserId()));
-    String draft = insertSubmittedDar(user, collectionId, datasetId, closeout, null);
+    insertSubmittedDar(user, collectionId, datasetId, closeout, null);
+    insertSubmittedDar(user, collectionId, datasetId, closeout, recentDate(1));
+
     assertEquals(1, pageRowCount(user));
     assertEquals(1, getCounts(user).approvalsActive());
-    jdbi.useHandle(
-        handle ->
-            handle
-                .createUpdate(
-                    "UPDATE data_access_request SET submission_date = now() WHERE reference_id = :referenceId")
-                .bind("referenceId", draft)
-                .execute());
-    assertEquals(0, pageRowCount(user));
-    assertEquals(0, getCounts(user).approvalsActive());
   }
 
   @Test
@@ -284,8 +279,10 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setCloseoutSupplement(
         new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
-    String referenceId = createSubmittedDar(user, datasetId, data, recentDate(5));
+    String referenceId =
+        createSubmittedDar(user, datasetId, new DataAccessRequestData(), recentDate(5));
     approve(user, referenceId, datasetId, VoteType.FINAL, true);
+    fileCloseout(user, referenceId, datasetId, data);
 
     assertEquals(0, getCounts(user).approvalsActive());
   }
@@ -455,8 +452,10 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
     DataAccessRequestData closedOut = new DataAccessRequestData();
     closedOut.setCloseoutSupplement(
         new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
-    String closedOutDar = createSubmittedDar(user, closedOutDataset, closedOut, recentDate(5));
+    String closedOutDar =
+        createSubmittedDar(user, closedOutDataset, new DataAccessRequestData(), recentDate(5));
     approve(user, closedOutDar, closedOutDataset, VoteType.FINAL, true);
+    fileCloseout(user, closedOutDar, closedOutDataset, closedOut);
     User otherResearcher = createUser();
     giveLibraryCard(otherResearcher);
     approveDatasetSubmittedDaysAgo(otherResearcher, createDataset(otherResearcher), 5);
@@ -551,6 +550,13 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
+  }
+
+  private void fileCloseout(
+      User user, String parentReferenceId, Integer datasetId, DataAccessRequestData closeout) {
+    Integer collectionId =
+        dataAccessRequestDAO.findByReferenceId(parentReferenceId).getCollectionId();
+    insertProgressReport(user, collectionId, parentReferenceId, datasetId, closeout);
   }
 
   private String insertProgressReport(

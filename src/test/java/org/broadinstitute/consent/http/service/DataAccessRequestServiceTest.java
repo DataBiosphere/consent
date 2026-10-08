@@ -1227,6 +1227,15 @@ library card) eve@yetanotherdomain.org\
   }
 
   @Test
+  void validateDarRejectsCloseoutSupplementOnOriginalDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    assertThrows(BadRequestException.class, () -> service.validateDar(user, dar));
+  }
+
+  @Test
   void testValidateInternalCollaboratorsNone() {
     User user = createRequestingUser();
     DataAccessRequest dar = createDataAccessRequest(List.of());

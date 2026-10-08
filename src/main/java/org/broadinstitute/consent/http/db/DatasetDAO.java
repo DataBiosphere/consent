@@ -710,7 +710,8 @@ WHERE dar.submission_date > now() - interval '8760 hours'
   AND dar.collection_id NOT IN (
     SELECT DISTINCT collection_id
     FROM data_access_request
-    WHERE submission_date IS NOT NULL AND data ->> 'closeoutSupplement' IS NOT NULL)
+    WHERE submission_date IS NOT NULL AND parent_id IS NOT NULL
+      AND data ->> 'closeoutSupplement' IS NOT NULL)
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
