@@ -97,7 +97,7 @@ Do these steps for one environment at a time. Do dev first.
    gcloud logging read 'resource.type="cloudsql_database"
      AND resource.labels.database_id="<project>:<instance>"
      AND logName="projects/<project>/logs/cloudsql.googleapis.com%2Fpostgres.log"
-     AND textPayload:"connection authorized" AND NOT textPayload:"user=cloudsql"' \
+     AND textPayload:"connection authorized: user=consent "' \
      --project <project> --freshness=30d --limit=50000 --format='value(textPayload)' \
      | sed -E 's/^.*connection authorized: //; s/ SSL.*$//' | sort | uniq -c | sort -rn
    ```
@@ -140,8 +140,11 @@ Do these steps for one environment at a time. Do dev first.
    1. It stops if the probe is not MD5.
    2. It opens one `psql` session and keeps it open.
    3. It sets `ALTER ROLE consent PASSWORD '<SCRAM verifier>'`. The server sees only the hash.
+      If the script does not see the confirmation in time, it prints a warning and goes on to step 4.
+      The change may still apply. After this point, the script never exits before step 4.
    4. It probes again (must be 10) and makes a new login with the same password.
-   5. If either check fails, it uses the open session to put the MD5 verifier back. It exits with code 2.
+   5. If either check fails, it uses the open session to put the MD5 verifier back.
+      It confirms the rollback with the probe (must be 5). It exits with code 2.
 
    Exit codes: 0 success, 1 stopped before any change, 2 verification failed and rollback ran.
 
@@ -211,6 +214,7 @@ Then run:
 CREDS_CMD='printf "{\"username\":\"consent\",\"password\":\"<test password>\"}"' \
   bash apply-scram.sh test <local port>
 SCRAM_TEST_FORCE_FAIL=1 CREDS_CMD=... bash apply-scram.sh test <local port>   # tests the rollback
+ALTER_CONFIRM_TRIES=0 CREDS_CMD=... bash apply-scram.sh test <local port>     # tests a missing confirmation
 ```
 
 **On a clone of the instance.** A clone copies the roles and their hashes.

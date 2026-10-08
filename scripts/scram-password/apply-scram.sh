@@ -13,6 +13,8 @@
 #                            (default: read consent-postgres-creds from PROJECT);
 #                            use it to rehearse against a local container
 #   SCRAM_TEST_FORCE_FAIL=1  force the verification to fail, to rehearse the rollback
+#   ALTER_CONFIRM_TRIES      how many 0.2 s polls to wait for the ALTER ROLE confirmation
+#                            (default 50). Use 0 to rehearse a missing confirmation.
 #
 # Safety net: one authenticated psql session stays open during the change. Open
 # sessions stay valid after ALTER ROLE, so if the new SCRAM login fails, the script
@@ -69,11 +71,22 @@ MD5H="md5$(printf '%s%s' "$PW" "$U" | python3 -c 'import sys,hashlib;print(hashl
 PSQLPID=$!
 exec 3>"$FIFO"
 
-waitfor() { # waitfor TEXT MINIMUM_COUNT
-  local _
-  for _ in $(seq 1 50); do
+pause() { python3 -c 'import time;time.sleep(0.2)'; }
+
+waitfor() { # waitfor TEXT MINIMUM_COUNT [TRIES]: wait for text in the held session output
+  local i tries=${3:-50}
+  for ((i = 0; i < tries; i++)); do
     [ "$(grep -c -F -- "$1" "$OUT")" -ge "$2" ] && return 0
-    python3 -c 'import time;time.sleep(0.2)'
+    pause
+  done
+  return 1
+}
+
+waitprobe() { # waitprobe TEXT: wait until the probe output contains TEXT
+  local i
+  for ((i = 0; i < 50; i++)); do
+    case "$(probe 2>&1)" in *"$1"*) return 0;; esac
+    pause
   done
   return 1
 }
@@ -82,9 +95,14 @@ printf "select 'held-session-ok';\n" >&3
 waitfor held-session-ok 1 || { echo "held session did not start - stopping, nothing changed"; exit 1; }
 echo "held session open"
 
+# From here on the role may have changed. Every failure or uncertain path must end in
+# the verification below, and so in the rollback. Do not exit before it.
 printf "ALTER ROLE %s PASSWORD '%s';\n" "$U" "$HASH" >&3; unset HASH
-waitfor "ALTER ROLE" 1 || { echo "ALTER ROLE did not report success - stopping"; exit 1; }
-echo "ALTER ROLE applied"
+if waitfor "ALTER ROLE" 1 "${ALTER_CONFIRM_TRIES:-50}"; then
+  echo "ALTER ROLE applied"
+else
+  echo "WARNING: ALTER ROLE was not confirmed in time. It may still apply. Checking the result."
+fi
 
 AFTER=$(probe); echo "after:  $AFTER"
 LOGIN=$("$PSQL" -tA "$CONN" -c "select 'new-login-ok as '||current_user" 2>&1 | grep -v -i "deprecat")
@@ -99,6 +117,11 @@ fi
 
 echo "RESULT: verification failed - ROLLING BACK to the MD5 verifier"
 printf "ALTER ROLE %s PASSWORD '%s';\n" "$U" "$MD5H" >&3
-waitfor "ALTER ROLE" 2 && echo "rollback applied" || echo "ROLLBACK DID NOT CONFIRM - check by hand"
+# Confirm with the probe, not with the output count: the first ALTER may be unconfirmed.
+if waitprobe "authType 5"; then
+  echo "rollback applied"
+else
+  echo "ROLLBACK DID NOT CONFIRM - check by hand"
+fi
 echo "after rollback: $(probe)"
 exit 2

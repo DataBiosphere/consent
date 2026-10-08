@@ -15,6 +15,20 @@ import sys
 NAMES = {0: "trust (ok)", 3: "cleartext password", 5: "MD5", 10: "SASL (SCRAM)"}
 
 
+def recv_exact(s: socket.socket, n: int) -> bytes:
+    """Read n bytes, or fewer if the server closes the connection first.
+
+    One recv() call can return less than n bytes, because TCP can split a header.
+    """
+    data = b""
+    while len(data) < n:
+        chunk = s.recv(n - len(data))
+        if not chunk:
+            break
+        data += chunk
+    return data
+
+
 def main() -> int:
     if len(sys.argv) != 5:
         print(__doc__)
@@ -24,7 +38,7 @@ def main() -> int:
     msg = struct.pack("!ii", 8 + len(body), 196608) + body
     with socket.create_connection((host, port), timeout=10) as s:
         s.sendall(msg)
-        head = s.recv(9)
+        head = recv_exact(s, 9)
     if len(head) < 9 or head[0:1] != b"R":
         print(f"unexpected reply: {head!r}")
         return 2
