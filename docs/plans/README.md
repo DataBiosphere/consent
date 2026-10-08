@@ -8,6 +8,7 @@ Use this directory for documents that describe a proposed path forward, migratio
 
 | Plan | Purpose |
 | --- | --- |
+| `data-showcase-delivery-plan.md` | Plan for Data Showcase across consent and duos-ui: showcases as typed code entries authored by PR (like `libraryVersions.ts`), a public catalog lookup in consent, and a six-section MVP; see also `data-showcase-artifact-review.md`. |
 | `dar-metrics-analytics-plan.md` | Plan for reporting DAR metrics (DAC decision outcome, source and turnaround, SO approval turnaround, volume, expiration) from data Consent already persists, and surfacing them in an internal admin analytics dashboard in duos-ui. Records which of the thirteen requested metrics are feasible and what renewal depends on. |
 | `data-use-primary-consistency-plan.md` | Plan for aligning dataset primary Data Use registration rules with automated matching while handling legacy records safely. |
 | `vodar-plan.md` | Plan for VODAR (View Only Data Access Requests) across duos-ui and consent: a constrained DAR for viewing data without analysis or publication, RADAR auto-approved when the DAC opts in and otherwise sent to normal DAC review. |
