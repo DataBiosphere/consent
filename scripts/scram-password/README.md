@@ -171,6 +171,31 @@ Do these steps for one environment at a time. Do dev first.
    Exit codes: 0 success, 1 stopped before any change, 2 verification failed and rollback ran,
    129, 130 or 143 interrupted (HUP, INT or TERM). After an interrupt, read the output and probe the role.
 
+   **If the script cannot finish or roll back,** the role can be on SCRAM with no verification. This happens when
+   no trap can run: `kill -9` (SIGKILL), a power loss, or a laptop that goes to sleep. It also happens when the
+   connection is lost (VPN or proxy), because the rollback needs the held session. The script then prints
+   "ROLLBACK NOT POSSIBLE" or "ROLLBACK DID NOT CONFIRM", or prints nothing at all. Do these steps:
+
+   1. Start the proxy again if it stopped (step 3).
+   2. Probe the role (step 4).
+   3. If the probe shows MD5 (`authType 5`), nothing changed. Run the script again from step 5.
+   4. If the probe shows SCRAM (`authType 10`), log in with the same password:
+
+      ```shell
+      (
+        set -euo pipefail
+        . scripts/scram-password/lib.sh
+        parse_creds "$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds)" \
+          || { echo "bad password in the secret - this result says nothing about the role"; exit 1; }
+        PGPASSWORD=$PW psql -X -tA "host=127.0.0.1 port=5434 dbname=consent user=consent sslmode=disable" \
+          -c "select 'login ok'"
+      )
+      ```
+
+      If it prints `login ok`, the change is complete. Go on to step 6.
+      If the login fails, roll back by hand at once (see "Roll back by hand" below). Then find the cause before
+      you try again.
+
 6. **Test the DUOS pod.** The result must be `OK {"current_user":"consent"}`.
 
    ```shell
