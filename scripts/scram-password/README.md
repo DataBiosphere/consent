@@ -35,6 +35,7 @@ A later `terraform apply` does not undo the change.
 | `apply-scram.sh` | Runs the change. It checks the result and rolls back on failure. |
 | `scram-hash` | Reads a password on stdin. Prints its SCRAM verifier. Refuses any output that is not a verifier. |
 | `check-logs.sh` | Searches the Cloud SQL logs for the password and for hash text. Prints counts only. |
+| `md5-verifier.py` | Prints the MD5 verifier of a role from its password on stdin. Used for the rollback. |
 | `probe-auth.py` | Asks the server which login method it wants. It sends no password. |
 | `node-connect-test.js` | Tests a login with the same `pg` library and FIPS Node as DUOS. |
 
@@ -99,14 +100,20 @@ Do these steps for one environment at a time. Do dev first.
    List the clients that logged in as `consent` in the last 30 days:
 
    ```shell
-   gcloud logging read 'resource.type="cloudsql_database"
-     AND resource.labels.database_id="<project>:<instance>"
-     AND logName="projects/<project>/logs/cloudsql.googleapis.com%2Fpostgres.log"
-     AND textPayload:"connection authorized: user=consent "' \
-     --project <project> --freshness=30d --format='value(textPayload)' \
-     | sed -E 's/^.*connection authorized: //; s/ SSL.*$//' | sort | uniq -c | sort -rn
+   (
+     set -euo pipefail
+     LOGINS=$(gcloud logging read 'resource.type="cloudsql_database"
+       AND resource.labels.database_id="<project>:<instance>"
+       AND logName="projects/<project>/logs/cloudsql.googleapis.com%2Fpostgres.log"
+       AND textPayload:"connection authorized: user=consent "' \
+       --project <project> --freshness=30d --format='value(textPayload)')
+     [ -n "$LOGINS" ] || { echo "no logins found: the log read failed"; exit 1; }
+     printf '%s\n' "$LOGINS" | sed -E 's/^.*connection authorized: //; s/ SSL.*$//' | sort | uniq -c | sort -rn
+   )
    ```
 
+   The block stops with an error if the read fails, so a failed read cannot look like an empty list of clients.
+   The consent role logs in all the time, so an empty result means that something is wrong.
    The command has no `--limit`, so it reads every login in the window. Do not add one: a cap can hide an
    old client that then breaks after the change.
    The Cloud SQL logs show `host=[local]` for every connection, so you cannot map a client to a pod.
@@ -207,13 +214,20 @@ Do these steps for one environment at a time. Do dev first.
 `apply-scram.sh` rolls back by itself. To roll back later, set the MD5 verifier.
 The verifier is `md5` followed by the MD5 of the password and the role name. Postgres 16 still accepts it.
 The old hash cannot be read, and you do not need it. The verifier comes from the same password.
+The block checks the password and the verifier before it runs the `ALTER`. Postgres treats a string that is not
+a verifier as a plaintext password, so a failed helper must never reach the `ALTER`.
 Use `psql -X`, so a local `~/.psqlrc` (for example `\set AUTOCOMMIT off`) cannot change the result.
 
 ```shell
-PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
-MD5H="md5$(printf '%s%s' "$PW" consent | python3 -c 'import sys,hashlib;print(hashlib.md5(sys.stdin.buffer.read()).hexdigest())')"
-printf "ALTER ROLE consent PASSWORD '%s';\n" "$MD5H" \
-  | PGPASSWORD=$PW psql -X -v ON_ERROR_STOP=1 -f - "host=127.0.0.1 port=5434 dbname=consent user=consent sslmode=disable"
+(
+  set -euo pipefail
+  PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
+  [ -n "$PW" ] || { echo "empty password: the secret read failed - nothing changed"; exit 1; }
+  MD5H=$(printf '%s' "$PW" | python3 scripts/scram-password/md5-verifier.py consent)
+  [[ "$MD5H" =~ ^md5[0-9a-f]{32}$ ]] || { echo "bad MD5 verifier - nothing changed"; exit 1; }
+  printf "ALTER ROLE consent PASSWORD '%s';\n" "$MD5H" \
+    | PGPASSWORD=$PW psql -X -v ON_ERROR_STOP=1 -f - "host=127.0.0.1 port=5434 dbname=consent user=consent sslmode=disable"
+)
 ```
 
 ## Rehearse first
