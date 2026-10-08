@@ -40,7 +40,17 @@ OUT=$(printf '%s' "$PW" | env -i "${SAFE_ENV[@]}" "$BIN" --no-trim) || {
 }
 
 # Verifier format: SCRAM-SHA-256$<iterations>:<salt>$<StoredKey>:<ServerKey>
-if [[ ! "$OUT" =~ ^SCRAM-SHA-256\$[0-9]+:[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$ ]]; then
+# Postgres checks this shape. It treats any string that does not pass as a PLAINTEXT
+# password, and then hashes that string. So the shape must be exact, as libpq writes it:
+#   iterations  a positive integer, no leading zero
+#   salt        16 bytes in canonical Base64: 22 characters plus "==" (the last character
+#               before the "==" must be one of A Q g w, so that the unused bits are zero)
+#   keys        32 bytes each in canonical Base64: 43 characters plus "=" (the last
+#               character before the "=" must be one of A E I M Q U Y c g k o s w 0 4 8)
+B64='[A-Za-z0-9+/]'
+SALT="${B64}{21}[AQgw]=="
+KEY="${B64}{42}[AEIMQUYcgkosw048]="
+if [[ ! "$OUT" =~ ^SCRAM-SHA-256\$[1-9][0-9]*:${SALT}\$${KEY}:${KEY}$ ]]; then
   echo "scram-hash: output is not a SCRAM verifier" >&2
   exit 1
 fi

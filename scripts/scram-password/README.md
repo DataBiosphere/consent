@@ -33,7 +33,7 @@ A later `terraform apply` does not undo the change.
 | File | Purpose |
 |---|---|
 | `apply-scram.sh` | Runs the change. It checks the result and rolls back on failure. |
-| `scram-hash` | Reads a password on stdin. Prints its SCRAM verifier. Refuses any output that is not a verifier. |
+| `scram-hash` | Reads a password on stdin. Prints its SCRAM verifier. Refuses any output that does not have the exact shape of a verifier (a 16-byte salt and two 32-byte keys in canonical Base64). |
 | `check-logs.sh` | Searches the Cloud SQL logs for the password and for hash text. Prints counts only. |
 | `md5-verifier.py` | Prints the MD5 verifier of a role from its password on stdin. Used for the rollback. |
 | `probe-auth.py` | Asks the server which login method it wants. It sends no password. |
