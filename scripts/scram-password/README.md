@@ -100,10 +100,12 @@ Do these steps for one environment at a time. Do dev first.
      AND resource.labels.database_id="<project>:<instance>"
      AND logName="projects/<project>/logs/cloudsql.googleapis.com%2Fpostgres.log"
      AND textPayload:"connection authorized: user=consent "' \
-     --project <project> --freshness=30d --limit=50000 --format='value(textPayload)' \
+     --project <project> --freshness=30d --format='value(textPayload)' \
      | sed -E 's/^.*connection authorized: //; s/ SSL.*$//' | sort | uniq -c | sort -rn
    ```
 
+   The command has no `--limit`, so it reads every login in the window. Do not add one: a cap can hide an
+   old client that then breaks after the change.
    The Cloud SQL logs show `host=[local]` for every connection, so you cannot map a client to a pod.
    Most logins have no `application_name`. Look for a named tool that you do not expect.
 

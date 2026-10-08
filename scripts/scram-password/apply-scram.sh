@@ -102,7 +102,6 @@ fi
 PW=$(printf '%s' "$CREDS" | jq -j .password); U=$(printf '%s' "$CREDS" | jq -r .username); unset CREDS
 [ -n "$PW" ] && [[ "$U" =~ ^[a-z_][a-z0-9_]*$ ]] || { echo "bad credential fields"; exit 1; }
 CONN="host=127.0.0.1 port=$PORT dbname=$DB user=$U sslmode=disable"
-export PGPASSWORD=$PW
 probe() { python3 "$HERE/probe-auth.py" 127.0.0.1 "$PORT" "$U" "$DB"; }
 
 # bounded SECONDS CMD...: run CMD and print its output. Give up after SECONDS, print
@@ -126,6 +125,10 @@ case "$BEFORE" in *"authType 5"*) ;; *) echo "expected MD5 before the change - s
 HASH=$(printf '%s' "$PW" | "$HERE/scram-hash") || { echo "hash failed - stopping, nothing changed"; exit 1; }
 MD5H="md5$(printf '%s%s' "$PW" "$U" | python3 -c 'import sys,hashlib;print(hashlib.md5(sys.stdin.buffer.read()).hexdigest())')"
 [[ "$MD5H" =~ ^md5[0-9a-f]{32}$ ]] || { echo "bad rollback verifier - stopping, nothing changed"; exit 1; }
+
+# Only the psql sessions need the password. Export it after the hashing, so that no
+# libpq program that runs earlier can pick it up.
+export PGPASSWORD=$PW
 
 : > "$OUT"; mkfifo "$FIFO"
 # -X must be the first option: it skips ~/.psqlrc, so a local setting such as

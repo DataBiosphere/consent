@@ -26,8 +26,15 @@ if [[ -z "$PW" ]]; then
   exit 1
 fi
 
+# pg-scram calls PQconnectdb("") before it makes the verifier. Run it in an empty
+# environment, with a host that cannot connect, so that it never opens a real
+# connection and never uses a libpq setting such as PGHOST or PGPASSWORD.
+SAFE_ENV=(PGHOST=/nonexistent PGPORT=1 PGCONNECT_TIMEOUT=1 PGPASSFILE=/nonexistent PGSERVICEFILE=/nonexistent)
+[[ -n "${LD_LIBRARY_PATH:-}" ]] && SAFE_ENV+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH")
+[[ -n "${DYLD_LIBRARY_PATH:-}" ]] && SAFE_ENV+=("DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH")
+
 # printf is a shell built-in, so the password never reaches a process list.
-OUT=$(printf '%s' "$PW" | "$BIN" --no-trim) || {
+OUT=$(printf '%s' "$PW" | env -i "${SAFE_ENV[@]}" "$BIN" --no-trim) || {
   echo "scram-hash: pg-scram failed" >&2
   exit 1
 }

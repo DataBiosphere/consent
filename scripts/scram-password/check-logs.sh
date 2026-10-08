@@ -21,9 +21,11 @@ FRESHNESS=${3:-3h}
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/scramlogs.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 
+# No --limit: the gcloud default is unlimited, so the audit reads every entry in the
+# window. A capped read could hide a leak and still print "clean".
 gcloud logging read "resource.type=\"cloudsql_database\"
   AND resource.labels.database_id=\"$PROJECT:$INSTANCE\"" \
-  --project "$PROJECT" --freshness="$FRESHNESS" --limit=60000 --format=json > "$WORK/logs.json"
+  --project "$PROJECT" --freshness="$FRESHNESS" --format=json > "$WORK/logs.json"
 [ "$(jq length "$WORK/logs.json")" -gt 0 ] || { echo "no log entries: the log read failed"; exit 1; }
 
 PW=$(gcloud --project "$PROJECT" secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
