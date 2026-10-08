@@ -128,7 +128,9 @@ MD5H="md5$(printf '%s%s' "$PW" "$U" | python3 -c 'import sys,hashlib;print(hashl
 [[ "$MD5H" =~ ^md5[0-9a-f]{32}$ ]] || { echo "bad rollback verifier - stopping, nothing changed"; exit 1; }
 
 : > "$OUT"; mkfifo "$FIFO"
-"$PSQL" -tA -v ON_ERROR_STOP=0 "$CONN" < "$FIFO" > "$OUT" 2>&1 &
+# -X must be the first option: it skips ~/.psqlrc, so a local setting such as
+# AUTOCOMMIT off cannot change how the ALTER and the rollback behave.
+"$PSQL" -X -tA -v ON_ERROR_STOP=0 "$CONN" < "$FIFO" > "$OUT" 2>&1 &
 PSQLPID=$!
 exec 3>"$FIFO"
 
@@ -169,7 +171,7 @@ else
 fi
 
 AFTER=$(probe); echo "after:  $AFTER"
-LOGIN=$(bounded "${VERIFY_TIMEOUT:-15}" "$PSQL" -tA "$CONN" -c "select 'new-login-ok as '||current_user" | grep -v -i "deprecat")
+LOGIN=$(bounded "${VERIFY_TIMEOUT:-15}" "$PSQL" -X -tA "$CONN" -c "select 'new-login-ok as '||current_user" | grep -v -i "deprecat")
 echo "new login: $LOGIN"
 case "$AFTER" in *"authType 10"*) P_OK=1;; *) P_OK=0;; esac
 case "$LOGIN" in *new-login-ok*) L_OK=1;; *) L_OK=0;; esac

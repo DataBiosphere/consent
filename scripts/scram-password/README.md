@@ -34,6 +34,7 @@ A later `terraform apply` does not undo the change.
 |---|---|
 | `apply-scram.sh` | Runs the change. It checks the result and rolls back on failure. |
 | `scram-hash` | Reads a password on stdin. Prints its SCRAM verifier. Refuses any output that is not a verifier. |
+| `check-logs.sh` | Searches the Cloud SQL logs for the password and for hash text. Prints counts only. |
 | `probe-auth.py` | Asks the server which login method it wants. It sends no password. |
 | `node-connect-test.js` | Tests a login with the same `pg` library and FIPS Node as DUOS. |
 
@@ -175,33 +176,17 @@ Do these steps for one environment at a time. Do dev first.
    Check that the new pods log no `password authentication`, `SCRAM`, `FATAL` or `SQLException` lines.
    The Liquibase job runs at the next consent deploy. It uses the same driver.
 
-8. **Check the Cloud SQL logs for the password.** Search for the real value. Print only counts.
+8. **Check the Cloud SQL logs for the password.** The script searches for the real value and prints only counts.
 
    ```shell
-   (
-     set -euo pipefail
-     trap 'rm -f logs.json' EXIT
-     gcloud logging read 'resource.type="cloudsql_database"
-       AND resource.labels.database_id="<project>:<instance>"' \
-       --project <project> --freshness=3h --limit=60000 --format=json > logs.json
-     [ "$(jq length logs.json)" -gt 0 ] || { echo "no log entries: the log read failed"; exit 1; }
-     PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
-     [ -n "$PW" ] || { echo "empty password: the secret read failed"; exit 1; }
-     bad=0
-     check() { # check LABEL GREP_ARGS...: every count must be 0
-       local label=$1 n; shift
-       n=$(grep -c "$@" logs.json || true)
-       echo "$label: $n"; [ "$n" = 0 ] || bad=1
-     }
-     check "plaintext password" -F -f <(printf '%s' "$PW")
-     check "SCRAM verifier" -F 'SCRAM-SHA-256$'
-     check "ALTER ROLE text" -i -E 'alter (role|user)'
-     [ "$bad" = 0 ] && echo "clean" || { echo "FOUND SENSITIVE TEXT"; exit 1; }
-   )
+   scripts/scram-password/check-logs.sh <project> <instance>
    ```
 
-   The block stops with an error if a read fails, so a failed read cannot look like a clean result.
-   Every count must be 0.
+   The script decodes every JSON string before it matches, so a password with a quote or a backslash cannot
+   hide in JSON escapes. It works in a private temporary directory and touches no file in your current directory.
+   It checks for the plaintext password, any `SCRAM-SHA-256$` verifier, any `md5` verifier, and `ALTER ROLE` text.
+   Every count must be 0. The script stops with an error if a read fails, so a failed read cannot look like
+   a clean result. By default it reads the last 3 hours. Pass a third argument (for example `6h`) to change that.
 
    The change is not logged, because the instances set no `log_statement`.
    If a statement fails, `log_min_error_statement = error` logs its text. The text holds only the hash.
@@ -217,12 +202,13 @@ Do these steps for one environment at a time. Do dev first.
 `apply-scram.sh` rolls back by itself. To roll back later, set the MD5 verifier.
 The verifier is `md5` followed by the MD5 of the password and the role name. Postgres 16 still accepts it.
 The old hash cannot be read, and you do not need it. The verifier comes from the same password.
+Use `psql -X`, so a local `~/.psqlrc` (for example `\set AUTOCOMMIT off`) cannot change the result.
 
 ```shell
 PW=$(gcloud --project <project> secrets versions access latest --secret=consent-postgres-creds | jq -j .password)
 MD5H="md5$(printf '%s%s' "$PW" consent | python3 -c 'import sys,hashlib;print(hashlib.md5(sys.stdin.buffer.read()).hexdigest())')"
 printf "ALTER ROLE consent PASSWORD '%s';\n" "$MD5H" \
-  | PGPASSWORD=$PW psql -v ON_ERROR_STOP=1 -f - "host=127.0.0.1 port=5434 dbname=consent user=consent sslmode=disable"
+  | PGPASSWORD=$PW psql -X -v ON_ERROR_STOP=1 -f - "host=127.0.0.1 port=5434 dbname=consent user=consent sslmode=disable"
 ```
 
 ## Rehearse first
