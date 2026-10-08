@@ -7,7 +7,8 @@ post:
   description: |
     Create a new DAR progress report
     A closeout automatically includes every dataset in the collection, ignoring the supplied
-    dataset selection, even if dataset registration approval has since changed. Submission
+    dataset selection, even if dataset registration approval has since changed. Dataset-dependent
+    collaboration and ethics documents are not required for closeouts. Submission
     immediately terminates all grants enabled by the collection
     and prevents further DAC voting, election creation, or cancellation.
     Deprecated in favor of /api/dar/v3/progress_report/{parentReferenceId}

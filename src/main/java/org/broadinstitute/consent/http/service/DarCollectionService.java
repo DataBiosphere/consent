@@ -792,6 +792,20 @@ public class DarCollectionService implements ConsentLogger {
     if (role != UserRoles.CHAIRPERSON && role != UserRoles.RESEARCHER) {
       throw new ForbiddenException(CANCEL_ROLE_ERROR);
     }
+    if (role == UserRoles.RESEARCHER
+        && !collection.getDars().isEmpty()
+        && !user.getUserId().equals(collection.getCreateUserId())) {
+      throw new NotFoundException();
+    }
+    return dataAccessRequestDAO.inTransaction(
+        dao -> {
+          dao.lockCollection(collection.getDarCollectionId());
+          return cancelDarCollectionByRoleInTransaction(user, collection, role);
+        });
+  }
+
+  private DarCollection cancelDarCollectionByRoleInTransaction(
+      User user, DarCollection collection, UserRoles role) {
     if (role == UserRoles.CHAIRPERSON) {
       validateCollectionIsNotClosedOut(collection.getDarCollectionId());
     }
@@ -955,7 +969,12 @@ public class DarCollectionService implements ConsentLogger {
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =
-            collectionServiceDAO.createElectionsForDarByUser(user, dar);
+            dataAccessRequestDAO.inTransaction(
+                dao -> {
+                  dao.lockCollection(collection.getDarCollectionId());
+                  validateCollectionIsNotClosedOut(collection.getDarCollectionId());
+                  return collectionServiceDAO.createElectionsForDarByUser(user, dar);
+                });
         if (createdElectionReferenceIds.isEmpty()) {
           var e =
               new IllegalStateException(
@@ -1018,9 +1037,13 @@ public class DarCollectionService implements ConsentLogger {
       return;
     }
 
-    validateCollectionIsNotClosedOut(collectionId);
-    // Create elections and votes for auto-open DACs
-    createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+    dataAccessRequestDAO.inTransaction(
+        dao -> {
+          dao.lockCollection(collectionId);
+          validateCollectionIsNotClosedOut(collectionId);
+          createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+          return null;
+        });
   }
 
   /** Sends notification messages for a new DAR collection. */

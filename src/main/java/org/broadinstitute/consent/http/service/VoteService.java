@@ -168,9 +168,21 @@ public class VoteService implements ConsentLogger {
   public List<Vote> updateVotesWithValue(
       List<Vote> votes, boolean voteValue, String rationale, User user)
       throws IllegalArgumentException {
-    validateVotesCanUpdate(votes);
+    List<Vote> updatedVotes;
     try {
-      List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+      updatedVotes =
+          dataAccessRequestDAO.inTransaction(
+              dao -> {
+                lockVoteCollections(votes, dao);
+                validateVotesCanUpdate(votes);
+                return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+              });
+    } catch (ConsentConflictException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Unable to update election votes.", e);
+    }
+    try {
       if (voteValue) {
         try {
           sendDatasetApprovalNotifications(updatedVotes, user);
@@ -577,10 +589,26 @@ public class VoteService implements ConsentLogger {
    */
   public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
       throws ConsentConflictException {
-    List<Vote> votes = voteDAO.findVotesByIds(voteIds);
-    validateVotesCanUpdate(votes);
-    voteDAO.updateRationaleByVoteIds(voteIds, rationale);
-    return findVotesByIds(voteIds);
+    return dataAccessRequestDAO.inTransaction(
+        dao -> {
+          List<Vote> votes = voteDAO.findVotesByIds(voteIds);
+          lockVoteCollections(votes, dao);
+          validateVotesCanUpdate(votes);
+          voteDAO.updateRationaleByVoteIds(voteIds, rationale);
+          return findVotesByIds(voteIds);
+        });
+  }
+
+  private void lockVoteCollections(List<Vote> votes, DataAccessRequestDAO dao) {
+    List<String> referenceIds =
+        electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList()).stream()
+            .map(Election::getReferenceId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    if (!referenceIds.isEmpty()) {
+      dao.lockCollectionsForReferenceIds(referenceIds);
+    }
   }
 
   @VisibleForTesting

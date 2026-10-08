@@ -488,10 +488,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         .thenReturn(closeout);
     when(datasetService.findDatasetsByIds(user, List.of(1, 2, 3))).thenReturn(List.of());
 
-    Dataset dataset = new Dataset();
-    dataset.setDataUse(new DataUse());
-    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
-
     try (var response =
         resource.postProgressReport(
             duosUser,
@@ -767,6 +763,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         childDar,
         parentDar);
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
+  }
+
+  @Test
+  void closeoutDocumentValidationIgnoresClientDatasetSelection() throws Exception {
+    DataAccessRequest closeout = generateDataAccessRequest();
+    closeout.setParentId(1);
+    closeout.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    for (List<Integer> selection : List.of(List.<Integer>of(), List.of(999))) {
+      closeout.setDatasetIds(selection);
+      resource.populateProgressReportWithDocuments(
+          user, null, null, null, null, closeout, generateDataAccessRequest());
+    }
+    verify(datasetService, never()).findDatasetById(any(), any());
   }
 
   @Test

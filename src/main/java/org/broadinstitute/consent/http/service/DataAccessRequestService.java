@@ -348,6 +348,15 @@ public class DataAccessRequestService implements ConsentLogger {
           transactionDAOs -> {
             DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
             DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
+            transactionalDarDAO.lockCollection(parentDar.getCollectionId());
+            if (transactionalDarDAO.hasSubmittedCloseout(parentDar.getCollectionId())) {
+              throw new BadRequestException(
+                  "Cannot create a progress report for a closed out collection");
+            }
+            if (progressReport.getIsCloseoutProgressReport()) {
+              progressReport.setDatasetIds(
+                  transactionalDarDAO.findDatasetIdsByCollectionId(parentDar.getCollectionId()));
+            }
             Integer progressReportId =
                 transactionalDarDAO.insertProgressReport(
                     progressReport.getParentId(),
@@ -364,7 +373,7 @@ public class DataAccessRequestService implements ConsentLogger {
               transactionalDarDAO.updateRequiresSOApproval(true, referenceId);
             }
             syncDataAccessRequestDatasets(
-                progressReportDatasetIds, referenceId, transactionalDarDAO);
+                progressReport.getDatasetIds(), referenceId, transactionalDarDAO);
             transactionalDarDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
             if (!progressReport.getIsCloseoutProgressReport()) {
               captureDatasetDaaSnapshots(

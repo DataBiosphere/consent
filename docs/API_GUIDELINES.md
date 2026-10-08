@@ -58,9 +58,13 @@ Keep this file updated as new patterns emerge.
 
 Closeout progress reports automatically include all datasets from submitted requests in the
 collection, including datasets omitted from later progress reports. The API ignores the submitted
-dataset selection for a closeout. Dataset registration approval is not required to terminate
-existing grants. Submission terminates collection grants immediately, without
+dataset selection for a closeout. Dataset registration approval and dataset-dependent collaboration or ethics documents are not
+required to terminate existing grants. Submission terminates collection grants immediately, without
 waiting for signing official approval or DAC acknowledgement. Closed out collections cannot be
 voted on, reopened, cancelled, or renewed through another progress report.
 
 The duos-ui closeout form must display the full collection dataset list without removal controls.
+
+Closeout submission, election mutations, and vote updates serialize on the same collection row.
+Each workflow checks for submitted closeouts after acquiring the lock and retains it until commit.
+Draft closeouts do not terminate grants or hide approved datasets.

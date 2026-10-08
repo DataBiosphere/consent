@@ -66,7 +66,6 @@ public class VoteServiceDAO {
                   electionUpdate.execute();
                 }
               });
-          h.commit();
         });
     return voteDAO.findVotesByIds(votes.stream().map(Vote::getVoteId).toList());
   }

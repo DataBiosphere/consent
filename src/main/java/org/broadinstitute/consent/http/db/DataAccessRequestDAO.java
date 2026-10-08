@@ -33,6 +33,25 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(DataAccessRequestMapper.class)
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
 
+  /**
+   * Lock before checking closeout state; retain the lock until all mutations commit. Call inside
+   * inTransaction: on-demand DAOs from the same Jdbi share that transaction's scoped handle.
+   */
+  @SqlQuery(
+      "SELECT collection_id FROM dar_collection WHERE collection_id = :collectionId FOR UPDATE")
+  Integer lockCollection(@Bind("collectionId") Integer collectionId);
+
+  /** Lock in a stable order for vote batches spanning multiple collections. */
+  @SqlQuery(
+      """
+      SELECT collection_id FROM dar_collection
+      WHERE collection_id IN (
+          SELECT collection_id FROM data_access_request WHERE reference_id IN (<referenceIds>)
+      )
+      ORDER BY collection_id FOR UPDATE
+      """)
+  List<Integer> lockCollectionsForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
   @SqlQuery(
       """
       SELECT DISTINCT dd.dataset_id

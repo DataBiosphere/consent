@@ -250,6 +250,33 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void draftCloseoutPreservesApprovalsUntilSubmitted() {
+    User user = createUser();
+    giveLibraryCard(user);
+    Integer datasetId = createDataset(user);
+    Integer collectionId = createCollection(user);
+    String approved =
+        insertSubmittedDar(
+            user, collectionId, datasetId, new DataAccessRequestData(), recentDate(5));
+    approve(user, approved, datasetId, VoteType.FINAL, true);
+    DataAccessRequestData closeout = new DataAccessRequestData();
+    closeout.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Completed"), "", user.getUserId()));
+    String draft = insertSubmittedDar(user, collectionId, datasetId, closeout, null);
+    assertEquals(1, pageRowCount(user));
+    assertEquals(1, getCounts(user).approvalsActive());
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE data_access_request SET submission_date = now() WHERE reference_id = :referenceId")
+                .bind("referenceId", draft)
+                .execute());
+    assertEquals(0, pageRowCount(user));
+    assertEquals(0, getCounts(user).approvalsActive());
+  }
+
+  @Test
   void doesNotCountApprovalsFromAClosedOutCollection() {
     User user = createUser();
     giveLibraryCard(user);
