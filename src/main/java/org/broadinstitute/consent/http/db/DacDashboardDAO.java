@@ -111,8 +111,9 @@ public interface DacDashboardDAO {
           WHERE election_count >= dataset_count AND NOT has_open_election
         ) AS dar_approved,
         COUNT(*) FILTER (
-          WHERE (has_open_chair_election AND NOT has_closeout)
-             OR (has_open_member_election AND has_pending_member_vote)
+          WHERE NOT has_closeout
+            AND (has_open_chair_election
+              OR (has_open_member_election AND has_pending_member_vote))
         ) AS awaiting_my_vote
       FROM collection_state
       """)

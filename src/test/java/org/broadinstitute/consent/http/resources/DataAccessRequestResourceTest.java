@@ -476,7 +476,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPostCloseoutReturnsAllDatasetsWithoutCreatingElections() throws Exception {
+  void testPostCloseoutReturnsAllDatasetsWithoutCreatingElections() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     mockProgressReportUserAndParentDar(parentDar);
     mockNoOpenProgressReportElections(parentDar);

@@ -74,6 +74,22 @@ class DacDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void doesNotOfferMemberVoteActionForCloseout() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User member = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dacId);
+    User researcher = createUser();
+    String closeout = createSubmittedDar(researcher, createDataset(owner, dacId), true);
+    Integer election = createElection(closeout, datasetIdFor(closeout), ElectionStatus.OPEN);
+    voteDAO.insertVote(member.getUserId(), election, VoteType.DAC.getValue());
+
+    DashboardDatabaseCounts counts = getCounts(member);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(0, counts.awaitingMyVote());
+  }
+
+  @Test
   void countsOnlyMemberRequestsWithAPendingDacVote() {
     User owner = createUser();
     Integer dacId = createDac(owner);
@@ -139,7 +155,8 @@ class DacDashboardDAOTest extends DAOTestHelper {
     assertEquals(1, counts.dacs());
     assertEquals(6, counts.darTotal());
     assertEquals(1, counts.darApproved());
-    assertEquals(3, counts.awaitingMyVote());
+    // Closeouts cannot be voted on by chairs or members, so only chairDar and memberDar count
+    assertEquals(2, counts.awaitingMyVote());
   }
 
   @Test

@@ -762,12 +762,12 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void createProgressReportRejectsClosedOutCollection() {
     DataAccessRequest parent = generateDataAccessRequest();
     when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId())).thenReturn(true);
+    User user = createUserWithPrerequisites();
+    DataAccessRequest progressReport = generateProgressReport();
 
     assertThrows(
         BadRequestException.class,
-        () ->
-            service.createProgressReport(
-                createUserWithPrerequisites(), generateProgressReport(), parent, request));
+        () -> service.createProgressReport(user, progressReport, parent, request));
     verify(dataAccessRequestDAO, never())
         .insertProgressReport(any(), any(), any(), any(), any(), any());
   }

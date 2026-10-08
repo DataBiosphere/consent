@@ -13,7 +13,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -964,7 +963,7 @@ public class DarCollectionService implements ConsentLogger {
    * @return The updated DarCollection
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
-      throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
+      throws BadRequestException, ForbiddenException, ConsentConflictException {
     DataAccessRequest dar = validateElectionCreation(user, collection);
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {

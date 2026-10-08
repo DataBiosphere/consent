@@ -1204,10 +1204,12 @@ class VoteServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(
             List.of("synthetic-original-dar")))
         .thenReturn(true);
+    List<Vote> votes = List.of(vote);
+    User user = new User();
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.updateVotesWithValue(List.of(vote), true, "synthetic rationale", new User()));
+        () -> service.updateVotesWithValue(votes, true, "synthetic rationale", user));
     verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
   }
 
