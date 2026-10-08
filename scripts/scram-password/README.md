@@ -60,11 +60,20 @@ Run the commands from the repository root. They write `main.c` and `pg-scram` in
 `scripts/scram-password`, where the `.gitignore` of that directory ignores them. Do not commit them.
 
 ```shell
-COMMIT=68a8861af6112588db2190bd625394c92e1585ec
-gh api "repos/fboulnois/pg-scram/contents/main.c?ref=$COMMIT" --jq .content | base64 --decode > scripts/scram-password/main.c
-shasum -a 256 scripts/scram-password/main.c   # must print d98bde7c1d80bb0df159dd278f46211423db8e16f432ed317191b50fe80de08d
-cc -I"$(pg_config --includedir)" scripts/scram-password/main.c -o scripts/scram-password/pg-scram -L"$(pg_config --libdir)" -lpq
+(
+  set -euo pipefail
+  COMMIT=68a8861af6112588db2190bd625394c92e1585ec
+  SHA256=d98bde7c1d80bb0df159dd278f46211423db8e16f432ed317191b50fe80de08d
+  SRC=scripts/scram-password/main.c
+  gh api "repos/fboulnois/pg-scram/contents/main.c?ref=$COMMIT" --jq .content | base64 --decode > "$SRC"
+  # The build runs only if the source matches the pinned checksum.
+  echo "$SHA256  $SRC" | shasum -a 256 -c - \
+    || { rm -f "$SRC"; echo "checksum mismatch - deleted $SRC, nothing built"; exit 1; }
+  cc -I"$(pg_config --includedir)" "$SRC" -o scripts/scram-password/pg-scram -L"$(pg_config --libdir)" -lpq
+)
 ```
+
+The checksum gates the build. On a mismatch the block deletes the source and builds nothing.
 
 On macOS with Postgres.app, add `/Applications/Postgres.app/Contents/Versions/latest/bin` to the `PATH` first.
 

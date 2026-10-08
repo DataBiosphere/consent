@@ -45,25 +45,37 @@ DB=${DB:-consent}
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/scram.XXXXXX") || exit 1
 FIFO="$WORK/held.fifo"; OUT="$WORK/held.out"; PSQLPID=""
-# 1 from just before the ALTER is sent until the result is verified or rolled back.
+# 1 from just before the ALTER is sent until the result is verified or the rollback is
+# confirmed. It stays 1 while the rollback runs, so that an interrupt cannot end the
+# protection early.
 PENDING_ROLLBACK=0
+# 1 once the rollback ALTER is queued, so that it is queued only once.
+ROLLBACK_SENT=0
 
 pause() { python3 -c 'import time;time.sleep(0.2)'; }
 
 rollback() {
-  PENDING_ROLLBACK=0
-  if [ -n "$PSQLPID" ] && kill -0 "$PSQLPID" 2>/dev/null; then
+  if [ "$ROLLBACK_SENT" = 0 ]; then
+    if [ -z "$PSQLPID" ] || ! kill -0 "$PSQLPID" 2>/dev/null; then
+      PENDING_ROLLBACK=0
+      echo "ROLLBACK NOT POSSIBLE: the held session is gone - check by hand"
+      echo "after rollback: $(probe 2>&1)"
+      return
+    fi
     # The held session runs its commands in order. Queue a marker behind the rollback, and
     # wait for the marker before the probe. The first ALTER may still be blocked, and the
     # probe shows MD5 while it is. Only the marker proves that BOTH ALTER commands have run.
     { printf "ALTER ROLE %s PASSWORD '%s';\n" "$U" "$MD5H" >&3; printf "select 'rollback-ordered';\n" >&3; } 2>/dev/null
-    if waitfor "rollback-ordered" 1 $(( ${ROLLBACK_WAIT:-30} * 5 )) && waitprobe "authType 5" 10; then
-      echo "rollback applied"
-    else
-      echo "ROLLBACK DID NOT CONFIRM - check by hand"
-    fi
+    ROLLBACK_SENT=1
+  fi
+  echo "waiting for the rollback (up to ${ROLLBACK_WAIT:-30} s)"
+  if waitfor "rollback-ordered" 1 $(( ${ROLLBACK_WAIT:-30} * 5 )) && waitprobe "authType 5" 10; then
+    PENDING_ROLLBACK=0
+    echo "rollback applied"
   else
-    echo "ROLLBACK NOT POSSIBLE: the held session is gone - check by hand"
+    # Clear the flag here too: one more wait would not help, and the operator must act.
+    PENDING_ROLLBACK=0
+    echo "ROLLBACK DID NOT CONFIRM - check by hand"
   fi
   echo "after rollback: $(probe 2>&1)"
 }
@@ -71,6 +83,9 @@ rollback() {
 # Runs from the EXIT trap below, so ShellCheck cannot see the call.
 # shellcheck disable=SC2329
 cleanup() {
+  # A second signal must not stop the cleanup while it rolls back and closes the session.
+  # The wait is bounded (ROLLBACK_WAIT plus a few seconds). Only kill -9 can stop it now.
+  trap '' HUP INT TERM
   if [ "$PENDING_ROLLBACK" = 1 ]; then
     echo "stopped before the result was verified - ROLLING BACK to the MD5 verifier"
     rollback
