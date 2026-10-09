@@ -345,6 +345,22 @@ class DaaServiceTest extends AbstractTestHelper {
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
   }
 
+  @Test
+  void testSendNewDaaEmailsContinuesAfterFailedSigningOfficialSend() throws Exception {
+    SimplifiedUser researcher = simplifiedUser(101, 1);
+    SimplifiedUser signingOfficial = simplifiedUser(201, 1);
+    SimplifiedUser signingOfficial2 = simplifiedUser(202, 1);
+    stubDaaWithRecipients(List.of(researcher), List.of(signingOfficial, signingOfficial2));
+    doThrow(new IOException("send failed"))
+        .when(emailService)
+        .sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
+
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+
+    verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
+    verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(202));
+  }
+
   private SimplifiedUser simplifiedUser(Integer userId, Integer institutionId) {
     User user = new User();
     user.setUserId(userId);
