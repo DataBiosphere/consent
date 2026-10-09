@@ -6,6 +6,10 @@ post:
     See /api/dar/v3/progress_report/{parentReferenceId} for replacement
   description: |
     Create a new DAR progress report
+    A closeout automatically includes every dataset in the collection, ignoring the supplied
+    dataset selection, even if dataset registration approval has since changed. Dataset-dependent
+    collaboration and ethics documents are not required for closeouts. Submission
+    immediately terminates all grants enabled by the collection.
     Deprecated in favor of /api/dar/v3/progress_report/{parentReferenceId}
   tags:
     - Data Access Request
