@@ -35,8 +35,10 @@ password and the instance name (`jq -r .instance_name`). It has no `db` field: t
 Do one environment at a time. For prod, first take a backup:
 `gcloud sql backups create --instance=<instance> --project=<project>`.
 
-1. **Find old clients.** A client with libpq below 10 or `pgjdbc` below 42.2 cannot do SCRAM.
-   List the logins of the role in the last 30 days, and look for a tool that you do not expect:
+1. **Find the clients of the role.** A client with libpq below 10 or `pgjdbc` below 42.2 cannot do SCRAM.
+   List the logins of the role in the last 30 days. The log shows each client's `application_name`, not its
+   driver version. Use the name to find each client, then check that client's driver version yourself.
+   Many clients send no `application_name`. On dev, most logins (the consent app) had none.
 
    ```shell
    gcloud logging read 'resource.type="cloudsql_database"
@@ -46,16 +48,19 @@ Do one environment at a time. For prod, first take a backup:
      | sed -E 's/^.*connection authorized: //; s/ SSL.*$//' | sort | uniq -c | sort -rn
    ```
 
-   Empty output means that the read failed: the role logs in all the time. Do not add `--limit`.
+   This needs the `log_connections` flag on the instance. The consent instances set it. Empty output means
+   that the flag is off or that the read failed, because the role logs in all the time. Do not add `--limit`.
 
-2. **Start the proxy** on your laptop, bound to loopback only:
+2. **Start the proxy** on your laptop, bound to loopback only. Read the instance's connection name first,
+   so that the region is not a guess:
 
    ```shell
+   CONNECTION_NAME=$(gcloud sql instances describe <instance> --project <project> --format='value(connectionName)')
    docker run -d --name scram-proxy -p 127.0.0.1:5434:5432 \
      -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/adc.json \
      -v "$HOME/.config/gcloud/application_default_credentials.json:/secrets/adc.json:ro" \
      gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0-alpine \
-     --address 0.0.0.0 --port 5432 <project>:us-central1:<instance>
+     --address 0.0.0.0 --port 5432 "$CONNECTION_NAME"
    ```
 
 3. **Load the password, and check that the role is on MD5.** In terminal A:
@@ -91,7 +96,8 @@ Do one environment at a time. For prod, first take a backup:
    `psql` asks twice, so it catches two different entries, but not the same wrong value twice. Step 6
    catches that.
 
-6. **Check the result** from terminal B, with the same `PGPASSWORD` and `CONN`:
+6. **Check the result** from terminal B. A new terminal does not have the variables from terminal A,
+   so run the `export PGPASSWORD=…` and `CONN=…` lines from step 3 there first. Then:
 
    ```shell
    psql -X "$CONN require_auth=scram-sha-256" -tAc "select 'login ok'"
