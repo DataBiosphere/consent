@@ -1408,6 +1408,40 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(voteDAO, never()).findDacVotesWithNamesByElectionIds(any());
   }
 
+  @ParameterizedTest
+  @EnumSource(
+      value = UserRoles.class,
+      names = {"ADMIN", "SIGNINGOFFICIAL", "CHAIRPERSON", "MEMBER", "RESEARCHER"})
+  void closedOutCollectionIsCompleteForEveryRole(UserRoles role) {
+    User user = new User();
+    user.setUserId(1);
+    user.setInstitutionId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Closeout"), "Closeout", 1));
+    Election openElection = new Election();
+    openElection.setElectionId(1);
+    openElection.setStatus(ElectionStatus.OPEN.getValue());
+    summary.addElection(openElection);
+    List<DarCollectionSummary> source = List.of(summary);
+    switch (role) {
+      case ADMIN ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin()).thenReturn(source);
+      case SIGNINGOFFICIAL ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(1)).thenReturn(source);
+      case RESEARCHER ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(1))
+              .thenReturn(source);
+      default ->
+          when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(1, role.getRoleId()))
+              .thenReturn(source);
+    }
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, role);
+
+    assertEquals(DarCollectionStatus.COMPLETE.getValue(), summaries.getFirst().getStatus());
+  }
+
   @Test
   void testProcessDarCollectionSummariesForAdminWithCloseout() {
     User user = new User();
@@ -2429,6 +2463,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertTrue(
         summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedActions, summaryResult.getActions());
+
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    DarCollectionSummary closedOutSummary =
+        service.getSummaryForRoleByCollectionId(user, UserRoles.MEMBER, collectionId);
+    assertTrue(closedOutSummary.getActions().isEmpty());
   }
 
   @Test

@@ -1470,6 +1470,34 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summariesForResearcher.get(0).getCloseoutSupplement());
   }
 
+  @Test
+  void testSummaryIgnoresCloseoutSupplementOnOriginalDar() {
+    Setup setup = createDarCollectionSummaryForUser(VoteType.FINAL);
+    String original = setup.summary().getLatestReferenceId();
+    // Only a progress report can close out; a stray supplement on an original DAR is not one.
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                    UPDATE data_access_request
+                    SET data = jsonb_set(data, '{closeoutSupplement}',
+                        '{"reasons": ["Completed"], "signingOfficialId": 1}'::jsonb)
+                    WHERE reference_id = :referenceId
+                    """)
+                .bind("referenceId", original)
+                .execute());
+
+    List<DarCollectionSummary> forResearcher =
+        darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(setup.userId());
+    List<DarCollectionSummary> forChair =
+        darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
+            setup.chairId(), UserRoles.CHAIRPERSON.getRoleId());
+
+    assertNull(forResearcher.getFirst().getCloseoutSupplement());
+    assertNull(forChair.getFirst().getCloseoutSupplement());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"RADAR_APPROVE", "FINAL"})
   void testGetDarCollectionSummaryForDACWithProgressReports(String voteType) {

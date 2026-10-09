@@ -128,6 +128,8 @@ public interface ResearcherDashboardDAO {
           AND NOT EXISTS (
             SELECT 1 FROM data_access_request closeout
             WHERE closeout.collection_id = sd.collection_id
+              AND closeout.submission_date IS NOT NULL
+              AND closeout.parent_id IS NOT NULL
               AND closeout.data->>'closeoutSupplement' IS NOT NULL
           )
         GROUP BY sd.dar_code, dd.dataset_id
