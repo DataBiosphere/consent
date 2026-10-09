@@ -11,6 +11,12 @@ These prompts are repository-specific and designed to produce changes that align
 | `bugfix.md` | Diagnose and fix a production or test failure |
 | `refactor.md` | Improve readability/maintainability without changing behavior |
 
+## Domain Guides
+
+| Guide | Read before touching... |
+| --- | --- |
+| `dar-lifecycle.md` | Drafts, DAR submission, progress reports, closeouts, elections/votes, or any grant/approval query |
+
 ## Recommended Workflow
 
 1. Choose one prompt based on task type.
