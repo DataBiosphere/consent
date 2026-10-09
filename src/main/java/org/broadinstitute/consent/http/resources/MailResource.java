@@ -15,6 +15,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -28,6 +29,9 @@ import org.broadinstitute.consent.http.service.EmailService;
 public class MailResource {
 
   private final EmailService emailService;
+
+  /** Summaries are listed many at once, so a page is capped rather than the whole log at once. */
+  static final int MAX_SUMMARY_LIMIT = 1000;
 
   @Inject
   public MailResource(EmailService emailService) {
@@ -75,25 +79,75 @@ public class MailResource {
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
     validateLimitAndOffset(limit, offset);
+    try {
+      return Response.ok()
+          .entity(
+              emailService.fetchEmailMessagesByCreateDate(
+                  parseStartDate(start), parseEndDate(end), limit, offset))
+          .build();
+    } catch (ParseException pe) {
+      return invalidDateResponse();
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/summary")
+  @RolesAllowed({ADMIN})
+  public Response getEmailSummaryByDateRange(
+      @Auth DuosUser duosUser,
+      @QueryParam("start") String start,
+      @QueryParam("end") String end,
+      @DefaultValue("20") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    validateLimitAndOffset(limit, offset);
+    if (limit != null && limit > MAX_SUMMARY_LIMIT) {
+      throw new BadRequestException("limit value must be " + MAX_SUMMARY_LIMIT + " or less");
+    }
+    try {
+      return Response.ok()
+          .entity(
+              emailService.fetchEmailMessageSummariesByCreateDate(
+                  parseStartDate(start), parseEndDate(end), limit, offset))
+          .build();
+    } catch (ParseException pe) {
+      return invalidDateResponse();
+    }
+  }
+
+  private Date parseStartDate(String start) throws ParseException {
+    if (StringUtils.isBlank(start)) {
+      throw new ParseException("start is required", 0);
+    }
+    return parseDate(start);
+  }
+
+  private Date parseEndDate(String end) throws ParseException {
+    return StringUtils.isNotBlank(end)
+        ? parseDate(end)
+        : Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+  }
+
+  private Date parseDate(String date) throws ParseException {
+    // A new instance per call, since SimpleDateFormat is not thread-safe.
     DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
     // if df.setLenient(false) were not set, dates like 55/97/2022 would parse and the year would be
     // advanced.
     df.setLenient(false);
-    try {
-      Date startDate = df.parse(start);
-      Date endDate =
-          StringUtils.isNotBlank(end)
-              ? df.parse(end)
-              : Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
-      return Response.ok()
-          .entity(emailService.fetchEmailMessagesByCreateDate(startDate, endDate, limit, offset))
-          .build();
-    } catch (ParseException pe) {
-      return Response.status(Response.Status.BAD_REQUEST)
-          .entity(
-              "Invalid date format provided for begin or end.  Please use MM/dd/yyyy (e.g. 05/21/2022)")
-          .build();
+    ParsePosition position = new ParsePosition(0);
+    Date parsed = df.parse(date, position);
+    // parse(String) stops at the date and ignores anything after it, such as 05/11/2021garbage.
+    if (parsed == null || position.getIndex() != date.length()) {
+      throw new ParseException(date, position.getErrorIndex());
     }
+    return parsed;
+  }
+
+  private Response invalidDateResponse() {
+    return Response.status(Response.Status.BAD_REQUEST)
+        .entity(
+            "Invalid date format provided for begin or end.  Please use MM/dd/yyyy (e.g. 05/21/2022)")
+        .build();
   }
 
   private void validateLimitAndOffset(Integer limit, Integer offset) {

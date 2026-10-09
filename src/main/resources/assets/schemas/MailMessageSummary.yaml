@@ -1,0 +1,38 @@
+type: object
+description: A sent email without its email text or SendGrid response.
+properties:
+  emailId:
+    type: integer
+    description: ID of the email that was sent
+  entityReferenceId:
+    type: [string, 'null']
+    description: Reference to the entity the email concerns, such as a DAR code or dataset identifier, depending on the email type
+  voteId:
+    type: [integer, 'null']
+    description: ID of associated vote
+  userId:
+    type: integer
+    description: ID of the user the message was sent to
+  emailType:
+    type: integer
+    description: The type of email message that was sent
+  dateSent:
+    type: [integer, 'null']
+    format: int64
+    description: Time the email was sent, in epoch milliseconds
+  sendgridStatus:
+    type: [integer, 'null']
+    description: The sendgrid response status code
+  createDate:
+    type: integer
+    format: int64
+    description: Time the email was logged, in epoch milliseconds
+examples:
+  - emailId: 1
+    entityReferenceId: DAR-123
+    voteId: 2
+    userId: 3
+    emailType: 8
+    dateSent: 1621382400000
+    sendgridStatus: 202
+    createDate: 1621382400000

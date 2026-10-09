@@ -3,10 +3,14 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -17,9 +21,13 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -126,6 +134,66 @@ class MailResourceTest extends AbstractTestHelper {
     Response response =
         mailResource.getEmailByDateRange(duosUser, "05/11/2021", "65/98/20229", null, null);
     assertEquals(400, response.getStatus());
+  }
+
+  @Test
+  void test_MailResource_summary_ListResponse() throws Exception {
+    initResource();
+    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+    List<MailMessageSummary> summaries =
+        List.of(new MailMessageSummary("DAR-1", 1, null, 2, 4, null, 202, new Date()));
+    when(emailService.fetchEmailMessageSummariesByCreateDate(
+            df.parse("05/11/2021"), df.parse("05/11/2022"), 50, 10))
+        .thenReturn(summaries);
+
+    Response response =
+        mailResource.getEmailSummaryByDateRange(duosUser, "05/11/2021", "05/11/2022", 50, 10);
+
+    assertEquals(200, response.getStatus());
+    assertEquals(summaries, response.getEntity());
+  }
+
+  @Test
+  void test_MailResource_summary_without_end_runs_through_today() throws Exception {
+    initResource();
+    Date tomorrowStart =
+        Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+    when(emailService.fetchEmailMessageSummariesByCreateDate(
+            new SimpleDateFormat("MM/dd/yyyy").parse("05/11/2021"), tomorrowStart, 20, 0))
+        .thenReturn(List.of());
+
+    Response response =
+        mailResource.getEmailSummaryByDateRange(duosUser, "05/11/2021", null, 20, 0);
+
+    assertEquals(200, response.getStatus());
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {"55/11/2021", "05/11/2021garbage"})
+  void test_MailResource_summary_unusable_start_date(String start) {
+    initResource();
+    Response response =
+        mailResource.getEmailSummaryByDateRange(duosUser, start, "05/11/2022", null, null);
+    assertEquals(400, response.getStatus());
+    verifyNoInteractions(emailService);
+  }
+
+  @Test
+  void test_MailResource_summary_limit_above_cap() {
+    initResource();
+    int limit = MailResource.MAX_SUMMARY_LIMIT + 1;
+    assertThrows(
+        BadRequestException.class,
+        () -> mailResource.getEmailSummaryByDateRange(duosUser, "05/11/2021", null, limit, null));
+  }
+
+  @Test
+  void test_MailResource_summary_invalid_limit() {
+    initResource();
+    assertThrows(
+        BadRequestException.class,
+        () -> mailResource.getEmailSummaryByDateRange(duosUser, "05/11/2021", null, -5, null));
   }
 
   private List<MailMessage> generateMailMessageList() {
