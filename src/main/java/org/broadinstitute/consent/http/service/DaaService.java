@@ -18,10 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
@@ -158,23 +160,38 @@ public class DaaService implements ConsentLogger {
   public void sendNewDaaEmails(Integer daaId, String dacName, String newDaaName) {
     try {
       DataAccessAgreement daa = findById(daaId);
-      if (daa != null) {
-        String previousDaaName = daa.getFile().getFileName();
-        List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
-        List<SimplifiedUser> signingOfficials =
-            researchers.stream()
-                .flatMap(
-                    researcher ->
-                        userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
-                .distinct()
-                .toList();
-        researchers.forEach(
-            researcher ->
-                sendNewDAAUploadResearcherMessage(
-                    researcher, dacName, previousDaaName, newDaaName));
-        signingOfficials.forEach(
-            signingOfficial ->
-                sendNewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName));
+      String previousDaaName = daa.getFile().getFileName();
+      List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
+      List<SimplifiedUser> signingOfficials =
+          researchers.stream()
+              .flatMap(
+                  researcher ->
+                      userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
+              .distinct()
+              .toList();
+      int failures = 0;
+      for (SimplifiedUser researcher : researchers) {
+        if (!sendNewDaaEmail(
+            researcher,
+            recipient ->
+                new NewDAAUploadResearcherMessage(
+                    recipient, dacName, previousDaaName, newDaaName))) {
+          failures++;
+        }
+      }
+      for (SimplifiedUser signingOfficial : signingOfficials) {
+        if (!sendNewDaaEmail(
+            signingOfficial,
+            recipient ->
+                new NewDAAUploadSOMessage(recipient, dacName, previousDaaName, newDaaName))) {
+          failures++;
+        }
+      }
+      if (failures > 0) {
+        throw new ServerErrorException(
+            "Failed to send %d of %d new DAA emails."
+                .formatted(failures, researchers.size() + signingOfficials.size()),
+            500);
       }
     } catch (Exception e) {
       logException(e);
@@ -182,27 +199,15 @@ public class DaaService implements ConsentLogger {
     }
   }
 
-  private void sendNewDAAUploadResearcherMessage(
-      SimplifiedUser researcher, String dacName, String previousDaaName, String newDaaName) {
+  private boolean sendNewDaaEmail(
+      SimplifiedUser recipient, Function<User, MailMessage> messageForRecipient) {
     try {
       emailService.sendMessage(
-          new NewDAAUploadResearcherMessage(
-              toRecipient(researcher), dacName, previousDaaName, newDaaName),
-          researcher.getUserId());
+          messageForRecipient.apply(toRecipient(recipient)), recipient.getUserId());
+      return true;
     } catch (Exception e) {
-      logException("Error sending new DAA email to researcher:", e);
-    }
-  }
-
-  private void sendNewDAAUploadSOMessage(
-      SimplifiedUser signingOfficial, String dacName, String previousDaaName, String newDaaName) {
-    try {
-      emailService.sendMessage(
-          new NewDAAUploadSOMessage(
-              toRecipient(signingOfficial), dacName, previousDaaName, newDaaName),
-          signingOfficial.getUserId());
-    } catch (Exception e) {
-      logException("Error sending new DAA email to signing official:", e);
+      logWarn("Error sending new DAA email to user " + recipient.getUserId(), e);
+      return false;
     }
   }
 

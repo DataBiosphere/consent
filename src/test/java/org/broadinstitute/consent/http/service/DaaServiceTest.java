@@ -252,134 +252,49 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Test
   void testSendNewDaaEmails() throws Exception {
-    SimplifiedUser researcher = mock(SimplifiedUser.class);
-    researcher.setDisplayName("Official Name");
-    researcher.setEmail("official@example.com");
-    researcher.setInstitutionId(randomInt(0, 50));
-
-    SimplifiedUser researcher2 = mock(SimplifiedUser.class);
-    researcher2.setDisplayName("Official Name2");
-    researcher2.setEmail("official2@example.com");
-    researcher2.setInstitutionId(randomInt(0, 50));
-
-    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.setDisplayName("Official Name");
-    signingOfficial.setEmail("official@example.com");
-
-    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.setDisplayName("Official Name2");
-    signingOfficial2.setEmail("official2@example.com");
-
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("previousDaaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-
-    initService();
-
-    when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
-    when(userService.findSOsByInstitutionId(any()))
-        .thenReturn(List.of(signingOfficial, signingOfficial2));
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
-    verify(emailService, times(2)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
-    verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
-  }
-
-  @Test
-  void testSendNewDaaEmailsOneResearcher() throws Exception {
-    SimplifiedUser researcher = mock(SimplifiedUser.class);
-    researcher.setDisplayName("Official Name");
-    researcher.setEmail("official@example.com");
-    researcher.setInstitutionId(randomInt(0, 50));
-
-    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.setDisplayName("Official Name");
-    signingOfficial.setEmail("official@example.com");
-
-    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.setDisplayName("Official Name2");
-    signingOfficial2.setEmail("official2@example.com");
-
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("previousDaaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-
-    initService();
-
-    when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
-    when(userService.findSOsByInstitutionId(any()))
-        .thenReturn(List.of(signingOfficial, signingOfficial2));
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
-    verify(emailService, times(1)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
-    verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
-  }
-
-  @Test
-  void testSendNewDaaEmailsStoresEachRecipient() throws Exception {
-    SimplifiedUser researcher = simplifiedUser(101, 1);
-    SimplifiedUser signingOfficial = simplifiedUser(201, 1);
-    stubDaaWithRecipients(List.of(researcher), List.of(signingOfficial));
+    stubDaaWithRecipients(
+        List.of(simplifiedUser(101, 1), simplifiedUser(102, 2)),
+        List.of(simplifiedUser(201, 1), simplifiedUser(202, 2)));
 
     service.sendNewDaaEmails(1, "dacName", "newDaaName");
 
     verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
+    verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(102));
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
+    verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(202));
   }
 
   @Test
-  void testSendNewDaaEmailsContinuesAfterFailedSend() throws Exception {
-    SimplifiedUser researcher = simplifiedUser(101, 1);
-    SimplifiedUser researcher2 = simplifiedUser(102, 1);
-    SimplifiedUser signingOfficial = simplifiedUser(201, 1);
-    stubDaaWithRecipients(List.of(researcher, researcher2), List.of(signingOfficial));
+  void testSendNewDaaEmailsSendsToEveryoneBeforeReportingAFailedResearcherSend() throws Exception {
+    stubDaaWithRecipients(
+        List.of(simplifiedUser(101, 1), simplifiedUser(102, 1)), List.of(simplifiedUser(201, 1)));
     doThrow(new IOException("send failed"))
         .when(emailService)
         .sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
 
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+    ServerErrorException e =
+        assertThrows(
+            ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
 
+    assertEquals("Failed to send 1 of 3 new DAA emails.", e.getMessage());
     verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(102));
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
   }
 
   @Test
-  void testSendNewDaaEmailsContinuesAfterFailedSigningOfficialSend() throws Exception {
-    SimplifiedUser researcher = simplifiedUser(101, 1);
-    SimplifiedUser signingOfficial = simplifiedUser(201, 1);
-    SimplifiedUser signingOfficial2 = simplifiedUser(202, 1);
-    stubDaaWithRecipients(List.of(researcher), List.of(signingOfficial, signingOfficial2));
+  void testSendNewDaaEmailsSendsToEveryoneBeforeReportingAFailedSigningOfficialSend()
+      throws Exception {
+    stubDaaWithRecipients(
+        List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1), simplifiedUser(202, 1)));
     doThrow(new IOException("send failed"))
         .when(emailService)
         .sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
 
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+    assertThrows(
+        ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
 
     verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(202));
-  }
-
-  private SimplifiedUser simplifiedUser(Integer userId, Integer institutionId) {
-    User user = new User();
-    user.setUserId(userId);
-    user.setDisplayName("User " + userId);
-    user.setEmail("user" + userId + "@example.com");
-    user.setInstitutionId(institutionId);
-    return new SimplifiedUser(user);
-  }
-
-  private void stubDaaWithRecipients(
-      List<SimplifiedUser> researchers, List<SimplifiedUser> signingOfficials) {
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("previousDaaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-    initService();
-    when(userService.getUsersByDaaId(any())).thenReturn(researchers);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(signingOfficials);
   }
 
   @Test
@@ -841,5 +756,26 @@ class DaaServiceTest extends AbstractTestHelper {
     verify(libraryCardService, never()).findLibraryCardIdByUserId(any());
     verify(libraryCardService, never()).validateNewLibraryCardCreation(any(), any());
     verify(libraryCardService, never()).sendNewLibraryCardIssuedMessage(any());
+  }
+
+  private SimplifiedUser simplifiedUser(Integer userId, Integer institutionId) {
+    User user = new User();
+    user.setUserId(userId);
+    user.setDisplayName("User " + userId);
+    user.setEmail("user" + userId + "@example.com");
+    user.setInstitutionId(institutionId);
+    return new SimplifiedUser(user);
+  }
+
+  private void stubDaaWithRecipients(
+      List<SimplifiedUser> researchers, List<SimplifiedUser> signingOfficials) {
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("previousDaaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+    initService();
+    when(userService.getUsersByDaaId(any())).thenReturn(researchers);
+    when(userService.findSOsByInstitutionId(any())).thenReturn(signingOfficials);
   }
 }

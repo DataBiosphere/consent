@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
@@ -587,7 +588,9 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new RuntimeException()).when(daaService).sendNewDaaEmails(any(), any(), any());
+    doThrow(new ServerErrorException("Failed to send 1 of 1 new DAA emails.", 500))
+        .when(daaService)
+        .sendNewDaaEmails(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
