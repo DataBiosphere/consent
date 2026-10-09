@@ -65,3 +65,9 @@ Write each `@SqlQuery` as one contiguous text block that reads top to bottom. Do
 concatenating shared `String` constants, and never splice one into the middle of a clause; repeat
 a short predicate or CTE in each query instead. Reviewers have found composed fragments too hard
 to verify. The base-fragment chains already in `DarMetricsDAO` predate this rule; don't extend them.
+
+## DAR lifecycle
+
+Before changing drafts, DAR submission, progress reports, closeouts, elections, votes, or any
+grant/approval query, read `docs/ai/dar-lifecycle.md`. In particular: progress reports are never
+drafts, and only a progress report (`parent_id IS NOT NULL`) can close out a collection.
