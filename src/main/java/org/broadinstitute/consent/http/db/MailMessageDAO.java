@@ -98,8 +98,14 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset);
 
-  // Recipients of one send get their own rows, created one after another. A row more than 10
-  // minutes after the previous row of its type and entity reference starts a new send.
+  int MAX_SEND_RECIPIENTS = 100;
+
+  default List<MailSend> fetchSendsByCreateDate(
+      Date start, Date end, Integer limit, Integer offset) {
+    return fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS);
+  }
+
+  // A row more than 10 minutes after the previous row of its type and reference starts a new send.
   @SqlQuery(
       """
       WITH in_range AS (
@@ -118,23 +124,42 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
             PARTITION BY email_type, entity_reference_id ORDER BY create_date, email_entity_id
           ) AS send_number
         FROM in_range
+      ),
+      page AS (
+        SELECT email_type, entity_reference_id, send_number,
+          MIN(email_entity_id) AS send_id, MIN(create_date) AS create_date,
+          COUNT(*) AS recipient_count
+        FROM numbered
+        GROUP BY email_type, entity_reference_id, send_number
+        ORDER BY MIN(create_date) DESC, MIN(email_entity_id) DESC
+        OFFSET :offset
+        LIMIT :limit
+      ),
+      named AS (
+        SELECT p.send_id, n.user_id, u.display_name,
+          ROW_NUMBER() OVER (
+            PARTITION BY p.send_id ORDER BY u.display_name, n.email_entity_id
+          ) AS position
+        FROM page p
+        JOIN numbered n ON n.email_type = p.email_type
+          AND n.entity_reference_id IS NOT DISTINCT FROM p.entity_reference_id
+          AND n.send_number = p.send_number
+        LEFT JOIN users u ON u.user_id = n.user_id
       )
-      SELECT MIN(n.email_entity_id) AS send_id, n.email_type, n.entity_reference_id,
-        MIN(n.create_date) AS create_date, COUNT(*) AS recipient_count,
+      SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count,
         json_agg(
-          json_build_object('userId', n.user_id, 'displayName', u.display_name)
-          ORDER BY u.display_name, n.email_entity_id
+          json_build_object('userId', nm.user_id, 'displayName', nm.display_name)
+          ORDER BY nm.position
         ) AS recipients
-      FROM numbered n
-      LEFT JOIN users u ON u.user_id = n.user_id
-      GROUP BY n.email_type, n.entity_reference_id, n.send_number
-      ORDER BY MIN(n.create_date) DESC, MIN(n.email_entity_id) DESC
-      OFFSET :offset
-      LIMIT :limit
+      FROM page p
+      JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
+      GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count
+      ORDER BY p.create_date DESC, p.send_id DESC
       """)
   List<MailSend> fetchSendsByCreateDate(
       @Bind("start") Date start,
       @Bind("end") Date end,
       @Bind("limit") Integer limit,
-      @Bind("offset") Integer offset);
+      @Bind("offset") Integer offset,
+      @Bind("recipientLimit") Integer recipientLimit);
 }
