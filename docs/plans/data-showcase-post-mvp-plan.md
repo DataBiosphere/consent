@@ -201,7 +201,7 @@ depend on E9 authoritative lifecycle events.
   changed visibility/scope before send, manifest mismatch and queued jobs after retirement.
   QA verifies delivery through a test sink, never real researchers. Registration sends on approved
   state change.
-- **Dependencies/PR boundary:** S7.1 registry synchronization + the section 2 date policy; worker/outbox
+- **Dependencies/PR boundary:** S7.1 registry synchronization + the release date decided in S1.1; worker/outbox
   and UI activation separately.
 
 #### S7.3 — Conference and education section family

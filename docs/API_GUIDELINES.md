@@ -31,7 +31,12 @@ Use these rules when adding or changing endpoints in the Consent service.
 
 ## Security and Authorization
 
-- Use `@RolesAllowed` or `@PermitAll` explicitly on endpoints.
+- Use `@RolesAllowed` or `@PermitAll` explicitly on authenticated endpoints (paths under `api/`).
+- Unauthenticated resources outside `api/` and `swagger/` (for example `StatusResource` and
+  `SupportResource`) take no `@Auth` parameter and no role annotation. `OAuthCustomAuthFilter` does
+  not run on those paths, so a role annotation there grants nothing and misleads readers. Keep such
+  resources narrowly scoped, and give each its own input limits and rate limit, because
+  `RateLimitFilter` covers only authenticated `api/` requests.
 - Apply least privilege and avoid broad role access by default.
 - Keep authorization checks consistent between Resource and Service logic.
 

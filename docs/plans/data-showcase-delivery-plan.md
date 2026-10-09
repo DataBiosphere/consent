@@ -76,10 +76,10 @@ plans are proposed implementation targets; existing reuse points are distinguish
 | --- | --- | --- |
 | Code-defined branding precedent | `duos-ui:src/libs/libraryVersions.ts` (a `LibraryVersions` record keyed by library key, each `LibraryVersion` holding query, icon, title, featured and order); `duos-ui:DATA-LIBRARY.md` (logo standards, ordering rule, testing checklist) | Showcases follow the same pattern: one typed entry per showcase, bundled logos, a contributor guide. |
 | Backend | Dropwizard, Guice, JDBI; `ConsentApplication`, `ConsentModule`; Resource → Service → DAO | MVP adds one public lookup resource over existing layers; no showcase tables. |
-| Public resource pattern | `OAuthCustomAuthFilter` authenticates only `swagger/` and `api/` paths and skips every other path. `resources/StatusResource.java` and `SupportResource.java` sit outside them with no role annotation. `PublicFeatureFlagResource` carries `@PermitAll`, which grants nothing there (review on PR #3136 questions whether it belongs). `docs/API_GUIDELINES.md` asks for an explicit `@RolesAllowed` or `@PermitAll` on endpoints | Model the public catalog lookup on `StatusResource`/`SupportResource`: outside `/api`, no `@Auth` parameter, no role annotation. S2.2 records this as an exception to the API guideline for unauthenticated resources, or updates the guideline. |
+| Public resource pattern | `OAuthCustomAuthFilter` authenticates only `swagger/` and `api/` paths and skips every other path. `resources/StatusResource.java` and `SupportResource.java` sit outside them with no role annotation. `PublicFeatureFlagResource` carries `@PermitAll`, which grants nothing there (review on PR #3136 questions whether it belongs). `docs/API_GUIDELINES.md` (updated with this plan) asks for explicit role annotations on authenticated endpoints and none on unauthenticated resources | Model the public catalog lookup on `StatusResource`/`SupportResource`: outside `/api`, no `@Auth` parameter, no role annotation, as the guideline now says. |
 | Dataset identity and metadata | `models/Dataset.java`, `models/Study.java`, `db/DatasetDAO.java`, `service/DatasetService.java`; registration builder defines `accessManagement`, `numberOfParticipants`, `dbGaPPhsID` | Reuse authoritative properties. Participants, samples, bytes and release dates are different concepts; do not invent equivalences. |
 | Dataset identifiers | `Dataset.getDatasetIdentifier()` builds `DUOS-` + zero-padded `alias`, a database sequence | Identifiers differ per environment. Configs use production identifiers (section 3). |
-| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Rank `latest-data-releases` by that same date, so the shelf and the digest users already receive agree (section 2). The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
+| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Candidate date for `latest-data-releases`, so the shelf and the digest users already receive would agree. S1.1 decides (section 2). The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
 | Public visibility | `Study.publicVisibility`; existing Elasticsearch access-control planning | Anonymous cards need an explicit public projection and eligibility policy. |
 | Existing automation | `service/DACAutomationRuleService.java`, `rules/DACAutomationRuleType.java`, `matching/DataUseMatcherV5.java`, `service/MatchService.java` | Extend RADAR and its existing decision path; do not introduce a parallel grant engine. |
 | Public UI and sign-in | `duos-ui:src/routing/AppRoutes.tsx` places `/datalibrary`, study and dataset detail routes inside `Authenticated` | Public showcases can launch without making the entire library public; preserve intent through sign-in. |
@@ -105,8 +105,8 @@ the first, using only the guide.
 The first release implements six section types: `masthead`, `hero`, `latest-data-releases`,
 `open-access-datasets`, `featured-tools`, and `featured-workspaces`. Latest releases is a computed
 shelf (section 3): consent ranks eligible datasets on every page load, so nobody maintains the list
-by hand. **This section owns the date policy;** other sections point here. The proposed “new in
-DUOS” date reuses the NewStudyDigest signals (section 1), one date per dataset: `create_date` for
+by hand. **The shelf's date is decided in S1.1, not before.** This section records the candidate,
+and other sections point here. The candidate “new in DUOS” date reuses the NewStudyDigest signals (section 1), one date per dataset: `create_date` for
 open and external datasets, and `dac_approval_date` for DAC-approved controlled datasets. A dataset
 with no applicable date is left off the shelf, and ties break by identifier. The shelf ranks all
 eligible datasets with no 24-hour window; the digest keeps its window. `create_date` records row
@@ -115,7 +115,7 @@ dataset it is when the DAC approved it; older rows may have none. Neither record
 publication or the moment a study became public, so the shelf's label says “new in DUOS”, not
 “released”. It may include
 controlled-access datasets, so MVP supports discovery of existing DUOS request paths as well as open
-data. S1.1 confirms the definition and the shelf's visible label. If product rejects it, the shelf
+data. S1.1 decides the date and the shelf's visible label. If S1.1 adopts no date, the shelf
 stays off, the MVP has five sections, and controlled-access discovery relies on search and request
 handoff only.
 
@@ -129,7 +129,8 @@ acceptance criteria, requiring product agreement in S1.1.
 | Release | Included epics/stories | Demonstrable completion |
 | --- | --- | --- |
 | R0: implementation-ready contracts | S1.1 and the field/visibility decisions in S2.1 | Reviewed artifact reconciled with remaining Jira/source gaps, MVP accepted, config type and lookup fixtures agreed across repositories. |
-| R1: MVP pilot and public launch | E1–E5 in full | Real flagship plus two partners as code, the second added by guide alone; public lookup, browse and request handoff, basic analytics, accessibility and operational gates. |
+| R1: MVP pilot and public launch | E1–E5, except the S4.3 health check | Real flagship plus two partners as code, the second added by guide alone; public lookup, browse and request handoff, basic analytics, accessibility and operational gates. |
+| Fast-follow after R1 | S4.3 identifier and link health check | Owners hear about datasets that went unavailable and broken links without checking pages by hand. |
 | Partner waves (operational cadence, not a release) | S4.1 guide on R1 capabilities | Partner 3 onward ship as config-only PRs; no change to shared components. |
 | R2: richer discovery | E6 | Rankings, aggregate charts, remaining compute types and research groupings; no changes to access decisions. |
 | R3: program engagement | E7 and E10, independently releasable | Subscription delivery, community/education content, publications and agreed impact presentation; native workshop enrollment only if selected in S7.4. |
@@ -138,7 +139,8 @@ acceptance criteria, requiring product agreement in S1.1.
 
 R1 includes the config type and showcase index, the CI guard, shared defaults, bundled assets,
 date-bounded content, the public lookup endpoint, the template and six sections, the guide and
-review roles, the identifier health check and analytics. It excludes rankings other than `newest`, email
+review roles and analytics. The S4.3 identifier and link health check follows launch as a fast-follow,
+because the page already hides ineligible records at runtime. R1 excludes rankings other than `newest`, email
 signup, automated approval changes, archive notices, publication submissions, through.bio, advanced
 charts and the remaining 17 sections. Disabled features must not display inert CTAs.
 
@@ -580,7 +582,7 @@ S1.1; the lookup feeds E3.
     records have the same result; do not query existence separately to distinguish those cases.
   - `ranking`: one of the fixed rankings with optional `scope`, `limit` (default 12, maximum 50), `pin` and
     `exclude`. Ranking queries return identifiers only, which then go through the S2.1 projection.
-    MVP implements `newest` after S1.1 approves the section 2 date policy; S6.1 adds the others.
+    MVP implements `newest` once S1.1 has decided the section 2 date; S6.1 adds the others.
   - `all`: every public-eligible dataset, paged (`pageSize` default 100, maximum 200), for flagship
     full-catalog charts (S6.3). Use deterministic identifier ordering and a validated continuation
     cursor bound to the request filters; never offer an unbounded page or caller-supplied offset.
@@ -723,7 +725,7 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 **Outcome:** anyone comfortable with PRs can add or change a showcase safely, with program-owner
 approval, without help from the original authors. **Owner:** duos-ui lead with product/content owner.
 **Source:** 27–30 (reinterpreted: index replaces the manage table, PR review replaces publication).
-**Dependencies:** E1; health check needs E2.
+**Dependencies:** E1; the S4.3 health check, a fast-follow outside the MVP gate, needs E2.
 
 #### S4.1 — Showcase guide and review roles
 
@@ -735,8 +737,8 @@ approval, without help from the original authors. **Owner:** duos-ui lead with p
   Include a worked partner example and the lookup/config limits from S2.2.
 - **Implement:** define review roles: CODEOWNERS (or named reviewers) for `src/showcases/` and
   showcase assets; the program owner approves copy and claims in the PR; an engineer approves code.
-  Add a PR template section for showcase changes (owner approval, preview link/screenshots, health
-  check result).
+  Add a PR template section for showcase changes (owner approval, preview link/screenshots, and the
+  health check result once S4.3 lands).
 - **Acceptance/tests:** an engineer who did not write the guide adds a synthetic showcase using only
   the guide, and CI catches each mistake listed in the guard tests.
 - **Dependencies/PR boundary:** S1.2/S1.3; documentation PR.
@@ -754,7 +756,10 @@ approval, without help from the original authors. **Owner:** duos-ui lead with p
   routable in a production build. Synthetic integration fixtures never enter production bundles.
 - **Dependencies/PR boundary:** S2.2 public proxy and legacy CSP/CORS configuration + S3.1.
 
-#### S4.3 — Scheduled identifier and link health check
+#### S4.3 — Scheduled identifier and link health check (fast-follow, not in the MVP gate)
+
+This story ships after R1. Until then, owners check their showcase pages after each change; the
+page already hides unavailable records at runtime, so nothing broken is shown to visitors.
 
 - **Implement:** a scheduled job (GitHub Action or equivalent) resolves every configured identifier
   and pin against the production lookup and checks configured external links, then reports
@@ -781,7 +786,8 @@ Content inventory and analytics design start in parallel with R0.
   illustrative studies, counts, fees or citations. Remove the illustrative-data footer only once
   illustrative content is absent. Product/content owners approve real fields in the PR.
 - **Acceptance/tests:** both showcases have meaningful dataset and compute content; missing-source
-  sections remain off; the health check is clean; no mock data reaches production.
+  sections remain off; every configured identifier resolves in the production lookup; no mock data
+  reaches production.
 - **Dependencies/PR boundary:** E1–E4; one PR per showcase.
 
 #### S5.2 — Showcase event context and baseline metrics
@@ -825,7 +831,7 @@ Content inventory and analytics design start in parallel with R0.
   partner-specific branches to shared components.
 - **Acceptance/tests:** the second partner is live through a config-only PR (config, index entry,
   assets); intake-to-production time is recorded. Partner waves (section 2) proceed only after this.
-- **Dependencies/PR boundary:** S5.1, S5.3, S4.1–S4.3.
+- **Dependencies/PR boundary:** S5.1, S5.3, S4.1–S4.2.
 
 ### Post-MVP epics (E6–E10), in outline
 
@@ -947,7 +953,7 @@ flowchart TD
   C --> D[E2 Public catalog lookup]
   P --> U[E3 Template and sections]
   D --> U
-  P --> A[E4 Guide, preview, health check]
+  P --> A[E4 Guide and preview]
   D --> A
   U --> L[E5 MVP pilot and launch]
   A --> L
@@ -973,7 +979,7 @@ Suggested implementation increments within MVP:
 1. Agree contracts, identifier policy and data visibility; land the config type and CI guard.
 2. Land the public lookup with tests; land the template plus one synthetic dataset section.
 3. Complete the six section families against fixtures, then against the real lookup.
-4. Write the guide, preview procedure and health check.
+4. Write the guide and preview procedure. The S4.3 health check follows launch.
 5. Add flagship and pilot partner as hidden entries, qualify, approve and go live.
 6. Add the second partner by guide only, then start partner waves.
 
@@ -993,13 +999,13 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 | Public lookup backing store | **Decided 2026-10-08:** Postgres-backed consent endpoint for time; public Elasticsearch index deferred (section 3 triggers) | Product/engineering leads | Recorded; revisit at E6 or on a trigger |
 | Artifact interpretation and earlier criteria | Approve documented visual/schema differences and recover missing earlier Jira criteria | Product/design | S1.1 |
 | Artifact-only fields and interactions | Resolve participants versus samples, metric windows, structured program/group fields and optional resource/publication relationships | Product/catalog/design | S1.1 and owning section stories |
-| Release-date source | Proposed: the NewStudyDigest “new in DUOS” dates (`dac_approval_date`, or `create_date` for open/external), with no 24-hour window and a label that does not claim provider publication. If product rejects it, keep `latest-data-releases` off and launch with five sections | Product/catalog | S1.1/S2.1 |
+| Release-date source | **Decided in S1.1, not before.** Candidate: the NewStudyDigest “new in DUOS” dates (`dac_approval_date`, or `create_date` for open/external), with no 24-hour window and a label that does not claim provider publication. If S1.1 adopts no date, keep `latest-data-releases` off and launch with five sections | Product/catalog | S1.1 |
 | Dataset identifiers across environments | Production identifiers for production/content previews; disable authenticated DUOS handoffs in production-data previews; functional tests use environment-local synthetic records and destinations | Frontend/backend/AppSec | S2.2/S3.2/S4.2 |
 | Public-bundle exposure | Merge only public-safe content; `hidden` is not a privacy control | Product/content | S4.1 and every showcase PR |
 | Review roles | CODEOWNERS or named reviewers for showcase paths; program owner approves copy in the PR | Product/frontend lead | S4.1 |
 | Workshop enrollment | Prefer provider links; native multi-session signup requires a separate provider enrollment contract | Program/frontend/backend | S7.4 |
 | Impact presentation | Prefer approved static summary/image plus provider link; live embed conditional on agreement | Product/partner | S10.3 |
-| MVP size | Six sections (five if product rejects the section 2 date policy) and complete authoring/public workflow | Product | R0 |
+| MVP size | Six sections (five if S1.1 adopts no date for the release shelf) and complete authoring/public workflow | Product | R0 |
 | Branding | Theme presets or contrast-checked primary/accent overrides; fixed typography | Design | S1.1/S1.3 |
 | Public data exposure | Table-specific allowlist driving a dedicated projection query (no full `Dataset`/`Study` objects), explicit visibility policy, free-text field decisions; private/nonexistent IDs share `unavailable` | Catalog/AppSec | S2.1/S2.2 before anonymous lookup |
 | Computed versus curated shelves | Rankings are computed by consent with config pins/exclusions; editorial shelves are curated; `open-access-datasets` kind decided per showcase | Product | S1.1/S3.3 |
@@ -1027,7 +1033,7 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 ### Shared implementation checks
 
 Backend work preserves Resource → Service → DAO, explicit auth annotations on authenticated
-endpoints (the public lookup is the recorded exception, section 1), constructor injection
+endpoints (unauthenticated resources follow `docs/API_GUIDELINES.md`, section 1), constructor injection
 and existing error handling. Every API change updates the OpenAPI entry point and referenced path/
 schema files. Strict Mockito Resource/Service tests verify validation/auth/status behavior, with
 database tests for the projection query. Use no `lenient()` stubbing.
@@ -1042,7 +1048,7 @@ synthetic fixtures in tests; real showcase content lives only in `src/showcases/
 | Public data exposure | JSON key set equals the allowlist; planted sensitive values never appear in any response; private, hard-deleted, unapproved controlled and null-visibility records return no metadata and never affect rankings; unavailable results do not distinguish private from nonexistent IDs |
 | Computed shelves | Rankings, scope, pins and exclusions resolve correctly with a fixed clock, including `archive-soonest`; popularity thresholds hold and no request counts or volume trends are returned |
 | Live metadata | Catalog rename/DAC/access/visibility/deletion changes appear without a release; no stale public eligibility |
-| Identifier health | Scheduled check reports unavailable identifiers without existence/privacy diagnoses, plus broken links to owners |
+| Identifier health (fast-follow, S4.3; not an R1 gate) | Scheduled check reports unavailable identifiers without existence/privacy diagnoses, plus broken links to owners |
 | Visibility gating | `hidden` entries are not routable in production; flipping to `live` and reverting both work |
 | Time-bounded content | Items appear and expire on schedule with a fixed clock |
 | Routing | `/data`, partner key, unknown/hidden 404, login return-to; BFF same-origin public proxy with no forwarded credentials/session dependency and enforced CSP, legacy direct lookup with CSP/CORS/preflight; production-data previews block authenticated DUOS handoffs; environment-local synthetic request flows pass and alias collisions cannot cross environments |
@@ -1093,7 +1099,8 @@ This document covers both repositories, records the code-defined content decisio
 DT-3904 stories and 23 sections, and reconciles the reviewed artifact with remaining source gaps
 and explicit scope decisions. It does not create Jira tickets or implement a showcase.
 
-The MVP implementation is complete only when E1–E5 acceptance checks pass with mocks off, the agreed
+The MVP implementation is complete only when E1–E5 acceptance checks (except fast-follow S4.3) pass
+with mocks off, the agreed
 MVP scope and factual content are approved, the flagship and pilot partner are live in production,
 and the second partner shipped through a config-only PR by someone using only the guide. Later
 epics have their own activation gates; they are not silently included in or declared complete by
