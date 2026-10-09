@@ -1,10 +1,13 @@
-# Set the consent database role to a SCRAM password
+# Consent Role SCRAM Password Plan
 
-Tickets: [DT-4237](https://broadworkbench.atlassian.net/browse/DT-4237) (dev),
-[DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244) (staging),
-[DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245) (prod)
+## Status
 
-## Why
+In progress. Dev is done ([DT-4237](https://broadworkbench.atlassian.net/browse/DT-4237), 2026-10-08).
+Staging ([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244)) and prod
+([DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245)) follow, with the procedure below.
+See [Results](#results).
+
+## Summary
 
 The DUOS server runs Node in FIPS mode, which does not allow MD5. The `consent` role stores its
 password as an MD5 hash, because the databases moved in place from Postgres 9 to 11 to 16, and an
@@ -18,14 +21,14 @@ Terraform does not manage this role's password, so a later `terraform apply` doe
 The change uses `psql`'s `\password` command. The `psql` client hashes the password, and only the
 verifier reaches the server. The plaintext never appears in a statement or in the server logs.
 
-## What you need
+## What You Need
 
 - `gcloud`, with `gcloud auth application-default login` done, and the Cloud SQL Client role on the project
 - `docker`, for the Cloud SQL Auth Proxy
 - `psql` with libpq 16 or later, for the `require_auth` checks (for example Postgres.app on macOS)
 - the VPN, for the `kubectl` steps
 
-This README uses placeholders: `<env>` (dev, staging or prod), `<project>` (GCP project), `<instance>` (Cloud SQL instance of the
+This plan uses placeholders: `<env>` (dev, staging or prod), `<project>` (GCP project), `<instance>` (Cloud SQL instance of the
 consent database), `<namespace>` (Kubernetes namespace), `<consent deployment>`, and
 `<duos deployment>` with `<duos container>`. The secret `consent-postgres-creds` holds the user, the
 password and the instance name (`jq -r .instance_name`). It has no `db` field: the database is `consent`.
