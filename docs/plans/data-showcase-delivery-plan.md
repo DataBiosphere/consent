@@ -1,7 +1,12 @@
 # Data Showcase: MVP and phased implementation plan
 
+Source epic: [DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904) and its 31 stories.
+
 Status: proposed decomposition for product and engineering review; no application changes or Jira
-tickets have been made. Planning IDs below are local identifiers, not Jira issue keys.
+tickets have been made. Planning IDs below (E1, S1.1, …) are local identifiers, not Jira issue keys.
+Section 4 details the MVP epics (E1–E5) and outlines the post-MVP epics (E6–E10). Their detailed
+stories are in the [post-MVP plan](data-showcase-post-mvp-plan.md), and each is re-planned before it
+starts.
 
 This plan covers **consent and duos-ui**, including the frontend server/proxy where necessary.
 It turns the supplied single epic into ten independently scoped epics with implementation stories,
@@ -21,19 +26,35 @@ guarded public endpoint, would let duos-ui change query shapes without backend w
 estimated at roughly 3–6 more backend engineer-weeks for R1 and needs an AppSec-approved staleness
 window, so it is deferred with revisit triggers (section 3).
 
+### Terms
+
+| Term | Meaning here |
+| --- | --- |
+| Showcase | A public page for one program or partner, defined as a typed config entry in duos-ui. The flagship showcase is served at `/data`. |
+| Section | One of the 23 fixed content blocks a showcase can enable, such as `hero` or `featured-tools`. |
+| Masthead | The sticky top bar: DUOS and partner logos, search, sign-in and section navigation. |
+| Hero | The first block under the masthead: introduction, headline statistics, calls to action and announcements. |
+| Shelf | A horizontally scrolling row of cards. |
+| Editorial shelf | A shelf whose datasets are listed by hand in config. |
+| Computed shelf | A shelf whose datasets Consent ranks on each request, such as newest first. |
+| CTA | Call to action: a button or link that asks the visitor to do something, such as "Request access". |
+| Static hero decoration | A fixed background image behind the hero, instead of the artifact's animated canvas. |
+| Handoff | A link from a public showcase into an existing DUOS workflow, such as search or a data access request. |
+| BFF | Backend For Frontend: duos-ui's Fastify server, which proxies requests to Consent. |
+| RADAR | Consent's existing rule-based automated DAC approval. |
+
 ## 1. Evidence and outstanding source material
 
 Reviewed on 2026-10-07 against consent `05348f28` and sibling duos-ui `4572a0f6`. These are local
-checkout observations, not assertions about what is deployed. The requirements source is the ticket
-text supplied in this conversation; its Jira key and URL were not supplied.
+checkout observations, not assertions about what is deployed. The requirements source is
+[DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904) and its 31 stories.
 
-The [Claude artifact reference](https://claude.ai/code/artifact/0ce96e5e-57b4-4943-9682-7c9538c98176)
-has been reviewed through the HTML export supplied by the user after remote retrieval failed.
-The sharing query parameter is intentionally omitted from repository documentation. The export is
-titled `DUOS — Data Use Oversight System`; its exact SHA-256 is
-`1356b52733e99b48ac51b963db4ed3b49531a8fef803bda7369395acdf293ce0`. No authoritative artifact
-version/timestamp was supplied. See the [artifact review](data-showcase-artifact-review.md) for
-source provenance, line references, complete findings and observed versus recommended behavior.
+The design artifact was reviewed from its HTML export, attached to DT-3904 as
+`data-showcase-artifact.html`. The export is titled `DUOS — Data Use Oversight System`; the SHA-256
+of the attached file is `1356b52733e99b48ac51b963db4ed3b49531a8fef803bda7369395acdf293ce0`. No
+authoritative artifact version or timestamp was supplied. See the
+[artifact review](data-showcase-artifact-review.md) for line references, complete findings and
+observed versus recommended behavior.
 
 The export confirms the visual order and distinct shelf, grid and panel layouts, but has 82
 placeholder links, three non-submitting forms, no API integration and a static illustrated impact
@@ -53,12 +74,12 @@ plans are proposed implementation targets; existing reuse points are distinguish
 
 | Area | Observed implementation | Consequence for delivery |
 | --- | --- | --- |
-| Code-defined branding precedent | `duos-ui:src/libs/libraryVersions.ts` (typed `LibraryVersion` entries with key, query, icon, title, featured, order); `duos-ui:DATA-LIBRARY.md` (logo standards, ordering rule, testing checklist) | Showcases follow the same pattern: one typed entry per showcase, bundled logos, a contributor guide. |
+| Code-defined branding precedent | `duos-ui:src/libs/libraryVersions.ts` (a `LibraryVersions` record keyed by library key, each `LibraryVersion` holding query, icon, title, featured and order); `duos-ui:DATA-LIBRARY.md` (logo standards, ordering rule, testing checklist) | Showcases follow the same pattern: one typed entry per showcase, bundled logos, a contributor guide. |
 | Backend | Dropwizard, Guice, JDBI; `ConsentApplication`, `ConsentModule`; Resource → Service → DAO | MVP adds one public lookup resource over existing layers; no showcase tables. |
-| Public resource pattern | `resources/PublicFeatureFlagResource.java` uses `@Path("feature")` and `@PermitAll` outside `/api` | Model the public catalog lookup on it. |
+| Public resource pattern | `OAuthCustomAuthFilter` authenticates only `swagger/` and `api/` paths and skips every other path. `resources/StatusResource.java` and `SupportResource.java` sit outside them with no role annotation. `PublicFeatureFlagResource` carries `@PermitAll`, which grants nothing there (review on PR #3136 questions whether it belongs). `docs/API_GUIDELINES.md` asks for an explicit `@RolesAllowed` or `@PermitAll` on endpoints | Model the public catalog lookup on `StatusResource`/`SupportResource`: outside `/api`, no `@Auth` parameter, no role annotation. S2.2 records this as an exception to the API guideline for unauthenticated resources, or updates the guideline. |
 | Dataset identity and metadata | `models/Dataset.java`, `models/Study.java`, `db/DatasetDAO.java`, `service/DatasetService.java`; registration builder defines `accessManagement`, `numberOfParticipants`, `dbGaPPhsID` | Reuse authoritative properties. Participants, samples, bytes and release dates are different concepts; do not invent equivalences. |
 | Dataset identifiers | `Dataset.getDatasetIdentifier()` builds `DUOS-` + zero-padded `alias`, a database sequence | Identifiers differ per environment. Configs use production identifiers (section 3). |
-| Release dates | No “released in DUOS” field. Nearest: `embargoReleaseDate`, `alternativeDataSharingPlanTargetPublicReleaseDate` (`DatasetRegistrationSchemaV1Builder.java:20,48`) | The `latest-data-releases` shelf has no authoritative source yet (section 7). |
+| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Rank `latest-data-releases` by that same date, so the shelf and the digest users already receive agree (section 2). The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
 | Public visibility | `Study.publicVisibility`; existing Elasticsearch access-control planning | Anonymous cards need an explicit public projection and eligibility policy. |
 | Existing automation | `service/DACAutomationRuleService.java`, `rules/DACAutomationRuleType.java`, `matching/DataUseMatcherV5.java`, `service/MatchService.java` | Extend RADAR and its existing decision path; do not introduce a parallel grant engine. |
 | Public UI and sign-in | `duos-ui:src/routing/AppRoutes.tsx` places `/datalibrary`, study and dataset detail routes inside `Authenticated` | Public showcases can launch without making the entire library public; preserve intent through sign-in. |
@@ -83,11 +104,20 @@ the first, using only the guide.
 
 The first release implements six section types: `masthead`, `hero`, `latest-data-releases`,
 `open-access-datasets`, `featured-tools`, and `featured-workspaces`. Latest releases is a computed
-shelf (section 3): consent ranks eligible datasets by release date on every page load, so nobody
-maintains the list by hand. It may include controlled-access datasets, so MVP supports discovery of
-existing DUOS request paths as well as open data. If authoritative release dates are unavailable,
-the release shelf stays off; do not relabel registration timestamps as releases. In that case the MVP has five sections and
-controlled-access discovery relies on search and request handoff only.
+shelf (section 3): consent ranks eligible datasets on every page load, so nobody maintains the list
+by hand. **This section owns the date policy;** other sections point here. The proposed “new in
+DUOS” date reuses the NewStudyDigest signals (section 1), one date per dataset: `create_date` for
+open and external datasets, and `dac_approval_date` for DAC-approved controlled datasets. A dataset
+with no applicable date is left off the shelf, and ties break by identifier. The shelf ranks all
+eligible datasets with no 24-hour window; the digest keeps its window. `create_date` records row
+insertion. `dac_approval_date` records the last approval-state update, so for a currently approved
+dataset it is when the DAC approved it; older rows may have none. Neither records a provider's
+publication or the moment a study became public, so the shelf's label says “new in DUOS”, not
+“released”. It may include
+controlled-access datasets, so MVP supports discovery of existing DUOS request paths as well as open
+data. S1.1 confirms the definition and the shelf's visible label. If product rejects it, the shelf
+stays off, the MVP has five sections, and controlled-access discovery relies on search and request
+handoff only.
 
 All 23 keys and their fixed order are reserved in the config type from day one. Unimplemented types
 cannot be enabled (the CI guard rejects them). Each enabled type ships its renderer, config schema,
@@ -103,7 +133,7 @@ acceptance criteria, requiring product agreement in S1.1.
 | Partner waves (operational cadence, not a release) | S4.1 guide on R1 capabilities | Partner 3 onward ship as config-only PRs; no change to shared components. |
 | R2: richer discovery | E6 | Rankings, aggregate charts, remaining compute types and research groupings; no changes to access decisions. |
 | R3: program engagement | E7 and E10, independently releasable | Subscription delivery, community/education content, publications and agreed impact presentation; native workshop enrollment only if selected in S7.4. |
-| R4a: automated access | E8 | Governed RADAR extension and an accurate instant-approval shelf. Can release independently of R2/R3/R4b. |
+| R4a: automated access | E8 | Governed RADAR extension and an accurate instant-approval shelf. Needs the R2 ranking interface (S6.1) for the instant shelf; independent of R3/R4b. |
 | R4b: archive awareness | E9, with E7 for delivered notices | Authoritative lifecycle information, advance notifications, and honest retrieval expectations. No billing or data-moving implementation. |
 
 R1 includes the config type and showcase index, the CI guard, shared defaults, bundled assets,
@@ -163,6 +193,50 @@ seed data for a database later without changing how pages render.
   `status: 'hidden'` keeps a route off; it is not a privacy control. Merge only content that is
   cleared for public disclosure, including unannounced partner names.
 
+An index entry and its partner config, shown as JSON (illustrative values; S1.2 fixes the types).
+The index entry in `src/showcases/index.ts`:
+
+```json
+{ "key": "example-partner", "title": "Example Partner Data", "route": "/showcase/example-partner",
+  "status": "hidden", "flagship": false, "order": 3 }
+```
+
+The `ShowcaseConfig` exported by `src/showcases/example-partner.ts`:
+
+```json
+{
+  "schemaVersion": 1,
+  "branding": {
+    "logo": { "src": "showcase/example-partner/logo.svg", "alt": "Example Partner" },
+    "theme": "blue"
+  },
+  "sections": {
+    "masthead": { "enabled": true },
+    "hero": {
+      "enabled": true,
+      "intro": "Discover Example Partner datasets in DUOS.",
+      "stats": [{ "label": "Studies", "value": "120", "asOf": "2026-10-01" }],
+      "announcements": [
+        { "text": "New cohort available", "url": "/datalibrary", "startDate": "2026-10-01", "endDate": "2026-11-01" }
+      ]
+    },
+    "latest-data-releases": { "enabled": true, "ranking": "newest", "scope": { "dac": ["Example DAC"] }, "limit": 12 },
+    "open-access-datasets": { "enabled": true, "items": ["DUOS-000123", "DUOS-000456"] },
+    "featured-tools": {
+      "enabled": true,
+      "items": [
+        { "id": "terra", "name": "Terra", "description": "Analyze data in the cloud.", "launchUrl": "https://app.terra.bio/", "featured": true }
+      ]
+    },
+    "most-requested-datasets": { "enabled": false }
+  }
+}
+```
+
+This is a partial excerpt, not a guard-valid config: a real config has all 23 section keys and
+nav labels. A partner file merges `defaultShowcase` within `sections`, key by key, so it lists only
+what differs while every key stays present in fixed order.
+
 **Revisit trigger for a database/admin UI:** content-only PRs routinely wait on release timing, or
 non-engineering owners need to edit without PRs. Measure with the section 8 lead-time metric.
 
@@ -174,37 +248,28 @@ admin editor and preview, a shared image-upload pipeline coordinated with DT-423
 picker. All of that is removed. Git supplies review, history and rollback; the CI guard supplies
 validation; bundled assets replace uploads; PR review replaces publication approval.
 
-### Assumptions review: outcomes versus implementation choices
+### Decisions and alternatives
 
-| Product outcome to preserve | Prescribed mechanism that can change | Recommendation |
+Each row pairs an outcome the source epic wants with the mechanism it prescribed or an alternative
+that was considered, and records what this plan does instead.
+
+| Outcome or option | Considered | Decision |
 | --- | --- | --- |
-| Admins publish without a deploy | Config tables plus admin editor | **Removed by product decision.** Content ships by PR and the daily release. |
-| Live content remains stable during editing | Versioned configurations or a dirty flag | Branches and PR review; only merged, released code is live. |
-| Editors do not overwrite each other | Compare `updateDate` | Git merges and conflicts. |
+| Admins publish without a deploy | Config tables plus admin editor; a headless CMS | **Removed by product decision.** Content ships by PR and the daily release. Revisit a database/admin UI only on the trigger above; a CMS adds a dependency and still needs live-catalog hydration. |
+| Live content stays stable, and editors do not overwrite each other | Versioned configurations, a dirty flag, `updateDate` comparison | Branches, PR review and git merges; only merged, released code is live. |
 | Consistent fixed template across partners | One entry per type with component/schema/form | Typed registry with reusable shelf/grid/featured-card/panel families; preserve the distinct layouts observed in the export. |
-| Dataset cards stay accurate | “Unified catalog data model” | Configs hold identifiers only; a safe public projection supplies live metadata. |
-| Researchers find suitable access paths | New DUO approval engine | First measure existing RADAR coverage; add new rules only for documented gaps. |
-| Researchers know about archival early | DUOS-owned storage state machine | Mirror authoritative provider state and send notices; do not own physical storage transitions. |
-| Partners control their branding | Arbitrary colors/fonts/imagery | Accessible theme presets or primary/accent overrides checked for contrast in CI; fixed typography. |
-| Admins curate useful shelves | Precomputed rankings and admin prefill | Rankings are computed shelves resolved by consent on each request; editorial shelves are curated in config. Pins and exclusions give editors control over computed shelves. |
+| Dataset cards stay accurate | A “unified catalog data model”; copying metadata into config | Configs hold identifiers only, and a safe public projection supplies live metadata. Copying metadata is rejected: cards go stale, and a dataset made private would stay public until edited. |
+| Public catalog lookup | A public Elasticsearch index built from the S2.1 projection | **Deferred 2026-10-08 for time.** It would let the frontend query, rank and facet freely, but costs an indexer, removal on every eligibility-affecting write, rebuilds, a guarded query endpoint and an AppSec staleness window. Revisit if the all-eligible response is too large for client-side work, public full-text search or an anonymous data library is planned, or new lookup modes become a frequent backend request. S2.1 stays the only source of public fields. |
+| Admins curate useful shelves | Precomputed rankings and admin prefill; hand-curated ranking shelves | Rankings are computed by consent on each request, with config pins and exclusions; editorial shelves stay curated. Hand-curated rankings are rejected because “latest” and “most requested” go stale and every refresh is a PR. |
+| Compute cards | Reuse existing catalog asset records | Investigate in S3.4; MVP uses typed resource entries in config. |
+| Researchers find suitable access paths | A new DUO approval engine | Measure existing RADAR coverage first (S8.1); add rules only for documented gaps. |
+| Researchers know about archival early | A DUOS-owned storage state machine; scheduled provider polling | Mirror authoritative provider state and send notices; never own physical storage transitions. Use the provider's supported integration, which may be polling. |
+| Partners control their branding | Arbitrary colors, fonts and imagery | Accessible theme presets or contrast-checked primary/accent overrides; fixed typography. |
 | Program engagement is measurable | Every Mixpanel event carries a slug | Showcase key on showcase-origin events and attributed handoffs. |
-
-### Other strategies considered
-
-| Strategy | Tradeoff | Recommendation |
-| --- | --- | --- |
-| Database-backed configs plus admin UI | No-deploy editing, at the cost of persistence, concurrency, lifecycle, uploads and an editor | Superseded; revisit only on the trigger above. |
-| Headless CMS | Editors and media, but a new dependency, identity integration and live-catalog hydration still needed | Not needed now that PR authoring is accepted. |
-| Copy dataset metadata into config | No backend change | Rejected: cards go stale and a dataset made private would stay public until edited. |
-| Public Elasticsearch index built from the S2.1 projection | Frontend can query, rank, facet and search freely within the approved fields; costs an indexer, removal on every eligibility-affecting write, scheduled rebuild and reconciliation, a guarded query endpoint, an Elasticsearch dependency for public pages and an AppSec staleness window | **Deferred 2026-10-08 for time.** Revisit if the all-eligible response is too large for client-side work, public full-text search or an anonymous data library is planned, or new lookup modes become a frequent backend request. S2.1 stays the only source of public fields, so the projection carries over. |
-| Reuse existing catalog asset records for compute cards | Fewer duplicate names/URLs where coverage is reliable | Investigate in S3.4; MVP uses typed resource entries in config. |
-| Existing RADAR eligibility shelf first | Fast-access discovery without new matching rules | S8.1 tests coverage; skip new rule work if existing rules meet agreed cases. |
-| Scheduled polling of storage provider | Simpler than events; lower immediacy | Start with the provider's supported integration. |
-| Link to approved subscription/registration provider | Avoids a new email subsystem; may lose attribution | Valid interim CTA after provider assessment; not completion of S7. |
-| Curated impact statistics + static visual and external link | Matches the export; differs from the ticket's live embed | Preferred initial impact variant; embed conditional (S10.3). |
-| Provider workshop registration links | Real enrollment without owning capacity/cancellation | Preferred first workshop delivery (S7.4). |
-| Static hero decoration | No animation lifecycle or reduced-motion complexity | Preferred MVP variant, subject to design approval. |
-| Hand-curated ranking shelves (the ticket's prefill model) | Full editorial control, but “latest” and “most requested” go stale and every refresh is a PR | Rejected for rankings. Computed shelves with config-level pins/exclusions instead; editorial shelves stay curated. |
+| Program signups | Linking to an approved subscription or registration provider | A valid interim CTA after provider assessment; it does not complete E7. |
+| Workshop enrollment | Provider registration links | Preferred first delivery (S7.4). |
+| Impact presentation | Curated statistics, a static visual and an external link | Preferred first variant; it matches the export but not the ticket's live embed, which is conditional (S10.3). |
+| Hero decoration | A static hero decoration | Preferred MVP variant, subject to design approval: no animation lifecycle or reduced-motion work. |
 
 These are qualitative comparisons, not effort estimates. Six initial sections and code-defined
 content are **scope changes**, recorded as product decisions rather than equivalent implementations.
@@ -227,7 +292,8 @@ does not name the same dataset in staging. Proposed policy: configs list **produ
 Non-production content previews resolve them against the production public lookup, which is
 anonymous, read-only and returns only allowlisted fields. BFF mode uses the credential-stripping
 public proxy defined below. Legacy mode uses an explicitly configured public lookup origin with
-CORS and CSP allowances for the approved staging/local preview origins (S2.2).
+CORS and CSP allowances for the approved staging/local preview origins (S2.2). Those CORS
+allowances apply to the `/showcase` path only; authenticated `/api` routes must not trust them.
 
 Bind the lookup environment and DUOS handoff environment explicitly. Production pages use production
 for both. A non-production preview using production metadata is read-only: disable authenticated
@@ -244,8 +310,8 @@ The alternative, dbGaP `phs` IDs, is stable but missing for many datasets, so it
 
 ### Public contract and security boundary
 
-The public lookup lives outside `/api` with `@PermitAll`, following `PublicFeatureFlagResource`.
-It returns an allowlist of display fields and must not serialize full `Dataset` or `Study` objects,
+The public lookup lives outside `/api` with no role annotation, following `StatusResource` and
+`SupportResource` (section 1). It returns an allowlist of display fields and must not serialize full `Dataset` or `Study` objects,
 internal storage locations or request state. Confirm the existing visibility policy before using
 `publicVisibility`; missing or ambiguous visibility fails closed. Public eligibility and access type
 are independent: an open dataset can still have non-public catalog metadata.
@@ -262,15 +328,58 @@ straight into a flat DTO, and never constructs `Dataset`, `Study` or `User` obje
 | Kind | Config | Resolution | Used by |
 | --- | --- | --- | --- |
 | Editorial | `items`: ordered production identifiers | Lookup returns eligible items in configured order | Highlight lists, related datasets, any shelf a program owner picks by hand |
-| Computed | `ranking` from a fixed set (`newest`, `most-requested`, `largest-cohort`; later `instant-eligible`, `archive-soonest`), optional `scope`, `limit`, `pin`, `exclude` | Consent applies eligibility and scope, places eligible pins first, removes exclusions, and ranks the rest on every request | `latest-data-releases`, `most-requested-datasets`, `largest-cohorts`, `instant-approval`, `datasets-moving-to-archive` |
+| Computed | `ranking` from a fixed set (`newest`, `most-requested`, `largest-cohort`; later `instant-eligible`, `archive-soonest`), optional `scope`, `limit`, `pin`, `exclude` | Consent applies eligibility and scope, places eligible pins first, removes exclusions, and ranks the rest on every request | `latest-data-releases`, `most-requested-datasets`, `largest-cohorts`, `instant-approval`, `datasets-moving-to-archive`, and `open-access-datasets` when its showcase chooses the computed kind (S3.3) |
+
+S1.2 implements one typed section-to-allowed-rankings mapping, shared by the CI guard and its
+tests; this table summarizes it. For MVP: `latest-data-releases` accepts `newest`, and
+`open-access-datasets` accepts `newest` when computed.
 
 `scope` uses a small fixed vocabulary of database-backed attributes agreed in S2.1 (for example
 submitter institution, DAC or study); it is never a raw Elasticsearch or SQL fragment. The program
 owner approves the ranking and scope in the PR rather than a list. Ranking runs after eligibility,
 so private datasets never influence or appear in a ranked shelf.
 
-The page batch-resolves all unique identifiers once, then reconstructs configured order. Unknown,
-private, deleted or otherwise ineligible identifiers share one public `unavailable` result and
+Two illustrative shelf fragments (the outer names are labels, not registry keys), and the lookup
+request each produces. The `scope.dac` key and its value type are provisional until S2.1 fixes the
+scope vocabulary:
+
+```json
+{
+  "editorial": { "enabled": true, "items": ["DUOS-000123", "DUOS-000456"] },
+  "computed": {
+    "enabled": true,
+    "ranking": "newest",
+    "scope": { "dac": ["Example DAC"] },
+    "limit": 12,
+    "pin": ["DUOS-000789"],
+    "exclude": ["DUOS-000111"]
+  }
+}
+```
+
+```json
+{ "mode": "identifiers", "section": "open-access-datasets", "identifiers": ["DUOS-000123", "DUOS-000456"] }
+```
+
+```json
+{ "mode": "ranking", "section": "latest-data-releases", "ranking": "newest",
+  "scope": { "dac": ["Example DAC"] }, "limit": 12, "pin": ["DUOS-000789"], "exclude": ["DUOS-000111"] }
+```
+
+Each returned summary carries only S2.1's approved fields. The field names below are proposed and
+finalized in S2.1:
+
+```json
+{ "identifier": "DUOS-000789", "title": "Example Cohort", "accessManagement": "controlled",
+  "dacName": "Example DAC", "participantCount": 5400, "availableDate": "2026-09-30" }
+```
+
+An unresolved identifier returns a separate response variant,
+`{ "identifier": "DUOS-000999", "status": "unavailable" }`, which the summary's exact-key test does
+not cover.
+
+The page batch-resolves all unique identifiers once, then reconstructs configured order. Unknown
+(including hard-deleted), private or otherwise ineligible identifiers share one public `unavailable` result and
 disappear from rendered shelves. Response shape, status and diagnostic text must not distinguish
 private records from nonexistent ones. The S4.3 health check reports only that public result;
 authorized catalog owners investigate the reason through existing authenticated administration.
@@ -297,7 +406,8 @@ require a separate provider allowlist, sandbox/CSP policy and agreement.
 
 ### Assets, routes and frontend transport
 
-Logos and images are bundled under `duos-ui:src/images/`, following `DATA-LIBRARY.md`: SVG
+Logos and images are bundled under `duos-ui:src/images/showcase/<key>/`, one directory per
+showcase, using the `DATA-LIBRARY.md` asset standards: SVG
 preferred, transparent PNG fallback, 256×256 canvas for logos, optimized, within its size limits.
 Hero and card images are not forced into that square. SVGs are reviewed in the PR and referenced
 through `<img>`, never inlined. Each image placement in config carries its alt text; logos require
@@ -316,49 +426,33 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
 - **Legacy mode:** the client posts directly to the explicitly configured public lookup origin,
   with `credentials: 'omit'` and no auth headers. Include that exact origin in legacy CSP and
   configure Consent CORS/preflight for approved UI origins, including production-data previews.
+  Scope those origin and preflight allowances to `/showcase/*`, so they never widen what
+  authenticated `/api` routes accept. CORS is set in Consent's proxy configuration, which is not
+  tracked in this repository; the local developer `config/site.conf` already sets wildcard CORS on
+  every path outside `/introspect/`. Production CORS has not been verified, so S2.2 first records
+  what production allows today and changes only `/showcase/*`.
 - **Environment configuration:** add a dedicated server-side showcase upstream setting and legacy
   client lookup-origin setting. Production points to production; content-preview deployments point
   to production; functional-test deployments point to their own seeded environment. Do not change
   the authenticated API base URL or accept an upstream URL from a request parameter. Missing
   configuration fails visibly (503 from the proxy), with no fallback to another environment.
-- **Failure/limits:** enforce the S2.2 body limit at the public proxy and directly in Consent, so
-  direct callers cannot bypass it. Configure the route's rate limit using the existing public-proxy
-  pattern and a pilot-load budget. Failed lookups show a retryable unavailable state, never mock data.
+- **Failure/limits:** enforce the S2.2 body limit and a rate limit both at the public proxy and
+  directly in Consent, so direct callers cannot bypass either. Consent's existing `RateLimitFilter`
+  does not cover this route: it skips every path outside `api/`, skips requests with no principal,
+  and does nothing in any environment where its `isEnabled()` config switch is off. S2.2 therefore adds
+  an anonymous per-client-IP limit for `/showcase/*` that is on in every environment. In legacy mode
+  the browser calls Consent directly, so this limit is the only throttle. Configure the proxy limit
+  with the existing public-proxy pattern and a pilot-load budget. Failed lookups show a retryable
+  unavailable state, never mock data.
 
 ### Subscription registry synchronization (E7, not MVP)
 
-Code remains the content source of truth. E7 adds a versioned JSON manifest generated from the
-validated duos-ui configs and retired-keys list, plus a Consent registry snapshot for subscription
-workers. A new partner needs a config PR and deployment synchronization, not a Consent code release.
-
-- **Manifest contract:** include schema version, target environment, frontend release identifier,
-  content hash, and entries containing stable key, `live`/`hidden`/`retired` state, enabled topics
-  and topic membership definitions. Retirement is represented by tombstones from the retired-keys
-  list; it is not a third routable frontend status. Include only subscription-relevant public
-  metadata, with no executable config or arbitrary query fragments.
-- **Membership:** an editorial source contributes its configured dataset identifiers. A computed
-  source contributes its fixed scope and section eligibility predicate plus pins/exclusions.
-  Consent evaluates membership against authoritative catalog data, independently of ranking order
-  and display `limit`; a top-N cutoff must not silently discard notification recipients. Pins must
-  satisfy scope/eligibility, exclusions win, and the union is deduplicated. Program owners approve
-  each topic's source sections and scope explicitly; unrelated shelves do not imply subscription
-  membership. Visibility is rechecked before sending. Archive topics additionally use E9 criteria.
-- **Delivery and authority:** S7.1 adds an authenticated `/api` synchronization contract restricted
-  to the deployment identity, preserving Resource → Service → DAO. The release pipeline stages a
-  validated immutable snapshot and pauses enrollment/sends before switching frontend releases,
-  then activates the snapshot and resumes only after that frontend release is serving. Use an
-  expected-active revision and monotonic activation revision to reject stale/concurrent updates;
-  retries are idempotent. Rollback explicitly reactivates a prior compatible snapshot under a new
-  activation revision, while retained retirement tombstones prevent key reuse.
-- **Failure and retirement:** pause new enrollment and sends during release/snapshot mismatch or
-  failed synchronization; never fall back to accepting arbitrary keys. Monitor the active release
-  and snapshot revision, define a bounded freshness interval in S7.1, and fail closed when that
-  check expires. Hidden, removed, retired or topic-disabled entries cannot enroll or deliver;
-  missing entries in a replacement snapshot are inactive. Recheck registry state before each send,
-  including queued jobs. Unsubscribe remains available during outages and after retirement.
-- **Ownership:** the frontend release owner owns manifest generation/activation and rollback;
-  the notifications owner owns snapshot validation, reconciliation and delivery gating. Agree
-  protocol fixtures, failure recovery and freshness before enabling any S7 signup UI.
+Code remains the content source of truth. For subscriptions, E7 generates a versioned manifest from
+the validated configs and retired-keys list and synchronizes it to a Consent registry snapshot, so a
+new partner needs a config PR and deployment synchronization, not a Consent code release. Membership
+fails closed, is evaluated independently of a shelf's display limit, and stops on retirement;
+unsubscribe works during outages. The full contract is in the
+[post-MVP plan](data-showcase-post-mvp-plan.md#subscription-registry-synchronization-e7).
 
 ## 4. Epics and detailed implementation stories
 
@@ -371,13 +465,13 @@ conventions, with Playwright scenarios in the existing e2e harness. All fixtures
 
 **Outcome:** showcases are typed, validated code entries that any engineer can add by following a
 guide. **Owner:** duos-ui lead with consent contract reviewer. **Dependencies:** S1.1 precedes the
-config type. **Source stories:** 24, 25, 28–30 (reinterpreted for code-defined content) and
+config type. **Source stories:** 24, 25, 27–30 (reinterpreted for code-defined content) and
 foundational portions of 26/31.
 
 #### S1.1 — Review the identified reference and settle implementable contracts
 
-- **Implement:** use the completed [artifact review](data-showcase-artifact-review.md) and recorded
-  source hash to agree the production interpretation. Recover omitted original Jira criteria;
+- **Implement:** use the completed [artifact review](data-showcase-artifact-review.md) and the
+  export attached to DT-3904 to agree the production interpretation. Recover omitted original Jira criteria;
   reconcile the 21 anchor IDs versus 23 registry types, participant/sample semantics, richer card/
   panel fields, static impact versus embed, and workshop enrollment versus alerts. Correct the
   corrupted Story 29 text. Agree the six-section MVP, the identifier policy and the release-date
@@ -401,7 +495,7 @@ foundational portions of 26/31.
 - **Acceptance/tests:** guard tests prove each rule fails on a deliberately broken fixture: missing
   or reordered keys, enabled unimplemented type, `#` or unsafe URL, missing logo alt, inverted date
   range, malformed identifier, duplicate or retired key, duplicate item ID, over-budget assets, a
-  dataset shelf with both or neither of `items`/`ranking`, an unknown ranking or scope key, and a
+  enabled dataset shelf with both or neither of `items`/`ranking` (a disabled section may omit both), an unknown ranking or scope key, and a
   ranking not allowed for its section, and exceeded lookup input/output limits. Before/after
   snapshots cover removal without a tombstone, a key rename without retiring the old key,
   tombstone deletion, retired-key reuse in a later revision and rollback resurrection. Valid
@@ -435,7 +529,7 @@ S1.1; the lookup feeds E3.
   properties (`schema_property`, `property_value`, `property_type`) from study properties
   (`key`, `value`, `type`); `study_property` has no `schema_property` column. Candidates:
   identifier, title, access management, reviewing DAC name, translated consent, participant count,
-  approved release date and safe destination. Evaluate optional PI display name, data types, file
+  “new in DUOS” date (section 2) and safe destination. Evaluate optional PI display name, data types, file
   formats and phenotype/sub-cohort fields against public-data policy before adding them. Add size
   only when a trusted byte source is known. Free-text fields (study description, phenotype) need an
   explicit decision — approve, truncate or omit — because they can contain emails or internal notes.
@@ -445,17 +539,31 @@ S1.1; the lookup feeds E3.
   mappers), filters `dataset_property.schema_property IN (:datasetPropertyAllowlist)` and
   `study_property.key IN (:studyPropertyAllowlist)` separately, and maps rows into a flat
   `ShowcaseDatasetSummary` with no nested `User`, `Institution` or file
-  objects and no `properties`/`data` maps. The SQL and the DTO are both derived from the allowlist.
-- **Backend — eligibility:** evaluate eligibility in the same query's `WHERE` clause: not deleted,
-  study `publicVisibility = true` (null fails closed), and per-section rules such as canonical
-  open-access management, including legacy handling already in `Dataset`. Explicitly verify the
-  existing public-visibility/access-control rules rather than merely checking DAC approval.
-  Eligibility inputs may be non-public; they filter rows and are never returned. Agree the `scope`
-  vocabulary here from database-backed attributes.
+  objects and no `properties`/`data` maps. The query is one fixed text block that follows the DAO
+  SQL rule in `docs/ai/CLAUDE.md`: the allowlist values reach it only as bound list parameters,
+  never as SQL assembled from constants. The DTO's fields mirror the same allowlist.
+- **Backend — eligibility:** evaluate eligibility in the same query's `WHERE` clause. Every row
+  needs study `public_visibility = true`; a null value or a dataset with no study fails closed.
+  Discoverability and requestability differ. Existing visibility does not require DAC approval, but
+  `DataAccessRequestService.validateRequestDatasetsAreApproved` rejects a DAR containing any dataset
+  whose `dac_approval` is not true. A controlled-access card that offers a DAR handoff therefore
+  requires `dataset.dac_approval = true`. Open and external cards use their approved provider
+  actions instead. Classify access with the digest's canonical open/external rule
+  (`DatasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds`), extended explicitly with
+  `Dataset.getAccessManagement()`'s legacy property and case/whitespace normalization; this can
+  include rows the current digest misses. Reuse the existing `public_visibility` predicates in
+  `DatasetDAO`. Mirror only the public-study branch of `DatasetService.verifyPublicVisibilityAccess`:
+  exclude its admin, creator and custodian exceptions and its no-study allowance, so the public page
+  shows only what an ordinary signed-in reader sees through public visibility. Datasets are hard-deleted
+  (`DatasetDAO.deleteDatasetById`; `dataset` has no deleted column), so a removed dataset is simply
+  absent. Per-section rules, such as canonical open access, add to these. Eligibility inputs may be
+  non-public; they filter rows and are never returned. Agree the `scope` vocabulary here from
+  database-backed attributes.
 - **Frontend:** define null-safe card labels: participants must not be called samples without an
   authoritative conversion; unknown counts show no numeric claim.
-- **Acceptance/tests:** synthetic records cover open/controlled/external, private/missing/null-
-  visibility/deleted, legacy properties and unknown values. A key-set test asserts the serialized
+- **Acceptance/tests:** synthetic records cover open/controlled/external, controlled without DAC
+  approval, private/missing/null-visibility, a hard-deleted identifier, legacy properties and
+  unknown values. A key-set test asserts the serialized
   summary's JSON keys equal the allowlist exactly, so a new DTO field fails until it is approved. An
   unapproved dataset `schema_property` or study `key` is never returned. Database tests exercise
   both property sources against the actual schema, including type conversion and null handling.
@@ -464,15 +572,15 @@ S1.1; the lookup feeds E3.
 
 #### S2.2 — Public batch lookup endpoint
 
-- **Backend:** add `PublicShowcaseCatalogResource`, e.g. `POST /showcase/datasets`, `@PermitAll`,
-  outside `/api`, with three modes that all return S2.1 summaries:
+- **Backend:** add `PublicShowcaseCatalogResource`, e.g. `POST /showcase/datasets`, outside `/api`
+  with no role annotation (section 1), with three modes that all return S2.1 summaries:
   - `identifiers`: an editorial list, capped at 200 submitted identifiers, deduplicated and
     resolved in one bounded query; returns eligible summaries plus a per-identifier `unavailable`
     result for every unresolved identifier. Nonexistent, private, deleted and section-ineligible
     records have the same result; do not query existence separately to distinguish those cases.
   - `ranking`: one of the fixed rankings with optional `scope`, `limit` (default 12, maximum 50), `pin` and
     `exclude`. Ranking queries return identifiers only, which then go through the S2.1 projection.
-    MVP implements `newest` once a release-date source exists; S6.1 adds the others.
+    MVP implements `newest` after S1.1 approves the section 2 date policy; S6.1 adds the others.
   - `all`: every public-eligible dataset, paged (`pageSize` default 100, maximum 200), for flagship
     full-catalog charts (S6.3). Use deterministic identifier ordering and a validated continuation
     cursor bound to the request filters; never offer an unbounded page or caller-supplied offset.
@@ -483,11 +591,18 @@ S1.1; the lookup feeds E3.
   deduplication: `identifiers` maximum 200, `pin` maximum 50 and `exclude` maximum 200. Each approved
   scope key accepts at most 20 typed values; reject unknown keys, nested query objects and arbitrary
   strings in place of the agreed attribute types. Identifier strings are at most 32 characters
-  and must pass the agreed DUOS identifier parser; continuation cursors are at most 512 characters.
+  and must pass `Dataset.parseIdentifierToAlias`; continuation cursors are at most 512 characters.
   `limit` and `pageSize` must be positive integers within their caps; pins never increase the result
   beyond `limit`. Reject mode-incompatible fields and over-limit inputs with 400 before DAO calls.
   Publish these initial limits in OpenAPI and align the frontend guard. Revisit the numeric values
   only through a reviewed contract change backed by the lookup/load spike.
+- **Backend — rate limit:** add an anonymous per-client-IP rate limit for `/showcase/*` in Consent
+  (section 3, Failure/limits): either extend `RateLimitFilter` with a public-path branch or add a
+  dedicated filter. It answers 429 with `Retry-After` and is enabled independently of the
+  authenticated limiter's `isEnabled()` switch. It reads the client IP from the forwarding header
+  only when the immediate peer is the trusted proxy, otherwise uses the socket peer, so a caller
+  cannot pick its own key by spoofing the header.
+  Size it from the lookup/load spike and the pilot-load budget.
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
   configuration, legacy CSP/CORS/preflight, and public-route rate limit. Document preview versus
   functional-test environment configuration. This transport work is required for MVP.
@@ -497,8 +612,8 @@ S1.1; the lookup feeds E3.
   Add a test mock with synthetic fixtures; never fall back to mock data in a deployed build.
 - **Acceptance/tests:** anonymous access works in every mode. Planted sensitive values in
   `piEmail`, `createUserEmail`, custodian emails, data location, certification files and an
-  unapproved property never appear anywhere in a response body, including errors. Private, deleted
-  and null-visibility records return no metadata and never appear in or affect a ranking; pins to
+  unapproved property never appear anywhere in a response body, including errors. Private,
+  hard-deleted, unapproved controlled and null-visibility records return no metadata and never appear in or affect a ranking; pins to
   ineligible datasets are dropped; exclusions hold; ranking ties are deterministic with a fixed
   clock. Swapping a private record for a nonexistent identifier produces equivalent response
   shape/status/diagnostics, including mixed batches; caller-supplied identifiers may be echoed.
@@ -507,7 +622,8 @@ S1.1; the lookup feeds E3.
   calls. Test body-size rejection (413) both directly and through the proxy, malformed/mismatched
   cursors, page termination, mode-incompatible fields and unknown parameters (400). Test anonymous
   BFF and legacy requests under enforced CSP, credential stripping, no session/CSRF calls,
-  preflight, missing upstream configuration and rate-limit responses (429). Query-count checks at
+  preflight, missing upstream configuration and rate-limit responses (429) both through the proxy
+  and directly at Consent, including with the authenticated limiter disabled. Query-count checks at
   maximum size. Document the Consent route in `assets/paths/` and `assets/api-docs.yaml`, plus the
   frontend proxy/configuration contract in duos-ui.
 - **Dependencies/PR boundary:** S2.1; `identifiers` mode and OpenAPI first, then `ranking`/`all`
@@ -550,8 +666,11 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 - **Frontend:** generate the sub-nav from visible navigable entries, preserving short labels and
   excluding masthead/hero. Account for the sticky header when scrolling to headings. Turn the
   mockup's inert search button and placeholder links into real keyboard-operable destinations.
-- **Frontend/backend:** preserve intended search/dataset destination through existing authentication
-  flows. Dataset request actions enter the current DAR path; show the existing login/eligibility
+- **Frontend/backend:** search, dataset detail and requests are signed-in pages (`AppRoutes.tsx`
+  wraps them in `Authenticated`), so each handoff from the public page runs: visitor clicks, signs
+  in if needed, lands on the intended destination. Label these actions as requiring sign-in, and
+  preserve the intended search/dataset destination through the existing authentication flow.
+  Dataset request actions enter the current DAR path; show the existing login/eligibility
   requirements accurately. Enforce the environment binding in section 3: production-data previews
   cannot enter environment-local authenticated flows. No new approval behavior and no anonymous
   library API exposure.
@@ -571,7 +690,7 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
   and stacked mobile layout. Prefer a static decorative background for MVP. Carousel supports an
   explicit pause control, focus/hover pause, manual controls and reduced motion; inactive slides
   must leave both the tab order and accessibility tree. Use accessible consent tooltips rather than
-  CSS pseudo-elements. New badges use the approved release-date window, not creation.
+  CSS pseudo-elements. New badges use the section 2 “new in DUOS” date and an approved badge window.
 - **Frontend/backend:** `latest-data-releases` is a computed shelf (`ranking: 'newest'`, optional
   scope, pins and exclusions). `open-access-datasets` supports either kind; whether the flagship's
   is a curated highlight list or computed “open access, newest first” is a product decision in
@@ -624,7 +743,8 @@ approval, without help from the original authors. **Owner:** duos-ui lead with p
 
 #### S4.2 — Preview procedure
 
-- **Implement:** document and support preview of a branch: local `pnpm dev` and staging, both
+- **Implement:** document and support preview of a branch: local `pnpm start` (Vite only;
+  `pnpm run start:server` to preview BFF mode) and staging, both
   resolving production identifiers in read-only content-preview mode per the identifier policy,
   with `status: 'hidden'` entries viewable in non-production builds only. Document the separate
   environment-local synthetic fixture for functional request testing. Use PR preview deployments
@@ -707,403 +827,67 @@ Content inventory and analytics design start in parallel with R0.
   assets); intake-to-production time is recorded. Partner waves (section 2) proceed only after this.
 - **Dependencies/PR boundary:** S5.1, S5.3, S4.1–S4.3.
 
-### E6 — Ranked discovery, charts and the remaining catalog/resource shelves (post-MVP)
+### Post-MVP epics (E6–E10), in outline
 
-**Outcome:** ranked shelves stay current without hand curation and visitors see richer discovery without new access
-decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner.
-**Source:** 2, 6, 7, 13, 15–17, 20 and the corresponding config schemas. **Dependencies:** E1–E5 interfaces.
+These epics are summarized here; their detailed stories are in the
+[post-MVP plan](data-showcase-post-mvp-plan.md), and each is re-planned before it starts. Story IDs
+(S6.1 and so on) are the same in both documents.
 
-#### S6.1 — Public ranking modes
+**E6 — Ranked discovery, charts and the remaining catalog/resource shelves.** Ranked shelves stay
+current without hand curation, and visitors get richer discovery without new access decisions.
+Owner: catalog/analytics backend owner + frontend discovery owner. Source: 2, 6, 7, 13, 15–17, 20.
+Depends on: E1–E5 interfaces.
+- Adds the `most-requested` and `largest-cohort` rankings, always after eligibility and scope.
+- Popularity is private: a minimum request count before a dataset can rank, and no public request
+  totals, volume trends or timing sample counts.
+- Charts and computed hero statistics are computed client-side from S2.2's lookups, never from the
+  authenticated Elasticsearch search.
+- Stories: S6.1 ranking modes, S6.2 most-requested and largest-cohort shelves, S6.3 charts and
+  computed hero statistics, S6.4 workflows/notebooks/AI models, S6.5 research areas and initiatives.
 
-- **Backend:** add `most-requested` and `largest-cohort` to the S2.2 `ranking` mode through a bounded
-  `ShowcaseRankingService`/DAO; add `instant-eligible` and `archive-soonest` when E8/E9 data exist.
-  Rankings return identifiers only and always run after eligibility and scope filters.
-- **Backend — most requested:** reuse DAR metrics definitions, excluding draft DARs, with an
-  explicit rolling window, renewal and multi-dataset counting policy. Because popularity reveals
-  request activity: require a minimum request count before a dataset can rank, never return counts,
-  and never rank on requests to ineligible datasets. Agree the threshold with privacy owners.
-- **Backend — performance:** start with bounded indexed queries computed per request; add short-lived
-  caching or materialized rollups only if the ranking-cost experiment or production load justifies
-  it. Deterministic ties.
-- **Acceptance/tests:** fixed-clock data verifies time windows, duplicate requests, the minimum-count
-  threshold, eligibility before ranking, scope filters, pins/exclusions, sparse counts, null
-  participant values and tie order. No response contains request counts or requester identity.
-- **Dependencies/PR boundary:** S2.2 + metrics-owner and privacy agreement; one PR per ranking.
+**E7 — Program subscriptions, community and education.** Showcase opt-ins lead to managed
+delivery, not dead signup forms. Owner: notifications backend, frontend and
+communications/privacy. Source: 5, 22, 23. Depends on: E1–E5; archive notices also on E9.
+- Subscriptions key on the permanent showcase key and validate against the synchronized registry
+  (section 3).
+- Decide first whether release alerts extend the existing NewStudyDigest or run beside it, with one
+  “new in DUOS” definition.
+- Workshops start with provider registration links; native multi-session signup is conditional.
+- No signup control ships until end-to-end delivery exists.
+- Stories: S7.1 preferences and enrollment, S7.2 alert delivery, S7.3 conference and education
+  sections, S7.4 workshop registration.
 
-#### S6.2 — Most requested and largest cohorts
+**E8 — Governed DUO/RADAR automation and instant-approval discovery.** Eligible requests get
+auditable grants through the existing decision path; ambiguous ones go to manual review. Owner:
+consent/RADAR lead, DAC governance and frontend DAR owner. Source: 9–10. Depends on: governance
+from R0; the instant shelf also needs the S6.1 ranking interface.
+- Measure existing RADAR coverage first, and extend `DACAutomationRuleService` only for proven gaps.
+- Unknown or ambiguous outcomes produce no grant and fall back to manual review; a kill switch is
+  independent of showcasing.
+- Shadow evaluation runs before any grant, and activation is its own release gate.
+- Stories: S8.1 policy, S8.2 decision path, S8.3 instant shelf and status, S8.4 shadow evaluation
+  and rollout.
 
-- **Backend/frontend:** add config schemas, CI guard rules and renderers for `most-requested-datasets`
-  and `largest-cohorts` as computed shelves on the S6.1 rankings, using shared dataset cards. Show live reviewing DAC
-  and the correctly labeled cohort measure. Define cohort eligibility when the catalog has only
-  participant counts; do not equate samples with participants without sign-off.
-- **Backend/frontend:** omit the artifact's lifetime request totals, request-volume sparklines and
-  quarterly volume changes under S6.1's no-public-request-count policy. Do not add these to config
-  or the projection. Any future volume display requires a separately approved privacy-policy
-  revision and updated contract/tests; provenance alone is insufficient. Optional median review
-  duration requires an approved suppression threshold, source, denominator, clock, window and
-  freshness, with sample counts kept internal. Sub-cohort/phenotype displays likewise require
-  known provenance. Unknown metrics are hidden, never filled from sample copy.
-- **Acceptance/tests:** pins and exclusions apply on top of the ranking; metadata changes stay
-  live. Tests cover invalidated datasets, empty public shelves, rolling-window explanation and no
-  public disclosure of requester identities or request volumes for any dataset. Contract and
-  renderer tests reject request-total/trend fields and verify suppression of sparse timing metrics.
-- **Dependencies/PR boundary:** S6.1; deliver each shelf with its config schema and API fixtures.
+**E9 — Storage lifecycle awareness and advance notices.** Researchers get credible warning before
+retrieval becomes slower or costlier. Owner: data-storage integration, consent backend,
+notifications and frontend. Source: 11–12. Depends on: an authoritative provider contract; E7 for
+delivery.
+- Mirror the provider's lifecycle state; DUOS never moves data, changes grants or bills.
+- The archive shelf is computed (`archive-soonest`) only, and the config cannot override provider
+  dates, sizes or fees.
+- Stories: S9.1 lifecycle contract, S9.2 ingestion and reconciliation, S9.3 archive shelf and
+  notices, S9.4 pilot.
 
-#### S6.3 — Curated-set charts and computed hero statistics
-
-- **Frontend/backend:** for a curated set, aggregate client-side over the deduplicated union of
-  eligible datasets already returned by the S2.2 lookup, which is bounded and needs no new endpoint.
-  Flagship-only full-catalog mode is also computed client-side, from the S2.2 `all` mode, so no
-  aggregate endpoint is needed if the measured all-eligible response fits one page load. If it does
-  not, fall back to a server-side aggregation built from a fixed list over the same projection.
-  Never use the authenticated Elasticsearch search for this: it requires sign-in, returns full
-  index documents and lets the caller define aggregations. Explicitly define
-  chart categories, missing-value buckets and whether counts are datasets or participants; never
-  sum participants across datasets and label them unique people without deduplication evidence.
-- **Frontend:** initially support the observed disease-area and data-type bars plus access-mode
-  donut, with an explicit multi-label/category policy. Account for external/unknown access modes;
-  do not force them into the three illustrated slices. Compute unique studies by study identity,
-  tool totals from defined resource scope, and bytes only from compatible authoritative measures.
-  The mockup's repeated 1,842 value is not evidence that study and dataset counts are equal.
-- **Frontend:** implement `datasets-at-a-glance`, chart selection in config, hero computed/manual mode,
-  bar/donut visualizations and filter click-through using existing library query encoding. Provide
-  text/table equivalents, keyboard-operable filters and labels independent of color.
-- **Acceptance/tests:** repeated IDs count once, hidden/deleted records contribute nothing, the CI
-  guard rejects full-catalog mode outside the flagship, empty charts are honest and aggregates agree with rendered
-  membership. Test the heading/filter/text-equivalent corrections in the artifact review; earlier
-  Jira accessibility criteria still require recovery in S1.1.
-- **Dependencies/PR boundary:** E2 `all` mode; chart fields (disease area, data types) must first be
-  approved and exposed in the S2.1 projection; query/aggregate tests before chart components.
-
-#### S6.4 — Workflows, notebooks and AI models
-
-- **Backend/frontend:** add `new-workflow-tools`, `notebooks` and `ai-models` as distinct registry
-  types using E3's resource-card primitives and config schemas. Validate configured names/descriptions/tags/
-  thumbnails/launch/docs URLs; add appropriate user-facing resource labels and empty states.
-- **Backend/frontend:** add optional typed version, runtime/platform, notebook environment and
-  model parameter-count fields where approved content exists. Usage-in-workspaces and added-date
-  badges require defined sources/meaning. Keep these out of generic hand-entered analytics and
-  omit unavailable fields rather than making external telemetry a release dependency.
-- **Acceptance/tests:** each type independently supports config validation, item order, enabled/empty
-  semantics, safe launch links and thumbnail alt handling. Test all three entries even if they
-  share implementation. No execution, credential exchange or model hosting is implied by a card.
-- **Dependencies/PR boundary:** S3.4/S1.2; one small PR per entry or a tightly scoped shared-family PR.
-
-#### S6.5 — Research areas and initiatives
-
-- **Backend/frontend:** add `research-area` and `research-initiative` with label, description,
-  approved icon/image and destination URL config schemas. Keep destinations explicit until the
-  scoped-library decision is resolved; display only approved groupings.
-- **Backend/frontend:** preserve research-area grids and initiative groups within the fixed section.
-  Add group ID/title, acronym/full name and optional dated availability badge to initiative items;
-  the export has four groups and thirteen cards, not one flat shelf. Group/item ordering does not
-  authorize section reordering. Avoid hardcoded group counts in editable eyebrow copy.
-- **Acceptance/tests:** group cards navigate correctly, internal filter links survive authentication,
-  unsafe destinations fail both validators and public empty/disabled groups have no anchor.
-- **Dependencies/PR boundary:** E1/E3 patterns; independent of rollup implementation.
-
-### E7 — Program subscriptions, community and education (post-MVP)
-
-**Outcome:** showcase-specific opt-ins result in managed delivery, not dead signup forms.
-**Owner:** notifications backend owner, frontend owner and communications/privacy stakeholders.
-**Source:** 5, 22, 23 and shared notification requirement. **Dependencies:** E1–E5; archive notices
-depend on E9 authoritative lifecycle events.
-
-#### S7.1 — Subscription preferences and enrollment lifecycle
-
-- **Backend:** design `ShowcaseSubscription` storage keyed by showcase key (immutable and never
-  reused, enforced by the S1.2 CI guard), topic, subscriber identity/channel and consent state, with
-  timestamps. Implement the section 3 manifest/synchronization contract and persisted registry
-  snapshots. Validate key syntax, then require an active `live` entry and enabled topic in the
-  current synchronized snapshot; reject unknown, hidden, retired and removed keys. A matching key
-  pattern alone never authorizes enrollment. Reuse existing mail infrastructure where suitable,
-  but add explicit subscription/verification/unsubscribe contracts.
-  Resolve anonymous-versus-signed-in enrollment, double opt-in, retention and abuse limits before
-  implementation. Public token actions need narrow non-`/api` routes; authenticated preferences
-  remain under `/api`. Verification/unsubscribe tokens are opaque, expiring and stored safely.
-- **Frontend:** add accessible signup/confirmation/preferences/unsubscribe states. Avoid exposing
-  whether an email already exists. State exactly which program and topic is being subscribed to.
-  Generate the manifest in the release pipeline and keep enrollment unavailable until its release
-  revision is active in Consent. Environment-local tests synchronize only synthetic configs.
-- **Acceptance/tests:** deduplicate enrollment, isolate two showcases, reject unknown/hidden/
-  retired keys and disabled topics, verify token expiry/replay, suppress unsubscribed recipients
-  and exercise rate limits. Test synchronization authorization, malformed manifests, environment
-  mismatch, stale/concurrent activation, retries, deployment failure, rollback and freshness expiry.
-  Removal/retirement stops enrollment and queued sends; unsubscribe still works during an outage.
-  Never put email addresses into analytics.
-- **Dependencies/PR boundary:** communications decisions + E1 showcase keys; agree manifest fixtures,
-  then registry storage/sync API, release integration and subscription API, then UI flows. Update
-  the showcase guide and release runbook with synchronization, retirement and recovery procedures.
-
-#### S7.2 — Reliable release and registration-alert delivery
-
-- **Backend:** implement source events, audience resolution, durable job/outbox state, retry/backoff,
-  per-event/per-recipient idempotency and delivery observability using existing SendGrid/mail hooks.
-  Resolve release membership from the active synchronized manifest using section 3's editorial/
-  computed membership rules. Record the manifest revision used for audience resolution; recheck
-  current membership, public eligibility, topic/registry state and unsubscribe before sending.
-  Scope changes do not replay old release events automatically. Deduplicate a dataset that appears
-  in multiple shelves and specify cross-showcase duplicate-email preference. Operationally
-  reconcile failed deliveries.
-- **Frontend:** enable release signup only after end-to-end delivery exists; display meaningful
-  pending/success/failure states and link to preference management. Track opt-in and verified opt-in
-  distinctly; provider acceptance is not proof of inbox delivery.
-- **Acceptance/tests:** synthetic provider failures/retries, unsubscribe-before-send, duplicate events,
-  showcase retirement, schedule cancellation and topic isolation produce correct outcomes. Test
-  editorial membership, computed scope with pins/exclusions, datasets outside the visible top N,
-  changed visibility/scope before send, manifest mismatch and queued jobs after retirement.
-  QA verifies delivery through a test sink, never real researchers. Registration sends on approved
-  state change.
-- **Dependencies/PR boundary:** S7.1 registry synchronization + release-date source; worker/outbox
-  and UI activation separately.
-
-#### S7.3 — Conference and education section family
-
-- **Backend/frontend:** implement `community-conference`, `where-else`, `anvil-workshops`,
-  `anvil-scholars`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference carries date/
-  timezone/location/description, optional past-event history and open-registration versus alert-signup
-  state. Where Else supports linked event tiles with optional date/location, reflecting the export;
-  a generic-links-only variant needs explicit product agreement. Program panels support Markdown
-  without raw HTML, CTA links and structured lead/audience/deadline/focus facts. Workshops support
-  upcoming/recent sessions and a private-training CTA without exposing private material. Preserve
-  season/year-only dates without inventing exact timestamps.
-- **Acceptance/tests:** explicit timezones render consistently; expired events do not claim upcoming
-  registration. Alert signup requires S7.1/S7.2; inline workshop enrollment requires S7.4, while
-  safe provider registration links do not. Copy-only panels
-  render through type-specific emptiness rules; test Markdown/link safety and each registry key.
-- **Dependencies/PR boundary:** E1/E3; static panels can precede subscription delivery with signup disabled.
-
-#### S7.4 — Workshop registration strategy and conditional enrollment integration
-
-- **Decision:** the export lets visitors select several sessions and submit one email address.
-  This is distinct from subscribing to an alert about registration opening. Prefer a real provider
-  registration URL per session initially; record the resulting interaction difference with product.
-  Implement native multi-session signup only if that behavior is required for release.
-- **Backend, if native signup is chosen:** agree provider contracts for stable session IDs,
-  enrollment, capacity/closed sessions, identity/consent, cancellation and outcomes. Add a narrowly
-  scoped resource/service/adapter with idempotency, rate limiting, verified recipient handling and
-  per-session results. Subscription state is not evidence of enrollment. Reuse delivery plumbing
-  where appropriate without treating an email-send success as successful registration.
-- **Frontend:** for the preferred link variant, render accessible session cards/links with clear
-  provider handoff. For native signup, implement labeled multi-select, validation, pending state,
-  partial-success/retry feedback and confirmation/cancellation instructions. Never show the export's
-  checkbox form unless its submission path works end to end.
-- **Acceptance/tests:** verify correct session destinations for the link variant. Native integration
-  additionally tests duplicate submissions, one closed session among several, provider outage,
-  invalid/expired identity verification and accurate per-session status without duplicate enrollment.
-- **Dependencies/PR boundary:** S7.3 plus program/provider decision; native path additionally uses
-  S7.1/S7.2 consent/delivery capabilities. Scope and estimate the adapter after provider validation;
-  this is a conditional post-MVP story, not a new MVP prerequisite.
-
-### E8 — Governed DUO/RADAR automation and instant-approval discovery (post-MVP)
-
-**Outcome:** eligible requests receive auditable existing-system grants, while ambiguous/ineligible
-requests continue through manual review. **Owner:** consent/RADAR lead, DAC governance and frontend
-DAR owner. **Source:** 9–10 and instant metrics/rankings. **Dependencies:** governance can start
-at R0; production activation waits for the missing original criteria and explicit rule approval.
-
-#### S8.1 — Ratify eligibility, matching and measurement policy
-
-- **Implement:** inventory existing RADAR rules and matching results against the intended DUO
-  behavior. Specify which DACs/datasets opt in, rule/ontology versions, ambiguous/unknown terms,
-  requester/SO/DAA eligibility, country constraints, revocations and multi-dataset outcomes.
-  The mockup's research-use-statement tooltip does not specify a free-text or LLM-based matcher;
-  preserve structured, deterministic rule evaluation unless separately justified and approved.
-  Coordinate primary-data-use and VODAR work without conflating their scopes. Define whether the
-  approval target measures submission-to-decision or eligible-after-SO-to-decision; report both
-  where meaningful. “Under 5–10 minutes” is a target, not an unconditional UI promise.
-- **Frontend:** design conditional eligibility copy and status states before exposing “instant.”
-- **Acceptance/tests:** DAC/product owners approve synthetic positive/negative/ambiguous scenarios
-  and fallback behavior. No new rule treats ontology compatibility alone as authority to grant access.
-- **Alternative exit:** if existing RADAR rules satisfy all agreed launch cases, record that result
-  and scope S8.2 to proven audit/idempotency/integration gaps; do not build a new matcher just because
-  the source calls this an “engine.” S8.3/S8.4 still validate discovery claims and rollout metrics.
-- **Dependencies/PR boundary:** recovered source criteria; policy/test fixtures before rule coding.
-
-#### S8.2 — Extend the existing decision path safely
-
-- **Backend:** extend `DACAutomationRuleService`, rule implementations and matching adapters only
-  where S8.1 shows gaps. Keep existing election/vote/notification semantics and approval consumers.
-  Re-evaluate authoritative dataset restrictions, DAC opt-in, request and SO prerequisites at
-  decision time; a showcase field or stale search badge cannot authorize access.
-- **Backend:** persist rule/version, evaluated input identifiers, outcome/reason and decision
-  timestamps for audit. Make retries/concurrent triggers idempotent per DAR/dataset decision and
-  integrate notifications after committed decisions. Unknown/ambiguous/error outcomes produce no
-  grant and fall back to existing review with observable reasons.
-- **Acceptance/tests:** synthetic positive/negative/ambiguous matches; changed consent/DAC opt-in,
-  canceled/reopened requests, SO pending, mixed datasets, duplicate execution and transaction
-  failure. Assert no duplicate vote/grant/email and no regressions to ordinary manual review or
-  approved-user endpoints. Keep a kill switch independent of showcasing.
-- **Dependencies/PR boundary:** S8.1; evaluator/rule tests, then persisted-decision integration.
-
-#### S8.3 — Instant shelf, request status and ranking
-
-- **Backend:** expose current dataset-level automation eligibility and privacy-safe median timing
-  with window/freshness and an indication when timing is unavailable for insufficient samples.
-  Sample counts remain internal under S6.1's no-public-request-count policy. Eligibility is not a
-  user-specific guaranteed outcome.
-  Add the `instant-eligible` ranking to S2.2; request status remains authenticated and scoped to its owner.
-- **Frontend:** implement `instant-approval` renderer/config schema, consent tooltip and “Request now”
-  handoff into the existing DAR. Show pending SO/automation/manual/approved/failed states through
-  the existing request UI; specify polling/backoff/cancellation or reuse its current mechanism after
-  source review. Suppress misleading median values for insufficient samples.
-- **Acceptance/tests:** disable a DAC rule while a card is open; submitting does not bypass the
-  updated policy. Test authorization of status reads, partial multi-dataset outcomes, live shelf
-  invalidation and correct actor-specific messaging without request-state leakage to public pages.
-- **Dependencies/PR boundary:** S8.2 + E2/E6 ranking interface; API projection then UI integration.
-
-#### S8.4 — Shadow evaluation and controlled rollout
-
-- **Implement:** run new matching behavior in evaluation-only mode against synthetic/staging cases
-  and an approved evaluation process before enabling grants. DACs opt in to a pilot; compare expected
-  outcomes, false-approval prevention and p50/p95 timing, including SO delays. Track automated versus
-  manual outcomes from votes, not clicks, using agreed reporting definitions.
-- **Acceptance/tests:** kill-switch drill stops new automated grants while manual routing remains
-  available. Audit, alerting and operational owner are in place. Disabling a rule does not silently
-  revoke existing grants; any revocation follows the established authorized workflow.
-- **Dependencies/PR boundary:** S8.1–S8.3; activation is a distinct release gate, not bundled with MVP.
-
-### E9 — Storage lifecycle awareness and advance notices (post-MVP)
-
-**Outcome:** researchers receive credible warning before retrieval becomes slower or costlier.
-**Owner:** data-storage integration owner, consent backend, notifications and frontend owners.
-**Source:** 11–12. **Dependencies:** authoritative provider contract; E7 for actual notification
-delivery. Storage movement, access grants and billing remain separate concerns.
-
-#### S9.1 — Authoritative lifecycle and retrieval contract
-
-- **Implement:** identify who supplies lifecycle state, scheduled archive time, byte size, fee/
-  currency/basis and retrieval SLA. Define ownership, refresh frequency, cancellation/rescheduling,
-  timezone and provider event ordering. Proposed states are ACTIVE, ARCHIVE_SCHEDULED, ARCHIVED and
-  RESTORING, with retrieval requests modeled separately if the provider requires them. Reconcile
-  with omitted original criteria before finalizing transitions. A local countdown is not proof
-  that the provider moved data.
-- **Contract:** the artifact mixes a per-GB banner with total-dollar card values. Define whether
-  totals are provider quotes or estimates, decimal/binary byte units, currency, fee exclusions and
-  quote expiry. Do not derive a production tariff from the illustrated amounts or use its generic
-  24–48-hour SLA for every provider. A hot-storage claim does not waive DUOS access approval.
-- **Frontend:** approve exact messaging for estimates, unknown price/SLA, stale status and a
-  request made before the deadline. Do not promise a pre-archive access request prevents archival
-  unless the storage owner explicitly supports that guarantee.
-- **Acceptance/tests:** storage/product owners sign off on transition/event examples, notice lead
-  times and the source of retrieval requests needed for the success metric. Unknown fees stay
-  unknown; the platform does not collect payment.
-- **Dependencies/PR boundary:** external contract before lifecycle schema and promises.
-
-#### S9.2 — Lifecycle ingestion and reconciliation
-
-- **Backend:** add normalized lifecycle metadata, provider event/version identifiers and observed/
-  effective timestamps. Implement authenticated provider ingestion or controlled scheduled polling,
-  allowed transitions, idempotent processing and reconciliation. Expose current safe fields through
-  E2 projection. Repeated/out-of-order events cannot regress newer state or trigger duplicate notices.
-- **Frontend/admin:** show source/freshness/errors in catalog administration as appropriate. Showcase
-  configs select a computed archive shelf through ranking/scope/pins/exclusions, but the schema has
-  no fields that could override provider lifecycle/fees.
-- **Acceptance/tests:** scheduled→rescheduled/canceled, scheduled→archived, restore and provider
-  outage paths use synthetic clocks/events. A stale feed is visibly degraded and does not silently
-  invent a state. No worker moves data or alters grants as a side effect.
-- **Dependencies/PR boundary:** S9.1; metadata + importer + reconciliation tests together.
-
-#### S9.3 — Archive shelf, warning and notice workflow
-
-- **Backend:** add the `archive-soonest` ranking and section eligibility excluding already
-  archived records. Use S7's delivery mechanism for lead-time notices, deduplication, correction
-  after rescheduling and suppression after unsubscribe/archive cancellation. Agree the audience:
-  interested subscribers, approved researchers, pending requesters, or a defined combination.
-- **Frontend:** implement `datasets-moving-to-archive` with warning strip, UTC-based countdown,
-  size, fee/currency/basis, SLA/freshness and appropriate request/retrieval CTA. Its config requires
-  `ranking: 'archive-soonest'`, with optional fixed-vocabulary `scope`, capped `limit`, `pin` and
-  `exclude`; it has no editorial `items` list. Lifecycle state, archive time, size, fees and SLA
-  come only from the E9 projection. The CI guard rejects hand-entered provider values/countdowns
-  and any other ranking. Pins must satisfy scope and archive eligibility; exclusions win.
-- **Acceptance/tests:** timezone/deadline boundary, missing estimates, provider outage, canceled
-  schedule and already-archived records yield truthful output. Test scope, capped limits,
-  deterministic archive-time ordering, eligible/ineligible pins, exclusions and invalid configs.
-  Notice membership uses the synchronized S7 manifest independently of the shelf's display limit.
-  Notice timing is verified with a test sink. If the backend cannot confirm future eligibility,
-  hide or label the claim rather than
-  showing a negative countdown as though archival were still upcoming.
-- **Dependencies/PR boundary:** S9.2 + S7.2; shelf may ship before notifications only with that limited
-  behavior explicitly released and no claims that notice delivery is complete.
-
-#### S9.4 — Pilot and measure archive outcomes
-
-- **Implement:** pilot with a cooperative storage provider, verify operational contacts and failed
-  ingestion/delivery alerts. Define a comparable pre/post archive retrieval cohort and baseline;
-  distinguish retrieval requests from dataset access requests and provider completion from clicks.
-- **Acceptance/tests:** demonstrate notice receipt before a real scheduled transition under an
-  approved pilot, reconcile observed provider state, and exercise stale-feed recovery. If retrieval
-  outcome data is unavailable, mark the reduction metric unmeasurable rather than claiming success.
-- **Dependencies/PR boundary:** S9.1–S9.3; separate activation gate from automated approval rollout.
-
-### E10 — Publications, impact and legacy showcase migration (post-MVP)
-
-**Outcome:** verified program impact and curated science become discoverable; legacy tiles retire
-only when replacement workflows are proven. **Owner:** content/product, frontend/backend and impact
-partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1–E5; agreement for embed.
-
-#### S10.1 — Curated publications
-
-- **Backend/frontend:** implement `latest-published-science` with citation, summary, destination and
-  year, per-showcase labels/links and self-report prompt setting. Add the config schema, CI guard
-  rules and renderer together. Approved curated publications can launch before submission moderation;
-  keep the prompt off until S10.2 is available.
-- **Backend/frontend:** for reference parity, support optional journal, authors, month/date,
-  cited-dataset IDs and related-workspace item/link alongside the common fields. Resolve catalog
-  labels live and suppress related CTAs whose target is unavailable; do not copy sample citations
-  or imply the artifact's workspace associations have been scientifically verified.
-- **Acceptance/tests:** bounded citation/year validation, safe links, item ordering, no raw HTML,
-  accessible cards and empty/disabled behavior. Publication presence alone does not substantiate
-  a claimed clinical or program outcome.
-- **Dependencies/PR boundary:** E1/E3; independently releasable registry entry.
-
-#### S10.2 — Self-report submission and moderation (conditional)
-
-- **Decision:** an external form link (for example a program-owned form) is the default; approved
-  submissions reach the page through an ordinary config PR. Build the native path below only if
-  product needs in-DUOS submission tracking.
-- **Backend, if native:** inspect for an existing moderation capability; if absent, add an authenticated
-  publication-submission resource/service/DAO with stable showcase attribution, submitter/audit,
-  pending/approved/rejected states and admin-only review. Establish abuse/duplicate policy. Approval
-  makes an item available for curation; it never changes a live page by itself.
-- **Frontend, if native:** add submission form, feedback and admin moderation list/detail. Approved
-  submissions are copied into a showcase config by PR.
-- **Acceptance/tests:** submission/review permissions, duplicate submissions, rejection/resubmission
-  and two-showcase isolation. Approved content stays off the page until a config PR ships it.
-  Synthetic citation/identity fixtures only.
-- **Dependencies/PR boundary:** S10.1 plus moderation owner; submission API then review/curation UI.
-
-#### S10.3 — through.bio impact presentation and agreement gate
-
-- **Preferred strategy:** implement `anvil-impact` as approved summary/stat content, attribution,
-  optional approved static image and a real external portfolio link. The inspected artifact uses
-  a static SVG illustration, not a live iframe. This option preserves its presentation intent with
-  less integration work, but changes the ticket's embed-specific criterion and needs product agreement.
-- **Backend/frontend:** define typed display mode (`summary` or `embed`), content provenance and
-  refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
-  live embedding is selected, add an approved URL/provider allowlist, frame sandbox, CSP, lazy
-  loading, accessible frame title and fallback link/message. Never fetch arbitrary URLs server-side
-  or accept executable HTML/SVG in config; static images are bundled assets reviewed in the PR.
-- **Acceptance/tests:** off by default; enablement requires recorded program agreement/content
-  approval. For summary mode, test factual approved content, attribution, image alt and real safe
-  links without iframe requests. Embed mode additionally tests rejected origins, blocked/slow
-  frames and usability without third-party cookies. Do not port the illustrative clinical graph
-  as factual evidence or treat a config flag as the external agreement itself.
-- **Dependencies/PR boundary:** per-program agreement + S1.1 mode decision; release independently
-  of science. A live embed is a separate follow-up slice if summary mode launches first.
-
-#### S10.4 — Retire featured-library maintenance after parity
-
-- **Implement:** showcases and featured libraries are now the same code pattern, so a showcase
-  entry can carry the `libraryVersions.ts` key whose query scopes its “browse all” link. Inventory
-  every featured tile; map it to a showcase or document why it remains. Preserve existing
-  `/datalibrary/:query` bookmarks/search semantics. Migrate entry links incrementally, verify
-  equivalent destinations, and merge `DATA-LIBRARY.md` into the showcase guide where they overlap.
-- **Acceptance/tests:** no removal until product approves parity and usage evidence for affected
-  partners. Test old links and authenticated search scopes, maintain a reversible link switch, and
-  avoid deleting query definitions still used elsewhere. Prepare a distinct Jira ticket after MVP;
-  no automatic retirement triggered by the first flagship publication.
-- **Dependencies/PR boundary:** proven E5 launch + partner-by-partner parity, not simply E1–E4 complete.
+**E10 — Publications, impact and legacy showcase migration.** Verified program impact and curated
+science become discoverable; legacy tiles retire only once replacements are proven. Owner:
+content/product, frontend/backend and the impact partner. Source: 19, 21, part of 31. Depends on:
+E1–E5; per-program agreement for any embed.
+- Publications are curated in config. Self-reports use an external form by default; native
+  moderation is conditional.
+- Impact starts as an approved static summary plus a provider link; a live embed needs agreement.
+- Featured-library tiles retire only after per-partner parity.
+- Stories: S10.1 curated publications, S10.2 self-report submission, S10.3 impact presentation,
+  S10.4 featured-library retirement.
 
 
 ## 5. Section registry completeness and source-story mapping
@@ -1116,7 +900,7 @@ Analysis Apps). Every row inherits shared config/visibility/anchor/CI-guard crit
 | --- | --- | --- | --- |
 | 1 | `masthead` | R1 S3.2 | 3 |
 | 2 | `hero` | R1 S3.3; computed stats S6.3 | 4 |
-| 3 | `latest-data-releases` | R1 S3.3 computed `newest` shelf (release-date source required); signup S7.2 | 5 |
+| 3 | `latest-data-releases` | R1 S3.3 computed `newest` shelf (NewStudyDigest dates, confirmed in S1.1); signup S7.2 | 5 |
 | 4 | `most-requested-datasets` | S6.1/S6.2 computed shelf | 6 |
 | 5 | `largest-cohorts` | S6.1/S6.2 computed shelf | 7 |
 | 6 | `open-access-datasets` | R1 S3.3 (curated or computed, decided in S1.1) | 8 |
@@ -1174,6 +958,7 @@ flowchart TD
   C --> S[E9 Provider and lifecycle work]
   G --> GA[Instant shelf activation]
   L --> GA
+  R --> GA
   S --> SA[Archive notice activation]
   N --> SA
 ```
@@ -1208,13 +993,13 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 | Public lookup backing store | **Decided 2026-10-08:** Postgres-backed consent endpoint for time; public Elasticsearch index deferred (section 3 triggers) | Product/engineering leads | Recorded; revisit at E6 or on a trigger |
 | Artifact interpretation and earlier criteria | Approve documented visual/schema differences and recover missing earlier Jira criteria | Product/design | S1.1 |
 | Artifact-only fields and interactions | Resolve participants versus samples, metric windows, structured program/group fields and optional resource/publication relationships | Product/catalog/design | S1.1 and owning section stories |
-| Release-date source | No “released in DUOS” field exists; choose a source (possibly a new field) or keep `latest-data-releases` off and launch with five sections | Product/catalog | S1.1/S2.1 |
+| Release-date source | Proposed: the NewStudyDigest “new in DUOS” dates (`dac_approval_date`, or `create_date` for open/external), with no 24-hour window and a label that does not claim provider publication. If product rejects it, keep `latest-data-releases` off and launch with five sections | Product/catalog | S1.1/S2.1 |
 | Dataset identifiers across environments | Production identifiers for production/content previews; disable authenticated DUOS handoffs in production-data previews; functional tests use environment-local synthetic records and destinations | Frontend/backend/AppSec | S2.2/S3.2/S4.2 |
 | Public-bundle exposure | Merge only public-safe content; `hidden` is not a privacy control | Product/content | S4.1 and every showcase PR |
 | Review roles | CODEOWNERS or named reviewers for showcase paths; program owner approves copy in the PR | Product/frontend lead | S4.1 |
 | Workshop enrollment | Prefer provider links; native multi-session signup requires a separate provider enrollment contract | Program/frontend/backend | S7.4 |
 | Impact presentation | Prefer approved static summary/image plus provider link; live embed conditional on agreement | Product/partner | S10.3 |
-| MVP size | Six sections (five without release dates) and complete authoring/public workflow | Product | R0 |
+| MVP size | Six sections (five if product rejects the section 2 date policy) and complete authoring/public workflow | Product | R0 |
 | Branding | Theme presets or contrast-checked primary/accent overrides; fixed typography | Design | S1.1/S1.3 |
 | Public data exposure | Table-specific allowlist driving a dedicated projection query (no full `Dataset`/`Study` objects), explicit visibility policy, free-text field decisions; private/nonexistent IDs share `unavailable` | Catalog/AppSec | S2.1/S2.2 before anonymous lookup |
 | Computed versus curated shelves | Rankings are computed by consent with config pins/exclusions; editorial shelves are curated; `open-access-datasets` kind decided per showcase | Product | S1.1/S3.3 |
@@ -1224,8 +1009,9 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 | Release/sample/size semantics | Establish authoritative sources/units; leave unavailable claims out | Catalog/product | S2.1/S3.3/S6.2 |
 | Empty section behavior | Type-specific content predicate and no public dead anchors | Product/design | S1.1/S3.1 |
 | Search scope/library replacement | MVP global library handoff; partner query scoping via `libraryVersions` keys later | Product/frontend | S3.2/S10.4 |
-| Public lookup transport | Required BFF `POST /public/showcase/datasets` proxy with credential stripping and unchanged BFF CSP; mode-aware client; configured direct origin plus CSP/CORS in legacy mode | Frontend/server | S2.2/S3.1/S5.3 |
-| Public lookup bounds | Consent and proxy enforce 64 KiB bodies; Consent enforces ID/pin/exclusion/scope/string limits, maximum ranking size 50 and page size 200 before DAO calls | Backend/frontend/server | S2.2 |
+| Public lookup transport | Required BFF `POST /public/showcase/datasets` proxy with credential stripping and unchanged BFF CSP; mode-aware client; configured direct origin plus CSP/CORS in legacy mode, with CORS allowances scoped to `/showcase/*` | Frontend/server | S2.2/S3.1/S5.3 |
+| Public lookup bounds | Consent and proxy enforce 64 KiB bodies and a rate limit; Consent's limit is anonymous per client IP, independent of `RateLimitFilter`'s `isEnabled()` switch; Consent enforces ID/pin/exclusion/scope/string limits, maximum ranking size 50 and page size 200 before DAO calls | Backend/frontend/server | S2.2 |
+| Two “new data” notification paths | Extend or deliberately coexist with NewStudyDigest; one definition of “new in DUOS” | Notifications owner/product | S7.2 |
 | Permanent showcase keys | Required check compares against the current protected target revision; removed keys become tombstones, tombstones persist, and rollback cannot restore retired identities | Frontend/release owners | S1.2/S4.1 |
 | Return to a database/admin UI | Only if the section 8 lead-time metric or owner feedback shows PR authoring is the bottleneck | Product | After partner waves |
 | Subscription registry and audience | Versioned release manifest synchronized to Consent; active-key/topic validation, explicit editorial/computed membership, deployment/rollback reconciliation and retirement suppression | Frontend release/notifications owners | S7.1 before signup activation |
@@ -1240,7 +1026,8 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 
 ### Shared implementation checks
 
-Backend work preserves Resource → Service → DAO, explicit auth annotations, constructor injection
+Backend work preserves Resource → Service → DAO, explicit auth annotations on authenticated
+endpoints (the public lookup is the recorded exception, section 1), constructor injection
 and existing error handling. Every API change updates the OpenAPI entry point and referenced path/
 schema files. Strict Mockito Resource/Service tests verify validation/auth/status behavior, with
 database tests for the projection query. Use no `lenient()` stubbing.
@@ -1252,7 +1039,7 @@ synthetic fixtures in tests; real showcase content lives only in `src/showcases/
 | Release-critical scenario | Required proof |
 | --- | --- |
 | Config validity | CI guard rejects every rule violation and lookup-limit violation; all real entries pass; before/after checks reject removal/rename without retirement, tombstone deletion and reuse; missing or stale base history cannot pass; rollback preserves tombstones |
-| Public data exposure | JSON key set equals the allowlist; planted sensitive values never appear in any response; private/deleted/null-visibility records return no metadata and never affect rankings; unavailable results do not distinguish private from nonexistent IDs |
+| Public data exposure | JSON key set equals the allowlist; planted sensitive values never appear in any response; private, hard-deleted, unapproved controlled and null-visibility records return no metadata and never affect rankings; unavailable results do not distinguish private from nonexistent IDs |
 | Computed shelves | Rankings, scope, pins and exclusions resolve correctly with a fixed clock, including `archive-soonest`; popularity thresholds hold and no request counts or volume trends are returned |
 | Live metadata | Catalog rename/DAC/access/visibility/deletion changes appear without a release; no stale public eligibility |
 | Identifier health | Scheduled check reports unavailable identifiers without existence/privacy diagnoses, plus broken links to owners |
@@ -1261,7 +1048,7 @@ synthetic fixtures in tests; real showcase content lives only in `src/showcases/
 | Routing | `/data`, partner key, unknown/hidden 404, login return-to; BFF same-origin public proxy with no forwarded credentials/session dependency and enforced CSP, legacy direct lookup with CSP/CORS/preflight; production-data previews block authenticated DUOS handoffs; environment-local synthetic request flows pass and alias collisions cannot cross environments |
 | Subscription synchronization (E7) | Deployment-authorized manifest activation, active-key/topic validation, freshness failure, rollback, retirement and queued-send suppression; editorial/computed membership independent of display limits; unsubscribe survives outages |
 | Accessibility | Keyboard-only page; inactive carousel links excluded; semantic headings; sticky-header anchor offset; accessible tooltips; reduced-motion shelf scrolling; WCAG AA contrast in supported themes; no page overflow at mobile widths/zoom |
-| Performance/failure | Maximum supported config, lookup query count and size, asset budget, failed lookup/analytics and no mock fallback; exact-limit/over-limit requests for every input bound, 413 at Consent and proxy, 400 before DAO calls, capped pagination and proxy 429 behavior |
+| Performance/failure | Maximum supported config, lookup query count and size, asset budget, failed lookup/analytics and no mock fallback; exact-limit/over-limit requests for every input bound, 413 at Consent and proxy, 400 before DAO calls, capped pagination, and 429 with `Retry-After` at both Consent and the proxy, including direct calls with the authenticated limiter disabled |
 | Launch realism | Approved real content, rollback by revert or flag, no illustrative claims, named content/support owners |
 
 Implementation verification commands, from each repository, should include:
@@ -1302,10 +1089,9 @@ as passing tests.
 
 ### Completion boundaries
 
-This planning task is complete when the decomposition is saved and indexed, includes both
-repositories, records the code-defined content decision, maps all 31 source stories and 23 sections,
-and reconciles the reviewed artifact with remaining source gaps and explicit scope decisions.
-It does not create external tickets or implement a showcase.
+This document covers both repositories, records the code-defined content decision, maps all 31
+DT-3904 stories and 23 sections, and reconciles the reviewed artifact with remaining source gaps
+and explicit scope decisions. It does not create Jira tickets or implement a showcase.
 
 The MVP implementation is complete only when E1–E5 acceptance checks pass with mocks off, the agreed
 MVP scope and factual content are approved, the flagship and pilot partner are live in production,

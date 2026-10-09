@@ -1,6 +1,8 @@
 # Data Showcase artifact review
 
-Reviewed 2026-10-07. Companion to the [delivery plan](data-showcase-delivery-plan.md).
+Reviewed 2026-10-07 for [DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904).
+Companion to the [delivery plan](data-showcase-delivery-plan.md); its Terms table defines the
+words used here, such as CTA (call to action) and shelf.
 This record distinguishes observed mockup behavior from proposed production requirements and scope
 decisions. It does not certify the mockup's sample data or external service claims.
 The request-metrics disposition was aligned with the delivery plan's disclosure policy on 2026-10-08;
@@ -8,12 +10,10 @@ the recorded artifact observations are unchanged.
 
 ## Source and method
 
-- Canonical reference: [Claude artifact](https://claude.ai/code/artifact/0ce96e5e-57b4-4943-9682-7c9538c98176).
-  The sharing query parameter is omitted from repository documentation.
-- The user supplied the HTML export after authenticated CLI and shared-link retrieval failed.
-  Reviewed local file: `/tmp/duos-showcase-artifact.UPjpPL/artifact.html`, 543,573 bytes, 3,510
-  newline characters. This is a temporary source location, not a durable repository asset.
-- SHA-256 of the exact pasted file, including its initial paste-instruction comment:
+- Source: the artifact's HTML export, attached to DT-3904 as `data-showcase-artifact.html`
+  (543,573 bytes, 3,510 newline characters). It is the exact file reviewed, including its initial
+  paste-instruction comment.
+- SHA-256 of the attached file:
   `1356b52733e99b48ac51b963db4ed3b49531a8fef803bda7369395acdf293ce0`.
 - HTML title: `DUOS — Data Use Oversight System`. No authoritative artifact version or modification
   timestamp was supplied; dates within sample content are not version metadata.
@@ -23,7 +23,7 @@ the recorded artifact observations are unchanged.
   analysis apps and impact panel. None of these renders produced a JavaScript page error.
 - This is a source/design review with limited browser checks, not a full WCAG audit, provider
   integration test, or live rendering of the remotely hosted artifact. Source line numbers below
-  refer to the pasted file identified by the hash.
+  refer to the attached file identified by the hash.
 
 ## What the mockup actually implements
 
@@ -45,12 +45,25 @@ certification, free credits, training, or program deadlines suitable for product
 
 ## Structure and visual template
 
+At a high level the page is built from five block types, which are what the implementation needs
+to reproduce:
+
+1. **Masthead:** sticky bar with DUOS and partner logos, search, sign-in and section navigation.
+2. **Hero:** introduction with headline statistics and calls to action, an onboarding panel, and
+   rotating announcements.
+3. **Shelves:** horizontally scrolling rows of dataset or resource cards.
+4. **Grids:** multi-column card layouts for apps, research areas, initiatives and events.
+5. **Panels:** two-column text-and-facts layouts for the conference, workshops and programs.
+
+The widths and breakpoints in the table record what the artifact does, as evidence for those
+blocks. They are not requirements; design sets the production values in S1.1.
+
 | Observation | Evidence | Implementation implication |
 | --- | --- | --- |
 | Masthead, hero, then 21 content sections in the ticket's order | Lines 1577–3389; `.subsection-nav` has 21 links | All 23 registry types are represented visually, but only the 21 content sections have matching anchor IDs. `masthead` and `hero` are classes without those IDs. |
 | Sticky two-row masthead, DUOS/AnVIL co-branding, search and sign-in | `.masthead`, `.masthead-inner`, `.subsection-nav` | Keep global identity and partner branding explicit; generate navigation from visible navigable content sections, not every enabled registry key. |
 | Wide, restrained shelf layout | `.wrap` max-width 1400px; 356px `.card`; horizontal overflow/scroll snapping | Use one accessible shelf primitive; preserve intended horizontal scrolling without page-level clipping. Do not implement every section as a horizontal shelf. |
-| Three hero columns on desktop | Intro/stats/CTAs, onboarding panel, announcement panel; `.hero-inner` collapses at 980px | Preserve the hierarchy with a responsive grid. Stats stack below 480px; search moves below branding below 560px. |
+| Three hero columns on desktop | Intro/stats/CTAs, onboarding panel, announcement panel; `.hero-inner` collapses at 980px; stats stack below 480px; search moves below branding below 560px | Preserve the hierarchy with a responsive grid; S1.1 sets production breakpoints. |
 | Distinct app, research and event grids | App grid 3→1 columns at 900px; research area 2→1 at 760px; initiatives 3→2→1 at 900/600px; Where Else 4→2→1 at 900/520px | Shared primitives can have fixed per-type variants; a universal card-strip renderer would lose important visual structure. |
 | Two-column conference, workshop and program panels | Collapse at 760px; facts/history remain separate from description | Typed settings/forms must support structured information where visual fidelity matters. |
 | Serif headings, sans-serif body, monospaced labels/figures | Fraunces, IBM Plex Sans, IBM Plex Mono; blue/gray palette and subdued borders | Use template-owned typography and accessible theme tokens. Custom per-partner fonts are not necessary to reproduce the design. |
@@ -141,7 +154,8 @@ epics. The artifact offers no backend evidence that would justify coupling these
   Native multi-session enrollment preserves more of the mockup interaction but introduces stable
   session IDs, provider enrollment outcomes, duplicate/partial-failure handling and cancellation.
   Record this as an explicit choice in S7.4, not a hidden expansion of notification subscriptions.
-- Prefer a static hero decoration and template-owned fonts. Preserve branding and layout without
+- Prefer a static hero decoration (a fixed background image instead of the animated canvas) and
+  template-owned fonts. Preserve branding and layout without
   introducing animation lifecycle or per-program font configuration into MVP.
 - Maintain truthful content and source provenance. Do not ship faux links, assumed retrieval rates,
   illustrative consent combinations, free-service promises or invented scientific impact metrics.
