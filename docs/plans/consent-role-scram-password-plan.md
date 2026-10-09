@@ -3,8 +3,8 @@
 ## Status
 
 In progress. Dev is done ([DT-4237](https://broadworkbench.atlassian.net/browse/DT-4237), 2026-10-08).
-Staging ([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244)) and prod
-([DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245)) follow, with the procedure below.
+Staging is done ([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244), 2026-10-09).
+Prod ([DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245)) follows, with the procedure below.
 See [Results](#results).
 
 ## Summary
@@ -132,7 +132,12 @@ Do one environment at a time. For prod, first take a backup:
    ```
 
    `postgresql` must be `true`, and the DUOS test must print `OK`. Before the change, the DUOS test printed
-   `Unrecognized algorithm name`.
+   `Unrecognized algorithm name`. Run the DUOS test once before step 4 too, as a baseline.
+
+   If `kubectl` hangs, your kubeconfig may hold an old address for the cluster. To avoid changing your
+   current context, write fresh credentials to a separate file and pass it with `--kubeconfig`:
+   `KUBECONFIG=/tmp/kube-<env> gcloud container clusters get-credentials <cluster> --zone <zone> --project <project>`.
+   `gcloud container clusters list --project <project>` shows `<cluster>` and `<zone>`.
 
 8. **Check the logs.** `\password` sends only the verifier, and the instances log no statements. This command
    must print nothing:
@@ -150,7 +155,7 @@ Do one environment at a time. For prod, first take a backup:
 | Date | Environment | Result |
 |---|---|---|
 | 2026-10-08 | dev | MD5 to SCRAM. The DUOS pod test printed `OK`. Consent restarted with no login errors. `GET /api/user/me` worked. The Cloud SQL logs held no password or hash. |
-| | staging | Not done. [DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244) |
+| 2026-10-09 | staging | MD5 to SCRAM ([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244)). No rollback was needed. The DUOS pod test changed from `Unrecognized algorithm name` to `OK`. Consent restarted with no login errors. `GET /api/user/me` worked, and sign-in to DUOS worked. The Cloud SQL logs held no `ALTER` text, no password and no verifier. |
 | | prod | Not done. [DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245) |
 
 The `\password` flow was also tested on a local Postgres 16 with `log_statement=all`. Only
