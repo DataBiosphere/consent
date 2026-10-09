@@ -85,7 +85,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Mock private Jdbi jdbi;
-  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private VoteDAO voteDAO;
@@ -171,6 +171,18 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
+    dataAccessRequestDAO =
+        org.mockito.Mockito.mock(
+            DataAccessRequestDAO.class,
+            invocation -> {
+              if (invocation.getMethod().getName().equals("inTransaction")) {
+                org.jdbi.v3.sqlobject.transaction.TransactionalCallback<
+                        ?, DataAccessRequestDAO, Exception>
+                    callback = invocation.getArgument(0);
+                return callback.inTransaction(dataAccessRequestDAO);
+              }
+              return org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation);
+            });
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
     when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(ruleDAO);
@@ -817,6 +829,25 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
     assertDoesNotThrow(
         () -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request));
+  }
+
+  @Test
+  void automaticApprovalRejectsSubmittedCloseoutUnderLock() {
+    DataAccessRequest dar = makeDAR();
+    when(dataAccessRequestDAO.hasSubmittedCloseout(dar.getCollectionId())).thenReturn(true);
+    assertThrows(
+        org.broadinstitute.consent.http.exceptions.ConsentConflictException.class,
+        () ->
+            service.openElectionAndApprove(
+                makeDacAutomationRuleGRU(),
+                new GeneralResearchUseV1(),
+                dar,
+                makeDataset(),
+                request));
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(dar.getCollectionId());
+    verify(electionDAO, never()).insertElection(any(), any(), any(), any(), any());
   }
 
   @Test

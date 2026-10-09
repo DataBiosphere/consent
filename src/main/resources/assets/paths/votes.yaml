@@ -51,7 +51,7 @@ put:
     404:
       description: Not Found
     409:
-      description: Conflict Error
+      description: Conflict. An election is not open for voting, is unsupported, or its collection has a submitted closeout.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

@@ -31,6 +31,8 @@ put:
       description: Forbidden. Not acting as a Chairperson or Researcher.
     404:
       description: Not Found
+    409:
+      description: Conflict. A collection with a submitted closeout cannot be canceled.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

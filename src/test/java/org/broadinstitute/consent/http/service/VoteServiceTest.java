@@ -74,7 +74,7 @@ class VoteServiceTest extends AbstractTestHelper {
   @Mock private Jdbi jdbi;
   @Mock private UserDAO userDAO;
   @Mock private DacDAO dacDAO;
-  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private EmailService emailService;
@@ -85,6 +85,18 @@ class VoteServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
+    dataAccessRequestDAO =
+        org.mockito.Mockito.mock(
+            DataAccessRequestDAO.class,
+            invocation -> {
+              if (invocation.getMethod().getName().equals("inTransaction")) {
+                org.jdbi.v3.sqlobject.transaction.TransactionalCallback<
+                        ?, DataAccessRequestDAO, Exception>
+                    callback = invocation.getArgument(0);
+                return callback.inTransaction(dataAccessRequestDAO);
+              }
+              return org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation);
+            });
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
@@ -1178,6 +1190,27 @@ class VoteServiceTest extends AbstractTestHelper {
     v.setIsReminderSent(true);
     v.setVote(true);
     return v;
+  }
+
+  @Test
+  void testCannotVoteOnEarlierDarAfterCollectionCloseout() {
+    Vote vote = new Vote();
+    vote.setElectionId(10);
+    Election election = new Election();
+    election.setReferenceId("synthetic-original-dar");
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(
+            List.of("synthetic-original-dar")))
+        .thenReturn(true);
+    List<Vote> votes = List.of(vote);
+    User voter = new User();
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
+    verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
   }
 
   // validateVotesCanUpdate tests

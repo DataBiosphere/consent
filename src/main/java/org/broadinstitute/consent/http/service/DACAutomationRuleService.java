@@ -303,6 +303,23 @@ public class DACAutomationRuleService implements ConsentLogger {
       Dataset dataset,
       ContainerRequest request) {
 
+    return dataAccessRequestDAO.inTransaction(
+        dao -> {
+          dao.lockCollection(dar.getCollectionId());
+          if (dao.hasSubmittedCloseout(dar.getCollectionId())) {
+            throw new ConsentConflictException("Cannot act on a closed out collection.");
+          }
+          return openElectionAndApproveInTransaction(
+              rule, ruleImplementation, dar, dataset, request);
+        });
+  }
+
+  private Vote openElectionAndApproveInTransaction(
+      DACAutomationRule rule,
+      RuleImplementationInterface ruleImplementation,
+      DataAccessRequest dar,
+      Dataset dataset,
+      ContainerRequest request) {
     // Wrap in transaction to ensure election and vote are created together
     Vote vote =
         electionDAO.inTransaction(
