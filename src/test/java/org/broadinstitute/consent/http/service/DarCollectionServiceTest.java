@@ -28,7 +28,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -107,7 +106,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock private DarCollectionServiceDAO darCollectionServiceDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
-  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private EmailService emailService;
   @Mock private VoteDAO voteDAO;
   @Mock private UserDAO userDAO;
@@ -120,6 +119,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
+    dataAccessRequestDAO =
+        org.mockito.Mockito.mock(
+            DataAccessRequestDAO.class,
+            invocation -> {
+              if (invocation.getMethod().getName().equals("inTransaction")) {
+                org.jdbi.v3.sqlobject.transaction.TransactionalCallback<
+                        ?, DataAccessRequestDAO, Exception>
+                    callback = invocation.getArgument(0);
+                return callback.inTransaction(dataAccessRequestDAO);
+              }
+              return org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation);
+            });
     when(jdbi.onDemand(DarCollectionDAO.class)).thenReturn(darCollectionDAO);
     when(jdbi.onDemand(DarCollectionSummaryDAO.class)).thenReturn(darCollectionSummaryDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
@@ -583,6 +594,49 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void closedOutCollectionCannotBeReopenedOrCancelled() {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DarCollection collection = createMockCollections().getFirst();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId("synthetic-original-dar");
+    dar.setDatasetIds(List.of(10));
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(collection.getDarCollectionId()))
+        .thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createElectionsForDarCollection(chair, collection));
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.cancelDarCollectionByRole(chair, collection, UserRoles.CHAIRPERSON));
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
+  @Test
+  void electionCreationRechecksCloseoutUnderLock() {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
+    when(dataAccessRequestDAO.hasSubmittedCloseout(collection.getDarCollectionId()))
+        .thenReturn(false, true);
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createElectionsForDarCollection(chair, collection));
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(collection.getDarCollectionId());
+    order.verify(dataAccessRequestDAO).lockCollection(collection.getDarCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(collection.getDarCollectionId());
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
+  @Test
   void testCreateElectionsForDarCollection() throws Exception {
     User user = new User();
     user.setEmail("email");
@@ -674,7 +728,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() throws Exception {
+  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() {
     User user = new User();
     user.setUserId(1);
     user.setEmail("email");
@@ -922,8 +976,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed()
-      throws SQLException {
+  void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -979,7 +1032,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() throws SQLException {
+  void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
