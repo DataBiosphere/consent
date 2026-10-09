@@ -5,6 +5,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.MailMessageMapper;
 import org.broadinstitute.consent.http.db.mapper.MailMessageSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.MailSendMapper;
+import org.broadinstitute.consent.http.enumeration.EmailReference;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
@@ -98,7 +99,14 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset);
 
+  default List<MailSend> fetchSendsByCreateDate(
+      Date start, Date end, Integer limit, Integer offset, Integer recipientLimit) {
+    return fetchSendsByCreateDate(
+        start, end, limit, offset, recipientLimit, EmailReference.kindsByTypeInt());
+  }
+
   // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
+  // :kinds holds, at each email type's number, what that type stores as its entity reference.
   @SqlQuery(
       """
       WITH in_range AS (
@@ -156,27 +164,72 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         JOIN grouped n ON n.send_row_id = p.send_id
         LEFT JOIN users u ON u.user_id = n.user_id
         GROUP BY p.send_id, n.user_id, u.display_name
+      ),
+      sends AS (
+        SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
+          p.recipient_count,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'userId', nm.user_id, 'displayName', nm.display_name, 'sent', nm.sent)
+              ORDER BY nm.position
+            ) FILTER (WHERE nm.send_id IS NOT NULL),
+            '[]'
+          ) AS recipients
+        FROM page p
+        LEFT JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
+        GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date,
+          p.last_create_date, p.recipient_count
       )
-      SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
-        p.recipient_count,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'userId', nm.user_id, 'displayName', nm.display_name, 'sent', nm.sent)
-            ORDER BY nm.position
-          ) FILTER (WHERE nm.send_id IS NOT NULL),
-          '[]'
-        ) AS recipients
-      FROM page p
-      LEFT JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
-      GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
-        p.recipient_count
-      ORDER BY p.create_date DESC, p.send_id DESC
+      SELECT s.*, COALESCE(by_code.dar_code, by_dar.dar_code) AS dar_code, aliases.dataset_aliases
+      FROM sends s
+      CROSS JOIN LATERAL (SELECT (CAST(:kinds AS text[]))[s.email_type] AS kind) k
+      LEFT JOIN dar_collection by_code
+        ON k.kind IN ('DAR_CODE', 'DAR_REFERENCE_ID') AND by_code.dar_code = s.entity_reference_id
+      LEFT JOIN election el
+        ON k.kind = 'ELECTION_ID' AND el.election_id = CASE
+          WHEN s.entity_reference_id ~ '^[0-9]{1,9}$'
+          THEN CAST(s.entity_reference_id AS integer) END
+      LEFT JOIN data_access_request dar
+        ON dar.reference_id = CASE
+          WHEN k.kind = 'DAR_REFERENCE_ID'
+            OR (k.kind = 'DAR_CODE' AND s.entity_reference_id !~ '^DAR-')
+          THEN s.entity_reference_id
+          ELSE el.reference_id END
+      LEFT JOIN dar_collection by_dar ON by_dar.collection_id = dar.collection_id
+      LEFT JOIN LATERAL (
+        SELECT array_agg(DISTINCT alias ORDER BY alias) AS dataset_aliases
+        FROM (
+          SELECT ds.alias FROM dataset ds WHERE ds.dataset_id = el.dataset_id
+          UNION ALL
+          SELECT ds.alias FROM dar_dataset dd JOIN dataset ds ON ds.dataset_id = dd.dataset_id
+          WHERE el.dataset_id IS NULL AND dd.reference_id = dar.reference_id
+          UNION ALL
+          SELECT ds.alias FROM data_access_request d
+          JOIN dar_dataset dd ON dd.reference_id = d.reference_id
+          JOIN dataset ds ON ds.dataset_id = dd.dataset_id
+          WHERE d.collection_id = by_code.collection_id
+            AND d.parent_id IS NULL
+            AND d.submission_date IS NOT NULL
+          UNION ALL
+          SELECT ds.alias FROM dataset ds
+          WHERE k.kind = 'DUOS_ID' AND ds.alias = CASE
+            WHEN s.entity_reference_id ~ '^DUOS-[0-9]{1,18}$'
+            THEN CAST(substr(s.entity_reference_id, 6) AS bigint) END
+          UNION ALL
+          SELECT ds.alias FROM dataset ds
+          WHERE ds.name = s.entity_reference_id
+            AND (k.kind = 'DATASET_NAME'
+              OR (k.kind = 'DUOS_ID' AND s.entity_reference_id !~ '^DUOS-'))
+        ) related
+      ) aliases ON TRUE
+      ORDER BY s.create_date DESC, s.send_id DESC
       """)
   List<MailSend> fetchSendsByCreateDate(
       @Bind("start") Date start,
       @Bind("end") Date end,
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset,
-      @Bind("recipientLimit") Integer recipientLimit);
+      @Bind("recipientLimit") Integer recipientLimit,
+      @Bind("kinds") List<String> kinds);
 }
