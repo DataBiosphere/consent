@@ -43,7 +43,10 @@ public interface DacDashboardDAO {
       ),
       -- A pre-2022 submission is one original DAR per dataset, so read its non-canceled siblings too.
       latest_dar AS (
-        SELECT ls.collection_id, dar.reference_id, dar.data->'closeoutSupplement' AS closeout
+        SELECT ls.collection_id, dar.reference_id,
+               -- Only a progress report can close out a collection.
+               CASE WHEN dar.parent_id IS NOT NULL THEN dar.data->'closeoutSupplement' END
+                 AS closeout
         FROM latest_submissions ls
         JOIN data_access_request dar ON dar.collection_id = ls.collection_id
         WHERE dar.reference_id = ls.reference_id
@@ -111,8 +114,9 @@ public interface DacDashboardDAO {
           WHERE election_count >= dataset_count AND NOT has_open_election
         ) AS dar_approved,
         COUNT(*) FILTER (
-          WHERE (has_open_chair_election AND NOT has_closeout)
-             OR (has_open_member_election AND has_pending_member_vote)
+          WHERE NOT has_closeout
+            AND (has_open_chair_election
+              OR (has_open_member_election AND has_pending_member_vote))
         ) AS awaiting_my_vote
       FROM collection_state
       """)

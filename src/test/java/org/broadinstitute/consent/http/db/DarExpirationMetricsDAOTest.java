@@ -160,6 +160,20 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void aSupplementOnAnOriginalDarIsNotACloseout() {
+    Integer dataset = createDataset();
+    DataAccessRequestData stray = new DataAccessRequestData();
+    stray.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Research complete"), null, user.getUserId()));
+    Instant submitted = now.minus(Duration.ofDays(400));
+    approve(createDar(stray, submitted, dataset), dataset);
+
+    ExpiredCollection row = only();
+    assertEquals(submitted.plus(TERM), row.accessEnd());
+    assertEquals(AccessEndReason.EXPIRED, row.reason());
+  }
+
+  @Test
   void aCollectionEndsOnceEveryDatasetsAccessHas() {
     Integer renewed = createDataset();
     Integer lapsed = createDataset();

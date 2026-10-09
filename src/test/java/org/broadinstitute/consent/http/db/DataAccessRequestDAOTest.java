@@ -1941,6 +1941,80 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(byStudy.getFirst().expired());
   }
 
+  @Test
+  void testCollectionDatasetsAndGrantsIgnoreDraftDarWithCloseoutSupplement() {
+    StudyDar grant = createStudyDar();
+    castFinalVote(grant.dar().getReferenceId(), grant.dataset(), new Date(), true);
+    Integer collectionId = grant.dar().getCollectionId();
+    Dataset earlierDataset = createStudyDataset(grant.studyId());
+    DataAccessRequest earlier = createDataAccessRequest(grant.dar().getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        earlier.getReferenceId(), earlierDataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        earlier.getReferenceId(), grant.dataset().getDatasetId());
+
+    Dataset draftOnlyDataset = createStudyDataset(grant.studyId());
+    DataAccessRequestData draftData = new DataAccessRequestData();
+    draftData.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Completed"), "", grant.dar().getUserId()));
+    String draftReferenceId = "synthetic-draft-closeout";
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        draftReferenceId,
+        grant.dar().getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        draftData,
+        "synthetic-era");
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        draftReferenceId, draftOnlyDataset.getDatasetId());
+
+    StudyDar otherCollection = createStudyDar();
+    assertEquals(
+        Set.of(grant.dataset().getDatasetId(), earlierDataset.getDatasetId()),
+        Set.copyOf(dataAccessRequestDAO.findDatasetIdsByCollectionId(collectionId)));
+    assertFalse(dataAccessRequestDAO.hasSubmittedCloseout(collectionId));
+    assertFalse(
+        dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(
+            List.of(grant.dar().getReferenceId(), otherCollection.dar().getReferenceId())));
+    assertEquals(
+        Set.of(grant.dataset().getDatasetId()),
+        dataAccessRequestDAO.findDatasetApprovalsByDar(grant.dar().getReferenceId()));
+    assertEquals(
+        1, dataAccessRequestDAO.findApprovedDARsByDatasetId(grant.dataset().getDatasetId()).size());
+  }
+
+  @Test
+  void testSubmittedOriginalDarWithCloseoutSupplementIsNotACloseout() {
+    StudyDar grant = createStudyDar();
+    castFinalVote(grant.dar().getReferenceId(), grant.dataset(), new Date(), true);
+    Integer collectionId = grant.dar().getCollectionId();
+    // Only a progress report (non-null parent_id) can close out a collection.
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Completed"), "", grant.dar().getUserId()));
+    String referenceId = "synthetic-original-with-closeout";
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        grant.dar().getUserId(),
+        new Date(),
+        new Date(),
+        new Date(),
+        data,
+        "synthetic-era");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, grant.dataset().getDatasetId());
+
+    assertFalse(dataAccessRequestDAO.hasSubmittedCloseout(collectionId));
+    assertFalse(
+        dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(
+            List.of(grant.dar().getReferenceId())));
+    assertEquals(
+        Set.of(grant.dataset().getDatasetId()),
+        dataAccessRequestDAO.findDatasetApprovalsByDar(grant.dar().getReferenceId()));
+  }
+
   /**
    * A closeout ends the collection's grant outright, so every dataset it reached is closed even
    * when the closeout's own report names only some of them. That matches how
@@ -1971,8 +2045,30 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         leftOutOfTheCloseout,
         grantedOn);
 
-    // The closeout's own report names one of the two datasets
-    fileFollowOn(requester, collectionId, grant, List.of(namedByTheCloseout), 0, true);
+    assertEquals(
+        Set.of(namedByTheCloseout.getDatasetId(), leftOutOfTheCloseout.getDatasetId()),
+        Set.copyOf(dataAccessRequestDAO.findDatasetIdsByCollectionId(collectionId)));
+    assertFalse(dataAccessRequestDAO.hasSubmittedCloseout(collectionId));
+    assertFalse(
+        dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(List.of(grant.getReferenceId())));
+    assertFalse(dataAccessRequestDAO.findDatasetApprovalsByDar(grant.getReferenceId()).isEmpty());
+
+    // A legacy partial closeout must also end the entire collection, before SO approval.
+    DataAccessRequest closeout =
+        fileFollowOn(requester, collectionId, grant, List.of(namedByTheCloseout), 0, true);
+    assertNull(closeout.getApprovingSigningOfficialUserId());
+    assertTrue(dataAccessRequestDAO.hasSubmittedCloseout(collectionId));
+    assertTrue(
+        dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(List.of(grant.getReferenceId())));
+    assertTrue(dataAccessRequestDAO.findDatasetApprovalsByDar(grant.getReferenceId()).isEmpty());
+    assertTrue(
+        dataAccessRequestDAO
+            .findApprovedDARsByDatasetId(namedByTheCloseout.getDatasetId())
+            .isEmpty());
+    assertTrue(
+        dataAccessRequestDAO
+            .findApprovedDARsByDatasetId(leftOutOfTheCloseout.getDatasetId())
+            .isEmpty());
 
     List<DarMetricsSummary> onNamed =
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
