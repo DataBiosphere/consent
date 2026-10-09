@@ -525,7 +525,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAMessage() throws Exception {
+  void testSendNewDAAMessage() {
     User user = new User();
     int dacId = randomInt(10, 20);
     Dac dac = new Dac();
@@ -559,7 +559,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAMessageDaaNotFound() throws Exception {
+  void testSendNewDAAMessageDaaNotFound() {
     User user = new User();
     int dacId = randomInt(10, 20);
     Dac dac = new Dac();
@@ -578,7 +578,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAMessageEmailError() throws Exception {
+  void testSendNewDAAMessageEmailError() {
     User user = new User();
     int dacId = randomInt(10, 20);
     Dac dac = new Dac();
