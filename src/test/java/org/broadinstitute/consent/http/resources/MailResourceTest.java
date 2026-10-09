@@ -184,7 +184,7 @@ class MailResourceTest extends AbstractTestHelper {
   @Test
   void test_MailResource_summary_limit_above_cap() {
     initResource();
-    int limit = MailResource.MAX_SUMMARY_LIMIT + 1;
+    int limit = MailResource.MAX_PAGE_LIMIT + 1;
     assertThrows(
         BadRequestException.class,
         () -> mailResource.getEmailSummaryByDateRange(duosUser, "05/11/2021", null, limit, null));
@@ -252,7 +252,7 @@ class MailResourceTest extends AbstractTestHelper {
   @Test
   void test_MailResource_sends_limit_above_cap() {
     initResource();
-    int limit = MailResource.MAX_SUMMARY_LIMIT + 1;
+    int limit = MailResource.MAX_PAGE_LIMIT + 1;
     assertThrows(
         BadRequestException.class,
         () -> mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, limit, null));

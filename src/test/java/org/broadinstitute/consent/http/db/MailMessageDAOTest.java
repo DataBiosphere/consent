@@ -642,35 +642,52 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_groups_the_recipients_of_one_send() {
     Instant first = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MILLIS);
-    List<User> users = List.of(createUser(), createUser(), createUser());
-    List<MailMessage> rows =
-        IntStream.range(0, users.size())
-            .mapToObj(
-                i ->
-                    generateSendRow(
-                        users.get(i),
-                        EmailType.NEW_DAR,
-                        "DAR-1",
-                        first.plus(i, ChronoUnit.MINUTES)))
-            .toList();
+    User carol = createUserNamed("Carol");
+    User alice = createUserNamed("Alice");
+    User bob = createUserNamed("Bob");
+    MailMessage earliest = generateSendRow(carol, EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(alice, EmailType.NEW_DAR, "DAR-1", first.plus(1, ChronoUnit.MINUTES));
+    generateSendRow(bob, EmailType.NEW_DAR, "DAR-1", first.plus(2, ChronoUnit.MINUTES));
 
     List<MailSend> sends = fetchSendsAroundNow();
 
-    List<MailSendRecipient> expectedRecipients =
-        users.stream()
-            .map(u -> new MailSendRecipient(u.getUserId(), u.getDisplayName()))
-            .sorted(Comparator.comparing(MailSendRecipient::displayName))
-            .toList();
     assertEquals(
         List.of(
             new MailSend(
-                rows.getFirst().emailId(),
+                earliest.emailId(),
                 EmailType.NEW_DAR.getTypeInt(),
                 "DAR-1",
-                rows.getFirst().createDate(),
+                earliest.createDate(),
                 3,
-                expectedRecipients)),
+                List.of(
+                    new MailSendRecipient(alice.getUserId(), "Alice"),
+                    new MailSendRecipient(bob.getUserId(), "Bob"),
+                    new MailSendRecipient(carol.getUserId(), "Carol")))),
         sends);
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_caps_the_recipients_but_counts_them_all() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    User carol = createUserNamed("Carol");
+    User alice = createUserNamed("Alice");
+    User bob = createUserNamed("Bob");
+    generateSendRow(carol, EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(alice, EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(bob, EmailType.NEW_DAR, "DAR-1", first);
+
+    MailSend send =
+        mailMessageDAO
+            .fetchSendsByCreateDate(
+                Date.from(first.minus(1, ChronoUnit.HOURS)), Date.from(Instant.now()), 10, 0, 2)
+            .getFirst();
+
+    assertEquals(3, send.recipientCount());
+    assertEquals(
+        List.of(
+            new MailSendRecipient(alice.getUserId(), "Alice"),
+            new MailSendRecipient(bob.getUserId(), "Bob")),
+        send.recipients());
   }
 
   @Test
@@ -740,6 +757,12 @@ class MailMessageDAOTest extends DAOTestHelper {
 
     assertEquals(List.of(inside.emailId()), forward);
     assertEquals(forward, reversed);
+  }
+
+  private User createUserNamed(String displayName) {
+    User user = createUser();
+    userDAO.updateDisplayName(user.getUserId(), displayName);
+    return user;
   }
 
   private List<MailSend> fetchSendsAroundNow() {

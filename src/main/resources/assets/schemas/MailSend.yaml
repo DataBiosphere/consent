@@ -3,7 +3,7 @@ description: One email sent to one or more recipients.
 properties:
   sendId:
     type: integer
-    description: ID of the send's earliest email
+    description: Smallest email ID in the send. Stable for a given date range; a send split by the range's start or end gets a different ID in each part.
   emailType:
     type: integer
     description: The type of email message that was sent
@@ -16,10 +16,10 @@ properties:
     description: When the send's earliest email was created, in epoch milliseconds
   recipientCount:
     type: integer
-    description: Number of emails in the send, one per recipient
+    description: Number of emails in the send, one per recipient, including any beyond the first 100 in recipients
   recipients:
     type: array
-    description: The send's recipients, ordered by display name
+    description: Up to 100 of the send's recipients, ordered by display name. recipientCount gives the full number.
     items:
       type: object
       properties:

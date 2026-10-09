@@ -30,8 +30,8 @@ public class MailResource {
 
   private final EmailService emailService;
 
-  /** Summaries are listed many at once, so a page is capped rather than the whole log at once. */
-  static final int MAX_SUMMARY_LIMIT = 1000;
+  /** Summaries and sends are listed many at once, so their pages are capped. */
+  static final int MAX_PAGE_LIMIT = 1000;
 
   @Inject
   public MailResource(EmailService emailService) {
@@ -100,7 +100,7 @@ public class MailResource {
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    validateSummaryLimitAndOffset(limit, offset);
+    validatePageLimitAndOffset(limit, offset);
     try {
       return Response.ok()
           .entity(
@@ -122,7 +122,7 @@ public class MailResource {
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    validateSummaryLimitAndOffset(limit, offset);
+    validatePageLimitAndOffset(limit, offset);
     try {
       return Response.ok()
           .entity(
@@ -134,10 +134,10 @@ public class MailResource {
     }
   }
 
-  private void validateSummaryLimitAndOffset(Integer limit, Integer offset) {
+  private void validatePageLimitAndOffset(Integer limit, Integer offset) {
     validateLimitAndOffset(limit, offset);
-    if (limit != null && limit > MAX_SUMMARY_LIMIT) {
-      throw new BadRequestException("limit value must be " + MAX_SUMMARY_LIMIT + " or less");
+    if (limit != null && limit > MAX_PAGE_LIMIT) {
+      throw new BadRequestException("limit value must be " + MAX_PAGE_LIMIT + " or less");
     }
   }
 
