@@ -10,7 +10,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
@@ -159,7 +159,7 @@ class MailResourceTest extends AbstractTestHelper {
   void test_MailResource_summary_without_end_runs_through_today() throws Exception {
     initResource();
     Date tomorrowStart =
-        Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+        Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
     when(emailService.fetchEmailMessageSummariesByCreateDate(
             new SimpleDateFormat("MM/dd/yyyy").parse("05/11/2021"), tomorrowStart, 20, 0))
         .thenReturn(List.of());

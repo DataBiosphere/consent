@@ -704,6 +704,32 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFetchSendsByCreateDate_starts_a_new_send_when_a_recipient_repeats() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    User alice = createUser();
+    User bob = createUser();
+    for (Instant created : List.of(first, first.plus(5, ChronoUnit.MINUTES))) {
+      generateSendRow(alice, EmailType.REMINDER, "42", created);
+      generateSendRow(bob, EmailType.REMINDER, "42", created);
+    }
+
+    List<Integer> recipientCounts =
+        fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList();
+
+    assertEquals(List.of(2, 2), recipientCounts);
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_keeps_emails_without_a_reference_apart() {
+    Instant now = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(createUser(), EmailType.NEW_DAR, null, now);
+    generateSendRow(createUser(), EmailType.NEW_DAR, null, now);
+
+    assertEquals(
+        List.of(1, 1), fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList());
+  }
+
+  @Test
   void testFetchSendsByCreateDate_separates_types_and_entity_references() {
     Instant now = Instant.now().minus(1, ChronoUnit.HOURS);
     generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", now);
