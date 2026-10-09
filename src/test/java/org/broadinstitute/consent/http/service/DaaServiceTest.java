@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -251,8 +252,6 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Test
   void testSendNewDaaEmails() throws Exception {
-    User user = mock(User.class);
-
     SimplifiedUser researcher = mock(SimplifiedUser.class);
     researcher.setDisplayName("Official Name");
     researcher.setEmail("official@example.com");
@@ -282,15 +281,13 @@ class DaaServiceTest extends AbstractTestHelper {
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(List.of(signingOfficial, signingOfficial2));
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
     verify(emailService, times(2)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
     verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
   }
 
   @Test
   void testSendNewDaaEmailsOneResearcher() throws Exception {
-    User user = mock(User.class);
-
     SimplifiedUser researcher = mock(SimplifiedUser.class);
     researcher.setDisplayName("Official Name");
     researcher.setEmail("official@example.com");
@@ -315,24 +312,69 @@ class DaaServiceTest extends AbstractTestHelper {
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(List.of(signingOfficial, signingOfficial2));
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
     verify(emailService, times(1)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
     verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
   }
 
   @Test
-  void testSendNewDaaEmailsDAANotFound() {
-    User user = mock(User.class);
+  void testSendNewDaaEmailsStoresEachRecipient() throws Exception {
+    SimplifiedUser researcher = simplifiedUser(101, 1);
+    SimplifiedUser signingOfficial = simplifiedUser(201, 1);
+    stubDaaWithRecipients(List.of(researcher), List.of(signingOfficial));
 
+    service.sendNewDaaEmails(1, "dacName", "newDaaName");
+
+    verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
+    verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
+  }
+
+  @Test
+  void testSendNewDaaEmailsContinuesAfterFailedSend() throws Exception {
+    SimplifiedUser researcher = simplifiedUser(101, 1);
+    SimplifiedUser researcher2 = simplifiedUser(102, 1);
+    SimplifiedUser signingOfficial = simplifiedUser(201, 1);
+    stubDaaWithRecipients(List.of(researcher, researcher2), List.of(signingOfficial));
+    doThrow(new IOException("send failed"))
+        .when(emailService)
+        .sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
+
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+
+    verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(102));
+    verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
+  }
+
+  private SimplifiedUser simplifiedUser(Integer userId, Integer institutionId) {
+    User user = new User();
+    user.setUserId(userId);
+    user.setDisplayName("User " + userId);
+    user.setEmail("user" + userId + "@example.com");
+    user.setInstitutionId(institutionId);
+    return new SimplifiedUser(user);
+  }
+
+  private void stubDaaWithRecipients(
+      List<SimplifiedUser> researchers, List<SimplifiedUser> signingOfficials) {
+    DataAccessAgreement daa = mock(DataAccessAgreement.class);
+    FileStorageObject file = mock(FileStorageObject.class);
+    when(file.getFileName()).thenReturn("previousDaaName");
+    when(daa.getFile()).thenReturn(file);
+    when(daaDAO.findById(any())).thenReturn(daa);
+    initService();
+    when(userService.getUsersByDaaId(any())).thenReturn(researchers);
+    when(userService.findSOsByInstitutionId(any())).thenReturn(signingOfficials);
+  }
+
+  @Test
+  void testSendNewDaaEmailsDAANotFound() {
     initService();
     assertThrows(
-        NotFoundException.class, () -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+        NotFoundException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
   }
 
   @Test
   void testSendNewDaaEmailsDAANoResearchersAndSOs() {
-    User user = mock(User.class);
-
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
     when(file.getFileName()).thenReturn("previousDaaName");
@@ -342,7 +384,7 @@ class DaaServiceTest extends AbstractTestHelper {
     initService();
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of());
-    assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    assertDoesNotThrow(() -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
     verifyNoInteractions(emailService);
   }
 

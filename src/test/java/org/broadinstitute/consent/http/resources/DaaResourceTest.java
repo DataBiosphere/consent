@@ -534,7 +534,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(any())).thenReturn(dac);
-    doNothing().when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+    doNothing().when(daaService).sendNewDaaEmails(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
@@ -568,7 +568,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+    doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
@@ -587,7 +587,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+    doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =

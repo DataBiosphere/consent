@@ -157,8 +157,7 @@ public class DaaService implements ConsentLogger {
     return daaId;
   }
 
-  public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName)
-      throws Exception {
+  public void sendNewDaaEmails(Integer daaId, String dacName, String newDaaName) throws Exception {
     try {
       DataAccessAgreement daa = findById(daaId);
       if (daa != null) {
@@ -171,24 +170,43 @@ public class DaaService implements ConsentLogger {
                         userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
                 .distinct()
                 .toList();
-        User toUser = new User();
 
         for (SimplifiedUser researcher : researchers) {
-          toUser.setEmail(researcher.getEmail());
-          toUser.setDisplayName(researcher.getDisplayName());
-          sendNewDAAUploadResearcherMessage(
-              toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+          try {
+            sendNewDAAUploadResearcherMessage(
+                toRecipient(researcher),
+                dacName,
+                previousDaaName,
+                newDaaName,
+                researcher.getUserId());
+          } catch (Exception e) {
+            logException("Error sending new DAA email to researcher:", e);
+          }
         }
         for (SimplifiedUser signingOfficial : signingOfficials) {
-          toUser.setEmail(signingOfficial.getEmail());
-          toUser.setDisplayName(signingOfficial.getDisplayName());
-          sendNewDAAUploadSOMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+          try {
+            sendNewDAAUploadSOMessage(
+                toRecipient(signingOfficial),
+                dacName,
+                previousDaaName,
+                newDaaName,
+                signingOfficial.getUserId());
+          } catch (Exception e) {
+            logException("Error sending new DAA email to signing official:", e);
+          }
         }
       }
     } catch (Exception e) {
       logException(e);
       throw (e);
     }
+  }
+
+  private static User toRecipient(SimplifiedUser simplifiedUser) {
+    User recipient = new User();
+    recipient.setEmail(simplifiedUser.getEmail());
+    recipient.setDisplayName(simplifiedUser.getDisplayName());
+    return recipient;
   }
 
   @VisibleForTesting

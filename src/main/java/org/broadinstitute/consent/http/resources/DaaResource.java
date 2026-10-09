@@ -400,10 +400,9 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("newDaaName") String newDaaName) {
     try {
       daaService.findById(oldDaaId);
-      User user = duosUser.getUser();
       Dac dac = dacService.findById(dacId);
       String dacName = dac.getName();
-      daaService.sendNewDaaEmails(user, oldDaaId, dacName, newDaaName);
+      daaService.sendNewDaaEmails(oldDaaId, dacName, newDaaName);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
