@@ -28,7 +28,7 @@ post:
     404:
       description: Not Found
     409:
-      description: Conflict.  Check error details
+      description: Conflict. The collection has a submitted closeout or cannot have elections opened in its current state.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

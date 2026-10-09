@@ -13,7 +13,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -803,6 +802,23 @@ public class DarCollectionService implements ConsentLogger {
     if (role != UserRoles.CHAIRPERSON && role != UserRoles.RESEARCHER) {
       throw new ForbiddenException(CANCEL_ROLE_ERROR);
     }
+    if (role == UserRoles.RESEARCHER
+        && !collection.getDars().isEmpty()
+        && !user.getUserId().equals(collection.getCreateUserId())) {
+      throw new NotFoundException();
+    }
+    return dataAccessRequestDAO.inTransaction(
+        dao -> {
+          dao.lockCollection(collection.getDarCollectionId());
+          return cancelDarCollectionByRoleInTransaction(user, collection, role);
+        });
+  }
+
+  private DarCollection cancelDarCollectionByRoleInTransaction(
+      User user, DarCollection collection, UserRoles role) {
+    if (role == UserRoles.CHAIRPERSON) {
+      validateCollectionIsNotClosedOut(collection.getDarCollectionId());
+    }
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn(
@@ -833,6 +849,7 @@ public class DarCollectionService implements ConsentLogger {
     if (!user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
+    validateCollectionIsNotClosedOut(collection.getDarCollectionId());
     DarCollectionSummary summary =
         darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(
             collection.getDarCollectionId());
@@ -934,6 +951,7 @@ public class DarCollectionService implements ConsentLogger {
           "DAR Collection ID: [%s] does not have any associated DAR ids"
               .formatted(collection.getDarCollectionId()));
     }
+    validateCollectionIsNotClosedOut(collection.getDarCollectionId());
     List<Integer> darDatasetIds = dar.getDatasetIds();
     if (darDatasetIds.isEmpty()) {
       throw new BadRequestException(CREATE_ELECTION_DATASET_ERROR);
@@ -956,12 +974,17 @@ public class DarCollectionService implements ConsentLogger {
    * @return The updated DarCollection
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
-      throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
+      throws BadRequestException, ForbiddenException, ConsentConflictException {
     DataAccessRequest dar = validateElectionCreation(user, collection);
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =
-            collectionServiceDAO.createElectionsForDarByUser(user, dar);
+            dataAccessRequestDAO.inTransaction(
+                dao -> {
+                  dao.lockCollection(collection.getDarCollectionId());
+                  validateCollectionIsNotClosedOut(collection.getDarCollectionId());
+                  return collectionServiceDAO.createElectionsForDarByUser(user, dar);
+                });
         if (createdElectionReferenceIds.isEmpty()) {
           var e =
               new IllegalStateException(
@@ -1011,6 +1034,12 @@ public class DarCollectionService implements ConsentLogger {
         });
   }
 
+  private void validateCollectionIsNotClosedOut(Integer collectionId) {
+    if (dataAccessRequestDAO.hasSubmittedCloseout(collectionId)) {
+      throw new ConsentConflictException("Cannot act on a closed out collection.");
+    }
+  }
+
   /** Creates elections for a new DAR collection. */
   public void createElectionsForNewDarCollection(Integer collectionId) {
     DarCollectionContext context = getDarCollectionContext(collectionId);
@@ -1018,8 +1047,13 @@ public class DarCollectionService implements ConsentLogger {
       return;
     }
 
-    // Create elections and votes for auto-open DACs
-    createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+    dataAccessRequestDAO.inTransaction(
+        dao -> {
+          dao.lockCollection(collectionId);
+          validateCollectionIsNotClosedOut(collectionId);
+          createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+          return null;
+        });
   }
 
   /** Sends notification messages for a new DAR collection. */
