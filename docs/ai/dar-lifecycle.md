@@ -1,8 +1,24 @@
-# DAR Lifecycle: Draft → DAR → Progress Report → Closeout
+# DAR Lifecycle: Draft, DAR, Progress Reports, Closeout
 
 Read this before changing anything that creates, reads, or filters `data_access_request` rows,
 elections, votes, or approval/grant queries. Each rule below exists because an earlier change got
 it wrong.
+
+## The flow
+
+```text
+(Draft) ──► Original DAR ─────────────────────────────────────────► Closeout
+                    └──► Progress report ──► … (0 or more reports) ──┘
+```
+
+- **Drafts are optional.** `createDataAccessRequest` submits an existing draft or inserts a new
+  DAR directly.
+- **Progress reports are optional.** A researcher can close out straight from the original DAR
+  (draft → submitted DAR → closeout), without filing a progress report first.
+- **A closeout is also optional.** A collection with no closeout keeps its grants until the term
+  ends (8760 hours from the newest submission) and then simply expires.
+- Never assume a closeout's parent is a progress report, or that a collection contains a
+  non-closeout progress report.
 
 ## The four states
 
@@ -13,7 +29,7 @@ All four live in the same `data_access_request` table. Tell them apart by column
 | Draft | `NULL` | `NULL` | `NULL` | `DataAccessRequestDAO.insertDraftDataAccessRequest` |
 | Original DAR | set | `NULL` | set | `DataAccessRequestService.createDataAccessRequest` |
 | Progress report | set | set (parent DAR id) | set, always | `DataAccessRequestDAO.insertProgressReport` |
-| Closeout | set | set | set, always | a progress report whose `data.closeoutSupplement` has reasons |
+| Closeout | set | set (the original DAR or a progress report) | set, always | a progress report whose `data.closeoutSupplement` has reasons |
 
 ### 1. Draft
 
@@ -39,18 +55,20 @@ All four live in the same `data_access_request` table. Tell them apart by column
   `DarCollectionSummaryDAO`.
 - `validateDar` rejects a `closeoutSupplement`. Original DARs cannot close anything out.
 
-### 3. Progress report (renewal)
+### 3. Progress report (renewal, optional)
 
+- Optional: a collection can go straight from the original DAR to a closeout. Each report renews
+  the grant term, and a collection can have any number of them, including none.
 - `POST /api/dar/v2/progress_report/{parentReferenceId}` →
   `DataAccessRequest.populateProgressReportFromJsonString` (copies the parent's data and overlays
   the report fields) → `DataAccessRequestService.createProgressReport`.
-- Preconditions:
+- Preconditions (closeouts go through the same endpoint and share the first four):
   - The caller owns the parent.
   - The parent is not a draft.
   - The parent has no open DataAccess elections.
   - The collection has no submitted closeout.
-  - The datasets are a subset of the parent's datasets and are currently approved
-    (`findDatasetApprovalsByDar`).
+  - Ordinary reports only: the datasets are a subset of the parent's datasets and are currently
+    approved (`findDatasetApprovalsByDar`). A closeout's datasets are set by the service instead.
 - `insertProgressReport` sets `parent_id`, `collection_id` and `submission_date = now()` in the
   INSERT. There is no draft step and no later "submit". Don't write fixtures or code that
   null out a progress report's `submission_date`.
@@ -59,13 +77,20 @@ All four live in the same `data_access_request` table. Tell them apart by column
 
 ### 4. Closeout (terminal)
 
+- **No interim progress report is needed.** A closeout is filed through the progress-report
+  endpoint against a submitted DAR in the collection: the original DAR when no report exists, or
+  the latest report otherwise (duos-ui uses the newest DAR). So `parent_id` may point at the
+  original DAR.
 - A closeout is a progress report with a `closeoutSupplement` (non-empty `reasons` plus a
   `signingOfficialId` at the submitter's institution). The model check is
   `DataAccessRequest.getIsCloseoutProgressReport()`: it requires `parent_id` and reasons.
 - On submission, the closeout:
   - **Covers every dataset in the collection.** The service replaces the client's selection with
     `findDatasetIdsByCollectionId`, which is the union over all submitted DARs. That includes
-    datasets that earlier progress reports dropped.
+    datasets that earlier progress reports dropped. Closeouts filed before this rule may list
+    only the datasets the researcher kept selected. The list can be **empty** if every dataset
+    in the collection was converted to external; see
+    [Datasets converted to external](#datasets-converted-to-external-dt-3184).
   - **Ends every grant in the collection immediately.** It does not wait for SO approval or DAC
     acknowledgement. `approveDataAccessRequestCloseout` only records the SO and notifies chairs.
   - Skips dataset-registration approval checks, dataset-dependent collaboration/ethics documents,
@@ -79,6 +104,47 @@ All four live in the same `data_access_request` table. Tell them apart by column
   Member and chair views offer no vote actions, and the DAC dashboard excludes it from
   "awaiting my vote" for chairs and members.
 - The duos-ui closeout form shows the full collection dataset list with removal disabled.
+
+## Datasets converted to external (DT-3184)
+
+DT-3184 (PR #2874, merged 2026-04-27) added a way to convert a DAC's controlled datasets to
+external access, for when the DAC stops managing access in DUOS. Whenever that conversion has run,
+DARs can have **fewer `dar_dataset` rows than they were submitted with, or none at all**. Any
+environment where the conversion has been run can contain such DARs.
+
+For each converted dataset, `DacServiceDAO`:
+
+- sets `dataset.dac_id`, `dac_approval` and `dac_approval_date` to NULL, and sets the dataset's
+  `accessManagement` property to `external`;
+- **deletes every `dar_dataset` row for the dataset**, on drafts, original DARs, progress reports
+  and closeouts alike;
+- appends to each affected DAR's `admin_dar_notes`: "On `<timestamp>` the following datasets were
+  removed administratively from this request because the responsible Data Access Committee no
+  longer manages access using DUOS. `DUOS-…`";
+- cancels open **DataAccess** elections on the dataset. It leaves RP elections alone, so open RP
+  elections can remain on those DARs with nothing to close them.
+
+What this means for any change you make:
+
+- **A missing `dar_dataset` row is not necessarily corruption.** The removal is deliberate, so
+  don't "repair" it by backfilling `dar_dataset`: that would bring back datasets DUOS no longer
+  manages. Look for the admin note before calling a gap a bug.
+- **Don't rebuild a DAR's datasets from `data.datasetIds`.** The JSON keeps the pre-conversion
+  list. On progress reports and closeouts it is also a copy of the **parent's** list
+  (`populateProgressReportFromJsonString` copies the parent's data), not the report's own
+  datasets. The admin note is the accurate record of which datasets a DAR lost.
+- **Inner joins to `dar_dataset` hide affected collections.** Every `DarCollectionSummaryDAO`
+  list and by-ID query, and the dashboard `getCounts` queries, inner-join `dar_dataset`. So a
+  collection whose latest DAR lost all its datasets vanishes from the admin, researcher and SO
+  lists and from the dashboard totals. `DarCollectionDAO`'s collection-detail queries left-join
+  and still find them. The DAC chair/member views can't show them at all, because no DAC manages
+  those datasets.
+- **Collection-wide dataset lists can be empty.** `findDatasetIdsByCollectionId` reads
+  `dar_dataset`, so a closeout on a fully converted collection gets no datasets and fails
+  "At least one dataset is required". Any new code that derives datasets from a collection must
+  handle an empty result deliberately.
+- Converted datasets have `dac_id IS NULL`. Queries that start from a DAC, or join
+  `dataset.dac_id`, drop them as well.
 
 ## SQL rules for closeout predicates
 
@@ -140,11 +206,13 @@ review bots have repeatedly claimed this opens a second pooled connection; it do
 | --- | --- | --- |
 | Treating any DAR with `closeoutSupplement` as a closeout | Originals can't close out; a stray JSON field closed whole collections | Require `parent_id IS NOT NULL`; `validateDar` rejects the field |
 | Modelling "draft closeouts" (a progress report with `submission_date` NULL) in code or fixtures | Progress reports are never drafts | Test "supplement on an original DAR never ends grants" instead |
-| Test fixtures inserting closeouts with `insertDataAccessRequest` (no parent) | Doesn't match production, so it passes the wrong predicates | File closeouts with `insertProgressReport` on an approved parent |
+| Assuming a closeout always follows an ordinary progress report | Researchers can close out straight from the original DAR, with no progress report in between | Handle a closeout whose parent is the original DAR; test that path as well as closeout-after-report |
+| Test fixtures inserting closeouts with `insertDataAccessRequest` (no parent) | Doesn't match how the app creates closeouts, so it passes the wrong predicates | File closeouts with `insertProgressReport` on an approved parent |
 | Trusting the client's dataset list for a closeout | Clients could omit datasets to skip validation or keep access | Expand to `findDatasetIdsByCollectionId` before validation and again under the lock |
 | Special-casing closeout status for one role only | Other roles showed `IN_PROCESS` or `SUBMITTED` for a closed collection | Apply closeout status in every role processor |
 | Excluding closeouts from only the chair branch of the DAC dashboard | Members saw a vote count with nothing to vote on | Gate the whole "awaiting my vote" count on `NOT has_closeout` |
 | Checking for a closeout outside the transaction | TOCTOU: a closeout could commit between the check and the write | Lock, re-check, mutate in one transaction |
+| Treating DARs with no `dar_dataset` rows as corrupt and planning a backfill from `data.datasetIds` | The DT-3184 conversion removed those rows on purpose, and on progress reports the JSON is the parent's list | Check `admin_dar_notes` for the removal note; fix the queries or behavior that mishandle the gap, not the data |
 | Comparing React props by identity in duos-ui `ProgressReportApplication` | The parent passes a freshly `merge()`d `dar` each render, which wiped the researcher's dataset removals | Key resets on dataset ids plus closeout mode |
 
 ## Verification checklist
@@ -153,8 +221,10 @@ review bots have repeatedly claimed this opens a second pooled connection; it do
   DAO suites one at a time: they all bind port 8180.
 - For grant or approval queries, test three cases: no closeout, a real closeout (progress report
   with a parent), and a supplement on an original DAR (must not close anything).
-- Check real data shapes against the `localdb` prod dump (schema `consent`) before tightening a
-  predicate.
+- Check real data shapes in `localdb` (schema `consent`) before tightening a predicate. Confirm which
+  dump it's loaded from first (`docker inspect localdb` shows the mounted `config/consentdb-*.sql`).
+- For collection or dataset queries, also test a DAR whose datasets were all converted to external
+  (no `dar_dataset` rows, `dataset.dac_id` NULL). It should still behave sensibly.
 - Sonar flags `throws` clauses left behind after you change a signature, multi-call
   `assertThrows` lambdas (S5778), and locals that hide fields (S1117). Re-check the callers' tests
   when you change a `throws` clause.
