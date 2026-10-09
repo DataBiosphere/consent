@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -159,14 +160,18 @@ public class DaaService implements ConsentLogger {
 
   public void sendNewDaaEmails(Integer daaId, String dacName, String newDaaName) {
     try {
-      DataAccessAgreement daa = findById(daaId);
-      String previousDaaName = daa.getFile().getFileName();
+      FileStorageObject file = findById(daaId).getFile();
+      if (file == null) {
+        throw new NotFoundException("Could not find a file for DAA " + daaId);
+      }
+      String previousDaaName = file.getFileName();
       List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
       List<SimplifiedUser> signingOfficials =
           researchers.stream()
-              .flatMap(
-                  researcher ->
-                      userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
+              .map(SimplifiedUser::getInstitutionId)
+              .filter(Objects::nonNull)
+              .distinct()
+              .flatMap(institutionId -> userService.findSOsByInstitutionId(institutionId).stream())
               .distinct()
               .toList();
       int failures = 0;

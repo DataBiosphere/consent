@@ -298,6 +298,28 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSendNewDaaEmailsLooksUpSigningOfficialsOncePerInstitution() {
+    stubDaaWithRecipients(
+        List.of(simplifiedUser(101, 1), simplifiedUser(102, 1), simplifiedUser(103, null)),
+        List.of(simplifiedUser(201, 1)));
+
+    service.sendNewDaaEmails(1, "dacName", "newDaaName");
+
+    verify(userService).findSOsByInstitutionId(1);
+    verify(userService, never()).findSOsByInstitutionId(null);
+  }
+
+  @Test
+  void testSendNewDaaEmailsDAAWithoutFile() {
+    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
+    initService();
+
+    assertThrows(
+        NotFoundException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+    verifyNoInteractions(emailService);
+  }
+
+  @Test
   void testSendNewDaaEmailsDAANotFound() {
     initService();
     assertThrows(
