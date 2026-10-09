@@ -1,0 +1,42 @@
+type: object
+description: One email sent to one or more recipients.
+properties:
+  sendId:
+    type: integer
+    description: ID of the send's earliest email
+  emailType:
+    type: integer
+    description: The type of email message that was sent
+  entityReferenceId:
+    type: [string, 'null']
+    description: Reference to the entity the email concerns, such as a DAR code or dataset identifier, depending on the email type
+  createDate:
+    type: integer
+    format: int64
+    description: When the send's earliest email was created, in epoch milliseconds
+  recipientCount:
+    type: integer
+    description: Number of emails in the send, one per recipient
+  recipients:
+    type: array
+    description: The send's recipients, ordered by display name
+    items:
+      type: object
+      properties:
+        userId:
+          type: [integer, 'null']
+          description: ID of the user the email was sent to
+        displayName:
+          type: [string, 'null']
+          description: The user's display name
+examples:
+  - sendId: 1
+    emailType: 34
+    entityReferenceId: '2026-10-09'
+    createDate: 1791507680457
+    recipientCount: 2
+    recipients:
+      - userId: 3
+        displayName: Ada Researcher
+      - userId: 4
+        displayName: Grace Member
