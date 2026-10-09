@@ -100,10 +100,7 @@ public class MailResource {
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    validateLimitAndOffset(limit, offset);
-    if (limit != null && limit > MAX_SUMMARY_LIMIT) {
-      throw new BadRequestException("limit value must be " + MAX_SUMMARY_LIMIT + " or less");
-    }
+    validateSummaryLimitAndOffset(limit, offset);
     try {
       return Response.ok()
           .entity(
@@ -112,6 +109,35 @@ public class MailResource {
           .build();
     } catch (ParseException pe) {
       return invalidDateResponse();
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/sends")
+  @RolesAllowed({ADMIN})
+  public Response getEmailSendsByDateRange(
+      @Auth DuosUser duosUser,
+      @QueryParam("start") String start,
+      @QueryParam("end") String end,
+      @DefaultValue("20") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    validateSummaryLimitAndOffset(limit, offset);
+    try {
+      return Response.ok()
+          .entity(
+              emailService.fetchEmailSendsByCreateDate(
+                  parseStartDate(start), parseEndDate(end), limit, offset))
+          .build();
+    } catch (ParseException pe) {
+      return invalidDateResponse();
+    }
+  }
+
+  private void validateSummaryLimitAndOffset(Integer limit, Integer offset) {
+    validateLimitAndOffset(limit, offset);
+    if (limit != null && limit > MAX_SUMMARY_LIMIT) {
+      throw new BadRequestException("limit value must be " + MAX_SUMMARY_LIMIT + " or less");
     }
   }
 

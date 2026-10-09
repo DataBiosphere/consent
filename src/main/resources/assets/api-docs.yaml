@@ -60,6 +60,8 @@ paths:
     $ref: './paths/mailByRange.yaml'
   /api/mail/summary:
     $ref: './paths/mailSummaryByRange.yaml'
+  /api/mail/sends:
+    $ref: './paths/mailSendsByRange.yaml'
   /api/daa:
     $ref: 'paths/daa.yaml'
   /api/daa/{daaId}:

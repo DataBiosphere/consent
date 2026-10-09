@@ -21,6 +21,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
+import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendRecipient;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -637,6 +639,143 @@ class MailMessageDAOTest extends DAOTestHelper {
     assertNotNull(savedMessage.createDate());
   }
 
+  @Test
+  void testFetchSendsByCreateDate_groups_the_recipients_of_one_send() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MILLIS);
+    List<User> users = List.of(createUser(), createUser(), createUser());
+    List<MailMessage> rows =
+        IntStream.range(0, users.size())
+            .mapToObj(
+                i ->
+                    generateSendRow(
+                        users.get(i),
+                        EmailType.NEW_DAR,
+                        "DAR-1",
+                        first.plus(i, ChronoUnit.MINUTES)))
+            .toList();
+
+    List<MailSend> sends = fetchSendsAroundNow();
+
+    List<MailSendRecipient> expectedRecipients =
+        users.stream()
+            .map(u -> new MailSendRecipient(u.getUserId(), u.getDisplayName()))
+            .sorted(Comparator.comparing(MailSendRecipient::displayName))
+            .toList();
+    assertEquals(
+        List.of(
+            new MailSend(
+                rows.getFirst().emailId(),
+                EmailType.NEW_DAR.getTypeInt(),
+                "DAR-1",
+                rows.getFirst().createDate(),
+                3,
+                expectedRecipients)),
+        sends);
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_starts_a_new_send_after_a_ten_minute_gap() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", first.plus(10, ChronoUnit.MINUTES));
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", first.plus(21, ChronoUnit.MINUTES));
+
+    List<Integer> recipientCounts =
+        fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList();
+
+    assertEquals(List.of(1, 2), recipientCounts);
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_separates_types_and_entity_references() {
+    Instant now = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", now);
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-2", now);
+    generateSendRow(createUser(), EmailType.NEW_CASE, "DAR-1", now);
+
+    assertEquals(3, fetchSendsAroundNow().size());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_pages_by_send() {
+    Instant now = Instant.now().minus(1, ChronoUnit.HOURS);
+    List<String> referencesNewestFirst = List.of("DAR-3", "DAR-2", "DAR-1");
+    for (int i = 0; i < referencesNewestFirst.size(); i++) {
+      Instant created = now.minus(i, ChronoUnit.MINUTES);
+      generateSendRow(createUser(), EmailType.NEW_DAR, referencesNewestFirst.get(i), created);
+      generateSendRow(createUser(), EmailType.NEW_DAR, referencesNewestFirst.get(i), created);
+    }
+    Date start = Date.from(now.minus(1, ChronoUnit.HOURS));
+    Date end = Date.from(Instant.now());
+
+    List<String> pagedReferences =
+        IntStream.range(0, 3)
+            .mapToObj(
+                offset ->
+                    mailMessageDAO
+                        .fetchSendsByCreateDate(start, end, 1, offset)
+                        .getFirst()
+                        .entityReferenceId())
+            .toList();
+
+    assertEquals(referencesNewestFirst, pagedReferences);
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_excludes_the_end_instant_in_either_order() {
+    Instant end = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    Instant start = end.minus(1, ChronoUnit.HOURS);
+    MailMessage inside =
+        generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", end.minus(1, ChronoUnit.MINUTES));
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-2", end);
+
+    List<Integer> forward =
+        mailMessageDAO.fetchSendsByCreateDate(Date.from(start), Date.from(end), 10, 0).stream()
+            .map(MailSend::sendId)
+            .toList();
+    List<Integer> reversed =
+        mailMessageDAO.fetchSendsByCreateDate(Date.from(end), Date.from(start), 10, 0).stream()
+            .map(MailSend::sendId)
+            .toList();
+
+    assertEquals(List.of(inside.emailId()), forward);
+    assertEquals(forward, reversed);
+  }
+
+  private List<MailSend> fetchSendsAroundNow() {
+    Instant now = Instant.now();
+    return mailMessageDAO.fetchSendsByCreateDate(
+        Date.from(now.minus(1, ChronoUnit.DAYS)), Date.from(now), 100, 0);
+  }
+
+  private MailMessage generateSendRow(
+      User user, EmailType emailType, String entityReferenceId, Instant instant) {
+    MailMessage savedMessage =
+        mailMessageDAO.insert(
+            new MailMessageInsert(
+                entityReferenceId,
+                null,
+                user.getUserId(),
+                emailType.getTypeInt(),
+                Date.from(instant),
+                randomAlphanumeric(10),
+                randomAlphanumeric(10),
+                202));
+    setCreateDate(savedMessage.emailId(), instant);
+    return mailMessageDAO.fetchMessageById(savedMessage.emailId());
+  }
+
+  private void setCreateDate(Integer emailId, Instant instant) {
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE email_entity SET create_date = :createDate WHERE email_entity_id = :emailId")
+                .bind("createDate", Date.from(instant))
+                .bind("emailId", emailId)
+                .execute());
+  }
+
   private MailMessage generateMessage(Instant instant) {
     return generateMessage(createUser(), instant);
   }
@@ -654,14 +793,7 @@ class MailMessageDAOTest extends DAOTestHelper {
                 randomAlphanumeric(10),
                 randomInt(200, 399),
                 null));
-    jdbi.useHandle(
-        handle ->
-            handle
-                .createUpdate(
-                    "UPDATE email_entity SET create_date = :createDate WHERE email_entity_id = :emailId")
-                .bind("createDate", Date.from(instant))
-                .bind("emailId", savedMessage.emailId())
-                .execute());
+    setCreateDate(savedMessage.emailId(), instant);
     return mailMessageDAO.fetchMessageById(savedMessage.emailId());
   }
 }
