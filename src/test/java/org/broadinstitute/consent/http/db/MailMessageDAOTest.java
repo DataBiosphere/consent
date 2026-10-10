@@ -716,6 +716,7 @@ class MailMessageDAOTest extends DAOTestHelper {
                 null,
                 randomAlphanumeric(10),
                 null,
+                null,
                 null));
     setCreateDate(undelivered.emailId(), Instant.now().minus(1, ChronoUnit.HOURS));
 
@@ -764,6 +765,46 @@ class MailMessageDAOTest extends DAOTestHelper {
 
     assertEquals(
         List.of(1, 1), fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_groups_a_send_id_however_long_the_send_takes() {
+    Instant first = Instant.now().minus(2, ChronoUnit.HOURS);
+    UUID sendId = UUID.randomUUID();
+    generateSendRow(createUser(), EmailType.NEW_STUDY_DIGEST, "2026-10-09", first, sendId);
+    generateSendRow(
+        createUser(),
+        EmailType.NEW_STUDY_DIGEST,
+        "2026-10-09",
+        first.plus(30, ChronoUnit.MINUTES),
+        sendId);
+
+    assertEquals(List.of(2), fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_separates_send_ids_sent_close_together() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", first, UUID.randomUUID());
+    generateSendRow(
+        createUser(),
+        EmailType.NEW_DAR,
+        "DAR-1",
+        first.plus(1, ChronoUnit.MINUTES),
+        UUID.randomUUID());
+
+    assertEquals(
+        List.of(1, 1), fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_groups_a_send_id_without_a_reference() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    UUID sendId = UUID.randomUUID();
+    generateSendRow(createUser(), EmailType.NEW_DAR, null, first, sendId);
+    generateSendRow(createUser(), EmailType.NEW_DAR, null, first, sendId);
+
+    assertEquals(List.of(2), fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList());
   }
 
   @Test
@@ -836,6 +877,11 @@ class MailMessageDAOTest extends DAOTestHelper {
 
   private MailMessage generateSendRow(
       User user, EmailType emailType, String entityReferenceId, Instant instant) {
+    return generateSendRow(user, emailType, entityReferenceId, instant, null);
+  }
+
+  private MailMessage generateSendRow(
+      User user, EmailType emailType, String entityReferenceId, Instant instant, UUID sendId) {
     MailMessage savedMessage =
         mailMessageDAO.insert(
             new MailMessageInsert(
@@ -846,7 +892,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(instant),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                202));
+                202,
+                sendId));
     setCreateDate(savedMessage.emailId(), instant);
     return mailMessageDAO.fetchMessageById(savedMessage.emailId());
   }
