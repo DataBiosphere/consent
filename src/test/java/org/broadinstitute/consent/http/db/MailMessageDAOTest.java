@@ -27,11 +27,13 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendRecipient;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -692,7 +694,13 @@ class MailMessageDAOTest extends DAOTestHelper {
     MailSend send =
         mailMessageDAO
             .fetchSendsByCreateDate(
-                Date.from(first.minus(1, ChronoUnit.HOURS)), Date.from(Instant.now()), 10, 0, 2)
+                Date.from(first.minus(1, ChronoUnit.HOURS)),
+                Date.from(Instant.now()),
+                10,
+                0,
+                2,
+                EmailTypeLists.CURRENT,
+                MailSendSearch.NONE)
             .getFirst();
 
     assertEquals(3, send.recipientCount());
@@ -763,7 +771,13 @@ class MailMessageDAOTest extends DAOTestHelper {
     MailSend send =
         mailMessageDAO
             .fetchSendsByCreateDate(
-                Date.from(first.minus(1, ChronoUnit.HOURS)), Date.from(Instant.now()), 10, 0, 0)
+                Date.from(first.minus(1, ChronoUnit.HOURS)),
+                Date.from(Instant.now()),
+                10,
+                0,
+                0,
+                EmailTypeLists.CURRENT,
+                MailSendSearch.NONE)
             .getFirst();
 
     assertEquals(1, send.recipientCount());
@@ -847,7 +861,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             .mapToObj(
                 offset ->
                     mailMessageDAO
-                        .fetchSendsByCreateDate(start, end, 1, offset, 100)
+                        .fetchSendsByCreateDate(
+                            start, end, 1, offset, 100, EmailTypeLists.CURRENT, MailSendSearch.NONE)
                         .getFirst()
                         .entityReferenceId())
             .toList();
@@ -864,11 +879,29 @@ class MailMessageDAOTest extends DAOTestHelper {
     generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-2", end);
 
     List<Integer> forward =
-        mailMessageDAO.fetchSendsByCreateDate(Date.from(start), Date.from(end), 10, 0, 100).stream()
+        mailMessageDAO
+            .fetchSendsByCreateDate(
+                Date.from(start),
+                Date.from(end),
+                10,
+                0,
+                100,
+                EmailTypeLists.CURRENT,
+                MailSendSearch.NONE)
+            .stream()
             .map(MailSend::sendId)
             .toList();
     List<Integer> reversed =
-        mailMessageDAO.fetchSendsByCreateDate(Date.from(end), Date.from(start), 10, 0, 100).stream()
+        mailMessageDAO
+            .fetchSendsByCreateDate(
+                Date.from(end),
+                Date.from(start),
+                10,
+                0,
+                100,
+                EmailTypeLists.CURRENT,
+                MailSendSearch.NONE)
+            .stream()
             .map(MailSend::sendId)
             .toList();
 
@@ -1373,10 +1406,114 @@ class MailMessageDAOTest extends DAOTestHelper {
     return user;
   }
 
+  @Test
+  void testFetchSendsByCreateDate_searches_recipients_beyond_the_listed_ones() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(createUserNamed("Alice"), EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(createUserNamed("Zelda"), EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(createUserNamed("Bob"), EmailType.NEW_DAR, "DAR-2", first);
+
+    List<MailSend> found = searchSends(MailSendSearch.of("zel", List.of()), 1);
+
+    assertEquals(List.of("DAR-1"), found.stream().map(MailSend::entityReferenceId).toList());
+    assertEquals(
+        List.of("Alice"),
+        found.getFirst().recipients().stream().map(MailSendRecipient::displayName).toList());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_searches_dar_codes_duos_ids_and_types() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    Dataset dataset = createDatasetFor(createDar(user, collectionId));
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(user, EmailType.NEW_DAR, darCode, first);
+    generateSendRow(user, EmailType.DAC_VOTE_REMINDER_DIGEST, "2026-10-09", first.plusSeconds(1));
+
+    assertEquals(1, searchSends(MailSendSearch.of(darCode.toLowerCase(), List.of()), 100).size());
+    assertEquals(
+        1, searchSends(MailSendSearch.of(dataset.getDatasetIdentifier(), List.of()), 100).size());
+    assertEquals(
+        List.of(EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt()),
+        searchSends(
+                MailSendSearch.of(
+                    "digest", List.of(EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt())),
+                100)
+            .stream()
+            .map(MailSend::emailType)
+            .toList());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_searches_the_entity_reference() {
+    generateSendRow(
+        createUser(),
+        EmailType.DAC_VOTE_REMINDER_DIGEST,
+        "2026-10-09",
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    assertEquals(1, searchSends(MailSendSearch.of("2026-10-09", List.of()), 100).size());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_takes_search_wildcards_literally() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(createUserNamed("Ada"), EmailType.NEW_DAR, "DAR-1", first);
+
+    assertEquals(List.of(), searchSends(MailSendSearch.of("%", List.of()), 100));
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_pages_search_results() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    for (int i = 0; i < 3; i++) {
+      generateSendRow(
+          createUserNamed("Match " + i), EmailType.NEW_DAR, "DAR-" + i, first.plusSeconds(i));
+      generateSendRow(
+          createUserNamed("Other " + i), EmailType.NEW_CASE, "DAR-" + i, first.plusSeconds(i));
+    }
+    Date start = Date.from(first.minus(1, ChronoUnit.HOURS));
+    Date end = Date.from(Instant.now());
+    MailSendSearch search = MailSendSearch.of("match", List.of());
+
+    List<String> pages =
+        IntStream.range(0, 3)
+            .mapToObj(
+                offset ->
+                    mailMessageDAO
+                        .fetchSendsByCreateDate(
+                            start, end, 1, offset, 100, EmailTypeLists.CURRENT, search)
+                        .getFirst()
+                        .entityReferenceId())
+            .toList();
+
+    assertEquals(List.of("DAR-2", "DAR-1", "DAR-0"), pages);
+  }
+
+  private List<MailSend> searchSends(MailSendSearch search, int recipientLimit) {
+    Instant now = Instant.now();
+    return mailMessageDAO.fetchSendsByCreateDate(
+        Date.from(now.minus(1, ChronoUnit.DAYS)),
+        Date.from(now),
+        100,
+        0,
+        recipientLimit,
+        EmailTypeLists.CURRENT,
+        search);
+  }
+
   private List<MailSend> fetchSendsAroundNow() {
     Instant now = Instant.now();
     return mailMessageDAO.fetchSendsByCreateDate(
-        Date.from(now.minus(1, ChronoUnit.DAYS)), Date.from(now), 100, 0, 100);
+        Date.from(now.minus(1, ChronoUnit.DAYS)),
+        Date.from(now),
+        100,
+        0,
+        100,
+        EmailTypeLists.CURRENT,
+        MailSendSearch.NONE);
   }
 
   private MailMessage generateSendRow(
