@@ -226,7 +226,7 @@ class MailResourceTest extends AbstractTestHelper {
     List<MailSend> sends =
         List.of(
             new MailSend(
-                1, 34, "2026-10-09", new Date(), 1, List.of(new MailSendRecipient(2, "A"))));
+                1, 34, "2026-10-09", new Date(), 1, List.of(new MailSendRecipient(2, "A", true))));
     when(emailService.fetchEmailSendsByCreateDate(
             df.parse("05/11/2021"), df.parse("05/11/2022"), 50, 10))
         .thenReturn(sends);

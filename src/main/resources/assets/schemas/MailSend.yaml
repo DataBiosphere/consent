@@ -29,6 +29,9 @@ properties:
         displayName:
           type: [string, 'null']
           description: The user's display name
+        delivered:
+          type: boolean
+          description: Whether SendGrid accepted the email. False when it rejected it or the user has turned email off.
 examples:
   - sendId: 1
     emailType: 34
@@ -38,5 +41,7 @@ examples:
     recipients:
       - userId: 3
         displayName: Ada Researcher
+        delivered: true
       - userId: 4
         displayName: Grace Member
+        delivered: false
