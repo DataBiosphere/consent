@@ -834,7 +834,7 @@ class MailMessageDAOTest extends DAOTestHelper {
             .mapToObj(
                 offset ->
                     mailMessageDAO
-                        .fetchSendsByCreateDate(start, end, 1, offset)
+                        .fetchSendsByCreateDate(start, end, 1, offset, 100)
                         .getFirst()
                         .entityReferenceId())
             .toList();
@@ -851,11 +851,11 @@ class MailMessageDAOTest extends DAOTestHelper {
     generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-2", end);
 
     List<Integer> forward =
-        mailMessageDAO.fetchSendsByCreateDate(Date.from(start), Date.from(end), 10, 0).stream()
+        mailMessageDAO.fetchSendsByCreateDate(Date.from(start), Date.from(end), 10, 0, 100).stream()
             .map(MailSend::sendId)
             .toList();
     List<Integer> reversed =
-        mailMessageDAO.fetchSendsByCreateDate(Date.from(end), Date.from(start), 10, 0).stream()
+        mailMessageDAO.fetchSendsByCreateDate(Date.from(end), Date.from(start), 10, 0, 100).stream()
             .map(MailSend::sendId)
             .toList();
 
@@ -872,7 +872,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   private List<MailSend> fetchSendsAroundNow() {
     Instant now = Instant.now();
     return mailMessageDAO.fetchSendsByCreateDate(
-        Date.from(now.minus(1, ChronoUnit.DAYS)), Date.from(now), 100, 0);
+        Date.from(now.minus(1, ChronoUnit.DAYS)), Date.from(now), 100, 0, 100);
   }
 
   private MailMessage generateSendRow(

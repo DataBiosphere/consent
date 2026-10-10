@@ -45,6 +45,8 @@ import org.jdbi.v3.core.result.ResultIterable;
 
 public class EmailService implements ConsentLogger {
 
+  static final int MAX_SEND_RECIPIENTS = 100;
+
   private static final int LOOKBACK_DELAY_HOURS = 24;
 
   /**
@@ -142,7 +144,7 @@ public class EmailService implements ConsentLogger {
 
   public List<MailSend> fetchEmailSendsByCreateDate(
       Date start, Date end, Integer limit, Integer offset) {
-    return emailDAO.fetchSendsByCreateDate(start, end, limit, offset);
+    return emailDAO.fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS);
   }
 
   public void sendVoteDigestMessages() {
