@@ -86,6 +86,7 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
     try (Response response = resource.sendDailyMessages(duosUser)) {
       resource.executor.shutdown();
       assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
+      assertEquals(200, response.getStatus());
     }
 
     assertEquals(3, Set.copyOf(sendIds.values()).size());
