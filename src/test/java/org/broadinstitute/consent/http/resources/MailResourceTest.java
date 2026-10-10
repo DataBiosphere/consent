@@ -280,7 +280,7 @@ class MailResourceTest extends AbstractTestHelper {
             df.parse("05/11/2022"),
             20,
             0,
-            new MailSendSearch("%a\\_b%", List.of(4))))
+            new MailSendSearch("%a\\_b%", null, List.of(4))))
         .thenReturn(List.of());
 
     Response response =
@@ -309,6 +309,31 @@ class MailResourceTest extends AbstractTestHelper {
         () ->
             mailResource.getEmailSendsByDateRange(
                 duosUser, "05/11/2021", null, 20, 0, search, List.of()));
+  }
+
+  @Test
+  void test_MailResource_sends_rejects_a_search_over_more_than_a_year() {
+    initResource();
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            mailResource.getEmailSendsByDateRange(
+                duosUser, "01/01/2025", "02/01/2026", 20, 0, "Ada", List.of()));
+  }
+
+  @Test
+  void test_MailResource_sends_ignores_search_types_without_a_search() throws Exception {
+    initResource();
+    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+    when(emailService.fetchEmailSendsByCreateDate(
+            df.parse("01/01/2020"), df.parse("02/01/2026"), 20, 0, MailSendSearch.NONE))
+        .thenReturn(List.of());
+
+    Response response =
+        mailResource.getEmailSendsByDateRange(
+            duosUser, "01/01/2020", "02/01/2026", 20, 0, " ", List.of("abc"));
+
+    assertEquals(200, response.getStatus());
   }
 
   @Test
