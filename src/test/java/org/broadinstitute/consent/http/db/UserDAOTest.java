@@ -598,7 +598,15 @@ class UserDAOTest extends DAOTestHelper {
                   Date now = Date.from(Instant.now());
                   mailMessageDAO.insert(
                       new MailMessageInsert(
-                          referenceId, null, user.getUserId(), emailType, now, "", null, null));
+                          referenceId,
+                          null,
+                          user.getUserId(),
+                          emailType,
+                          now,
+                          "",
+                          null,
+                          null,
+                          null));
                 }
               }
             });

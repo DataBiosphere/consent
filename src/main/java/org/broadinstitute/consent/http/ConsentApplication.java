@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.filters.EmailSendIdFilter;
 import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
@@ -250,6 +251,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(RateLimitFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
     env.jersey().register(TemplateSizeLimitFilter.class);
+    env.jersey().register(EmailSendIdFilter.class);
   }
 
   @Override
