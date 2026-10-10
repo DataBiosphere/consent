@@ -102,11 +102,18 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
   default List<MailSend> fetchSendsByCreateDate(
       Date start, Date end, Integer limit, Integer offset, Integer recipientLimit) {
     return fetchSendsByCreateDate(
-        start, end, limit, offset, recipientLimit, EmailReference.kindsByTypeInt());
+        start,
+        end,
+        limit,
+        offset,
+        recipientLimit,
+        EmailReference.kindsByTypeInt(),
+        EmailReference.rolesByTypeInt());
   }
 
   // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
-  // :kinds holds, at each email type's number, what that type stores as its entity reference.
+  // :kinds and :roles hold, at each email type's number, what it stores and whether it's an
+  // approval or about a progress report.
   @SqlQuery(
       """
       WITH in_range AS (
@@ -183,7 +190,10 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       )
       SELECT s.*, COALESCE(by_code.dar_code, by_dar.dar_code) AS dar_code, aliases.dataset_aliases
       FROM sends s
-      CROSS JOIN LATERAL (SELECT (CAST(:kinds AS text[]))[s.email_type] AS kind) k
+      CROSS JOIN LATERAL (
+        SELECT (CAST(:kinds AS text[]))[s.email_type] AS kind,
+          COALESCE((CAST(:roles AS text[]))[s.email_type], '') AS role
+      ) k
       LEFT JOIN dar_collection by_code
         ON k.kind IN ('DAR_CODE', 'DAR_REFERENCE_ID') AND by_code.dar_code = s.entity_reference_id
       LEFT JOIN election el
@@ -198,30 +208,65 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
           ELSE el.reference_id END
       LEFT JOIN dar_collection by_dar ON by_dar.collection_id = dar.collection_id
       LEFT JOIN LATERAL (
-        SELECT array_agg(DISTINCT alias ORDER BY alias) AS dataset_aliases
+        SELECT MAX(pr.id) AS progress_report_id FROM data_access_request pr
+        WHERE k.role LIKE 'PROGRESS_REPORT%'
+          AND pr.collection_id = by_code.collection_id
+          AND pr.parent_id IS NOT NULL
+          AND pr.submission_date <= s.create_date
+          AND pr.data ->> 'closeoutSupplement' IS NULL
+      ) target ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT array_agg(DISTINCT related.alias ORDER BY related.alias) AS dataset_aliases
         FROM (
-          SELECT ds.alias FROM dataset ds WHERE ds.dataset_id = el.dataset_id
+          SELECT ds.alias, ds.dataset_id, el.reference_id
+          FROM dataset ds WHERE ds.dataset_id = el.dataset_id
           UNION ALL
-          SELECT ds.alias FROM dar_dataset dd JOIN dataset ds ON ds.dataset_id = dd.dataset_id
+          SELECT ds.alias, ds.dataset_id, dd.reference_id
+          FROM dar_dataset dd JOIN dataset ds ON ds.dataset_id = dd.dataset_id
           WHERE el.dataset_id IS NULL AND dd.reference_id = dar.reference_id
           UNION ALL
-          SELECT ds.alias FROM data_access_request d
+          SELECT ds.alias, ds.dataset_id, dd.reference_id
+          FROM data_access_request d
           JOIN dar_dataset dd ON dd.reference_id = d.reference_id
           JOIN dataset ds ON ds.dataset_id = dd.dataset_id
           WHERE d.collection_id = by_code.collection_id
-            AND d.parent_id IS NULL
-            AND d.submission_date IS NOT NULL
+            AND (d.id = target.progress_report_id
+              OR (target.progress_report_id IS NULL
+                AND d.parent_id IS NULL
+                AND d.submission_date IS NOT NULL))
           UNION ALL
-          SELECT ds.alias FROM dataset ds
+          SELECT ds.alias, ds.dataset_id, NULL
+          FROM dataset ds
           WHERE k.kind = 'DUOS_ID' AND ds.alias = CASE
             WHEN s.entity_reference_id ~ '^DUOS-[0-9]{1,18}$'
             THEN CAST(substr(s.entity_reference_id, 6) AS bigint) END
           UNION ALL
-          SELECT ds.alias FROM dataset ds
+          SELECT ds.alias, ds.dataset_id, NULL
+          FROM dataset ds
           WHERE ds.name = s.entity_reference_id
             AND (k.kind = 'DATASET_NAME'
               OR (k.kind = 'DUOS_ID' AND s.entity_reference_id !~ '^DUOS-'))
+          UNION ALL
+          SELECT ds.alias, ds.dataset_id, NULL
+          FROM study st JOIN dataset ds ON ds.study_id = st.study_id
+          WHERE k.kind = 'STUDY_UUID' AND st.uuid = CASE
+            WHEN s.entity_reference_id
+              ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN CAST(s.entity_reference_id AS uuid) END
         ) related
+        WHERE k.role NOT LIKE '%APPROVAL'
+          OR related.reference_id IS NULL
+          OR (
+            SELECT v.vote FROM election e
+            JOIN vote v ON v.election_id = e.election_id
+            WHERE e.reference_id = related.reference_id
+              AND (e.dataset_id = related.dataset_id OR e.dataset_id IS NULL)
+              AND LOWER(e.election_type) = 'dataaccess'
+              AND LOWER(v.type) IN ('final', 'radar_approve')
+              AND v.vote IS NOT NULL
+            ORDER BY COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+            LIMIT 1
+          ) IS TRUE
       ) aliases ON TRUE
       ORDER BY s.create_date DESC, s.send_id DESC
       """)
@@ -231,5 +276,6 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset,
       @Bind("recipientLimit") Integer recipientLimit,
-      @Bind("kinds") List<String> kinds);
+      @Bind("kinds") List<String> kinds,
+      @Bind("roles") List<String> roles);
 }

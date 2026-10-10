@@ -41,7 +41,7 @@ properties:
     description: Code of the DAR the email concerns, such as DAR-123. Progress report emails carry their parent DAR's code. Null for email types unrelated to a DAR.
   datasetIdentifiers:
     type: array
-    description: DUOS-IDs of the datasets the email concerns, in alias order, as they are now rather than when the email was sent. For emails that identify a DAR only by its code, these are the submitted DAR's datasets, not its progress reports'. Empty for email types not tied to a DAR or dataset.
+    description: DUOS-IDs of the datasets the email concerns, in alias order, as they are now rather than when the email was sent. For emails that identify a DAR only by its code, these are the submitted DAR's datasets; for the two progress-report types, the latest progress report submitted before the email, other than a closeout, or the DAR's when there is none. Approval emails list only the datasets currently approved by their last final vote. Empty for email types not tied to a DAR, dataset or study.
     items:
       type: string
 examples:

@@ -21,6 +21,7 @@ import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -985,6 +986,247 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFetchSendsByCreateDate_lists_only_approved_datasets_on_an_approval_email() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset approved = createDatasetFor(dar);
+    Dataset denied = createDatasetFor(dar);
+    castFinalVote(user, dar, approved, true);
+    castFinalVote(user, dar, denied, false);
+    generateSendRow(
+        user, EmailType.RESEARCHER_DAR_APPROVED, darCode, Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(List.of(approved.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_judges_approval_by_the_vote_cast_last() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset dataset = createDatasetFor(dar);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            dar.getReferenceId(),
+            dataset.getDatasetId());
+    Integer castLast =
+        voteDAO.insertVote(createUser().getUserId(), electionId, VoteType.FINAL.getValue());
+    Integer castFirst =
+        voteDAO.insertVote(createUser().getUserId(), electionId, VoteType.FINAL.getValue());
+    Instant now = Instant.now();
+    Date opened = Date.from(now.minus(3, ChronoUnit.DAYS));
+    updateVote(
+        false,
+        "r",
+        Date.from(now.minus(2, ChronoUnit.DAYS)),
+        castFirst,
+        false,
+        electionId,
+        opened,
+        false);
+    updateVote(
+        true,
+        "r",
+        Date.from(now.minus(1, ChronoUnit.DAYS)),
+        castLast,
+        false,
+        electionId,
+        opened,
+        false);
+    generateSendRow(
+        user, EmailType.RESEARCHER_DAR_APPROVED, darCode, now.minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(List.of(dataset.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_judges_a_progress_report_approval_by_its_own_votes() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest parent = createDar(user, collectionId);
+    Dataset first = createDatasetFor(parent);
+    Dataset second = createDatasetFor(parent);
+    castFinalVote(user, parent, first, true);
+    castFinalVote(user, parent, second, true);
+    DataAccessRequest progressReport = createProgressReport(user, parent);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        progressReport.getReferenceId(), first.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        progressReport.getReferenceId(), second.getDatasetId());
+    castFinalVote(user, progressReport, first, true);
+    castFinalVote(user, progressReport, second, false);
+    generateSendRow(
+        user,
+        EmailType.RESEARCHER_PROGRESS_REPORT_APPROVED,
+        darCode,
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(List.of(first.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_uses_each_datasets_current_approval() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset approvedFirst = createDatasetFor(dar);
+    Dataset approvedLater = createDatasetFor(dar);
+    castFinalVote(user, dar, approvedFirst, true);
+    castFinalVote(user, dar, approvedLater, true, Instant.now());
+    generateSendRow(
+        user, EmailType.RESEARCHER_DAR_APPROVED, darCode, Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(
+        List.of(approvedFirst.getDatasetIdentifier(), approvedLater.getDatasetIdentifier()),
+        send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_ignores_progress_reports_submitted_after_the_send() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest parent = createDar(user, collectionId);
+    createDatasetFor(parent);
+    DataAccessRequest firstReport = createProgressReport(user, parent);
+    Dataset reported = createDatasetFor(firstReport);
+    createDatasetFor(createProgressReport(user, firstReport, Instant.now()));
+    generateSendRow(
+        user,
+        EmailType.NEW_PROGRESS_REPORT_CASE,
+        darCode,
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(List.of(reported.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_a_study_uuid_as_its_datasets() {
+    User user = createUser();
+    UUID studyUuid = UUID.randomUUID();
+    Integer studyId =
+        studyDAO.insertStudy(
+            "Study_" + randomAlphabetic(10),
+            "description",
+            "pi",
+            "pi@example.com",
+            List.of(),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            studyUuid);
+    Dataset dataset = createDataset();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    generateSendRow(
+        user,
+        EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION,
+        studyUuid.toString(),
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertNull(send.darCode());
+    assertEquals(List.of(dataset.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_skips_a_closeout_when_reading_the_latest_progress_report() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest parent = createDar(user, collectionId);
+    DataAccessRequest progressReport = createProgressReport(user, parent);
+    Dataset reported = createDatasetFor(progressReport);
+    DataAccessRequest closeout = createProgressReport(user, progressReport);
+    createDatasetFor(closeout);
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE data_access_request SET data = jsonb_set(COALESCE(data, '{}'), '{closeoutSupplement}', '{}') WHERE id = :id")
+                .bind("id", closeout.getId())
+                .execute());
+    generateSendRow(
+        user,
+        EmailType.NEW_PROGRESS_REPORT_CASE,
+        darCode,
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    assertEquals(
+        List.of(reported.getDatasetIdentifier()),
+        fetchSendsAroundNow().getFirst().datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_falls_back_to_the_parent_without_an_earlier_progress_report() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest parent = createDar(user, collectionId);
+    Dataset requested = createDatasetFor(parent);
+    createDatasetFor(createProgressReport(user, parent, Instant.now()));
+    generateSendRow(
+        user,
+        EmailType.NEW_PROGRESS_REPORT_CASE,
+        darCode,
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    assertEquals(
+        List.of(requested.getDatasetIdentifier()),
+        fetchSendsAroundNow().getFirst().datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_approval_from_an_election_without_a_dataset() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset dataset = createDatasetFor(dar);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            dar.getReferenceId(),
+            null);
+    Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
+    updateVote(true, "r", new Date(), voteId, false, electionId, new Date(), false);
+    generateSendRow(
+        user, EmailType.RESEARCHER_DAR_APPROVED, darCode, Instant.now().minus(1, ChronoUnit.HOURS));
+
+    assertEquals(
+        List.of(dataset.getDatasetIdentifier()),
+        fetchSendsAroundNow().getFirst().datasetIdentifiers());
+  }
+
+  @Test
   void testFetchSendsByCreateDate_reads_a_duos_id_and_a_dataset_name() {
     Dataset approved = createDataset();
     Dataset submitted = createDataset();
@@ -1046,6 +1288,23 @@ class MailMessageDAOTest extends DAOTestHelper {
     assertEquals(List.of(), send.datasetIdentifiers());
   }
 
+  private void castFinalVote(User chair, DataAccessRequest dar, Dataset dataset, boolean vote) {
+    castFinalVote(chair, dar, dataset, vote, Instant.now().minus(2, ChronoUnit.HOURS));
+  }
+
+  private void castFinalVote(
+      User chair, DataAccessRequest dar, Dataset dataset, boolean vote, Instant castAt) {
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            dar.getReferenceId(),
+            dataset.getDatasetId());
+    Integer voteId = voteDAO.insertVote(chair.getUserId(), electionId, VoteType.FINAL.getValue());
+    updateVote(vote, "rationale", Date.from(castAt), voteId, false, electionId, new Date(), false);
+  }
+
   private DataAccessRequest createDar(User user, Integer collectionId) {
     return createDar(user, collectionId, new Date());
   }
@@ -1066,6 +1325,11 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   private DataAccessRequest createProgressReport(User user, DataAccessRequest parent) {
+    return createProgressReport(user, parent, Instant.now().minus(2, ChronoUnit.HOURS));
+  }
+
+  private DataAccessRequest createProgressReport(
+      User user, DataAccessRequest parent, Instant submittedAt) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertProgressReport(
         parent.getId(),
@@ -1074,6 +1338,14 @@ class MailMessageDAOTest extends DAOTestHelper {
         user.getUserId(),
         new DataAccessRequestData(),
         randomAlphabetic(10));
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE data_access_request SET submission_date = :submittedAt WHERE reference_id = :referenceId")
+                .bind("submittedAt", Date.from(submittedAt))
+                .bind("referenceId", referenceId)
+                .execute());
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
