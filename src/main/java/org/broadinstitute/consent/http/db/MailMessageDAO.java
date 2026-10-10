@@ -105,36 +105,51 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
     return fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS);
   }
 
-  // A row more than 10 minutes after the previous row of its type and reference starts a new send.
+  // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
   @SqlQuery(
       """
       WITH in_range AS (
         SELECT email_entity_id, entity_reference_id, user_id, email_type, create_date, date_sent,
-          COALESCE(entity_reference_id, 'email-' || email_entity_id) AS send_key
+          send_id,
+          CASE WHEN entity_reference_id IS NULL AND send_id IS NULL THEN email_entity_id END
+            AS lone_id
         FROM email_entity
         WHERE create_date >= LEAST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
           AND create_date < GREATEST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
       ),
       flagged AS (
         SELECT in_range.*,
-          CASE WHEN create_date - LAG(create_date) OVER send_order <= INTERVAL '10 minutes'
-            THEN 0 ELSE 1 END AS starts_send
+          CASE
+            WHEN LAG(create_date) OVER send_order IS NULL THEN 1
+            WHEN send_id IS NOT NULL THEN 0
+            WHEN create_date - LAG(create_date) OVER send_order <= INTERVAL '10 minutes' THEN 0
+            ELSE 1 END AS starts_send
         FROM in_range
-        WINDOW send_order AS (PARTITION BY email_type, send_key ORDER BY create_date, email_entity_id)
+        WINDOW send_order AS (
+          PARTITION BY email_type, entity_reference_id, lone_id, send_id
+          ORDER BY create_date, email_entity_id)
       ),
       numbered AS (
         SELECT flagged.*,
-          SUM(starts_send) OVER send_order AS send_number
+          SUM(starts_send) OVER (
+            PARTITION BY email_type, entity_reference_id, lone_id, send_id
+            ORDER BY create_date, email_entity_id
+          ) AS send_number
         FROM flagged
-        WINDOW send_order AS (PARTITION BY email_type, send_key ORDER BY create_date, email_entity_id)
+      ),
+      grouped AS (
+        SELECT numbered.*,
+          MIN(email_entity_id) OVER (
+            PARTITION BY email_type, entity_reference_id, lone_id, send_id, send_number
+          ) AS send_row_id
+        FROM numbered
       ),
       page AS (
-        SELECT email_type, send_key, send_number, entity_reference_id,
-          MIN(email_entity_id) AS send_id, MIN(create_date) AS create_date,
-          COUNT(DISTINCT user_id) AS recipient_count
-        FROM numbered
-        GROUP BY email_type, send_key, send_number, entity_reference_id
-        ORDER BY MIN(create_date) DESC, MIN(email_entity_id) DESC
+        SELECT send_row_id AS send_id, email_type, entity_reference_id,
+          MIN(create_date) AS create_date, COUNT(DISTINCT user_id) AS recipient_count
+        FROM grouped
+        GROUP BY send_row_id, email_type, entity_reference_id
+        ORDER BY MIN(create_date) DESC, send_row_id DESC
         OFFSET :offset
         LIMIT :limit
       ),
@@ -144,9 +159,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
             PARTITION BY p.send_id ORDER BY u.display_name, MIN(n.email_entity_id)
           ) AS position
         FROM page p
-        JOIN numbered n ON n.email_type = p.email_type
-          AND n.send_key = p.send_key
-          AND n.send_number = p.send_number
+        JOIN grouped n ON n.send_row_id = p.send_id
         LEFT JOIN users u ON u.user_id = n.user_id
         GROUP BY p.send_id, n.user_id, u.display_name
       )
