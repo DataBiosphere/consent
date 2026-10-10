@@ -13,7 +13,18 @@ public final class EmailSendId {
     CURRENT.set(UUID.randomUUID());
   }
 
-  /** Null outside a request, where each email is grouped by the older rules. */
+  /** Runs a job off the request thread, such as a scheduled batch, under a send id of its own. */
+  public static void run(Runnable job) {
+    UUID previous = CURRENT.get();
+    CURRENT.set(UUID.randomUUID());
+    try {
+      job.run();
+    } finally {
+      CURRENT.set(previous);
+    }
+  }
+
+  /** Null outside a request or job, where each email is grouped by the older rules. */
   public static UUID current() {
     return CURRENT.get();
   }
