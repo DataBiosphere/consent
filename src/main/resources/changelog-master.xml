@@ -271,4 +271,5 @@
   <include file="changesets/changelog-consent-2026-09-19-drop-match-consent.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-10-06-metrics-date-indexes.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-10-06-ontology-index-normalized-ids.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-10-09-email-entity-send-id.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

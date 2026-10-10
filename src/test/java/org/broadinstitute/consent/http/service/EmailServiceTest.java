@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -40,6 +41,7 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
+import org.broadinstitute.consent.http.mail.EmailSendId;
 import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -55,6 +57,7 @@ import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.core.result.ResultIterator;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -100,6 +103,11 @@ class EmailServiceTest extends AbstractTestHelper {
     service = new EmailService(jdbi, sendGridAPI, templateHelper, config);
   }
 
+  @AfterEach
+  void clearSendId() {
+    EmailSendId.clear();
+  }
+
   @Test
   void testSendMessage() throws Exception {
     String userEmail = "user@duos";
@@ -132,6 +140,8 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
+    EmailSendId.start();
+    UUID sendId = EmailSendId.current();
     Instant fixedInstant = Instant.now();
     try (var mockedStatic = mockStatic(Instant.class)) {
       mockedStatic.when(Instant::now).thenReturn(fixedInstant);
@@ -165,7 +175,8 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(m.dateSent(), Date.from(fixedInstant))
                         && Objects.equals(m.emailText(), emailText)
                         && Objects.equals(m.sendgridResponse(), response.getBody())
-                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
+                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())
+                        && Objects.equals(m.sendId(), sendId)));
   }
 
   @Test
@@ -218,7 +229,8 @@ class EmailServiceTest extends AbstractTestHelper {
                         && m.dateSent() == null
                         && Objects.equals(m.emailText(), emailText)
                         && m.sendgridResponse() == null
-                        && m.sendgridStatus() == null));
+                        && m.sendgridStatus() == null
+                        && m.sendId() == null));
   }
 
   @Test
