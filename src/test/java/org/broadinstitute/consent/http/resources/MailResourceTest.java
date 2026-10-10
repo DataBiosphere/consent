@@ -257,4 +257,26 @@ class MailResourceTest extends AbstractTestHelper {
         BadRequestException.class,
         () -> mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, limit, null));
   }
+
+  @Test
+  void test_MailResource_sends_without_end_runs_through_today() throws Exception {
+    initResource();
+    Date tomorrowStart =
+        Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    when(emailService.fetchEmailSendsByCreateDate(
+            new SimpleDateFormat("MM/dd/yyyy").parse("05/11/2021"), tomorrowStart, 20, 0))
+        .thenReturn(List.of());
+
+    Response response = mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, 20, 0);
+
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  void test_MailResource_sends_negative_offset() {
+    initResource();
+    assertThrows(
+        BadRequestException.class,
+        () -> mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, 20, -1));
+  }
 }

@@ -98,13 +98,6 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset);
 
-  int MAX_SEND_RECIPIENTS = 100;
-
-  default List<MailSend> fetchSendsByCreateDate(
-      Date start, Date end, Integer limit, Integer offset) {
-    return fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS);
-  }
-
   // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
   @SqlQuery(
       """
