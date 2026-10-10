@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -30,7 +29,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
-import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendRecipient;
 import org.broadinstitute.consent.http.models.mail.MailSendSearch;
@@ -480,110 +478,6 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(yesterdayStart), Date.from(todayStart), 2, 0);
     assertEquals(1, messages4.size());
     assertEquals(messageYesterday.emailId(), messages4.getFirst().emailId());
-  }
-
-  @Test
-  void testFetchSummariesByCreateDate() {
-    Instant now = Instant.now();
-    MailMessage messageToday = generateMessage(now);
-    generateMessage(now.minus(2, ChronoUnit.DAYS));
-
-    List<MailMessageSummary> summaries =
-        mailMessageDAO.fetchMessageSummariesByCreateDate(
-            Date.from(now.minus(1, ChronoUnit.HOURS)),
-            Date.from(now.plus(1, ChronoUnit.HOURS)),
-            10,
-            0);
-
-    assertEquals(
-        List.of(
-            new MailMessageSummary(
-                messageToday.entityReferenceId(),
-                messageToday.emailId(),
-                messageToday.voteId(),
-                messageToday.userId(),
-                messageToday.emailType(),
-                messageToday.dateSent(),
-                messageToday.sendgridStatus(),
-                messageToday.createDate())),
-        summaries);
-  }
-
-  @Test
-  void testFetchSummariesByCreateDate_excludes_the_end_instant_in_either_order() {
-    Instant end = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-    Instant start = end.minus(1, ChronoUnit.HOURS);
-    MailMessage inside = generateMessage(end.minus(1, ChronoUnit.MINUTES));
-    generateMessage(end);
-
-    List<Integer> forward =
-        mailMessageDAO
-            .fetchMessageSummariesByCreateDate(Date.from(start), Date.from(end), 10, 0)
-            .stream()
-            .map(MailMessageSummary::emailId)
-            .toList();
-    List<Integer> reversed =
-        mailMessageDAO
-            .fetchMessageSummariesByCreateDate(Date.from(end), Date.from(start), 10, 0)
-            .stream()
-            .map(MailMessageSummary::emailId)
-            .toList();
-
-    assertEquals(List.of(inside.emailId()), forward);
-    assertEquals(forward, reversed);
-  }
-
-  @Test
-  void testFetchSummariesByCreateDate_keeps_null_vote_and_status() {
-    Instant now = Instant.now();
-    mailMessageDAO.insert(
-        new MailMessageInsert(
-            randomAlphanumeric(10),
-            null,
-            createUser().getUserId(),
-            EmailType.NEW_DAR.getTypeInt(),
-            null,
-            randomAlphanumeric(10),
-            null,
-            null,
-            null));
-
-    MailMessageSummary summary =
-        mailMessageDAO
-            .fetchMessageSummariesByCreateDate(
-                Date.from(now.minus(1, ChronoUnit.HOURS)),
-                Date.from(now.plus(1, ChronoUnit.HOURS)),
-                1,
-                0)
-            .getFirst();
-
-    assertNull(summary.voteId());
-    assertNull(summary.sendgridStatus());
-    assertNull(summary.dateSent());
-  }
-
-  @Test
-  void testFetchSummariesByCreateDate_pages_through_tied_create_dates_by_id() {
-    Instant now = Instant.now();
-    List<Integer> idsNewestFirst =
-        List.of(generateMessage(now), generateMessage(now), generateMessage(now)).stream()
-            .map(MailMessage::emailId)
-            .sorted(Comparator.reverseOrder())
-            .toList();
-    Date start = Date.from(now.minus(1, ChronoUnit.HOURS));
-    Date end = Date.from(now.plus(1, ChronoUnit.HOURS));
-
-    List<Integer> pagedIds =
-        IntStream.range(0, 3)
-            .mapToObj(
-                offset ->
-                    mailMessageDAO
-                        .fetchMessageSummariesByCreateDate(start, end, 1, offset)
-                        .getFirst()
-                        .emailId())
-            .toList();
-
-    assertEquals(idsNewestFirst, pagedIds);
   }
 
   @Test

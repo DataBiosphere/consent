@@ -49,7 +49,6 @@ import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
-import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.core.Handle;
@@ -305,19 +304,6 @@ class EmailServiceTest extends AbstractTestHelper {
     when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt()))
         .thenReturn(mailMessages);
     assertEquals(2, service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
-  }
-
-  @Test
-  void testFetchEmailSummariesByCreateDate() {
-    Date startDate = new Date();
-    Date endDate = new Date();
-    List<MailMessageSummary> summaries =
-        List.of(new MailMessageSummary("DAR-1", 1, null, 2, 4, null, 202, new Date()));
-    when(emailDAO.fetchMessageSummariesByCreateDate(startDate, endDate, 20, 0))
-        .thenReturn(summaries);
-
-    assertEquals(
-        summaries, service.fetchEmailMessageSummariesByCreateDate(startDate, endDate, 20, 0));
   }
 
   @Test

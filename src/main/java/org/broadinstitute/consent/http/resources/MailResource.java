@@ -33,7 +33,7 @@ public class MailResource {
 
   private final EmailService emailService;
 
-  /** Summaries and sends are listed many at once, so their pages are capped. */
+  /** Sends are listed many at once, so their pages are capped. */
   static final int MAX_PAGE_LIMIT = 1000;
 
   static final Duration MAX_SEARCH_RANGE = Duration.ofDays(367);
@@ -88,28 +88,6 @@ public class MailResource {
       return Response.ok()
           .entity(
               emailService.fetchEmailMessagesByCreateDate(
-                  parseStartDate(start), parseEndDate(end), limit, offset))
-          .build();
-    } catch (ParseException pe) {
-      return invalidDateResponse();
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @Path("/summary")
-  @RolesAllowed({ADMIN})
-  public Response getEmailSummaryByDateRange(
-      @Auth DuosUser duosUser,
-      @QueryParam("start") String start,
-      @QueryParam("end") String end,
-      @DefaultValue("20") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    validatePageLimitAndOffset(limit, offset);
-    try {
-      return Response.ok()
-          .entity(
-              emailService.fetchEmailMessageSummariesByCreateDate(
                   parseStartDate(start), parseEndDate(end), limit, offset))
           .build();
     } catch (ParseException pe) {

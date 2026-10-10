@@ -3,12 +3,10 @@ package org.broadinstitute.consent.http.db;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.MailMessageMapper;
-import org.broadinstitute.consent.http.db.mapper.MailMessageSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.MailSendMapper;
 import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
-import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -18,7 +16,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(MailMessageMapper.class)
-@RegisterRowMapper(MailMessageSummaryMapper.class)
 @RegisterRowMapper(MailSendMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
@@ -82,23 +79,6 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       WHERE email_entity_id = :emailId
       """)
   MailMessage fetchMessageById(@Bind("emailId") Integer emailId);
-
-  // The id breaks create_date ties, so offset pages neither skip nor repeat a row.
-  @SqlQuery(
-      """
-      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, sendgrid_status, create_date
-      FROM email_entity e
-      WHERE create_date >= LEAST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
-        AND create_date < GREATEST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
-      ORDER BY create_date DESC, email_entity_id DESC
-      OFFSET :offset
-      LIMIT :limit
-      """)
-  List<MailMessageSummary> fetchMessageSummariesByCreateDate(
-      @Bind("start") Date start,
-      @Bind("end") Date end,
-      @Bind("limit") Integer limit,
-      @Bind("offset") Integer offset);
 
   // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
   // :types.kinds and :types.roles hold, at each email type's number, what it stores and whether

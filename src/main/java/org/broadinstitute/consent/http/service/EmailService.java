@@ -38,7 +38,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
-import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -137,11 +136,6 @@ public class EmailService implements ConsentLogger {
   public List<org.broadinstitute.consent.http.models.mail.MailMessage>
       fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
-  }
-
-  public List<MailMessageSummary> fetchEmailMessageSummariesByCreateDate(
-      Date start, Date end, Integer limit, Integer offset) {
-    return emailDAO.fetchMessageSummariesByCreateDate(start, end, limit, offset);
   }
 
   public List<MailSend> fetchEmailSendsByCreateDate(
