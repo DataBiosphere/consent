@@ -16,7 +16,7 @@ properties:
     description: When the send's earliest email was created, in epoch milliseconds
   recipientCount:
     type: integer
-    description: Number of emails in the send, one per recipient, including any beyond the first 100 in recipients
+    description: Number of distinct users the send went to, including any beyond the first 100 in recipients
   recipients:
     type: array
     description: Up to 100 of the send's recipients, ordered by display name. recipientCount gives the full number.
@@ -31,7 +31,7 @@ properties:
           description: The user's display name
         delivered:
           type: boolean
-          description: Whether SendGrid accepted the email. False when it rejected it or the user has turned email off.
+          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev.
 examples:
   - sendId: 1
     emailType: 34

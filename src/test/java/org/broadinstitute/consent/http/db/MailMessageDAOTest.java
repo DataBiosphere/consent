@@ -728,6 +728,20 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFetchSendsByCreateDate_lists_a_user_with_two_emails_in_a_send_once() {
+    Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
+    User alice = createUserNamed("Alice");
+    generateSendRow(alice, EmailType.NEW_DAR, "DAR-1", first);
+    generateSendRow(alice, EmailType.NEW_DAR, "DAR-1", first.plus(1, ChronoUnit.MINUTES));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(1, send.recipientCount());
+    assertEquals(
+        List.of(new MailSendRecipient(alice.getUserId(), "Alice", true)), send.recipients());
+  }
+
+  @Test
   void testFetchSendsByCreateDate_keeps_a_send_when_no_recipients_are_listed() {
     Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
     generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", first);
