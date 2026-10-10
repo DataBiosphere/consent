@@ -129,26 +129,26 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         WINDOW send_order AS (PARTITION BY email_type, send_key ORDER BY create_date, email_entity_id)
       ),
       page AS (
-        SELECT email_type, send_key, send_number,
-          MIN(entity_reference_id) AS entity_reference_id,
+        SELECT email_type, send_key, send_number, entity_reference_id,
           MIN(email_entity_id) AS send_id, MIN(create_date) AS create_date,
-          COUNT(*) AS recipient_count
+          COUNT(DISTINCT user_id) AS recipient_count
         FROM numbered
-        GROUP BY email_type, send_key, send_number
+        GROUP BY email_type, send_key, send_number, entity_reference_id
         ORDER BY MIN(create_date) DESC, MIN(email_entity_id) DESC
         OFFSET :offset
         LIMIT :limit
       ),
       named AS (
-        SELECT p.send_id, n.user_id, u.display_name, n.date_sent IS NOT NULL AS delivered,
+        SELECT p.send_id, n.user_id, u.display_name, bool_or(n.date_sent IS NOT NULL) AS delivered,
           ROW_NUMBER() OVER (
-            PARTITION BY p.send_id ORDER BY u.display_name, n.email_entity_id
+            PARTITION BY p.send_id ORDER BY u.display_name, MIN(n.email_entity_id)
           ) AS position
         FROM page p
         JOIN numbered n ON n.email_type = p.email_type
           AND n.send_key = p.send_key
           AND n.send_number = p.send_number
         LEFT JOIN users u ON u.user_id = n.user_id
+        GROUP BY p.send_id, n.user_id, u.display_name
       )
       SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count,
         COALESCE(
