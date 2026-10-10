@@ -105,18 +105,12 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
     return fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS);
   }
 
-  // A send is a recipient's nth email of one type and reference, each within 10 minutes of the
-  // last.
+  // A row more than 10 minutes after the previous row of its type and reference starts a new send.
   @SqlQuery(
       """
       WITH in_range AS (
-        SELECT email_entity_id, entity_reference_id, user_id, email_type, create_date,
-          COALESCE(entity_reference_id, 'email-' || email_entity_id) AS send_key,
-          ROW_NUMBER() OVER (
-            PARTITION BY email_type, COALESCE(entity_reference_id, 'email-' || email_entity_id),
-              user_id
-            ORDER BY create_date, email_entity_id
-          ) AS occurrence
+        SELECT email_entity_id, entity_reference_id, user_id, email_type, create_date, date_sent,
+          COALESCE(entity_reference_id, 'email-' || email_entity_id) AS send_key
         FROM email_entity
         WHERE create_date >= LEAST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
           AND create_date < GREATEST(CAST(:start AS timestamptz), CAST(:end AS timestamptz))
@@ -126,46 +120,47 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
           CASE WHEN create_date - LAG(create_date) OVER send_order <= INTERVAL '10 minutes'
             THEN 0 ELSE 1 END AS starts_send
         FROM in_range
-        WINDOW send_order AS (
-          PARTITION BY email_type, send_key, occurrence ORDER BY create_date, email_entity_id)
+        WINDOW send_order AS (PARTITION BY email_type, send_key ORDER BY create_date, email_entity_id)
       ),
       numbered AS (
         SELECT flagged.*,
-          SUM(starts_send) OVER (
-            PARTITION BY email_type, send_key, occurrence ORDER BY create_date, email_entity_id
-          ) AS send_number
+          SUM(starts_send) OVER send_order AS send_number
         FROM flagged
+        WINDOW send_order AS (PARTITION BY email_type, send_key ORDER BY create_date, email_entity_id)
       ),
       page AS (
-        SELECT email_type, send_key, occurrence, send_number,
+        SELECT email_type, send_key, send_number,
           MIN(entity_reference_id) AS entity_reference_id,
           MIN(email_entity_id) AS send_id, MIN(create_date) AS create_date,
           COUNT(*) AS recipient_count
         FROM numbered
-        GROUP BY email_type, send_key, occurrence, send_number
+        GROUP BY email_type, send_key, send_number
         ORDER BY MIN(create_date) DESC, MIN(email_entity_id) DESC
         OFFSET :offset
         LIMIT :limit
       ),
       named AS (
-        SELECT p.send_id, n.user_id, u.display_name,
+        SELECT p.send_id, n.user_id, u.display_name, n.date_sent IS NOT NULL AS delivered,
           ROW_NUMBER() OVER (
             PARTITION BY p.send_id ORDER BY u.display_name, n.email_entity_id
           ) AS position
         FROM page p
         JOIN numbered n ON n.email_type = p.email_type
           AND n.send_key = p.send_key
-          AND n.occurrence = p.occurrence
           AND n.send_number = p.send_number
         LEFT JOIN users u ON u.user_id = n.user_id
       )
       SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count,
-        json_agg(
-          json_build_object('userId', nm.user_id, 'displayName', nm.display_name)
-          ORDER BY nm.position
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'userId', nm.user_id, 'displayName', nm.display_name, 'delivered', nm.delivered)
+            ORDER BY nm.position
+          ) FILTER (WHERE nm.send_id IS NOT NULL),
+          '[]'
         ) AS recipients
       FROM page p
-      JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
+      LEFT JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
       GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count
       ORDER BY p.create_date DESC, p.send_id DESC
       """)

@@ -660,9 +660,9 @@ class MailMessageDAOTest extends DAOTestHelper {
                 earliest.createDate(),
                 3,
                 List.of(
-                    new MailSendRecipient(alice.getUserId(), "Alice"),
-                    new MailSendRecipient(bob.getUserId(), "Bob"),
-                    new MailSendRecipient(carol.getUserId(), "Carol")))),
+                    new MailSendRecipient(alice.getUserId(), "Alice", true),
+                    new MailSendRecipient(bob.getUserId(), "Bob", true),
+                    new MailSendRecipient(carol.getUserId(), "Carol", true)))),
         sends);
   }
 
@@ -685,8 +685,8 @@ class MailMessageDAOTest extends DAOTestHelper {
     assertEquals(3, send.recipientCount());
     assertEquals(
         List.of(
-            new MailSendRecipient(alice.getUserId(), "Alice"),
-            new MailSendRecipient(bob.getUserId(), "Bob")),
+            new MailSendRecipient(alice.getUserId(), "Alice", true),
+            new MailSendRecipient(bob.getUserId(), "Bob", true)),
         send.recipients());
   }
 
@@ -704,19 +704,42 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFetchSendsByCreateDate_starts_a_new_send_when_a_recipient_repeats() {
+  void testFetchSendsByCreateDate_marks_undelivered_recipients() {
+    User user = createUser();
+    MailMessage undelivered =
+        mailMessageDAO.insert(
+            new MailMessageInsert(
+                "DAR-1",
+                null,
+                user.getUserId(),
+                EmailType.NEW_DAR.getTypeInt(),
+                null,
+                randomAlphanumeric(10),
+                null,
+                null));
+    setCreateDate(undelivered.emailId(), Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(
+        List.of(new MailSendRecipient(user.getUserId(), user.getDisplayName(), false)),
+        send.recipients());
+    assertEquals(undelivered.emailId(), send.sendId());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_keeps_a_send_when_no_recipients_are_listed() {
     Instant first = Instant.now().minus(1, ChronoUnit.HOURS);
-    User alice = createUser();
-    User bob = createUser();
-    for (Instant created : List.of(first, first.plus(5, ChronoUnit.MINUTES))) {
-      generateSendRow(alice, EmailType.REMINDER, "42", created);
-      generateSendRow(bob, EmailType.REMINDER, "42", created);
-    }
+    generateSendRow(createUser(), EmailType.NEW_DAR, "DAR-1", first);
 
-    List<Integer> recipientCounts =
-        fetchSendsAroundNow().stream().map(MailSend::recipientCount).toList();
+    MailSend send =
+        mailMessageDAO
+            .fetchSendsByCreateDate(
+                Date.from(first.minus(1, ChronoUnit.HOURS)), Date.from(Instant.now()), 10, 0, 0)
+            .getFirst();
 
-    assertEquals(List.of(2, 2), recipientCounts);
+    assertEquals(1, send.recipientCount());
+    assertEquals(List.of(), send.recipients());
   }
 
   @Test

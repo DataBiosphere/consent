@@ -2,7 +2,7 @@ get:
   summary: Get Email Sends by Date Range.
   operationId: apiMailSendsGet
   description: |
-    Admin only feature returns the emails sent in a Date Range, one entry per send rather than per recipient, newest first. A send is the emails of one type and entity reference created no more than 10 minutes apart. A recipient's second email of the same type and reference starts a new send, and an email with no entity reference is a send of its own. A send that crosses a range boundary is split there.
+    Admin only feature returns the emails sent in a Date Range, one entry per send rather than per recipient, newest first. A send is the emails of one type and entity reference created no more than 10 minutes apart. An email with no entity reference is a send of its own. A send that crosses a range boundary is split there.
   parameters:
     - name: start
       in: query
