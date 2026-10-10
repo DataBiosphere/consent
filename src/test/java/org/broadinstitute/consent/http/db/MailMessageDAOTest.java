@@ -6,17 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
@@ -664,7 +672,9 @@ class MailMessageDAOTest extends DAOTestHelper {
                 List.of(
                     new MailSendRecipient(alice.getUserId(), "Alice", true),
                     new MailSendRecipient(bob.getUserId(), "Bob", true),
-                    new MailSendRecipient(carol.getUserId(), "Carol", true)))),
+                    new MailSendRecipient(carol.getUserId(), "Carol", true)),
+                null,
+                List.of())),
         sends);
   }
 
@@ -863,6 +873,226 @@ class MailMessageDAOTest extends DAOTestHelper {
 
     assertEquals(List.of(inside.emailId()), forward);
     assertEquals(forward, reversed);
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_a_dar_code_as_its_submitted_dar() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset first = createDatasetFor(dar);
+    Dataset second = createDatasetFor(dar);
+    createDatasetFor(createProgressReport(user, dar));
+    createDatasetFor(createDar(user, collectionId, null));
+    generateSendRow(user, EmailType.NEW_DAR, darCode, Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(
+        List.of(first.getDatasetIdentifier(), second.getDatasetIdentifier()),
+        send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_a_progress_report_reference_as_its_parent_dar() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest parent = createDar(user, collectionId);
+    createDatasetFor(parent);
+    DataAccessRequest progressReport = createProgressReport(user, parent);
+    Dataset reported = createDatasetFor(progressReport);
+    generateSendRow(
+        user,
+        EmailType.SO_PROGRESS_REPORT_SUBMITTED,
+        progressReport.getReferenceId(),
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(List.of(reported.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_an_election_id_as_its_dar_and_dataset() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    createDatasetFor(dar);
+    Dataset elected = createDatasetFor(dar);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            dar.getReferenceId(),
+            elected.getDatasetId());
+    generateSendRow(
+        user, EmailType.REMINDER, electionId.toString(), Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(List.of(elected.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_an_election_without_a_dataset_as_its_dars_datasets() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset requested = createDatasetFor(dar);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            dar.getReferenceId(),
+            null);
+    generateSendRow(
+        user, EmailType.REMINDER, electionId.toString(), Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(List.of(requested.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_an_older_dar_reference_on_a_dar_code_type() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset requested = createDatasetFor(dar);
+    generateSendRow(
+        user, EmailType.NEW_DAR, dar.getReferenceId(), Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(List.of(requested.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_a_duos_id_and_a_dataset_name() {
+    Dataset approved = createDataset();
+    Dataset submitted = createDataset();
+    Instant created = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(
+        createUser(), EmailType.DATASET_APPROVED, approved.getDatasetIdentifier(), created);
+    generateSendRow(
+        createUser(), EmailType.NEW_DATASET, submitted.getName(), created.plusSeconds(1));
+
+    List<MailSend> sends = fetchSendsAroundNow();
+
+    assertEquals(
+        List.of(
+            List.of(submitted.getDatasetIdentifier()), List.of(approved.getDatasetIdentifier())),
+        sends.stream().map(MailSend::datasetIdentifiers).toList());
+    assertEquals(Arrays.asList(null, null), sends.stream().map(MailSend::darCode).toList());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_an_older_dataset_name_on_a_duos_id_type() {
+    Dataset dataset = createDataset();
+    generateSendRow(
+        createUser(),
+        EmailType.DATASET_DENIED,
+        dataset.getName(),
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    assertEquals(
+        List.of(dataset.getDatasetIdentifier()),
+        fetchSendsAroundNow().getFirst().datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_an_older_dar_code_on_a_reference_id_type() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    Dataset requested = createDatasetFor(createDar(user, collectionId));
+    generateSendRow(user, EmailType.DAR_EXPIRED, darCode, Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(List.of(requested.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_leaves_unrelated_types_without_dar_or_datasets() {
+    generateSendRow(
+        createUser(),
+        EmailType.DAC_VOTE_REMINDER_DIGEST,
+        "2026-10-09",
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertNull(send.darCode());
+    assertEquals(List.of(), send.datasetIdentifiers());
+  }
+
+  private DataAccessRequest createDar(User user, Integer collectionId) {
+    return createDar(user, collectionId, new Date());
+  }
+
+  private DataAccessRequest createDar(User user, Integer collectionId, Date submissionDate) {
+    String referenceId = UUID.randomUUID().toString();
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        now,
+        submissionDate,
+        now,
+        new DataAccessRequestData(),
+        randomAlphabetic(10));
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private DataAccessRequest createProgressReport(User user, DataAccessRequest parent) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        parent.getId(),
+        parent.getCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new DataAccessRequestData(),
+        randomAlphabetic(10));
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private Dataset createDatasetFor(DataAccessRequest dar) {
+    Dataset dataset = createDataset();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+    return dataset;
+  }
+
+  private Dataset createDataset() {
+    Integer id =
+        datasetDAO.insertDataset(
+            "Name_" + randomAlphabetic(20),
+            new Timestamp(System.currentTimeMillis()),
+            createUser().getUserId(),
+            null,
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            null);
+    return datasetDAO.findDatasetById(id);
   }
 
   private User createUserNamed(String displayName) {

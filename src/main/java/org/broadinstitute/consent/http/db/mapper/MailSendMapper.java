@@ -2,9 +2,12 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Stream;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendRecipient;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -26,6 +29,25 @@ public class MailSendMapper implements RowMapper<MailSend> {
         r.getTimestamp("create_date"),
         r.getTimestamp("last_create_date"),
         r.getInt("recipient_count"),
-        recipients);
+        recipients,
+        r.getString("dar_code"),
+        datasetIdentifiers(r.getArray("dataset_aliases")));
+  }
+
+  private static List<String> datasetIdentifiers(Array aliases) throws SQLException {
+    if (aliases == null) {
+      return List.of();
+    }
+    try {
+      // Number, since dataset.alias is bigint where Liquibase created it but numeric on older
+      // databases.
+      return Stream.of((Object[]) aliases.getArray())
+          .map(
+              alias ->
+                  Dataset.parseAliasToIdentifier(Math.toIntExact(((Number) alias).longValue())))
+          .toList();
+    } finally {
+      aliases.free();
+    }
   }
 }

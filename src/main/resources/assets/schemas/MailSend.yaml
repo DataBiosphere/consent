@@ -35,7 +35,15 @@ properties:
           description: The user's display name
         sent:
           type: boolean
-          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev. Acceptance is not delivery; nothing records whether the email reached the inbox.
+          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev.
+  darCode:
+    type: [string, 'null']
+    description: Code of the DAR the email concerns, such as DAR-123. Progress report emails carry their parent DAR's code. Null for email types unrelated to a DAR.
+  datasetIdentifiers:
+    type: array
+    description: DUOS-IDs of the datasets the email concerns, in alias order, as they are now rather than when the email was sent. For emails that identify a DAR only by its code, these are the submitted DAR's datasets, not its progress reports'. Empty for email types not tied to a DAR or dataset.
+    items:
+      type: string
 examples:
   - sendId: 1
     emailType: 34
@@ -50,3 +58,5 @@ examples:
       - userId: 4
         displayName: Grace Member
         sent: false
+    darCode: null
+    datasetIdentifiers: []
