@@ -39,8 +39,12 @@ public class MailSendMapper implements RowMapper<MailSend> {
       return List.of();
     }
     try {
-      return Stream.of((Long[]) aliases.getArray())
-          .map(alias -> Dataset.parseAliasToIdentifier(Math.toIntExact(alias)))
+      // Number, since dataset.alias is bigint where Liquibase created it but numeric on older
+      // databases.
+      return Stream.of((Object[]) aliases.getArray())
+          .map(
+              alias ->
+                  Dataset.parseAliasToIdentifier(Math.toIntExact(((Number) alias).longValue())))
           .toList();
     } finally {
       aliases.free();
