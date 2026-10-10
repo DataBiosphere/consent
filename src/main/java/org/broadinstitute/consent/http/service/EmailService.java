@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
@@ -81,8 +82,7 @@ public class EmailService implements ConsentLogger {
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
   }
 
-  /** Returns false when SendGrid rejects the email. */
-  public boolean sendMessage(MailMessage mailMessage, Integer userId)
+  public EmailSendOutcome sendMessage(MailMessage mailMessage, Integer userId)
       throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
@@ -116,7 +116,7 @@ public class EmailService implements ConsentLogger {
             sendgridResponse,
             sendgridStatus);
     emailDAO.insert(mailMessageInsert);
-    return response == null || response.getStatusCode() < 400;
+    return EmailSendOutcome.of(response);
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(

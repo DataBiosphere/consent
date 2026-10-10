@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
@@ -165,7 +167,8 @@ public class DaaService implements ConsentLogger {
       throw new ServerErrorException("DAA " + daaId + " has no file", 500);
     }
     String previousDaaName = file.getFileName();
-    List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
+    List<SimplifiedUser> researchers =
+        userService.getUsersByDaaId(daaId).stream().distinct().toList();
     List<SimplifiedUser> signingOfficials =
         researchers.stream()
             .map(SimplifiedUser::getInstitutionId)
@@ -174,46 +177,51 @@ public class DaaService implements ConsentLogger {
             .flatMap(institutionId -> userService.findSOsByInstitutionId(institutionId).stream())
             .distinct()
             .toList();
-    int failed =
-        sendNewDaaEmails(
-                researchers,
-                recipient ->
-                    new NewDAAUploadResearcherMessage(
-                        recipient, dacName, previousDaaName, newDaaName))
-            + sendNewDaaEmails(
-                signingOfficials,
-                recipient ->
-                    new NewDAAUploadSOMessage(recipient, dacName, previousDaaName, newDaaName));
-    int sent = researchers.size() + signingOfficials.size() - failed;
-    if (sent == 0 && failed > 0) {
-      throw new ServerErrorException("Failed to send all " + failed + " new DAA emails", 500);
+    Map<EmailSendOutcome, Integer> outcomes = new EnumMap<>(EmailSendOutcome.class);
+    sendNewDaaEmails(
+        researchers,
+        recipient ->
+            new NewDAAUploadResearcherMessage(recipient, dacName, previousDaaName, newDaaName),
+        outcomes);
+    sendNewDaaEmails(
+        signingOfficials,
+        recipient -> new NewDAAUploadSOMessage(recipient, dacName, previousDaaName, newDaaName),
+        outcomes);
+    NewDaaEmailResult result =
+        new NewDaaEmailResult(
+            outcomes.getOrDefault(EmailSendOutcome.SENT, 0),
+            outcomes.getOrDefault(EmailSendOutcome.SKIPPED, 0),
+            outcomes.getOrDefault(EmailSendOutcome.FAILED, 0));
+    if (result.sent() == 0 && result.failed() > 0) {
+      throw new ServerErrorException(
+          "Failed to send all " + result.failed() + " new DAA emails", 500);
     }
-    return new NewDaaEmailResult(sent, failed);
+    return result;
   }
 
-  private int sendNewDaaEmails(
-      List<SimplifiedUser> recipients, Function<User, MailMessage> messageForRecipient) {
-    int failed = 0;
+  private void sendNewDaaEmails(
+      List<SimplifiedUser> recipients,
+      Function<User, MailMessage> messageForRecipient,
+      Map<EmailSendOutcome, Integer> outcomes) {
     for (SimplifiedUser recipient : recipients) {
-      if (!sendNewDaaEmail(recipient, messageForRecipient)) {
-        failed++;
-      }
+      outcomes.merge(sendNewDaaEmail(recipient, messageForRecipient), 1, Integer::sum);
     }
-    return failed;
   }
 
-  private boolean sendNewDaaEmail(
+  private EmailSendOutcome sendNewDaaEmail(
       SimplifiedUser recipient, Function<User, MailMessage> messageForRecipient) {
     try {
-      if (emailService.sendMessage(
-          messageForRecipient.apply(toRecipient(recipient)), recipient.getUserId())) {
-        return true;
+      EmailSendOutcome outcome =
+          emailService.sendMessage(
+              messageForRecipient.apply(toRecipient(recipient)), recipient.getUserId());
+      if (outcome == EmailSendOutcome.FAILED) {
+        logWarn("SendGrid rejected the new DAA email to user " + recipient.getUserId());
       }
-      logWarn("SendGrid rejected the new DAA email to user " + recipient.getUserId());
+      return outcome;
     } catch (Exception e) {
       logWarn("Error sending new DAA email to user " + recipient.getUserId(), e);
+      return EmailSendOutcome.FAILED;
     }
-    return false;
   }
 
   private static User toRecipient(SimplifiedUser simplifiedUser) {

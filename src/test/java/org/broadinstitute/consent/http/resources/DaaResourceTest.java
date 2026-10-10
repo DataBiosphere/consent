@@ -536,7 +536,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(any())).thenReturn(dac);
-    NewDaaEmailResult result = new NewDaaEmailResult(3, 1);
+    NewDaaEmailResult result = new NewDaaEmailResult(3, 0, 1);
     when(daaService.sendNewDaaEmails(any(), any(), any())).thenReturn(result);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -591,7 +591,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new ServerErrorException("Failed to send 1 of 1 new DAA emails.", 500))
+    doThrow(new ServerErrorException("Failed to send all 1 new DAA emails", 500))
         .when(daaService)
         .sendNewDaaEmails(any(), any(), any());
 

@@ -31,6 +31,7 @@ import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
@@ -275,7 +276,7 @@ class DaaServiceTest extends AbstractTestHelper {
 
     NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
 
-    assertEquals(new NewDaaEmailResult(2, 1), result);
+    assertEquals(new NewDaaEmailResult(2, 0, 1), result);
     verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(102));
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
   }
@@ -284,18 +285,41 @@ class DaaServiceTest extends AbstractTestHelper {
   void testSendNewDaaEmailsCountsASendGridRejection() throws Exception {
     stubDaaWithRecipients(
         List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1), simplifiedUser(202, 1)));
-    when(emailService.sendMessage(any(NewDAAUploadSOMessage.class), eq(201))).thenReturn(false);
+    when(emailService.sendMessage(any(NewDAAUploadSOMessage.class), eq(201)))
+        .thenReturn(EmailSendOutcome.FAILED);
 
     NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
 
-    assertEquals(new NewDaaEmailResult(2, 1), result);
+    assertEquals(new NewDaaEmailResult(2, 0, 1), result);
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(202));
+  }
+
+  @Test
+  void testSendNewDaaEmailsCountsOptedOutRecipientsAsSkipped() throws Exception {
+    stubDaaWithRecipients(List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1)));
+    when(emailService.sendMessage(any(NewDAAUploadSOMessage.class), eq(201)))
+        .thenReturn(EmailSendOutcome.SKIPPED);
+
+    NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
+
+    assertEquals(new NewDaaEmailResult(1, 1, 0), result);
+  }
+
+  @Test
+  void testSendNewDaaEmailsEmailsAResearcherWithTwoCardsOnce() throws Exception {
+    SimplifiedUser researcher = simplifiedUser(101, 1);
+    stubDaaWithRecipients(List.of(researcher, simplifiedUser(101, 1)), List.of());
+
+    NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
+
+    assertEquals(new NewDaaEmailResult(1, 0, 0), result);
+    verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
   }
 
   @Test
   void testSendNewDaaEmailsFailsWhenNoEmailIsSent() throws Exception {
     stubDaaWithRecipients(List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1)));
-    when(emailService.sendMessage(any(), any())).thenReturn(false);
+    when(emailService.sendMessage(any(), any())).thenReturn(EmailSendOutcome.FAILED);
 
     assertThrows(
         ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
@@ -803,6 +827,6 @@ class DaaServiceTest extends AbstractTestHelper {
     initService();
     when(userService.getUsersByDaaId(any())).thenReturn(researchers);
     when(userService.findSOsByInstitutionId(any())).thenReturn(signingOfficials);
-    when(emailService.sendMessage(any(), any())).thenReturn(true);
+    when(emailService.sendMessage(any(), any())).thenReturn(EmailSendOutcome.SENT);
   }
 }

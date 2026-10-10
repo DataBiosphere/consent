@@ -35,6 +35,9 @@ post:
               sent:
                 type: integer
                 description: Number of emails sent
+              skipped:
+                type: integer
+                description: Number of recipients not emailed because they opted out of email or notifications are off
               failed:
                 type: integer
                 description: Number of emails that could not be sent

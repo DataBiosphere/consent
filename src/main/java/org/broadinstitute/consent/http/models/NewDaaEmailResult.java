@@ -1,4 +1,4 @@
 package org.broadinstitute.consent.http.models;
 
-/** How many new-DAA emails went out and how many failed. */
-public record NewDaaEmailResult(int sent, int failed) {}
+/** How many new-DAA emails were sent, skipped because the recipient opted out, or failed. */
+public record NewDaaEmailResult(int sent, int skipped, int failed) {}

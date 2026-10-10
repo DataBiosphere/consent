@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +38,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Reminder;
@@ -133,7 +133,7 @@ class EmailServiceTest extends AbstractTestHelper {
     Instant fixedInstant = Instant.now();
     try (var mockedStatic = mockStatic(Instant.class)) {
       mockedStatic.when(Instant::now).thenReturn(fixedInstant);
-      service.sendMessage(message, userId);
+      assertEquals(EmailSendOutcome.SENT, service.sendMessage(message, userId));
     }
 
     var captor = ArgumentCaptor.forClass(Mail.class);
@@ -198,7 +198,7 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
-    assertTrue(service.sendMessage(message, userId));
+    assertEquals(EmailSendOutcome.SKIPPED, service.sendMessage(message, userId));
 
     var captor = ArgumentCaptor.forClass(Mail.class);
     verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
@@ -251,7 +251,7 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
-    assertFalse(service.sendMessage(message, userId));
+    assertEquals(EmailSendOutcome.FAILED, service.sendMessage(message, userId));
 
     verify(emailDAO)
         .insert(
