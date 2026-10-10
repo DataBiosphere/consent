@@ -36,9 +36,11 @@ import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
+import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.result.ResultIterable;
@@ -143,8 +145,9 @@ public class EmailService implements ConsentLogger {
   }
 
   public List<MailSend> fetchEmailSendsByCreateDate(
-      Date start, Date end, Integer limit, Integer offset) {
-    return emailDAO.fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS);
+      Date start, Date end, Integer limit, Integer offset, MailSendSearch search) {
+    return emailDAO.fetchSendsByCreateDate(
+        start, end, limit, offset, MAX_SEND_RECIPIENTS, EmailTypeLists.CURRENT, search);
   }
 
   public void sendVoteDigestMessages() {

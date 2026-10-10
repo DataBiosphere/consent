@@ -46,10 +46,12 @@ import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
+import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
@@ -326,9 +328,12 @@ class EmailServiceTest extends AbstractTestHelper {
         List.of(
             new MailSend(
                 1, 34, "2026-10-09", new Date(), new Date(), 0, List.of(), null, List.of()));
-    when(emailDAO.fetchSendsByCreateDate(startDate, endDate, 20, 0, 100)).thenReturn(sends);
+    MailSendSearch search = MailSendSearch.of("Ada", List.of());
+    when(emailDAO.fetchSendsByCreateDate(
+            startDate, endDate, 20, 0, 100, EmailTypeLists.CURRENT, search))
+        .thenReturn(sends);
 
-    assertEquals(sends, service.fetchEmailSendsByCreateDate(startDate, endDate, 20, 0));
+    assertEquals(sends, service.fetchEmailSendsByCreateDate(startDate, endDate, 20, 0, search));
   }
 
   @Test

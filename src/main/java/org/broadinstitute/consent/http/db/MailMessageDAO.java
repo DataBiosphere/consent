@@ -5,11 +5,12 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.MailMessageMapper;
 import org.broadinstitute.consent.http.db.mapper.MailMessageSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.MailSendMapper;
-import org.broadinstitute.consent.http.enumeration.EmailReference;
+import org.broadinstitute.consent.http.models.mail.EmailTypeLists;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
@@ -99,21 +100,9 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset);
 
-  default List<MailSend> fetchSendsByCreateDate(
-      Date start, Date end, Integer limit, Integer offset, Integer recipientLimit) {
-    return fetchSendsByCreateDate(
-        start,
-        end,
-        limit,
-        offset,
-        recipientLimit,
-        EmailReference.kindsByTypeInt(),
-        EmailReference.rolesByTypeInt());
-  }
-
   // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
-  // :kinds and :roles hold, at each email type's number, what it stores and whether it's an
-  // approval or about a progress report.
+  // :types.kinds and :types.roles hold, at each email type's number, what it stores and whether
+  // it's an approval or about a progress report. A search pages after filtering, not before.
   @SqlQuery(
       """
       WITH in_range AS (
@@ -159,8 +148,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         FROM grouped
         GROUP BY send_row_id, email_type, entity_reference_id
         ORDER BY MIN(create_date) DESC, send_row_id DESC
-        OFFSET :offset
-        LIMIT :limit
+        OFFSET CASE WHEN CAST(:search.pattern AS text) IS NULL THEN :offset ELSE 0 END
+        LIMIT CASE WHEN CAST(:search.pattern AS text) IS NULL THEN :limit END
       ),
       named AS (
         SELECT p.send_id, n.user_id, u.display_name, bool_or(n.date_sent IS NOT NULL) AS sent,
@@ -171,6 +160,11 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         JOIN grouped n ON n.send_row_id = p.send_id
         LEFT JOIN users u ON u.user_id = n.user_id
         GROUP BY p.send_id, n.user_id, u.display_name
+      ),
+      name_matches AS (
+        SELECT DISTINCT g.send_row_id FROM grouped g
+        JOIN users u ON u.user_id = g.user_id
+        WHERE u.display_name ILIKE :search.pattern
       ),
       sends AS (
         SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
@@ -191,8 +185,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       SELECT s.*, COALESCE(by_code.dar_code, by_dar.dar_code) AS dar_code, aliases.dataset_aliases
       FROM sends s
       CROSS JOIN LATERAL (
-        SELECT (CAST(:kinds AS text[]))[s.email_type] AS kind,
-          COALESCE((CAST(:roles AS text[]))[s.email_type], '') AS role
+        SELECT (CAST(:types.kinds AS text[]))[s.email_type] AS kind,
+          COALESCE((CAST(:types.roles AS text[]))[s.email_type], '') AS role
       ) k
       LEFT JOIN dar_collection by_code
         ON k.kind IN ('DAR_CODE', 'DAR_REFERENCE_ID') AND by_code.dar_code = s.entity_reference_id
@@ -268,7 +262,18 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
             LIMIT 1
           ) IS TRUE
       ) aliases ON TRUE
+      WHERE CAST(:search.pattern AS text) IS NULL
+        OR s.email_type = ANY(CAST(:search.types AS integer[]))
+        OR COALESCE(by_code.dar_code, by_dar.dar_code) ILIKE :search.pattern
+        OR EXISTS (
+          SELECT 1 FROM unnest(aliases.dataset_aliases) alias
+          WHERE alias = CAST(:search.alias AS bigint)
+            OR 'DUOS-' || lpad(alias::text, GREATEST(6, length(alias::text)), '0')
+              ILIKE :search.pattern)
+        OR s.send_id IN (SELECT send_row_id FROM name_matches)
       ORDER BY s.create_date DESC, s.send_id DESC
+      OFFSET CASE WHEN CAST(:search.pattern AS text) IS NULL THEN 0 ELSE :offset END
+      LIMIT :limit
       """)
   List<MailSend> fetchSendsByCreateDate(
       @Bind("start") Date start,
@@ -276,6 +281,6 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset,
       @Bind("recipientLimit") Integer recipientLimit,
-      @Bind("kinds") List<String> kinds,
-      @Bind("roles") List<String> roles);
+      @BindMethods("types") EmailTypeLists types,
+      @BindMethods("search") MailSendSearch search);
 }

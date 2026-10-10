@@ -17,12 +17,15 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.broadinstitute.consent.http.service.EmailService;
 
 @Path("api/mail")
@@ -32,6 +35,8 @@ public class MailResource {
 
   /** Summaries and sends are listed many at once, so their pages are capped. */
   static final int MAX_PAGE_LIMIT = 1000;
+
+  static final Duration MAX_SEARCH_RANGE = Duration.ofDays(367);
 
   @Inject
   public MailResource(EmailService emailService) {
@@ -121,16 +126,52 @@ public class MailResource {
       @QueryParam("start") String start,
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("search") String search,
+      @QueryParam("searchTypes") List<String> searchTypes) {
     validatePageLimitAndOffset(limit, offset);
+    boolean searching = search != null && !search.isBlank();
+    if (searching && search.length() > MailSendSearch.MAX_LENGTH) {
+      throw new BadRequestException(
+          "search must be " + MailSendSearch.MAX_LENGTH + " characters or fewer");
+    }
     try {
+      Date startDate = parseStartDate(start);
+      Date endDate = parseEndDate(end);
+      // A search reads every send in the range, so its range is capped.
+      if (searching
+          && Math.abs(endDate.getTime() - startDate.getTime()) > MAX_SEARCH_RANGE.toMillis()) {
+        throw new BadRequestException(
+            "A search covers at most " + MAX_SEARCH_RANGE.toDays() + " days");
+      }
       return Response.ok()
           .entity(
               emailService.fetchEmailSendsByCreateDate(
-                  parseStartDate(start), parseEndDate(end), limit, offset))
+                  startDate,
+                  endDate,
+                  limit,
+                  offset,
+                  searching
+                      ? MailSendSearch.of(search, parseTypes(searchTypes))
+                      : MailSendSearch.NONE))
           .build();
     } catch (ParseException pe) {
       return invalidDateResponse();
+    }
+  }
+
+  private static List<Integer> parseTypes(List<String> types) {
+    if (types == null) {
+      return List.of();
+    }
+    try {
+      return types.stream()
+          .map(String::strip)
+          .filter(type -> !type.isEmpty())
+          .map(Integer::valueOf)
+          .toList();
+    } catch (NumberFormatException e) {
+      throw new BadRequestException("searchTypes must be email type numbers");
     }
   }
 
