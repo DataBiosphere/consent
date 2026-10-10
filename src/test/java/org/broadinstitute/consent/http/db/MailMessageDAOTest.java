@@ -675,7 +675,8 @@ class MailMessageDAOTest extends DAOTestHelper {
     User bob = createUserNamed("Bob");
     MailMessage earliest = generateSendRow(carol, EmailType.NEW_DAR, "DAR-1", first);
     generateSendRow(alice, EmailType.NEW_DAR, "DAR-1", first.plus(1, ChronoUnit.MINUTES));
-    generateSendRow(bob, EmailType.NEW_DAR, "DAR-1", first.plus(2, ChronoUnit.MINUTES));
+    MailMessage latest =
+        generateSendRow(bob, EmailType.NEW_DAR, "DAR-1", first.plus(2, ChronoUnit.MINUTES));
 
     List<MailSend> sends = fetchSendsAroundNow();
 
@@ -686,6 +687,7 @@ class MailMessageDAOTest extends DAOTestHelper {
                 EmailType.NEW_DAR.getTypeInt(),
                 "DAR-1",
                 earliest.createDate(),
+                latest.createDate(),
                 3,
                 List.of(
                     new MailSendRecipient(alice.getUserId(), "Alice", true),
