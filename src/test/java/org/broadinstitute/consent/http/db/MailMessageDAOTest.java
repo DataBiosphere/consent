@@ -1435,6 +1435,8 @@ class MailMessageDAOTest extends DAOTestHelper {
     assertEquals(1, searchSends(MailSendSearch.of(darCode.toLowerCase(), List.of()), 100).size());
     assertEquals(
         1, searchSends(MailSendSearch.of(dataset.getDatasetIdentifier(), List.of()), 100).size());
+    String unpadded = "DUOS-" + Integer.parseInt(dataset.getDatasetIdentifier().substring(5));
+    assertEquals(1, searchSends(MailSendSearch.of(unpadded, List.of()), 100).size());
     assertEquals(
         List.of(EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt()),
         searchSends(
@@ -1444,17 +1446,6 @@ class MailMessageDAOTest extends DAOTestHelper {
             .stream()
             .map(MailSend::emailType)
             .toList());
-  }
-
-  @Test
-  void testFetchSendsByCreateDate_searches_the_entity_reference() {
-    generateSendRow(
-        createUser(),
-        EmailType.DAC_VOTE_REMINDER_DIGEST,
-        "2026-10-09",
-        Instant.now().minus(1, ChronoUnit.HOURS));
-
-    assertEquals(1, searchSends(MailSendSearch.of("2026-10-09", List.of()), 100).size());
   }
 
   @Test

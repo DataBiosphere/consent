@@ -17,6 +17,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -34,6 +35,8 @@ public class MailResource {
 
   /** Summaries and sends are listed many at once, so their pages are capped. */
   static final int MAX_PAGE_LIMIT = 1000;
+
+  static final Duration MAX_SEARCH_RANGE = Duration.ofDays(367);
 
   @Inject
   public MailResource(EmailService emailService) {
@@ -127,19 +130,30 @@ public class MailResource {
       @QueryParam("search") String search,
       @QueryParam("searchTypes") List<String> searchTypes) {
     validatePageLimitAndOffset(limit, offset);
-    if (search != null && search.length() > MailSendSearch.MAX_LENGTH) {
+    boolean searching = search != null && !search.isBlank();
+    if (searching && search.length() > MailSendSearch.MAX_LENGTH) {
       throw new BadRequestException(
           "search must be " + MailSendSearch.MAX_LENGTH + " characters or fewer");
     }
     try {
+      Date startDate = parseStartDate(start);
+      Date endDate = parseEndDate(end);
+      // A search reads every send in the range, so its range is capped.
+      if (searching
+          && Math.abs(endDate.getTime() - startDate.getTime()) > MAX_SEARCH_RANGE.toMillis()) {
+        throw new BadRequestException(
+            "A search covers at most " + MAX_SEARCH_RANGE.toDays() + " days");
+      }
       return Response.ok()
           .entity(
               emailService.fetchEmailSendsByCreateDate(
-                  parseStartDate(start),
-                  parseEndDate(end),
+                  startDate,
+                  endDate,
                   limit,
                   offset,
-                  MailSendSearch.of(search, parseTypes(searchTypes))))
+                  searching
+                      ? MailSendSearch.of(search, parseTypes(searchTypes))
+                      : MailSendSearch.NONE))
           .build();
     } catch (ParseException pe) {
       return invalidDateResponse();
@@ -151,7 +165,11 @@ public class MailResource {
       return List.of();
     }
     try {
-      return types.stream().filter(type -> !type.isBlank()).map(Integer::valueOf).toList();
+      return types.stream()
+          .map(String::strip)
+          .filter(type -> !type.isEmpty())
+          .map(Integer::valueOf)
+          .toList();
     } catch (NumberFormatException e) {
       throw new BadRequestException("searchTypes must be email type numbers");
     }

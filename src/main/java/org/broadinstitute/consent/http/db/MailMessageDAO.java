@@ -267,9 +267,9 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         OR COALESCE(by_code.dar_code, by_dar.dar_code) ILIKE :search.pattern
         OR EXISTS (
           SELECT 1 FROM unnest(aliases.dataset_aliases) alias
-          WHERE 'DUOS-' || lpad(alias::text, GREATEST(6, length(alias::text)), '0')
-            ILIKE :search.pattern)
-        OR s.entity_reference_id ILIKE :search.pattern
+          WHERE alias = CAST(:search.alias AS bigint)
+            OR 'DUOS-' || lpad(alias::text, GREATEST(6, length(alias::text)), '0')
+              ILIKE :search.pattern)
         OR s.send_id IN (SELECT send_row_id FROM name_matches)
       ORDER BY s.create_date DESC, s.send_id DESC
       OFFSET CASE WHEN CAST(:search.pattern AS text) IS NULL THEN 0 ELSE :offset END

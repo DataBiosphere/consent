@@ -21,13 +21,13 @@ get:
     - name: search
       in: query
       description: |
-        Only sends whose DAR code, DUOS-IDs or any recipient's display name contains this text, ignoring case, or whose type is in searchTypes. Searching reads every send in the range before paging, so it is slower than browsing.
+        Only sends whose DAR code, DUOS-IDs or any recipient's display name contains this text, ignoring case (DUOS-123 also finds DUOS-000123), or whose type's name contains it as whole words (vote reminder finds DAC_VOTE_REMINDER_DIGEST), or whose type is in searchTypes. At most 200 characters. Searching reads every send in the range before paging, so the range may cover at most 367 days.
       required: false
       schema:
         type: string
     - name: searchTypes
       in: query
-      description: Email type numbers that also match the search, for callers that label types themselves. Ignored without search.
+      description: Email type numbers that also match the search, for callers that label types themselves. Ignored without a search.
       required: false
       schema:
         type: array
@@ -60,7 +60,7 @@ get:
             items:
               $ref: '../schemas/MailSend.yaml'
     400:
-      description: Bad Request - Check that start is provided, dates are in the MM/dd/yyyy format, limit is from 0 to 1000 and offset is not negative.
+      description: Bad Request - Check that start is provided, dates are in the MM/dd/yyyy format, limit is from 0 to 1000, offset is not negative, and a search is at most 200 characters over at most 367 days with numeric searchTypes.
     401:
       description: Unauthorized.
     429:
