@@ -11,5 +11,6 @@ public record MailSend(
     Integer emailType,
     String entityReferenceId,
     Date createDate,
+    Date lastCreateDate,
     Integer recipientCount,
     List<MailSendRecipient> recipients) {}

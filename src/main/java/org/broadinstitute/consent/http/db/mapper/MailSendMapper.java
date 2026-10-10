@@ -24,6 +24,7 @@ public class MailSendMapper implements RowMapper<MailSend> {
         r.getInt("email_type"),
         r.getString("entity_reference_id"),
         r.getTimestamp("create_date"),
+        r.getTimestamp("last_create_date"),
         r.getInt("recipient_count"),
         recipients);
   }

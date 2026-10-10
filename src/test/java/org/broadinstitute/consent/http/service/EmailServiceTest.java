@@ -322,7 +322,8 @@ class EmailServiceTest extends AbstractTestHelper {
   void testFetchEmailSendsByCreateDate() {
     Date startDate = new Date();
     Date endDate = new Date();
-    List<MailSend> sends = List.of(new MailSend(1, 34, "2026-10-09", new Date(), 0, List.of()));
+    List<MailSend> sends =
+        List.of(new MailSend(1, 34, "2026-10-09", new Date(), new Date(), 0, List.of()));
     when(emailDAO.fetchSendsByCreateDate(startDate, endDate, 20, 0, 100)).thenReturn(sends);
 
     assertEquals(sends, service.fetchEmailSendsByCreateDate(startDate, endDate, 20, 0));

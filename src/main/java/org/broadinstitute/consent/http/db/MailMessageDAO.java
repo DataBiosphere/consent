@@ -139,7 +139,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       ),
       page AS (
         SELECT send_row_id AS send_id, email_type, entity_reference_id,
-          MIN(create_date) AS create_date, COUNT(DISTINCT user_id) AS recipient_count
+          MIN(create_date) AS create_date, MAX(create_date) AS last_create_date,
+          COUNT(DISTINCT user_id) AS recipient_count
         FROM grouped
         GROUP BY send_row_id, email_type, entity_reference_id
         ORDER BY MIN(create_date) DESC, send_row_id DESC
@@ -156,7 +157,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         LEFT JOIN users u ON u.user_id = n.user_id
         GROUP BY p.send_id, n.user_id, u.display_name
       )
-      SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count,
+      SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
+        p.recipient_count,
         COALESCE(
           json_agg(
             json_build_object(
@@ -167,7 +169,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         ) AS recipients
       FROM page p
       LEFT JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
-      GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.recipient_count
+      GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
+        p.recipient_count
       ORDER BY p.create_date DESC, p.send_id DESC
       """)
   List<MailSend> fetchSendsByCreateDate(

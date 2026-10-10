@@ -14,6 +14,10 @@ properties:
     type: integer
     format: int64
     description: When the send's earliest email was created, in epoch milliseconds
+  lastCreateDate:
+    type: integer
+    format: int64
+    description: When the send's latest email in the range was created, in epoch milliseconds
   recipientCount:
     type: integer
     description: Number of distinct users the send went to, including any beyond the first 100 in recipients
@@ -24,7 +28,7 @@ properties:
       type: object
       properties:
         userId:
-          type: [integer, 'null']
+          type: integer
           description: ID of the user the email was sent to
         displayName:
           type: [string, 'null']
@@ -37,6 +41,7 @@ examples:
     emailType: 34
     entityReferenceId: '2026-10-09'
     createDate: 1791507680457
+    lastCreateDate: 1791507712004
     recipientCount: 2
     recipients:
       - userId: 3
