@@ -101,8 +101,8 @@ public class EmailService implements ConsentLogger {
     }
     // Checks that the user has not disabled email before sending
     Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
-    Instant now = Instant.now();
-    Date dateSent = (response != null && response.getStatusCode() < 400) ? Date.from(now) : null;
+    EmailSendOutcome outcome = EmailSendOutcome.of(response);
+    Date dateSent = outcome == EmailSendOutcome.SENT ? Date.from(Instant.now()) : null;
     String sendgridResponse = response != null ? response.getBody() : null;
     Integer sendgridStatus = response != null ? response.getStatusCode() : null;
     MailMessageInsert mailMessageInsert =
@@ -115,8 +115,12 @@ public class EmailService implements ConsentLogger {
             content,
             sendgridResponse,
             sendgridStatus);
-    emailDAO.insert(mailMessageInsert);
-    return EmailSendOutcome.of(response);
+    try {
+      emailDAO.insert(mailMessageInsert);
+    } catch (Exception e) {
+      logException("Email to user " + userId + " was sent but not recorded:", e);
+    }
+    return outcome;
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(

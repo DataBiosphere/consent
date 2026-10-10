@@ -220,6 +220,34 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSendMessage_ReportsSent_WhenRecordingTheEmailFails() throws Exception {
+    User user = new User();
+    user.setEmail("user@duos");
+    var message = createMailMessage(user, EmailType.NEW_CASE, "subject", "DAR-1", null, null);
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(mock());
+    Response response = new Response();
+    response.setStatusCode(202);
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    when(emailDAO.insert(any())).thenThrow(new IllegalStateException("db down"));
+
+    assertEquals(EmailSendOutcome.SENT, service.sendMessage(message, 1234));
+  }
+
+  @Test
+  void testSendMessage_DoesNotSetDateSent_WhenSendGridReturnsARedirect() throws Exception {
+    User user = new User();
+    user.setEmail("user@duos");
+    var message = createMailMessage(user, EmailType.NEW_CASE, "subject", "DAR-1", null, null);
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(mock());
+    Response response = new Response();
+    response.setStatusCode(302);
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+
+    assertEquals(EmailSendOutcome.FAILED, service.sendMessage(message, 1234));
+    verify(emailDAO).insert(argThat((MailMessageInsert m) -> m.dateSent() == null));
+  }
+
+  @Test
   void testSendMessage_DoesNotSetDateSent_WhenSendGridReturnsErrorResponse() throws Exception {
     String userEmail = "user@duos";
     User user = new User();

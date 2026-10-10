@@ -178,12 +178,12 @@ public class DaaService implements ConsentLogger {
             .distinct()
             .toList();
     Map<EmailSendOutcome, Integer> outcomes = new EnumMap<>(EmailSendOutcome.class);
-    sendNewDaaEmails(
+    sendToEach(
         researchers,
         recipient ->
             new NewDAAUploadResearcherMessage(recipient, dacName, previousDaaName, newDaaName),
         outcomes);
-    sendNewDaaEmails(
+    sendToEach(
         signingOfficials,
         recipient -> new NewDAAUploadSOMessage(recipient, dacName, previousDaaName, newDaaName),
         outcomes);
@@ -199,7 +199,7 @@ public class DaaService implements ConsentLogger {
     return result;
   }
 
-  private void sendNewDaaEmails(
+  private void sendToEach(
       List<SimplifiedUser> recipients,
       Function<User, MailMessage> messageForRecipient,
       Map<EmailSendOutcome, Integer> outcomes) {
