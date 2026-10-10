@@ -18,6 +18,23 @@ get:
       required: false
       schema:
         type: string
+    - name: search
+      in: query
+      description: |
+        Only sends whose DAR code, DUOS-IDs or any recipient's display name contains this text, ignoring case, or whose type is in searchTypes. Searching reads every send in the range before paging, so it is slower than browsing.
+      required: false
+      schema:
+        type: string
+    - name: searchTypes
+      in: query
+      description: Email type numbers that also match the search, for callers that label types themselves. Ignored without search.
+      required: false
+      schema:
+        type: array
+        items:
+          type: integer
+      style: form
+      explode: true
     - name: limit
       in: query
       description: Number of sends to return. Defaults to 20 if unset. Must be from 0 to 1000.

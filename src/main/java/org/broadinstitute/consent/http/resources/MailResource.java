@@ -20,9 +20,11 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.broadinstitute.consent.http.service.EmailService;
 
 @Path("api/mail")
@@ -121,16 +123,37 @@ public class MailResource {
       @QueryParam("start") String start,
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
-      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+      @DefaultValue("0") @QueryParam("offset") Integer offset,
+      @QueryParam("search") String search,
+      @QueryParam("searchTypes") List<String> searchTypes) {
     validatePageLimitAndOffset(limit, offset);
+    if (search != null && search.length() > MailSendSearch.MAX_LENGTH) {
+      throw new BadRequestException(
+          "search must be " + MailSendSearch.MAX_LENGTH + " characters or fewer");
+    }
     try {
       return Response.ok()
           .entity(
               emailService.fetchEmailSendsByCreateDate(
-                  parseStartDate(start), parseEndDate(end), limit, offset))
+                  parseStartDate(start),
+                  parseEndDate(end),
+                  limit,
+                  offset,
+                  MailSendSearch.of(search, parseTypes(searchTypes))))
           .build();
     } catch (ParseException pe) {
       return invalidDateResponse();
+    }
+  }
+
+  private static List<Integer> parseTypes(List<String> types) {
+    if (types == null) {
+      return List.of();
+    }
+    try {
+      return types.stream().filter(type -> !type.isBlank()).map(Integer::valueOf).toList();
+    } catch (NumberFormatException e) {
+      throw new BadRequestException("searchTypes must be email type numbers");
     }
   }
 

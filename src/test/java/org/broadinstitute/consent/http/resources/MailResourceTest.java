@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
 import org.broadinstitute.consent.http.models.mail.MailSendRecipient;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -236,11 +237,12 @@ class MailResourceTest extends AbstractTestHelper {
                 "DAR-1",
                 List.of("DUOS-000001")));
     when(emailService.fetchEmailSendsByCreateDate(
-            df.parse("05/11/2021"), df.parse("05/11/2022"), 50, 10))
+            df.parse("05/11/2021"), df.parse("05/11/2022"), 50, 10, MailSendSearch.NONE))
         .thenReturn(sends);
 
     Response response =
-        mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", "05/11/2022", 50, 10);
+        mailResource.getEmailSendsByDateRange(
+            duosUser, "05/11/2021", "05/11/2022", 50, 10, null, null);
 
     assertEquals(200, response.getStatus());
     assertEquals(sends, response.getEntity());
@@ -252,7 +254,8 @@ class MailResourceTest extends AbstractTestHelper {
   void test_MailResource_sends_unusable_start_date(String start) {
     initResource();
     Response response =
-        mailResource.getEmailSendsByDateRange(duosUser, start, "05/11/2022", null, null);
+        mailResource.getEmailSendsByDateRange(
+            duosUser, start, "05/11/2022", null, null, null, null);
     assertEquals(400, response.getStatus());
     verifyNoInteractions(emailService);
   }
@@ -263,7 +266,49 @@ class MailResourceTest extends AbstractTestHelper {
     int limit = MailResource.MAX_PAGE_LIMIT + 1;
     assertThrows(
         BadRequestException.class,
-        () -> mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, limit, null));
+        () ->
+            mailResource.getEmailSendsByDateRange(
+                duosUser, "05/11/2021", null, limit, null, null, null));
+  }
+
+  @Test
+  void test_MailResource_sends_passes_the_search_on() throws Exception {
+    initResource();
+    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+    when(emailService.fetchEmailSendsByCreateDate(
+            df.parse("05/11/2021"),
+            df.parse("05/11/2022"),
+            20,
+            0,
+            new MailSendSearch("%a\\_b%", List.of(4))))
+        .thenReturn(List.of());
+
+    Response response =
+        mailResource.getEmailSendsByDateRange(
+            duosUser, "05/11/2021", "05/11/2022", 20, 0, " a_b ", List.of("4"));
+
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  void test_MailResource_sends_rejects_malformed_search_types() {
+    initResource();
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            mailResource.getEmailSendsByDateRange(
+                duosUser, "05/11/2021", null, 20, 0, "x", List.of("abc")));
+  }
+
+  @Test
+  void test_MailResource_sends_rejects_an_overlong_search() {
+    initResource();
+    String search = "a".repeat(MailSendSearch.MAX_LENGTH + 1);
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            mailResource.getEmailSendsByDateRange(
+                duosUser, "05/11/2021", null, 20, 0, search, List.of()));
   }
 
   @Test
@@ -272,10 +317,15 @@ class MailResourceTest extends AbstractTestHelper {
     Date tomorrowStart =
         Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
     when(emailService.fetchEmailSendsByCreateDate(
-            new SimpleDateFormat("MM/dd/yyyy").parse("05/11/2021"), tomorrowStart, 20, 0))
+            new SimpleDateFormat("MM/dd/yyyy").parse("05/11/2021"),
+            tomorrowStart,
+            20,
+            0,
+            MailSendSearch.NONE))
         .thenReturn(List.of());
 
-    Response response = mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, 20, 0);
+    Response response =
+        mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, 20, 0, null, null);
 
     assertEquals(200, response.getStatus());
   }
@@ -285,6 +335,8 @@ class MailResourceTest extends AbstractTestHelper {
     initResource();
     assertThrows(
         BadRequestException.class,
-        () -> mailResource.getEmailSendsByDateRange(duosUser, "05/11/2021", null, 20, -1));
+        () ->
+            mailResource.getEmailSendsByDateRange(
+                duosUser, "05/11/2021", null, 20, -1, null, null));
   }
 }
