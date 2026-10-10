@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -197,7 +198,7 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
-    service.sendMessage(message, userId);
+    assertTrue(service.sendMessage(message, userId));
 
     var captor = ArgumentCaptor.forClass(Mail.class);
     verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
@@ -250,7 +251,7 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
-    service.sendMessage(message, userId);
+    assertFalse(service.sendMessage(message, userId));
 
     verify(emailDAO)
         .insert(

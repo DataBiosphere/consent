@@ -81,7 +81,8 @@ public class EmailService implements ConsentLogger {
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
   }
 
-  public void sendMessage(MailMessage mailMessage, Integer userId)
+  /** Returns false when SendGrid rejects the email. */
+  public boolean sendMessage(MailMessage mailMessage, Integer userId)
       throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
@@ -115,6 +116,7 @@ public class EmailService implements ConsentLogger {
             sendgridResponse,
             sendgridStatus);
     emailDAO.insert(mailMessageInsert);
+    return response == null || response.getStatusCode() < 400;
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(

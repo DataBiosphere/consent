@@ -26,7 +26,18 @@ post:
     - Mail
   responses:
     200:
-      description: Successfully sent emails to Signing Officials and Researchers about the newly uploaded DAA
+      description: Emails were sent to Signing Officials and Researchers about the newly uploaded DAA. `failed` counts recipients whose email could not be sent; the others already received theirs, so retrying would email them again.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              sent:
+                type: integer
+                description: Number of emails sent
+              failed:
+                type: integer
+                description: Number of emails that could not be sent
     404:
       description: DAC, DAA, or User Not Found
     429:
@@ -36,4 +47,4 @@ post:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
     500:
-      description: Internal Server Error
+      description: Internal Server Error, including when the DAA has no file or no email could be sent

@@ -403,8 +403,9 @@ public class DaaResource extends Resource implements ConsentLogger {
       logInfo(
           "User %d is sending new DAA emails for DAA %d"
               .formatted(duosUser.getUser().getUserId(), oldDaaId));
-      daaService.sendNewDaaEmails(oldDaaId, dac.getName(), newDaaName);
-      return Response.ok().build();
+      return Response.ok()
+          .entity(daaService.sendNewDaaEmails(oldDaaId, dac.getName(), newDaaName))
+          .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

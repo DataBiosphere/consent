@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.NewDaaEmailResult;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -265,40 +266,43 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDaaEmailsSendsToEveryoneBeforeReportingAFailedResearcherSend() throws Exception {
+  void testSendNewDaaEmailsCountsAFailedResearcherSendAndSendsTheRest() throws Exception {
     stubDaaWithRecipients(
         List.of(simplifiedUser(101, 1), simplifiedUser(102, 1)), List.of(simplifiedUser(201, 1)));
     doThrow(new IOException("send failed"))
         .when(emailService)
         .sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
 
-    ServerErrorException e =
-        assertThrows(
-            ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+    NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
 
-    assertEquals("Failed to send 1 of 3 new DAA emails.", e.getMessage());
+    assertEquals(new NewDaaEmailResult(2, 1), result);
     verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(102));
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
   }
 
   @Test
-  void testSendNewDaaEmailsSendsToEveryoneBeforeReportingAFailedSigningOfficialSend()
-      throws Exception {
+  void testSendNewDaaEmailsCountsASendGridRejection() throws Exception {
     stubDaaWithRecipients(
         List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1), simplifiedUser(202, 1)));
-    doThrow(new IOException("send failed"))
-        .when(emailService)
-        .sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
+    when(emailService.sendMessage(any(NewDAAUploadSOMessage.class), eq(201))).thenReturn(false);
 
-    assertThrows(
-        ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+    NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
 
-    verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101));
+    assertEquals(new NewDaaEmailResult(2, 1), result);
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(202));
   }
 
   @Test
-  void testSendNewDaaEmailsLooksUpSigningOfficialsOncePerInstitution() {
+  void testSendNewDaaEmailsFailsWhenNoEmailIsSent() throws Exception {
+    stubDaaWithRecipients(List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1)));
+    when(emailService.sendMessage(any(), any())).thenReturn(false);
+
+    assertThrows(
+        ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+  }
+
+  @Test
+  void testSendNewDaaEmailsLooksUpSigningOfficialsOncePerInstitution() throws Exception {
     stubDaaWithRecipients(
         List.of(simplifiedUser(101, 1), simplifiedUser(102, 1), simplifiedUser(103, null)),
         List.of(simplifiedUser(201, 1)));
@@ -315,7 +319,7 @@ class DaaServiceTest extends AbstractTestHelper {
     initService();
 
     assertThrows(
-        NotFoundException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
+        ServerErrorException.class, () -> service.sendNewDaaEmails(1, "dacName", "newDaaName"));
     verifyNoInteractions(emailService);
   }
 
@@ -790,7 +794,7 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   private void stubDaaWithRecipients(
-      List<SimplifiedUser> researchers, List<SimplifiedUser> signingOfficials) {
+      List<SimplifiedUser> researchers, List<SimplifiedUser> signingOfficials) throws Exception {
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
     when(file.getFileName()).thenReturn("previousDaaName");
@@ -799,5 +803,6 @@ class DaaServiceTest extends AbstractTestHelper {
     initService();
     when(userService.getUsersByDaaId(any())).thenReturn(researchers);
     when(userService.findSOsByInstitutionId(any())).thenReturn(signingOfficials);
+    when(emailService.sendMessage(any(), any())).thenReturn(true);
   }
 }

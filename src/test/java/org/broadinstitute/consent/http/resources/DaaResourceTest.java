@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.NewDaaEmailResult;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -535,12 +536,14 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(any())).thenReturn(dac);
-    doNothing().when(daaService).sendNewDaaEmails(any(), any(), any());
+    NewDaaEmailResult result = new NewDaaEmailResult(3, 1);
+    when(daaService.sendNewDaaEmails(any(), any(), any())).thenReturn(result);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
         resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(result, response.getEntity());
     }
   }
 
