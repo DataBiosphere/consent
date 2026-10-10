@@ -21,9 +21,9 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       """
       WITH insterted_row AS (
         INSERT INTO email_entity
-          (entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date)
+          (entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date, send_id)
         VALUES
-          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendgridResponse, :sendgridStatus, NOW())
+          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendgridResponse, :sendgridStatus, NOW(), CAST(:sendId AS uuid))
         RETURNING *)
       SELECT * FROM insterted_row
       """)
