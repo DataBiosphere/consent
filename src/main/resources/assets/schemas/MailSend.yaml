@@ -33,9 +33,9 @@ properties:
         displayName:
           type: [string, 'null']
           description: The user's display name
-        delivered:
+        sent:
           type: boolean
-          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev.
+          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev. Acceptance is not delivery; nothing records whether the email reached the inbox.
 examples:
   - sendId: 1
     emailType: 34
@@ -46,7 +46,7 @@ examples:
     recipients:
       - userId: 3
         displayName: Ada Researcher
-        delivered: true
+        sent: true
       - userId: 4
         displayName: Grace Member
-        delivered: false
+        sent: false
