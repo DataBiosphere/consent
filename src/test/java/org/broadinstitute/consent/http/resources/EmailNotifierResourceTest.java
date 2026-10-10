@@ -3,14 +3,20 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
 import jakarta.ws.rs.core.Response;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.mail.EmailSendId;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -20,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
 class EmailNotifierResourceTest extends AbstractTestHelper {
@@ -63,6 +70,32 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
     try (Response response = resource.sendDailyMessages(duosUser)) {
       assertEquals(200, response.getStatus());
     }
+  }
+
+  @Test
+  void testSendDailyMessages_RunsEachJobUnderItsOwnSendId() throws InterruptedException {
+    Map<String, UUID> sendIds = new ConcurrentHashMap<>();
+    doAnswer(recordSendId(sendIds, "expiration"))
+        .when(dataAccessRequestService)
+        .sendExpirationNotices();
+    doAnswer(recordSendId(sendIds, "digest")).when(emailService).sendVoteDigestMessages();
+    doAnswer(recordSendId(sendIds, "newDataset"))
+        .when(emailService)
+        .sendNewDatasetInDUOSNotifications();
+
+    try (Response response = resource.sendDailyMessages(duosUser)) {
+      resource.executor.shutdown();
+      assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
+    }
+
+    assertEquals(3, Set.copyOf(sendIds.values()).size());
+  }
+
+  private static Answer<Void> recordSendId(Map<String, UUID> sendIds, String job) {
+    return invocation -> {
+      sendIds.put(job, EmailSendId.current());
+      return null;
+    };
   }
 
   @Test
