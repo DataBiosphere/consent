@@ -148,7 +148,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         LIMIT :limit
       ),
       named AS (
-        SELECT p.send_id, n.user_id, u.display_name, bool_or(n.date_sent IS NOT NULL) AS delivered,
+        SELECT p.send_id, n.user_id, u.display_name, bool_or(n.date_sent IS NOT NULL) AS sent,
           ROW_NUMBER() OVER (
             PARTITION BY p.send_id ORDER BY u.display_name, MIN(n.email_entity_id)
           ) AS position
@@ -162,7 +162,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         COALESCE(
           json_agg(
             json_build_object(
-              'userId', nm.user_id, 'displayName', nm.display_name, 'delivered', nm.delivered)
+              'userId', nm.user_id, 'displayName', nm.display_name, 'sent', nm.sent)
             ORDER BY nm.position
           ) FILTER (WHERE nm.send_id IS NOT NULL),
           '[]'

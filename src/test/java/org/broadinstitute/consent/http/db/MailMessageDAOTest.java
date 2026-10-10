@@ -706,9 +706,9 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFetchSendsByCreateDate_marks_undelivered_recipients() {
+  void testFetchSendsByCreateDate_marks_unsent_recipients() {
     User user = createUser();
-    MailMessage undelivered =
+    MailMessage unsent =
         mailMessageDAO.insert(
             new MailMessageInsert(
                 "DAR-1",
@@ -720,14 +720,14 @@ class MailMessageDAOTest extends DAOTestHelper {
                 null,
                 null,
                 null));
-    setCreateDate(undelivered.emailId(), Instant.now().minus(1, ChronoUnit.HOURS));
+    setCreateDate(unsent.emailId(), Instant.now().minus(1, ChronoUnit.HOURS));
 
     MailSend send = fetchSendsAroundNow().getFirst();
 
     assertEquals(
         List.of(new MailSendRecipient(user.getUserId(), user.getDisplayName(), false)),
         send.recipients());
-    assertEquals(undelivered.emailId(), send.sendId());
+    assertEquals(unsent.emailId(), send.sendId());
   }
 
   @Test
