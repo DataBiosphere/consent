@@ -722,6 +722,7 @@ class ElectionDAOTest extends DAOTestHelper {
             FIXED_DATE,
             "Extra, Extra!",
             null,
+            null,
             null));
 
     List<UserVoteReminder> userVoteReminders =

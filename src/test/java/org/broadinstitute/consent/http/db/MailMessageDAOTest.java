@@ -46,7 +46,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(now),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     assertNotNull(mail);
   }
 
@@ -67,7 +68,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                           Date.from(now),
                           randomAlphanumeric(10),
                           randomAlphanumeric(10),
-                          randomInt(200, 399)));
+                          randomInt(200, 399),
+                          null));
               assertNotNull(mail);
             });
   }
@@ -86,7 +88,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(now),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     assertNotNull(mail);
   }
 
@@ -108,7 +111,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(Instant.now()),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     assertNotNull(mail);
     assertEquals(entityReferenceId, mail.entityReferenceId());
   }
@@ -145,7 +149,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(Instant.now()),
             randomAlphanumeric(10),
             randomAlphanumeric(10),
-            randomInt(200, 399));
+            randomInt(200, 399),
+            null);
     assertThrows(
         UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
@@ -164,7 +169,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(now),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     assertNotNull(mail);
   }
 
@@ -181,7 +187,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 null,
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     assertNotNull(mail);
   }
 
@@ -199,7 +206,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(now),
                 randomAlphanumeric(10),
                 null,
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     assertNotNull(mail);
   }
 
@@ -217,6 +225,7 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(now),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
+                null,
                 null));
     assertNotNull(mail);
   }
@@ -237,7 +246,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(now),
             null,
             sendGridResponse,
-            sendGridStatus);
+            sendGridStatus,
+            null);
     assertThrows(
         UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
@@ -259,7 +269,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(now),
             null,
             sendGridResponse,
-            sendGridStatus);
+            sendGridStatus,
+            null);
     assertThrows(
         UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
@@ -282,7 +293,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(now),
             null,
             sendGridResponse,
-            sendGridStatus);
+            sendGridStatus,
+            null);
     assertThrows(
         UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
@@ -307,7 +319,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(historicalInstant),
                 emailText,
                 sendGridResponse,
-                sendGridStatus));
+                sendGridStatus,
+                null));
     assertNotNull(savedMessage.createDate());
     assertTrue(savedMessage.createDate().toInstant().isAfter(historicalInstant));
   }
@@ -328,7 +341,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                       Date.from(now),
                       randomAlphanumeric(10),
                       randomAlphanumeric(10),
-                      randomInt(200, 399)));
+                      randomInt(200, 399),
+                      null));
             });
 
     EnumSet.allOf(EmailType.class)
@@ -375,7 +389,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(now),
             randomAlphanumeric(10),
             randomAlphanumeric(10),
-            randomInt(200, 399)));
+            randomInt(200, 399),
+            null));
 
     List<MailMessage> mailMessageList =
         mailMessageDAO.fetchMessagesByUserId(user.getUserId(), 10, 0);
@@ -391,7 +406,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             Date.from(now),
             randomAlphanumeric(10),
             randomAlphanumeric(10),
-            randomInt(200, 399)));
+            randomInt(200, 399),
+            null));
     List<MailMessage> mailMessageList2 =
         mailMessageDAO.fetchMessagesByUserId(user.getUserId(), 10, 0);
     assertEquals(2, mailMessageList2.size());
@@ -516,6 +532,7 @@ class MailMessageDAOTest extends DAOTestHelper {
             null,
             randomAlphanumeric(10),
             null,
+            null,
             null));
 
     MailMessageSummary summary =
@@ -604,7 +621,8 @@ class MailMessageDAOTest extends DAOTestHelper {
             nowDate,
             emailText,
             sendGridResponse,
-            sendGridStatus);
+            sendGridStatus,
+            null);
 
     MailMessage savedMessage = mailMessageDAO.insert(unsavedMessage);
     assertNotNull(savedMessage);
@@ -634,7 +652,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 Date.from(instant),
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
-                randomInt(200, 399)));
+                randomInt(200, 399),
+                null));
     jdbi.useHandle(
         handle ->
             handle
