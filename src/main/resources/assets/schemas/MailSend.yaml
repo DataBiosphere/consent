@@ -1,0 +1,52 @@
+type: object
+description: One email sent to one or more recipients.
+properties:
+  sendId:
+    type: integer
+    description: Smallest email ID in the send. Stable for a given date range; a send split by the range's start or end gets a different ID in each part.
+  emailType:
+    type: integer
+    description: The type of email message that was sent
+  entityReferenceId:
+    type: [string, 'null']
+    description: Reference to the entity the email concerns, such as a DAR code or dataset identifier, depending on the email type
+  createDate:
+    type: integer
+    format: int64
+    description: When the send's earliest email was created, in epoch milliseconds
+  lastCreateDate:
+    type: integer
+    format: int64
+    description: When the send's latest email in the range was created, in epoch milliseconds
+  recipientCount:
+    type: integer
+    description: Number of distinct users the send went to, including any beyond the first 100 in recipients
+  recipients:
+    type: array
+    description: Up to 100 of the send's recipients, ordered by display name. recipientCount gives the full number.
+    items:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: ID of the user the email was sent to
+        displayName:
+          type: [string, 'null']
+          description: The user's display name
+        sent:
+          type: boolean
+          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev. Acceptance is not delivery; nothing records whether the email reached the inbox.
+examples:
+  - sendId: 1
+    emailType: 34
+    entityReferenceId: '2026-10-09'
+    createDate: 1791507680457
+    lastCreateDate: 1791507712004
+    recipientCount: 2
+    recipients:
+      - userId: 3
+        displayName: Ada Researcher
+        sent: true
+      - userId: 4
+        displayName: Grace Member
+        sent: false

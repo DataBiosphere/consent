@@ -18,7 +18,7 @@ import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.EmailType;
@@ -30,8 +30,8 @@ public class MailResource {
 
   private final EmailService emailService;
 
-  /** Summaries are listed many at once, so a page is capped rather than the whole log at once. */
-  static final int MAX_SUMMARY_LIMIT = 1000;
+  /** Summaries and sends are listed many at once, so their pages are capped. */
+  static final int MAX_PAGE_LIMIT = 1000;
 
   @Inject
   public MailResource(EmailService emailService) {
@@ -100,10 +100,7 @@ public class MailResource {
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
-    validateLimitAndOffset(limit, offset);
-    if (limit != null && limit > MAX_SUMMARY_LIMIT) {
-      throw new BadRequestException("limit value must be " + MAX_SUMMARY_LIMIT + " or less");
-    }
+    validatePageLimitAndOffset(limit, offset);
     try {
       return Response.ok()
           .entity(
@@ -112,6 +109,35 @@ public class MailResource {
           .build();
     } catch (ParseException pe) {
       return invalidDateResponse();
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @Path("/sends")
+  @RolesAllowed({ADMIN})
+  public Response getEmailSendsByDateRange(
+      @Auth DuosUser duosUser,
+      @QueryParam("start") String start,
+      @QueryParam("end") String end,
+      @DefaultValue("20") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    validatePageLimitAndOffset(limit, offset);
+    try {
+      return Response.ok()
+          .entity(
+              emailService.fetchEmailSendsByCreateDate(
+                  parseStartDate(start), parseEndDate(end), limit, offset))
+          .build();
+    } catch (ParseException pe) {
+      return invalidDateResponse();
+    }
+  }
+
+  private void validatePageLimitAndOffset(Integer limit, Integer offset) {
+    validateLimitAndOffset(limit, offset);
+    if (limit != null && limit > MAX_PAGE_LIMIT) {
+      throw new BadRequestException("limit value must be " + MAX_PAGE_LIMIT + " or less");
     }
   }
 
@@ -125,7 +151,7 @@ public class MailResource {
   private Date parseEndDate(String end) throws ParseException {
     return StringUtils.isNotBlank(end)
         ? parseDate(end)
-        : Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+        : Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
   }
 
   private Date parseDate(String date) throws ParseException {
