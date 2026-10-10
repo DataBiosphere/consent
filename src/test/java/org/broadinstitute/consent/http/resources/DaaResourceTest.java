@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
@@ -33,6 +34,7 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.NewDaaEmailResult;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -525,7 +527,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAMessage() throws Exception {
+  void testSendNewDAAMessage() {
     User user = new User();
     int dacId = randomInt(10, 20);
     Dac dac = new Dac();
@@ -534,12 +536,14 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(any())).thenReturn(dac);
-    doNothing().when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+    NewDaaEmailResult result = new NewDaaEmailResult(3, 0, 1);
+    when(daaService.sendNewDaaEmails(any(), any(), any())).thenReturn(result);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
         resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(result, response.getEntity());
     }
   }
 
@@ -559,7 +563,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAMessageDaaNotFound() throws Exception {
+  void testSendNewDAAMessageDaaNotFound() {
     User user = new User();
     int dacId = randomInt(10, 20);
     Dac dac = new Dac();
@@ -568,7 +572,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+    doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
@@ -578,7 +582,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAMessageEmailError() throws Exception {
+  void testSendNewDAAMessageEmailError() {
     User user = new User();
     int dacId = randomInt(10, 20);
     Dac dac = new Dac();
@@ -587,7 +591,9 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
+    doThrow(new ServerErrorException("Failed to send all 1 new DAA emails", 500))
+        .when(daaService)
+        .sendNewDaaEmails(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =

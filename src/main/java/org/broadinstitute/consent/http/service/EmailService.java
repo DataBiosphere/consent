@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
@@ -81,7 +82,7 @@ public class EmailService implements ConsentLogger {
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
   }
 
-  public void sendMessage(MailMessage mailMessage, Integer userId)
+  public EmailSendOutcome sendMessage(MailMessage mailMessage, Integer userId)
       throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
@@ -100,8 +101,8 @@ public class EmailService implements ConsentLogger {
     }
     // Checks that the user has not disabled email before sending
     Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
-    Instant now = Instant.now();
-    Date dateSent = (response != null && response.getStatusCode() < 400) ? Date.from(now) : null;
+    EmailSendOutcome outcome = EmailSendOutcome.of(response);
+    Date dateSent = outcome == EmailSendOutcome.SENT ? Date.from(Instant.now()) : null;
     String sendgridResponse = response != null ? response.getBody() : null;
     Integer sendgridStatus = response != null ? response.getStatusCode() : null;
     MailMessageInsert mailMessageInsert =
@@ -114,7 +115,12 @@ public class EmailService implements ConsentLogger {
             content,
             sendgridResponse,
             sendgridStatus);
-    emailDAO.insert(mailMessageInsert);
+    try {
+      emailDAO.insert(mailMessageInsert);
+    } catch (Exception e) {
+      logException("Email to user " + userId + " was sent but not recorded:", e);
+    }
+    return outcome;
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(

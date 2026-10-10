@@ -1,12 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
@@ -15,21 +13,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
+import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.NewDaaEmailResult;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -157,59 +161,74 @@ public class DaaService implements ConsentLogger {
     return daaId;
   }
 
-  public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName)
-      throws Exception {
-    try {
-      DataAccessAgreement daa = findById(daaId);
-      if (daa != null) {
-        String previousDaaName = daa.getFile().getFileName();
-        List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
-        List<SimplifiedUser> signingOfficials =
-            researchers.stream()
-                .flatMap(
-                    researcher ->
-                        userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
-                .distinct()
-                .toList();
-        User toUser = new User();
+  public NewDaaEmailResult sendNewDaaEmails(Integer daaId, String dacName, String newDaaName) {
+    FileStorageObject file = findById(daaId).getFile();
+    if (file == null) {
+      throw new ServerErrorException("DAA " + daaId + " has no file", 500);
+    }
+    String previousDaaName = file.getFileName();
+    List<SimplifiedUser> researchers =
+        userService.getUsersByDaaId(daaId).stream().distinct().toList();
+    List<SimplifiedUser> signingOfficials =
+        researchers.stream()
+            .map(SimplifiedUser::getInstitutionId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .flatMap(institutionId -> userService.findSOsByInstitutionId(institutionId).stream())
+            .distinct()
+            .toList();
+    Map<EmailSendOutcome, Integer> outcomes = new EnumMap<>(EmailSendOutcome.class);
+    sendToEach(
+        researchers,
+        recipient ->
+            new NewDAAUploadResearcherMessage(recipient, dacName, previousDaaName, newDaaName),
+        outcomes);
+    sendToEach(
+        signingOfficials,
+        recipient -> new NewDAAUploadSOMessage(recipient, dacName, previousDaaName, newDaaName),
+        outcomes);
+    NewDaaEmailResult result =
+        new NewDaaEmailResult(
+            outcomes.getOrDefault(EmailSendOutcome.SENT, 0),
+            outcomes.getOrDefault(EmailSendOutcome.SKIPPED, 0),
+            outcomes.getOrDefault(EmailSendOutcome.FAILED, 0));
+    if (result.sent() == 0 && result.failed() > 0) {
+      throw new ServerErrorException(
+          "Failed to send all " + result.failed() + " new DAA emails", 500);
+    }
+    return result;
+  }
 
-        for (SimplifiedUser researcher : researchers) {
-          toUser.setEmail(researcher.getEmail());
-          toUser.setDisplayName(researcher.getDisplayName());
-          sendNewDAAUploadResearcherMessage(
-              toUser, dacName, previousDaaName, newDaaName, user.getUserId());
-        }
-        for (SimplifiedUser signingOfficial : signingOfficials) {
-          toUser.setEmail(signingOfficial.getEmail());
-          toUser.setDisplayName(signingOfficial.getDisplayName());
-          sendNewDAAUploadSOMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
-        }
-      }
-    } catch (Exception e) {
-      logException(e);
-      throw (e);
+  private void sendToEach(
+      List<SimplifiedUser> recipients,
+      Function<User, MailMessage> messageForRecipient,
+      Map<EmailSendOutcome, Integer> outcomes) {
+    for (SimplifiedUser recipient : recipients) {
+      outcomes.merge(sendNewDaaEmail(recipient, messageForRecipient), 1, Integer::sum);
     }
   }
 
-  @VisibleForTesting
-  protected void sendNewDAAUploadResearcherMessage(
-      User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
-      throws TemplateException, IOException {
-    emailService.sendMessage(
-        new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName),
-        userId);
+  private EmailSendOutcome sendNewDaaEmail(
+      SimplifiedUser recipient, Function<User, MailMessage> messageForRecipient) {
+    try {
+      EmailSendOutcome outcome =
+          emailService.sendMessage(
+              messageForRecipient.apply(toRecipient(recipient)), recipient.getUserId());
+      if (outcome == EmailSendOutcome.FAILED) {
+        logWarn("SendGrid rejected the new DAA email to user " + recipient.getUserId());
+      }
+      return outcome;
+    } catch (Exception e) {
+      logWarn("Error sending new DAA email to user " + recipient.getUserId(), e);
+      return EmailSendOutcome.FAILED;
+    }
   }
 
-  @VisibleForTesting
-  protected void sendNewDAAUploadSOMessage(
-      User signingOfficial,
-      String dacName,
-      String previousDaaName,
-      String newDaaName,
-      Integer userId)
-      throws TemplateException, IOException {
-    emailService.sendMessage(
-        new NewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName), userId);
+  private static User toRecipient(SimplifiedUser simplifiedUser) {
+    User recipient = new User();
+    recipient.setEmail(simplifiedUser.getEmail());
+    recipient.setDisplayName(simplifiedUser.getDisplayName());
+    return recipient;
   }
 
   public InputStream findFileById(Integer daaId) {
