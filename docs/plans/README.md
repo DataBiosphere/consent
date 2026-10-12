@@ -8,6 +8,9 @@ Use this directory for documents that describe a proposed path forward, migratio
 
 | Plan | Purpose |
 | --- | --- |
+| `data-showcase-delivery-plan.md` | Plan for Data Showcase ([DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904)) across consent and duos-ui: showcases as typed code entries authored by PR (like `libraryVersions.ts`), a public catalog lookup in consent, and a six-section MVP. |
+| `data-showcase-post-mvp-plan.md` | Detailed post-MVP epics (E6–E10) for the Data Showcase plan (DT-3904): ranked discovery and charts, subscriptions, RADAR automation, archive notices, and publications/impact. Each is re-planned before it starts. |
+| `data-showcase-artifact-review.md` | Companion to the Data Showcase plan (DT-3904): what the supplied design artifact actually implements, its structure, accessibility gaps, and how each finding maps to plan stories. |
 | `dar-metrics-analytics-plan.md` | Plan for reporting DAR metrics (DAC decision outcome, source and turnaround, SO approval turnaround, volume, expiration) from data Consent already persists, and surfacing them in an internal admin analytics dashboard in duos-ui. Records which of the thirteen requested metrics are feasible and what renewal depends on. |
 | `data-use-primary-consistency-plan.md` | Plan for aligning dataset primary Data Use registration rules with automated matching while handling legacy records safely. |
 | `vodar-plan.md` | Plan for VODAR (View Only Data Access Requests) across duos-ui and consent: a constrained DAR for viewing data without analysis or publication, RADAR auto-approved when the DAC opts in and otherwise sent to normal DAC review. |
