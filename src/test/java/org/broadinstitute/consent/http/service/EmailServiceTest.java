@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
 import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -231,7 +232,9 @@ class EmailServiceTest extends AbstractTestHelper {
     when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
     when(emailDAO.insert(any())).thenThrow(new IllegalStateException("db down"));
 
-    assertThrows(IllegalStateException.class, () -> service.sendMessage(message, 1234));
+    EmailNotRecordedException thrown =
+        assertThrows(EmailNotRecordedException.class, () -> service.sendMessage(message, 1234));
+    assertEquals(EmailSendOutcome.SENT, thrown.getOutcome());
   }
 
   @Test

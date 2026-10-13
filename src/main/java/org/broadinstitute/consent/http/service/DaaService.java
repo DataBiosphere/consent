@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
 import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
@@ -220,8 +221,11 @@ public class DaaService implements ConsentLogger {
         logWarn("SendGrid rejected the new DAA email to user " + recipient.getUserId());
       }
       return outcome;
+    } catch (EmailNotRecordedException e) {
+      logException("New DAA email to user " + recipient.getUserId() + " was not recorded:", e);
+      return e.getOutcome();
     } catch (Exception e) {
-      logWarn("Error sending new DAA email to user " + recipient.getUserId(), e);
+      logException("Error sending new DAA email to user " + recipient.getUserId() + ":", e);
       return EmailSendOutcome.FAILED;
     }
   }

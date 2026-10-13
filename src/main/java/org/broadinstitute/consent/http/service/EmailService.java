@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
 import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -115,7 +116,11 @@ public class EmailService implements ConsentLogger {
             content,
             sendgridResponse,
             sendgridStatus);
-    emailDAO.insert(mailMessageInsert);
+    try {
+      emailDAO.insert(mailMessageInsert);
+    } catch (RuntimeException e) {
+      throw new EmailNotRecordedException(outcome, e);
+    }
     return outcome;
   }
 

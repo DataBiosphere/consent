@@ -31,6 +31,7 @@ import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
 import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
@@ -279,6 +280,18 @@ class DaaServiceTest extends AbstractTestHelper {
     assertEquals(new NewDaaEmailResult(2, 0, 1), result);
     verify(emailService).sendMessage(any(NewDAAUploadResearcherMessage.class), eq(102));
     verify(emailService).sendMessage(any(NewDAAUploadSOMessage.class), eq(201));
+  }
+
+  @Test
+  void testSendNewDaaEmailsCountsAnUnrecordedSendByItsOutcome() throws Exception {
+    stubDaaWithRecipients(List.of(simplifiedUser(101, 1)), List.of(simplifiedUser(201, 1)));
+    when(emailService.sendMessage(any(NewDAAUploadResearcherMessage.class), eq(101)))
+        .thenThrow(
+            new EmailNotRecordedException(EmailSendOutcome.SENT, new IllegalStateException("db")));
+
+    NewDaaEmailResult result = service.sendNewDaaEmails(1, "dacName", "newDaaName");
+
+    assertEquals(new NewDaaEmailResult(2, 0, 0), result);
   }
 
   @Test
