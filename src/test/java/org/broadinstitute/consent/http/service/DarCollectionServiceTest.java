@@ -2606,6 +2606,38 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verifyNoInteractions(emailService);
   }
 
+  // A closeout committed after the progress report and before its post-commit processing
+  @Test
+  void testSendNewDARCollectionMessage_CloseoutCommittedAfterSubmission() throws Exception {
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(1);
+    DataAccessRequest progressReport = new DataAccessRequest();
+    progressReport.setId(1);
+    progressReport.setParentId(100);
+    progressReport.setReferenceId(UUID.randomUUID().toString());
+    progressReport.setSubmissionDate(new Timestamp(1000));
+    progressReport.setDatasetIds(List.of(1));
+    progressReport.setData(new DataAccessRequestData());
+    DataAccessRequest closeout = new DataAccessRequest();
+    closeout.setId(2);
+    closeout.setParentId(progressReport.getId());
+    closeout.setReferenceId(UUID.randomUUID().toString());
+    closeout.setSubmissionDate(new Timestamp(2000));
+    closeout.setDatasetIds(List.of(1, 2));
+    DataAccessRequestData closeoutData = new DataAccessRequestData();
+    closeoutData.setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    closeout.setData(closeoutData);
+    collection.addDar(progressReport);
+    collection.addDar(closeout);
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
+
+    service.createElectionsForNewDarCollection(1);
+    service.sendNewDARCollectionMessage(1);
+
+    verify(datasetDAO, never()).findDatasetsByIdList(anyList());
+    verifyNoInteractions(dacAutomationRuleService, emailService);
+  }
+
   // Only manual DACs, no automation rules
   @Test
   void testSendNewDARCollectionMessage_ManualDACsOnly() throws Exception {

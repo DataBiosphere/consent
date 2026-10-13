@@ -1107,6 +1107,13 @@ public class DarCollectionService implements ConsentLogger {
       logWarn("Could not find DAR collection for collection id: " + collectionId);
       return null;
     }
+    // Callers run after the submission commits, so a closeout may have landed in between. It would
+    // then be the most recent DAR, and nothing may be opened or announced on a closed collection.
+    if (darCollection.getDars().values().stream()
+        .anyMatch(DataAccessRequest::getIsCloseoutProgressReport)) {
+      logWarn("Skipping new DAR processing for closed out collection id: " + collectionId);
+      return null;
+    }
 
     // Get the most recent DAR and its associated users
     DataAccessRequest latestDar = darCollection.getMostRecentDar();
