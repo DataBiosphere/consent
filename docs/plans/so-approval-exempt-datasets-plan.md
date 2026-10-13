@@ -51,14 +51,14 @@ SOs still get the informational "DAR submitted" email (`notifySigningOfficialsOf
 | 1 | consent | Store the exemption flag on the dataset | ~300 lines | — |
 | 2 | consent | Leave exempt datasets out of the SO decision | ~250 lines | 1 |
 | 3 | consent | `NOT_REQUIRED` value in the search index, and a reindex after DAC delete | ~150 lines | 1 |
-| 4 | consent | Endpoint for chairs to set the flag | ~300 lines | 2 and 3 deployed; decision 2 confirmed |
+| 4 | consent | Endpoint for chairs to set the flag | ~300 lines | 2, 3, 6, and 7 deployed; decision 2 confirmed |
 | 5 | duos-ui | Exemption toggle on the DAC profile page | ~350 lines | 4 deployed |
 | 6 | duos-ui | DAR form hint and SO queue test | ~100 lines | 1 deployed |
 | 7 | duos-ui | Data Library chip, filter, and banner | ~150 lines | 3 deployed |
 
 Sizes include tests. Tasks 2 and 3 can go in any order after Task 1. Tasks 6 and 7 are small and can share one PR.
 
-**The endpoint (Task 4) is the only way to set the flag, so it ships after everything that reads the flag.** Until Task 4 deploys, no dataset can be exempt. When it deploys, the SO decision (Task 2) and the search index (Task 3) already handle exempt datasets. A chair never sees a dataset marked "Exempt" while new DARs on it still go to the SO queue, and no catch-up reindex is needed.
+**The endpoint (Task 4) is the only way to set the flag, so it ships after everything that reads the flag.** Until Task 4 deploys, no dataset can be exempt. When it deploys, every part that reads the flag already handles exempt datasets: the SO decision (Task 2), the search index (Task 3), the DAR form hint (Task 6), and the Data Library (Task 7). A chair never sees a dataset marked "Exempt" while new DARs on it still go to the SO queue, and no catch-up reindex is needed.
 
 ## Tasks
 
@@ -239,10 +239,11 @@ The hint today says "…must approve you under **each** data access agreement ab
 
 ## Deploy order
 
-1. Task 1, then Tasks 2 and 3 (consent). Task 6 can deploy any time after Task 1. Task 7 can deploy any time after Task 3.
-2. Confirm decision 2 with product.
-3. Task 4 (consent). This is the first change that lets a dataset become exempt.
-4. Task 5 (duos-ui).
+1. Task 1, then Tasks 2 and 3 (consent).
+2. Tasks 6 and 7 (duos-ui). Task 6 needs only Task 1. Task 7 needs Task 3.
+3. Confirm decision 2 with product.
+4. Task 4 (consent). This is the first change that lets a dataset become exempt.
+5. Task 5 (duos-ui).
 
 The new JSON field and enum value are additive, so the current UI works against the new backend at every step.
 
