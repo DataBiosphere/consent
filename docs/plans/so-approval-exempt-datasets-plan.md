@@ -30,6 +30,8 @@ Note: the ticket says that the requester's institution drives SO approval. The c
 
 The stored flag stays the single gate, so the SO queue and the DAC workflow need no change.
 
+SOs still get the informational "DAR submitted" email (`notifySigningOfficialsOfDARSubmission`) for a DAR on exempt datasets. That email goes out for every DAR today, including DARs that need no SO approval, and this plan does not change it. Only the "approval needed" email (`notifySpecificSigningOfficialOfApprovalNeeded`) depends on the flag.
+
 ## Decisions
 
 | # | Question | Decision | Source |
@@ -48,7 +50,7 @@ The stored flag stays the single gate, so the SO queue and the DAC workflow need
 |---|---|---|---|---|
 | 1 | consent | Store the exemption flag on the dataset | ~300 lines | — |
 | 2 | consent | Leave exempt datasets out of the SO decision | ~250 lines | 1 |
-| 3 | consent | `NOT_REQUIRED` value in the search index | ~80 lines | 1 |
+| 3 | consent | `NOT_REQUIRED` value in the search index, and a reindex after DAC delete | ~150 lines | 1 |
 | 4 | consent | Endpoint for chairs to set the flag | ~300 lines | 2 and 3 deployed; decision 2 confirmed |
 | 5 | duos-ui | Exemption toggle on the DAC profile page | ~350 lines | 4 deployed |
 | 6 | duos-ui | DAR form hint and SO queue test | ~100 lines | 1 deployed |
@@ -56,7 +58,7 @@ The stored flag stays the single gate, so the SO queue and the DAC workflow need
 
 Sizes include tests. Tasks 2 and 3 can go in any order after Task 1. Tasks 6 and 7 are small and can share one PR.
 
-**The endpoint (Task 4) is the only way to set the flag, so it ships after everything that reads the flag.** Until Task 4 deploys, no dataset can be exempt. When it deploys, the SO decision (Task 2) and the search index (Task 3) already handle exempt datasets. A chair never sees "Not required" while new DARs still go to the SO queue, and no catch-up reindex is needed.
+**The endpoint (Task 4) is the only way to set the flag, so it ships after everything that reads the flag.** Until Task 4 deploys, no dataset can be exempt. When it deploys, the SO decision (Task 2) and the search index (Task 3) already handle exempt datasets. A chair never sees a dataset marked "Exempt" while new DARs on it still go to the SO queue, and no catch-up reindex is needed.
 
 ## Tasks
 
@@ -140,11 +142,13 @@ Existing tests keep passing with no change, because an unstubbed `findSoApproval
   - `instantApprovalEligible`: no change. It still comes from the DAC rules, and it stays unset when the rules could not be resolved. Exempt datasets still go through RADAR (decision 1), so they keep this value.
   - Datasets with no DAC keep `PRE_AUTHORIZED`. Such a dataset cannot be exempt, because Task 1 resets the flag with the DAC.
 - Add the value to the `soApprovalModel` enum in `DatasetSearch.yaml`.
+- Reindex the datasets of a deleted DAC. Task 1 resets the flag in the database when a DAC is deleted, but `DacService.deleteDac` does not reindex today, so an exempt dataset would keep `NOT_REQUIRED` in the Data Library. Copy the pattern of the externalize flow (`DacService`, around L326): read the DAC's dataset ids before the delete, and call `indexDatasets` for them after the delete succeeds. Log a failed reindex; do not fail the delete. This also fixes the other DAC fields that go stale in the index after a delete today.
 
 **Tests:**
 - An exempt dataset maps to `NOT_REQUIRED`, also when its DAC has the SO rule.
 - An exempt dataset has the same `instantApprovalEligible` value as a non-exempt dataset with the same DAC rules and data use.
 - When the rules cannot be resolved, an exempt dataset still maps to `NOT_REQUIRED`, and `instantApprovalEligible` stays unset.
+- `deleteDac` reindexes the DAC's datasets after the delete, and a failed reindex does not fail the delete.
 
 No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, and Task 4 reindexes each dataset when a chair changes its flag. For a reindex that fails at that time, see Task 4.
 
@@ -156,7 +160,7 @@ No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, a
 - New request model `DatasetSoApprovalExemption` (copy `DatasetApproval`). Return 400 if the body is empty or `exempt` is missing.
 - `DatasetService.updateSoApprovalExemption(dataset, user, exempt)`:
   1. Update the row with the DAC id from the request.
-  2. If no row changed, an admin moved the dataset to another DAC after the resource checked it. Throw `ConsentConflictException` (409) and do not reindex.
+  2. If no row changed, the dataset moved to another DAC after the resource checked it. An admin or a chair can move a dataset (for example, through `PUT /api/dataset/v3/{datasetId}`). Throw `ConsentConflictException` (409) and do not reindex.
   3. Otherwise, reindex the dataset and return the fresh dataset. Use `elasticSearchService.synchronizeDatasetInESIndex(dataset, true)`, not the `indexDatasets` call that `approveDataset` makes. `synchronizeDatasetInESIndex` closes the response and logs a non-success status as well as an `IOException`. A failed reindex does not fail the request, because the database update is already done.
 - OpenAPI: a new path file, the request schema, and the 409 response.
 
@@ -174,8 +178,9 @@ A failed reindex leaves only the Data Library chip and filter stale. The SO deci
 - Types: `Dataset.soApprovalExempt?: boolean`. Add `'NOT_REQUIRED'` to `DatasetTerm.soApprovalModel`.
 - `DAC.updateSoApprovalExemption(dacId, datasetId, exempt)` in `src/libs/ajax/DAC.ts`.
 - New component `DatasetSoExemptionCell`:
-  - A chair sees a switch labeled "Required" or "Not required", with a tooltip that explains the effect and says that it applies to new requests only.
-  - Everyone else sees the text only.
+  - The cell shows the exemption state, not the outcome of a DAR. A non-exempt dataset does not always need SO approval: the normal check can still skip it (no DAC rule, and the researcher is pre-authorized). So the labels are "Exempt" and "Not exempt", never "Required" or "Not required".
+  - A chair sees a switch labeled "SO approval exempt", with the state next to it. A tooltip explains the effect and says that it applies to new requests only.
+  - Everyone else sees the text "Exempt" or "Not exempt".
   - If the save fails, show an error and leave the switch in its old position. On a 409, also tell the chair to reload the page, because the dataset moved to another DAC.
 - `DacProfile.tsx`: add an "SO Approval" column to the datasets grid. This needs some setup in the page:
   - a chair check: `user.roles` has `Chairperson` for this `dacId`. Do not include admins, because the backend allows chairs only.
@@ -183,7 +188,7 @@ A failed reindex leaves only the Data Library chip and filter stale. The SO deci
   - the full `dataset` object on each grid row.
   - the column list as a `useMemo`.
 
-**Tests:** the cell (read-only text, a toggle that saves, a failed save that reverts, the 409 message) and the page (the column is present, a chair can edit, a member cannot).
+**Tests:** the cell (the "Exempt" and "Not exempt" text, a toggle that saves, a failed save that reverts, the 409 message) and the page (the column is present, a chair can edit, a member cannot).
 
 ### Task 6: DAR form hint and SO queue test (duos-ui)
 
@@ -192,14 +197,19 @@ A failed reindex leaves only the Data Library chip and filter stale. The SO deci
 | List | Use | Change |
 |---|---|---|
 | The required DAA ids (`getDisplayedDaaIds`, sent through `onDaaIdsChange`) | The DAA table, and the DAAs that the DAR acknowledges | **None.** It keeps every dataset, exempt or not. The backend rejects a DAR that does not acknowledge every DAA. |
-| `missingDaaIds` | The hint "Your Institutional Signing Official must approve you…" | Compute it from the non-exempt datasets only. |
+| `missingDaaIds` | The hint about SO approval | Compute it from the non-exempt datasets only. |
 
 Do not put the exemption filter inside `getDisplayedDaaIds`. Filter the datasets only where `missingDaaIds` is computed.
 
-`SigningOfficialDarApprovals.spec.tsx`: add a test that a collection with `requiresSOApproval: false` does not show. The page already filters on that flag. This test documents the acceptance criterion and guards it.
+The hint today says "…must approve you under **each** data access agreement above…". With a mixed selection, the table also lists DAAs that only exempt datasets need, so "each … above" is no longer true. Change the hint to name the DAAs in `missingDaaIds`: "Your Institutional Signing Official must approve you under these data access agreements before a data access committee can review your request: <file names>."
+
+`SigningOfficialDarApprovals.spec.tsx`: the page keeps a collection when `requiresSOApproval` is true **or** its actions include `Review_Progress_Report` (closeout review). Add two tests, and do not change the filter:
+- A collection with `requiresSOApproval: false` and no `Review_Progress_Report` action does not show. This documents the acceptance criterion.
+- A collection with `requiresSOApproval: false` and the `Review_Progress_Report` action still shows. This guards the closeout review workflow.
 
 **Tests:**
 - The hint is hidden when only exempt datasets need the DAA, and shown when a non-exempt dataset also needs it.
+- With a mixed selection, the hint names only the DAAs that non-exempt datasets need.
 - `onDaaIdsChange` still receives the DAAs of exempt datasets.
 
 ### Task 7: Data Library chip, filter, and banner (duos-ui)
