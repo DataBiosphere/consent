@@ -157,6 +157,15 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         OFFSET :offset
         LIMIT :limit
       ),
+      recorded AS (
+        SELECT g.send_row_id AS send_id,
+          array_agg(DISTINCT ds.alias ORDER BY ds.alias) AS dataset_aliases
+        FROM grouped g
+        JOIN page p ON p.send_id = g.send_row_id
+        CROSS JOIN unnest(g.dataset_ids) AS recorded_ids(dataset_id)
+        JOIN dataset ds ON ds.dataset_id = recorded_ids.dataset_id
+        GROUP BY g.send_row_id
+      ),
       named AS (
         SELECT p.send_id, n.user_id, u.display_name, bool_or(n.date_sent IS NOT NULL) AS sent,
           ROW_NUMBER() OVER (
@@ -200,13 +209,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
           THEN s.entity_reference_id
           ELSE el.reference_id END
       LEFT JOIN dar_collection by_dar ON by_dar.collection_id = dar.collection_id
-      LEFT JOIN LATERAL (
-        SELECT array_agg(DISTINCT ds.alias ORDER BY ds.alias) AS dataset_aliases
-        FROM grouped g
-        CROSS JOIN unnest(g.dataset_ids) AS recorded_ids(dataset_id)
-        JOIN dataset ds ON ds.dataset_id = recorded_ids.dataset_id
-        WHERE g.send_row_id = s.send_id
-      ) recorded ON s.datasets_recorded
+      LEFT JOIN recorded ON recorded.send_id = s.send_id
       LEFT JOIN LATERAL (
         SELECT array_agg(DISTINCT alias ORDER BY alias) AS dataset_aliases
         FROM (
