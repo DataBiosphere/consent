@@ -58,8 +58,6 @@ paths:
     $ref: './paths/mailByUserId.yaml'
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
-  /api/mail/summary:
-    $ref: './paths/mailSummaryByRange.yaml'
   /api/mail/sends:
     $ref: './paths/mailSendsByRange.yaml'
   /api/daa:

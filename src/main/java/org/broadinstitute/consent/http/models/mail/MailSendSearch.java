@@ -20,7 +20,7 @@ public record MailSendSearch(String pattern, Long alias, List<Integer> types) {
 
   public static final MailSendSearch NONE = new MailSendSearch(null, null, List.of());
 
-  private static final Pattern DUOS_ID = Pattern.compile("(?i)^DUOS-0*([0-9]{1,18})$");
+  private static final Pattern DUOS_ID = Pattern.compile("(?i)^DUOS-0*(\\d{1,18})$");
 
   /**
    * Matches {@code text} anywhere, taking it literally rather than as LIKE wildcards. The types are
