@@ -76,11 +76,11 @@ The only reliable draft marker is `submission_date IS NULL`: a draft can carry a
 - Preconditions (closeouts go through the same endpoint and share the first four):
   - The caller owns the parent.
   - The parent is not a draft.
-  - The parent has no open DataAccess elections. **This check is not serialized.**
-    `postProgressReport` runs it before the transaction, and under the collection lock
-    `insertProgressReport` re-checks only `hasSubmittedCloseout`. So a closeout can commit while a
-    DataAccess election is still open, and later votes on that election get 409. This is a known
-    gap in the code; don't rely on "no open elections" holding for a closed-out collection.
+  - The parent has no open DataAccess elections. `postProgressReport` checks this before
+    uploading documents, and `insertProgressReport` checks it again after `lockCollection`,
+    alongside `hasSubmittedCloseout`. Every election-opening path takes the same lock, so a
+    closeout can't commit while one of the parent's DataAccess elections is open. RP elections
+    don't block.
   - The collection has no submitted closeout.
   - Ordinary reports only: the datasets are a subset of the parent's datasets and are currently
     approved (`findDatasetApprovalsByDar`). A closeout's datasets are set by the service instead.
@@ -195,9 +195,8 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
 ## Concurrency
 
 Closeout submission, election creation/cancellation, and vote/rationale updates serialize on the
-collection row. Only the checks re-run under the lock are serialized; the progress-report
-"no open DataAccess elections" precondition is not (see
-[Progress report](#3-progress-report-renewal-optional)).
+collection row. Only the checks re-run under the lock are serialized, so a new precondition
+that must hold at commit belongs after `lockCollection`, not only in the resource.
 
 1. Open a transaction (`dataAccessRequestDAO.inTransaction(...)` or
    `DataAccessRequestServiceDAO.inTransaction`).
