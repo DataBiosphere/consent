@@ -54,16 +54,21 @@ duos-ui repeats the same rule in four places. Each one takes the first DAA whose
 | # | Repo | Task | Size (est.) | Depends on |
 |---|---|---|---|---|
 | 1 | consent | Store the override DAA on the dataset | ~300 lines | — |
-| 2 | consent | Resolve the effective DAA in `DaaDAO` | ~250 lines | 1 |
+| 2 | consent | Resolve the effective DAA in `DaaDAO` | ~300 lines | 1 |
 | 3 | consent | Upload a DAA without making it the DAC default | ~150 lines | — |
 | 4 | consent | Show override DAAs to SOs (`overrideDatasetIds`, dashboard counts) | ~200 lines | 1 |
-| 5 | consent | Endpoints for chairs to set and clear the override | ~350 lines | 1, 2 |
+| 5 | consent | Endpoints for chairs to set and clear the override | ~350 lines | 2 and 4; **6 and 9 deployed**; decision 7 confirmed |
 | 6 | duos-ui | Use the effective DAA in the DAR and progress report forms | ~350 lines | 1 deployed |
-| 7 | duos-ui | DAA picker on the DAC profile page | ~350 lines | 5 deployed, **6 deployed** |
+| 7 | duos-ui | DAA picker on the DAC profile page | ~350 lines | 5 deployed |
 | 8 | duos-ui | Upload a new DAA from the picker | ~150 lines | 3 deployed, 7 |
 | 9 | duos-ui | Show override-only DAAs on the SO DAA assignment page | ~100 lines | 4 deployed |
 
 Sizes include tests. Tasks 1 and 3 can start at once.
+
+**The endpoints (Task 5) are the only way to write an override, so they ship after everything that reads overrides.** The API, not the picker, is the gate: a client can call the API without the picker. Until Task 5 deploys, no dataset can have an override. When it deploys, these parts already handle overrides:
+- the server queries (Task 2),
+- the DAR and progress report forms (Task 6),
+- the SO DAA assignment page (Task 9), so that SOs can pre-authorize researchers for an override-only DAA.
 
 ## Tasks
 
@@ -75,7 +80,12 @@ Add the column and carry it through the model and the DAO layer.
 - `Dataset.java`: add `overrideDaaId`. `DatasetMapper` and `DatasetReducer`: map the column (follow the `dac_approval` pattern).
 - `DatasetDAO`:
   - Add `override_daa_id` to the six dataset select lists that already select `d.dac_approval`.
-  - Add `updateDatasetDaaOverride(daaId, updateDate, updateUserId, datasetId)`. A `null` `daaId` clears the override.
+  - Add `updateDatasetDaaOverride(daaId, updateDate, updateUserId, datasetId, dacId)`. A `null` `daaId` clears the override. It returns the number of updated rows. Its `WHERE` clause also checks the DAC, so that a write from a stale DAC changes nothing (see Task 5):
+
+    ```sql
+    WHERE dataset_id = :datasetId AND dac_id = :dacId
+    ```
+
 - Clear the override when the DAC changes (decision 4). This touches `DatasetDAO.updateDatasetDacId` and `updateDatasetByDatasetId`, and the two dataset `UPDATE` statements in `DacServiceDAO` (DAC delete and externalize). In the two `DatasetDAO` methods, clear the override only when the DAC id really changes:
 
   ```sql
@@ -86,7 +96,13 @@ Add the column and carry it through the model and the DAO layer.
 
   PostgreSQL reads the old row in every `SET` expression, so the `CASE` sees the old `dac_id`.
 
-**Tests:** new datasets have no override; the override can be set and cleared; the override appears in `findDatasetById`, `findDatasetsByIdList`, and `findDatasetsAssociatedWithDac`; a DAC change clears it; an unchanged DAC keeps it; DAC delete and externalize clear it.
+**Tests:**
+- New datasets have no override.
+- The override can be set and cleared.
+- An update with the wrong DAC id changes no row and returns 0, both to set and to clear.
+- The override appears in `findDatasetById`, `findDatasetsByIdList`, and `findDatasetsAssociatedWithDac`.
+- A DAC change clears the override. An unchanged DAC keeps it.
+- DAC delete and externalize clear the override.
 
 ### Task 2: Resolve the effective DAA in `DaaDAO` (consent)
 
@@ -105,7 +121,7 @@ WHERE d.dataset_id IN (<datasetIds>)
 
 This task changes behavior for DAR validation, the SO pre-authorization check, and the DAR snapshots. No dataset has an override until Task 5 ships, so the change is safe to deploy early. Reviewers should still read it as a behavior change.
 
-**Tests:** for each query, cover these cases:
+**Tests.** First, for each query, cover these cases:
 - A dataset with no override gets the DAC default.
 - A dataset with an override gets the override.
 - A mix of the two gets both DAAs.
@@ -113,6 +129,15 @@ This task changes behavior for DAR validation, the SO pre-authorization check, a
 - A dataset with neither gets no DAA.
 
 The existing `DaaDAOTest` tests must pass unchanged.
+
+Then cover each workflow that reads these queries. consent has no integration test that submits a DAR, so use DAO tests (`DAOTestHelper`, real SQL) that call the same queries as the service:
+
+| Workflow | Service code | Query | Test |
+|---|---|---|---|
+| DAA acknowledgment | `hasAcknowledgedRequiredDaas` | `findDaaIdsByDatasetIds` | For a dataset with an override, the required set is `{override}`, not `{default}`. |
+| SO pre-authorization | `isUserPreAuthorizedForAllDaas` | `findDaaIdsByDatasetIds` | A library card with only the default DAA does not cover a dataset with an override. A card with the override DAA does. |
+| DAR snapshot | `captureDatasetDaaSnapshots` | `findCurrentDaaMappingsByDatasetIds`, then `insertDarDatasetDaaSnapshots` | The snapshot records the override DAA. |
+| Snapshot stability | — | `findDatasetDaaSnapshotsByReferenceId` | After a snapshot is captured, set, change, and clear the override. The snapshot does not change. |
 
 ### Task 3: Upload a DAA without making it the DAC default (consent)
 
@@ -141,16 +166,19 @@ The existing `DaaDAOTest` tests must pass unchanged.
 Implementation:
 - `DacResource`: copy the pattern of `approveDataset` (`PUT /api/dac/{dacId}/dataset/{datasetId}`). Move its two checks into a private helper, `findDatasetForChair`, and use the helper in all three endpoints. The checks are "the dataset belongs to this DAC" and "the user is a chair of this DAC". Both return 404, as today.
 - `DatasetService.updateDaaOverride(dataset, user, daaId)`:
-  - For a non-null `daaId`, return 404 if the DAA does not exist.
-  - Return 400 if the DAA does not belong to the dataset's DAC (decision 1).
-  - Then update the row and return the fresh dataset.
-  - No reindex is needed, because the search index does not hold the DAA.
-- OpenAPI: the two path files, and `overrideDaaId` on `Dataset.yaml`.
+  1. For a non-null `daaId`, return 404 if the DAA does not exist.
+  2. Return 400 if the DAA does not belong to the dataset's DAC (decision 1).
+  3. Update the row with the DAC id from the request.
+  4. If no row changed, an admin moved the dataset to another DAC after the resource checked it. Throw `ConsentConflictException` (409).
+  5. Otherwise, return the fresh dataset. No reindex is needed, because the search index does not hold the DAA.
+- OpenAPI: the two path files, `overrideDaaId` on `Dataset.yaml`, and the 409 response.
 
 **Tests:**
-- Service: set, clear, a DAA of another DAC (400), an unknown DAA (404).
+- Service: set; clear; a DAA of another DAC (400); an unknown DAA (404); a stale DAC (the DAO returns 0) gives 409, both to set and to clear.
 - Resource: success for both endpoints, wrong DAC, not a chair.
 - The existing `approveDataset` tests after the helper refactor.
+
+**Release gate:** confirm decision 7 (datasets only) with product before this task deploys. This task is the first that lets a dataset have an override.
 
 ### Task 6: Use the effective DAA in the DAR and progress report forms (duos-ui)
 
@@ -170,18 +198,26 @@ Implementation:
 - Two DAAs with the same file name are both kept.
 - Each of the four components shows or sends the override DAA.
 
-**Unusual step:** deploy this task before Task 7. If chairs can set overrides while the old form is live, the form sends the DAC default, and every DAR on an overridden dataset fails validation.
+This task must deploy before Task 5 (see the task summary). If overrides could exist while the old form is live, the form would send the DAC default, and every DAR on an overridden dataset would fail validation.
 
 ### Task 7: DAA picker on the DAC profile page (duos-ui)
 
 - `DAC.setDatasetDaa(dacId, datasetId, daaId)` and `DAC.clearDatasetDaa(dacId, datasetId)` in `src/libs/ajax/DAC.ts`.
 - `daaHelpers.getDacDaaOptions(daas, dacId)`: the DAC's DAAs (uploaded by it, or its default), oldest first.
-- New component `DatasetDaaCell`:
+- New component `DatasetDaaCell`. It must keep two states apart that have different future behavior:
+
+  | State | Stored value | When the DAC default changes later |
+  |---|---|---|
+  | Follow the DAC default | `overrideDaaId = null` | The dataset uses the new default. |
+  | Pinned to a DAA | `overrideDaaId = <id>` | The dataset keeps the pinned DAA. |
+
   - A chair sees a select with these options:
-    - "DAC default (<file name>)". This option clears the override, so the dataset follows the default if the default changes later.
-    - Each of the DAC's other DAAs.
-  - Everyone else sees the current DAA name as text.
-  - If the save fails, show an error and keep the old value.
+    - "Follow the DAC default (<file name>)". This option clears the override.
+    - Every one of the DAC's DAAs, **including the current default**. Each one pins the dataset to that DAA. Mark the current default with "(current DAC default)" after its name.
+  - The selected option comes from `overrideDaaId`, never from a comparison with the default. A dataset pinned to the current default shows the pinned option, not "Follow the DAC default".
+  - If `overrideDaaId` is set but the DAA is missing from the list, show it as "DAA-<id>" and keep it selected.
+  - Everyone else sees the current DAA name as text, with "(DAC default)" when the dataset follows the default.
+  - If the save fails, show an error and keep the old value. On a 409, also tell the chair to reload the page, because the dataset moved to another DAC.
 - `DacProfile.tsx`: load `DAA.getDaas()` with the DAC and its datasets, and add a "Data Access Agreement" column to the datasets grid. This needs some setup in the page:
   - a chair check: `user.roles` has `Chairperson` for this `dacId`. Do not include admins, because the backend allows chairs only.
   - a `handleDatasetChange` handler that merges the returned dataset into its row.
@@ -190,7 +226,12 @@ Implementation:
 
 **Tests:**
 - The ajax calls.
-- The cell: read-only text for the default and for an override; picking a DAA sets it; picking the default clears it; a failed save keeps the old value.
+- The cell:
+  - read-only text for the default and for an override.
+  - picking a DAA pins it; picking "Follow the DAC default" clears it.
+  - a dataset pinned to the current default shows the pinned option selected, and the chair can switch it to "Follow the DAC default".
+  - after the page reloads with a new DAC default, a pinned dataset still shows its pinned DAA, and a following dataset shows the new default.
+  - a failed save keeps the old value; a 409 shows the reload message.
 - The page: the column is present, a chair can edit, a member cannot.
 
 ### Task 8: Upload a new DAA from the picker (duos-ui)
@@ -199,9 +240,9 @@ Implementation:
 - `DatasetDaaCell`: add the option "Upload a new DAA…". It opens the existing `UploadDaaModal`. On save, the cell does three things:
   1. It uploads the file with `setAsDacDefault: false`.
   2. It adds the new DAA to the page's list.
-  3. It assigns the new DAA to the dataset.
+  3. It pins the dataset to the new DAA.
 
-**Tests:** the URL parameter; the upload does not make the DAA the default, and then assigns it to the dataset; a failed upload shows an error.
+**Tests:** the URL parameter; the upload does not make the DAA the default, and then pins it to the dataset; a failed upload shows an error.
 
 ### Task 9: Show override-only DAAs on the SO DAA assignment page (duos-ui)
 
@@ -212,18 +253,27 @@ Implementation:
 
 **Tests:** the helper, the label, and an override-only DAA that shows on the page.
 
+This task must deploy before Task 5. Otherwise a chair could require an override-only DAA that SOs cannot find, so no researcher could be pre-authorized for it.
+
 ## Edge cases to cover in review
 
 1. Two required DAAs have the same file name. Expected: both show and both are sent (Task 6).
 2. A dataset's override DAA is missing from the list that the UI loaded. Expected: the UI does not fall back to the DAC default (Task 6).
 3. A DAA is an override only, so nothing lists it as a DAC default. Expected: SOs can see it and pre-authorize researchers for it (Tasks 4 and 9).
-4. A dataset moves to another DAC. Expected: the override clears (Task 1).
-5. A chair uploads a DAA for one dataset. Expected: the DAC default does not change (Tasks 3 and 8).
+4. A dataset moves to another DAC, also in the middle of a chair's save. Expected: the override clears, and a stale write gets 409 (Tasks 1 and 5).
+5. A dataset is pinned to the DAA that is also the DAC default. Expected: it stays pinned when the default changes (Task 7).
+6. An override changes after a DAR was submitted. Expected: the DAR's snapshot does not change (Task 2).
+7. A chair uploads a DAA for one dataset. Expected: the DAC default does not change (Tasks 3 and 8).
 
 ## Deploy order
 
-- Deploy each consent PR before the duos-ui PRs that use it (see the "Depends on" column). The new JSON fields and the query parameter are additive, so the current UI works against the new backend.
-- Deploy Task 6 before Task 7 (see Task 6).
+1. Tasks 1–4 (consent). Task 3 can deploy at any point.
+2. Tasks 6 and 9 (duos-ui).
+3. Confirm decision 7 with product.
+4. Task 5 (consent). This is the first change that lets a dataset have an override.
+5. Task 7, then Task 8 (duos-ui).
+
+The new JSON fields and the query parameter are additive, so the current UI works against the new backend at every step.
 
 ## Overlap with DT-4267
 
@@ -235,4 +285,4 @@ The SO-approval-exempt plan changes some of the same code. Whichever branch merg
   - `Dataset.yaml`: each plan adds one property.
 - **`DacResource.findDatasetForChair`:** both plans add the same helper. Keep one copy.
 - **`DacProfile.tsx`:** both plans add the same setup (the chair check, `handleDatasetChange`, the row `dataset`, the `columns` memo). Keep one copy, and keep both columns (DAA, then SO Approval).
-- **`DataAccessAgreements.tsx`:** this plan replaces `getDisplayedDaaIds` with `getRequiredDaaIds`. DT-4267 filters out exempt datasets before it calls that function. Keep the filter and call `getRequiredDaaIds`.
+- **`DataAccessAgreements.tsx`:** this plan replaces `getDisplayedDaaIds` with `getRequiredDaaIds`. DT-4267 filters out exempt datasets only where `missingDaaIds` is computed. Keep that filter out of `getRequiredDaaIds`, because its result is the list of DAAs that the DAR acknowledges.
