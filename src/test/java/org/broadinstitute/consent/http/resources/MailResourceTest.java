@@ -232,11 +232,12 @@ class MailResourceTest extends AbstractTestHelper {
   @Test
   void test_MailResource_sends_rejects_malformed_search_types() {
     initResource();
+    List<String> searchTypes = List.of("abc");
     assertThrows(
         BadRequestException.class,
         () ->
             mailResource.getEmailSendsByDateRange(
-                duosUser, "05/11/2021", null, 20, 0, "x", List.of("abc")));
+                duosUser, "05/11/2021", null, 20, 0, "x", searchTypes));
   }
 
   @Test
