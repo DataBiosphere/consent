@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
 import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
@@ -100,9 +101,14 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("offset") Integer offset);
 
   default List<MailSend> fetchSendsByCreateDate(
-      Date start, Date end, Integer limit, Integer offset, Integer recipientLimit) {
+      Date start,
+      Date end,
+      Integer limit,
+      Integer offset,
+      Integer recipientLimit,
+      MailSendSearch search) {
     return fetchSendsByCreateDate(
-        start, end, limit, offset, recipientLimit, EmailReference.kindsByTypeInt());
+        start, end, limit, offset, recipientLimit, EmailReference.kindsByTypeInt(), search);
   }
 
   // One send per send_id, type and reference; older rows split on 10-minute gaps in sent time.
@@ -153,8 +159,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         FROM grouped
         GROUP BY send_row_id, email_type, entity_reference_id
         ORDER BY MIN(create_date) DESC, send_row_id DESC
-        OFFSET :offset
-        LIMIT :limit
+        OFFSET CASE WHEN CAST(:search.pattern AS text) IS NULL THEN :offset ELSE 0 END
+        LIMIT CASE WHEN CAST(:search.pattern AS text) IS NULL THEN :limit END
       ),
       recorded AS (
         SELECT g.send_row_id AS send_id,
@@ -174,6 +180,11 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         JOIN grouped n ON n.send_row_id = p.send_id
         LEFT JOIN users u ON u.user_id = n.user_id
         GROUP BY p.send_id, n.user_id, u.display_name
+      ),
+      name_matches AS (
+        SELECT DISTINCT g.send_row_id FROM grouped g
+        JOIN users u ON u.user_id = g.user_id
+        WHERE u.display_name ILIKE :search.pattern
       ),
       sends AS (
         SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
@@ -245,7 +256,18 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
             THEN CAST(s.entity_reference_id AS uuid) END
         ) related
       ) aliases ON NOT s.datasets_recorded
+      WHERE CAST(:search.pattern AS text) IS NULL
+        OR s.email_type = ANY(CAST(:search.types AS integer[]))
+        OR COALESCE(by_code.dar_code, by_dar.dar_code) ILIKE :search.pattern
+        OR EXISTS (
+          SELECT 1 FROM unnest(COALESCE(recorded.dataset_aliases, aliases.dataset_aliases)) alias
+          WHERE alias = CAST(:search.alias AS bigint)
+            OR 'DUOS-' || lpad(alias::text, GREATEST(6, length(alias::text)), '0')
+              ILIKE :search.pattern)
+        OR s.send_id IN (SELECT send_row_id FROM name_matches)
       ORDER BY s.create_date DESC, s.send_id DESC
+      OFFSET CASE WHEN CAST(:search.pattern AS text) IS NULL THEN 0 ELSE :offset END
+      LIMIT :limit
       """)
   List<MailSend> fetchSendsByCreateDate(
       @Bind("start") Date start,
@@ -253,5 +275,6 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset,
       @Bind("recipientLimit") Integer recipientLimit,
-      @Bind("kinds") List<String> kinds);
+      @Bind("kinds") List<String> kinds,
+      @BindMethods("search") MailSendSearch search);
 }
