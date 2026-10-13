@@ -602,6 +602,34 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testInsert_stores_a_null_send_id() {
+    MailMessage saved =
+        mailMessageDAO.insert(
+            new MailMessageInsert(
+                "DAR-1",
+                null,
+                createUser().getUserId(),
+                EmailType.NEW_DAR.getTypeInt(),
+                null,
+                randomAlphanumeric(10),
+                null,
+                null,
+                null));
+
+    boolean storedNull =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT send_id IS NULL FROM email_entity WHERE email_entity_id = :id")
+                    .bind("id", saved.emailId())
+                    .mapTo(Boolean.class)
+                    .one());
+
+    assertTrue(storedNull);
+  }
+
+  @Test
   void testInsert() {
     User user = createUser();
     String entityReferenceId = randomAlphanumeric(10);
