@@ -322,6 +322,8 @@ those lag behind upstream, run:
 
 ```$ scripts/check-infra-deps.sh```
 
+This script requires `git`, `curl`, and `jq`; install any missing tools before running it.
+
 It shallow-clones `terra-helmfile` and `terraform-ap-deployments` with your git credentials (both
 are private) and prints a Markdown table of current vs. latest versions and end-of-life dates.
 Pass `--helmfile-dir` and `--tf-dir` to read existing checkouts instead. It only reports; the
