@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.mail.message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -34,8 +35,8 @@ public class NewCaseMessage extends MailMessage {
   }
 
   @Override
-  public List<Integer> getDatasetIds() {
-    return datasetIds;
+  public Optional<List<Integer>> getDatasetIds() {
+    return Optional.ofNullable(datasetIds);
   }
 
   @Override

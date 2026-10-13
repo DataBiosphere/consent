@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.mail.message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
@@ -35,12 +36,12 @@ class MailMessageDatasetIdsTest {
   @ParameterizedTest
   @MethodSource("messagesWithDatasets")
   void records_the_datasets_it_concerns(MailMessage message) {
-    assertEquals(List.of(7, 8), message.getDatasetIds());
+    assertEquals(Optional.of(List.of(7, 8)), message.getDatasetIds());
   }
 
   @Test
   void records_no_datasets_by_default() {
-    assertNull(new DarExpiredMessage(USER, "DAR-1", "ref").getDatasetIds());
+    assertTrue(new DarExpiredMessage(USER, "DAR-1", "ref").getDatasetIds().isEmpty());
   }
 
   private static DatasetMailDTO dto(int id) {

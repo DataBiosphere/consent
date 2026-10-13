@@ -957,22 +957,7 @@ public class DarCollectionService implements ConsentLogger {
         try {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
-          List<Integer> chairDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
-          for (User voteUser : voteUsers) {
-            List<Integer> memberDatasetIds =
-                datasetDAO.findDatasetIdsByDACUserId(voteUser.getUserId());
-            List<Integer> datasetIds =
-                dar.getDatasetIds().stream()
-                    .filter(id -> chairDatasetIds.contains(id) && memberDatasetIds.contains(id))
-                    .toList();
-            if (dar.getProgressReport()) {
-              sendProgressReportNewCollectionElectionMessage(
-                  List.of(voteUser), collection.getDarCode(), datasetIds);
-            } else {
-              sendDarNewCollectionElectionMessage(
-                  List.of(voteUser), collection.getDarCode(), datasetIds);
-            }
-          }
+          sendNewCaseMessages(user, dar, collection.getDarCode(), voteUsers);
 
         } catch (Exception e) {
           logException(
@@ -1481,6 +1466,24 @@ public class DarCollectionService implements ConsentLogger {
     return new ArrayList<>(
         userDAO.findUsersForDatasetsByRole(
             datasetIds, List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId())));
+  }
+
+  private void sendNewCaseMessages(
+      User chair, DataAccessRequest dar, String darCode, List<User> voteUsers)
+      throws IOException, TemplateException {
+    List<Integer> chairDatasetIds = datasetDAO.findDatasetIdsByDACUserId(chair.getUserId());
+    for (User voteUser : voteUsers) {
+      List<Integer> memberDatasetIds = datasetDAO.findDatasetIdsByDACUserId(voteUser.getUserId());
+      List<Integer> datasetIds =
+          dar.getDatasetIds().stream()
+              .filter(id -> chairDatasetIds.contains(id) && memberDatasetIds.contains(id))
+              .toList();
+      if (dar.getProgressReport()) {
+        sendProgressReportNewCollectionElectionMessage(List.of(voteUser), darCode, datasetIds);
+      } else {
+        sendDarNewCollectionElectionMessage(List.of(voteUser), darCode, datasetIds);
+      }
+    }
   }
 
   private List<Integer> datasetIdsInUserDacs(User user, Set<Dac> dacs, Set<Dataset> datasets) {

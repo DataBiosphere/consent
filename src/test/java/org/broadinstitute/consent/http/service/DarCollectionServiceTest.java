@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -632,7 +633,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     ArgumentCaptor<NewCaseMessage> captor = ArgumentCaptor.forClass(NewCaseMessage.class);
     verify(emailService).sendMessage(captor.capture(), any());
-    assertEquals(List.of(10), captor.getValue().getDatasetIds());
+    assertEquals(Optional.of(List.of(10)), captor.getValue().getDatasetIds());
   }
 
   @Test
@@ -4280,7 +4281,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     ArgumentCaptor<NewCaseMessage> captor = ArgumentCaptor.forClass(NewCaseMessage.class);
     verify(emailService).sendMessage(captor.capture(), any());
-    assertEquals(List.of(1), captor.getValue().getDatasetIds());
+    assertEquals(Optional.of(List.of(1)), captor.getValue().getDatasetIds());
   }
 
   @Test

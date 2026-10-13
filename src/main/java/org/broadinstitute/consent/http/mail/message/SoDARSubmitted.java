@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.mail.message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
@@ -43,8 +44,8 @@ public class SoDARSubmitted extends MailMessage {
   }
 
   @Override
-  public List<Integer> getDatasetIds() {
-    return datasets.stream().map(Dataset::getDatasetId).toList();
+  public Optional<List<Integer>> getDatasetIds() {
+    return Optional.of(datasets.stream().map(Dataset::getDatasetId).toList());
   }
 
   @Override

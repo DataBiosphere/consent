@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.mail.message;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -36,8 +37,8 @@ public abstract class MailMessage {
     return null;
   }
 
-  /** The datasets this email concerns, or null when its type does not record them. */
-  public List<Integer> getDatasetIds() {
-    return null;
+  /** The datasets this email concerns; empty when its type does not record them. */
+  public Optional<List<Integer>> getDatasetIds() {
+    return Optional.empty();
   }
 }

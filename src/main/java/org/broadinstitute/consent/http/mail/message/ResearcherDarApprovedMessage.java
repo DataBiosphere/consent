@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.mail.message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -51,8 +52,8 @@ public class ResearcherDarApprovedMessage extends MailMessage {
   }
 
   @Override
-  public List<Integer> getDatasetIds() {
-    return datasets.stream().map(DatasetMailDTO::datasetId).toList();
+  public Optional<List<Integer>> getDatasetIds() {
+    return Optional.of(datasets.stream().map(DatasetMailDTO::datasetId).toList());
   }
 
   @Override
