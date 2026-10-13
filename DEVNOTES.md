@@ -313,6 +313,21 @@ e.g.
 Run the dependency checker:
 ```$ mvn org.owasp:dependency-check-maven:check``` 
 
+### How to check infrastructure dependencies
+
+Dependabot covers the Java, Docker and GitHub Actions dependencies, but not the infrastructure
+that deploys Consent and DUOS: Terraform and its modules, Cloud SQL Postgres, the Cloud SQL
+Proxy, ArgoCD, External Secrets, and the helm/helmfile/kubectl that Thelma pins. To see how far
+those lag behind upstream, run:
+
+```$ scripts/check-infra-deps.sh```
+
+It shallow-clones `terra-helmfile` and `terraform-ap-deployments` with your git credentials (both
+are private) and prints a Markdown table of current vs. latest versions and end-of-life dates.
+Pass `--helmfile-dir` and `--tf-dir` to read existing checkouts instead. It only reports; the
+upgrades themselves are PRs to those repos. To track a new pin, add a `check_*` function to `CHECKS`
+in the script.
+
 ## Integration Testing
 
 Integration tests live in `src/test/java/**/integration/` and are run as part
