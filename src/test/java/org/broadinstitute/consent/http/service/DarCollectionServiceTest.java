@@ -607,6 +607,35 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateElectionsForDarCollectionRecordsEachMembersOwnDatasets() throws Exception {
+    User chair = new User();
+    chair.setUserId(1);
+    chair.setEmail("email");
+    chair.setChairpersonRoleWithDAC(1);
+    User member = new User();
+    member.setUserId(2);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10, 20));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10, 20));
+    when(datasetDAO.findDatasetIdsByDACUserId(1)).thenReturn(List.of(10, 20));
+    when(datasetDAO.findDatasetIdsByDACUserId(2)).thenReturn(List.of(10));
+    when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any()))
+        .thenReturn(List.of("electionId"));
+    when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(member));
+    when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(collection);
+
+    service.createElectionsForDarCollection(chair, collection);
+
+    ArgumentCaptor<NewCaseMessage> captor = ArgumentCaptor.forClass(NewCaseMessage.class);
+    verify(emailService).sendMessage(captor.capture(), any());
+    assertEquals(List.of(10), captor.getValue().getDatasetIds());
+  }
+
+  @Test
   void testCreateElectionsForDarCollectionWithoutDarsIsBadRequest() {
     User user = new User();
     user.setUserId(1);

@@ -958,14 +958,20 @@ public class DarCollectionService implements ConsentLogger {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
           List<Integer> chairDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
-          List<Integer> openedDatasetIds =
-              dar.getDatasetIds().stream().filter(chairDatasetIds::contains).toList();
-          if (dar.getProgressReport()) {
-            sendProgressReportNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode(), openedDatasetIds);
-          } else {
-            sendDarNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode(), openedDatasetIds);
+          for (User voteUser : voteUsers) {
+            List<Integer> memberDatasetIds =
+                datasetDAO.findDatasetIdsByDACUserId(voteUser.getUserId());
+            List<Integer> datasetIds =
+                dar.getDatasetIds().stream()
+                    .filter(id -> chairDatasetIds.contains(id) && memberDatasetIds.contains(id))
+                    .toList();
+            if (dar.getProgressReport()) {
+              sendProgressReportNewCollectionElectionMessage(
+                  List.of(voteUser), collection.getDarCode(), datasetIds);
+            } else {
+              sendDarNewCollectionElectionMessage(
+                  List.of(voteUser), collection.getDarCode(), datasetIds);
+            }
           }
 
         } catch (Exception e) {
@@ -1288,9 +1294,8 @@ public class DarCollectionService implements ConsentLogger {
   /**
    * Notifies users for the given DACs and datasets.
    *
-   * <p>When {@code isAutoOpen} is {@code true}, each user receives a single auto-open email; {@code
-   * dacs} and {@code datasets} are not consulted. When {@code false}, per-user DAC/dataset
-   * membership is resolved from {@code dacs} and {@code datasets} to build the email body.
+   * <p>Each user's DACs are resolved from {@code dacs}, and their datasets from {@code datasets}:
+   * recorded on the auto-open email when {@code isAutoOpen}, listed in the request email otherwise.
    */
   @VisibleForTesting
   protected void notifyUsersForDacs(
