@@ -75,6 +75,7 @@ Add the column and carry it through the model and the DAO layer.
     ```
 
   - Add `findSoApprovalExemptDatasetIds(datasetIds)`.
+- OpenAPI: add `soApprovalExempt` to `Dataset.yaml`. Dataset responses carry the field as soon as this task deploys, and Task 6 reads it before Task 4 ships.
 - Reset the flag when the DAC changes (decision 4). This touches `DatasetDAO.updateDatasetDacId` and `updateDatasetByDatasetId`, and the two dataset `UPDATE` statements in `DacServiceDAO` (DAC delete and externalize). In the two `DatasetDAO` methods, reset the flag only when the DAC id really changes:
 
   ```sql
@@ -134,12 +135,18 @@ Existing tests keep passing with no change, because an unstubbed `findSoApproval
 ### Task 3: `NOT_REQUIRED` value in the search index (consent)
 
 - Add `NOT_REQUIRED` to `SoApprovalModel`.
-- In `ElasticSearchService`, when a dataset is exempt, set `soApprovalModel` to `NOT_REQUIRED` before the rule-based check. Datasets with no DAC keep `PRE_AUTHORIZED`. Such a dataset cannot be exempt, because Task 1 resets the flag with the DAC.
+- In `ElasticSearchService.toDatasetTerm`, today one branch sets two fields together when the DAC rules resolve: `soApprovalModel` and `instantApprovalEligible`. Keep them independent:
+  - `soApprovalModel`: if the dataset is exempt, set `NOT_REQUIRED`. The flag alone decides this, so set it also when the rules could not be resolved (`enabledRulesByDacId == null`). Otherwise keep the current rule-based value.
+  - `instantApprovalEligible`: no change. It still comes from the DAC rules, and it stays unset when the rules could not be resolved. Exempt datasets still go through RADAR (decision 1), so they keep this value.
+  - Datasets with no DAC keep `PRE_AUTHORIZED`. Such a dataset cannot be exempt, because Task 1 resets the flag with the DAC.
 - Add the value to the `soApprovalModel` enum in `DatasetSearch.yaml`.
 
-**Tests:** an exempt dataset maps to `NOT_REQUIRED`, also when its DAC has the SO rule.
+**Tests:**
+- An exempt dataset maps to `NOT_REQUIRED`, also when its DAC has the SO rule.
+- An exempt dataset has the same `instantApprovalEligible` value as a non-exempt dataset with the same DAC rules and data use.
+- When the rules cannot be resolved, an exempt dataset still maps to `NOT_REQUIRED`, and `instantApprovalEligible` stays unset.
 
-No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, and Task 4 reindexes each dataset when a chair changes its flag.
+No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, and Task 4 reindexes each dataset when a chair changes its flag. For a reindex that fails at that time, see Task 4.
 
 ### Task 4: Endpoint for chairs to set the flag (consent)
 
@@ -150,11 +157,13 @@ No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, a
 - `DatasetService.updateSoApprovalExemption(dataset, user, exempt)`:
   1. Update the row with the DAC id from the request.
   2. If no row changed, an admin moved the dataset to another DAC after the resource checked it. Throw `ConsentConflictException` (409) and do not reindex.
-  3. Otherwise, reindex the dataset (as `approveDataset` does) and return the fresh dataset.
-- OpenAPI: a new path file, the request schema, `soApprovalExempt` on `Dataset.yaml`, and the 409 response.
+  3. Otherwise, reindex the dataset and return the fresh dataset. Use `elasticSearchService.synchronizeDatasetInESIndex(dataset, true)`, not the `indexDatasets` call that `approveDataset` makes. `synchronizeDatasetInESIndex` closes the response and logs a non-success status as well as an `IOException`. A failed reindex does not fail the request, because the database update is already done.
+- OpenAPI: a new path file, the request schema, and the 409 response.
+
+A failed reindex leaves only the Data Library chip and filter stale. The SO decision (Task 2) reads the database, not the index, so DARs are not affected. This is the same best-effort behavior as the reindex after a DAC rule toggle (`DACAutomationRuleService.reindexDatasetsForRuleChange`), which changes the same index field. To repair a stale entry, an admin calls `POST /api/dataset/index/{datasetId}`. The log warning names the dataset id. consent has no durable retry for index writes today. If the team wants one, it belongs in its own ticket, for every index write.
 
 **Tests:**
-- Service: update and reindex; a stale DAC (the DAO returns 0) gives 409 with no reindex, both to set and to clear the flag.
+- Service: update and reindex; a stale DAC (the DAO returns 0) gives 409 with no reindex, both to set and to clear the flag; a failed reindex still returns the updated dataset.
 - Resource: success, wrong DAC, not a chair, bad body.
 - The existing `approveDataset` tests after the helper refactor.
 
