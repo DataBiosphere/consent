@@ -35,7 +35,7 @@ properties:
           description: The user's display name
         sent:
           type: boolean
-          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev.
+          description: Whether SendGrid accepted any of this recipient's emails in the send. False when SendGrid rejected them, the user has turned email off, or email notifications are off for the whole environment, as on dev. Acceptance is not delivery; nothing records whether the email reached the inbox.
   darCode:
     type: [string, 'null']
     description: Code of the DAR the email concerns, such as DAR-123. Progress report emails carry their parent DAR's code. Null for email types unrelated to a DAR.

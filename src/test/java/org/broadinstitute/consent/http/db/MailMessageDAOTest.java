@@ -935,6 +935,9 @@ class MailMessageDAOTest extends DAOTestHelper {
     Dataset second = createDatasetFor(dar);
     createDatasetFor(createProgressReport(user, dar));
     createDatasetFor(createDar(user, collectionId, null));
+    DataAccessRequest archived = createDar(user, collectionId);
+    createDatasetFor(archived);
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archived.getReferenceId()));
     generateSendRow(user, EmailType.NEW_DAR, darCode, Instant.now().minus(1, ChronoUnit.HOURS));
 
     MailSend send = fetchSendsAroundNow().getFirst();
@@ -985,6 +988,38 @@ class MailMessageDAOTest extends DAOTestHelper {
             elected.getDatasetId());
     generateSendRow(
         user, EmailType.REMINDER, electionId.toString(), Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(List.of(elected.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_a_ten_digit_election_id() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset elected = createDatasetFor(dar);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            dar.getReferenceId(),
+            elected.getDatasetId());
+    long largeId = 10_000_000_000L + electionId;
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate("UPDATE election SET election_id = :largeId WHERE election_id = :id")
+                .bind("largeId", largeId)
+                .bind("id", electionId)
+                .execute());
+    generateSendRow(
+        user, EmailType.REMINDER, Long.toString(largeId), Instant.now().minus(1, ChronoUnit.HOURS));
 
     MailSend send = fetchSendsAroundNow().getFirst();
 
@@ -1064,6 +1099,31 @@ class MailMessageDAOTest extends DAOTestHelper {
     assertEquals(
         List.of(dataset.getDatasetIdentifier()),
         fetchSendsAroundNow().getFirst().datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_reads_an_older_name_shaped_like_a_duos_id_as_a_name() {
+    Dataset named = createDataset();
+    String name = "DUOS-" + randomInt(100_000, 999_999);
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate("UPDATE dataset SET name = :name WHERE dataset_id = :id")
+                .bind("name", name)
+                .bind("id", named.getDatasetId())
+                .execute());
+    Instant beforeDuosIds = Instant.parse("2026-07-01T12:00:00Z");
+    generateSendRow(createUser(), EmailType.DATASET_DENIED, name, beforeDuosIds);
+
+    List<MailSend> sends =
+        mailMessageDAO.fetchSendsByCreateDate(
+            Date.from(beforeDuosIds.minus(1, ChronoUnit.DAYS)),
+            Date.from(beforeDuosIds.plus(1, ChronoUnit.DAYS)),
+            100,
+            0,
+            100);
+
+    assertEquals(List.of(named.getDatasetIdentifier()), sends.getFirst().datasetIdentifiers());
   }
 
   @Test

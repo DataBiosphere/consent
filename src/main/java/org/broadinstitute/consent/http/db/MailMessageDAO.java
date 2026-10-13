@@ -106,6 +106,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
   }
 
   // One send per send_id, type and reference; older rows split on 10-minute gaps in sent time.
+  // DATASET_APPROVED/DENIED stored the dataset name until DUOS-IDs replaced it on 2026-07-30.
   @SqlQuery(
       """
       WITH in_range AS (
@@ -187,8 +188,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         ON k.kind IN ('DAR_CODE', 'DAR_REFERENCE_ID') AND by_code.dar_code = s.entity_reference_id
       LEFT JOIN election el
         ON k.kind = 'ELECTION_ID' AND el.election_id = CASE
-          WHEN s.entity_reference_id ~ '^[0-9]{1,9}$'
-          THEN CAST(s.entity_reference_id AS integer) END
+          WHEN s.entity_reference_id ~ '^[0-9]{1,18}$'
+          THEN CAST(s.entity_reference_id AS bigint) END
       LEFT JOIN data_access_request dar
         ON dar.reference_id = CASE
           WHEN k.kind = 'DAR_REFERENCE_ID'
@@ -210,16 +211,20 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
           WHERE d.collection_id = by_code.collection_id
             AND d.parent_id IS NULL
             AND d.submission_date IS NOT NULL
+            AND (LOWER(d.data ->> 'status') != 'archived' OR d.data ->> 'status' IS NULL)
           UNION ALL
           SELECT ds.alias FROM dataset ds
           WHERE k.kind = 'DUOS_ID' AND ds.alias = CASE
             WHEN s.entity_reference_id ~ '^DUOS-[0-9]{1,18}$'
+              AND s.create_date >= TIMESTAMPTZ '2026-07-30 17:02:38+00'
             THEN CAST(substr(s.entity_reference_id, 6) AS bigint) END
           UNION ALL
           SELECT ds.alias FROM dataset ds
           WHERE ds.name = s.entity_reference_id
             AND (k.kind = 'DATASET_NAME'
-              OR (k.kind = 'DUOS_ID' AND s.entity_reference_id !~ '^DUOS-'))
+              OR (k.kind = 'DUOS_ID'
+                AND (s.create_date < TIMESTAMPTZ '2026-07-30 17:02:38+00'
+                  OR s.entity_reference_id !~ '^DUOS-[0-9]{1,18}$')))
         ) related
       ) aliases ON TRUE
       ORDER BY s.create_date DESC, s.send_id DESC
