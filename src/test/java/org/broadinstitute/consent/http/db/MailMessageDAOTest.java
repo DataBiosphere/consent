@@ -1127,6 +1127,88 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFetchSendsByCreateDate_reads_a_study_uuid_as_its_datasets() {
+    User user = createUser();
+    UUID studyUuid = UUID.randomUUID();
+    Integer studyId =
+        studyDAO.insertStudy(
+            "Study_" + randomAlphabetic(10),
+            "description",
+            "pi",
+            "pi@example.com",
+            List.of(),
+            true,
+            user.getUserId(),
+            Instant.now(),
+            studyUuid);
+    Dataset dataset = createDataset();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
+    generateSendRow(
+        user,
+        EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION,
+        studyUuid.toString(),
+        Instant.now().minus(1, ChronoUnit.HOURS));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertNull(send.darCode());
+    assertEquals(List.of(dataset.getDatasetIdentifier()), send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_lists_the_datasets_a_send_recorded() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    DataAccessRequest dar = createDar(user, collectionId);
+    Dataset approved = createDatasetFor(dar);
+    Dataset alsoApproved = createDatasetFor(dar);
+    createDatasetFor(dar);
+    UUID sendId = UUID.randomUUID();
+    Instant sentAt = Instant.now().minus(1, ChronoUnit.HOURS);
+    generateSendRow(
+        user,
+        EmailType.DATA_CUSTODIAN_APPROVAL,
+        darCode,
+        sentAt,
+        sendId,
+        List.of(approved.getDatasetId()));
+    generateSendRow(
+        createUser(),
+        EmailType.DATA_CUSTODIAN_APPROVAL,
+        darCode,
+        sentAt,
+        sendId,
+        List.of(alsoApproved.getDatasetId()));
+
+    MailSend send = fetchSendsAroundNow().getFirst();
+
+    assertEquals(darCode, send.darCode());
+    assertEquals(
+        List.of(approved.getDatasetIdentifier(), alsoApproved.getDatasetIdentifier()),
+        send.datasetIdentifiers());
+  }
+
+  @Test
+  void testFetchSendsByCreateDate_does_not_look_up_a_send_that_recorded_no_datasets() {
+    User user = createUser();
+    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    createDatasetFor(createDar(user, collectionId));
+    generateSendRow(
+        user,
+        EmailType.NEW_CASE,
+        darCode,
+        Instant.now().minus(1, ChronoUnit.HOURS),
+        UUID.randomUUID(),
+        List.of());
+
+    assertEquals(List.of(), fetchSendsAroundNow().getFirst().datasetIdentifiers());
+  }
+
+  @Test
   void testFetchSendsByCreateDate_reads_an_older_dar_code_on_a_reference_id_type() {
     User user = createUser();
     String darCode = "DAR-" + randomInt(1000, 1_000_000);
@@ -1223,6 +1305,16 @@ class MailMessageDAOTest extends DAOTestHelper {
 
   private MailMessage generateSendRow(
       User user, EmailType emailType, String entityReferenceId, Instant instant, UUID sendId) {
+    return generateSendRow(user, emailType, entityReferenceId, instant, sendId, null);
+  }
+
+  private MailMessage generateSendRow(
+      User user,
+      EmailType emailType,
+      String entityReferenceId,
+      Instant instant,
+      UUID sendId,
+      List<Integer> datasetIds) {
     MailMessage savedMessage =
         mailMessageDAO.insert(
             new MailMessageInsert(
@@ -1234,7 +1326,8 @@ class MailMessageDAOTest extends DAOTestHelper {
                 randomAlphanumeric(10),
                 randomAlphanumeric(10),
                 202,
-                sendId));
+                sendId,
+                datasetIds));
     setCreateDate(savedMessage.emailId(), instant);
     return mailMessageDAO.fetchMessageById(savedMessage.emailId());
   }

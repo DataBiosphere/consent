@@ -25,9 +25,9 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       """
       WITH insterted_row AS (
         INSERT INTO email_entity
-          (entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date, send_id)
+          (entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date, send_id, dataset_ids)
         VALUES
-          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendgridResponse, :sendgridStatus, NOW(), CAST(:sendId AS uuid))
+          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendgridResponse, :sendgridStatus, NOW(), CAST(:sendId AS uuid), CAST(:datasetIds AS integer[]))
         RETURNING *)
       SELECT * FROM insterted_row
       """)
@@ -107,11 +107,12 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   // One send per send_id, type and reference; older rows split on 10-minute gaps in sent time.
   // DATASET_APPROVED/DENIED stored the dataset name until DUOS-IDs replaced it on 2026-07-30.
+  // Sends that recorded dataset_ids list those; older ones look their datasets up as they are now.
   @SqlQuery(
       """
       WITH in_range AS (
         SELECT email_entity_id, entity_reference_id, user_id, email_type, create_date, date_sent,
-          send_id, GREATEST(create_date, date_sent) AS sent_at,
+          send_id, dataset_ids, GREATEST(create_date, date_sent) AS sent_at,
           CASE WHEN entity_reference_id IS NULL AND send_id IS NULL THEN email_entity_id END
             AS lone_id
         FROM email_entity
@@ -148,7 +149,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       page AS (
         SELECT send_row_id AS send_id, email_type, entity_reference_id,
           MIN(create_date) AS create_date, MAX(create_date) AS last_create_date,
-          COUNT(DISTINCT user_id) AS recipient_count
+          COUNT(DISTINCT user_id) AS recipient_count,
+          bool_or(dataset_ids IS NOT NULL) AS datasets_recorded
         FROM grouped
         GROUP BY send_row_id, email_type, entity_reference_id
         ORDER BY MIN(create_date) DESC, send_row_id DESC
@@ -167,7 +169,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       ),
       sends AS (
         SELECT p.send_id, p.email_type, p.entity_reference_id, p.create_date, p.last_create_date,
-          p.recipient_count,
+          p.recipient_count, p.datasets_recorded,
           COALESCE(
             json_agg(
               json_build_object(
@@ -179,9 +181,10 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         FROM page p
         LEFT JOIN named nm ON nm.send_id = p.send_id AND nm.position <= :recipientLimit
         GROUP BY p.send_id, p.email_type, p.entity_reference_id, p.create_date,
-          p.last_create_date, p.recipient_count
+          p.last_create_date, p.recipient_count, p.datasets_recorded
       )
-      SELECT s.*, COALESCE(by_code.dar_code, by_dar.dar_code) AS dar_code, aliases.dataset_aliases
+      SELECT s.*, COALESCE(by_code.dar_code, by_dar.dar_code) AS dar_code,
+        COALESCE(recorded.dataset_aliases, aliases.dataset_aliases) AS dataset_aliases
       FROM sends s
       CROSS JOIN LATERAL (SELECT (CAST(:kinds AS text[]))[s.email_type] AS kind) k
       LEFT JOIN dar_collection by_code
@@ -197,6 +200,13 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
           THEN s.entity_reference_id
           ELSE el.reference_id END
       LEFT JOIN dar_collection by_dar ON by_dar.collection_id = dar.collection_id
+      LEFT JOIN LATERAL (
+        SELECT array_agg(DISTINCT ds.alias ORDER BY ds.alias) AS dataset_aliases
+        FROM grouped g
+        CROSS JOIN unnest(g.dataset_ids) AS recorded_ids(dataset_id)
+        JOIN dataset ds ON ds.dataset_id = recorded_ids.dataset_id
+        WHERE g.send_row_id = s.send_id
+      ) recorded ON s.datasets_recorded
       LEFT JOIN LATERAL (
         SELECT array_agg(DISTINCT alias ORDER BY alias) AS dataset_aliases
         FROM (
@@ -225,8 +235,14 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
               OR (k.kind = 'DUOS_ID'
                 AND (s.create_date < TIMESTAMPTZ '2026-07-30 17:02:38+00'
                   OR s.entity_reference_id !~ '^DUOS-[0-9]{1,18}$')))
+          UNION ALL
+          SELECT ds.alias FROM study st JOIN dataset ds ON ds.study_id = st.study_id
+          WHERE k.kind = 'STUDY_UUID' AND st.uuid = CASE
+            WHEN s.entity_reference_id
+              ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN CAST(s.entity_reference_id AS uuid) END
         ) related
-      ) aliases ON TRUE
+      ) aliases ON NOT s.datasets_recorded
       ORDER BY s.create_date DESC, s.send_id DESC
       """)
   List<MailSend> fetchSendsByCreateDate(

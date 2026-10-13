@@ -47,6 +47,11 @@ public class DACMembersDARRADARApprovedMessage extends MailMessage {
   }
 
   @Override
+  public List<Integer> getDatasetIds() {
+    return datasets.stream().map(DatasetMailDTO::datasetId).toList();
+  }
+
+  @Override
   public String getEntityReferenceId() {
     return referenceId;
   }

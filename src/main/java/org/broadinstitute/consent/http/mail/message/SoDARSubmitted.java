@@ -43,6 +43,11 @@ public class SoDARSubmitted extends MailMessage {
   }
 
   @Override
+  public List<Integer> getDatasetIds() {
+    return datasets.stream().map(Dataset::getDatasetId).toList();
+  }
+
+  @Override
   public String getEntityReferenceId() {
     return referenceId;
   }

@@ -12,6 +12,7 @@ public enum EmailReference {
   ELECTION_ID,
   DUOS_ID,
   DATASET_NAME,
+  STUDY_UUID,
   NONE;
 
   @SuppressWarnings("deprecation")
@@ -39,6 +40,7 @@ public enum EmailReference {
       case REMINDER -> ELECTION_ID;
       case DATASET_DENIED, DATASET_APPROVED -> DUOS_ID;
       case NEW_DATASET -> DATASET_NAME;
+      case NEW_STUDY_REGISTRATION_CONFIRMATION -> STUDY_UUID;
       case COLLECT,
           DISABLED_DATASET,
           CLOSED_DATASET_ELECTION,
@@ -52,7 +54,6 @@ public enum EmailReference {
           NEW_DAA_UPLOAD_SO,
           NEW_LIBRARY_CARD_ISSUED,
           DAC_VOTE_REMINDER_DIGEST,
-          NEW_STUDY_REGISTRATION_CONFIRMATION,
           NEW_STUDY_DIGEST ->
           NONE;
     };

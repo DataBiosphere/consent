@@ -24,7 +24,7 @@ class ResearcherDarApprovedMessageTest extends AbstractMailMessageTest {
     researcher.setDisplayName("Researcher User");
     researcher.setEmail("researcher@test.com");
     List<DatasetMailDTO> datasets =
-        List.of(new DatasetMailDTO("dataset-name", "DUOS-00001", "gs://bucket/object"));
+        List.of(new DatasetMailDTO(1, "dataset-name", "DUOS-00001", "gs://bucket/object"));
     var message =
         new ResearcherDarApprovedMessage(researcher, "DAR-123", datasets, "General Use", false);
 
@@ -61,7 +61,7 @@ class ResearcherDarApprovedMessageTest extends AbstractMailMessageTest {
         new ResearcherDarApprovedMessage(
             researcher,
             darCode,
-            List.of(new DatasetMailDTO(datasetName, datasetId, dataLocationUrl)),
+            List.of(new DatasetMailDTO(1, datasetName, datasetId, dataLocationUrl)),
             "",
             false);
     assertEquals(darCode, message.getEntityReferenceId());
@@ -99,7 +99,7 @@ class ResearcherDarApprovedMessageTest extends AbstractMailMessageTest {
         new ResearcherDarApprovedMessage(
             researcher,
             darCode,
-            List.of(new DatasetMailDTO(datasetName, datasetId, null)),
+            List.of(new DatasetMailDTO(1, datasetName, datasetId, null)),
             "",
             true);
     assertEquals(darCode, message.getEntityReferenceId());

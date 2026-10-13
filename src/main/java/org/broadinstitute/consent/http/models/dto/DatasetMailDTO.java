@@ -1,3 +1,4 @@
 package org.broadinstitute.consent.http.models.dto;
 
-public record DatasetMailDTO(String name, String identifier, String dataLocationUrl) {}
+public record DatasetMailDTO(
+    Integer datasetId, String name, String identifier, String dataLocationUrl) {}

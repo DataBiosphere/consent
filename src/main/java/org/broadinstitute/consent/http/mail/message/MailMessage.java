@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
@@ -32,6 +33,11 @@ public abstract class MailMessage {
   public abstract String getEntityReferenceId();
 
   public Integer getVoteId() {
+    return null;
+  }
+
+  /** The datasets this email concerns, or null when its type does not record them. */
+  public List<Integer> getDatasetIds() {
     return null;
   }
 }
