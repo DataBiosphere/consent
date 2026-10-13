@@ -107,7 +107,6 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   // One send per send_id, type and reference; older rows split on 10-minute gaps in sent time.
   // DATASET_APPROVED/DENIED stored the dataset name until DUOS-IDs replaced it on 2026-07-30.
-  // Sends that recorded dataset_ids list those; older ones look their datasets up as they are now.
   @SqlQuery(
       """
       WITH in_range AS (
