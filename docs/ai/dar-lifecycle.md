@@ -15,18 +15,20 @@ it wrong.
   DAR directly.
 - **Progress reports are optional.** A researcher can close out straight from the original DAR
   (draft → submitted DAR → closeout), without filing a progress report first.
-- **A closeout is also optional.** A collection with no closeout keeps its grants until the term
-  ends (8760 hours from the newest submission) and then simply expires.
+- **A closeout is also optional.** A collection with no closeout keeps each grant until that
+  grant's term ends (8760 hours from the approved DAR's own `submission_date`) and then simply
+  expires.
 - Never assume a closeout's parent is a progress report, or that a collection contains a
   non-closeout progress report.
 
 ## The four states
 
 All four live in the same `data_access_request` table. Tell them apart by columns, not by JSON.
+The only reliable draft marker is `submission_date IS NULL`: a draft can carry a `collection_id`.
 
 | State | `collection_id` | `parent_id` | `submission_date` | Created by |
 | --- | --- | --- | --- | --- |
-| Draft | `NULL` | `NULL` | `NULL` | `DataAccessRequestDAO.insertDraftDataAccessRequest` |
+| Draft | `NULL`, or set (a canceled collection reset to draft) | `NULL` | `NULL` | `DataAccessRequestDAO.insertDraftDataAccessRequest` |
 | Original DAR | set | `NULL` | set | `DataAccessRequestService.createDataAccessRequest` |
 | Progress report | set | set (parent DAR id) | set, always | `DataAccessRequestDAO.insertProgressReport` |
 | Closeout | set | set (the original DAR or a progress report) | set, always | a progress report whose `data.closeoutSupplement` has reasons |
@@ -35,8 +37,11 @@ All four live in the same `data_access_request` table. Tell them apart by column
 
 - Created by `DataAccessRequestService.insertDraftDataAccessRequest`; edited through
   `updateByReferenceId`, which rejects non-drafts (`SubmittedDARCannotBeEditedException`).
-- No collection, no elections, no grants. Drafts never count toward approvals, dashboards, or
-  closeout logic.
+- A new draft has no collection. Resubmitting a canceled collection
+  (`DarCollectionService.updateCollectionToDraftStatus`) turns its DARs back into drafts: it nulls
+  `submission_date` but keeps `collection_id`, and `createDataAccessRequest` later reuses that
+  collection. So never test `collection_id IS NULL` to find drafts.
+- No elections, no grants. Drafts never count toward approvals, dashboards, or closeout logic.
 - **Only an original DAR can be a draft. A progress report is never a draft.**
 
 ### 2. Original DAR (submission)
@@ -48,8 +53,11 @@ All four live in the same `data_access_request` table. Tell them apart by column
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`).
-- A grant is an approved FINAL vote on a DataAccess election. Access runs 8760 hours from the
-  newest submission in the collection, original or progress report.
+- A grant is a (DAR, dataset) pair whose most recent `final` or `radar_approve` vote on a
+  DataAccess election approved it. Access runs 8760 hours from **that DAR's own**
+  `submission_date` (`DataAccessRequestDAO.findApprovedDARsByDatasetId`,
+  `DatasetDAO.getApprovedDatasets`). Newer submissions in the collection don't extend it unless
+  they are approved themselves.
 - Pre-2022 collections can hold **several original DARs** (one per dataset). Queries that pick
   "the latest DAR" must also read the non-canceled sibling originals; see `DacDashboardDAO` and
   `DarCollectionSummaryDAO`.
@@ -57,15 +65,22 @@ All four live in the same `data_access_request` table. Tell them apart by column
 
 ### 3. Progress report (renewal, optional)
 
-- Optional: a collection can go straight from the original DAR to a closeout. Each report renews
-  the grant term, and a collection can have any number of them, including none.
+- Optional: a collection can go straight from the original DAR to a closeout. A collection can
+  have any number of reports, including none.
+- A report renews access only once its own DataAccess election approves it: the new grant runs
+  8760 hours from the report's `submission_date`, for the datasets approved on it. A pending or
+  denied report renews nothing, and the earlier grants keep their original expiry.
 - `POST /api/dar/v2/progress_report/{parentReferenceId}` →
   `DataAccessRequest.populateProgressReportFromJsonString` (copies the parent's data and overlays
   the report fields) → `DataAccessRequestService.createProgressReport`.
 - Preconditions (closeouts go through the same endpoint and share the first four):
   - The caller owns the parent.
   - The parent is not a draft.
-  - The parent has no open DataAccess elections.
+  - The parent has no open DataAccess elections. **This check is not serialized.**
+    `postProgressReport` runs it before the transaction, and under the collection lock
+    `insertProgressReport` re-checks only `hasSubmittedCloseout`. So a closeout can commit while a
+    DataAccess election is still open, and later votes on that election get 409. This is a known
+    gap in the code; don't rely on "no open elections" holding for a closed-out collection.
   - The collection has no submitted closeout.
   - Ordinary reports only: the datasets are a subset of the parent's datasets and are currently
     approved (`findDatasetApprovalsByDar`). A closeout's datasets are set by the service instead.
@@ -180,7 +195,9 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
 ## Concurrency
 
 Closeout submission, election creation/cancellation, and vote/rationale updates serialize on the
-collection row:
+collection row. Only the checks re-run under the lock are serialized; the progress-report
+"no open DataAccess elections" precondition is not (see
+[Progress report](#3-progress-report-renewal-optional)).
 
 1. Open a transaction (`dataAccessRequestDAO.inTransaction(...)` or
    `DataAccessRequestServiceDAO.inTransaction`).
