@@ -98,12 +98,13 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset);
 
-  // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps.
+  // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps,
+  // timed by date_sent too because rows from before 2022-11 kept only the day in create_date.
   @SqlQuery(
       """
       WITH in_range AS (
         SELECT email_entity_id, entity_reference_id, user_id, email_type, create_date, date_sent,
-          send_id,
+          send_id, GREATEST(create_date, date_sent) AS sent_at,
           CASE WHEN entity_reference_id IS NULL AND send_id IS NULL THEN email_entity_id END
             AS lone_id
         FROM email_entity
@@ -113,20 +114,20 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       flagged AS (
         SELECT in_range.*,
           CASE
-            WHEN LAG(create_date) OVER send_order IS NULL THEN 1
+            WHEN LAG(sent_at) OVER send_order IS NULL THEN 1
             WHEN send_id IS NOT NULL THEN 0
-            WHEN create_date - LAG(create_date) OVER send_order <= INTERVAL '10 minutes' THEN 0
+            WHEN sent_at - LAG(sent_at) OVER send_order <= INTERVAL '10 minutes' THEN 0
             ELSE 1 END AS starts_send
         FROM in_range
         WINDOW send_order AS (
           PARTITION BY email_type, entity_reference_id, lone_id, send_id
-          ORDER BY create_date, email_entity_id)
+          ORDER BY sent_at, email_entity_id)
       ),
       numbered AS (
         SELECT flagged.*,
           SUM(starts_send) OVER (
             PARTITION BY email_type, entity_reference_id, lone_id, send_id
-            ORDER BY create_date, email_entity_id
+            ORDER BY sent_at, email_entity_id
           ) AS send_number
         FROM flagged
       ),

@@ -734,6 +734,27 @@ class MailMessageDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFetchSendsByCreateDate_splits_day_only_rows_by_their_sent_time() {
+    Instant day = Instant.now().minus(3, ChronoUnit.DAYS).truncatedTo(ChronoUnit.DAYS);
+    for (int hour : List.of(9, 15)) {
+      MailMessage row =
+          generateSendRow(
+              createUser(), EmailType.NEW_DAR, "DAR-1", day.plus(hour, ChronoUnit.HOURS));
+      setCreateDate(row.emailId(), day);
+    }
+
+    List<MailSend> sends =
+        mailMessageDAO.fetchSendsByCreateDate(
+            Date.from(day.minus(1, ChronoUnit.DAYS)),
+            Date.from(day.plus(1, ChronoUnit.DAYS)),
+            100,
+            0,
+            100);
+
+    assertEquals(2, sends.size());
+  }
+
+  @Test
   void testFetchSendsByCreateDate_marks_unsent_recipients() {
     User user = createUser();
     MailMessage unsent =
