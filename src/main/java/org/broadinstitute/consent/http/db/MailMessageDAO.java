@@ -98,8 +98,7 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Bind("limit") Integer limit,
       @Bind("offset") Integer offset);
 
-  // Rows sharing a send_id, type and reference are one send; older rows split on 10-minute gaps,
-  // timed by date_sent too because rows from before 2022-11 kept only the day in create_date.
+  // One send per send_id, type and reference; older rows split on 10-minute gaps in sent time.
   @SqlQuery(
       """
       WITH in_range AS (
