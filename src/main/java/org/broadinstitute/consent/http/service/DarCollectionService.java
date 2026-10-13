@@ -957,12 +957,15 @@ public class DarCollectionService implements ConsentLogger {
         try {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
+          List<Integer> chairDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
+          List<Integer> openedDatasetIds =
+              dar.getDatasetIds().stream().filter(chairDatasetIds::contains).toList();
           if (dar.getProgressReport()) {
             sendProgressReportNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode(), dar.getDatasetIds());
+                voteUsers, collection.getDarCode(), openedDatasetIds);
           } else {
             sendDarNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode(), dar.getDatasetIds());
+                voteUsers, collection.getDarCode(), openedDatasetIds);
           }
 
         } catch (Exception e) {
@@ -1304,10 +1307,14 @@ public class DarCollectionService implements ConsentLogger {
         // Send election notification for auto-open DACs
         if (latestDar.getProgressReport()) {
           sendProgressReportNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode(), latestDar.getDatasetIds());
+              List.of(user),
+              darCollection.getDarCode(),
+              datasetIdsInUserDacs(user, dacs, datasets));
         } else {
           sendDarNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode(), latestDar.getDatasetIds());
+              List.of(user),
+              darCollection.getDarCode(),
+              datasetIdsInUserDacs(user, dacs, datasets));
         }
       } else {
         // Send manual notification for manual DACs
@@ -1469,6 +1476,15 @@ public class DarCollectionService implements ConsentLogger {
     return new ArrayList<>(
         userDAO.findUsersForDatasetsByRole(
             datasetIds, List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId())));
+  }
+
+  private List<Integer> datasetIdsInUserDacs(User user, Set<Dac> dacs, Set<Dataset> datasets) {
+    List<Integer> dacIds = getMatchingDacs(user, dacs).stream().map(Dac::getDacId).toList();
+    return datasets.stream()
+        .filter(dataset -> dacIds.contains(dataset.getDacId()))
+        .map(Dataset::getDatasetId)
+        .sorted()
+        .toList();
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {

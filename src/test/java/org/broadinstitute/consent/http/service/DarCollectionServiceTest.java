@@ -4221,6 +4221,40 @@ class DarCollectionServiceTest extends AbstractTestHelper {
    * DAC/dataset entries for their own DAC — not a union of all prior users' entries.
    */
   @Test
+  void testNotifyUsersForDacs_AutoOpenPath_RecordsOnlyTheUsersOwnDacDatasets() throws Exception {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of(1, 2));
+    DarCollection collection = new DarCollection();
+    collection.setDarCode("DAR-TEST");
+    Dac dac10 = new Dac();
+    dac10.setDacId(10);
+    Dac dac20 = new Dac();
+    dac20.setDacId(20);
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(20);
+    User chairDac10 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 10);
+
+    service.notifyUsersForDacs(
+        Set.of(chairDac10),
+        Set.of(dac10, dac20),
+        Set.of(dataset1, dataset2),
+        dar,
+        collection,
+        "Researcher Name",
+        true);
+
+    ArgumentCaptor<NewCaseMessage> captor = ArgumentCaptor.forClass(NewCaseMessage.class);
+    verify(emailService).sendMessage(captor.capture(), any());
+    assertEquals(List.of(1), captor.getValue().getDatasetIds());
+  }
+
+  @Test
   void testNotifyUsersForDacs_ManualPath_EachUserReceivesOnlyTheirOwnDacDatasets()
       throws Exception {
     DataAccessRequest dar = new DataAccessRequest();
