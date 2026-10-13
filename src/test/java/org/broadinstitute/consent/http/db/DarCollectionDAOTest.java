@@ -193,7 +193,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     createLibraryCard(user);
     User updatedUser = userDAO.findUserById(user.getUserId());
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, updatedUser.getUserId(), FIXED_DATE);
     createDataAccessRequest(updatedUser.getUserId(), collectionId);
@@ -304,7 +304,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     createLibraryCard(user);
     User updatedUser = userDAO.findUserById(user.getUserId());
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, updatedUser.getUserId(), FIXED_DATE);
     createDataAccessRequest(updatedUser.getUserId(), collectionId);
@@ -466,7 +466,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     createLibraryCard(user);
     User updatedUser = userDAO.findUserById(user.getUserId());
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, updatedUser.getUserId(), FIXED_DATE);
     createDataAccessRequest(updatedUser.getUserId(), collectionId);
@@ -745,7 +745,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer userId = user.getUserId();
     createUserProperty(userId, UserFields.ERA_STATUS.getValue());
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), FIXED_DATE);
     Dataset dataset = createDataset();
@@ -769,7 +769,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer userId = user.getUserId();
     createUserProperty(userId, UserFields.ERA_STATUS.getValue());
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), FIXED_DATE);
     DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
@@ -830,7 +830,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
-    String darCode = "DAR-" + randomInt(1, 10000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), FIXED_DATE);
     Dataset dataset = createDataset();

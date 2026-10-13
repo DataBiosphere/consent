@@ -839,7 +839,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_a_dar_code_as_its_submitted_dar() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest dar = createDar(user, collectionId);
@@ -863,7 +863,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_a_progress_report_reference_as_its_parent_dar() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest parent = createDar(user, collectionId);
@@ -885,7 +885,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_an_election_id_as_its_dar_and_dataset() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest dar = createDar(user, collectionId);
@@ -910,7 +910,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_a_ten_digit_election_id() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest dar = createDar(user, collectionId);
@@ -942,7 +942,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_an_election_without_a_dataset_as_its_dars_datasets() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest dar = createDar(user, collectionId);
@@ -966,7 +966,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_an_older_dar_reference_on_a_dar_code_type() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest dar = createDar(user, collectionId);
@@ -1071,7 +1071,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_lists_the_datasets_a_send_recorded() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     DataAccessRequest dar = createDar(user, collectionId);
@@ -1106,7 +1106,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_does_not_look_up_a_send_that_recorded_no_datasets() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     createDatasetFor(createDar(user, collectionId));
@@ -1124,7 +1124,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_reads_an_older_dar_code_on_a_reference_id_type() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     Dataset requested = createDatasetFor(createDar(user, collectionId));
@@ -1223,7 +1223,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchSendsByCreateDate_searches_dar_codes_duos_ids_and_types() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1000, 1_000_000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     Dataset dataset = createDatasetFor(createDar(user, collectionId));

@@ -213,7 +213,7 @@ class OntologyDAOTest extends DAOTestHelper {
 
   private DataAccessRequest insertDarWithOntologies(List<String> termIds) {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(1, 999999999);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), Date.from(FIXED_INSTANT));
     DataAccessRequestData data = new DataAccessRequestData();
