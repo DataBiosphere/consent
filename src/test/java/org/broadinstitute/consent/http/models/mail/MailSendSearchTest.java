@@ -28,6 +28,11 @@ class MailSendSearchTest {
   }
 
   @Test
+  void underscores_alone_match_no_type() {
+    assertEquals(List.of(), MailSendSearch.of("_ _", null).types());
+  }
+
+  @Test
   void a_duos_id_names_its_alias_padded_or_not() {
     assertEquals(123L, MailSendSearch.of("duos-123", null).alias());
     assertEquals(123L, MailSendSearch.of("DUOS-000123", null).alias());

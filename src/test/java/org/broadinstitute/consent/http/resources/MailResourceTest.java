@@ -322,6 +322,19 @@ class MailResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void test_MailResource_sends_allows_a_search_over_367_days_across_a_clock_change() {
+    initResource();
+    when(emailService.fetchEmailSendsByCreateDate(any(), any(), any(), any(), any()))
+        .thenReturn(List.of());
+
+    Response response =
+        mailResource.getEmailSendsByDateRange(
+            duosUser, "11/01/2025", "11/03/2026", 20, 0, "Ada", List.of());
+
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
   void test_MailResource_sends_ignores_search_types_without_a_search() throws Exception {
     initResource();
     SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");

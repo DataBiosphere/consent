@@ -40,7 +40,10 @@ public record MailSendSearch(String pattern, Long alias, List<Integer> types) {
         Stream.concat(
                 labelledTypes == null ? Stream.empty() : labelledTypes.stream(),
                 Stream.of(EmailType.values())
-                    .filter(type -> Collections.indexOfSubList(words(type.name()), words) >= 0)
+                    .filter(
+                        type ->
+                            !words.isEmpty()
+                                && Collections.indexOfSubList(words(type.name()), words) >= 0)
                     .map(EmailType::getTypeInt))
             .distinct()
             .toList();

@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
@@ -138,9 +139,11 @@ public class MailResource {
     try {
       Date startDate = parseStartDate(start);
       Date endDate = parseEndDate(end);
-      // A search reads every send in the range, so its range is capped.
+      // A search reads every send in the range, so its range is capped, in calendar days so a DST
+      // change does not count.
       if (searching
-          && Math.abs(endDate.getTime() - startDate.getTime()) > MAX_SEARCH_RANGE.toMillis()) {
+          && Math.abs(ChronoUnit.DAYS.between(localDate(startDate), localDate(endDate)))
+              > MAX_SEARCH_RANGE.toDays()) {
         throw new BadRequestException(
             "A search covers at most " + MAX_SEARCH_RANGE.toDays() + " days");
       }
@@ -180,6 +183,10 @@ public class MailResource {
     if (limit != null && limit > MAX_PAGE_LIMIT) {
       throw new BadRequestException("limit value must be " + MAX_PAGE_LIMIT + " or less");
     }
+  }
+
+  private static LocalDate localDate(Date date) {
+    return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
   }
 
   private Date parseStartDate(String start) throws ParseException {
