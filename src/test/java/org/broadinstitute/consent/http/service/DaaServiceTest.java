@@ -546,6 +546,32 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testIsOrWasDaaLinkedToDacReturnsTrueForAReplacedDaa() {
+    Integer dacId = 7;
+    Integer daaId = 90;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.wasDaaLinkedToDac(dacId, daaId)).thenReturn(true);
+
+    initService();
+
+    assertTrue(service.isOrWasDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testIsOrWasDaaLinkedToDacReturnsFalseWithoutAnyLink() {
+    Integer dacId = 7;
+    Integer daaId = 91;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.wasDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+
+    initService();
+
+    assertFalse(service.isOrWasDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
   void testIsDaaLinkedToDacReturnsFalseWhenNoRelationExists() {
     Integer dacId = 7;
     Integer daaId = 89;

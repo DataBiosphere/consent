@@ -41,6 +41,10 @@ post:
               failed:
                 type: integer
                 description: Number of emails that could not be sent
+    400:
+      description: The DAA is not linked to the DAC.
+    403:
+      description: The user is not a chairperson of the DAC.
     404:
       description: DAC, DAA, or User Not Found
     429:

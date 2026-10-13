@@ -536,6 +536,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(any())).thenReturn(dac);
+    when(daaService.isOrWasDaaLinkedToDac(any(), any())).thenReturn(true);
     NewDaaEmailResult result = new NewDaaEmailResult(3, 0, 1);
     when(daaService.sendNewDaaEmails(any(), any(), any())).thenReturn(result);
 
@@ -572,7 +573,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
-    doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any());
+    when(daaService.findById(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
@@ -591,6 +592,7 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(dacId);
     DuosUser duosUser = new DuosUser(authUser, user);
     when(dacService.findById(dacId)).thenReturn(dac);
+    when(daaService.isOrWasDaaLinkedToDac(any(), any())).thenReturn(true);
     doThrow(new ServerErrorException("Failed to send all 1 new DAA emails", 500))
         .when(daaService)
         .sendNewDaaEmails(any(), any(), any());
@@ -599,6 +601,41 @@ class DaaResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
       assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSendNewDAAMessageForbiddenForAChairOfAnotherDac() {
+    User user = new User();
+    int dacId = randomInt(10, 20);
+    user.setChairpersonRoleWithDAC(dacId + 1);
+    DuosUser duosUser = new DuosUser(authUser, user);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    try (Response response =
+        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+      verify(dacService, never()).findById(any());
+      verify(daaService, never()).sendNewDaaEmails(any(), any(), any());
+    }
+  }
+
+  @Test
+  void testSendNewDAAMessageBadRequestForADaaNotLinkedToTheDac() {
+    User user = new User();
+    int dacId = randomInt(10, 20);
+    Dac dac = new Dac();
+    dac.setDacId(dacId);
+    user.setChairpersonRoleWithDAC(dacId);
+    DuosUser duosUser = new DuosUser(authUser, user);
+    when(dacService.findById(dacId)).thenReturn(dac);
+    when(daaService.isOrWasDaaLinkedToDac(any(), any())).thenReturn(false);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    try (Response response =
+        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
+      assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+      verify(daaService, never()).sendNewDaaEmails(any(), any(), any());
     }
   }
 

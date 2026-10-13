@@ -1,5 +1,6 @@
+<#ftl output_format="HTML">
 <#assign pageTitle="Broad Data Use Oversight System - New Data Access Agreement Upload">
-<#assign greetingHtml="Dear ${researcherUserName},">
+<#assign greetingHtml>Dear ${researcherUserName},</#assign>
 <#include "/freemarker/header.ftl">
     <tr>
       <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
