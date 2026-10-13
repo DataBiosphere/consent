@@ -392,7 +392,7 @@ checkout() {
 }
 
 describe() {
-  git -C "$1" log -1 --format='`%h` (%cs)'
+  git -C "$1" log -1 --format='%h (%cs)'
 }
 
 HELMFILE=$(checkout "$HELMFILE_REPO" "$HELMFILE_DIR")
