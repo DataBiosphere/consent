@@ -17,7 +17,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -37,7 +36,7 @@ public class MailResource {
   /** Summaries and sends are listed many at once, so their pages are capped. */
   static final int MAX_PAGE_LIMIT = 1000;
 
-  static final Duration MAX_SEARCH_RANGE = Duration.ofDays(367);
+  static final int MAX_SEARCH_DAYS = 367;
 
   @Inject
   public MailResource(EmailService emailService) {
@@ -142,9 +141,8 @@ public class MailResource {
       // In calendar days, so a DST change does not shorten the cap.
       if (searching
           && Math.abs(ChronoUnit.DAYS.between(localDate(startDate), localDate(endDate)))
-              > MAX_SEARCH_RANGE.toDays()) {
-        throw new BadRequestException(
-            "A search covers at most " + MAX_SEARCH_RANGE.toDays() + " days");
+              > MAX_SEARCH_DAYS) {
+        throw new BadRequestException("A search covers at most " + MAX_SEARCH_DAYS + " days");
       }
       return Response.ok()
           .entity(
