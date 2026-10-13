@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Jdbi;
@@ -22,7 +23,8 @@ public class DataAccessRequestServiceDAO {
       DataAccessRequestDAO dataAccessRequestDAO,
       DaaDAO daaDAO,
       DarCollectionDAO darCollectionDAO,
-      CounterDAO counterDAO) {}
+      CounterDAO counterDAO,
+      ElectionDAO electionDAO) {}
 
   private final Jdbi jdbi;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -47,7 +49,8 @@ public class DataAccessRequestServiceDAO {
                     handle.attach(DataAccessRequestDAO.class),
                     handle.attach(DaaDAO.class),
                     handle.attach(DarCollectionDAO.class),
-                    handle.attach(CounterDAO.class))));
+                    handle.attach(CounterDAO.class),
+                    handle.attach(ElectionDAO.class))));
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar)

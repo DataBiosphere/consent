@@ -386,6 +386,9 @@ public class DataAccessRequestService implements ConsentLogger {
     String referenceId = progressReport.getReferenceId();
     transactionalDarDAO.lockCollection(parentDar.getCollectionId());
     prepareProgressReportForCollection(transactionalDarDAO, progressReport, parentDar);
+    // The resource checks this before uploading documents. Check again under the collection lock,
+    // which election creation also takes, so an election opened since then is not missed.
+    validateParentHasNoOpenDataAccessElections(transactionDAOs.electionDAO(), parentDar);
     Integer progressReportId =
         transactionalDarDAO.insertProgressReport(
             progressReport.getParentId(),
@@ -411,6 +414,22 @@ public class DataAccessRequestService implements ConsentLogger {
           transactionalDaaDAO);
     }
     return progressReportId;
+  }
+
+  private void validateParentHasNoOpenDataAccessElections(
+      ElectionDAO dao, DataAccessRequest parentDar) {
+    boolean hasOpenDataAccessElections =
+        dao.findOpenElectionsByReferenceIds(List.of(parentDar.getReferenceId())).stream()
+            .anyMatch(
+                election ->
+                    election
+                        .getElectionType()
+                        .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+    if (hasOpenDataAccessElections) {
+      throw new BadRequestException(
+          "Cannot create a progress report for a DAR with an open election: "
+              + parentDar.getReferenceId());
+    }
   }
 
   private void notifySigningOfficialOfCloseout(
