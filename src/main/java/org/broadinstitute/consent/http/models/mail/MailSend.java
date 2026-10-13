@@ -13,4 +13,6 @@ public record MailSend(
     Date createDate,
     Date lastCreateDate,
     Integer recipientCount,
-    List<MailSendRecipient> recipients) {}
+    List<MailSendRecipient> recipients,
+    String darCode,
+    List<String> datasetIdentifiers) {}
