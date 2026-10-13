@@ -120,7 +120,8 @@ public class EmailService implements ConsentLogger {
             content,
             sendgridResponse,
             sendgridStatus,
-            EmailSendId.current());
+            EmailSendId.current(),
+            mailMessage.getDatasetIds().orElse(null));
     try {
       emailDAO.insert(mailMessageInsert);
     } catch (RuntimeException e) {

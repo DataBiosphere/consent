@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.mail.EmailSendId;
 import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
@@ -578,6 +579,19 @@ class EmailServiceTest extends AbstractTestHelper {
 
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
+  }
+
+  @Test
+  void testSendMessage_RecordsTheMessagesDatasets() throws Exception {
+    User user = new User();
+    user.setEmail("user@duos");
+    user.setDisplayName("User");
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName))
+        .thenReturn(mock(Template.class));
+
+    service.sendMessage(new NewCaseMessage(user, "DAR-1", List.of(7, 8)), 1234);
+
+    verify(emailDAO).insert(argThat((MailMessageInsert m) -> List.of(7, 8).equals(m.datasetIds())));
   }
 
   private org.broadinstitute.consent.http.mail.message.MailMessage createMailMessage(

@@ -61,7 +61,7 @@ class EntityReferenceIdLengthTest {
   private static final String UNBOUNDED_TEXT_SOURCE = "b".repeat(1000);
 
   private static final List<DatasetMailDTO> DATASET_DTOS =
-      List.of(new DatasetMailDTO("dataset name", "DUOS-000001", "http://dataLocationUrl"));
+      List.of(new DatasetMailDTO(1, "dataset name", "DUOS-000001", "http://dataLocationUrl"));
 
   private record MessageCase(
       Class<? extends MailMessage> messageType, String referenceIdSource, MailMessage message) {
@@ -143,7 +143,7 @@ class EntityReferenceIdLengthTest {
             "dataset name",
             new DatasetSubmittedMessage(
                 user(), "Data Submitter", LONGEST_BOUNDED_SOURCE, "DAC name")),
-        messageCase("dar code", new NewCaseMessage(user(), LONGEST_BOUNDED_SOURCE)),
+        messageCase("dar code", new NewCaseMessage(user(), LONGEST_BOUNDED_SOURCE, List.of(1))),
         messageCase(
             "dac name",
             new NewDAAUploadResearcherMessage(
@@ -164,7 +164,9 @@ class EntityReferenceIdLengthTest {
                 user(), LONGEST_BOUNDED_SOURCE, "Researcher Name")),
         messageCase(
             "the recipient's email", new NewLibraryCardIssuedMessage(userWithLongestEmail())),
-        messageCase("dar code", new NewProgressReportCaseMessage(user(), LONGEST_BOUNDED_SOURCE)),
+        messageCase(
+            "dar code",
+            new NewProgressReportCaseMessage(user(), LONGEST_BOUNDED_SOURCE, List.of(1))),
         messageCase(
             "dar reference id",
             new NewProgressReportRequestMessage(

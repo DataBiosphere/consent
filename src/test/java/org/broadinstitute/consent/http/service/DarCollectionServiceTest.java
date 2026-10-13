@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -604,6 +605,35 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(any());
     verify(emailService).sendMessage(any(NewCaseMessage.class), any());
     verify(darCollectionDAO).findDARCollectionByCollectionId(any());
+  }
+
+  @Test
+  void testCreateElectionsForDarCollectionRecordsEachMembersOwnDatasets() throws Exception {
+    User chair = new User();
+    chair.setUserId(1);
+    chair.setEmail("email");
+    chair.setChairpersonRoleWithDAC(1);
+    User member = new User();
+    member.setUserId(2);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10, 20));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10, 20));
+    when(datasetDAO.findDatasetIdsByDACUserId(1)).thenReturn(List.of(10, 20));
+    when(datasetDAO.findDatasetIdsByDACUserId(2)).thenReturn(List.of(10));
+    when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any()))
+        .thenReturn(List.of("electionId"));
+    when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(member));
+    when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(collection);
+
+    service.createElectionsForDarCollection(chair, collection);
+
+    ArgumentCaptor<NewCaseMessage> captor = ArgumentCaptor.forClass(NewCaseMessage.class);
+    verify(emailService).sendMessage(captor.capture(), any());
+    assertEquals(Optional.of(List.of(10)), captor.getValue().getDatasetIds());
   }
 
   @Test
@@ -4220,6 +4250,40 @@ class DarCollectionServiceTest extends AbstractTestHelper {
    * <p>With two chairs from different DACs, each user's NewDARRequestMessage must contain only the
    * DAC/dataset entries for their own DAC — not a union of all prior users' entries.
    */
+  @Test
+  void testNotifyUsersForDacs_AutoOpenPath_RecordsOnlyTheUsersOwnDacDatasets() throws Exception {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of(1, 2));
+    DarCollection collection = new DarCollection();
+    collection.setDarCode("DAR-TEST");
+    Dac dac10 = new Dac();
+    dac10.setDacId(10);
+    Dac dac20 = new Dac();
+    dac20.setDacId(20);
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(20);
+    User chairDac10 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 10);
+
+    service.notifyUsersForDacs(
+        Set.of(chairDac10),
+        Set.of(dac10, dac20),
+        Set.of(dataset1, dataset2),
+        dar,
+        collection,
+        "Researcher Name",
+        true);
+
+    ArgumentCaptor<NewCaseMessage> captor = ArgumentCaptor.forClass(NewCaseMessage.class);
+    verify(emailService).sendMessage(captor.capture(), any());
+    assertEquals(Optional.of(List.of(1)), captor.getValue().getDatasetIds());
+  }
+
   @Test
   void testNotifyUsersForDacs_ManualPath_EachUserReceivesOnlyTheirOwnDacDatasets()
       throws Exception {

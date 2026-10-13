@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,7 @@ class NewProgressReportCaseMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testMessageSubject() {
-    var message2 = new NewProgressReportCaseMessage(new User(), "DAR-123");
+    var message2 = new NewProgressReportCaseMessage(new User(), "DAR-123", List.of(1));
     assertEquals("Log votes on Progress Report case id: DAR-123.", message2.createSubject());
   }
 
@@ -19,7 +20,7 @@ class NewProgressReportCaseMessageTest extends AbstractMailMessageTest {
   void testCreateModel_AddsRequiredFields() {
     User toUser = new User();
     toUser.setDisplayName("Test User");
-    var message = new NewProgressReportCaseMessage(toUser, "DAR-123");
+    var message = new NewProgressReportCaseMessage(toUser, "DAR-123", List.of(1));
 
     assertRequiredModelFields(message, Map.of("userName", "Test User", "entityName", "DAR-123"));
   }
@@ -32,7 +33,7 @@ class NewProgressReportCaseMessageTest extends AbstractMailMessageTest {
     User toUser = new User();
     toUser.setDisplayName(userName);
 
-    var message = new NewProgressReportCaseMessage(toUser, referenceId);
+    var message = new NewProgressReportCaseMessage(toUser, referenceId, List.of(1));
     assertEquals(referenceId, message.getEntityReferenceId());
 
     var rendered = renderTemplate(message, serverUrl);
