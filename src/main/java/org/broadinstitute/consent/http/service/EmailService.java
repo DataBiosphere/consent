@@ -115,11 +115,7 @@ public class EmailService implements ConsentLogger {
             content,
             sendgridResponse,
             sendgridStatus);
-    try {
-      emailDAO.insert(mailMessageInsert);
-    } catch (Exception e) {
-      logException("Email to user " + userId + " was sent but not recorded:", e);
-    }
+    emailDAO.insert(mailMessageInsert);
     return outcome;
   }
 

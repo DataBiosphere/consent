@@ -26,7 +26,7 @@ post:
     - Mail
   responses:
     200:
-      description: Emails were sent to Signing Officials and Researchers about the newly uploaded DAA. `failed` counts recipients whose email could not be sent; the others already received theirs, so retrying would email them again.
+      description: Emails were sent to Signing Officials and Researchers about the newly uploaded DAA. `failed` counts recipients whose email could not be sent or recorded; the others already received theirs, so retrying would email them again.
       content:
         application/json:
           schema:
@@ -40,7 +40,7 @@ post:
                 description: Number of recipients not emailed because they opted out of email or notifications are off
               failed:
                 type: integer
-                description: Number of emails that could not be sent
+                description: Number of emails that could not be sent, or were sent but could not be recorded
     404:
       description: DAC, DAA, or User Not Found
     429:

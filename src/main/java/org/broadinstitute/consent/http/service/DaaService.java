@@ -194,7 +194,9 @@ public class DaaService implements ConsentLogger {
             outcomes.getOrDefault(EmailSendOutcome.FAILED, 0));
     if (result.sent() == 0 && result.failed() > 0) {
       throw new ServerErrorException(
-          "Failed to send all " + result.failed() + " new DAA emails", 500);
+          "Failed to send all %d new DAA emails (%d skipped)"
+              .formatted(result.failed(), result.skipped()),
+          500);
     }
     return result;
   }

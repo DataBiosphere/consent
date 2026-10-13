@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -220,7 +221,7 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendMessage_ReportsSent_WhenRecordingTheEmailFails() throws Exception {
+  void testSendMessage_Throws_WhenRecordingTheEmailFails() throws Exception {
     User user = new User();
     user.setEmail("user@duos");
     var message = createMailMessage(user, EmailType.NEW_CASE, "subject", "DAR-1", null, null);
@@ -230,7 +231,7 @@ class EmailServiceTest extends AbstractTestHelper {
     when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
     when(emailDAO.insert(any())).thenThrow(new IllegalStateException("db down"));
 
-    assertEquals(EmailSendOutcome.SENT, service.sendMessage(message, 1234));
+    assertThrows(IllegalStateException.class, () -> service.sendMessage(message, 1234));
   }
 
   @Test
