@@ -80,6 +80,7 @@ Add the column and carry it through the model and the DAO layer.
 - `Dataset.java`: add `overrideDaaId`. `DatasetMapper` and `DatasetReducer`: map the column (follow the `dac_approval` pattern).
 - `DatasetDAO`:
   - Add `override_daa_id` to the six dataset select lists that already select `d.dac_approval`.
+- OpenAPI: add `overrideDaaId` to `Dataset.yaml`. Dataset responses carry the field as soon as this task deploys, and Task 6 reads it before Task 5 ships.
   - Add `updateDatasetDaaOverride(daaId, updateDate, updateUserId, datasetId, dacId)`. A `null` `daaId` clears the override. It returns the number of updated rows. Its `WHERE` clause also checks the DAC, so that a write from a stale DAC changes nothing (see Task 5):
 
     ```sql
@@ -150,12 +151,14 @@ Then cover each workflow that reads these queries. consent has no integration te
 ### Task 4: Show override DAAs to SOs (consent)
 
 - `DataAccessAgreement`: add `overrideDatasetIds` (sorted list).
-- `DaaDAO.mapOverrideDaaIdsToDatasetIds()`: a new query that maps each DAA to the datasets that use it as an override. It reuses `DaaDatasetReducer`.
-- `DaaService.findAll` and `findById`: fill `overrideDatasetIds`, with an empty list when the DAA has no override datasets.
+- Two new `DaaDAO` queries:
+  - `mapOverrideDaaIdsToDatasetIds()`: maps each DAA to the datasets that use it as an override. It reuses `DaaDatasetReducer`. Only `findAll` uses it.
+  - `findOverrideDatasetIdsByDaaId(daaId)`: the override datasets of one DAA, `ORDER BY dataset_id`. `findById` uses it, so that a single read does not load every override. This matters because `findById` runs in loops, for example in `DaaService.findDAAsInJsonArray`.
+- `DaaService.findAll` and `findById`: fill `overrideDatasetIds`, sorted, with an empty list when the DAA has no override datasets.
 - `SigningOfficialDashboardDAO` and `AdminDashboardDAO`: the `assignable_daas` CTE also counts DAAs that are a dataset override in a DAC that is not deleted.
 - OpenAPI: add `overrideDatasetIds` to `DataAccessAgreement.yaml`.
 
-**Tests:** the new DAO query; the service fills the field (with and without overrides); both dashboards count an override-only DAA.
+**Tests:** both new DAO queries, including the sort order; `findAll` and `findById` fill the field (with and without overrides), and `findById` does not call the bulk query; both dashboards count an override-only DAA.
 
 ### Task 5: Endpoints for chairs to set and clear the override (consent)
 
@@ -171,7 +174,7 @@ Implementation:
   3. Update the row with the DAC id from the request.
   4. If no row changed, an admin moved the dataset to another DAC after the resource checked it. Throw `ConsentConflictException` (409).
   5. Otherwise, return the fresh dataset. No reindex is needed, because the search index does not hold the DAA.
-- OpenAPI: the two path files, `overrideDaaId` on `Dataset.yaml`, and the 409 response.
+- OpenAPI: the two path files and the 409 response.
 
 **Tests:**
 - Service: set; clear; a DAA of another DAC (400); an unknown DAA (404); a stale DAC (the DAO returns 0) gives 409, both to set and to clear.
@@ -182,10 +185,14 @@ Implementation:
 
 ### Task 6: Use the effective DAA in the DAR and progress report forms (duos-ui)
 
-- Types: `Dataset.overrideDaaId?: number | null`, `DAAObject.overrideDatasetIds?: number[]`.
+- Types: `Dataset.overrideDaaId?: number | null`.
 - `src/libs/daaHelpers.ts`:
   - `findEffectiveDaa(dataset, daas)`: the override if it is set, else the DAA whose `dacs` contains the dataset's DAC. If the override is set but missing from `daas`, return `undefined`. Do not fall back to the default, because the backend requires the override.
   - `getRequiredDaaIds(datasets, daas)`: unique ids, ascending.
+  - `findDatasetsWithUnresolvedOverride(datasets, daas)`: the datasets whose override is set but missing from `daas`.
+- **Unresolved override.** `getRequiredDaaIds` cannot include a DAA that it cannot find, so a submit would fail the backend's exact-set check. `GET /api/daa` returns every DAA, so this happens only when the list is stale or did not load. When `findDatasetsWithUnresolvedOverride` is not empty:
+  - `DataAccessAgreements.tsx` shows an error that names the datasets and asks the researcher to reload the page, and disables the Attest button. Save Draft stays available.
+  - `ProgressReportDataAccessAgreements.tsx` shows the same error, and the progress report form does not submit.
 - Use the helpers in the four places that repeat the DAC-only rule:
   - `RequiredDAAs.tsx`: when an override DAA has no DAC name, show "—".
   - `DataAccessAgreements.tsx`: delete `getDisplayedDaaIds`.
@@ -197,6 +204,7 @@ Implementation:
 - The helpers: default, override, missing override, no DAC.
 - Two DAAs with the same file name are both kept.
 - Each of the four components shows or sends the override DAA.
+- With an unresolved override, the DAR form shows the error and disables Attest, and the progress report form shows the error and does not submit.
 
 This task must deploy before Task 5 (see the task summary). If overrides could exist while the old form is live, the form would send the DAC default, and every DAR on an overridden dataset would fail validation.
 
@@ -246,6 +254,7 @@ This task must deploy before Task 5 (see the task summary). If overrides could e
 
 ### Task 9: Show override-only DAAs on the SO DAA assignment page (duos-ui)
 
+- Types: `DAAObject.overrideDatasetIds?: number[]`. This task is the only one that reads the field, so it adds the type.
 - `researcherViewHelpers.ts`:
   - Add `isAssignableDaa(daa)`. It is true when the DAA has DACs or override datasets.
   - `getDacName` labels an override-only DAA as "Dataset-specific (N datasets)".
@@ -258,7 +267,7 @@ This task must deploy before Task 5. Otherwise a chair could require an override
 ## Edge cases to cover in review
 
 1. Two required DAAs have the same file name. Expected: both show and both are sent (Task 6).
-2. A dataset's override DAA is missing from the list that the UI loaded. Expected: the UI does not fall back to the DAC default (Task 6).
+2. A dataset's override DAA is missing from the list that the UI loaded. Expected: the UI does not fall back to the DAC default, and it blocks the submit with an error that asks the researcher to reload (Task 6).
 3. A DAA is an override only, so nothing lists it as a DAC default. Expected: SOs can see it and pre-authorize researchers for it (Tasks 4 and 9).
 4. A dataset moves to another DAC, also in the middle of a chair's save. Expected: the override clears, and a stale write gets 409 (Tasks 1 and 5).
 5. A dataset is pinned to the DAA that is also the DAC default. Expected: it stays pinned when the default changes (Task 7).
