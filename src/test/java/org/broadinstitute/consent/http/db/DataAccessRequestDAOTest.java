@@ -2520,7 +2520,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             Date.from(Instant.now()),
             "hello world!",
             "success",
-            200));
+            200,
+            null));
     List<DataAccessRequest> dars =
         dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
             EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.mail;
 
 import java.util.Date;
+import java.util.UUID;
 
 public record MailMessageInsert(
     String entityReferenceId,
@@ -10,4 +11,5 @@ public record MailMessageInsert(
     Date dateSent,
     String emailText,
     String sendgridResponse,
-    Integer sendgridStatus) {}
+    Integer sendgridStatus,
+    UUID sendId) {}
