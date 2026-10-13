@@ -47,14 +47,16 @@ The stored flag stays the single gate, so the SO queue and the DAC workflow need
 | # | Repo | Task | Size (est.) | Depends on |
 |---|---|---|---|---|
 | 1 | consent | Store the exemption flag on the dataset | ~300 lines | — |
-| 2 | consent | Leave exempt datasets out of the SO decision | ~200 lines | 1 |
-| 3 | consent | Endpoint for chairs to set the flag | ~300 lines | 1 |
-| 4 | consent | `NOT_REQUIRED` value in the search index | ~80 lines | 1 |
-| 5 | duos-ui | Exemption toggle on the DAC profile page | ~350 lines | 3 deployed |
-| 6 | duos-ui | DAR form hint and SO queue test | ~80 lines | 1 deployed |
-| 7 | duos-ui | Data Library chip and filter | ~120 lines | 4 deployed |
+| 2 | consent | Leave exempt datasets out of the SO decision | ~250 lines | 1 |
+| 3 | consent | `NOT_REQUIRED` value in the search index | ~80 lines | 1 |
+| 4 | consent | Endpoint for chairs to set the flag | ~300 lines | 2 and 3 deployed; decision 2 confirmed |
+| 5 | duos-ui | Exemption toggle on the DAC profile page | ~350 lines | 4 deployed |
+| 6 | duos-ui | DAR form hint and SO queue test | ~100 lines | 1 deployed |
+| 7 | duos-ui | Data Library chip, filter, and banner | ~150 lines | 3 deployed |
 
-Sizes include tests. Tasks 2, 3, and 4 can go in any order after Task 1. Tasks 6 and 7 are small and can share one PR.
+Sizes include tests. Tasks 2 and 3 can go in any order after Task 1. Tasks 6 and 7 are small and can share one PR.
+
+**The endpoint (Task 4) is the only way to set the flag, so it ships after everything that reads the flag.** Until Task 4 deploys, no dataset can be exempt. When it deploys, the SO decision (Task 2) and the search index (Task 3) already handle exempt datasets. A chair never sees "Not required" while new DARs still go to the SO queue, and no catch-up reindex is needed.
 
 ## Tasks
 
@@ -66,7 +68,12 @@ Add the column and carry it through the model and the DAO layer.
 - `Dataset.java`: add `soApprovalExempt`. `DatasetMapper` and `DatasetReducer`: map the column (follow the `dac_approval` pattern).
 - `DatasetDAO`:
   - Add `so_approval_exempt` to the six dataset select lists that already select `d.dac_approval`.
-  - Add `updateDatasetSoApprovalExempt(exempt, updateDate, updateUserId, datasetId)`.
+  - Add `updateDatasetSoApprovalExempt(exempt, updateDate, updateUserId, datasetId, dacId)`. It returns the number of updated rows. Its `WHERE` clause also checks the DAC, so that a write from a stale DAC changes nothing (see Task 4):
+
+    ```sql
+    WHERE dataset_id = :datasetId AND dac_id = :dacId
+    ```
+
   - Add `findSoApprovalExemptDatasetIds(datasetIds)`.
 - Reset the flag when the DAC changes (decision 4). This touches `DatasetDAO.updateDatasetDacId` and `updateDatasetByDatasetId`, and the two dataset `UPDATE` statements in `DacServiceDAO` (DAC delete and externalize). In the two `DatasetDAO` methods, reset the flag only when the DAC id really changes:
 
@@ -78,7 +85,14 @@ Add the column and carry it through the model and the DAO layer.
 
   PostgreSQL reads the old row in every `SET` expression, so the `CASE` sees the old `dac_id`.
 
-**Tests:** new datasets are not exempt; the flag can be set and cleared; the filter query returns only exempt ids; a DAC change resets the flag; an unchanged DAC keeps it; DAC delete and externalize reset it.
+**Tests:**
+- New datasets are not exempt.
+- The flag can be set and cleared.
+- An update with the wrong DAC id changes no row and returns 0.
+- The filter query returns only exempt ids.
+- A DAC change resets the flag. An unchanged DAC keeps it.
+- DAC delete and externalize reset the flag.
+- A change to the flag does not change `requires_so_approval` on a DAR that was already submitted (decision 2).
 
 ### Task 2: Leave exempt datasets out of the SO decision (consent)
 
@@ -95,30 +109,29 @@ private boolean requiresSOApproval(User user, List<Integer> datasetIds) {
 }
 ```
 
-- Apply the same filter to the pre-authorization check in `createProgressReport`.
+- Apply the same filter to the pre-authorization check in `createProgressReport`. A progress report reads the flag when it is submitted, not when its parent DAR was submitted.
 - `isUserPreAuthorizedForAllDaas` returns `true` for an empty list, with no query.
-- Do not change `hasAcknowledgedRequiredDaas`. Researchers still acknowledge every DAA (decision 3).
+- Do not change `hasAcknowledgedRequiredDaas`. Researchers still acknowledge every DAA, including the DAAs of exempt datasets (decision 3).
 
-**Tests:**
-- All datasets exempt, the researcher has no pre-authorization, and the DAC has the SO rule: no SO approval, and RADAR runs.
-- Mixed, where only the exempt dataset's DAC has the rule: no SO approval.
-- Mixed, where a non-exempt dataset's DAC has the rule: SO approval.
-- A progress report on exempt datasets only: no SO approval.
+**Tests.** The two conditions (the DAC rule and DAA pre-authorization) each need their own cases, with the other condition held off:
+
+| Datasets | DAC rule | Researcher's pre-authorization | Expected |
+|---|---|---|---|
+| All exempt | on | none | No SO approval, and RADAR runs |
+| Exempt (rule on) + non-exempt (rule off) | mixed | has every DAA | No SO approval |
+| Exempt (rule off) + non-exempt (rule on) | mixed | has every DAA | SO approval |
+| Exempt (DAA X) + non-exempt (DAA Y) | off | has Y, not X | No SO approval |
+| Exempt (DAA X) + non-exempt (DAA Y) | off | has X, not Y | SO approval |
+| Exempt and non-exempt that share DAA X | off | not X | SO approval (the non-exempt dataset needs X) |
+
+Also test:
+- A DAR on exempt datasets only still fails validation if a DAA is not acknowledged.
+- A progress report on exempt datasets only needs no SO approval.
+- A progress report uses the flag at its own submit time. Its parent was submitted when the dataset was not exempt, and the progress report is submitted after the flag is set: it needs no SO approval.
 
 Existing tests keep passing with no change, because an unstubbed `findSoApprovalExemptDatasetIds` returns an empty list.
 
-### Task 3: Endpoint for chairs to set the flag (consent)
-
-`PUT /api/dac/{dacId}/dataset/{datasetId}/so-approval-exemption`, body `{"exempt": true|false}`, role `CHAIRPERSON`. It returns the updated `Dataset`.
-
-- `DacResource`: copy the pattern of `approveDataset` (`PUT /api/dac/{dacId}/dataset/{datasetId}`). Move its two checks into a private helper, `findDatasetForChair`, and use the helper in both endpoints. The checks are "the dataset belongs to this DAC" and "the user is a chair of this DAC". Both return 404, as today.
-- New request model `DatasetSoApprovalExemption` (copy `DatasetApproval`). Return 400 if the body is empty or `exempt` is missing.
-- `DatasetService.updateSoApprovalExemption(dataset, user, exempt)`: update the row, reindex the dataset (as `approveDataset` does), and return the fresh dataset.
-- OpenAPI: a new path file, the request schema, and `soApprovalExempt` on `Dataset.yaml`.
-
-**Tests:** service (update and reindex), resource (success, wrong DAC, not a chair, bad body), and the existing `approveDataset` tests after the helper refactor.
-
-### Task 4: `NOT_REQUIRED` value in the search index (consent)
+### Task 3: `NOT_REQUIRED` value in the search index (consent)
 
 - Add `NOT_REQUIRED` to `SoApprovalModel`.
 - In `ElasticSearchService`, when a dataset is exempt, set `soApprovalModel` to `NOT_REQUIRED` before the rule-based check. Datasets with no DAC keep `PRE_AUTHORIZED`. Such a dataset cannot be exempt, because Task 1 resets the flag with the DAC.
@@ -126,7 +139,26 @@ Existing tests keep passing with no change, because an unstubbed `findSoApproval
 
 **Tests:** an exempt dataset maps to `NOT_REQUIRED`, also when its DAC has the SO rule.
 
-**Unusual step:** none. No dataset is exempt at deploy time, so no reindex is needed. Task 3 reindexes each dataset when a chair changes its flag.
+No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, and Task 4 reindexes each dataset when a chair changes its flag.
+
+### Task 4: Endpoint for chairs to set the flag (consent)
+
+`PUT /api/dac/{dacId}/dataset/{datasetId}/so-approval-exemption`, body `{"exempt": true|false}`, role `CHAIRPERSON`. It returns the updated `Dataset`.
+
+- `DacResource`: copy the pattern of `approveDataset` (`PUT /api/dac/{dacId}/dataset/{datasetId}`). Move its two checks into a private helper, `findDatasetForChair`, and use the helper in both endpoints. The checks are "the dataset belongs to this DAC" and "the user is a chair of this DAC". Both return 404, as today.
+- New request model `DatasetSoApprovalExemption` (copy `DatasetApproval`). Return 400 if the body is empty or `exempt` is missing.
+- `DatasetService.updateSoApprovalExemption(dataset, user, exempt)`:
+  1. Update the row with the DAC id from the request.
+  2. If no row changed, an admin moved the dataset to another DAC after the resource checked it. Throw `ConsentConflictException` (409) and do not reindex.
+  3. Otherwise, reindex the dataset (as `approveDataset` does) and return the fresh dataset.
+- OpenAPI: a new path file, the request schema, `soApprovalExempt` on `Dataset.yaml`, and the 409 response.
+
+**Tests:**
+- Service: update and reindex; a stale DAC (the DAO returns 0) gives 409 with no reindex, both to set and to clear the flag.
+- Resource: success, wrong DAC, not a chair, bad body.
+- The existing `approveDataset` tests after the helper refactor.
+
+**Release gate:** confirm decision 2 (not retroactive) with product before this task deploys. This task is the first that lets a dataset become exempt.
 
 ### Task 5: Exemption toggle on the DAC profile page (duos-ui)
 
@@ -135,42 +167,65 @@ Existing tests keep passing with no change, because an unstubbed `findSoApproval
 - New component `DatasetSoExemptionCell`:
   - A chair sees a switch labeled "Required" or "Not required", with a tooltip that explains the effect and says that it applies to new requests only.
   - Everyone else sees the text only.
-  - If the save fails, show an error and leave the switch in its old position.
+  - If the save fails, show an error and leave the switch in its old position. On a 409, also tell the chair to reload the page, because the dataset moved to another DAC.
 - `DacProfile.tsx`: add an "SO Approval" column to the datasets grid. This needs some setup in the page:
   - a chair check: `user.roles` has `Chairperson` for this `dacId`. Do not include admins, because the backend allows chairs only.
   - a `handleDatasetChange` handler that merges the returned dataset into its row.
   - the full `dataset` object on each grid row.
   - the column list as a `useMemo`.
 
-**Tests:** the cell (read-only text, a toggle that saves, a failed save that reverts) and the page (the column is present, a chair can edit, a member cannot).
+**Tests:** the cell (read-only text, a toggle that saves, a failed save that reverts, the 409 message) and the page (the column is present, a chair can edit, a member cannot).
 
 ### Task 6: DAR form hint and SO queue test (duos-ui)
 
-- `DataAccessAgreements.tsx` shows "Your Institutional Signing Official must approve you…" when the researcher lacks a required DAA. Compute that list from the non-exempt datasets only. The DAA table and the acknowledgment do not change.
-- `SigningOfficialDarApprovals.spec.tsx`: add a test that a collection with `requiresSOApproval: false` does not show. The page already filters on that flag. This test documents the acceptance criterion and guards it.
+`DataAccessAgreements.tsx` computes two lists from the selected datasets. Only one of them changes:
 
-**Tests:** the hint is hidden when only exempt datasets need the DAA, and shown when a non-exempt dataset also needs it.
+| List | Use | Change |
+|---|---|---|
+| The required DAA ids (`getDisplayedDaaIds`, sent through `onDaaIdsChange`) | The DAA table, and the DAAs that the DAR acknowledges | **None.** It keeps every dataset, exempt or not. The backend rejects a DAR that does not acknowledge every DAA. |
+| `missingDaaIds` | The hint "Your Institutional Signing Official must approve you…" | Compute it from the non-exempt datasets only. |
 
-### Task 7: Data Library chip and filter (duos-ui)
+Do not put the exemption filter inside `getDisplayedDaaIds`. Filter the datasets only where `missingDaaIds` is computed.
+
+`SigningOfficialDarApprovals.spec.tsx`: add a test that a collection with `requiresSOApproval: false` does not show. The page already filters on that flag. This test documents the acceptance criterion and guards it.
+
+**Tests:**
+- The hint is hidden when only exempt datasets need the DAA, and shown when a non-exempt dataset also needs it.
+- `onDaaIdsChange` still receives the DAAs of exempt datasets.
+
+### Task 7: Data Library chip, filter, and banner (duos-ui)
 
 - Add `'not-required'` to `SoApprovalModel` in `src/types/library.ts`, and map `NOT_REQUIRED` to it in `DatasetUtils.getSoApprovalModelByDatasetId`.
 - `datasetColumns.tsx`: show the chip "SO Approval Not Required" with a neutral color and a tooltip. Replace the two-way `isPerRequestApproval` branches with one lookup table, keyed by model.
 - `useLibraryPageState.ts`: add the filter option `NOT_REQUIRED`.
-- Check that `SoApprovalReminderBanner` shows no banner for `'not-required'`.
+- `SoApprovalReminderBanner` is a page-level notice. Today it gets only `showsPerDatasetIndicator`, and it always says that DACs require SO approval. That statement is no longer always true. Change it as follows:
+  - New wording: "Most data access committees require a Signing Official to approve either the researcher or each request before they review it." With the per-dataset indicator, add: "Each dataset below shows which approval model applies, including datasets that need no Signing Official approval."
+  - Add the prop `allResultsSoApprovalNotRequired`. `LibraryPageShell` sets it to `true` when the result list is not empty and every model in `soApprovalModelByDatasetId` is `'not-required'`. When it is `true`, the shell does not render the banner.
+  - For mixed results, or when the models are unknown, render the banner with the new wording.
 
-**Tests:** the mapping, the chip, and the banner.
+**Tests:**
+- The mapping and the chip.
+- The banner shows the new wording, with and without the per-dataset sentence.
+- The shell hides the banner when every result is `'not-required'`.
+- The shell shows the banner for mixed results, for an empty result list, and when there is no model map.
 
 ## Edge cases to cover in review
 
 1. Every dataset is exempt, but the researcher has no pre-authorization and the DAC has the SO rule. Expected: no SO approval, and RADAR runs (Task 2).
-2. A DAR mixes exempt and non-exempt datasets. Only the non-exempt datasets count, in both directions (Task 2).
-3. A progress report covers exempt datasets only. Expected: no SO approval (Task 2).
-4. A dataset moves to another DAC. Expected: the flag resets (Task 1).
-5. A chair sets the flag while a DAR on that dataset waits for SO approval. Expected: the DAR keeps waiting (decision 2). Confirm this with product before release.
+2. A DAR mixes exempt and non-exempt datasets. Only the non-exempt datasets count, for the DAC rule and for DAA pre-authorization separately. A DAA that an exempt and a non-exempt dataset share still counts (Task 2).
+3. Exempt datasets still need DAA acknowledgment, on the server and in the form (Tasks 2 and 6).
+4. A progress report uses the flag at its own submit time (Task 2).
+5. A dataset moves to another DAC, also in the middle of a chair's save. Expected: the flag resets, and a stale write gets 409 (Tasks 1 and 4).
+6. A chair sets the flag while a DAR on that dataset waits for SO approval. Expected: the DAR keeps waiting (decision 2, Task 1 test).
 
 ## Deploy order
 
-Deploy the consent PRs before the duos-ui PRs that use them (see the "Depends on" column). The new JSON field and enum value are additive, so the current UI works against the new backend.
+1. Task 1, then Tasks 2 and 3 (consent). Task 6 can deploy any time after Task 1. Task 7 can deploy any time after Task 3.
+2. Confirm decision 2 with product.
+3. Task 4 (consent). This is the first change that lets a dataset become exempt.
+4. Task 5 (duos-ui).
+
+The new JSON field and enum value are additive, so the current UI works against the new backend at every step.
 
 ## Overlap with DT-3876
 
@@ -182,4 +237,4 @@ The per-dataset DAA plan changes some of the same code. Whichever branch merges 
   - `Dataset.yaml`: each plan adds one property.
 - **`DacResource.findDatasetForChair`:** both plans add the same helper. Keep one copy.
 - **`DacProfile.tsx`:** both plans add the same setup (the chair check, `handleDatasetChange`, the row `dataset`, the `columns` memo). Keep one copy, and keep both columns (DAA, then SO Approval).
-- **`DataAccessAgreements.tsx`:** DT-3876 replaces `getDisplayedDaaIds` with `getRequiredDaaIds`. Apply this plan's exempt-dataset filter to whichever function is there.
+- **`DataAccessAgreements.tsx`:** DT-3876 replaces `getDisplayedDaaIds` with `getRequiredDaaIds`. Keep the exemption filter out of that function, because its result is the list of DAAs that the DAR acknowledges. Apply the filter only where `missingDaaIds` is computed: `getRequiredDaaIds(datasets.filter(d => !d.soApprovalExempt), daas)`.
