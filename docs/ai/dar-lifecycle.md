@@ -115,6 +115,10 @@ The only reliable draft marker is `submission_date IS NULL`: a draft can carry a
   - Opening or reopening elections (409).
   - Chair cancellation (409).
   - Another progress report (400).
+- New-DAR processing (`createElectionsForNewDarCollection`, `sendNewDARCollectionMessage`) runs
+  after the submission commits and acts on the collection's most recent DAR. It does nothing
+  once the collection holds a closeout, because a closeout committed in between would otherwise
+  be that DAR and get elections and new-request emails.
 - Every role sees the collection as `COMPLETE` (`DarCollectionService.applyCloseoutStatus`).
   Member and chair views offer no vote actions, and the DAC dashboard excludes it from
   "awaiting my vote" for chairs and members.
