@@ -9,6 +9,8 @@ import java.util.Map;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ResearcherProgressReportApprovedMessageTest extends AbstractMailMessageTest {
 
@@ -126,5 +128,34 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractMailMessageTes
     // Negative test to ensure data location is not in the template.
     assertFalse(rendered.content().contains(dataLocation));
     assertTrue(rendered.content().contains(researcherEmail));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"https://example.org/data", "HTTP://example.org/data"})
+  void testWebDataLocationUrlRendersAsLink(String url) throws Exception {
+    var rendered = renderTemplate(messageWithDataLocationUrl(url), "");
+
+    assertEquals(1, rendered.document().getElementsByAttributeValue("href", url).size());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"javascript:alert(1)", "data:text/html,x", "gs://bucket/object"})
+  void testNonWebDataLocationUrlRendersAsText(String url) throws Exception {
+    var rendered = renderTemplate(messageWithDataLocationUrl(url), "");
+
+    assertTrue(rendered.document().getElementsByAttributeValue("href", url).isEmpty());
+    assertTrue(rendered.document().text().contains(url));
+  }
+
+  private static ResearcherApprovedProgressReportMessage messageWithDataLocationUrl(String url) {
+    User researcher = new User();
+    researcher.setDisplayName("Researcher User");
+    researcher.setEmail("researcher@test.com");
+    return new ResearcherApprovedProgressReportMessage(
+        researcher,
+        "DAR-123",
+        List.of(new DatasetMailDTO(1, "name", "DUOS-000001", url)),
+        "",
+        false);
   }
 }
