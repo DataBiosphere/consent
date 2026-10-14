@@ -2,7 +2,7 @@
 
 Oct 13, 2026 · Gregory Rushton · Ticket: [DT-3810](https://broadworkbench.atlassian.net/browse/DT-3810)
 
-The feature is feasible and smaller than the request implies. Consent already stores Model and Workspace assets and sends them to Elasticsearch. The work adds two fields to each asset, plus validation, index enrichment and UI. We estimate 8 tickets and about 2,650 lines in total, with no new database tables.
+The request adds Access Management and Primary and Secondary Data Use Terms to the Model and Workspace study assets, so that they match the Dataset schema. Today, researchers and Signing Officials who browse the Data Library cannot see the access restrictions or the permitted research uses for a model or a workspace. In consent, the work stores these fields, exposes them through the API, and sends them to Elasticsearch. In duos-ui, the work adds the fields to the `AiModel` and `Workspace` types and shows them in the Data Library with the existing Dataset components. Other asset types, such as Biospecimen, and the authoring of Data Use Terms for Datasets are out of scope.
 
 ## Current state
 
