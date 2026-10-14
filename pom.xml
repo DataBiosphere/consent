@@ -553,6 +553,15 @@
         <artifactId>jackson-dataformat-yaml</artifactId>
         <version>3.2.3</version>
       </dependency>
+      <!--
+       Security update for the async-http-client that zendesk-java-client 1.6.1 uses.
+       See CVE-2026-107282, fixed in 3.0.14.
+      -->
+      <dependency>
+        <groupId>org.asynchttpclient</groupId>
+        <artifactId>async-http-client</artifactId>
+        <version>3.0.14</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
