@@ -124,8 +124,8 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   - **Cancels every open election in the collection**, of any type (DataAccess and RP) and on
     any DAR, not just the parent (`ElectionDAO.cancelOpenElectionsByCollectionId`, under the
     collection lock). Votes are rejected after a closeout, so an election left open could never
-    be decided. The elections are set to `Canceled` and not archived, like a chair cancel, so the
-    collection still shows them.
+    be decided. The elections are set to `Canceled`; like a chair cancel, this doesn't archive
+    them (it leaves `archived` as it was), so the collection still shows them.
   - Skips dataset-registration approval checks, dataset-dependent collaboration/ethics documents,
     DAA acknowledgements, and election creation.
 - After it, the collection is closed. All of these are rejected:
