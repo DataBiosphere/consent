@@ -154,6 +154,11 @@ public class DaaService implements ConsentLogger {
     return daaDAO.isDaaLinkedToDac(dacId, daaId) || daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId);
   }
 
+  /** Also true for a DAA the DAC has since replaced, as recorded in the DAA audit history. */
+  public boolean isOrWasDaaLinkedToDac(Integer dacId, Integer daaId) {
+    return isDaaLinkedToDac(dacId, daaId) || daaDAO.wasDaaLinkedToDac(dacId, daaId);
+  }
+
   /** Creates a new DAA for the DAC and links it for DAC document upload workflows. */
   public Integer createAndLinkDaaIdForDac(User user, Integer dacId) {
     Instant now = Instant.now();
