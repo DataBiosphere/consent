@@ -322,11 +322,12 @@ public class DataAccessRequestService implements ConsentLogger {
       DataAccessRequest progressReport,
       DataAccessRequest parentDar,
       ContainerRequest request) {
-    prepareProgressReportForCollection(dataAccessRequestDAO, progressReport, parentDar);
-    validateProgressReport(user, progressReport, parentDar);
-    if (!progressReport.getIsCloseoutProgressReport()) {
-      validateDatasetsApprovedForParent(progressReport, parentDar);
+    if (progressReport.getIsCloseoutProgressReport()) {
+      // Validation needs the closeout's real dataset list. insertProgressReport reads it again
+      // under the collection lock, where it counts.
+      expandCloseoutToCollectionDatasets(dataAccessRequestDAO, progressReport, parentDar);
     }
+    validateProgressReport(user, progressReport, parentDar);
 
     String referenceId = progressReport.getReferenceId();
     boolean userIsPreAuthedForDaas =
@@ -350,19 +351,10 @@ public class DataAccessRequestService implements ConsentLogger {
     return findByReferenceId(referenceId);
   }
 
-  /**
-   * Rejects progress reports on a closed out collection and expands a closeout to every dataset in
-   * the collection, ignoring the client's selection. Called before validation and again under the
-   * collection lock.
-   */
-  private void prepareProgressReportForCollection(
-      DataAccessRequestDAO dao, DataAccessRequest progressReport, DataAccessRequest parentDar) {
-    if (dao.hasSubmittedCloseout(parentDar.getCollectionId())) {
-      throw new BadRequestException("Cannot create a progress report for a closed out collection");
-    }
-    if (progressReport.getIsCloseoutProgressReport()) {
-      progressReport.setDatasetIds(dao.findDatasetIdsByCollectionId(parentDar.getCollectionId()));
-    }
+  /** A closeout covers every dataset in the collection, ignoring the client's selection. */
+  private void expandCloseoutToCollectionDatasets(
+      DataAccessRequestDAO dao, DataAccessRequest closeout, DataAccessRequest parentDar) {
+    closeout.setDatasetIds(dao.findDatasetIdsByCollectionId(parentDar.getCollectionId()));
   }
 
   private void validateDatasetsApprovedForParent(
@@ -385,8 +377,13 @@ public class DataAccessRequestService implements ConsentLogger {
     DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
     String referenceId = progressReport.getReferenceId();
     transactionalDarDAO.lockCollection(parentDar.getCollectionId());
-    prepareProgressReportForCollection(transactionalDarDAO, progressReport, parentDar);
-    if (!progressReport.getIsCloseoutProgressReport()) {
+    if (transactionalDarDAO.hasSubmittedCloseout(parentDar.getCollectionId())) {
+      throw new BadRequestException("Cannot create a progress report for a closed out collection");
+    }
+    boolean closeout = progressReport.getIsCloseoutProgressReport();
+    if (closeout) {
+      expandCloseoutToCollectionDatasets(transactionalDarDAO, progressReport, parentDar);
+    } else {
       // The resource checks this before uploading documents. Check again under the collection
       // lock, which election creation also takes, so an election opened since then is not missed.
       validateParentHasNoOpenDataAccessElections(transactionDAOs.electionDAO(), parentDar);
@@ -399,20 +396,18 @@ public class DataAccessRequestService implements ConsentLogger {
             user.getUserId(),
             progressReport.getData(),
             user.getEraCommonsId());
-    if (!progressReport.getIsCloseoutProgressReport()) {
+    syncDataAccessRequestDatasets(progressReport.getDatasetIds(), referenceId, transactionalDarDAO);
+    transactionalDarDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
+    if (closeout) {
+      // Nothing can vote on a closed out collection, so end whatever is still open in it.
+      transactionDAOs.electionDAO().cancelOpenElectionsByCollectionId(parentDar.getCollectionId());
+    } else {
+      // A closeout acknowledges no DAAs and starts no review, so these apply to renewals only.
       transactionalDaaDAO.insertDarDAARelationship(
           progressReportId, progressReport.getData().getDaaIds());
       if (!userIsPreAuthedForDaas) {
         transactionalDarDAO.updateRequiresSOApproval(true, referenceId);
       }
-    }
-    syncDataAccessRequestDatasets(progressReport.getDatasetIds(), referenceId, transactionalDarDAO);
-    transactionalDarDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
-    if (progressReport.getIsCloseoutProgressReport()) {
-      // Nothing can vote on a closed out collection, so end whatever is still open in it.
-      transactionDAOs.electionDAO().cancelOpenElectionsByCollectionId(parentDar.getCollectionId());
-    }
-    if (!progressReport.getIsCloseoutProgressReport()) {
       captureDatasetDaaSnapshots(
           progressReportId,
           progressReport.getDatasetIds(),
@@ -546,34 +541,47 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getDatasetIds().isEmpty()) {
       throw new BadRequestException("At least one dataset is required");
     }
-    if (!progressReport.getIsCloseoutProgressReport()
-        && !Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
-      throw new BadRequestException(
-          "Progress report can only be created for datasets in the parent DAR");
-    }
     if (progressReport.getData().getProgressReportSummary() == null
         || progressReport.getData().getProgressReportSummary().isEmpty()) {
       throw new BadRequestException("Progress report summary is required");
     }
-
     if (progressReport.getIsCloseoutProgressReport()) {
-      Integer providedSigningOfficial =
-          progressReport.getData().getCloseoutSupplement().signingOfficialId();
-      try {
-        User selectedSigningOfficial = userService.findUserById(providedSigningOfficial);
-        if (!selectedSigningOfficial.getInstitutionId().equals(user.getInstitutionId())) {
-          throw new BadRequestException(
-              "The signing official selected in the closeout is not in the same institution as the submitter.");
-        }
-        if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-          throw new BadRequestException("The selected signing official is not a signing official");
-        }
-      } catch (NotFoundException _) {
-        throw new BadRequestException(
-            "The selected signing official in the closeout was not found.");
-      }
+      validateCloseoutSigningOfficial(user, progressReport);
+    } else {
+      validateRenewalDatasets(progressReport, parentDar);
     }
-    if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
+  }
+
+  /** The closeout's signing official must be a signing official at the submitter's institution. */
+  private void validateCloseoutSigningOfficial(User user, DataAccessRequest progressReport) {
+    Integer providedSigningOfficial =
+        progressReport.getData().getCloseoutSupplement().signingOfficialId();
+    try {
+      User selectedSigningOfficial = userService.findUserById(providedSigningOfficial);
+      if (!selectedSigningOfficial.getInstitutionId().equals(user.getInstitutionId())) {
+        throw new BadRequestException(
+            "The signing official selected in the closeout is not in the same institution as the submitter.");
+      }
+      if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+        throw new BadRequestException("The selected signing official is not a signing official");
+      }
+    } catch (NotFoundException _) {
+      throw new BadRequestException("The selected signing official in the closeout was not found.");
+    }
+  }
+
+  /**
+   * An ordinary progress report renews datasets of its parent that are currently approved, and its
+   * submitter must have acknowledged their DAAs unless it reports a data management incident.
+   */
+  private void validateRenewalDatasets(
+      DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    if (!Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
+      throw new BadRequestException(
+          "Progress report can only be created for datasets in the parent DAR");
+    }
+    validateDatasetsApprovedForParent(progressReport, parentDar);
+    if (!progressReport.getHasDMI()) {
       hasAcknowledgedRequiredDaas(progressReport);
     }
   }

@@ -26,7 +26,7 @@ post:
     404:
       description: Not Found
     409:
-      description: Conflict.  Check error details
+      description: Conflict. The collection does not require approval, or it has a submitted closeout.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

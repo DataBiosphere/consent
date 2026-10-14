@@ -177,8 +177,7 @@ public class VoteService implements ConsentLogger {
       updatedVotes =
           dataAccessRequestDAO.inTransaction(
               dao -> {
-                lockVoteCollections(votes, dao);
-                validateVotesCanUpdate(votes);
+                validateVotesCanUpdate(votes, lockVoteCollections(votes, dao));
                 return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
               });
     } catch (ConsentConflictException e) {
@@ -598,8 +597,7 @@ public class VoteService implements ConsentLogger {
       return dataAccessRequestDAO.inTransaction(
           dao -> {
             List<Vote> votes = voteDAO.findVotesByIds(voteIds);
-            lockVoteCollections(votes, dao);
-            validateVotesCanUpdate(votes);
+            validateVotesCanUpdate(votes, lockVoteCollections(votes, dao));
             voteDAO.updateRationaleByVoteIds(voteIds, rationale);
             return findVotesByIds(voteIds);
           });
@@ -625,9 +623,12 @@ public class VoteService implements ConsentLogger {
     }
   }
 
-  private void lockVoteCollections(List<Vote> votes, DataAccessRequestDAO dao) {
+  /** Locks the votes' collections and returns their elections, so callers needn't reload them. */
+  private List<Election> lockVoteCollections(List<Vote> votes, DataAccessRequestDAO dao) {
+    List<Election> elections =
+        electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList());
     List<String> referenceIds =
-        electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList()).stream()
+        elections.stream()
             .map(Election::getReferenceId)
             .filter(Objects::nonNull)
             .distinct()
@@ -635,13 +636,17 @@ public class VoteService implements ConsentLogger {
     if (!referenceIds.isEmpty()) {
       dao.lockCollectionsForReferenceIds(referenceIds);
     }
+    return elections;
   }
 
   @VisibleForTesting
   protected void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
-    List<Election> elections =
-        electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList());
+    validateVotesCanUpdate(
+        votes, electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList()));
+  }
 
+  private void validateVotesCanUpdate(List<Vote> votes, List<Election> elections)
+      throws ConsentConflictException {
     List<String> referenceIds =
         elections.stream()
             .map(Election::getReferenceId)
