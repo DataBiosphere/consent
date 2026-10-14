@@ -1,4 +1,3 @@
-<#ftl output_format="HTML">
 <#assign pageTitle="Broad Data Use Oversight System - New Data Access Agreement Upload">
 <#assign greetingHtml>Dear ${signingOfficialUserName},</#assign>
 <#include "/freemarker/header.ftl">
