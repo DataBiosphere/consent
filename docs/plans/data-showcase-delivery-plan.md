@@ -15,7 +15,9 @@ been made. Jira epics and stories exist for E1 and E2 only (table below); the ot
 | E2 — Public-safe live catalog lookup | [DT-4271](https://broadworkbench.atlassian.net/browse/DT-4271) |
 | S2.1 — Define the minimal catalog projection and eligibility policy (backend) | [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274) |
 | S2.1 — Null-safe dataset card labels (frontend) | [DT-4279](https://broadworkbench.atlassian.net/browse/DT-4279) |
-| S2.2 — Public batch lookup endpoint | [DT-4275](https://broadworkbench.atlassian.net/browse/DT-4275) |
+| S2.2 — Public batch lookup endpoint (backend) | [DT-4275](https://broadworkbench.atlassian.net/browse/DT-4275) |
+| S2.2 — Anonymous `/showcase/*` rate limit in consent (backend) | [DT-4280](https://broadworkbench.atlassian.net/browse/DT-4280) |
+| S2.2 — BFF public proxy, transport configuration and catalog client (frontend/proxy) | [DT-4281](https://broadworkbench.atlassian.net/browse/DT-4281) |
 
 Section 4 details the MVP epics (E1–E5) and outlines the post-MVP epics (E6–E10). Their detailed
 stories are in the [post-MVP plan](data-showcase-post-mvp-plan.md), and each is re-planned before it
