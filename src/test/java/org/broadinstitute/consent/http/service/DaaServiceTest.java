@@ -546,6 +546,18 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testIsOrWasDaaLinkedToDacReturnsTrueForTheCurrentDaaWithoutReadingHistory() {
+    Integer dacId = 7;
+    Integer daaId = 92;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(true);
+
+    initService();
+
+    assertTrue(service.isOrWasDaaLinkedToDac(dacId, daaId));
+    verify(daaDAO, never()).wasDaaLinkedToDac(any(), any());
+  }
+
+  @Test
   void testIsOrWasDaaLinkedToDacReturnsTrueForAReplacedDaa() {
     Integer dacId = 7;
     Integer daaId = 90;
