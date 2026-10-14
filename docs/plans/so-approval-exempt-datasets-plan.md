@@ -37,10 +37,10 @@ SOs still get the informational "DAR submitted" email (`notifySigningOfficialsOf
 | # | Question | Decision | Source |
 |---|---|---|---|
 | 1 | A DAR has exempt and non-exempt datasets. Is SO approval partial? | No. The SO approves the whole DAR. Only the non-exempt datasets decide whether SO approval is needed. | Ticket answer |
-| 2 | Is the exemption retroactive? | No. The decision is made and stored at submit. A DAR that already waits for SO approval keeps waiting after a chair sets the flag. | **Confirm with product** |
+| 2 | Is the exemption retroactive, when a chair sets it or clears it? | No, in both directions. The decision is made and stored at submit. A DAR that already waits for SO approval keeps waiting after a chair sets the flag. A DAR that was submitted while its datasets were exempt keeps `requires_so_approval = false` after a chair clears the flag. Its later progress reports read the flag at their own submit time (Task 2), so they can need SO approval again. | **Confirm with product** |
 | 3 | Do exempt datasets still need DAA acknowledgment? | Yes. The exemption removes only the SO step. | This plan |
 | 4 | What happens when a dataset moves to another DAC, or its DAC is deleted or externalized? | The flag resets to `false`. The exemption is a decision of the old DAC. | This plan |
-| 5 | Who can set the flag? | Chairpersons of the dataset's DAC, the same rule as dataset approval. | This plan |
+| 5 | Who can set the flag? | Chairpersons of the dataset's DAC, the same rule as dataset approval. Admins cannot. The ticket mentions a "DAC admin UI / Dataset management UI", so product must confirm that admins do not need this. | **Confirm with product** |
 | 6 | Where do chairs set it? | The "Datasets Managed by this DAC" grid on the DAC profile page. The `/dac_datasets` grid reads the search index and stays read-only. | This plan |
 | 7 | How does the Data Library show it? | A new search-index value, `SoApprovalModel.NOT_REQUIRED`, with the chip "SO Approval Not Required". | This plan |
 
@@ -51,7 +51,7 @@ SOs still get the informational "DAR submitted" email (`notifySigningOfficialsOf
 | 1 | consent | Store the exemption flag on the dataset | ~300 lines | — |
 | 2 | consent | Leave exempt datasets out of the SO decision | ~250 lines | 1 |
 | 3 | consent | `NOT_REQUIRED` value in the search index, and a reindex after DAC delete | ~150 lines | 1 |
-| 4 | consent | Endpoint for chairs to set the flag | ~300 lines | 2, 3, 6, and 7 deployed; decision 2 confirmed |
+| 4 | consent | Endpoint for chairs to set the flag, with an audit row | ~350 lines | 2, 3, 6, and 7 deployed; decisions 2 and 5 confirmed |
 | 5 | duos-ui | Exemption toggle on the DAC profile page | ~350 lines | 4 deployed |
 | 6 | duos-ui | DAR form hint and SO queue test | ~100 lines | 1 deployed |
 | 7 | duos-ui | Data Library chip, filter, and banner | ~150 lines | 3 deployed |
@@ -95,7 +95,7 @@ Add the column and carry it through the model and the DAO layer.
 - The filter query returns only exempt ids.
 - A DAC change resets the flag. An unchanged DAC keeps it.
 - DAC delete and externalize reset the flag.
-- A change to the flag does not change `requires_so_approval` on a DAR that was already submitted (decision 2).
+- A change to the flag does not change `requires_so_approval` on a DAR that was already submitted (decision 2). Test both directions: set the flag on a DAR that needs SO approval, and clear the flag on a DAR that does not.
 
 ### Task 2: Leave exempt datasets out of the SO decision (consent)
 
@@ -130,7 +130,9 @@ private boolean requiresSOApproval(User user, List<Integer> datasetIds) {
 Also test:
 - A DAR on exempt datasets only still fails validation if a DAA is not acknowledged.
 - A progress report on exempt datasets only needs no SO approval.
-- A progress report uses the flag at its own submit time. Its parent was submitted when the dataset was not exempt, and the progress report is submitted after the flag is set: it needs no SO approval.
+- A progress report uses the flag at its own submit time, in both directions:
+  - Its parent was submitted when the dataset was not exempt, and the progress report is submitted after the flag is set: it needs no SO approval.
+  - Its parent was submitted when the dataset was exempt, and the progress report is submitted after the flag is cleared: it needs SO approval if the normal check says so.
 
 Existing tests keep passing with no change, because an unstubbed `findSoApprovalExemptDatasetIds` returns an empty list.
 
@@ -139,16 +141,16 @@ Existing tests keep passing with no change, because an unstubbed `findSoApproval
 - Add `NOT_REQUIRED` to `SoApprovalModel`.
 - In `ElasticSearchService.toDatasetTerm`, today one branch sets two fields together when the DAC rules resolve: `soApprovalModel` and `instantApprovalEligible`. Keep them independent:
   - `soApprovalModel`: if the dataset is exempt, set `NOT_REQUIRED`. The flag alone decides this, so set it also when the rules could not be resolved (`enabledRulesByDacId == null`). Otherwise keep the current rule-based value.
-  - `instantApprovalEligible`: no change. It still comes from the DAC rules, and it stays unset when the rules could not be resolved. Exempt datasets still go through RADAR (decision 1), so they keep this value.
+  - `instantApprovalEligible`: no change. It still comes from the DAC rules, and it stays unset when the rules could not be resolved. Exempt datasets still go through RADAR (Task 2, edge case 1), so they keep this value.
   - Datasets with no DAC keep `PRE_AUTHORIZED`. Such a dataset cannot be exempt, because Task 1 resets the flag with the DAC.
 - Add the value to the `soApprovalModel` enum in `DatasetSearch.yaml`.
-- Reindex the datasets of a deleted DAC. Task 1 resets the flag in the database when a DAC is deleted, but `DacService.deleteDac` does not reindex today, so an exempt dataset would keep `NOT_REQUIRED` in the Data Library. Copy the pattern of the externalize flow (`DacService`, around L326): read the DAC's dataset ids before the delete, and call `indexDatasets` for them after the delete succeeds. Log a failed reindex; do not fail the delete. This also fixes the other DAC fields that go stale in the index after a delete today.
+- Reindex the datasets of a deleted DAC. Task 1 resets the flag in the database when a DAC is deleted, but `DacService.deleteDac` does not reindex today, so an exempt dataset would keep `NOT_REQUIRED` in the Data Library. Follow the externalize flow (`DacService.convertDacDatasetsToExternal`): read the DAC's dataset ids before the delete, and call `indexDatasets` for them after the delete succeeds. Do not copy its call as it is, because it never closes the `Response` that `indexDatasets` returns. Open the response in a try-with-resources block and log a non-success status, as `synchronizeDatasetListInESIndex` does. Log a failed reindex; do not fail the delete. Fix the externalize call in the same way, in the same change. This also fixes the other DAC fields that go stale in the index after a delete today.
 
 **Tests:**
 - An exempt dataset maps to `NOT_REQUIRED`, also when its DAC has the SO rule.
 - An exempt dataset has the same `instantApprovalEligible` value as a non-exempt dataset with the same DAC rules and data use.
 - When the rules cannot be resolved, an exempt dataset still maps to `NOT_REQUIRED`, and `instantApprovalEligible` stays unset.
-- `deleteDac` reindexes the DAC's datasets after the delete, and a failed reindex does not fail the delete.
+- `deleteDac` reindexes the DAC's datasets after the delete and closes the response. A non-success status or an exception does not fail the delete.
 
 No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, and Task 4 reindexes each dataset when a chair changes its flag. For a reindex that fails at that time, see Task 4.
 
@@ -159,19 +161,25 @@ No reindex is needed at deploy. No dataset can be exempt until Task 4 deploys, a
 - `DacResource`: copy the pattern of `approveDataset` (`PUT /api/dac/{dacId}/dataset/{datasetId}`). Move its two checks into a private helper, `findDatasetForChair`, and use the helper in both endpoints. The checks are "the dataset belongs to this DAC" and "the user is a chair of this DAC". Both return 404, as today.
 - New request model `DatasetSoApprovalExemption` (copy `DatasetApproval`). Return 400 if the body is empty or `exempt` is missing.
 - `DatasetService.updateSoApprovalExemption(dataset, user, exempt)`:
-  1. Update the row with the DAC id from the request.
-  2. If no row changed, the dataset moved to another DAC after the resource checked it. An admin or a chair can move a dataset (for example, through `PUT /api/dataset/v3/{datasetId}`). Throw `ConsentConflictException` (409) and do not reindex.
+  1. Update the row with the DAC id from the request, and write an audit row in the same transaction (see below).
+  2. If no row changed, the dataset moved to another DAC after the resource checked it. An admin or a chair can move a dataset (for example, through `PUT /api/dataset/v3/{datasetId}`). Write no audit row, throw `ConsentConflictException` (409), and do not reindex.
   3. Otherwise, reindex the dataset and return the fresh dataset. Use `elasticSearchService.synchronizeDatasetInESIndex(dataset, true)`, not the `indexDatasets` call that `approveDataset` makes. `synchronizeDatasetInESIndex` closes the response and logs a non-success status as well as an `IOException`. A failed reindex does not fail the request, because the database update is already done.
 - OpenAPI: a new path file, the request schema, and the 409 response.
+
+**Audit.** The exemption overrides the DAC's `REQUIRE_SO_DAR_APPROVAL` rule, and consent audits each change to that rule (`dac_rule_audit`). The exemption needs an audit too. `update_user_id` and `update_date` are not enough, because the next edit of the dataset overwrites them.
+
+- Add `DatasetServiceDAO.updateSoApprovalExemption`. Follow `updateDatasetDataUse`: in one `jdbi` transaction, call `DatasetDAO.updateDatasetSoApprovalExempt`, and if it updated one row, call `addAuditRecord`. Return the row count to `DatasetService`.
+- Add two `AuditActions` values, `SO_EXEMPTION_SET` and `SO_EXEMPTION_CLEARED`. The existing `UPDATE` value does not show which way the flag changed. The `dataset_audit.change_action` column is text, so no schema change is needed.
 
 A failed reindex leaves only the Data Library chip and filter stale. The SO decision (Task 2) reads the database, not the index, so DARs are not affected. This is the same best-effort behavior as the reindex after a DAC rule toggle (`DACAutomationRuleService.reindexDatasetsForRuleChange`), which changes the same index field. To repair a stale entry, an admin calls `POST /api/dataset/index/{datasetId}`. The log warning names the dataset id. consent has no durable retry for index writes today. If the team wants one, it belongs in its own ticket, for every index write.
 
 **Tests:**
 - Service: update and reindex; a stale DAC (the DAO returns 0) gives 409 with no reindex, both to set and to clear the flag; a failed reindex still returns the updated dataset.
+- Service DAO: a set writes one `SO_EXEMPTION_SET` audit row, and a clear writes one `SO_EXEMPTION_CLEARED` row, with the user id. A stale DAC writes no audit row.
 - Resource: success, wrong DAC, not a chair, bad body.
 - The existing `approveDataset` tests after the helper refactor.
 
-**Release gate:** confirm decision 2 (not retroactive) with product before this task deploys. This task is the first that lets a dataset become exempt.
+**Release gate:** confirm decision 2 (not retroactive) and decision 5 (chairs only) with product before this task deploys. This task is the first that lets a dataset become exempt.
 
 ### Task 5: Exemption toggle on the DAC profile page (duos-ui)
 
@@ -236,12 +244,13 @@ The hint today says "…must approve you under **each** data access agreement ab
 4. A progress report uses the flag at its own submit time (Task 2).
 5. A dataset moves to another DAC, also in the middle of a chair's save. Expected: the flag resets, and a stale write gets 409 (Tasks 1 and 4).
 6. A chair sets the flag while a DAR on that dataset waits for SO approval. Expected: the DAR keeps waiting (decision 2, Task 1 test).
+7. A chair clears the flag after a DAR on that dataset was submitted with no SO approval. Expected: the DAR does not go back to the SO queue, but its next progress report can need SO approval (decision 2, Tasks 1 and 2).
 
 ## Deploy order
 
 1. Task 1, then Tasks 2 and 3 (consent).
 2. Tasks 6 and 7 (duos-ui). Task 6 needs only Task 1. Task 7 needs Task 3.
-3. Confirm decision 2 with product.
+3. Confirm decisions 2 and 5 with product.
 4. Task 4 (consent). This is the first change that lets a dataset become exempt.
 5. Task 5 (duos-ui).
 
