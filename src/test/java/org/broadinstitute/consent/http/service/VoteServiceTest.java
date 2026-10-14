@@ -1264,6 +1264,44 @@ class VoteServiceTest extends AbstractTestHelper {
         "lock", new SQLException("synthetic lock failure", sqlState), null);
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testVoteUpdatesValidateElectionsReadAfterTheLock(boolean rationaleOnly) {
+    Vote vote = new Vote();
+    vote.setVoteId(1);
+    vote.setElectionId(10);
+    Election open = new Election();
+    open.setReferenceId("synthetic-dar");
+    open.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    open.setStatus(ElectionStatus.OPEN.getValue());
+    // Another request canceled the election while this one waited for the collection lock.
+    Election canceled = new Election();
+    canceled.setReferenceId("synthetic-dar");
+    canceled.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    canceled.setStatus(ElectionStatus.CANCELED.getValue());
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(open), List.of(canceled));
+    List<Vote> votes = List.of(vote);
+    List<Integer> voteIds = List.of(1);
+    User voter = new User();
+
+    if (rationaleOnly) {
+      when(voteDAO.findVotesByIds(voteIds)).thenReturn(votes);
+      assertThrows(
+          ConsentConflictException.class,
+          () -> service.updateRationaleByVoteIds(voteIds, "synthetic rationale"));
+      verify(voteDAO, never()).updateRationaleByVoteIds(any(), any());
+    } else {
+      assertThrows(
+          ConsentConflictException.class,
+          () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
+      verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
+    }
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(electionDAO, dataAccessRequestDAO);
+    order.verify(electionDAO).findElectionsByIds(List.of(10));
+    order.verify(dataAccessRequestDAO).lockCollectionsForReferenceIds(List.of("synthetic-dar"));
+    order.verify(electionDAO).findElectionsByIds(List.of(10));
+  }
+
   // validateVotesCanUpdate tests
 
   @Test
