@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -180,6 +181,7 @@ public class VoteService implements ConsentLogger {
     } catch (ConsentConflictException e) {
       throw e;
     } catch (Exception e) {
+      throwIfLockFailure(e);
       throw new IllegalArgumentException("Unable to update election votes.", e);
     }
     try {
@@ -589,14 +591,38 @@ public class VoteService implements ConsentLogger {
    */
   public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
       throws ConsentConflictException {
-    return dataAccessRequestDAO.inTransaction(
-        dao -> {
-          List<Vote> votes = voteDAO.findVotesByIds(voteIds);
-          lockVoteCollections(votes, dao);
-          validateVotesCanUpdate(votes);
-          voteDAO.updateRationaleByVoteIds(voteIds, rationale);
-          return findVotesByIds(voteIds);
-        });
+    try {
+      return dataAccessRequestDAO.inTransaction(
+          dao -> {
+            List<Vote> votes = voteDAO.findVotesByIds(voteIds);
+            lockVoteCollections(votes, dao);
+            validateVotesCanUpdate(votes);
+            voteDAO.updateRationaleByVoteIds(voteIds, rationale);
+            return findVotesByIds(voteIds);
+          });
+    } catch (ConsentConflictException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      throwIfLockFailure(e);
+      throw e;
+    }
+  }
+
+  /** SQL states for a deadlock, a lock wait that timed out, and a serialization failure. */
+  private static final Set<String> LOCK_FAILURE_STATES = Set.of("40P01", "55P03", "40001");
+
+  /**
+   * Waiting on the collection lock can end in a deadlock or timeout when another change holds it.
+   * That is a conflict the caller can retry, not a bad request.
+   */
+  private static void throwIfLockFailure(Exception e) {
+    for (Throwable t = e; t != null; t = t.getCause()) {
+      if (t instanceof SQLException sqlException
+          && LOCK_FAILURE_STATES.contains(sqlException.getSQLState())) {
+        throw new ConsentConflictException(
+            "The collection is being changed by another request. Try again.");
+      }
+    }
   }
 
   private void lockVoteCollections(List<Vote> votes, DataAccessRequestDAO dao) {

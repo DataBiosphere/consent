@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.JsonArray;
 import freemarker.template.TemplateException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -58,6 +59,7 @@ import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1211,6 +1213,66 @@ class VoteServiceTest extends AbstractTestHelper {
         ConsentConflictException.class,
         () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
     verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"40P01", "55P03", "40001"})
+  void testUpdateVotesWithValueReturnsConflictWhenTheCollectionLockFails(String sqlState) {
+    Vote vote = new Vote();
+    vote.setElectionId(10);
+    Election election = new Election();
+    election.setReferenceId("synthetic-dar");
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.lockCollectionsForReferenceIds(List.of("synthetic-dar")))
+        .thenThrow(lockFailure(sqlState));
+    List<Vote> votes = List.of(vote);
+    User voter = new User();
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
+    verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
+  }
+
+  @Test
+  void testUpdateVotesWithValueKeepsBadRequestForOtherDatabaseErrors() {
+    Vote vote = new Vote();
+    vote.setElectionId(10);
+    Election election = new Election();
+    election.setReferenceId("synthetic-dar");
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.lockCollectionsForReferenceIds(List.of("synthetic-dar")))
+        .thenThrow(lockFailure("23505"));
+    List<Vote> votes = List.of(vote);
+    User voter = new User();
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
+  }
+
+  @Test
+  void testUpdateRationaleReturnsConflictWhenTheCollectionLockFails() {
+    Vote vote = new Vote();
+    vote.setVoteId(1);
+    vote.setElectionId(10);
+    Election election = new Election();
+    election.setReferenceId("synthetic-dar");
+    when(voteDAO.findVotesByIds(List.of(1))).thenReturn(List.of(vote));
+    when(electionDAO.findElectionsByIds(List.of(10))).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.lockCollectionsForReferenceIds(List.of("synthetic-dar")))
+        .thenThrow(lockFailure("40P01"));
+    List<Integer> voteIds = List.of(1);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateRationaleByVoteIds(voteIds, "synthetic rationale"));
+    verify(voteDAO, never()).updateRationaleByVoteIds(any(), any());
+  }
+
+  private static UnableToExecuteStatementException lockFailure(String sqlState) {
+    return new UnableToExecuteStatementException(
+        "lock", new SQLException("synthetic lock failure", sqlState), null);
   }
 
   // validateVotesCanUpdate tests

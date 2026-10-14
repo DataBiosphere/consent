@@ -395,23 +395,26 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
-      // Prevent creation if there are open DataAccess elections for the parent DAR
-      List<Election> openElections =
-          dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
-      boolean hasOpenDataAccessElections =
-          openElections.stream()
-              .anyMatch(
-                  election ->
-                      election
-                          .getElectionType()
-                          .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
-      if (hasOpenDataAccessElections) {
-        throw new BadRequestException(
-            "Cannot create a progress report for a DAR with an open election: "
-                + parentDar.getReferenceId());
-      }
       DataAccessRequest payload =
           DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
+      // Prevent creation if there are open DataAccess elections for the parent DAR. A closeout
+      // cancels the collection's open elections instead.
+      if (!payload.getIsCloseoutProgressReport()) {
+        List<Election> openElections =
+            dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
+        boolean hasOpenDataAccessElections =
+            openElections.stream()
+                .anyMatch(
+                    election ->
+                        election
+                            .getElectionType()
+                            .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+        if (hasOpenDataAccessElections) {
+          throw new BadRequestException(
+              "Cannot create a progress report for a DAR with an open election: "
+                  + parentDar.getReferenceId());
+        }
+      }
       DataAccessRequest progressReport =
           createProgressReportWithDocuments(
               user,

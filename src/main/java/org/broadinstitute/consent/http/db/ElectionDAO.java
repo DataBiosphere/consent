@@ -239,6 +239,23 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("lastUpdate") Date lastUpdate);
 
   /**
+   * Cancels every open election, of any type, on the DARs of a collection. A closeout calls this
+   * under the collection lock: votes are rejected once a collection is closed out, so an election
+   * left open could never be decided. The elections stay unarchived, like a chair cancel.
+   *
+   * @return the number of elections canceled
+   */
+  @SqlUpdate(
+      """
+      UPDATE election
+      SET status = 'Canceled', last_update = now()
+      WHERE LOWER(status) = 'open'
+        AND reference_id IN (
+          SELECT reference_id FROM data_access_request WHERE collection_id = :collectionId)
+      """)
+  int cancelOpenElectionsByCollectionId(@Bind("collectionId") Integer collectionId);
+
+  /**
    * Find the Dac for this election. Looks across associations to a dac via dataset and those
    * associated via the consent.
    *

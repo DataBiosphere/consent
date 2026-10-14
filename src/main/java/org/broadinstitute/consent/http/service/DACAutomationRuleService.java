@@ -279,7 +279,18 @@ public class DACAutomationRuleService implements ConsentLogger {
     boolean darContainsBannedCountry = CountryValidator.containsBannedCountry(dar);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
     if (shouldApprove && !darContainsBannedCountry) {
-      Vote v = openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
+      Vote v;
+      try {
+        v = openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
+      } catch (ConsentConflictException e) {
+        // The collection was closed out after submission. Skip this dataset so approvals already
+        // made for other datasets still send their notifications.
+        logInfo(
+            String.format(
+                "Rule %s not triggered for DAC id: %s and dataset id: %s: %s",
+                rule.ruleType(), dataset.getDacId(), dataset.getDatasetId(), e.getMessage()));
+        return Optional.empty();
+      }
       if (v != null) {
         return Optional.of(v);
       }
@@ -303,15 +314,24 @@ public class DACAutomationRuleService implements ConsentLogger {
       Dataset dataset,
       ContainerRequest request) {
 
-    return dataAccessRequestDAO.inTransaction(
-        dao -> {
-          dao.lockCollection(dar.getCollectionId());
-          if (dao.hasSubmittedCloseout(dar.getCollectionId())) {
-            throw new ConsentConflictException("Cannot act on a closed out collection.");
-          }
-          return openElectionAndApproveInTransaction(
-              rule, ruleImplementation, dar, dataset, request);
-        });
+    try {
+      return dataAccessRequestDAO.inTransaction(
+          dao -> {
+            dao.lockCollection(dar.getCollectionId());
+            if (dao.hasSubmittedCloseout(dar.getCollectionId())) {
+              throw new ConsentConflictException("Cannot act on a closed out collection.");
+            }
+            return openElectionAndApproveInTransaction(
+                rule, ruleImplementation, dar, dataset, request);
+          });
+    } catch (ConsentConflictException e) {
+      throw e;
+    } catch (Exception e) {
+      // Raised out of the transaction so the election and vote roll back together. Catching it
+      // inside would commit a transaction Postgres had already aborted.
+      logException("Error opening election and approving vote", e);
+      return null;
+    }
   }
 
   private Vote openElectionAndApproveInTransaction(
@@ -330,20 +350,15 @@ public class DACAutomationRuleService implements ConsentLogger {
               return voteDAO.findVoteById(voteId);
             });
 
-    try {
-      List<Vote> updatedVotes =
-          voteServiceDAO.updateVotesWithValue(
-              List.of(vote),
-              true,
-              String.format(
-                  "Rule Automated DAR (RADAR) Approval using rule: %s",
-                  ruleImplementation.getRuleType()));
-      assert (updatedVotes.size() == 1);
-      vote = updatedVotes.getFirst();
-    } catch (Exception e) {
-      logException("Error updating vote", e);
-      return null;
-    }
+    List<Vote> updatedVotes =
+        voteServiceDAO.updateVotesWithValue(
+            List.of(vote),
+            true,
+            String.format(
+                "Rule Automated DAR (RADAR) Approval using rule: %s",
+                ruleImplementation.getRuleType()));
+    assert (updatedVotes.size() == 1);
+    vote = updatedVotes.getFirst();
     User user = userDAO.findUserById(rule.enabledByUserId());
     ComplianceLogger.logRadarApproval(user, List.of(dataset), request, 200);
     logInfo(

@@ -631,28 +631,35 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
-    sourceCollection
-        .getDars()
-        .values()
-        .forEach(
-            (d) -> {
-              Date now = new Date();
-              DataAccessRequestData newData =
-                  new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
-              newData.setStatus(null);
-              newData.setReferenceId(d.getReferenceId());
-              daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
-              dataAccessRequestDAO.updateDataByReferenceId(
-                  d.getReferenceId(), d.getUserId(), null, now, newData, null);
-            });
+    Integer collectionId = sourceCollection.getDarCollectionId();
+    dataAccessRequestDAO.inTransaction(
+        dao -> {
+          // Reverting to drafts nulls every submission_date, which would undo a closeout.
+          dao.lockCollection(collectionId);
+          validateCollectionIsNotClosedOut(collectionId);
+          sourceCollection
+              .getDars()
+              .values()
+              .forEach(
+                  (d) -> {
+                    Date now = new Date();
+                    DataAccessRequestData newData =
+                        new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                    newData.setStatus(null);
+                    newData.setReferenceId(d.getReferenceId());
+                    daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                    dataAccessRequestDAO.updateDataByReferenceId(
+                        d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                  });
+          return null;
+        });
 
     // get updated collection
-    sourceCollection =
-        this.darCollectionDAO.findDARCollectionByCollectionId(
-            sourceCollection.getDarCollectionId());
+    DarCollection updatedCollection =
+        this.darCollectionDAO.findDARCollectionByCollectionId(collectionId);
 
     return this.processDraftAsSummary(
-        new ArrayList<>(sourceCollection.getDars().values()).getFirst());
+        new ArrayList<>(updatedCollection.getDars().values()).getFirst());
   }
 
   /**

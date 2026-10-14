@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -969,6 +970,21 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
     Optional<Vote> appliedVote = serviceSpy.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isEmpty());
+  }
+
+  @Test
+  void testApplyRuleSkipsDatasetWhenCollectionWasClosedOut() {
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    Dataset datasetGru = makeDataset();
+    DataAccessRequest darHmb = makeDAR();
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    doThrow(new ConsentConflictException("Cannot act on a closed out collection."))
+        .when(serviceSpy)
+        .openElectionAndApprove(any(), any(), any(), any(), any());
+
+    // Returning empty instead of throwing lets triggerDACRuleSettings notify earlier approvals.
+    assertTrue(serviceSpy.applyRule(rule, datasetGru, darHmb, request).isEmpty());
   }
 
   @Test

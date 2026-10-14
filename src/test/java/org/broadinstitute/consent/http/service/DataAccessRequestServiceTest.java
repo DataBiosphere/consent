@@ -762,6 +762,45 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @ValueSource(booleans = {true, false})
   void createProgressReportRechecksOpenDataAccessElectionsUnderLock(boolean dataAccess) {
     mockTransactionalDaos();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    // An election opened after the resource's preflight check. Only DataAccess elections block.
+    Election election = new Election();
+    election.setReferenceId(parentDar.getReferenceId());
+    election.setElectionType(
+        dataAccess ? ElectionType.DATA_ACCESS.getValue() : ElectionType.RP.getValue());
+    when(electionDAO.findOpenElectionsByReferenceIds(List.of(parentDar.getReferenceId())))
+        .thenReturn(List.of(election));
+
+    if (dataAccess) {
+      assertThrows(
+          BadRequestException.class,
+          () -> service.createProgressReport(user, progressReport, parentDar, request));
+      verify(dataAccessRequestDAO, never())
+          .insertProgressReport(any(), any(), any(), any(), any(), any());
+    } else {
+      when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+          .thenReturn(progressReport);
+      assertNotNull(service.createProgressReport(user, progressReport, parentDar, request));
+      verify(dataAccessRequestDAO).insertProgressReport(any(), any(), any(), any(), any(), any());
+    }
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO, electionDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(parentDar.getCollectionId());
+    order.verify(electionDAO).findOpenElectionsByReferenceIds(List.of(parentDar.getReferenceId()));
+    verify(electionDAO, never()).cancelOpenElectionsByCollectionId(any());
+  }
+
+  @Test
+  void createCloseoutCancelsOpenElectionsInTheCollectionUnderLock() {
+    mockTransactionalDaos();
     User user = createUserWithPrerequisites();
     User signingOfficial = createUserWithPrerequisites();
     signingOfficial.setInstitutionId(user.getInstitutionId());
@@ -773,31 +812,21 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     closeout.setParentId(parent.getId());
     closeout.setCollectionId(parent.getCollectionId());
     closeout.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
-    // An election opened after the resource's preflight check. Only DataAccess elections block.
-    Election election = new Election();
-    election.setReferenceId(parent.getReferenceId());
-    election.setElectionType(
-        dataAccess ? ElectionType.DATA_ACCESS.getValue() : ElectionType.RP.getValue());
     when(userService.findUserById(2)).thenReturn(signingOfficial);
     when(dataAccessRequestDAO.findDatasetIdsByCollectionId(parent.getCollectionId()))
         .thenReturn(List.of(3));
-    when(electionDAO.findOpenElectionsByReferenceIds(List.of(parent.getReferenceId())))
-        .thenReturn(List.of(election));
+    when(dataAccessRequestDAO.findByReferenceId(closeout.getReferenceId())).thenReturn(closeout);
 
-    if (dataAccess) {
-      assertThrows(
-          BadRequestException.class,
-          () -> service.createProgressReport(user, closeout, parent, request));
-      verify(dataAccessRequestDAO, never())
-          .insertProgressReport(any(), any(), any(), any(), any(), any());
-    } else {
-      when(dataAccessRequestDAO.findByReferenceId(closeout.getReferenceId())).thenReturn(closeout);
-      assertNotNull(service.createProgressReport(user, closeout, parent, request));
-      verify(dataAccessRequestDAO).insertProgressReport(any(), any(), any(), any(), any(), any());
-    }
+    assertNotNull(service.createProgressReport(user, closeout, parent, request));
+
+    // A closeout ends the collection's open elections instead of being blocked by them.
+    verify(electionDAO, never()).findOpenElectionsByReferenceIds(any());
     org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO, electionDAO);
     order.verify(dataAccessRequestDAO).lockCollection(parent.getCollectionId());
-    order.verify(electionDAO).findOpenElectionsByReferenceIds(List.of(parent.getReferenceId()));
+    order
+        .verify(dataAccessRequestDAO)
+        .insertProgressReport(any(), any(), any(), any(), any(), any());
+    order.verify(electionDAO).cancelOpenElectionsByCollectionId(parent.getCollectionId());
   }
 
   @Test

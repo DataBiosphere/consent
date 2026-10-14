@@ -102,6 +102,45 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testCancelOpenElectionsByCollectionId() {
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequest otherDar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDatasetId();
+    Integer openAccess = createDataAccessElection(referenceId, datasetId).getElectionId();
+    Integer openRp =
+        electionDAO.insertElection(
+            ElectionType.RP.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
+    Integer closed =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
+    Integer otherCollection =
+        createDataAccessElection(otherDar.getReferenceId(), datasetId).getElectionId();
+
+    assertEquals(2, electionDAO.cancelOpenElectionsByCollectionId(dar.getCollectionId()));
+
+    assertEquals(
+        ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(openAccess).getStatus());
+    assertEquals(
+        ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(openRp).getStatus());
+    assertEquals(
+        ElectionStatus.CLOSED.getValue(), electionDAO.findElectionById(closed).getStatus());
+    assertEquals(
+        ElectionStatus.OPEN.getValue(), electionDAO.findElectionById(otherCollection).getStatus());
+    // Canceled like a chair cancel, so the collection still shows what the closeout ended.
+    assertFalse(electionDAO.findElectionById(openAccess).getArchived());
+  }
+
+  @Test
   void testFindElectionsByReferenceIds() {
     Dataset dataset = createDataset();
     DataAccessRequest dar1 = createDataAccessRequestV3();
