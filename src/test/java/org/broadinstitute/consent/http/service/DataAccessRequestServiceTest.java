@@ -634,12 +634,14 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest newDar =
         service.createProgressReport(user, progressReport, parentDar, request);
 
+    // Datasets are read once for validation, then the closeout check and the authoritative
+    // dataset list are read under the lock.
     org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
-    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parentDar.getCollectionId());
     order.verify(dataAccessRequestDAO).findDatasetIdsByCollectionId(parentDar.getCollectionId());
     order.verify(dataAccessRequestDAO).lockCollection(parentDar.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parentDar.getCollectionId());
     order.verify(dataAccessRequestDAO).findDatasetIdsByCollectionId(parentDar.getCollectionId());
+    verify(dataAccessRequestDAO).hasSubmittedCloseout(parentDar.getCollectionId());
     assertNotNull(newDar);
     assertEquals(List.of(3, 4, 5), newDar.getDatasetIds());
     verify(dataSetDAO, never()).findDatasetsByIdList(any());
@@ -729,7 +731,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void createProgressReportRejectsCloseoutCommittedAfterPreflight() {
+  void createProgressReportRejectsCloseoutCommittedBeforeTheLock() {
     mockTransactionalDaos();
     User user = createUserWithPrerequisites();
     User signingOfficial = createUserWithPrerequisites();
@@ -745,15 +747,15 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userService.findUserById(2)).thenReturn(signingOfficial);
     when(dataAccessRequestDAO.findDatasetIdsByCollectionId(parent.getCollectionId()))
         .thenReturn(List.of(3));
-    when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId()))
-        .thenReturn(false, true);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId())).thenReturn(true);
     assertThrows(
         BadRequestException.class,
         () -> service.createProgressReport(user, closeout, parent, request));
+    // The closeout check runs once, under the lock.
     org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
-    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
     order.verify(dataAccessRequestDAO).lockCollection(parent.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
+    verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
     verify(dataAccessRequestDAO, never())
         .insertProgressReport(any(), any(), any(), any(), any(), any());
   }
@@ -831,16 +833,25 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void createProgressReportRejectsClosedOutCollection() {
-    DataAccessRequest parent = generateDataAccessRequest();
-    when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId())).thenReturn(true);
-    User user = createUserWithPrerequisites();
+    mockTransactionalDaos();
+    DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(dataAccessRequestDAO.hasSubmittedCloseout(parentDar.getCollectionId())).thenReturn(true);
 
     assertThrows(
         BadRequestException.class,
-        () -> service.createProgressReport(user, progressReport, parent, request));
+        () -> service.createProgressReport(user, progressReport, parentDar, request));
     verify(dataAccessRequestDAO, never())
         .insertProgressReport(any(), any(), any(), any(), any(), any());
+    verify(electionDAO, never()).findOpenElectionsByReferenceIds(any());
   }
 
   @Test
@@ -1070,6 +1081,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(FIXED_TIMESTAMP);
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.of(1, 2));
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
   }
 
@@ -1100,6 +1113,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(collaborator1.email())).thenReturn(collaborator1User);
     when(userDAO.findUserByEmail(collaborator2.email())).thenReturn(collaborator2User);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.of(1, 2));
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
   }
 

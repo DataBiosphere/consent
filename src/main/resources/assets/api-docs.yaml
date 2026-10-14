@@ -549,8 +549,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/dar/v2/progress_report/{parentReferenceId}:
-    # Closeouts include all collection datasets, require no dataset-dependent documents,
-    # terminate grants and cancel the collection's open elections at submission.
     $ref: './paths/progressReport.yaml'
   /api/dar/{referenceId}/approveCloseout:
     $ref: './paths/approveCloseoutBySigningOfficial.yaml'

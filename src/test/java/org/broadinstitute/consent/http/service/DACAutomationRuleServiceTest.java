@@ -172,18 +172,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    dataAccessRequestDAO =
-        org.mockito.Mockito.mock(
-            DataAccessRequestDAO.class,
-            invocation -> {
-              if (invocation.getMethod().getName().equals("inTransaction")) {
-                org.jdbi.v3.sqlobject.transaction.TransactionalCallback<
-                        ?, DataAccessRequestDAO, Exception>
-                    callback = invocation.getArgument(0);
-                return callback.inTransaction(dataAccessRequestDAO);
-              }
-              return org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation);
-            });
+    dataAccessRequestDAO = TransactionMocks.dataAccessRequestDAO();
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
     when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(ruleDAO);
