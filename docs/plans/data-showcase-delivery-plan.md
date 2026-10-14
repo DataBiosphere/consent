@@ -2,8 +2,20 @@
 
 Source epic: [DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904) and its 31 stories.
 
-Status: proposed decomposition for product and engineering review; no application changes or Jira
-tickets have been made. Planning IDs below (E1, S1.1, …) are local identifiers, not Jira issue keys.
+Status: proposed decomposition for product and engineering review; no application changes have
+been made. Jira epics and stories exist for E1 and E2 only (table below); the other planning IDs
+(E3, S3.1, …) are local identifiers, not Jira issue keys.
+
+| Planning ID | Jira |
+| --- | --- |
+| E1 — Code-defined showcase configuration | [DT-4270](https://broadworkbench.atlassian.net/browse/DT-4270) |
+| S1.1 — Review the identified reference and settle implementable contracts | [DT-4272](https://broadworkbench.atlassian.net/browse/DT-4272) |
+| S1.2 — Config type, showcase index and CI guard | [DT-4273](https://broadworkbench.atlassian.net/browse/DT-4273) |
+| S1.3 — Shared defaults, assets and time-bounded content | [DT-4276](https://broadworkbench.atlassian.net/browse/DT-4276) |
+| E2 — Public-safe live catalog lookup | [DT-4271](https://broadworkbench.atlassian.net/browse/DT-4271) |
+| S2.1 — Define the minimal catalog projection and eligibility policy | [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274) |
+| S2.2 — Public batch lookup endpoint | [DT-4275](https://broadworkbench.atlassian.net/browse/DT-4275) |
+
 Section 4 details the MVP epics (E1–E5) and outlines the post-MVP epics (E6–E10). Their detailed
 stories are in the [post-MVP plan](data-showcase-post-mvp-plan.md), and each is re-planned before it
 starts.
