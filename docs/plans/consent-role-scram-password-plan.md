@@ -2,10 +2,13 @@
 
 ## Status
 
-In progress. Dev is done ([DT-4237](https://broadworkbench.atlassian.net/browse/DT-4237), 2026-10-08).
-Staging is done ([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244), 2026-10-09).
-Prod ([DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245)) follows, with the procedure below.
-See [Results](#results).
+Complete. All three environments store a SCRAM hash: dev
+([DT-4237](https://broadworkbench.atlassian.net/browse/DT-4237), 2026-10-08), staging
+([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244), 2026-10-09) and prod
+([DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245), 2026-10-14). See [Results](#results).
+
+Keep the procedure. A restore from a backup taken before the change brings the MD5 hash back, because the
+hash is part of the instance data. Run the procedure again after such a restore, or for a new instance.
 
 ## Summary
 
@@ -65,6 +68,13 @@ Do one environment at a time. For prod, first take a backup:
      gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.0-alpine \
      --address 0.0.0.0 --port 5432 "$CONNECTION_NAME"
    ```
+
+   The proxy uses the credentials file that you mount, and that account needs Cloud SQL access to the
+   project. Your application-default credentials can belong to an account without that access: on prod they
+   did. Then mount that account's own file instead:
+   `$HOME/.config/gcloud/legacy_credentials/<account>/adc.json`.
+   If the proxy log shows `invalid_rapt`, the account needs a fresh login. Run `gcloud auth login <account>`,
+   complete the forced re-authentication, and start the proxy again.
 
 3. **Load the password, and check that the role is on MD5.** In terminal A:
 
@@ -156,7 +166,7 @@ Do one environment at a time. For prod, first take a backup:
 |---|---|---|
 | 2026-10-08 | dev | MD5 to SCRAM. The DUOS pod test printed `OK`. Consent restarted with no login errors. `GET /api/user/me` worked. The Cloud SQL logs held no password or hash. |
 | 2026-10-09 | staging | MD5 to SCRAM ([DT-4244](https://broadworkbench.atlassian.net/browse/DT-4244)). No rollback was needed. The DUOS pod test changed from `Unrecognized algorithm name` to `OK`. Consent restarted with no login errors. `GET /api/user/me` worked, and sign-in to DUOS worked. The Cloud SQL logs held no `ALTER` text, no password and no verifier. |
-| | prod | Not done. [DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245) |
+| 2026-10-14 | prod | MD5 to SCRAM ([DT-4245](https://broadworkbench.atlassian.net/browse/DT-4245)), after an on-demand backup. No rollback was needed. The DUOS pod test changed from `Unrecognized algorithm name` to `OK`. The consent pods restarted with no login errors. The consent Swagger UI and the DUOS UI worked. The Cloud SQL logs held no `ALTER` text, no password and no verifier. |
 
 The `\password` flow was also tested on a local Postgres 16 with `log_statement=all`. Only
 `ALTER USER "consent" PASSWORD 'SCRAM-SHA-256$…'` (and `'md5…'` for the rollback) reached the server,
