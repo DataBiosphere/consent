@@ -6,7 +6,7 @@ The request adds Access Management and Primary and Secondary Data Use Terms to t
 
 ## Current state
 
-One part of the request is not correct. Consent already persists Model and Workspace assets. A 2026-09-02 migration moved each asset list into its own `study_property` row. The gap is only the two new fields.
+Consent stores the Model and Workspace assets of a study as JSON lists, one `study_property` row for each asset type. A 2026-09-02 migration moved each list into its own row. The entries have no data use and no structured access management.
 
 | Aspect | Dataset | Model | Workspace |
 | --- | --- | --- | --- |
@@ -69,17 +69,17 @@ The UI type for a Dataset row calls the summary `dataUse`. For assets, the index
 
 ## Design decisions
 
-We recommend option A: keep the JSON lists in `study_property` and add the two fields to each entry. Option A gives the same result for the user at about half the cost of option B.
+Decided: option A. We keep the JSON lists in `study_property` and add the two fields to each entry. We discarded option B, because it gives the same result for the user at about twice the cost.
 
 | Option | What changes | Approx. lines | Benefit | Cost |
 | --- | --- | --- | --- | --- |
-| A. Extend the JSON entries (recommended) | Validation, index enrichment, OpenAPI, UI | 2,650 | No schema change, no data migration, no change to the read and write path of `StudyAssets` | Data use is not queryable in SQL |
-| B. New `ai_model` and `workspace` tables | Two tables, DAOs, mappers, a data migration from `study_property`, a rewrite of `StudyAssets` reads and writes, plus all of option A | 5,000 or more | Data use is queryable in SQL; asset IDs are real keys | Undoes the 2026-09-02 promotion work; a second migration of live data |
+| A. Extend the JSON entries (chosen) | Validation, index enrichment, OpenAPI, UI | 2,450 | No schema change, no data migration, no change to the read and write path of `StudyAssets` | Data use is not queryable in SQL |
+| B. New `ai_model` and `workspace` tables (discarded) | Two tables, DAOs, mappers, a data migration from `study_property`, a rewrite of `StudyAssets` reads and writes, plus all of option A | 5,000 or more | Data use is queryable in SQL; asset IDs are real keys | Undoes the 2026-09-02 promotion work; a second migration of live data |
 
 Other decisions in the plan:
 
 - **Store `DataUse`, compute `DataUseSummary`.** This matches the Dataset path. Ontology labels for disease codes stay current after each reindex.
-- **Reuse the enum.** Move `ConsentGroup.AccessManagement` to a shared package, or reference it from a new asset validator. Do not make a second enum.
+- **Reuse the enum.** Use `ConsentGroup.AccessManagement` where it is now. Do not move it, because 38 files use it. Do not make a second enum.
 - **Validate only the new keys.** Do not parse a whole entry into a Java class and write it back. `StudyAssets` keeps unknown client fields on purpose, and a Gson round trip drops them.
 - **No DAC rule for assets.** Models and workspaces are not requestable in the Data Library (`isRowSelectable` is false). Access management on an asset is information only, so `validateDacRequirement` does not apply.
 - **Keep `Workspace.access` for now.** It stays as a deprecated free-text field until the team decides how to treat existing values. See the open questions.
@@ -115,6 +115,7 @@ Rules for the module:
 - A missing `dataUse` or `accessManagement` is valid. `prepare` never throws. It returns messages such as `models[2].accessManagement: must be one of open, controlled, external`.
 - A malformed stored `dataUse` gets no summary and a `logWarn`. An ontology database error propagates, as it does for datasets.
 - `withSummaries` memoises within one call, so identical `dataUse` values cost one ontology lookup.
+- Other asset types can use the module later. To add a type, add its key to the list of asset types that the module handles. The callers do not change. Each new type still needs its own UI work, and Biospecimen first needs a decision on its free-text `optionalDataUse` field.
 
 Callers:
 
@@ -134,16 +135,16 @@ The plan has 8 tickets: 4 in consent and 4 in duos-ui. Each estimate includes te
 
 | # | Repo | Title | Scope | Approx. lines | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| 1 | consent | Validate data use and access management on model and workspace entries | Move `AccessManagement` to a shared package. Add an asset validator for `dataUse` and `accessManagement` on each `models` and `workspaces` entry. Call it from `StudyRegistrationRequestValidator`. | 450 | None |
+| 1 | consent | Validate data use and access management on model and workspace entries | Add the write side of `AssetDataUse` (`prepare`). It validates `dataUse` and `accessManagement` on each `models` and `workspaces` entry and removes `dataUseSummary`. Call it from `StudyRegistrationRequestValidator` and `RegistrationRequestMapper.promotedAsset`. Use `ConsentGroup.AccessManagement` where it is now. | 300 | None |
 | 2 | consent | Document the new asset fields in OpenAPI | Add `dataUse`, `accessManagement` and `dataUseSummary` to `AiModel.yaml` and `Workspace.yaml`. Reference the existing `DataUse` and `DataUseSummary` schemas. | 150 | None |
-| 3 | consent | Index the data use summary for models and workspaces | In `ElasticSearchService.toStudyTerm`, add `dataUseSummary` to each entry that has a `dataUse`. Check the `dataset` index mapping and update it if it is not dynamic. | 400 | 1 |
-| 4 | consent | Return the data use summary from the study asset endpoints | Share the enrichment from ticket 3 with `StudyAssetService`, so that `/assets/models` and `/assets/workspaces` return the same shape as the index. Also use it in SchemaFromStudy, which the registration GET uses, and pass the module through DatasetRegistrationSchemaV1Builder. | 250 | 3 |
+| 3 | consent | Index the data use summary for models and workspaces | Add the read side of `AssetDataUse` (`withSummaries`) and its `@Provides @Singleton` provider in `ConsentModule`. Call it from `ElasticSearchService.toStudyTerm`, so that each entry that has a `dataUse` gets a `dataUseSummary`. Check the `dataset` index mapping and update it if it is not dynamic. | 300 | 1 |
+| 4 | consent | Return the data use summary from the study asset endpoints | Share the enrichment from ticket 3 with `StudyAssetService`, so that `/assets/models` and `/assets/workspaces` return the same shape as the index. Also use it in SchemaFromStudy, which the registration GET uses, and pass the module through DatasetRegistrationSchemaV1Builder. | 300 | 3 |
 | 5 | duos-ui | Enter data use and access management for models and workspaces | Add the new fields to the `AiModel` and `Workspace` types. Add an access management select and the existing data use editor to the `AiModelList` and `WorkspaceList` forms. If the diff goes above 500 lines, split it into one ticket for each asset type. | 500 | 1, 2 |
-| 6 | duos-ui | Show data use and access management in the Data Library | Add the fields to the Elasticsearch and library row types. Make `DATA_USE_GRID_COLUMN` generic. Add the data use and access columns to `modelColumns.tsx` and `workspaceColumns.tsx`, which also updates the study details tables. | 400 | 3 |
+| 6 | duos-ui | Show data use and access management in the Data Library | Add the fields to the Elasticsearch and library row types. Make `DATA_USE_GRID_COLUMN` generic. Add the data use and access columns to `modelColumns.tsx` and `workspaceColumns.tsx`, which also updates the study details tables. | 400 | 3, 4 |
 | 7 | duos-ui | Filter models and workspaces by data use and access management | Add access management and data use filters to the Models and Workspaces tabs in `dataLibraryFilterConfig.ts` and the client-side `matchesModelFilters` and `matchesWorkspaceFilters`. | 350 | 6 |
 | 8 | both | Retire the free-text workspace access field | Apply the team decision on `Workspace.access`: map, hide or remove the old values. Remove the old column and filter. | 150 | 6, team decision |
 
-Total: about 2,650 lines.
+Total: about 2,450 lines.
 
 ## Risks and open questions
 
