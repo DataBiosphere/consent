@@ -59,6 +59,9 @@ import org.jdbi.v3.core.Jdbi;
 
 public class VoteService implements ConsentLogger {
 
+  /** SQL states for a deadlock, a lock wait that timed out, and a serialization failure. */
+  private static final Set<String> LOCK_FAILURE_STATES = Set.of("40P01", "55P03", "40001");
+
   private final UserDAO userDAO;
   private final DacDAO dacDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -607,9 +610,6 @@ public class VoteService implements ConsentLogger {
       throw e;
     }
   }
-
-  /** SQL states for a deadlock, a lock wait that timed out, and a serialization failure. */
-  private static final Set<String> LOCK_FAILURE_STATES = Set.of("40P01", "55P03", "40001");
 
   /**
    * Waiting on the collection lock can end in a deadlock or timeout when another change holds it.
