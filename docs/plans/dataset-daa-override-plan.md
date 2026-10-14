@@ -4,7 +4,7 @@
 
 Proposed. Ticket: [DT-3876](https://broadworkbench.atlassian.net/browse/DT-3876).
 
-Related plan: `so-approval-exempt-datasets-plan.md` ([DT-4267](https://broadworkbench.atlassian.net/browse/DT-4267)) changes some of the same files. The two plans do not depend on each other. See [Overlap with DT-4267](#overlap-with-dt-4267).
+Related plan: `so-approval-exempt-datasets-plan.md` ([DT-4267](https://broadworkbench.atlassian.net/browse/DT-4267), added by [#3153](https://github.com/DataBiosphere/consent/pull/3153)) changes some of the same files. The two plans do not depend on each other. See [Overlap with DT-4267](#overlap-with-dt-4267).
 
 ## Overview
 
@@ -49,6 +49,7 @@ duos-ui repeats the same rule in four places. Each one takes the first DAA whose
 | 7 | The ticket says "a specific DAA for the dataset, model, or workspace". | DUOS has no "model" or "workspace" entity. This plan covers datasets only. | **Confirm with product** |
 | 8 | An override-only DAA has an empty `dacs` list, because `dacs` lists only the DACs that use the DAA as their default. How do SOs see it? | Add `overrideDatasetIds` to the DAA JSON. The SO DAA assignment page and the dashboard counts treat a DAA as assignable when it has DACs or override datasets. | This plan |
 | 9 | A DAC's default can be a DAA that another DAC uploaded. If a dataset is pinned to that DAA and the DAC then changes its default, the DAA no longer belongs to the DAC (decision 1). What happens to the pin? | The pin stays. Decision 1 applies when a chair assigns a DAA, not afterwards. Clearing pins on a default change would defeat the purpose of a pin. The chair can still re-save the same pin, and can move the dataset to any of the DAC's current DAAs. | This plan |
+| 10 | Does anyone get a notice when a chair sets, changes, or clears an override? | No. This plan sends no email. See [Effects of an override on researchers](#effects-of-an-override-on-researchers) and [Out of scope](#out-of-scope-follow-up). | **Confirm with product** |
 
 ## Task summary
 
@@ -58,7 +59,7 @@ duos-ui repeats the same rule in four places. Each one takes the first DAA whose
 | 2 | consent | Resolve the effective DAA in `DaaDAO` | ~300 lines | 1 |
 | 3 | consent | Upload a DAA without making it the DAC default | ~150 lines | — |
 | 4 | consent | Show override DAAs to SOs (`overrideDatasetIds`, dashboard counts) | ~200 lines | 1 |
-| 5 | consent | Endpoints for chairs to set and clear the override | ~350 lines | 2 and 4; **6 and 9 deployed**; decision 7 confirmed |
+| 5 | consent | Endpoints for chairs to set and clear the override | ~350 lines | 2 and 4; **6 and 9 deployed**; decisions 7 and 10 confirmed |
 | 6 | duos-ui | Use the effective DAA in the DAR and progress report forms | ~350 lines | 1 deployed |
 | 7 | duos-ui | DAA picker on the DAC profile page | ~350 lines | 5 deployed |
 | 8 | duos-ui | Upload a new DAA from the picker | ~150 lines | 3 deployed, 7 |
@@ -77,7 +78,7 @@ Sizes include tests. Tasks 1 and 3 can start at once.
 
 Add the column and carry it through the model and the DAO layer.
 
-- Liquibase changeset: add `dataset.override_daa_id BIGINT NULL`, with an FK to `data_access_agreement(daa_id)` (`ON DELETE SET NULL`) and an index.
+- Liquibase changeset: add `dataset.override_daa_id BIGINT NULL`, with an FK to `data_access_agreement(daa_id)` (`ON DELETE RESTRICT`) and an index. Do not use `ON DELETE SET NULL`: a `NULL` override means "use the DAC default", so a deleted DAA would quietly move the dataset to the default. Task 6 must not fall back to the default for the same reason. No code deletes a DAA today, so `RESTRICT` changes no current behavior. A future DAA delete must first clear or move the overrides that use the DAA.
 - `Dataset.java`: add `overrideDaaId`. `DatasetMapper` and `DatasetReducer`: map the column (follow the `dac_approval` pattern).
 - `DatasetDAO`:
   - Add `override_daa_id` to the six dataset select lists that already select `d.dac_approval`.
@@ -101,6 +102,7 @@ Add the column and carry it through the model and the DAO layer.
 **Tests:**
 - New datasets have no override.
 - The override can be set and cleared.
+- A delete of a DAA that a dataset uses as its override fails, and the override does not change.
 - An update with the wrong DAC id changes no row and returns 0, both to set and to clear.
 - The override appears in `findDatasetById`, `findDatasetsByIdList`, and `findDatasetsAssociatedWithDac`.
 - A DAC change clears the override. An unchanged DAC keeps it.
@@ -146,6 +148,7 @@ Then cover each workflow that reads these queries. consent has no integration te
 - `DaaResource.createDaaForDac` (`POST /api/daa/dac/{dacId}`): add the query parameter `setAsDacDefault`, default `true`.
 - Pass the parameter through `DaaService.createDaaWithFso` to `DaaServiceDAO.createDaaWithFso`, which calls `createDacDaaRelation` only when the value is `true`. The DAA still records the DAC as its `initial_dac_id`, so it counts as one of the DAC's DAAs (decision 1).
 - OpenAPI: document the parameter.
+- Do not change the second upload path. `FileStorageObjectService` calls `DaaService.createAndLinkDaaIdForDac` for a DAC document upload, and that call also makes the new DAA the DAC default. The picker (Task 8) does not use this path.
 
 **Tests:** with `false`, the DAA exists and is linked by `initial_dac_id` but not by `dac_daa`. With no parameter, the behavior is the same as today.
 
@@ -184,7 +187,7 @@ The DAA ownership check (step 2) and the update (step 3) are separate operations
 - Resource: success for both endpoints, wrong DAC, not a chair.
 - The existing `approveDataset` tests after the helper refactor.
 
-**Release gate:** confirm decision 7 (datasets only) with product before this task deploys. This task is the first that lets a dataset have an override.
+**Release gate:** confirm decisions 7 (datasets only) and 10 (no notice) with product before this task deploys. This task is the first that lets a dataset have an override.
 
 ### Task 6: Use the effective DAA in the DAR and progress report forms (duos-ui)
 
@@ -279,7 +282,20 @@ This task must deploy before Task 5. Otherwise a chair could require an override
 6. An override changes after a DAR was submitted. Expected: the DAR's snapshot does not change (Task 2).
 7. A chair uploads a DAA for one dataset. Expected: the DAC default does not change (Tasks 3 and 8).
 
+## Effects of an override on researchers
+
+When a chair sets or changes an override, the dataset requires a different DAA. The researchers that this affects get no notice (decision 10):
+- A researcher whose library card has only the DAC default is no longer pre-authorized for the dataset. `isUserPreAuthorizedForAllDaas` returns false, so a new DAR on the dataset goes to SO approval.
+- An open draft DAR or progress report on the dataset must acknowledge the override DAA before it can be submitted. Task 6 shows the override DAA as required.
+- A submitted DAR does not change. Its snapshot keeps the DAA that the researcher acknowledged (Task 2).
+
+When a chair clears an override, the dataset requires the DAC default again, with the same effects.
+
 ## Out of scope (follow-up)
+
+**Notices for overrides.** This plan sends no email when an override is set, changed, or cleared (decision 10). A follow-up ticket can add one. It can model the email on the DAC default change flow (`POST /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}`, `DaaService.sendNewDaaEmails`).
+
+**The DAC default change email and pinned datasets.** When a DAC changes its default, duos-ui calls `sendNewDaaEmails`. The email goes to every researcher who has the old DAA, and to their SOs. It says that the new DAA applies to all future requests to the DAC. That is not true for a dataset that stays pinned to the old DAA (decision 9). This plan does not change the email. A follow-up ticket can change its text, or name the datasets that keep the old DAA.
 
 `DaaDAO.findByDarReferenceId` (the DAAs of a DAR, used by `DataAccessRequestResource`) returns the *current* DAAs of the DAR's datasets, not the DAAs that the researcher acknowledged at submit. This is already true today when a DAC changes its default DAA. Overrides make it happen more often. The `dar_dataset_daa_snapshot` table already holds the acknowledged DAAs, so a follow-up ticket can read from it. This plan changes the query only so that it resolves overrides (Task 2).
 
@@ -287,7 +303,7 @@ This task must deploy before Task 5. Otherwise a chair could require an override
 
 1. Tasks 1–4 (consent). Task 3 can deploy at any point.
 2. Tasks 6 and 9 (duos-ui).
-3. Confirm decision 7 with product.
+3. Confirm decisions 7 and 10 with product.
 4. Task 5 (consent). This is the first change that lets a dataset have an override.
 5. Task 7, then Task 8 (duos-ui).
 
