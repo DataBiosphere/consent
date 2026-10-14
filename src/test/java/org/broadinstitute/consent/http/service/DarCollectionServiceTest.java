@@ -189,6 +189,28 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateCollectionToDraftStatusRejectsClosedOutCollection() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(7);
+    sourceCollection.addDar(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(7)).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateCollectionToDraftStatus(sourceCollection));
+
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(7);
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(7);
+    verify(dataAccessRequestDAO, never())
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(daaDAO, never()).deleteDarDatasetDaaSnapshotsByReferenceId(any());
+  }
+
+  @Test
   void testAddDatasetsToCollection() {
     Set<Dataset> datasets = new HashSet<>();
     DarCollection collection = generateMockDarCollection(datasets);
