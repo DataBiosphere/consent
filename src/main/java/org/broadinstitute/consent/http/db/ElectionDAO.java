@@ -241,7 +241,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   /**
    * Cancels every open election, of any type, on the DARs of a collection. A closeout calls this
    * under the collection lock: votes are rejected once a collection is closed out, so an election
-   * left open could never be decided. The elections stay unarchived, like a chair cancel.
+   * left open could never be decided. Like a chair cancel, it leaves archived as it was.
    *
    * @return the number of elections canceled
    */
