@@ -13,7 +13,8 @@ been made. Jira epics and stories exist for E1 and E2 only (table below); the ot
 | S1.2 — Config type, showcase index and CI guard | [DT-4273](https://broadworkbench.atlassian.net/browse/DT-4273) |
 | S1.3 — Shared defaults, assets and time-bounded content | [DT-4276](https://broadworkbench.atlassian.net/browse/DT-4276) |
 | E2 — Public-safe live catalog lookup | [DT-4271](https://broadworkbench.atlassian.net/browse/DT-4271) |
-| S2.1 — Define the minimal catalog projection and eligibility policy | [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274) |
+| S2.1 — Define the minimal catalog projection and eligibility policy (backend) | [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274) |
+| S2.1 — Null-safe dataset card labels (frontend) | [DT-4279](https://broadworkbench.atlassian.net/browse/DT-4279) |
 | S2.2 — Public batch lookup endpoint | [DT-4275](https://broadworkbench.atlassian.net/browse/DT-4275) |
 
 Section 4 details the MVP epics (E1–E5) and outlines the post-MVP epics (E6–E10). Their detailed
