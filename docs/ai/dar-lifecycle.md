@@ -135,6 +135,7 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   - Chair cancellation (409).
   - Researcher cancellation (409).
   - Resubmitting the collection as a draft (409).
+  - Signing official approval of a DAR in the collection (409).
   - Another progress report (400).
 - New-DAR processing (`createElectionsForNewDarCollection`, `sendNewDARCollectionMessage`) runs
   after the submission commits and acts on the collection's most recent DAR. It does nothing
@@ -234,16 +235,18 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
 
 ## Concurrency
 
-Closeout submission, election creation/cancellation, resubmit, and vote/rationale updates
-serialize on the collection row. Only the checks re-run under the lock are serialized, so a new
+Closeout submission, election creation/cancellation, resubmit, signing official approval, and
+vote/rationale updates serialize on the collection row. Only the checks re-run under the lock are serialized, so a new
 precondition that must hold at commit belongs after `lockCollection`, not only in the resource.
 
 1. Open a transaction (`dataAccessRequestDAO.inTransaction(...)` or
    `DataAccessRequestServiceDAO.inTransaction`).
 2. `lockCollection(collectionId)` (or `lockCollectionsForReferenceIds`, which locks in a stable
    order).
-3. Re-check `hasSubmittedCloseout` **after** taking the lock. A preflight check outside the lock
-   is fine for fast failure, but never rely on it alone.
+3. Check `hasSubmittedCloseout` **after** taking the lock. `CollectionLocks.lockOpenCollection`
+   does steps 2 and 3 and throws 409; use it. Progress reports do their own check because they
+   return 400. Don't add a second check before the lock: it can't be relied on, and it repeats
+   the query.
 4. Mutate, then commit. The lock is held until commit.
 
 - Don't catch a SQL error inside the locked callback and carry on: Postgres has already aborted
