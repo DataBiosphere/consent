@@ -69,5 +69,6 @@ to verify. The base-fragment chains already in `DarMetricsDAO` predate this rule
 ## DAR lifecycle
 
 Before changing drafts, DAR submission, progress reports, closeouts, elections, votes, or any
-grant/approval query, read `docs/ai/dar-lifecycle.md`. In particular: progress reports are never
-drafts, and only a progress report (`parent_id IS NOT NULL`) can close out a collection.
+grant/approval query, read `docs/ai/dar-lifecycle.md`. In particular: only a progress report
+(`parent_id IS NOT NULL`) can close out a collection, and a closeout predicate must also require
+`submission_date IS NOT NULL`, because resubmit can turn progress reports back into drafts.

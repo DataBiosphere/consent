@@ -38,5 +38,7 @@ These instructions apply to code suggestions and PR review in this repository.
 - `docs/ARCHITECTURE.md`
 - `docs/ONBOARDING.md`
 - `docs/ai/prompts/`
+- `docs/ai/dar-lifecycle.md` (review any change to DARs, progress reports, closeouts, elections,
+  votes or grant queries against it)
 - `CONTRIBUTING.md`
 

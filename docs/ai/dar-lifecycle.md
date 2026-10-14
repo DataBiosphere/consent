@@ -23,15 +23,17 @@ it wrong.
 
 ## The four states
 
-All four live in the same `data_access_request` table. Tell them apart by columns, not by JSON.
-The only reliable draft marker is `submission_date IS NULL`: a draft can carry a `collection_id`.
+All four live in the same `data_access_request` table. Tell them apart by columns, plus one JSON
+field: `data.closeoutSupplement` is the only thing that separates a closeout from an ordinary
+progress report. The only reliable draft marker is `submission_date IS NULL`: a draft can carry a
+`collection_id`.
 
 | State | `collection_id` | `parent_id` | `submission_date` | Created by |
 | --- | --- | --- | --- | --- |
-| Draft | `NULL`, or set (a canceled collection reset to draft) | `NULL` | `NULL` | `DataAccessRequestDAO.insertDraftDataAccessRequest` |
+| Draft | `NULL`, or set (a canceled collection reset to draft) | `NULL` | `NULL` | `DataAccessRequestService.insertDraftDataAccessRequest` |
 | Original DAR | set | `NULL` | set | `DataAccessRequestService.createDataAccessRequest` |
-| Progress report | set | set (parent DAR id) | set, always | `DataAccessRequestDAO.insertProgressReport` |
-| Closeout | set | set (the original DAR or a progress report) | set, always | a progress report whose `data.closeoutSupplement` has reasons |
+| Progress report | set | set (parent DAR id) | set at insert; resubmit can null it | `DataAccessRequestDAO.insertProgressReport` |
+| Closeout | set | set (the original DAR or a progress report) | set, always (resubmit is rejected) | a progress report whose `data.closeoutSupplement` has reasons |
 
 ### 1. Draft
 
@@ -42,14 +44,24 @@ The only reliable draft marker is `submission_date IS NULL`: a draft can carry a
   `submission_date` but keeps `collection_id`, and `createDataAccessRequest` later reuses that
   collection. So never test `collection_id IS NULL` to find drafts.
 - No elections, no grants. Drafts never count toward approvals, dashboards, or closeout logic.
-- **Only an original DAR can be a draft. A progress report is never a draft.**
+- **Only an original DAR is *created* as a draft.** Progress reports are inserted already
+  submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
+  progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit
+  needs a canceled DAR in the collection, so this mostly affects pre-2022 collections with a
+  canceled sibling original. A closed-out collection can't be resubmitted (409, under the
+  collection lock), so a closeout never loses its `submission_date`.
 
 ### 2. Original DAR (submission)
 
 - `createDataAccessRequest` validates (`validateDar`). In one transaction it then creates a
-  `dar_collection` (code `DAR-<n>`) or reuses the draft's, and sets `submission_date` through
-  `updateDraftToSubmittedForCollection`. It also syncs `dar_dataset`, snapshots DAAs, and flags
-  `requires_so_approval` when needed.
+  `dar_collection` (code `DAR-<n>`) or reuses the draft's, and sets `submission_date`:
+  `updateDraftToSubmittedForCollection` when submitting an existing draft, or
+  `insertDataAccessRequest` when there is no draft. It also syncs `dar_dataset`, snapshots DAAs,
+  and flags `requires_so_approval` when needed.
+- Every write to `submission_date`: those two, `insertProgressReport` (`now()`),
+  `updateDataByReferenceId`, which resubmit calls with `NULL`, and
+  `DataAccessRequestServiceDAO.updateByReferenceId`, which saves draft edits (only drafts reach
+  it, so it writes `NULL` back).
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`).
@@ -73,20 +85,21 @@ The only reliable draft marker is `submission_date IS NULL`: a draft can carry a
 - `POST /api/dar/v2/progress_report/{parentReferenceId}` →
   `DataAccessRequest.populateProgressReportFromJsonString` (copies the parent's data and overlays
   the report fields) → `DataAccessRequestService.createProgressReport`.
-- Preconditions (closeouts go through the same endpoint and share the first four):
+- Preconditions. Closeouts go through the same endpoint; they share the ones not marked
+  "ordinary reports only":
   - The caller owns the parent.
   - The parent is not a draft.
-  - The parent has no open DataAccess elections. `postProgressReport` checks this before
-    uploading documents, and `insertProgressReport` checks it again after `lockCollection`,
-    alongside `hasSubmittedCloseout`. Every election-opening path takes the same lock, so a
-    closeout can't commit while one of the parent's DataAccess elections is open. RP elections
-    don't block.
-  - The collection has no submitted closeout.
+  - The collection has no submitted closeout. Checked before validation and again under
+    `lockCollection`.
+  - Ordinary reports only: the parent has no open DataAccess elections. `postProgressReport`
+    checks this before uploading documents, and `insertProgressReport` checks it again under the
+    lock. Every election-opening path takes the same lock. RP elections don't block. A closeout
+    is not blocked by open elections; it cancels them (see below).
   - Ordinary reports only: the datasets are a subset of the parent's datasets and are currently
     approved (`findDatasetApprovalsByDar`). A closeout's datasets are set by the service instead.
 - `insertProgressReport` sets `parent_id`, `collection_id` and `submission_date = now()` in the
-  INSERT. There is no draft step and no later "submit". Don't write fixtures or code that
-  null out a progress report's `submission_date`.
+  INSERT. There is no draft step and no later "submit". Only resubmit nulls it afterwards (see
+  [Draft](#1-draft)); don't write other fixtures or code that do.
 - A non-closeout report starts a new review cycle: `processNewDarCollection` opens elections for
   auto-open DACs and notifies.
 
@@ -108,12 +121,20 @@ The only reliable draft marker is `submission_date IS NULL`: a draft can carry a
     [Datasets converted to external](#datasets-converted-to-external-dt-3184).
   - **Ends every grant in the collection immediately.** It does not wait for SO approval or DAC
     acknowledgement. `approveDataAccessRequestCloseout` only records the SO and notifies chairs.
+  - **Cancels every open election in the collection**, of any type (DataAccess and RP) and on
+    any DAR, not just the parent (`ElectionDAO.cancelOpenElectionsByCollectionId`, under the
+    collection lock). Votes are rejected after a closeout, so an election left open could never
+    be decided. The elections are set to `Canceled` and not archived, like a chair cancel, so the
+    collection still shows them.
   - Skips dataset-registration approval checks, dataset-dependent collaboration/ethics documents,
     DAA acknowledgements, and election creation.
 - After it, the collection is closed. All of these are rejected:
   - Votes and rationale updates (409).
-  - Opening or reopening elections (409).
+  - Opening or reopening elections (409). Automated (RADAR) approval skips the dataset instead
+    of failing, so approvals already made for other datasets still notify.
   - Chair cancellation (409).
+  - Researcher cancellation (409).
+  - Resubmitting the collection as a draft (409).
   - Another progress report (400).
 - New-DAR processing (`createElectionsForNewDarCollection`, `sendNewDARCollectionMessage`) runs
   after the submission commits and acts on the collection's most recent DAR. It does nothing
@@ -131,17 +152,28 @@ external access, for when the DAC stops managing access in DUOS. Whenever that c
 DARs can have **fewer `dar_dataset` rows than they were submitted with, or none at all**. Any
 environment where the conversion has been run can contain such DARs.
 
-For each converted dataset, `DacServiceDAO`:
+`DacServiceDAO` runs the conversion. The request (`DacDatasetExternalizationRequest`) has flags,
+so not every step runs every time. For each converted dataset it **always**:
 
 - sets `dataset.dac_id`, `dac_approval` and `dac_approval_date` to NULL, and sets the dataset's
-  `accessManagement` property to `external`;
-- **deletes every `dar_dataset` row for the dataset**, on drafts, original DARs, progress reports
-  and closeouts alike;
-- appends to each affected DAR's `admin_dar_notes`: "On `<timestamp>` the following datasets were
-  removed administratively from this request because the responsible Data Access Committee no
-  longer manages access using DUOS. `DUOS-…`";
-- cancels open **DataAccess** elections on the dataset. It leaves RP elections alone, so open RP
-  elections can remain on those DARs with nothing to close them.
+  `accessManagement` property to `external`. Controlled datasets are converted; open-access ones
+  only when `convertOpenAccessDatasets` is true (default false).
+
+Then, depending on the flags:
+
+- `revokeApprovedAccess` (default **true**):
+  - **deletes every `dar_dataset` row for the dataset**, on drafts, original DARs, progress
+    reports and closeouts alike;
+  - appends to each affected DAR's `admin_dar_notes`: "On `<timestamp>` the following datasets
+    were removed administratively from this request because the responsible Data Access
+    Committee no longer manages access using DUOS. `DUOS-…`".
+- `cancelOpenElections` (default **true**): cancels and archives open **DataAccess** elections on
+  the dataset. It leaves RP elections alone, so open RP elections can remain on those DARs with
+  nothing to close them.
+- `dryRun` (default false) only reports what would change.
+
+So a missing `dar_dataset` row with the admin note means `revokeApprovedAccess` ran. If it was
+turned off, the dataset is external but the DARs still list it.
 
 What this means for any change you make:
 
@@ -177,8 +209,12 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
 
 - `parent_id IS NOT NULL` is the key condition. Without it, a stray supplement on an original DAR
   would close the collection.
-- `submission_date IS NOT NULL` is redundant for progress reports, but keep it so drafts can
-  never match.
+- `submission_date IS NOT NULL` is required: resubmit can turn progress reports back into
+  drafts (see [Draft](#1-draft)), and a draft must never close anything.
+- Two equivalent spellings are in use: `data ->> 'closeoutSupplement' IS NOT NULL`, and
+  `data -> 'closeoutSupplement' IS NOT NULL AND data -> 'closeoutSupplement' != 'null'::jsonb`
+  (`SigningOfficialDashboardDAO`). `->>` already returns NULL for a JSON `null`. Prefer the first
+  in new queries.
 - A closeout applies to the **whole collection**: compare on `collection_id`, not on the
   closeout's own `dar_dataset` rows.
 - When a query **projects** the supplement (rather than filtering on it), gate the column on
@@ -198,9 +234,9 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
 
 ## Concurrency
 
-Closeout submission, election creation/cancellation, and vote/rationale updates serialize on the
-collection row. Only the checks re-run under the lock are serialized, so a new precondition
-that must hold at commit belongs after `lockCollection`, not only in the resource.
+Closeout submission, election creation/cancellation, resubmit, and vote/rationale updates
+serialize on the collection row. Only the checks re-run under the lock are serialized, so a new
+precondition that must hold at commit belongs after `lockCollection`, not only in the resource.
 
 1. Open a transaction (`dataAccessRequestDAO.inTransaction(...)` or
    `DataAccessRequestServiceDAO.inTransaction`).
@@ -209,6 +245,12 @@ that must hold at commit belongs after `lockCollection`, not only in the resourc
 3. Re-check `hasSubmittedCloseout` **after** taking the lock. A preflight check outside the lock
    is fine for fast failure, but never rely on it alone.
 4. Mutate, then commit. The lock is held until commit.
+
+- Don't catch a SQL error inside the locked callback and carry on: Postgres has already aborted
+  the transaction, so the commit silently rolls back. Let it propagate out of `inTransaction`,
+  then handle it (as `DACAutomationRuleService.openElectionAndApprove` does).
+- A deadlock or lock timeout while waiting for the lock (SQL states `40P01`, `55P03`, `40001`)
+  is a retryable conflict: `VoteService` returns 409 for it, not 400.
 
 JDBI 3 (3.52.x) binds one handle per thread: `Jdbi.withHandle` reuses the thread's `handleScope`,
 and `Handle.inTransaction` joins an open transaction. So on-demand DAOs and nested
@@ -225,7 +267,7 @@ review bots have repeatedly claimed this opens a second pooled connection; it do
 | Mistake | Why it's wrong | Correct approach |
 | --- | --- | --- |
 | Treating any DAR with `closeoutSupplement` as a closeout | Originals can't close out; a stray JSON field closed whole collections | Require `parent_id IS NOT NULL`; `validateDar` rejects the field |
-| Modelling "draft closeouts" (a progress report with `submission_date` NULL) in code or fixtures | Progress reports are never drafts | Test "supplement on an original DAR never ends grants" instead |
+| Modelling "draft closeouts" (a closeout with `submission_date` NULL) in code or fixtures | Closeouts are never drafts: they are inserted submitted and resubmit is rejected once one exists | Test "supplement on an original DAR never ends grants" instead |
 | Assuming a closeout always follows an ordinary progress report | Researchers can close out straight from the original DAR, with no progress report in between | Handle a closeout whose parent is the original DAR; test that path as well as closeout-after-report |
 | Test fixtures inserting closeouts with `insertDataAccessRequest` (no parent) | Doesn't match how the app creates closeouts, so it passes the wrong predicates | File closeouts with `insertProgressReport` on an approved parent |
 | Trusting the client's dataset list for a closeout | Clients could omit datasets to skip validation or keep access | Expand to `findDatasetIdsByCollectionId` before validation and again under the lock |
