@@ -121,9 +121,12 @@ eol_date() {
 value_after() {
   local file=$1 key=$2
   shift 2
-  awk -v key="$key:" -v anchors="$(printf '%s\n' "$@")" '
+  awk -v key="$key:" '
     function indent(line) { match(line, /^ */); return RLENGTH }
-    BEGIN { depth = split(anchors, anchor, "\n") }
+    BEGIN {
+      depth = ARGC - 2
+      for (i = 1; i <= depth; i++) { anchor[i] = ARGV[i]; ARGV[i] = "" }
+    }
     level && $0 !~ /^[[:space:]]*(#|$)/ && indent($0) < limit { exit }
     level == depth && $1 == key { gsub(/["'\'']/, "", $2); print $2; done = 1; exit }
     level < depth && $0 ~ anchor[level + 1] {
@@ -131,7 +134,7 @@ value_after() {
       # A parent key or list item contains deeper lines only; an entry has siblings.
       limit = indent($0) + ($0 ~ /:[[:space:]]*$/ || $0 ~ /^[[:space:]]*- / ? 1 : 0)
     }
-    END { if (!done) exit 1 }' "$file" \
+    END { if (!done) exit 1 }' "$@" "$file" \
     || { echo "no $key under $* in $file" >&2; return 1; }
 }
 
