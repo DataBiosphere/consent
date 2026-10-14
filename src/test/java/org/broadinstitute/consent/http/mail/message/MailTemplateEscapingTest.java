@@ -30,7 +30,7 @@ class MailTemplateEscapingTest extends AbstractMailMessageTest {
   private static final String MARKUP = "<i id=\"injected\">x</i>";
 
   private static final List<DatasetMailDTO> DATASET_DTOS =
-      List.of(new DatasetMailDTO(1, MARKUP, "DUOS-000001", "http://dataLocationUrl"));
+      List.of(new DatasetMailDTO(1, MARKUP, "DUOS-000001", "https://example.org/data"));
 
   private record MessageCase(MailMessage message) {
     @Override
