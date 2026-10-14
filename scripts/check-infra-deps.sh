@@ -61,10 +61,11 @@ CHECKS=(
 TAB=$'\t'
 TODAY=$(date +%F)
 
-# Helpers. A lookup that finds nothing fails with a message on stderr, so the
-# check shows up as ⚪ instead of silently dropping out of the report. Assign
-# lookups to a variable before use: a failure inside "$(...)" passed straight
-# as an argument is ignored.
+# Helpers. A lookup that finds nothing fails with a message on stderr, so its row
+# (or, outside a per-row loop, the whole check) shows up as ⚪ instead of silently
+# dropping out of the report. End-of-life dates are only context, so a failed
+# lookup there shows "?" instead. Assign lookups to a variable before use: a
+# failure inside "$(...)" passed straight as an argument is ignored.
 
 # The numeric part of a version: v1.12.1 -> 1.12.1, 2.1.2-buster -> 2.1.2, POSTGRES_16 -> 16.
 core() {
@@ -87,7 +88,9 @@ latest_git_tag() {
 # Newest X.Y.Z (or vX.Y.Z) tag of a public container image. Usage: latest_image_tag REGISTRY IMAGE
 latest_image_tag() {
   curl -fsS "https://$1/v2/$2/tags/list" | jq -r '.tags[]' \
-    | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 | grep . \
+    | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' \
+    | awk '{ version = $0; sub(/^v/, "", version); print version "\t" $0 }' \
+    | sort -V | tail -1 | cut -f2 | grep . \
     || { echo "no release tags for $1/$2" >&2; return 1; }
 }
 
@@ -100,23 +103,36 @@ latest_cycle() {
   eol_cycles "$1" | jq -er '.[0].cycle'
 }
 
-# End-of-life date of the release cycle containing a version; empty if none is set.
+# End-of-life date of the release cycle containing a version; empty if none is set,
+# "?" if the lookup fails.
 eol_date() {
   local version
-  version=$(core "$2")
+  version=$(core "$2") || true
   eol_cycles "$1" | jq -r --arg v "$version" '
     first(.[] | .cycle as $c | select($v == $c or ($v | startswith($c + ".")))) | .eol
-    | if type == "string" then . else empty end'
+    | if type == "string" then . else empty end' \
+    || { echo "no end-of-life dates for $1" >&2; echo "?"; }
 }
 
-# First `KEY: value` after the line matching ANCHOR, e.g. the version under `- name: argo-cd`.
-# Usage: value_after FILE ANCHOR KEY
+# The `KEY: value` in the YAML block of the last ANCHOR, each ANCHOR being searched for
+# within the block of the one before. A block holds the children of a parent key
+# (`postgres:`) or the siblings of an entry (the `tag:` beside `repo: ...`, the
+# `version:` beside `- name: argo-cd`). Usage: value_after FILE KEY ANCHOR...
 value_after() {
-  awk -v anchor="$2" -v key="$3:" '
-    found && $1 == key { gsub(/"/, "", $2); print $2; done = 1; exit }
-    $0 ~ anchor { found = 1 }
-    END { if (!done) exit 1 }' "$1" \
-    || { echo "no $3 after /$2/ in $1" >&2; return 1; }
+  local file=$1 key=$2
+  shift 2
+  awk -v key="$key:" -v anchors="$(printf '%s\n' "$@")" '
+    function indent(line) { match(line, /^ */); return RLENGTH }
+    BEGIN { depth = split(anchors, anchor, "\n") }
+    level && $0 !~ /^[[:space:]]*(#|$)/ && indent($0) < limit { exit }
+    level == depth && $1 == key { gsub(/["'\'']/, "", $2); print $2; done = 1; exit }
+    level < depth && $0 ~ anchor[level + 1] {
+      level++
+      # A parent key or list item contains deeper lines only; an entry has siblings.
+      limit = indent($0) + ($0 ~ /:[[:space:]]*$/ || $0 ~ /^[[:space:]]*- / ? 1 : 0)
+    }
+    END { if (!done) exit 1 }' "$file" \
+    || { echo "no $key under $* in $file" >&2; return 1; }
 }
 
 # Prints `value<TAB>path` for each match of PATTERN (grep -E) in the files named NAME
@@ -132,8 +148,8 @@ pins() {
   matches=$(cd "$root" && find "$@" -type f -name "$name" -exec grep -HoE -e "$pattern" {} +) || true
   [ -n "$matches" ] || { echo "no match for '$pattern' under $root" >&2; return 1; }
   printf '%s\n' "$matches" | awk '{
-    i = index($0, ":"); match_ = substr($0, i + 1); sub(/"$/, "", match_)
-    n = split(match_, words, /[" ]+/)
+    i = index($0, ":"); match_ = substr($0, i + 1); gsub(/["'\'']/, "", match_)
+    n = split(match_, words, / +/)
     print words[n] "\t" substr($0, 1, i - 1)
   }'
 }
@@ -169,7 +185,7 @@ group_pins() {
   local aggregate=${1:-compact} pins value
   pins=$(cat)
   [ -n "$pins" ] || { echo "no pins found" >&2; return 1; }
-  for value in $(printf '%s\n' "$pins" | cut -f1 | sort -u); do
+  printf '%s\n' "$pins" | cut -f1 | sort -u | while IFS= read -r value; do
     printf '%s\t%s\n' "$value" \
       "$(printf '%s\n' "$pins" | awk -F'\t' -v v="$value" '$1 == v { print $2 }' | $aggregate)"
   done
@@ -183,7 +199,7 @@ status() {
   latest=$(core "$2") || true
   if [ -z "$current" ] || [ -z "$latest" ]; then
     echo ⚪
-  elif [ -n "$3" ] && [[ ! "$3" > "$TODAY" ]]; then
+  elif [ -n "$3" ] && [ "$3" != "?" ] && [[ ! "$3" > "$TODAY" ]]; then
     echo 🔴
   elif [ "$(printf '%s\n%s\n' "$latest" "$current" | sort -V | tail -1)" = "$current" ]; then
     echo 🟢
@@ -216,10 +232,10 @@ check_terraform() {
   latest=v$(latest_git_tag hashicorp/terraform)
   awk '
     function emit() {
-      if (version != "" && (dir ~ /^dsp-duos\// || dir == "terra-monitoring" \
+      if (name != "" && (dir ~ /^dsp-duos\// || dir == "terra-monitoring" \
           || workspace ~ /^databiosphere-(consent|duos-ui)$/)) {
         sub(/-(dev|staging|prod|tools)$/, "", name)
-        print version "\t" name
+        print (version == "" ? "default" : version) "\t" name
       }
     }
     /^  - name: / { emit(); name = $3; dir = workspace = version = "" }
@@ -229,6 +245,11 @@ check_terraform() {
     END { emit() }' "$TF/atlantis.yaml" \
     | sort -u | group_pins join_lines \
     | while IFS=$TAB read -r version names; do
+        if [ "$version" = default ]; then
+          finding Terraform "Atlantis default" "$latest" "" "atlantis.yaml ($names)" \
+            "no terraform_version, so it runs whatever Atlantis defaults to" ⚪
+          continue
+        fi
         eol=$(eol_date terraform "$version")
         finding Terraform "$version" "$latest" "$eol" "atlantis.yaml ($names)"
       done
@@ -236,8 +257,8 @@ check_terraform() {
 
 # Remote modules pinned with `?ref=<name>-<version>`.
 check_terraform_modules() {
-  local source paths repo module ref prefix latest
-  pins "$TF" 'source *= *"[^"]*\?ref=[^"]*"' '*.tf' "${DUOS_TF_DIRS[@]}" \
+  local source paths repo module ref prefix version latest
+  pins "$TF" '^[[:space:]]*source *= *"[^"]*\?ref=[^"]*"' '*.tf' "${DUOS_TF_DIRS[@]}" \
     | group_pins \
     | while IFS=$TAB read -r source paths; do
         source=${source#git::}
@@ -251,15 +272,20 @@ check_terraform_modules() {
           finding "Module $source" "?" "" "" "$paths" "unrecognized source" ⚪
           continue
         fi
-        latest=$prefix$(latest_git_tag "$repo" "$prefix")
-        finding "Module $repo//$module" "$ref" "$latest" "" "$paths"
+        version=${ref#"$prefix"}
+        latest=$(latest_git_tag "$repo" "$prefix") || {
+          finding "Module $repo//$module" "$ref" "?" "" "$paths" "lookup failed (see stderr)" ⚪
+          continue
+        }
+        finding "Module $repo//$module" "$ref" "$prefix$latest" "" "$paths" "" \
+          "$(status "$version" "$latest" "")"
       done
 }
 
 check_cloudsql_postgres() {
   local latest version paths eol
   latest=$(latest_cycle postgresql)
-  pins "$TF" 'db_version *= *"POSTGRES_[0-9]+"' '*.tfvars' dsp-duos \
+  pins "$TF" '^[[:space:]]*db_version *= *"POSTGRES_[0-9]+"' '*.tfvars' dsp-duos \
     | group_pins \
     | while IFS=$TAB read -r version paths; do
         eol=$(eol_date postgresql "$version")
@@ -272,7 +298,7 @@ check_cloudsql_postgres() {
 
 check_bee_postgres() {
   local path=values/app/consent/bee.yaml.gotmpl major latest eol
-  major=$(value_after "$HELMFILE/$path" '^postgres:' tag)
+  major=$(value_after "$HELMFILE/$path" tag '^postgres:' '^  imageConfig:')
   latest=$(latest_cycle postgresql)
   eol=$(eol_date postgresql "$major")
   finding "BEE Postgres image" "$major" "$latest" "$eol" "$path"
@@ -280,7 +306,7 @@ check_bee_postgres() {
 
 check_cloud_sql_proxy() {
   local path=charts/foundation-lib/values.yaml tag latest note="" icon=""
-  tag=$(value_after "$HELMFILE/$path" 'repo: .*cloud-sql-proxy' tag)
+  tag=$(value_after "$HELMFILE/$path" tag 'repo: .*cloud-sql-proxy')
   latest=$(latest_git_tag GoogleCloudPlatform/cloud-sql-proxy)
   case $tag in
     *buster*)
@@ -308,10 +334,10 @@ check_httpd_proxy() {
 check_argocd() {
   local chart=charts/dsp-argocd/Chart.yaml values=charts/dsp-argocd/values.yaml
   local app app_latest eol chart_version chart_latest
-  app=$(value_after "$HELMFILE/$values" '^  image:$' tag)
+  app=$(value_after "$HELMFILE/$values" tag '^  image:$')
   app_latest=v$(latest_git_tag argoproj/argo-cd)
   eol=$(eol_date argo-cd "$app")
-  chart_version=$(value_after "$HELMFILE/$chart" '- name: argo-cd$' version)
+  chart_version=$(value_after "$HELMFILE/$chart" version '- name: argo-cd$')
   chart_latest=$(latest_git_tag argoproj/argo-helm argo-cd-)
   finding ArgoCD "$app" "$app_latest" "$eol" "$values"
   finding "ArgoCD Helm chart" "$chart_version" "$chart_latest" "" "$chart"
@@ -319,20 +345,33 @@ check_argocd() {
 
 check_external_secrets() {
   local chart=charts/dsp-external-secrets/Chart.yaml version latest
-  version=$(value_after "$HELMFILE/$chart" '- name: external-secrets$' version)
+  version=$(value_after "$HELMFILE/$chart" version '- name: external-secrets$')
   latest=$(latest_git_tag external-secrets/external-secrets helm-chart-)
   finding "External Secrets Operator chart" "$version" "$latest" "" "$chart"
 }
 
 check_deprecated_apis() {
-  local chart api replacement note found paths
-  local charts=("${DUOS_CHARTS[@]}") templates=()
-  for chart in "${DUOS_CHARTS[@]}"; do
-    charts+=($(sed -nE 's#.*repository: file://\.\./([^ ]+).*#\1#p' "$HELMFILE/charts/$chart/Chart.yaml"))
+  local chart charts more api replacement note found paths
+  local templates=()
+  charts=$(printf '%s\n' "${DUOS_CHARTS[@]}" | sort -u)
+  while :; do
+    more=$(
+      {
+        printf '%s\n' "$charts"
+        while read -r chart; do
+          sed -nE "s#.*repository: *[\"']?file://\.\./([^\"' ]+).*#\1#p" \
+            "$HELMFILE/charts/$chart/Chart.yaml" || exit
+        done <<< "$charts"
+      } | sort -u
+    )
+    [ "$more" != "$charts" ] || break
+    charts=$more
   done
-  for chart in $(printf '%s\n' "${charts[@]}" | sort -u); do
-    templates+=("charts/$chart/templates")
-  done
+  while read -r chart; do
+    if [ -d "$HELMFILE/charts/$chart/templates" ]; then
+      templates+=("charts/$chart/templates")
+    fi
+  done <<< "$charts"
   found=$(pins "$HELMFILE" '^apiVersion: *[^ ]+' '*' "${templates[@]}")
   while IFS='|' read -r api replacement note; do
     [ -n "$api" ] || continue
@@ -345,14 +384,21 @@ check_deprecated_apis() {
 
 check_thelma_tools() {
   local script variable repo product name pin latest eol
+  local where="thelma: scripts/install-runtime-deps.sh"
   script=$(curl -fsS "$THELMA_TOOL_PINS")
   while read -r variable repo product name; do
     pin=$(printf '%s\n' "$script" | sed -nE "s/^$variable='?v?([^' ]+)'?.*/\\1/p")
-    [ -n "$pin" ] || { echo "no $variable in Thelma's tool pins" >&2; return 1; }
-    latest=$(latest_git_tag "$repo")
+    if [ -z "$pin" ]; then
+      finding "$name" "?" "" "" "$where" "no $variable in Thelma's tool pins" ⚪
+      continue
+    fi
+    latest=$(latest_git_tag "$repo") || {
+      finding "$name" "$pin" "?" "" "$where" "lookup failed (see stderr)" ⚪
+      continue
+    }
     eol=""
     [ "$product" = - ] || eol=$(eol_date "$product" "$pin")
-    finding "$name" "$pin" "$latest" "$eol" "thelma: scripts/install-runtime-deps.sh"
+    finding "$name" "$pin" "$latest" "$eol" "$where"
   done <<'EOF'
 HELM_VERSION helm/helm - helm
 HELMFILE_VERSION helmfile/helmfile - helmfile
@@ -367,8 +413,11 @@ HELMFILE_DIR=""
 TF_DIR=""
 while [ $# -gt 0 ]; do
   case $1 in
-    --helmfile-dir) HELMFILE_DIR=$2; shift 2 ;;
-    --tf-dir) TF_DIR=$2; shift 2 ;;
+    --helmfile-dir | --tf-dir)
+      [ $# -ge 2 ] || { echo "$1 needs a directory" >&2; exit 2; }
+      if [ "$1" = --tf-dir ]; then TF_DIR=$2; else HELMFILE_DIR=$2; fi
+      shift 2
+      ;;
     -h | --help) sed -nE '3,/^[^#]/ s/^# ?//p' "$0"; exit 0 ;;
     *) echo "Unknown argument: $1 (see --help)" >&2; exit 2 ;;
   esac
@@ -387,7 +436,7 @@ checkout() {
   local dest
   dest="$WORK/$(basename "$1" .git)"
   echo "Cloning $1..." >&2
-  git clone --quiet --depth 1 "$1" "$dest" >&2
+  git clone --quiet --depth 1 "$1" "$dest" >&2 || { echo "Could not clone $1" >&2; return 1; }
   echo "$dest"
 }
 
@@ -409,6 +458,8 @@ for check in "${CHECKS[@]}"; do
   if ! wait "${pids[$i]}"; then
     finding "$check" "?" "" "" "" "check failed: $(tr '\n|' '  ' < "$WORK/$check.err")" ⚪ \
       >> "$WORK/$check.out"
+  elif [ -s "$WORK/$check.err" ]; then
+    sed "s/^/$check: /" "$WORK/$check.err" >&2
   fi
   i=$((i + 1))
 done
