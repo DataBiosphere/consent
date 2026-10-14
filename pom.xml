@@ -17,23 +17,23 @@
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>5.0.2</dropwizard.version>
     <logback.version>1.6.5</logback.version>
-    <postgres.version>42.7.13</postgres.version>
+    <postgres.version>42.7.14</postgres.version>
     <surefire.version>3.6.0</surefire.version>
-    <swagger.ui.version>5.32.15</swagger.ui.version>
+    <swagger.ui.version>5.33.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
     <commons.csv.version>1.14.1</commons.csv.version>
     <junit.version>6.1.3</junit.version>
     <mockito.version>5.24.0</mockito.version>
     <sonar.plugin.version>5.8.0.7211</sonar.plugin.version>
-    <netty.override.version>4.2.18.Final</netty.override.version>
-    <spotless.version>3.10.3</spotless.version>
-    <jetty.version>12.1.13</jetty.version>
+    <netty.override.version>4.2.19.Final</netty.override.version>
+    <spotless.version>3.10.4</spotless.version>
+    <jetty.version>12.1.14</jetty.version>
     <!-- Declared here rather than inline on the dependency so properties-maven-plugin writes it to
          mvn.properties, which is how ElasticSearchCapabilityService reports the client version in a
          deployed build: the shade plugin strips dependency manifests, so the client's own
          Package.getImplementationVersion() is null in the uber jar. -->
-    <elasticsearch.rest.client.version>9.5.4</elasticsearch.rest.client.version>
+    <elasticsearch.rest.client.version>9.5.5</elasticsearch.rest.client.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -374,7 +374,7 @@
       <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>7.24.0</version>
+        <version>7.26.0</version>
         <executions>
           <execution>
             <id>validate-openapi-spec</id>
@@ -474,7 +474,7 @@
       <dependency>
         <groupId>org.eclipse.jetty.ee10</groupId>
         <artifactId>jetty-ee10-bom</artifactId>
-        <version>12.1.13</version>
+        <version>12.1.14</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -502,7 +502,7 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.59.0</version>
+        <version>8.60.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -662,7 +662,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.6.4</version>
+      <version>5.6.5</version>
     </dependency>
 
     <dependency>
