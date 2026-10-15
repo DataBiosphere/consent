@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -174,6 +175,13 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     testingDAO.truncateAllTables();
   }
 
+  private static final AtomicInteger DAR_CODE_SEQUENCE = new AtomicInteger();
+
+  /** dar_collection.dar_code is unique, so random codes can collide within a test. */
+  protected static String uniqueDarCode() {
+    return "DAR-" + DAR_CODE_SEQUENCE.incrementAndGet();
+  }
+
   /*
     Utility methods in this class need to be complete from the perspective of the
     entity. When testing, if you need a specific modification to an object, call
@@ -197,7 +205,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    */
   protected DataAccessRequest createDataAccessRequestV3() {
     User user = createUserWithInstitution();
-    String darCode = "DAR-" + randomInt(1, 999999999);
+    String darCode = uniqueDarCode();
     Integer collection_id =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     for (int i = 0; i < 4; i++) {

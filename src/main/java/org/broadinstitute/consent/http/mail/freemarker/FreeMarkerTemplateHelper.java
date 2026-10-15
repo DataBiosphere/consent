@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
+import freemarker.core.HTMLOutputFormat;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
@@ -15,6 +16,8 @@ public class FreeMarkerTemplateHelper {
     freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_34);
     // Recognize standard file extensions if templates use them in the future
     freeMarkerConfig.setRecognizeStandardFileExtensions(true);
+    // Escapes every interpolated value, since names and other text in emails are user-supplied.
+    freeMarkerConfig.setOutputFormat(HTMLOutputFormat.INSTANCE);
     freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     // Load templates from the classpath root; we'll resolve the configured templateDirectory
     // when requesting templates to allow include directives to resolve relative paths.

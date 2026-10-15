@@ -68,4 +68,20 @@ class NewDAAUploadSOMessageTest extends AbstractMailMessageTest {
                 + " which will apply for all future requests to this DAC."));
     assertFalse(rendered.content().contains("${"));
   }
+
+  @Test
+  void testTemplateEscapesTheNewDaaName() throws Exception {
+    User recipient = new User();
+    recipient.setDisplayName("<a href=\"https://evil.example\">Recipient</a>");
+    var message =
+        new NewDAAUploadSOMessage(recipient, "DAC <i>Name</i>", "Previous DAA", "<b>New DAA</b>");
+
+    var rendered = renderTemplate(message, "https://duos.example.org/");
+
+    assertTrue(rendered.content().contains("&lt;b&gt;New DAA&lt;/b&gt;"));
+    assertTrue(rendered.content().contains("DAC &lt;i&gt;Name&lt;/i&gt;"));
+    assertTrue(rendered.content().contains("Dear &lt;a href="));
+    assertFalse(rendered.content().contains("<b>New DAA</b>"));
+    assertFalse(rendered.content().contains("<a href=\"https://evil.example\">"));
+  }
 }

@@ -198,7 +198,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
-    String darCode = "DAR-" + randomInt(1, 10000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     Dataset dataset = createDataset();

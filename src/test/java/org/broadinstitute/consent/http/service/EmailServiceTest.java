@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -28,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -38,20 +40,26 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
+import org.broadinstitute.consent.http.mail.EmailSendId;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
-import org.broadinstitute.consent.http.models.mail.MailMessageSummary;
+import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.core.result.ResultIterator;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -97,6 +105,11 @@ class EmailServiceTest extends AbstractTestHelper {
     service = new EmailService(jdbi, sendGridAPI, templateHelper, config);
   }
 
+  @AfterEach
+  void clearSendId() {
+    EmailSendId.clear();
+  }
+
   @Test
   void testSendMessage() throws Exception {
     String userEmail = "user@duos";
@@ -129,10 +142,12 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
+    EmailSendId.start();
+    UUID sendId = EmailSendId.current();
     Instant fixedInstant = Instant.now();
     try (var mockedStatic = mockStatic(Instant.class)) {
       mockedStatic.when(Instant::now).thenReturn(fixedInstant);
-      service.sendMessage(message, userId);
+      assertEquals(EmailSendOutcome.SENT, service.sendMessage(message, userId));
     }
 
     var captor = ArgumentCaptor.forClass(Mail.class);
@@ -162,7 +177,8 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(m.dateSent(), Date.from(fixedInstant))
                         && Objects.equals(m.emailText(), emailText)
                         && Objects.equals(m.sendgridResponse(), response.getBody())
-                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
+                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())
+                        && Objects.equals(m.sendId(), sendId)));
   }
 
   @Test
@@ -197,7 +213,7 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
-    service.sendMessage(message, userId);
+    assertEquals(EmailSendOutcome.SKIPPED, service.sendMessage(message, userId));
 
     var captor = ArgumentCaptor.forClass(Mail.class);
     verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
@@ -215,7 +231,38 @@ class EmailServiceTest extends AbstractTestHelper {
                         && m.dateSent() == null
                         && Objects.equals(m.emailText(), emailText)
                         && m.sendgridResponse() == null
-                        && m.sendgridStatus() == null));
+                        && m.sendgridStatus() == null
+                        && m.sendId() == null));
+  }
+
+  @Test
+  void testSendMessage_Throws_WhenRecordingTheEmailFails() throws Exception {
+    User user = new User();
+    user.setEmail("user@duos");
+    var message = createMailMessage(user, EmailType.NEW_CASE, "subject", "DAR-1", null, null);
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(mock());
+    Response response = new Response();
+    response.setStatusCode(202);
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    when(emailDAO.insert(any())).thenThrow(new IllegalStateException("db down"));
+
+    EmailNotRecordedException thrown =
+        assertThrows(EmailNotRecordedException.class, () -> service.sendMessage(message, 1234));
+    assertEquals(EmailSendOutcome.SENT, thrown.getOutcome());
+  }
+
+  @Test
+  void testSendMessage_DoesNotSetDateSent_WhenSendGridReturnsARedirect() throws Exception {
+    User user = new User();
+    user.setEmail("user@duos");
+    var message = createMailMessage(user, EmailType.NEW_CASE, "subject", "DAR-1", null, null);
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(mock());
+    Response response = new Response();
+    response.setStatusCode(302);
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+
+    assertEquals(EmailSendOutcome.FAILED, service.sendMessage(message, 1234));
+    verify(emailDAO).insert(argThat((MailMessageInsert m) -> m.dateSent() == null));
   }
 
   @Test
@@ -250,7 +297,7 @@ class EmailServiceTest extends AbstractTestHelper {
                   return true;
                 }));
 
-    service.sendMessage(message, userId);
+    assertEquals(EmailSendOutcome.FAILED, service.sendMessage(message, userId));
 
     verify(emailDAO)
         .insert(
@@ -293,16 +340,17 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFetchEmailSummariesByCreateDate() {
+  void testFetchEmailSendsByCreateDate() {
     Date startDate = new Date();
     Date endDate = new Date();
-    List<MailMessageSummary> summaries =
-        List.of(new MailMessageSummary("DAR-1", 1, null, 2, 4, null, 202, new Date()));
-    when(emailDAO.fetchMessageSummariesByCreateDate(startDate, endDate, 20, 0))
-        .thenReturn(summaries);
+    List<MailSend> sends =
+        List.of(
+            new MailSend(
+                1, 34, "2026-10-09", new Date(), new Date(), 0, List.of(), null, List.of()));
+    MailSendSearch search = MailSendSearch.of("Ada", List.of());
+    when(emailDAO.fetchSendsByCreateDate(startDate, endDate, 20, 0, 100, search)).thenReturn(sends);
 
-    assertEquals(
-        summaries, service.fetchEmailMessageSummariesByCreateDate(startDate, endDate, 20, 0));
+    assertEquals(sends, service.fetchEmailSendsByCreateDate(startDate, endDate, 20, 0, search));
   }
 
   @Test
@@ -519,6 +567,19 @@ class EmailServiceTest extends AbstractTestHelper {
 
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
+  }
+
+  @Test
+  void testSendMessage_RecordsTheMessagesDatasets() throws Exception {
+    User user = new User();
+    user.setEmail("user@duos");
+    user.setDisplayName("User");
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName))
+        .thenReturn(mock(Template.class));
+
+    service.sendMessage(new NewCaseMessage(user, "DAR-1", List.of(7, 8)), 1234);
+
+    verify(emailDAO).insert(argThat((MailMessageInsert m) -> List.of(7, 8).equals(m.datasetIds())));
   }
 
   private org.broadinstitute.consent.http.mail.message.MailMessage createMailMessage(

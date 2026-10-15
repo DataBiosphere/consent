@@ -188,6 +188,18 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           """)
   boolean isDaaInitiallyLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
+  @SqlQuery(
+      """
+          SELECT EXISTS (
+              SELECT 1
+              FROM daa_audit
+              WHERE dac_id = :dacId
+                    AND daa_id = :daaId
+                    AND action IN ('CREATE', 'ADD')
+          )
+          """)
+  boolean wasDaaLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+
   /**
    * Create a Daa given name, description, and create date
    *
