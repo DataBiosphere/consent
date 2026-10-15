@@ -20,6 +20,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.List;
 import org.broadinstitute.consent.http.configurations.PublicRateLimitConfiguration;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
+import org.glassfish.jersey.uri.UriComponent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -51,8 +52,7 @@ class PublicRateLimitFilterTest {
   }
 
   private void mockRequest(String path, String peer, String realIp) {
-    when(requestContext.getUriInfo()).thenReturn(uriInfo);
-    when(uriInfo.getPath()).thenReturn(path);
+    mockPath(path);
     when(servletRequest.getRemoteAddr()).thenReturn(peer);
     headers.remove(PublicRateLimitFilter.REAL_IP_HEADER);
     if (realIp != null) {
@@ -64,6 +64,8 @@ class PublicRateLimitFilterTest {
   private void mockPath(String path) {
     when(requestContext.getUriInfo()).thenReturn(uriInfo);
     when(uriInfo.getPath()).thenReturn(path);
+    // Jersey's own parser, so the segments match what the filter gets at run time.
+    when(uriInfo.getPathSegments()).thenReturn(UriComponent.decodePath(path, true));
   }
 
   private void send(PublicRateLimitFilter filter, int count) {

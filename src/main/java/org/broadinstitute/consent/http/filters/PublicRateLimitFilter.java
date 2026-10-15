@@ -14,6 +14,8 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.PreMatching;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.PathSegment;
+import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 import java.time.Duration;
 import java.util.List;
@@ -81,8 +83,9 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
 
   @Override
   public void filter(ContainerRequestContext requestContext) {
-    String path = requestContext.getUriInfo().getPath();
-    if (!path.equals(LIMITED_PATH) && !path.startsWith(LIMITED_PATH + "/")) {
+    UriInfo uriInfo = requestContext.getUriInfo();
+    String path = uriInfo.getPath();
+    if (!isLimitedPath(uriInfo)) {
       return;
     }
     List<String> realIp =
@@ -95,5 +98,19 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
               .formatted(clientIp.key(), clientIp.source(), path));
       requestContext.abortWith(RateLimitFilter.tooManyRequests(probe));
     }
+  }
+
+  /**
+   * True when the first non-empty path segment is {@code showcase}. Jersey matches resources on
+   * segments without their matrix parameters, so {@code showcase;x=1/datasets} reaches the {@code
+   * showcase/datasets} resource; a check on the raw path would let that request skip the limit.
+   */
+  private static boolean isLimitedPath(UriInfo uriInfo) {
+    return uriInfo.getPathSegments().stream()
+        .map(PathSegment::getPath)
+        .filter(segment -> !segment.isEmpty())
+        .findFirst()
+        .map(LIMITED_PATH::equals)
+        .orElse(false);
   }
 }
