@@ -113,6 +113,33 @@ class ClientIpResolverTest {
   }
 
   @Test
+  void testBracketedIpv6PeerFromJettyIsTrusted() {
+    // Jetty 12's getRemoteAddr() returns an IPv6 peer in brackets.
+    assertEquals(
+        new ClientIp("192.0.2.1", KeySource.REAL_IP_HEADER),
+        resolver.resolve("[0:0:0:0:0:0:0:1]", List.of("192.0.2.1")));
+  }
+
+  @Test
+  void testBracketedUntrustedIpv6PeerIsKeyedByItsSlash64() {
+    assertEquals(
+        new ClientIp("2001:db8:9:9::/64", KeySource.UNTRUSTED_PEER),
+        resolver.resolve("[2001:db8:9:9:0:0:0:42]", List.of("192.0.2.1")));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "fe80::1%eth0", // Guava's forString throws for an unknown interface name
+        "fe80::1%1" // a numeric scope parses, but is never a real client either
+      })
+  void testScopedRealIpUsesPeer(String realIp) {
+    assertEquals(
+        new ClientIp("127.0.0.1", KeySource.TRUSTED_PEER_WITHOUT_HEADER),
+        resolver.resolve("127.0.0.1", List.of(realIp)));
+  }
+
+  @Test
   void testIpv4MappedPeerMatchesIpv4Range() {
     assertEquals(
         new ClientIp("192.0.2.1", KeySource.REAL_IP_HEADER),
@@ -146,7 +173,9 @@ class ClientIpResolverTest {
         "127.0.0.1/abc", // a non-numeric prefix
         "127.0.0.1/3x", // trailing text; Jetty alone would read it as /3
         "10.0.0.1-10.0.0.9", // a min-max range; Jetty alone would accept it
-        "10.64.1.0/10" // a CIDR range with host bits set
+        "10.64.1.0/10", // a CIDR range with host bits set
+        "fe80::1%eth0/128", // a scoped address; Guava would throw for an unknown interface
+        "[::1]" // brackets are for peers from Jetty, not for config entries
       })
   void testInvalidTrustedProxyIsRejected(String entry) {
     List<String> trustedProxies = List.of(entry);
