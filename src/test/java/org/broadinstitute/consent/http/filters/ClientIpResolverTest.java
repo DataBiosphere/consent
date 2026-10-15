@@ -131,4 +131,39 @@ class ClientIpResolverTest {
 
     assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
   }
+
+  @Test
+  void testPrefixWithTrailingTextIsRejected() {
+    // Jetty alone parses the prefix leniently.
+    List<String> trustedProxies = List.of("127.0.0.1/3x");
+
+    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
+  }
+
+  @Test
+  void testMinMaxRangeIsRejected() {
+    // Jetty alone accepts this form.
+    List<String> trustedProxies = List.of("10.0.0.1-10.0.0.9");
+
+    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
+  }
+
+  @Test
+  void testCidrWithHostBitsSetIsRejected() {
+    List<String> trustedProxies = List.of("10.64.1.0/10");
+
+    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
+  }
+
+  @Test
+  void testBareLiteralTrustsOnlyThatAddress() {
+    ClientIpResolver literalResolver = new ClientIpResolver(List.of("10.1.2.3"));
+
+    assertEquals(
+        KeySource.REAL_IP_HEADER,
+        literalResolver.resolve("10.1.2.3", List.of("192.0.2.1")).source());
+    assertEquals(
+        KeySource.UNTRUSTED_PEER,
+        literalResolver.resolve("10.1.2.4", List.of("192.0.2.1")).source());
+  }
 }
