@@ -65,4 +65,5 @@ Only a progress report (non-null `parent_id`) can close out a collection; origin
 that carry a closeout supplement are rejected. Closeout submission, resubmit, signing official
 approval, and changes to a collection's elections and votes take the same collection row lock and
 reject a closed out collection after acquiring it. The endpoint contract is in
-`src/main/resources/assets/paths/progressReport.yaml`; don't restate it here.
+`src/main/resources/assets/paths/progressReport.yaml`, and the full lifecycle rules are in
+`docs/ai/dar-lifecycle.md`; don't restate either here.

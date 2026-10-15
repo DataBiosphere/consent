@@ -12,6 +12,8 @@ This repository uses multiple instruction entry points.
 - `docs/ARCHITECTURE.md`
 - `docs/ONBOARDING.md`
 - `docs/plans/README.md`
+- `docs/ai/README.md` (component guides; `docs/ai/dar-lifecycle.md` for DARs, progress
+  reports, closeouts, elections and grant queries)
 - `docs/ai/prompts/README.md`
 - `docs/ai/prompts/api-endpoint.md`
 - `docs/ai/prompts/feature-development.md`
