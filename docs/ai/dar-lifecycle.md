@@ -136,7 +136,7 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   - Researcher cancellation (409).
   - Resubmitting the collection as a draft (409).
   - Signing official approval of a DAR in the collection (409).
-  - Another progress report (400).
+  - Another progress report (409).
 - New-DAR processing (`createElectionsForNewDarCollection`, `sendNewDARCollectionMessage`) runs
   after the submission commits and acts on the collection's most recent DAR. It does nothing
   once the collection holds a closeout, because a closeout committed in between would otherwise
@@ -244,16 +244,19 @@ precondition that must hold at commit belongs after `lockCollection`, not only i
 2. `lockCollection(collectionId)` (or `lockCollectionsForReferenceIds`, which locks in a stable
    order).
 3. Check `hasSubmittedCloseout` **after** taking the lock. `CollectionLocks.lockOpenCollection`
-   does steps 2 and 3 and throws 409; use it. Progress reports do their own check because they
-   return 400. Don't add a second check before the lock: it can't be relied on, and it repeats
-   the query.
+   does steps 2 and 3 and throws 409; use it. Progress reports do their own check, with their
+   own message, and also return 409. Don't add a second closeout check before the lock: it can't
+   be relied on, and it repeats the query. Do check who the caller is before locking (signing
+   official approval does), so an unauthorized caller gets 403, not 409, and doesn't hold the
+   lock; then check again on the row read under the lock.
 4. Mutate, then commit. The lock is held until commit.
 
 - Don't catch a SQL error inside the locked callback and carry on: Postgres has already aborted
   the transaction, so the commit silently rolls back. Let it propagate out of `inTransaction`,
   then handle it (as `DACAutomationRuleService.openElectionAndApprove` does).
 - A deadlock or lock timeout while waiting for the lock (SQL states `40P01`, `55P03`, `40001`)
-  is a retryable conflict: `VoteService` returns 409 for it, not 400.
+  is a retryable conflict. `CollectionLocks.throwIfLockFailure` turns it into a 409; votes,
+  rationale updates and progress report creation use it.
 
 JDBI 3 (3.52.x) binds one handle per thread: `Jdbi.withHandle` reuses the thread's `handleScope`,
 and `Handle.inTransaction` joins an open transaction. So on-demand DAOs and nested
