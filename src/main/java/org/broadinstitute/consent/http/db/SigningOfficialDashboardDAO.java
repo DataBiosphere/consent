@@ -45,12 +45,14 @@ public interface SigningOfficialDashboardDAO {
                COALESCE(LOWER(dar.data->>'status') = 'canceled', FALSE) AS canceled,
                -- Needs SO involvement, actioned or not.
                (dar.requires_so_approval
-                  OR (dar.data->'closeoutSupplement' IS NOT NULL
+                  OR (dar.parent_id IS NOT NULL
+                      AND dar.data->'closeoutSupplement' IS NOT NULL
                       AND dar.data->'closeoutSupplement' != 'null'::jsonb)) AS needs_so,
                -- The subset of needs_so this SO can still act on.
                ((dar.requires_so_approval AND dar.approving_so_id IS NULL
                    AND LOWER(dar.data->>'signingOfficialEmail') = LOWER(:userEmail))
-                  OR (dar.data->'closeoutSupplement' IS NOT NULL
+                  OR (dar.parent_id IS NOT NULL
+                      AND dar.data->'closeoutSupplement' IS NOT NULL
                       AND dar.data->'closeoutSupplement' != 'null'::jsonb
                       AND dar.approving_so_id IS NULL
                       AND dar.data->'closeoutSupplement'->>'signingOfficialId' = :userId))

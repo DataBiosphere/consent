@@ -150,15 +150,14 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
     Integer denied = createDataset(user);
     Integer approved = createDataset(user);
-    DataAccessRequestData closeout = new DataAccessRequestData();
-    closeout.setCloseoutSupplement(
-        new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
-    castFinalVote(
-        user,
+    // The denied sibling still awaits this SO's approval.
+    DataAccessRequestData needsSo = new DataAccessRequestData();
+    needsSo.setSigningOfficialEmail(user.getEmail());
+    String deniedDar =
         insertSubmittedDar(
-            user, collectionId, denied, closeout, Date.from(Instant.parse("2020-01-01T00:00:00Z"))),
-        denied,
-        false);
+            user, collectionId, denied, needsSo, Date.from(Instant.parse("2020-01-01T00:00:00Z")));
+    dataAccessRequestDAO.updateRequiresSOApproval(true, deniedDar);
+    castFinalVote(user, deniedDar, denied, false);
     castFinalVote(
         user,
         insertSubmittedDar(
@@ -212,7 +211,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     DataAccessRequestData actioned = new DataAccessRequestData();
     actioned.setCloseoutSupplement(
         new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
-    String referenceId = createSubmittedDar(user, datasetId, actioned);
+    String referenceId = fileCloseout(user, datasetId, actioned);
     dataAccessRequestDAO.updateDarApprovalSO(user.getUserId(), referenceId);
 
     DashboardDatabaseCounts counts =
@@ -224,13 +223,29 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void supplementOnOriginalDarCreatesNoSoWork() {
+    User user = createUserWithInstitution();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
+    createSubmittedDar(user, createDataset(user), data);
+
+    DashboardDatabaseCounts counts =
+        jdbi.onDemand(SigningOfficialDashboardDAO.class)
+            .getCounts(user.getInstitutionId(), user.getUserId().toString(), user.getEmail());
+
+    assertEquals(0, counts.approvalTotal());
+    assertEquals(0, counts.awaitingSoAction());
+  }
+
+  @Test
   void countsPendingCloseoutReviewAsAwaitingSoAction() {
     User user = createUserWithInstitution();
     Integer datasetId = createDataset(user);
     DataAccessRequestData data = new DataAccessRequestData();
     data.setCloseoutSupplement(
         new CloseoutSupplement(List.of("Project completed"), "Closeout notes", user.getUserId()));
-    createSubmittedDar(user, datasetId, data);
+    fileCloseout(user, datasetId, data);
 
     DashboardDatabaseCounts counts =
         jdbi.onDemand(SigningOfficialDashboardDAO.class)
@@ -277,7 +292,17 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     return referenceId;
   }
 
-  private void insertProgressReport(
+  /** A closeout is filed as a progress report on an earlier original DAR, as in production. */
+  private String fileCloseout(User user, Integer datasetId, DataAccessRequestData closeout) {
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
+    String original =
+        insertSubmittedDar(user, collectionId, datasetId, new DataAccessRequestData(), FIXED_DATE);
+    return insertProgressReport(user, collectionId, original, datasetId, closeout);
+  }
+
+  private String insertProgressReport(
       User user,
       Integer collectionId,
       String parentReferenceId,
@@ -292,6 +317,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         data,
         "era-commons-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    return referenceId;
   }
 
   private void castFinalVote(User user, String referenceId, Integer datasetId, boolean approve) {
