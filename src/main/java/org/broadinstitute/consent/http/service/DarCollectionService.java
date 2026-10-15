@@ -166,7 +166,15 @@ public class DarCollectionService implements ConsentLogger {
             elections.values().forEach(e -> updateStatusCount(statusCount, e.getStatus()));
             determineCollectionStatus(s, statusCount);
           }
+          applyCloseoutStatus(s);
         });
+  }
+
+  /** A submitted closeout closes the collection immediately, whatever its elections show. */
+  private void applyCloseoutStatus(DarCollectionSummary summary) {
+    if (summary.getCloseoutSupplement() != null) {
+      summary.setStatus(DarCollectionStatus.COMPLETE.getValue());
+    }
   }
 
   private DarCollectionSummary processDraftAsSummary(DataAccessRequest d) {
@@ -232,6 +240,7 @@ public class DarCollectionService implements ConsentLogger {
           } else {
             determineCollectionStatus(s, statusCount);
           }
+          applyCloseoutStatus(s);
         });
   }
 
@@ -239,6 +248,11 @@ public class DarCollectionService implements ConsentLogger {
       List<DarCollectionSummary> summaries, Integer userId) {
     summaries.forEach(
         s -> {
+          if (s.getCloseoutSupplement() != null) {
+            s.getActions().clear();
+            applyCloseoutStatus(s);
+            return;
+          }
           Collection<Election> elections = s.getElections().values();
           int electionCount = elections.size();
           // if there are no elections present, unreviewed
@@ -300,6 +314,7 @@ public class DarCollectionService implements ConsentLogger {
           Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
           Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
           determineCollectionStatus(s, statusCount);
+          applyCloseoutStatus(s);
           updateSummaryActionsForChair(s, closedCount, openCount);
         });
   }
@@ -367,6 +382,7 @@ public class DarCollectionService implements ConsentLogger {
               .values()
               .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
           determineCollectionStatus(s, statusCount);
+          applyCloseoutStatus(s);
           updateSummaryActionsForSO(user, s);
         });
   }

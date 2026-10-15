@@ -74,6 +74,44 @@ class DacDashboardDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void doesNotOfferMemberVoteActionForCloseout() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User member = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dacId);
+    User researcher = createUser();
+    String closeout = createSubmittedDar(researcher, createDataset(owner, dacId), true);
+    Integer election = createElection(closeout, datasetIdFor(closeout), ElectionStatus.OPEN);
+    voteDAO.insertVote(member.getUserId(), election, VoteType.DAC.getValue());
+
+    DashboardDatabaseCounts counts = getCounts(member);
+
+    assertEquals(1, counts.darTotal());
+    assertEquals(0, counts.awaitingMyVote());
+  }
+
+  @Test
+  void supplementOnOriginalDarDoesNotHidePendingMemberVote() {
+    User owner = createUser();
+    Integer dacId = createDac(owner);
+    User member = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dacId);
+    User researcher = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(
+            "DAR-" + UUID.randomUUID(), researcher.getUserId(), FIXED_DATE);
+    String original =
+        insertOriginalDar(
+            researcher,
+            collectionId,
+            createDataset(owner, dacId),
+            Date.from(Instant.now()),
+            closeoutData(researcher));
+    Integer election = createElection(original, datasetIdFor(original), ElectionStatus.OPEN);
+    voteDAO.insertVote(member.getUserId(), election, VoteType.DAC.getValue());
+
+    assertEquals(1, getCounts(member).awaitingMyVote());
+  }
+
+  @Test
   void countsOnlyMemberRequestsWithAPendingDacVote() {
     User owner = createUser();
     Integer dacId = createDac(owner);
@@ -139,7 +177,8 @@ class DacDashboardDAOTest extends DAOTestHelper {
     assertEquals(1, counts.dacs());
     assertEquals(6, counts.darTotal());
     assertEquals(1, counts.darApproved());
-    assertEquals(3, counts.awaitingMyVote());
+    // Closeouts cannot be voted on by chairs or members, so only chairDar and memberDar count
+    assertEquals(2, counts.awaitingMyVote());
   }
 
   @Test
@@ -252,29 +291,62 @@ class DacDashboardDAOTest extends DAOTestHelper {
         dacId);
   }
 
+  /** A closeout is filed as a progress report on an earlier original DAR, as in production. */
   private String createSubmittedDar(User researcher, Integer datasetId, boolean closeout) {
     Integer collectionId =
         darCollectionDAO.insertDarCollection(
             "DAR-" + UUID.randomUUID(), researcher.getUserId(), FIXED_DATE);
-    String referenceId = UUID.randomUUID().toString();
-    DataAccessRequestData data = new DataAccessRequestData();
-    if (closeout) {
-      data.setCloseoutSupplement(
-          new CloseoutSupplement(
-              List.of("Project completed"), "Synthetic closeout notes", researcher.getUserId()));
+    if (!closeout) {
+      return insertOriginalDar(
+          researcher,
+          collectionId,
+          datasetId,
+          Date.from(Instant.now()),
+          new DataAccessRequestData());
     }
+    String parentReferenceId =
+        insertOriginalDar(
+            researcher, collectionId, datasetId, FIXED_DATE, new DataAccessRequestData());
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dataAccessRequestDAO.findByReferenceId(parentReferenceId).getId(),
+        collectionId,
+        referenceId,
+        researcher.getUserId(),
+        closeoutData(researcher),
+        "synthetic-era-id");
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    datasetIdsByReferenceId.put(referenceId, datasetId);
+    return referenceId;
+  }
+
+  private String insertOriginalDar(
+      User researcher,
+      Integer collectionId,
+      Integer datasetId,
+      Date submissionDate,
+      DataAccessRequestData data) {
+    String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId,
         referenceId,
         researcher.getUserId(),
         FIXED_DATE,
-        Date.from(Instant.now()),
+        submissionDate,
         FIXED_DATE,
         data,
         "synthetic-era-id");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     datasetIdsByReferenceId.put(referenceId, datasetId);
     return referenceId;
+  }
+
+  private DataAccessRequestData closeoutData(User researcher) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setCloseoutSupplement(
+        new CloseoutSupplement(
+            List.of("Project completed"), "Synthetic closeout notes", researcher.getUserId()));
+    return data;
   }
 
   private String insertDar(

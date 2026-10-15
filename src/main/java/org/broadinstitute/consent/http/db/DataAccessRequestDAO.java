@@ -34,6 +34,57 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO> {
 
   /**
+   * Lock before checking closeout state; retain the lock until all mutations commit. Call inside
+   * inTransaction: on-demand DAOs from the same Jdbi share that transaction's scoped handle.
+   */
+  @SqlQuery(
+      "SELECT collection_id FROM dar_collection WHERE collection_id = :collectionId FOR UPDATE")
+  Integer lockCollection(@Bind("collectionId") Integer collectionId);
+
+  /** Lock in a stable order for vote batches spanning multiple collections. */
+  @SqlQuery(
+      """
+      SELECT collection_id FROM dar_collection
+      WHERE collection_id IN (
+          SELECT collection_id FROM data_access_request WHERE reference_id IN (<referenceIds>)
+      )
+      ORDER BY collection_id FOR UPDATE
+      """)
+  List<Integer> lockCollectionsForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
+  @SqlQuery(
+      """
+      SELECT DISTINCT dd.dataset_id
+      FROM data_access_request dar
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+      WHERE dar.collection_id = :collectionId AND dar.submission_date IS NOT NULL
+      ORDER BY dd.dataset_id
+      """)
+  List<Integer> findDatasetIdsByCollectionId(@Bind("collectionId") Integer collectionId);
+
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request
+          WHERE collection_id = :collectionId AND submission_date IS NOT NULL
+              AND parent_id IS NOT NULL AND data ->> 'closeoutSupplement' IS NOT NULL
+      )
+      """)
+  boolean hasSubmittedCloseout(@Bind("collectionId") Integer collectionId);
+
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request dar
+          INNER JOIN data_access_request closeout ON closeout.collection_id = dar.collection_id
+          WHERE dar.reference_id IN (<referenceIds>) AND closeout.submission_date IS NOT NULL
+              AND closeout.parent_id IS NOT NULL
+              AND closeout.data ->> 'closeoutSupplement' IS NOT NULL
+      )
+      """)
+  boolean hasSubmittedCloseoutForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
+  /**
    * Find all non-draft/partial DataAccessRequests
    *
    * @return List<DataAccessRequest>
@@ -98,7 +149,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       AND dar.collection_id NOT IN (
         SELECT DISTINCT collection_id
         FROM data_access_request
-        WHERE data ->> 'closeoutSupplement' IS NOT NULL)
+        WHERE submission_date IS NOT NULL AND parent_id IS NOT NULL
+          AND data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
@@ -163,6 +215,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
               FROM data_access_request dar
               WHERE dar.submission_date IS NOT NULL
+                  AND dar.parent_id IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
               GROUP BY dar.collection_id
           )
@@ -273,6 +326,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.collection_id, MAX(dar.submission_date) AS closeout_date
               FROM data_access_request dar
               WHERE dar.submission_date IS NOT NULL
+                  AND dar.parent_id IS NOT NULL
                   AND dar.data ->> 'closeoutSupplement' IS NOT NULL
               GROUP BY dar.collection_id
           )
@@ -407,7 +461,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         AND dar.collection_id NOT IN (
           SELECT DISTINCT collection_id
           FROM data_access_request
-          WHERE data ->> 'closeoutSupplement' IS NOT NULL)
+          WHERE submission_date IS NOT NULL AND parent_id IS NOT NULL
+            AND data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId);
 
