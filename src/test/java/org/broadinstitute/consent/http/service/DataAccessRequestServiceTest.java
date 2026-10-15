@@ -784,7 +784,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Election election = new Election();
     election.setReferenceId(parentDar.getReferenceId());
     election.setElectionType(
-        dataAccess ? ElectionType.DATA_ACCESS.getValue() : ElectionType.RP.getValue());
+        // The alternative is a legacy RP election
+        dataAccess ? ElectionType.DATA_ACCESS.getValue() : "RP");
     when(electionDAO.findOpenElectionsByReferenceIds(List.of(parentDar.getReferenceId())))
         .thenReturn(List.of(election));
 

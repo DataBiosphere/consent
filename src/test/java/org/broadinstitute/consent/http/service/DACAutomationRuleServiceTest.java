@@ -826,16 +826,13 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   @Test
   void automaticApprovalRejectsSubmittedCloseoutUnderLock() {
     DataAccessRequest dar = makeDAR();
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
+    Dataset dataset = makeDataset();
     when(dataAccessRequestDAO.hasSubmittedCloseout(dar.getCollectionId())).thenReturn(true);
     assertThrows(
         ConsentConflictException.class,
-        () ->
-            service.openElectionAndApprove(
-                makeDacAutomationRuleGRU(),
-                new GeneralResearchUseV1(),
-                dar,
-                makeDataset(),
-                request));
+        () -> service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request));
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(dar.getCollectionId());
