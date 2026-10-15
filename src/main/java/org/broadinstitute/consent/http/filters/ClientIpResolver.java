@@ -88,7 +88,16 @@ public class ClientIpResolver {
     return InetAddresses.forString(value);
   }
 
-  private record Cidr(byte[] network, int prefixLength) {
+  // A class, not a record: a record's equals and hashCode would compare the array by identity.
+  private static final class Cidr {
+
+    private final byte[] network;
+    private final int prefixLength;
+
+    private Cidr(byte[] network, int prefixLength) {
+      this.network = network;
+      this.prefixLength = prefixLength;
+    }
 
     static Cidr parse(String value) {
       String[] parts = value.strip().split("/", 2);

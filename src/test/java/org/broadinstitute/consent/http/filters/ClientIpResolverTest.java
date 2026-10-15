@@ -113,18 +113,22 @@ class ClientIpResolverTest {
 
   @Test
   void testHostnameIsRejectedAsTrustedProxy() {
-    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(List.of("localhost")));
+    List<String> trustedProxies = List.of("localhost");
+
+    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
   }
 
   @Test
   void testPrefixLongerThanAddressIsRejected() {
-    assertThrows(
-        IllegalArgumentException.class, () -> new ClientIpResolver(List.of("127.0.0.1/33")));
+    List<String> trustedProxies = List.of("127.0.0.1/33");
+
+    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
   }
 
   @Test
   void testNonNumericPrefixIsRejected() {
-    assertThrows(
-        IllegalArgumentException.class, () -> new ClientIpResolver(List.of("127.0.0.1/abc")));
+    List<String> trustedProxies = List.of("127.0.0.1/abc");
+
+    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
   }
 }
