@@ -489,6 +489,11 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest childDar,
       DataAccessRequest parentDar)
       throws IOException {
+    // Closing grants does not authorize further data use, so dataset-dependent document
+    // requirements do not apply. In particular, client selection must not control validation.
+    if (childDar.getIsCloseoutProgressReport()) {
+      return;
+    }
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {

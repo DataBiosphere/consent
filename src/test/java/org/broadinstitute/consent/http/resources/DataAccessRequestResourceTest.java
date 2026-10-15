@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -474,6 +476,35 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testPostCloseoutReturnsAllDatasetsWithoutCreatingElections() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    DataAccessRequest closeout = generateDataAccessRequest();
+    closeout.setParentId(parentDar.getId());
+    closeout.setDatasetIds(List.of(1, 2, 3));
+    closeout.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
+        .thenReturn(closeout);
+    when(datasetService.findDatasetsByIds(user, List.of(1, 2, 3))).thenReturn(List.of());
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser,
+            request,
+            "synthetic-parent",
+            "{\"datasetIds\":[1],\"closeoutSupplement\":{\"reasons\":[\"Completed\"],\"signingOfficialId\":2}}",
+            null,
+            null,
+            null,
+            null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(List.of(1.0, 2.0, 3.0), ((Map<?, ?>) response.getEntity()).get("datasetIds"));
+    }
+    verify(darCollectionService, never()).createElectionsForNewDarCollection(any());
+  }
+
+  @Test
   void testPostProgressReportDifferentUser() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setUserId(2);
@@ -732,6 +763,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         childDar,
         parentDar);
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
+  }
+
+  @Test
+  void closeoutDocumentValidationIgnoresClientDatasetSelection() throws Exception {
+    DataAccessRequest closeout = generateDataAccessRequest();
+    closeout.setParentId(1);
+    closeout.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    for (List<Integer> selection : List.of(List.<Integer>of(), List.of(999))) {
+      closeout.setDatasetIds(selection);
+      resource.populateProgressReportWithDocuments(
+          user, null, null, null, null, closeout, generateDataAccessRequest());
+    }
+    verify(datasetService, never()).findDatasetById(any(), any());
   }
 
   @Test

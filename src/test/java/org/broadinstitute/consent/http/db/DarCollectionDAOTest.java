@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -79,6 +80,29 @@ class DarCollectionDAOTest extends DAOTestHelper {
     List<String> ids =
         collection.getDars().values().stream().map(DataAccessRequest::getReferenceId).toList();
     assertTrue(ids.contains(dar.getReferenceId()));
+  }
+
+  @Test
+  void testFindDARCollectionByCollectionIdLoadsCloseout() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    User user = createUser();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", user.getUserId()));
+    String closeoutReferenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dar.getId(),
+        dar.getCollectionId(),
+        closeoutReferenceId,
+        user.getUserId(),
+        data,
+        user.getEraCommonsId());
+
+    DarCollection collection =
+        darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+
+    // DarCollectionService skips new-DAR processing when a loaded collection holds a closeout
+    assertTrue(collection.getDars().get(closeoutReferenceId).getIsCloseoutProgressReport());
+    assertFalse(collection.getDars().get(dar.getReferenceId()).getIsCloseoutProgressReport());
   }
 
   @Test

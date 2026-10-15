@@ -322,79 +322,114 @@ public class DataAccessRequestService implements ConsentLogger {
       DataAccessRequest progressReport,
       DataAccessRequest parentDar,
       ContainerRequest request) {
+    prepareProgressReportForCollection(dataAccessRequestDAO, progressReport, parentDar);
     validateProgressReport(user, progressReport, parentDar);
+    if (!progressReport.getIsCloseoutProgressReport()) {
+      validateDatasetsApprovedForParent(progressReport, parentDar);
+    }
 
     String referenceId = progressReport.getReferenceId();
-    List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
-    Set<Integer> darDatasetIds =
-        dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
-
-    if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
-      throw new BadRequestException(
-          "Progress report can only be created for approved datasets in the parent DAR");
-    }
     boolean userIsPreAuthedForDaas =
         isUserPreAuthorizedForAllDaas(user, progressReport.getDatasetIds());
     try {
       dataAccessRequestServiceDAO.inTransaction(
-          transactionDAOs -> {
-            DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
-            DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
-            Integer progressReportId =
-                transactionalDarDAO.insertProgressReport(
-                    progressReport.getParentId(),
-                    progressReport.getCollectionId(),
-                    referenceId,
-                    user.getUserId(),
-                    progressReport.getData(),
-                    user.getEraCommonsId());
-            if (!progressReport.getIsCloseoutProgressReport()) {
-              transactionalDaaDAO.insertDarDAARelationship(
-                  progressReportId, progressReport.getData().getDaaIds());
-            }
-            if (!progressReport.getIsCloseoutProgressReport() && !userIsPreAuthedForDaas) {
-              transactionalDarDAO.updateRequiresSOApproval(true, referenceId);
-            }
-            syncDataAccessRequestDatasets(
-                progressReportDatasetIds, referenceId, transactionalDarDAO);
-            transactionalDarDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
-            if (!progressReport.getIsCloseoutProgressReport()) {
-              captureDatasetDaaSnapshots(
-                  progressReportId,
-                  progressReportDatasetIds,
-                  Timestamp.from(Instant.now()),
-                  transactionalDaaDAO);
-            }
-            return progressReportId;
-          });
+          transactionDAOs ->
+              insertProgressReport(
+                  user, progressReport, parentDar, userIsPreAuthedForDaas, transactionDAOs));
     } catch (JdbiException _) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
     if (progressReport.getIsCloseoutProgressReport()) {
-      try {
-        User signingOfficialUser =
-            userService.findUserById(
-                progressReport.getData().getCloseoutSupplement().signingOfficialId());
-        sendSubmittedCloseoutMessage(
-            signingOfficialUser,
-            parentDar.getDarCode(),
-            referenceId,
-            serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
-      } catch (Exception e) {
-        // Persistence has already committed, so a notification failure must not make the caller
-        // treat creation as failed and compensate by deleting the progress report documents.
-        logException("Unable to send submitted closeout message for " + referenceId, e);
-      }
-    }
-
-    if (!progressReport.getIsCloseoutProgressReport()
-        && !progressReport.getHasDMI()
-        && userIsPreAuthedForDaas) {
-      ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
+      notifySigningOfficialOfCloseout(progressReport, parentDar);
+    } else if (!progressReport.getHasDMI() && userIsPreAuthedForDaas) {
+      ruleService.triggerDACRuleSettings(
+          user, progressReport.getDatasetIds(), referenceId, request);
     }
 
     return findByReferenceId(referenceId);
+  }
+
+  /**
+   * Rejects progress reports on a closed out collection and expands a closeout to every dataset in
+   * the collection, ignoring the client's selection. Called before validation and again under the
+   * collection lock.
+   */
+  private void prepareProgressReportForCollection(
+      DataAccessRequestDAO dao, DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    if (dao.hasSubmittedCloseout(parentDar.getCollectionId())) {
+      throw new BadRequestException("Cannot create a progress report for a closed out collection");
+    }
+    if (progressReport.getIsCloseoutProgressReport()) {
+      progressReport.setDatasetIds(dao.findDatasetIdsByCollectionId(parentDar.getCollectionId()));
+    }
+  }
+
+  private void validateDatasetsApprovedForParent(
+      DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    Set<Integer> darDatasetIds =
+        dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
+    if (!darDatasetIds.containsAll(progressReport.getDatasetIds())) {
+      throw new BadRequestException(
+          "Progress report can only be created for approved datasets in the parent DAR");
+    }
+  }
+
+  private Integer insertProgressReport(
+      User user,
+      DataAccessRequest progressReport,
+      DataAccessRequest parentDar,
+      boolean userIsPreAuthedForDaas,
+      DataAccessRequestServiceDAO.TransactionDAOs transactionDAOs) {
+    DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
+    DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
+    String referenceId = progressReport.getReferenceId();
+    transactionalDarDAO.lockCollection(parentDar.getCollectionId());
+    prepareProgressReportForCollection(transactionalDarDAO, progressReport, parentDar);
+    Integer progressReportId =
+        transactionalDarDAO.insertProgressReport(
+            progressReport.getParentId(),
+            progressReport.getCollectionId(),
+            referenceId,
+            user.getUserId(),
+            progressReport.getData(),
+            user.getEraCommonsId());
+    if (!progressReport.getIsCloseoutProgressReport()) {
+      transactionalDaaDAO.insertDarDAARelationship(
+          progressReportId, progressReport.getData().getDaaIds());
+      if (!userIsPreAuthedForDaas) {
+        transactionalDarDAO.updateRequiresSOApproval(true, referenceId);
+      }
+    }
+    syncDataAccessRequestDatasets(progressReport.getDatasetIds(), referenceId, transactionalDarDAO);
+    transactionalDarDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
+    if (!progressReport.getIsCloseoutProgressReport()) {
+      captureDatasetDaaSnapshots(
+          progressReportId,
+          progressReport.getDatasetIds(),
+          Timestamp.from(Instant.now()),
+          transactionalDaaDAO);
+    }
+    return progressReportId;
+  }
+
+  private void notifySigningOfficialOfCloseout(
+      DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    String referenceId = progressReport.getReferenceId();
+    try {
+      User signingOfficialUser =
+          userService.findUserById(
+              progressReport.getData().getCloseoutSupplement().signingOfficialId());
+      sendSubmittedCloseoutMessage(
+          signingOfficialUser,
+          parentDar.getDarCode(),
+          referenceId,
+          serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
+    } catch (Exception e) {
+      // Persistence has already committed, so a notification failure must not make the caller
+      // treat creation as failed and compensate by deleting the progress report documents.
+      logException("Unable to send submitted closeout message for " + referenceId, e);
+    }
   }
 
   public Map<Integer, DatasetDaaSnapshot> findDatasetDaaSnapshotsByReferenceId(String referenceId) {
@@ -486,7 +521,8 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getDatasetIds().isEmpty()) {
       throw new BadRequestException("At least one dataset is required");
     }
-    if (!Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
+    if (!progressReport.getIsCloseoutProgressReport()
+        && !Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
       throw new BadRequestException(
           "Progress report can only be created for datasets in the parent DAR");
     }
@@ -528,7 +564,10 @@ public class DataAccessRequestService implements ConsentLogger {
     if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
-    validateRequestDatasetsAreApproved(dar);
+    // Closing existing grants must remain possible if a dataset's registration approval changes.
+    if (!dar.getIsCloseoutProgressReport()) {
+      validateRequestDatasetsAreApproved(dar);
+    }
     userService.validateActiveERACredentials(user);
   }
 
@@ -570,6 +609,11 @@ public class DataAccessRequestService implements ConsentLogger {
 
   public void validateDar(User user, DataAccessRequest dar) {
     validateCommonDarAndProgressReportElements(user, dar);
+
+    // Closeout queries key on the supplement, so only a progress report may carry one.
+    if (dar.getData().getCloseoutSupplement() != null) {
+      throw new BadRequestException("A closeout can only be submitted as a progress report.");
+    }
 
     if (!Objects.equals(user.getEmail(), dar.getData().getPiEmail())
         || !Objects.equals(user.getDisplayName(), dar.getData().getPiName())) {

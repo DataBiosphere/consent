@@ -597,8 +597,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }
 
-  @Test
-  void createCloseoutProgressReport() throws TemplateException, IOException {
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 2, 3})
+  void createCloseoutProgressReport(int selection) throws TemplateException, IOException {
     mockTransactionalDaos();
     User user = createUserWithPrerequisites();
     User signingOfficial = createUserWithPrerequisites();
@@ -614,18 +615,35 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
-    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
         .thenReturn(progressReport);
-    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
-        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(dataAccessRequestDAO.findDatasetIdsByCollectionId(parentDar.getCollectionId()))
+        .thenReturn(List.of(3, 4), List.of(3, 4, 5));
 
+    // The client omitted datasets, and the parent is a later report that omitted an earlier one.
+    progressReport.setDatasetIds(
+        switch (selection) {
+          case 0 -> List.of(3);
+          case 1 -> List.of();
+          case 2 -> List.of(3, 999);
+          default -> null;
+        });
+    parentDar.setDatasetIds(List.of(3, 4));
     DataAccessRequest newDar =
         service.createProgressReport(user, progressReport, parentDar, request);
 
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parentDar.getCollectionId());
+    order.verify(dataAccessRequestDAO).findDatasetIdsByCollectionId(parentDar.getCollectionId());
+    order.verify(dataAccessRequestDAO).lockCollection(parentDar.getCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parentDar.getCollectionId());
+    order.verify(dataAccessRequestDAO).findDatasetIdsByCollectionId(parentDar.getCollectionId());
     assertNotNull(newDar);
+    assertEquals(List.of(3, 4, 5), newDar.getDatasetIds());
+    verify(dataSetDAO, never()).findDatasetsByIdList(any());
+    verify(dataAccessRequestDAO, never()).findDatasetApprovalsByDar(any());
     verify(emailService).sendMessage(any(SubmittedCloseoutMessage.class), any());
     verify(dataAccessRequestDAO)
         .insertProgressReport(
@@ -661,16 +679,17 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
-    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
         .thenReturn(progressReport);
-    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
-        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(dataAccessRequestDAO.findDatasetIdsByCollectionId(parentDar.getCollectionId()))
+        .thenReturn(List.of(3, 4, 5));
     doThrow(new RuntimeException("notification failed"))
         .when(emailService)
         .sendMessage(any(SubmittedCloseoutMessage.class), any());
+
+    progressReport.setDatasetIds(List.of());
 
     DataAccessRequest createdProgressReport =
         assertDoesNotThrow(
@@ -707,6 +726,50 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertThrows(
         NotFoundException.class,
         () -> service.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId()));
+  }
+
+  @Test
+  void createProgressReportRejectsCloseoutCommittedAfterPreflight() {
+    mockTransactionalDaos();
+    User user = createUserWithPrerequisites();
+    User signingOfficial = createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    signingOfficial.setSigningOfficialRole();
+    DataAccessRequest parent = generateDataAccessRequest();
+    parent.setSubmissionDate(FIXED_TIMESTAMP);
+    parent.setUserId(user.getUserId());
+    DataAccessRequest closeout = generateProgressReport();
+    closeout.setParentId(parent.getId());
+    closeout.setCollectionId(parent.getCollectionId());
+    closeout.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    when(userService.findUserById(2)).thenReturn(signingOfficial);
+    when(dataAccessRequestDAO.findDatasetIdsByCollectionId(parent.getCollectionId()))
+        .thenReturn(List.of(3));
+    when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId()))
+        .thenReturn(false, true);
+    assertThrows(
+        BadRequestException.class,
+        () -> service.createProgressReport(user, closeout, parent, request));
+    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
+    order.verify(dataAccessRequestDAO).lockCollection(parent.getCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
+    verify(dataAccessRequestDAO, never())
+        .insertProgressReport(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void createProgressReportRejectsClosedOutCollection() {
+    DataAccessRequest parent = generateDataAccessRequest();
+    when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId())).thenReturn(true);
+    User user = createUserWithPrerequisites();
+    DataAccessRequest progressReport = generateProgressReport();
+
+    assertThrows(
+        BadRequestException.class,
+        () -> service.createProgressReport(user, progressReport, parent, request));
+    verify(dataAccessRequestDAO, never())
+        .insertProgressReport(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -840,7 +903,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
-    mockApprovedDatasets(progressReport.getDatasetIds());
 
     doThrow(NotFoundException.class).when(userService).findUserById(2);
 
@@ -867,7 +929,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
-    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
 
@@ -895,7 +956,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
-    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
 
@@ -923,7 +983,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(FIXED_TIMESTAMP);
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
-    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
 
@@ -1165,6 +1224,15 @@ library card) eve@yetanotherdomain.org\
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertDoesNotThrow(() -> service.validateDar(user, dar));
+  }
+
+  @Test
+  void validateDarRejectsCloseoutSupplementOnOriginalDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("Completed"), "", 2));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    assertThrows(BadRequestException.class, () -> service.validateDar(user, dar));
   }
 
   @Test
