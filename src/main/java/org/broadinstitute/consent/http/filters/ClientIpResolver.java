@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.filters;
 import com.google.common.net.InetAddresses;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.regex.Pattern;
+import org.eclipse.jetty.util.InetAddressSet;
 
 /**
  * Picks the client IP for an anonymous rate-limit key, so that a caller cannot choose its own key.
@@ -30,6 +32,11 @@ public class ClientIpResolver {
 
   static final String UNKNOWN = "unknown";
 
+  // An IP literal with an optional decimal prefix length. Jetty's InetAddressSet also accepts
+  // hostnames (it resolves them with DNS), min-max ranges and a legacy wildcard form, and it parses
+  // the prefix leniently, so each entry must match this before Jetty sees it.
+  private static final Pattern PREFIX = Pattern.compile("\\d{1,3}");
+
   /** Where a rate-limit key came from. */
   public enum KeySource {
     /** The peer is not a trusted proxy, so the key is the peer. */
@@ -45,14 +52,23 @@ public class ClientIpResolver {
   /** A rate-limit key and where it came from. */
   public record ClientIp(String key, KeySource source) {}
 
-  private final List<Cidr> trustedProxies;
+  private final InetAddressSet trustedProxies = new InetAddressSet();
 
   /**
-   * @param trustedProxies IP address literals or CIDR ranges; hostnames are rejected
+   * @param trustedProxies IP address literals or CIDR ranges with no host bits set; hostnames and
+   *     other range forms are rejected
    * @throws IllegalArgumentException if an entry is not an IP literal or valid CIDR range
    */
   public ClientIpResolver(List<String> trustedProxies) {
-    this.trustedProxies = trustedProxies.stream().map(Cidr::parse).toList();
+    for (String entry : trustedProxies) {
+      String pattern = entry.strip();
+      String[] parts = pattern.split("/", 2);
+      if (!InetAddresses.isInetAddress(parts[0])
+          || (parts.length == 2 && !PREFIX.matcher(parts[1]).matches())) {
+        throw new IllegalArgumentException("Not an IP literal or CIDR range: " + entry);
+      }
+      this.trustedProxies.add(pattern);
+    }
   }
 
   /**
@@ -78,7 +94,7 @@ public class ClientIpResolver {
   }
 
   private boolean isTrusted(InetAddress address) {
-    return trustedProxies.stream().anyMatch(cidr -> cidr.contains(address));
+    return trustedProxies.test(address);
   }
 
   private static InetAddress parse(String value) {
@@ -86,53 +102,5 @@ public class ClientIpResolver {
       return null;
     }
     return InetAddresses.forString(value);
-  }
-
-  // A class, not a record: a record's equals and hashCode would compare the array by identity.
-  private static final class Cidr {
-
-    private final byte[] network;
-    private final int prefixLength;
-
-    private Cidr(byte[] network, int prefixLength) {
-      this.network = network;
-      this.prefixLength = prefixLength;
-    }
-
-    static Cidr parse(String value) {
-      String[] parts = value.strip().split("/", 2);
-      InetAddress address = InetAddresses.forString(parts[0]);
-      byte[] bytes = address.getAddress();
-      int maxPrefix = bytes.length * 8;
-      int prefix;
-      try {
-        prefix = parts.length == 2 ? Integer.parseInt(parts[1]) : maxPrefix;
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("Invalid CIDR prefix: " + value, e);
-      }
-      if (prefix < 0 || prefix > maxPrefix) {
-        throw new IllegalArgumentException("Invalid CIDR prefix: " + value);
-      }
-      return new Cidr(bytes, prefix);
-    }
-
-    boolean contains(InetAddress address) {
-      byte[] bytes = address.getAddress();
-      if (bytes.length != network.length) {
-        return false;
-      }
-      int fullBytes = prefixLength / 8;
-      for (int i = 0; i < fullBytes; i++) {
-        if (bytes[i] != network[i]) {
-          return false;
-        }
-      }
-      int remainingBits = prefixLength % 8;
-      if (remainingBits == 0) {
-        return true;
-      }
-      int mask = (0xFF << (8 - remainingBits)) & 0xFF;
-      return (bytes[fullBytes] & mask) == (network[fullBytes] & mask);
-    }
   }
 }
