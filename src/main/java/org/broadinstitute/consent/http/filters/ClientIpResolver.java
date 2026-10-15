@@ -2,26 +2,48 @@ package org.broadinstitute.consent.http.filters;
 
 import com.google.common.net.InetAddresses;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Picks the client IP for an anonymous rate-limit key, so that a caller cannot choose its own key.
  *
- * <p>If the socket peer is not a trusted proxy, the result is the peer, and {@code X-Forwarded-For}
- * is ignored. If the peer is trusted, the header is read from the right. Each trusted hop appends
- * the address it received the request from, so the first entry from the right that is not a trusted
- * proxy is the client. A caller can write any entries at the left of the header, but those entries
- * are never reached while a trusted hop appended a real address to their right.
+ * <p>If the socket peer is a trusted proxy, the key is the {@code X-Real-IP} header. Otherwise the
+ * key is the peer, and the header is ignored. In a deployed environment the peer is always the
+ * Apache sidecar on loopback, so the header decides the key.
  *
- * <p>Behind the Google load balancer and the Apache sidecar, the header that Consent receives is
- * {@code <caller entries>, <client>, <load balancer address>, <front-end address>}. Requests from
- * the BFF add the BFF egress address after the browser address. Each of those infrastructure
- * addresses must be a trusted proxy for the key to be the browser address.
+ * <p>The Google load balancer sets {@code X-Real-IP} to the client address that it saw, through the
+ * {@code customRequestHeaders} entry {@code X-Real-IP:{client_ip_address}} in the shared
+ * terra-helmfile ingress chart's {@code BackendConfig}. Google documents that headers the load
+ * balancer adds overwrite any client header with the same name, so a caller cannot spoof it. {@code
+ * X-Forwarded-For} is not used: in dev on 2026-10-15 the load balancer logged the real client
+ * address, but the {@code X-Forwarded-For} that reached the Apache sidecar held only a Google
+ * front-end address.
+ *
+ * <p>Only the {@code gke} ingress class renders that {@code BackendConfig}. Behind another ingress,
+ * such as the HAProxy ingress in BEEs, nothing overwrites a client-supplied {@code X-Real-IP}.
+ *
+ * <p>If the peer is trusted but the header is missing, repeated, or not a single IP literal, the
+ * key falls back to the peer. All such requests then share one bucket, and {@link
+ * KeySource#TRUSTED_PEER_WITHOUT_HEADER} in the 429 log shows the misconfiguration.
  */
 public class ClientIpResolver {
 
   static final String UNKNOWN = "unknown";
+
+  /** Where a rate-limit key came from. */
+  public enum KeySource {
+    /** The peer is not a trusted proxy, so the key is the peer. */
+    UNTRUSTED_PEER,
+    /** The peer is a trusted proxy, so the key is the {@code X-Real-IP} value. */
+    REAL_IP_HEADER,
+    /**
+     * The peer is a trusted proxy, but it sent no usable {@code X-Real-IP}, so the key is the peer.
+     */
+    TRUSTED_PEER_WITHOUT_HEADER
+  }
+
+  /** A rate-limit key and where it came from. */
+  public record ClientIp(String key, KeySource source) {}
 
   private final List<Cidr> trustedProxies;
 
@@ -35,38 +57,24 @@ public class ClientIpResolver {
 
   /**
    * @param peerAddress the socket peer address
-   * @param forwardedForValues each {@code X-Forwarded-For} header value, in received order
-   * @return the normalized client address
+   * @param realIpValues each {@code X-Real-IP} header value, in received order
+   * @return the normalized client address and its source
    */
-  public String resolve(String peerAddress, List<String> forwardedForValues) {
+  public ClientIp resolve(String peerAddress, List<String> realIpValues) {
     InetAddress peer = parse(peerAddress);
     if (peer == null) {
-      return peerAddress == null ? UNKNOWN : peerAddress;
+      return new ClientIp(peerAddress == null ? UNKNOWN : peerAddress, KeySource.UNTRUSTED_PEER);
     }
+    String peerKey = InetAddresses.toAddrString(peer);
     if (!isTrusted(peer)) {
-      return InetAddresses.toAddrString(peer);
+      return new ClientIp(peerKey, KeySource.UNTRUSTED_PEER);
     }
-    List<String> entries = new ArrayList<>();
-    for (String value : forwardedForValues) {
-      for (String entry : value.split(",")) {
-        if (!entry.isBlank()) {
-          entries.add(entry.strip());
-        }
-      }
+    // The load balancer writes exactly one value. Anything else did not come from it.
+    InetAddress client = realIpValues.size() == 1 ? parse(realIpValues.getFirst().strip()) : null;
+    if (client == null) {
+      return new ClientIp(peerKey, KeySource.TRUSTED_PEER_WITHOUT_HEADER);
     }
-    InetAddress candidate = peer;
-    for (int i = entries.size() - 1; i >= 0; i--) {
-      InetAddress hop = parse(entries.get(i));
-      if (hop == null) {
-        // A trusted hop wrote something that is not an address. Do not guess past it.
-        return InetAddresses.toAddrString(peer);
-      }
-      candidate = hop;
-      if (!isTrusted(hop)) {
-        break;
-      }
-    }
-    return InetAddresses.toAddrString(candidate);
+    return new ClientIp(InetAddresses.toAddrString(client), KeySource.REAL_IP_HEADER);
   }
 
   private boolean isTrusted(InetAddress address) {

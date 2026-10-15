@@ -4,102 +4,111 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import org.broadinstitute.consent.http.filters.ClientIpResolver.ClientIp;
+import org.broadinstitute.consent.http.filters.ClientIpResolver.KeySource;
 import org.junit.jupiter.api.Test;
 
 class ClientIpResolverTest {
 
-  // Loopback stands for the Apache sidecar; 35.191.0.0/16 for the load balancer front ends;
-  // 203.0.113.10 for the load balancer address; 198.51.100.7 for the BFF egress address.
+  // Loopback stands for the Apache sidecar in the same pod.
   private final ClientIpResolver resolver =
-      new ClientIpResolver(
-          List.of("127.0.0.1/32", "::1/128", "35.191.0.0/16", "203.0.113.10", "198.51.100.7"));
+      new ClientIpResolver(List.of("127.0.0.1/32", "::1/128"));
 
   @Test
-  void testUntrustedPeerIgnoresForwardedHeader() {
-    assertEquals("192.0.2.50", resolver.resolve("192.0.2.50", List.of("192.0.2.99")));
+  void testTrustedPeerUsesRealIpHeader() {
+    assertEquals(
+        new ClientIp("192.0.2.1", KeySource.REAL_IP_HEADER),
+        resolver.resolve("127.0.0.1", List.of("192.0.2.1")));
+  }
+
+  @Test
+  void testUntrustedPeerIgnoresRealIpHeader() {
+    assertEquals(
+        new ClientIp("192.0.2.50", KeySource.UNTRUSTED_PEER),
+        resolver.resolve("192.0.2.50", List.of("192.0.2.99")));
   }
 
   @Test
   void testUntrustedPeerWithNoHeaderUsesPeer() {
-    assertEquals("192.0.2.50", resolver.resolve("192.0.2.50", List.of()));
+    assertEquals(
+        new ClientIp("192.0.2.50", KeySource.UNTRUSTED_PEER),
+        resolver.resolve("192.0.2.50", List.of()));
   }
 
   @Test
   void testTrustedPeerWithNoHeaderUsesPeer() {
-    assertEquals("127.0.0.1", resolver.resolve("127.0.0.1", List.of()));
-  }
-
-  @Test
-  void testTrustedPeerUsesForwardedClient() {
-    assertEquals("192.0.2.1", resolver.resolve("127.0.0.1", List.of("192.0.2.1")));
-  }
-
-  @Test
-  void testSkipsTrustedHopsFromTheRight() {
-    // Header as the Apache sidecar sees it behind the Google load balancer.
     assertEquals(
-        "192.0.2.1", resolver.resolve("127.0.0.1", List.of("192.0.2.1, 203.0.113.10, 35.191.4.5")));
+        new ClientIp("127.0.0.1", KeySource.TRUSTED_PEER_WITHOUT_HEADER),
+        resolver.resolve("127.0.0.1", List.of()));
   }
 
   @Test
-  void testCallerSuppliedEntriesLeftOfTheClientAreIgnored() {
+  void testRepeatedHeaderUsesPeer() {
+    // The load balancer writes one value, so two values did not come from it alone.
     assertEquals(
-        "192.0.2.1",
-        resolver.resolve("127.0.0.1", List.of("10.9.9.9, 192.0.2.1, 203.0.113.10, 35.191.4.5")));
+        new ClientIp("127.0.0.1", KeySource.TRUSTED_PEER_WITHOUT_HEADER),
+        resolver.resolve("127.0.0.1", List.of("192.0.2.99", "192.0.2.1")));
   }
 
   @Test
-  void testCallerCannotSpoofATrustedAddressToShiftTheKey() {
-    // The caller prepends a trusted address. The rightmost untrusted entry is still the caller.
+  void testCommaListInHeaderUsesPeer() {
     assertEquals(
-        "192.0.2.1",
-        resolver.resolve(
-            "127.0.0.1", List.of("198.51.100.7, 192.0.2.1, 203.0.113.10, 35.191.4.5")));
+        new ClientIp("127.0.0.1", KeySource.TRUSTED_PEER_WITHOUT_HEADER),
+        resolver.resolve("127.0.0.1", List.of("192.0.2.99, 192.0.2.1")));
   }
 
   @Test
-  void testRequestThroughTheBffUsesTheForwardedBrowserAddress() {
+  void testUnparseableHeaderUsesPeer() {
     assertEquals(
-        "192.0.2.1",
-        resolver.resolve(
-            "127.0.0.1", List.of("192.0.2.1, 198.51.100.7, 203.0.113.10, 35.191.4.5")));
+        new ClientIp("127.0.0.1", KeySource.TRUSTED_PEER_WITHOUT_HEADER),
+        resolver.resolve("127.0.0.1", List.of("not-an-ip")));
   }
 
   @Test
-  void testMultipleHeaderValuesAreReadInOrder() {
+  void testHostnameInHeaderIsNotResolved() {
     assertEquals(
-        "192.0.2.1", resolver.resolve("127.0.0.1", List.of("10.9.9.9", "192.0.2.1, 203.0.113.10")));
+        new ClientIp("127.0.0.1", KeySource.TRUSTED_PEER_WITHOUT_HEADER),
+        resolver.resolve("127.0.0.1", List.of("localhost")));
   }
 
   @Test
-  void testAllTrustedEntriesUseTheLeftmostEntry() {
+  void testHeaderWhitespaceIsStripped() {
     assertEquals(
-        "203.0.113.10", resolver.resolve("127.0.0.1", List.of("203.0.113.10, 35.191.4.5")));
-  }
-
-  @Test
-  void testUnparseableClientEntryUsesPeer() {
-    assertEquals("127.0.0.1", resolver.resolve("127.0.0.1", List.of("not-an-ip, 203.0.113.10")));
-  }
-
-  @Test
-  void testEmptyEntriesAreSkipped() {
-    assertEquals("192.0.2.1", resolver.resolve("127.0.0.1", List.of("192.0.2.1, , 203.0.113.10")));
+        new ClientIp("192.0.2.1", KeySource.REAL_IP_HEADER),
+        resolver.resolve("127.0.0.1", List.of(" 192.0.2.1 ")));
   }
 
   @Test
   void testIpv6ClientIsNormalized() {
-    assertEquals("2001:db8::1", resolver.resolve("::1", List.of("2001:DB8:0:0:0:0:0:1")));
+    assertEquals(
+        new ClientIp("2001:db8::1", KeySource.REAL_IP_HEADER),
+        resolver.resolve("::1", List.of("2001:DB8:0:0:0:0:0:1")));
   }
 
   @Test
   void testIpv4MappedPeerMatchesIpv4Range() {
-    assertEquals("192.0.2.1", resolver.resolve("::ffff:127.0.0.1", List.of("192.0.2.1")));
+    assertEquals(
+        new ClientIp("192.0.2.1", KeySource.REAL_IP_HEADER),
+        resolver.resolve("::ffff:127.0.0.1", List.of("192.0.2.1")));
+  }
+
+  @Test
+  void testCidrRangeMatchesPartialByte() {
+    ClientIpResolver rangeResolver = new ClientIpResolver(List.of("10.64.0.0/10"));
+
+    assertEquals(
+        KeySource.REAL_IP_HEADER,
+        rangeResolver.resolve("10.127.255.255", List.of("192.0.2.1")).source());
+    assertEquals(
+        KeySource.UNTRUSTED_PEER,
+        rangeResolver.resolve("10.128.0.1", List.of("192.0.2.1")).source());
   }
 
   @Test
   void testNullPeerUsesUnknownKey() {
-    assertEquals("unknown", resolver.resolve(null, List.of("192.0.2.1")));
+    assertEquals(
+        new ClientIp("unknown", KeySource.UNTRUSTED_PEER),
+        resolver.resolve(null, List.of("192.0.2.1")));
   }
 
   @Test
@@ -111,5 +120,11 @@ class ClientIpResolverTest {
   void testPrefixLongerThanAddressIsRejected() {
     assertThrows(
         IllegalArgumentException.class, () -> new ClientIpResolver(List.of("127.0.0.1/33")));
+  }
+
+  @Test
+  void testNonNumericPrefixIsRejected() {
+    assertThrows(
+        IllegalArgumentException.class, () -> new ClientIpResolver(List.of("127.0.0.1/abc")));
   }
 }
