@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Runs the public limit through the real Jetty stack, so Jersey must inject the servlet request
  * that gives the socket peer. The test client connects from loopback, which is a trusted proxy by
- * default, so each forwarded address gets its own bucket. The authenticated limiter does not run on
+ * default, so each X-Real-IP address gets its own bucket. The authenticated limiter does not run on
  * these paths. Nothing is mapped under {@code showcase/} yet, so allowed requests get 404.
  *
  * <p>This test uses the JDK client: the Apache client behind {@code getClient()} retries a 429
@@ -27,7 +27,7 @@ class ShowcaseRateLimitTests extends ContainerTests {
   private static final HttpClient HTTP = HttpClient.newHttpClient();
 
   @Test
-  void testRequestsOverTheLimitGet429PerForwardedClient() throws Exception {
+  void testRequestsOverTheLimitGet429PerRealIp() throws Exception {
     RateLimitConfiguration config = APPLICATION.getConfiguration().getRateLimitConfiguration();
     int capacityPerPod =
         (int)
@@ -47,10 +47,10 @@ class ShowcaseRateLimitTests extends ContainerTests {
     assertEquals(404, get("192.0.2.2").statusCode());
   }
 
-  private HttpResponse<Void> get(String forwardedFor) throws Exception {
+  private HttpResponse<Void> get(String realIp) throws Exception {
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(serviceUrl(PATH)))
-            .header("X-Forwarded-For", forwardedFor)
+            .header("X-Real-IP", realIp)
             .GET()
             .build();
     return HTTP.send(request, BodyHandlers.discarding());

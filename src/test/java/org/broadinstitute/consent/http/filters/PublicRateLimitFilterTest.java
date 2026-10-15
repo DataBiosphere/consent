@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.filters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,13 +49,13 @@ class PublicRateLimitFilterTest {
     return new PublicRateLimitFilter(config, servletRequest);
   }
 
-  private void mockRequest(String path, String peer, String forwardedFor) {
+  private void mockRequest(String path, String peer, String realIp) {
     when(requestContext.getUriInfo()).thenReturn(uriInfo);
     when(uriInfo.getPath()).thenReturn(path);
     when(servletRequest.getRemoteAddr()).thenReturn(peer);
-    headers.remove(PublicRateLimitFilter.FORWARDED_FOR_HEADER);
-    if (forwardedFor != null) {
-      headers.add(PublicRateLimitFilter.FORWARDED_FOR_HEADER, forwardedFor);
+    headers.remove(PublicRateLimitFilter.REAL_IP_HEADER);
+    if (realIp != null) {
+      headers.add(PublicRateLimitFilter.REAL_IP_HEADER, realIp);
     }
     when(requestContext.getHeaders()).thenReturn(headers);
   }
@@ -129,7 +131,7 @@ class PublicRateLimitFilterTest {
   }
 
   @Test
-  void testTrustedProxyRequestsAreKeyedByForwardedClient() {
+  void testTrustedProxyRequestsAreKeyedByRealIp() {
     PublicRateLimitFilter filter = buildFilter(1, 1, true);
 
     mockRequest("showcase/datasets", TRUSTED_PROXY, "192.0.2.1");
@@ -177,5 +179,41 @@ class PublicRateLimitFilterTest {
 
     verify(requestContext, never()).abortWith(any());
     verify(servletRequest, never()).getRemoteAddr();
+  }
+
+  @Test
+  void testLogsKeyAndSourceOnEach429() {
+    PublicRateLimitFilter filter = spy(buildFilter(1, 1, true));
+    mockRequest("showcase/datasets", TRUSTED_PROXY, "192.0.2.1");
+
+    send(filter, 3);
+
+    verify(filter, times(2))
+        .logWarn(
+            "Showcase rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
+                + "path=showcase/datasets");
+  }
+
+  @Test
+  void testLogShowsFallbackWhenTrustedProxySendsNoHeader() {
+    PublicRateLimitFilter filter = spy(buildFilter(1, 1, true));
+    mockRequest("showcase/datasets", TRUSTED_PROXY, null);
+
+    send(filter, 2);
+
+    verify(filter)
+        .logWarn(
+            "Showcase rate limit exceeded: key=127.0.0.1, source=TRUSTED_PEER_WITHOUT_HEADER, "
+                + "path=showcase/datasets");
+  }
+
+  @Test
+  void testDoesNotLogWithinTheLimit() {
+    PublicRateLimitFilter filter = spy(buildFilter(1, 1, true));
+    mockRequest("showcase/datasets", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(filter, never()).logWarn(anyString());
   }
 }

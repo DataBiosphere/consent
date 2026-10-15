@@ -20,14 +20,18 @@ import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.PublicRateLimitConfiguration;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
+import org.broadinstitute.consent.http.filters.ClientIpResolver.ClientIp;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
 /**
  * Token-bucket rate limiter for the anonymous public {@code showcase/} routes, keyed by client IP.
  * It is separate from {@link RateLimitFilter}, which skips every request without a principal, and
  * it does not read that filter's {@code enabled} switch: this limit is on in every environment.
  *
- * <p>The key comes from {@link ClientIpResolver}. It believes {@code X-Forwarded-For} only when the
- * socket peer is a configured trusted proxy, so a direct caller cannot choose its own key.
+ * <p>The key comes from {@link ClientIpResolver}. It believes the load balancer's {@code X-Real-IP}
+ * only when the socket peer is a configured trusted proxy, so a direct caller cannot choose its own
+ * key. Each 429 logs a warning with the key and its source, so the keying can be checked in a
+ * deployed environment. The log is console only: a 429 is expected behavior, not an alert.
  *
  * <p>Buckets live in-process, as in {@link RateLimitFilter}: each pod enforces {@code
  * requestsPerMinute / podCount}. The filter is {@code @PreMatching}, so it also counts requests to
@@ -37,9 +41,9 @@ import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
 @Provider
 @PreMatching
 @Priority(Priorities.AUTHENTICATION)
-public class PublicRateLimitFilter implements ContainerRequestFilter {
+public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLogger {
 
-  static final String FORWARDED_FOR_HEADER = "X-Forwarded-For";
+  static final String REAL_IP_HEADER = "X-Real-IP";
   private static final String LIMITED_PATH = "showcase";
   // Larger than RateLimitFilter's cap: anonymous keys are cheap for a caller to rotate, and an
   // evicted bucket starts full again.
@@ -81,12 +85,14 @@ public class PublicRateLimitFilter implements ContainerRequestFilter {
     if (!path.equals(LIMITED_PATH) && !path.startsWith(LIMITED_PATH + "/")) {
       return;
     }
-    List<String> forwardedFor =
-        Objects.requireNonNullElse(
-            requestContext.getHeaders().get(FORWARDED_FOR_HEADER), List.of());
-    String key = clientIpResolver.resolve(servletRequest.getRemoteAddr(), forwardedFor);
-    ConsumptionProbe probe = buckets.getUnchecked(key).tryConsumeAndReturnRemaining(1);
+    List<String> realIp =
+        Objects.requireNonNullElse(requestContext.getHeaders().get(REAL_IP_HEADER), List.of());
+    ClientIp clientIp = clientIpResolver.resolve(servletRequest.getRemoteAddr(), realIp);
+    ConsumptionProbe probe = buckets.getUnchecked(clientIp.key()).tryConsumeAndReturnRemaining(1);
     if (!probe.isConsumed()) {
+      logWarn(
+          "Showcase rate limit exceeded: key=%s, source=%s, path=%s"
+              .formatted(clientIp.key(), clientIp.source(), path));
       requestContext.abortWith(RateLimitFilter.tooManyRequests(probe));
     }
   }

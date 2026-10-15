@@ -17,11 +17,10 @@ import org.broadinstitute.consent.http.filters.ClientIpResolver;
  * across pods with the parent {@link RateLimitConfiguration#getPodCount()}, as for the
  * authenticated limiter.
  *
- * <p>{@code trustedProxies} lists the IP addresses or CIDR ranges whose {@code X-Forwarded-For}
- * entries Consent believes. The default trusts only loopback, which is the Apache sidecar in the
- * same pod. Behind a load balancer, also list the load balancer's own address and front-end ranges,
- * and the BFF egress addresses, or every client behind them shares one bucket. See {@link
- * ClientIpResolver}.
+ * <p>{@code trustedProxies} lists the socket peers, as IP addresses or CIDR ranges, whose {@code
+ * X-Real-IP} header Consent believes. The default trusts only loopback, which is the Apache sidecar
+ * in the same pod. Deployed environments need no other entry: the Google load balancer sets {@code
+ * X-Real-IP}, and the sidecar passes it through. See {@link ClientIpResolver}.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PublicRateLimitConfiguration {
