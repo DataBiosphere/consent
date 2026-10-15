@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.filters;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -128,6 +129,20 @@ class PublicRateLimitFilterTest {
     filter.filter(requestContext);
 
     verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testScopedRealIpFallsBackToPeerWithoutError() {
+    // Guava's forString throws for an unknown interface name; the filter must not return a 500.
+    PublicRateLimitFilter filter = spy(buildFilter(1, 1, true));
+    mockRequest("showcase/datasets", TRUSTED_PROXY, "fe80::1%eth0");
+
+    assertDoesNotThrow(() -> send(filter, 2));
+
+    verify(filter)
+        .logWarn(
+            "Showcase rate limit exceeded: key=127.0.0.1, source=TRUSTED_PEER_WITHOUT_HEADER, "
+                + "path=showcase/datasets");
   }
 
   @Test
