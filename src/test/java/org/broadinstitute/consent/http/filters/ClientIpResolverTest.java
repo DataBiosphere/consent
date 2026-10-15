@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.filters;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -81,10 +82,34 @@ class ClientIpResolverTest {
   }
 
   @Test
-  void testIpv6ClientIsNormalized() {
+  void testIpv6ClientIsKeyedByItsSlash64() {
     assertEquals(
-        new ClientIp("2001:db8::1", KeySource.REAL_IP_HEADER),
-        resolver.resolve("::1", List.of("2001:DB8:0:0:0:0:0:1")));
+        new ClientIp("2001:db8:1:2::/64", KeySource.REAL_IP_HEADER),
+        resolver.resolve("::1", List.of("2001:DB8:1:2:aaaa:bbbb:cccc:dddd")));
+  }
+
+  @Test
+  void testIpv6AddressesInOneSlash64ShareAKey() {
+    // One caller rotating through its /64 must not get a fresh bucket for each address.
+    String first = resolver.resolve("::1", List.of("2001:db8:1:2::1")).key();
+    String second = resolver.resolve("::1", List.of("2001:db8:1:2:ffff:ffff:ffff:ffff")).key();
+
+    assertEquals(first, second);
+  }
+
+  @Test
+  void testIpv6AddressesInDifferentSlash64sHaveDifferentKeys() {
+    String first = resolver.resolve("::1", List.of("2001:db8:1:2::1")).key();
+    String second = resolver.resolve("::1", List.of("2001:db8:1:3::1")).key();
+
+    assertNotEquals(first, second);
+  }
+
+  @Test
+  void testUntrustedIpv6PeerIsKeyedByItsSlash64() {
+    assertEquals(
+        new ClientIp("2001:db8:9:9::/64", KeySource.UNTRUSTED_PEER),
+        resolver.resolve("2001:db8:9:9::42", List.of("192.0.2.1")));
   }
 
   @Test

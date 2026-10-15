@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.filters;
 
 import com.google.common.net.InetAddresses;
+import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.eclipse.jetty.util.InetAddressSet;
@@ -27,10 +30,16 @@ import org.eclipse.jetty.util.InetAddressSet;
  * <p>If the peer is trusted but the header is missing, repeated, or not a single IP literal, the
  * key falls back to the peer. All such requests then share one bucket, and {@link
  * KeySource#TRUSTED_PEER_WITHOUT_HEADER} in the 429 log shows the misconfiguration.
+ *
+ * <p>An IPv6 key is the address's /64 prefix, for example {@code 2001:db8::/64}. ISPs usually give
+ * each subscriber at least a /64, so a key per full address would let one caller rotate through
+ * addresses and get a fresh bucket for each request. IPv4 keys are full addresses. The Consent
+ * ingresses had no IPv6 address on 2026-10-15, so this applies only if one is added.
  */
 public class ClientIpResolver {
 
   static final String UNKNOWN = "unknown";
+  private static final int IPV6_KEY_PREFIX_BYTES = 8;
 
   // An IP literal with an optional decimal prefix length. Jetty's InetAddressSet also accepts
   // hostnames (it resolves them with DNS), min-max ranges and a legacy wildcard form, and it parses
@@ -74,14 +83,14 @@ public class ClientIpResolver {
   /**
    * @param peerAddress the socket peer address
    * @param realIpValues each {@code X-Real-IP} header value, in received order
-   * @return the normalized client address and its source
+   * @return the normalized client key (an IPv4 address or an IPv6 /64 prefix) and its source
    */
   public ClientIp resolve(String peerAddress, List<String> realIpValues) {
     InetAddress peer = parse(peerAddress);
     if (peer == null) {
       return new ClientIp(peerAddress == null ? UNKNOWN : peerAddress, KeySource.UNTRUSTED_PEER);
     }
-    String peerKey = InetAddresses.toAddrString(peer);
+    String peerKey = key(peer);
     if (!isTrusted(peer)) {
       return new ClientIp(peerKey, KeySource.UNTRUSTED_PEER);
     }
@@ -90,7 +99,21 @@ public class ClientIpResolver {
     if (client == null) {
       return new ClientIp(peerKey, KeySource.TRUSTED_PEER_WITHOUT_HEADER);
     }
-    return new ClientIp(InetAddresses.toAddrString(client), KeySource.REAL_IP_HEADER);
+    return new ClientIp(key(client), KeySource.REAL_IP_HEADER);
+  }
+
+  private static String key(InetAddress address) {
+    if (!(address instanceof Inet6Address)) {
+      return InetAddresses.toAddrString(address);
+    }
+    byte[] bytes = address.getAddress();
+    Arrays.fill(bytes, IPV6_KEY_PREFIX_BYTES, bytes.length, (byte) 0);
+    try {
+      return InetAddresses.toAddrString(InetAddress.getByAddress(bytes)) + "/64";
+    } catch (UnknownHostException e) {
+      // getByAddress throws only for an illegal array length, and this array has 16 bytes.
+      throw new IllegalStateException(e);
+    }
   }
 
   private boolean isTrusted(InetAddress address) {
