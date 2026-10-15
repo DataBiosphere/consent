@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <changeSet id="changelog-consent-2026-10-15-blog-post" author="kmarete">
+    <createTable tableName="blog_post">
+      <column name="blog_post_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="slug" type="TEXT"><constraints nullable="false"/></column>
+      <column name="title" type="TEXT"><constraints nullable="false"/></column>
+      <column name="excerpt" type="TEXT"/>
+      <column name="content_md" type="TEXT"><constraints nullable="false"/></column>
+      <column name="category" type="TEXT"><constraints nullable="false"/></column>
+      <column name="tags" type="TEXT[]" defaultValueComputed="'{}'"><constraints nullable="false"/></column>
+      <column name="status" type="TEXT"><constraints nullable="false"/></column>
+      <column name="publish_date" type="TIMESTAMP WITH TIME ZONE"/>
+      <column name="featured" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="author_display_name" type="TEXT"/>
+      <column name="parent_slug" type="TEXT"/>
+      <column name="legacy_url" type="TEXT"/>
+      <column name="author_user_id" type="INTEGER"/>
+      <column name="create_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="create_user_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="update_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="update_user_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="version" type="INTEGER" defaultValueNumeric="0"><constraints nullable="false"/></column>
+      <column name="deleted" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+      <column name="delete_date" type="TIMESTAMP WITH TIME ZONE"/>
+      <column name="delete_user_id" type="INTEGER"/>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="blog_post" baseColumnNames="author_user_id" referencedTableName="users" referencedColumnNames="user_id" constraintName="fk_blog_post_author_user"/>
+    <addForeignKeyConstraint baseTableName="blog_post" baseColumnNames="create_user_id" referencedTableName="users" referencedColumnNames="user_id" constraintName="fk_blog_post_create_user"/>
+    <addForeignKeyConstraint baseTableName="blog_post" baseColumnNames="update_user_id" referencedTableName="users" referencedColumnNames="user_id" constraintName="fk_blog_post_update_user"/>
+    <addForeignKeyConstraint baseTableName="blog_post" baseColumnNames="delete_user_id" referencedTableName="users" referencedColumnNames="user_id" constraintName="fk_blog_post_delete_user"/>
+    <sql>
+      ALTER TABLE blog_post ADD CONSTRAINT ck_blog_post_category CHECK (category IN
+        ('BLOG_POST', 'USER_GUIDE', 'FEATURE_ANNOUNCEMENT', 'IN_THE_NEWS', 'POLICY_BRIEF', 'PAGE'));
+      ALTER TABLE blog_post ADD CONSTRAINT ck_blog_post_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED'));
+      ALTER TABLE blog_post ADD CONSTRAINT ck_blog_post_slug CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$');
+      CREATE UNIQUE INDEX idx_blog_post_category_slug_active ON blog_post (category, slug) WHERE deleted = false;
+    </sql>
+  </changeSet>
+</databaseChangeLog>
