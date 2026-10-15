@@ -7,6 +7,8 @@ import java.util.List;
 import org.broadinstitute.consent.http.filters.ClientIpResolver.ClientIp;
 import org.broadinstitute.consent.http.filters.ClientIpResolver.KeySource;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ClientIpResolverTest {
 
@@ -111,46 +113,18 @@ class ClientIpResolverTest {
         resolver.resolve(null, List.of("192.0.2.1")));
   }
 
-  @Test
-  void testHostnameIsRejectedAsTrustedProxy() {
-    List<String> trustedProxies = List.of("localhost");
-
-    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
-  }
-
-  @Test
-  void testPrefixLongerThanAddressIsRejected() {
-    List<String> trustedProxies = List.of("127.0.0.1/33");
-
-    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
-  }
-
-  @Test
-  void testNonNumericPrefixIsRejected() {
-    List<String> trustedProxies = List.of("127.0.0.1/abc");
-
-    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
-  }
-
-  @Test
-  void testPrefixWithTrailingTextIsRejected() {
-    // Jetty alone parses the prefix leniently.
-    List<String> trustedProxies = List.of("127.0.0.1/3x");
-
-    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
-  }
-
-  @Test
-  void testMinMaxRangeIsRejected() {
-    // Jetty alone accepts this form.
-    List<String> trustedProxies = List.of("10.0.0.1-10.0.0.9");
-
-    assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
-  }
-
-  @Test
-  void testCidrWithHostBitsSetIsRejected() {
-    List<String> trustedProxies = List.of("10.64.1.0/10");
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "localhost", // a hostname; Jetty alone would resolve it with DNS
+        "127.0.0.1/33", // a prefix longer than the address
+        "127.0.0.1/abc", // a non-numeric prefix
+        "127.0.0.1/3x", // trailing text; Jetty alone would read it as /3
+        "10.0.0.1-10.0.0.9", // a min-max range; Jetty alone would accept it
+        "10.64.1.0/10" // a CIDR range with host bits set
+      })
+  void testInvalidTrustedProxyIsRejected(String entry) {
+    List<String> trustedProxies = List.of(entry);
 
     assertThrows(IllegalArgumentException.class, () -> new ClientIpResolver(trustedProxies));
   }
