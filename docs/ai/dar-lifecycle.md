@@ -89,14 +89,16 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   "ordinary reports only":
   - The caller owns the parent.
   - The parent is not a draft.
-  - The collection has no submitted closeout. Checked before validation and again under
-    `lockCollection`.
+  - The collection has no submitted closeout (409). Checked only under `lockCollection`, in
+    `insertProgressReport`, before the checks below that run under the lock.
   - Ordinary reports only: the parent has no open DataAccess elections. `postProgressReport`
     checks this before uploading documents, and `insertProgressReport` checks it again under the
     lock. Every election-opening path takes the same lock. RP elections don't block. A closeout
     is not blocked by open elections; it cancels them (see below).
-  - Ordinary reports only: the datasets are a subset of the parent's datasets and are currently
-    approved (`findDatasetApprovalsByDar`). A closeout's datasets are set by the service instead.
+  - Ordinary reports only: the datasets are a subset of the parent's datasets (checked in
+    validation) and are currently approved (`findDatasetApprovalsByDar`, checked under the lock
+    after the closeout check). That query finds nothing for a closed-out collection, so running it
+    first would turn the 409 into a 400. A closeout's datasets are set by the service instead.
 - `insertProgressReport` sets `parent_id`, `collection_id` and `submission_date = now()` in the
   INSERT. There is no draft step and no later "submit". Only resubmit nulls it afterwards (see
   [Draft](#1-draft)); don't write other fixtures or code that do.
