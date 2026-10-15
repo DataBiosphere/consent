@@ -605,6 +605,11 @@ S1.1; the lookup feeds E3.
   only when the immediate peer is the trusted proxy, otherwise uses the socket peer, so a caller
   cannot pick its own key by spoofing the header.
   Size it from the lookup/load spike and the pilot-load budget.
+  Implemented as `PublicRateLimitFilter` with `ClientIpResolver` (DT-4280), configured by
+  `rateLimit.showcase.requestsPerMinute` (default 120 per client IP for the deployment) and
+  `rateLimit.showcase.trustedProxies` (default loopback, the Apache sidecar). Before exposure,
+  terra-helmfile must add the Google load balancer front-end ranges, the ingress address and the BFF
+  egress addresses to `trustedProxies`; otherwise every client behind them shares one bucket.
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
   configuration, legacy CSP/CORS/preflight, and public-route rate limit. Document preview versus
   functional-test environment configuration. This transport work is required for MVP.

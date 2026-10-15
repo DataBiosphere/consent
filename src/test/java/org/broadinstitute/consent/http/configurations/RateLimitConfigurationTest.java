@@ -7,6 +7,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -50,6 +51,42 @@ class RateLimitConfigurationTest {
         validator.validate(buildConfig(3, 3));
 
     assertTrue(violations.isEmpty());
+  }
+
+  @Test
+  void testShowcaseDefaultsAreValid() {
+    RateLimitConfiguration config = buildConfig(100, 3);
+
+    assertTrue(validator.validate(config).isEmpty());
+    assertEquals(
+        PublicRateLimitConfiguration.DEFAULT_REQUESTS_PER_MINUTE,
+        config.getShowcase().getRequestsPerMinute());
+    assertEquals(List.of("127.0.0.1/32", "::1/128"), config.getShowcase().getTrustedProxies());
+  }
+
+  @Test
+  void testShowcaseRequestsPerMinuteLessThanPodCountIsInvalid() {
+    RateLimitConfiguration config = buildConfig(100, 3);
+    config.getShowcase().setRequestsPerMinute(2);
+
+    Set<ConstraintViolation<RateLimitConfiguration>> violations = validator.validate(config);
+
+    assertEquals(1, violations.size());
+    assertEquals(
+        "showcaseRequestsPerMinuteAtLeastPodCount",
+        violations.iterator().next().getPropertyPath().toString());
+  }
+
+  @Test
+  void testShowcaseTrustedProxyHostnameIsInvalid() {
+    RateLimitConfiguration config = buildConfig(100, 3);
+    config.getShowcase().setTrustedProxies(List.of("127.0.0.1/32", "proxy.example.org"));
+
+    Set<ConstraintViolation<RateLimitConfiguration>> violations = validator.validate(config);
+
+    assertEquals(1, violations.size());
+    assertEquals(
+        "showcase.trustedProxiesValid", violations.iterator().next().getPropertyPath().toString());
   }
 
   @Test
