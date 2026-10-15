@@ -27,6 +27,9 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.exceptions.EmailNotRecordedException;
+import org.broadinstitute.consent.http.mail.EmailSendId;
+import org.broadinstitute.consent.http.mail.EmailSendOutcome;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
@@ -36,11 +39,15 @@ import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
+import org.broadinstitute.consent.http.models.mail.MailSend;
+import org.broadinstitute.consent.http.models.mail.MailSendSearch;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.result.ResultIterable;
 
 public class EmailService implements ConsentLogger {
+
+  static final int MAX_SEND_RECIPIENTS = 100;
 
   private static final int LOOKBACK_DELAY_HOURS = 24;
 
@@ -80,7 +87,7 @@ public class EmailService implements ConsentLogger {
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
   }
 
-  public void sendMessage(MailMessage mailMessage, Integer userId)
+  public EmailSendOutcome sendMessage(MailMessage mailMessage, Integer userId)
       throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
@@ -99,8 +106,8 @@ public class EmailService implements ConsentLogger {
     }
     // Checks that the user has not disabled email before sending
     Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
-    Instant now = Instant.now();
-    Date dateSent = (response != null && response.getStatusCode() < 400) ? Date.from(now) : null;
+    EmailSendOutcome outcome = EmailSendOutcome.of(response);
+    Date dateSent = outcome == EmailSendOutcome.SENT ? Date.from(Instant.now()) : null;
     String sendgridResponse = response != null ? response.getBody() : null;
     Integer sendgridStatus = response != null ? response.getStatusCode() : null;
     MailMessageInsert mailMessageInsert =
@@ -112,8 +119,15 @@ public class EmailService implements ConsentLogger {
             dateSent,
             content,
             sendgridResponse,
-            sendgridStatus);
-    emailDAO.insert(mailMessageInsert);
+            sendgridStatus,
+            EmailSendId.current(),
+            mailMessage.getDatasetIds().orElse(null));
+    try {
+      emailDAO.insert(mailMessageInsert);
+    } catch (RuntimeException e) {
+      throw new EmailNotRecordedException(outcome, e);
+    }
+    return outcome;
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(
@@ -129,6 +143,11 @@ public class EmailService implements ConsentLogger {
   public List<org.broadinstitute.consent.http.models.mail.MailMessage>
       fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
+  }
+
+  public List<MailSend> fetchEmailSendsByCreateDate(
+      Date start, Date end, Integer limit, Integer offset, MailSendSearch search) {
+    return emailDAO.fetchSendsByCreateDate(start, end, limit, offset, MAX_SEND_RECIPIENTS, search);
   }
 
   public void sendVoteDigestMessages() {

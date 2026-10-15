@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!-- Rows written during one request share a send_id, so one send is that id plus type and reference. -->
+  <changeSet id="changelog-consent-2026-10-09-email-entity-send-id" author="kmarete">
+    <addColumn tableName="email_entity">
+      <column name="send_id" type="uuid"/>
+    </addColumn>
+  </changeSet>
+</databaseChangeLog>

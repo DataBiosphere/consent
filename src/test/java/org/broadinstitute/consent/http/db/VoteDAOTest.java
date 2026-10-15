@@ -457,7 +457,7 @@ class VoteDAOTest extends DAOTestHelper {
   }
 
   private DarCollection createDarCollectionWithDatasets(User user, List<Dataset> datasets) {
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     datasets.forEach(

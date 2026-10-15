@@ -996,11 +996,7 @@ public class DarCollectionService implements ConsentLogger {
         try {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
-          if (dar.getProgressReport()) {
-            sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
-          } else {
-            sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
-          }
+          sendNewCaseMessages(user, dar, collection.getDarCode(), voteUsers);
 
         } catch (Exception e) {
           logException(
@@ -1336,9 +1332,8 @@ public class DarCollectionService implements ConsentLogger {
   /**
    * Notifies users for the given DACs and datasets.
    *
-   * <p>When {@code isAutoOpen} is {@code true}, each user receives a single auto-open email; {@code
-   * dacs} and {@code datasets} are not consulted. When {@code false}, per-user DAC/dataset
-   * membership is resolved from {@code dacs} and {@code datasets} to build the email body.
+   * <p>Each user's DACs are resolved from {@code dacs}, and their datasets from {@code datasets}:
+   * recorded on the auto-open email when {@code isAutoOpen}, listed in the request email otherwise.
    */
   @VisibleForTesting
   protected void notifyUsersForDacs(
@@ -1354,9 +1349,15 @@ public class DarCollectionService implements ConsentLogger {
       if (isAutoOpen) {
         // Send election notification for auto-open DACs
         if (latestDar.getProgressReport()) {
-          sendProgressReportNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
+          sendProgressReportNewCollectionElectionMessage(
+              List.of(user),
+              darCollection.getDarCode(),
+              datasetIdsInUserDacs(user, dacs, datasets));
         } else {
-          sendDarNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
+          sendDarNewCollectionElectionMessage(
+              List.of(user),
+              darCollection.getDarCode(),
+              datasetIdsInUserDacs(user, dacs, datasets));
         }
       } else {
         // Send manual notification for manual DACs
@@ -1390,18 +1391,21 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
+  protected void sendDarNewCollectionElectionMessage(
+      List<User> users, String darCode, List<Integer> datasetIds)
       throws IOException, TemplateException {
     for (User user : users) {
-      emailService.sendMessage(new NewCaseMessage(user, darCode), user.getUserId());
+      emailService.sendMessage(new NewCaseMessage(user, darCode, datasetIds), user.getUserId());
     }
   }
 
   @VisibleForTesting
-  protected void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
+  protected void sendProgressReportNewCollectionElectionMessage(
+      List<User> users, String darCode, List<Integer> datasetIds)
       throws IOException, TemplateException {
     for (User user : users) {
-      emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
+      emailService.sendMessage(
+          new NewProgressReportCaseMessage(user, darCode, datasetIds), user.getUserId());
     }
   }
 
@@ -1529,6 +1533,33 @@ public class DarCollectionService implements ConsentLogger {
     return new ArrayList<>(
         userDAO.findUsersForDatasetsByRole(
             datasetIds, List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId())));
+  }
+
+  private void sendNewCaseMessages(
+      User chair, DataAccessRequest dar, String darCode, List<User> voteUsers)
+      throws IOException, TemplateException {
+    List<Integer> chairDatasetIds = datasetDAO.findDatasetIdsByDACUserId(chair.getUserId());
+    for (User voteUser : voteUsers) {
+      List<Integer> memberDatasetIds = datasetDAO.findDatasetIdsByDACUserId(voteUser.getUserId());
+      List<Integer> datasetIds =
+          dar.getDatasetIds().stream()
+              .filter(id -> chairDatasetIds.contains(id) && memberDatasetIds.contains(id))
+              .toList();
+      if (dar.getProgressReport()) {
+        sendProgressReportNewCollectionElectionMessage(List.of(voteUser), darCode, datasetIds);
+      } else {
+        sendDarNewCollectionElectionMessage(List.of(voteUser), darCode, datasetIds);
+      }
+    }
+  }
+
+  private List<Integer> datasetIdsInUserDacs(User user, Set<Dac> dacs, Set<Dataset> datasets) {
+    List<Integer> dacIds = getMatchingDacs(user, dacs).stream().map(Dac::getDacId).toList();
+    return datasets.stream()
+        .filter(dataset -> dacIds.contains(dataset.getDacId()))
+        .map(Dataset::getDatasetId)
+        .sorted()
+        .toList();
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
