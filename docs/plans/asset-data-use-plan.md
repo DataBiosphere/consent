@@ -44,7 +44,7 @@ Each Model and each Workspace entry gets two new fields. The fields use the same
 
 1. The submitter enters data use and access management for each model or workspace in the study registration form.
 2. duos-ui sends the lists as the top-level `models` and `workspaces` registration fields.
-3. `StudyRegistrationRequestValidator` validates the two new fields on each entry. It rejects an unknown enum value or a `DataUse` that fails `DataUsePrimaryValidator`.
+3. `StudyRegistrationRequestValidator` (study create) and `StudyUpdateRequestValidator` (study edit) validate the two new fields on each entry. It rejects an unknown enum value or a `DataUse` that fails `DataUsePrimaryValidator`.
 4. Consent stores each list in its `study_property` row, as today. No schema change is necessary.
 5. `ElasticSearchService.toStudyTerm` reads each entry. If the entry has a `dataUse`, it adds a `dataUseSummary` that `OntologyService.translateDataUseSummary` computes.
 6. The bulk index call writes the enriched entries under `study.assets.models` and `study.assets.workspaces` in each dataset document.
@@ -73,7 +73,7 @@ Decided: option A. We keep the JSON lists in `study_property` and add the two fi
 
 | Option | What changes | Approx. lines | Benefit | Cost |
 | --- | --- | --- | --- | --- |
-| A. Extend the JSON entries (chosen) | Validation, index enrichment, OpenAPI, UI | 2,550 | No schema change, no data migration, no change to the read and write path of `StudyAssets` | Data use is not queryable in SQL |
+| A. Extend the JSON entries (chosen) | Validation, index enrichment, OpenAPI, UI | 2,600 | No schema change, no data migration, no change to the read and write path of `StudyAssets` | Data use is not queryable in SQL |
 | B. New `ai_model` and `workspace` tables (discarded) | Two tables, DAOs, mappers, a data migration from `study_property`, a rewrite of `StudyAssets` reads and writes, plus all of option A | 5,000 or more | Data use is queryable in SQL; asset IDs are real keys | Undoes the 2026-09-02 promotion work; a second migration of live data |
 
 Other decisions in the plan:
@@ -124,6 +124,7 @@ Callers:
 | Caller | Call |
 | --- | --- |
 | `StudyRegistrationRequestValidator` | `prepare(...).violations()` |
+| `StudyUpdateRequestValidator.validate` | `prepare(...).violations()` |
 | `RegistrationRequestMapper.promotedAsset` | `prepare(...).stored()` |
 | `ElasticSearchService.toStudyTerm` | `withSummaries(assemble(...))` |
 | `StudyAssetService` | `withSummaries(key, findAssetList(...))` |
@@ -137,7 +138,7 @@ The plan has 8 tickets: 4 in consent and 4 in duos-ui. Each estimate includes te
 
 | # | Repo | Title | Scope | Approx. lines | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| 1 | consent | Validate data use and access management on model and workspace entries | Add the write side of `AssetDataUse` (`prepare`). It validates `dataUse` and `accessManagement` on each `models` and `workspaces` entry and removes `dataUseSummary`. Call it from `StudyRegistrationRequestValidator` and `RegistrationRequestMapper.promotedAsset`. Use `ConsentGroup.AccessManagement` where it is now. | 300 | None |
+| 1 | consent | Validate data use and access management on model and workspace entries | Add the write side of `AssetDataUse` (`prepare`). It validates `dataUse` and `accessManagement` on each `models` and `workspaces` entry and removes `dataUseSummary`. Add one shared `collectAssetViolations(registration)` method to `StudyRegistrationRequestValidator`. Call it from `collectStudyViolations` (study create) and from `StudyUpdateRequestValidator.validate` (study edit), which does not call the base collectors. Validate the list that `StudyAssets.promotedValue` returns, which is the list that persistence stores. Call `prepare` from `RegistrationRequestMapper.promotedAsset`. Use `ConsentGroup.AccessManagement` where it is now. Test bad model and workspace fields on create and on update, including entries that come from the legacy `assets.models` and `assets.workspaces`. | 350 | None |
 | 2 | consent | Document the new asset fields in OpenAPI | Add a reusable schema for the `DataUse` object, moved out of `paths/datasetByIdDataUse.yaml`. Add a `DataUseSummary` schema that uses the existing term schema in `DataUse.yaml`. Add `dataUse`, `accessManagement` and `dataUseSummary` to `AiModel.yaml` and `Workspace.yaml`. | 250 | None |
 | 3 | consent | Index the data use summary for models and workspaces | Add the read side of `AssetDataUse` (`withSummaries`) and its `@Provides @Singleton` provider in `ConsentModule`. Call it from `ElasticSearchService.toStudyTerm`, so that each entry that has a `dataUse` gets a `dataUseSummary`. Check the `dataset` index mapping and update it if it is not dynamic. | 300 | 1 |
 | 4 | consent | Return the data use summary from the study asset endpoints | Share the enrichment from ticket 3 with `StudyAssetService`, so that `/assets/models` and `/assets/workspaces` return the same shape as the index. Also use it in SchemaFromStudy, which the registration GET uses, and pass the module through DatasetRegistrationSchemaV1Builder. | 300 | 3 |
@@ -146,7 +147,7 @@ The plan has 8 tickets: 4 in consent and 4 in duos-ui. Each estimate includes te
 | 7 | duos-ui | Filter models and workspaces by data use and access management | Add access management and data use filters to the Models and Workspaces tabs in `dataLibraryFilterConfig.ts` and the client-side `matchesModelFilters` and `matchesWorkspaceFilters`. | 350 | 6 |
 | 8 | both | Retire the free-text workspace access field | Apply the team decision on `Workspace.access`: map, hide or remove the old values. Remove the old column and filter. | 150 | 6, team decision |
 
-Total: about 2,550 lines.
+Total: about 2,600 lines.
 
 ## Risks and open questions
 
