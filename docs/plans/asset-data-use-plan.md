@@ -73,7 +73,7 @@ Decided: option A. We keep the JSON lists in `study_property` and add the two fi
 
 | Option | What changes | Approx. lines | Benefit | Cost |
 | --- | --- | --- | --- | --- |
-| A. Extend the JSON entries (chosen) | Validation, index enrichment, OpenAPI, UI | 2,450 | No schema change, no data migration, no change to the read and write path of `StudyAssets` | Data use is not queryable in SQL |
+| A. Extend the JSON entries (chosen) | Validation, index enrichment, OpenAPI, UI | 2,550 | No schema change, no data migration, no change to the read and write path of `StudyAssets` | Data use is not queryable in SQL |
 | B. New `ai_model` and `workspace` tables (discarded) | Two tables, DAOs, mappers, a data migration from `study_property`, a rewrite of `StudyAssets` reads and writes, plus all of option A | 5,000 or more | Data use is queryable in SQL; asset IDs are real keys | Undoes the 2026-09-02 promotion work; a second migration of live data |
 
 Other decisions in the plan:
@@ -83,6 +83,8 @@ Other decisions in the plan:
 - **Validate only the new keys.** Do not parse a whole entry into a Java class and write it back. `StudyAssets` keeps unknown client fields on purpose, and a Gson round trip drops them.
 - **No DAC rule for assets.** Models and workspaces are not requestable in the Data Library (`isRowSelectable` is false). Access management on an asset is information only, so `validateDacRequirement` does not apply.
 - **Keep `Workspace.access` for now.** It stays as a deprecated free-text field until the team decides how to treat existing values. See the open questions.
+- **Authoring is in scope.** The request puts authoring out of scope only for Datasets. To make the fields "storable", submitters need a form to enter them, so ticket 5 is necessary.
+- **Model data use is entered by hand.** A model does not get its data use from its `trainedOnDatasets`. The submitter enters it in the registration form.
 
 ### Module design for asset data use
 
@@ -127,7 +129,7 @@ Callers:
 | `StudyAssetService` | `withSummaries(key, findAssetList(...))` |
 | `SchemaFromStudy` (registration GET) | `withSummaries(key, findAssetList(...))` |
 
-The registration GET is a fourth reader that the first plan did not list. It is also the source of the summaries that clients send back. `DatasetRegistrationSchemaV1Builder` and `SchemaFromStudy` are made with `new` in `DatasetResource` and `StudyResource`, so ticket 4 must pass the injected module to them. The module depends on `TranslationUtil`, which `OntologyService.translateDataUseSummary` calls. Tests use the Testcontainers database in `DAOTestHelper` with `ontology_index` rows, and need no port.
+The registration GET (`SchemaFromStudy`) also reads these lists. It is also the source of the summaries that clients send back. `DatasetRegistrationSchemaV1Builder` and `SchemaFromStudy` are made with `new` in `DatasetResource` and `StudyResource`, so ticket 4 must pass the injected module to them. The module depends on `TranslationUtil`, which `OntologyService.translateDataUseSummary` calls. Tests use the Testcontainers database in `DAOTestHelper` with `ontology_index` rows, and need no port.
 
 ## Tickets
 
@@ -136,7 +138,7 @@ The plan has 8 tickets: 4 in consent and 4 in duos-ui. Each estimate includes te
 | # | Repo | Title | Scope | Approx. lines | Depends on |
 | --- | --- | --- | --- | --- | --- |
 | 1 | consent | Validate data use and access management on model and workspace entries | Add the write side of `AssetDataUse` (`prepare`). It validates `dataUse` and `accessManagement` on each `models` and `workspaces` entry and removes `dataUseSummary`. Call it from `StudyRegistrationRequestValidator` and `RegistrationRequestMapper.promotedAsset`. Use `ConsentGroup.AccessManagement` where it is now. | 300 | None |
-| 2 | consent | Document the new asset fields in OpenAPI | Add `dataUse`, `accessManagement` and `dataUseSummary` to `AiModel.yaml` and `Workspace.yaml`. Reference the existing `DataUse` and `DataUseSummary` schemas. | 150 | None |
+| 2 | consent | Document the new asset fields in OpenAPI | Add a reusable schema for the `DataUse` object, moved out of `paths/datasetByIdDataUse.yaml`. Add a `DataUseSummary` schema that uses the existing term schema in `DataUse.yaml`. Add `dataUse`, `accessManagement` and `dataUseSummary` to `AiModel.yaml` and `Workspace.yaml`. | 250 | None |
 | 3 | consent | Index the data use summary for models and workspaces | Add the read side of `AssetDataUse` (`withSummaries`) and its `@Provides @Singleton` provider in `ConsentModule`. Call it from `ElasticSearchService.toStudyTerm`, so that each entry that has a `dataUse` gets a `dataUseSummary`. Check the `dataset` index mapping and update it if it is not dynamic. | 300 | 1 |
 | 4 | consent | Return the data use summary from the study asset endpoints | Share the enrichment from ticket 3 with `StudyAssetService`, so that `/assets/models` and `/assets/workspaces` return the same shape as the index. Also use it in SchemaFromStudy, which the registration GET uses, and pass the module through DatasetRegistrationSchemaV1Builder. | 300 | 3 |
 | 5 | duos-ui | Enter data use and access management for models and workspaces | Add the new fields to the `AiModel` and `Workspace` types. Add an access management select and the existing data use editor to the `AiModelList` and `WorkspaceList` forms. If the diff goes above 500 lines, split it into one ticket for each asset type. | 500 | 1, 2 |
@@ -144,16 +146,13 @@ The plan has 8 tickets: 4 in consent and 4 in duos-ui. Each estimate includes te
 | 7 | duos-ui | Filter models and workspaces by data use and access management | Add access management and data use filters to the Models and Workspaces tabs in `dataLibraryFilterConfig.ts` and the client-side `matchesModelFilters` and `matchesWorkspaceFilters`. | 350 | 6 |
 | 8 | both | Retire the free-text workspace access field | Apply the team decision on `Workspace.access`: map, hide or remove the old values. Remove the old column and filter. | 150 | 6, team decision |
 
-Total: about 2,450 lines.
+Total: about 2,550 lines.
 
 ## Risks and open questions
 
-The team must answer questions 2 and 4 before ticket 5 starts. Question 3 is decided.
+The team must answer questions 1 and 2 before ticket 5 starts.
 
-1. **Authoring is in scope.** The request puts authoring out of scope only for Datasets. To make the fields "storable", submitters need a form to enter them, so ticket 5 is necessary.
-2. **Existing `Workspace.access` values.** Do we map them to the enum, show them read-only, or drop them? Free text cannot map to the enum without a manual review.
-3. **Model data use from training datasets (decided).** A model has `trainedOnDatasets`. Decided: a model does not get its data use from those datasets. The submitter enters it by hand in the registration form.
-4. **Secondary terms for models.** The `DataUse` object includes `aiLlmUse`. Product must confirm which secondary terms make sense for a model and for a workspace.
-5. **Index mapping.** Consent code does not set an explicit mapping for the `dataset` index. If the index is dynamic, the new fields need no change. If not, ticket 3 must update the mapping and run a reindex.
-6. **Validation of old studies.** Old entries have no `dataUse`. The validator must accept a missing value, so that an edit to an old study does not fail.
-7. **Index size.** Each dataset document repeats its study's assets. A study with many datasets and many models stores each summary many times. The extra size is small, but we must confirm it on a large study.
+1. **Existing `Workspace.access` values.** Do we map them to the enum, show them read-only, or drop them? Free text cannot map to the enum without a manual review.
+2. **Secondary terms for models.** The `DataUse` object includes `aiLlmUse`. Product must confirm which secondary terms make sense for a model and for a workspace.
+3. **Index mapping.** Consent code does not set an explicit mapping for the `dataset` index. If the index is dynamic, the new fields need no change. If not, ticket 3 must update the mapping and run a reindex.
+4. **Index size.** Each dataset document repeats its study's assets. A study with many datasets and many models stores each summary many times. The extra size is small, but we must confirm it on a large study.
