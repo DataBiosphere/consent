@@ -125,13 +125,26 @@ class ElectionDAOTest extends DAOTestHelper {
             datasetId);
     Integer otherCollection =
         createDataAccessElection(otherDar.getReferenceId(), datasetId).getElectionId();
+    // Another DAR in the same collection, such as the parent of a progress report.
+    String siblingReferenceId =
+        darCollectionDAO
+            .findDARCollectionByCollectionId(dar.getCollectionId())
+            .getDars()
+            .keySet()
+            .stream()
+            .filter(id -> !id.equals(referenceId))
+            .findFirst()
+            .orElseThrow();
+    Integer sibling = createDataAccessElection(siblingReferenceId, datasetId).getElectionId();
 
-    assertEquals(2, electionDAO.cancelOpenElectionsByCollectionId(dar.getCollectionId()));
+    assertEquals(3, electionDAO.cancelOpenElectionsByCollectionId(dar.getCollectionId()));
 
     assertEquals(
         ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(openAccess).getStatus());
     assertEquals(
         ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(openRp).getStatus());
+    assertEquals(
+        ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(sibling).getStatus());
     assertEquals(
         ElectionStatus.CLOSED.getValue(), electionDAO.findElectionById(closed).getStatus());
     assertEquals(

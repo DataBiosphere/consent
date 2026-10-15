@@ -66,6 +66,14 @@ post:
         application/json:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
+    409:
+      description: |
+        Conflict. The collection already has a submitted closeout, or another request was
+        changing the collection at the same time. The second case can be retried.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     429:
       description: Too Many Requests - rate limit exceeded
       content:
