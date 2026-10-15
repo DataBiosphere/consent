@@ -16,6 +16,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -78,6 +80,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -85,7 +88,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @Mock private Jdbi jdbi;
-  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private VoteDAO voteDAO;
@@ -171,6 +174,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
+    dataAccessRequestDAO = TransactionMocks.dataAccessRequestDAO();
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
     when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(ruleDAO);
@@ -820,6 +824,22 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void automaticApprovalRejectsSubmittedCloseoutUnderLock() {
+    DataAccessRequest dar = makeDAR();
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
+    Dataset dataset = makeDataset();
+    when(dataAccessRequestDAO.hasSubmittedCloseout(dar.getCollectionId())).thenReturn(true);
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request));
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(dar.getCollectionId());
+    verify(electionDAO, never()).insertElection(any(), any(), any(), any(), any());
+  }
+
+  @Test
   void testOpenElectionAndApprove() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
@@ -938,6 +958,21 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
 
     Optional<Vote> appliedVote = serviceSpy.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isEmpty());
+  }
+
+  @Test
+  void testApplyRuleSkipsDatasetWhenCollectionWasClosedOut() {
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    Dataset datasetGru = makeDataset();
+    DataAccessRequest darHmb = makeDAR();
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    doThrow(new ConsentConflictException("Cannot act on a closed out collection."))
+        .when(serviceSpy)
+        .openElectionAndApprove(any(), any(), any(), any(), any());
+
+    // Returning empty instead of throwing lets triggerDACRuleSettings notify earlier approvals.
+    assertTrue(serviceSpy.applyRule(rule, datasetGru, darHmb, request).isEmpty());
   }
 
   @Test

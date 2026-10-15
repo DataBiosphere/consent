@@ -13,7 +13,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -632,28 +631,34 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
-    sourceCollection
-        .getDars()
-        .values()
-        .forEach(
-            (d) -> {
-              Date now = new Date();
-              DataAccessRequestData newData =
-                  new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
-              newData.setStatus(null);
-              newData.setReferenceId(d.getReferenceId());
-              daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
-              dataAccessRequestDAO.updateDataByReferenceId(
-                  d.getReferenceId(), d.getUserId(), null, now, newData, null);
-            });
+    Integer collectionId = sourceCollection.getDarCollectionId();
+    dataAccessRequestDAO.inTransaction(
+        dao -> {
+          // Reverting to drafts nulls every submission_date, which would undo a closeout.
+          CollectionLocks.lockOpenCollection(dao, collectionId);
+          sourceCollection
+              .getDars()
+              .values()
+              .forEach(
+                  (d) -> {
+                    Date now = new Date();
+                    DataAccessRequestData newData =
+                        new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                    newData.setStatus(null);
+                    newData.setReferenceId(d.getReferenceId());
+                    daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                    dataAccessRequestDAO.updateDataByReferenceId(
+                        d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                  });
+          return null;
+        });
 
     // get updated collection
-    sourceCollection =
-        this.darCollectionDAO.findDARCollectionByCollectionId(
-            sourceCollection.getDarCollectionId());
+    DarCollection updatedCollection =
+        this.darCollectionDAO.findDARCollectionByCollectionId(collectionId);
 
     return this.processDraftAsSummary(
-        new ArrayList<>(sourceCollection.getDars().values()).getFirst());
+        new ArrayList<>(updatedCollection.getDars().values()).getFirst());
   }
 
   /**
@@ -803,6 +808,20 @@ public class DarCollectionService implements ConsentLogger {
     if (role != UserRoles.CHAIRPERSON && role != UserRoles.RESEARCHER) {
       throw new ForbiddenException(CANCEL_ROLE_ERROR);
     }
+    if (role == UserRoles.RESEARCHER
+        && !collection.getDars().isEmpty()
+        && !user.getUserId().equals(collection.getCreateUserId())) {
+      throw new NotFoundException();
+    }
+    return dataAccessRequestDAO.inTransaction(
+        dao -> {
+          CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
+          return cancelDarCollectionByRoleInTransaction(user, collection, role);
+        });
+  }
+
+  private DarCollection cancelDarCollectionByRoleInTransaction(
+      User user, DarCollection collection, UserRoles role) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn(
@@ -956,12 +975,16 @@ public class DarCollectionService implements ConsentLogger {
    * @return The updated DarCollection
    */
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
-      throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
+      throws BadRequestException, ForbiddenException, ConsentConflictException {
     DataAccessRequest dar = validateElectionCreation(user, collection);
     if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =
-            collectionServiceDAO.createElectionsForDarByUser(user, dar);
+            dataAccessRequestDAO.inTransaction(
+                dao -> {
+                  CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
+                  return collectionServiceDAO.createElectionsForDarByUser(user, dar);
+                });
         if (createdElectionReferenceIds.isEmpty()) {
           var e =
               new IllegalStateException(
@@ -982,6 +1005,9 @@ public class DarCollectionService implements ConsentLogger {
               e);
         }
         return getByCollectionId(user, collection.getDarCollectionId());
+      } catch (ConsentConflictException e) {
+        // A closed out collection is an expected rejection, not an error to alert on.
+        throw e;
       } catch (Exception e) {
         logException(
             "Exception creating elections and votes for collection: %s"
@@ -1014,8 +1040,12 @@ public class DarCollectionService implements ConsentLogger {
       return;
     }
 
-    // Create elections and votes for auto-open DACs
-    createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+    dataAccessRequestDAO.inTransaction(
+        dao -> {
+          CollectionLocks.lockOpenCollection(dao, collectionId);
+          createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+          return null;
+        });
   }
 
   /** Sends notification messages for a new DAR collection. */
@@ -1456,8 +1486,22 @@ public class DarCollectionService implements ConsentLogger {
 
   private void approveDataAccessRequestBySigningOfficial(
       User signingOfficial, DataAccessRequest dar, ContainerRequest request) {
+    // Reject a user who can't approve before taking the lock, so they get a 403, not a 409.
     validateSigningOfficialApproval(signingOfficial, dar);
-    dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
+    dataAccessRequestDAO.inTransaction(
+        dao -> {
+          // An approval lets DAC rules open elections, which a closed out collection rejects.
+          // Validate the row again under the lock, so two approvals can't both pass.
+          CollectionLocks.lockOpenCollection(dao, dar.getCollectionId());
+          DataAccessRequest locked = dao.findByReferenceId(dar.getReferenceId());
+          if (locked == null) {
+            throw new NotFoundException(
+                "Data access request %s not found".formatted(dar.getReferenceId()));
+          }
+          validateSigningOfficialApproval(signingOfficial, locked);
+          dao.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
+          return null;
+        });
     User researcher = userDAO.findUserById(dar.getUserId());
     List<Integer> datasetIds = dar.getDatasetIds();
     if (!dar.getIsCloseoutProgressReport() && !dar.getHasDMI()) {

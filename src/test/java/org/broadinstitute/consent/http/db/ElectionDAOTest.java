@@ -102,6 +102,55 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testCancelOpenElectionsByCollectionId() {
+    Dataset dataset = createDataset();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequest otherDar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDatasetId();
+    Integer openAccess = createDataAccessElection(referenceId, datasetId).getElectionId();
+    // A legacy RP election, which a closeout cancels too
+    Integer openRp =
+        electionDAO.insertElection(
+            "RP", ElectionStatus.OPEN.getValue(), new Date(), referenceId, datasetId);
+    Integer closed =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
+    Integer otherCollection =
+        createDataAccessElection(otherDar.getReferenceId(), datasetId).getElectionId();
+    // Another DAR in the same collection, such as the parent of a progress report.
+    String siblingReferenceId =
+        darCollectionDAO
+            .findDARCollectionByCollectionId(dar.getCollectionId())
+            .getDars()
+            .keySet()
+            .stream()
+            .filter(id -> !id.equals(referenceId))
+            .findFirst()
+            .orElseThrow();
+    Integer sibling = createDataAccessElection(siblingReferenceId, datasetId).getElectionId();
+
+    assertEquals(3, electionDAO.cancelOpenElectionsByCollectionId(dar.getCollectionId()));
+
+    assertEquals(
+        ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(openAccess).getStatus());
+    assertEquals(
+        ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(openRp).getStatus());
+    assertEquals(
+        ElectionStatus.CANCELED.getValue(), electionDAO.findElectionById(sibling).getStatus());
+    assertEquals(
+        ElectionStatus.CLOSED.getValue(), electionDAO.findElectionById(closed).getStatus());
+    assertEquals(
+        ElectionStatus.OPEN.getValue(), electionDAO.findElectionById(otherCollection).getStatus());
+    // Canceled like a chair cancel, so the collection still shows what the closeout ended.
+    assertFalse(electionDAO.findElectionById(openAccess).getArchived());
+  }
+
+  @Test
   void testFindElectionsByReferenceIds() {
     Dataset dataset = createDataset();
     DataAccessRequest dar1 = createDataAccessRequestV3();

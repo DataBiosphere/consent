@@ -61,16 +61,8 @@ Keep this file updated as new patterns emerge.
 
 ## Collection Closeouts
 
-Closeout progress reports automatically include all datasets from submitted requests in the
-collection, including datasets omitted from later progress reports. The API ignores the submitted
-dataset selection for a closeout. Dataset registration approval and dataset-dependent collaboration or ethics documents are not
-required to terminate existing grants. Submission terminates collection grants immediately, without
-waiting for signing official approval or DAC acknowledgement. Closed out collections cannot be
-renewed through another progress report.
-
-The duos-ui closeout form must display the full collection dataset list without removal controls.
-
-Closeout submission locks the collection row and rechecks for submitted closeouts
-before insertion, retaining the lock until commit.
-Only a progress report (non-null `parent_id`) can close out a collection, and progress reports are
-never drafts. Original DAR submissions that carry a closeout supplement are rejected.
+Only a progress report (non-null `parent_id`) can close out a collection; original DAR submissions
+that carry a closeout supplement are rejected. Closeout submission, resubmit, signing official
+approval, and changes to a collection's elections and votes take the same collection row lock and
+reject a closed out collection after acquiring it. The endpoint contract is in
+`src/main/resources/assets/paths/progressReport.yaml`; don't restate it here.

@@ -40,6 +40,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Dac;
@@ -395,23 +396,26 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
-      // Prevent creation if there are open DataAccess elections for the parent DAR
-      List<Election> openElections =
-          dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
-      boolean hasOpenDataAccessElections =
-          openElections.stream()
-              .anyMatch(
-                  election ->
-                      election
-                          .getElectionType()
-                          .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
-      if (hasOpenDataAccessElections) {
-        throw new BadRequestException(
-            "Cannot create a progress report for a DAR with an open election: "
-                + parentDar.getReferenceId());
-      }
       DataAccessRequest payload =
           DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
+      // Prevent creation if there are open DataAccess elections for the parent DAR. A closeout
+      // cancels the collection's open elections instead.
+      if (!payload.getIsCloseoutProgressReport()) {
+        List<Election> openElections =
+            dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
+        boolean hasOpenDataAccessElections =
+            openElections.stream()
+                .anyMatch(
+                    election ->
+                        election
+                            .getElectionType()
+                            .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+        if (hasOpenDataAccessElections) {
+          throw new BadRequestException(
+              "Cannot create a progress report for a DAR with an open election: "
+                  + parentDar.getReferenceId());
+        }
+      }
       DataAccessRequest progressReport =
           createProgressReportWithDocuments(
               user,
@@ -438,6 +442,11 @@ public class DataAccessRequestResource extends Resource {
       // This service method knows how to distinguish between a DAR and a Progress Report.
       darCollectionService.createElectionsForNewDarCollection(collectionId);
       darCollectionService.sendNewDARCollectionMessage(collectionId);
+    } catch (ConsentConflictException e) {
+      // A closeout committed after this submission. Nothing may be opened on the collection.
+      logWarn(
+          "Skipping new DAR processing for collection id: %s: %s"
+              .formatted(collectionId, e.getMessage()));
     } catch (Exception e) {
       // non-fatal exception
       logCaughtEmailException(collectionId, e);

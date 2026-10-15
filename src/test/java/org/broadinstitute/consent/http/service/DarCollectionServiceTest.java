@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -28,7 +29,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -95,6 +95,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -108,7 +109,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock private DarCollectionServiceDAO darCollectionServiceDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
-  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private EmailService emailService;
   @Mock private VoteDAO voteDAO;
   @Mock private UserDAO userDAO;
@@ -121,6 +122,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
+    dataAccessRequestDAO = TransactionMocks.dataAccessRequestDAO();
     when(jdbi.onDemand(DarCollectionDAO.class)).thenReturn(darCollectionDAO);
     when(jdbi.onDemand(DarCollectionSummaryDAO.class)).thenReturn(darCollectionSummaryDAO);
     when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
@@ -176,6 +178,28 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(firstReferenceId);
     verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(secondReferenceId);
+  }
+
+  @Test
+  void testUpdateCollectionToDraftStatusRejectsClosedOutCollection() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(7);
+    sourceCollection.addDar(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(7)).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateCollectionToDraftStatus(sourceCollection));
+
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(7);
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(7);
+    verify(dataAccessRequestDAO, never())
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(daaDAO, never()).deleteDarDatasetDaaSnapshotsByReferenceId(any());
   }
 
   @Test
@@ -584,6 +608,51 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void closedOutCollectionCannotBeReopenedOrCancelled() {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DarCollection collection = createMockCollections().getFirst();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId("synthetic-original-dar");
+    dar.setDatasetIds(List.of(10));
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
+    when(dataAccessRequestDAO.hasSubmittedCloseout(collection.getDarCollectionId()))
+        .thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createElectionsForDarCollection(chair, collection));
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.cancelDarCollectionByRole(chair, collection, UserRoles.CHAIRPERSON));
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
+  @Test
+  void electionCreationChecksCloseoutUnderLock() {
+    User chair = new User();
+    chair.setChairpersonRoleWithDAC(1);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(10));
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(datasetDAO.findDatasetIdsByDacIds(List.of(1))).thenReturn(List.of(10));
+    when(dataAccessRequestDAO.hasSubmittedCloseout(collection.getDarCollectionId()))
+        .thenReturn(true);
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createElectionsForDarCollection(chair, collection));
+    // The closeout check runs once, after the lock.
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(collection.getDarCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(collection.getDarCollectionId());
+    verify(dataAccessRequestDAO).hasSubmittedCloseout(collection.getDarCollectionId());
+    verify(darCollectionServiceDAO, never()).createElectionsForDarByUser(any(), any());
+  }
+
+  @Test
   void testCreateElectionsForDarCollection() throws Exception {
     User user = new User();
     user.setEmail("email");
@@ -704,7 +773,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() throws Exception {
+  void testCreateElectionsForDarCollectionAsChairOfGoverningDacIsAllowed() {
     User user = new User();
     user.setUserId(1);
     user.setEmail("email");
@@ -771,6 +840,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         ForbiddenException.class,
         () -> service.approveDarCollection(notASigningOfficial, collection, request));
+    // Rejected before the collection lock is taken.
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
   @Test
@@ -792,6 +863,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         ConsentConflictException.class,
         () -> service.approveDarCollection(signingOfficial, collection, request));
+    // Rejected before the collection lock is taken.
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
   @Test
@@ -816,6 +889,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         ForbiddenException.class,
         () -> service.approveDarCollection(signingOfficial, collection, request));
+    // Rejected before the collection lock is taken.
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
   @Test
@@ -836,6 +911,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setData(darData);
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
 
     assertDoesNotThrow(() -> service.approveDarCollection(signingOfficial, collection, request));
   }
@@ -860,6 +936,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     DarCollection collection = new DarCollection();
     collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
 
     doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
@@ -892,6 +969,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     DarCollection collection = new DarCollection();
     collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
 
     doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
@@ -923,6 +1001,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         ForbiddenException.class,
         () -> service.approveDarCollection(signingOfficial, collection, request));
+    // Rejected before the collection lock is taken.
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
   @Test
@@ -949,11 +1029,61 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> service.approveDarCollection(signingOfficial, collection, request));
+    // Rejected before the collection lock is taken.
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
   @Test
-  void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed()
-      throws SQLException {
+  void testApproveCollectionRejectsClosedOutCollectionUnderLock() {
+    User signingOfficial = new User();
+    signingOfficial.setEmail("so@example.com");
+    signingOfficial.setUserId(2);
+    DataAccessRequest dar = makeDarAwaitingApprovalBy(signingOfficial);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(dar.getCollectionId())).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(signingOfficial, collection, request));
+
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
+    order.verify(dataAccessRequestDAO).hasSubmittedCloseout(dar.getCollectionId());
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+    verifyNoInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testApproveCollectionReturnsNotFoundWhenDarIsDeletedBeforeTheLock() {
+    User signingOfficial = new User();
+    signingOfficial.setEmail("so@example.com");
+    signingOfficial.setUserId(2);
+    DataAccessRequest dar = makeDarAwaitingApprovalBy(signingOfficial);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(null);
+
+    assertThrows(
+        NotFoundException.class,
+        () -> service.approveDarCollection(signingOfficial, collection, request));
+
+    verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  private static DataAccessRequest makeDarAwaitingApprovalBy(User signingOfficial) {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setRequiresSOApproval(true);
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
+    dar.setData(darData);
+    return dar;
+  }
+
+  @Test
+  void testCreateElectionsForDarCollection_Chairperson_SO_Approval_Not_Needed() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -1009,7 +1139,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() throws SQLException {
+  void testCreateElectionsForDarCollection_Chairperson_With_SO_Approval() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);

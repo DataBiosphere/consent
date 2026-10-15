@@ -479,7 +479,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testPostCloseoutReturnsAllDatasetsWithoutCreatingElections() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     mockProgressReportUserAndParentDar(parentDar);
-    mockNoOpenProgressReportElections(parentDar);
     DataAccessRequest closeout = generateDataAccessRequest();
     closeout.setParentId(parentDar.getId());
     closeout.setDatasetIds(List.of(1, 2, 3));
@@ -502,6 +501,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(List.of(1.0, 2.0, 3.0), ((Map<?, ?>) response.getEntity()).get("datasetIds"));
     }
     verify(darCollectionService, never()).createElectionsForNewDarCollection(any());
+    // A closeout cancels open elections rather than being rejected by them.
+    verify(dataAccessRequestService, never()).findOpenElectionsByReferenceId(any());
   }
 
   @Test
@@ -550,7 +551,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String invalidDar = "{\"projectTitle\": \"test\", \"datasetIds\": \"invalid\"}";
     DataAccessRequest parentDar = generateDataAccessRequest();
     mockProgressReportUserAndParentDar(parentDar);
-    mockNoOpenProgressReportElections(parentDar);
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 

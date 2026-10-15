@@ -58,7 +58,9 @@ import org.jdbi.v3.core.Jdbi;
 
 public class VoteService implements ConsentLogger {
 
+  /** SQL states for a deadlock, a lock wait that timed out, and a serialization failure. */
   private final UserDAO userDAO;
+
   private final DacDAO dacDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
@@ -168,9 +170,22 @@ public class VoteService implements ConsentLogger {
   public List<Vote> updateVotesWithValue(
       List<Vote> votes, boolean voteValue, String rationale, User user)
       throws IllegalArgumentException {
-    validateVotesCanUpdate(votes);
+    List<Vote> updatedVotes;
     try {
-      List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+      updatedVotes =
+          dataAccessRequestDAO.inTransaction(
+              dao -> {
+                lockVoteCollections(votes, dao);
+                validateVotesCanUpdate(votes);
+                return voteServiceDAO.updateVotesWithValue(votes, voteValue, rationale);
+              });
+    } catch (ConsentConflictException e) {
+      throw e;
+    } catch (Exception e) {
+      CollectionLocks.throwIfLockFailure(e);
+      throw new IllegalArgumentException("Unable to update election votes.", e);
+    }
+    try {
       if (voteValue) {
         try {
           sendDatasetApprovalNotifications(updatedVotes, user);
@@ -584,16 +599,53 @@ public class VoteService implements ConsentLogger {
    */
   public List<Vote> updateRationaleByVoteIds(List<Integer> voteIds, String rationale)
       throws ConsentConflictException {
-    List<Vote> votes = voteDAO.findVotesByIds(voteIds);
-    validateVotesCanUpdate(votes);
-    voteDAO.updateRationaleByVoteIds(voteIds, rationale);
-    return findVotesByIds(voteIds);
+    try {
+      return dataAccessRequestDAO.inTransaction(
+          dao -> {
+            List<Vote> votes = voteDAO.findVotesByIds(voteIds);
+            lockVoteCollections(votes, dao);
+            validateVotesCanUpdate(votes);
+            voteDAO.updateRationaleByVoteIds(voteIds, rationale);
+            return findVotesByIds(voteIds);
+          });
+    } catch (ConsentConflictException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
+  }
+
+  /**
+   * Locks the votes' collections. The elections read here only find the collections: another
+   * request may close or cancel them while this one waits, so validation reads them again.
+   */
+  private void lockVoteCollections(List<Vote> votes, DataAccessRequestDAO dao) {
+    List<String> referenceIds =
+        electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList()).stream()
+            .map(Election::getReferenceId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    if (!referenceIds.isEmpty()) {
+      dao.lockCollectionsForReferenceIds(referenceIds);
+    }
   }
 
   @VisibleForTesting
   protected void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
     List<Election> elections =
         electionDAO.findElectionsByIds(votes.stream().map(Vote::getElectionId).toList());
+    List<String> referenceIds =
+        elections.stream()
+            .map(Election::getReferenceId)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    if (!referenceIds.isEmpty()
+        && dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(referenceIds)) {
+      throw new ConsentConflictException("Cannot vote on a closed out collection.");
+    }
 
     // If there are any DataAccess elections in a non-open state, throw an error
     List<Election> nonOpenAccessElections =

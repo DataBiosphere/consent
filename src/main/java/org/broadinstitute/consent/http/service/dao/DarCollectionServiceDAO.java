@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -42,17 +41,12 @@ public class DarCollectionServiceDAO {
   /// @param user The User initiating new elections for a data access request
   /// @param dar The DataAccessRequest
   /// @return List of reference ids for which a DAR election was created
-  public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
-      throws SQLException {
+  public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar) {
     List<String> createdElectionReferenceIds = new ArrayList<>();
     List<Integer> actionableDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
 
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          // By default, new connections are set to auto-commit which breaks our rollback strategy.
-          // Turn that off for this connection. This will not affect existing or new connections and
-          // only applies to the current one in this handle.
-          handle.getConnection().setAutoCommit(false);
           List<Update> inserts = new ArrayList<>();
           // For each Dataset in each DAR, :
           //    1. Archive existing, non-open, Elections
@@ -112,7 +106,6 @@ public class DarCollectionServiceDAO {
                     }
                   });
           inserts.forEach(Update::execute);
-          handle.commit();
         });
     return createdElectionReferenceIds;
   }

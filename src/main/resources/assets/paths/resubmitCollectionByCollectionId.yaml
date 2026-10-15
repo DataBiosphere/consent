@@ -22,6 +22,8 @@ put:
       description: Bad Request (dar collection is not canceled)
     404:
       description: Not Found
+    409:
+      description: Conflict. A collection with a submitted closeout cannot be resubmitted.
     429:
       description: Too Many Requests - rate limit exceeded
       content:
