@@ -360,9 +360,8 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   private void validateDatasetsApprovedForParent(
-      DataAccessRequest progressReport, DataAccessRequest parentDar) {
-    Set<Integer> darDatasetIds =
-        dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
+      DataAccessRequestDAO dao, DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    Set<Integer> darDatasetIds = dao.findDatasetApprovalsByDar(parentDar.getReferenceId());
     if (!darDatasetIds.containsAll(progressReport.getDatasetIds())) {
       throw new BadRequestException(
           "Progress report can only be created for approved datasets in the parent DAR");
@@ -390,6 +389,9 @@ public class DataAccessRequestService implements ConsentLogger {
       // The resource checks this before uploading documents. Check again under the collection
       // lock, which election creation also takes, so an election opened since then is not missed.
       validateParentHasNoOpenDataAccessElections(transactionDAOs.electionDAO(), parentDar);
+      // After the closeout check: the approvals query finds nothing once a collection is closed
+      // out, which would otherwise turn that 409 into a 400.
+      validateDatasetsApprovedForParent(transactionalDarDAO, progressReport, parentDar);
     }
     Integer progressReportId =
         transactionalDarDAO.insertProgressReport(
@@ -583,7 +585,8 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Progress report can only be created for datasets in the parent DAR");
     }
-    validateDatasetsApprovedForParent(progressReport, parentDar);
+    // Approval of the parent's datasets is checked under the collection lock, in
+    // insertProgressReport.
     if (!progressReport.getHasDMI()) {
       hasAcknowledgedRequiredDaas(progressReport);
     }
