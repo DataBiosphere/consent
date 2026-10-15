@@ -29,7 +29,9 @@ final class CollectionLocks {
    */
   static void throwIfLockFailure(Exception e) {
     for (Throwable t = e; t != null; t = t.getCause()) {
+      // Set.of rejects null lookups, and a driver may leave the SQLState unset.
       if (t instanceof SQLException sqlException
+          && sqlException.getSQLState() != null
           && LOCK_FAILURE_STATES.contains(sqlException.getSQLState())) {
         throw new ConsentConflictException(
             "The collection is being changed by another request. Try again.");

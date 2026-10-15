@@ -929,6 +929,30 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .insertProgressReport(any(), any(), any(), any(), any(), any());
   }
 
+  @Test
+  void createProgressReportReturnsBadRequestForStatementFailureWithoutSqlState() {
+    mockTransactionalDaos();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    doThrow(
+            new UnableToExecuteStatementException(
+                "insert", new SQLException("synthetic failure without SQLState"), null))
+        .when(dataAccessRequestDAO)
+        .lockCollection(parentDar.getCollectionId());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> service.createProgressReport(user, progressReport, parentDar, request));
+  }
+
   private User createRequestingUser() {
     User requestingUser = new User(1, "requestor@test.com", "Requestor", FIXED_DATE, roles);
     requestingUser.setInstitutionId(1);
