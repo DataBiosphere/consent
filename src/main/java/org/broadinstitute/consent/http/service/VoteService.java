@@ -264,7 +264,10 @@ public class VoteService implements ConsentLogger {
                     .map(
                         d ->
                             new DatasetMailDTO(
-                                d.getName(), d.getDatasetIdentifier(), getDataLocationUrl(d)))
+                                d.getDatasetId(),
+                                d.getName(),
+                                d.getDatasetIdentifier(),
+                                getDataLocationUrl(d)))
                     .toList();
 
             // Get all Data Use translations, distinctly in the case that there are several with the
@@ -420,6 +423,7 @@ public class VoteService implements ConsentLogger {
                 .computeIfAbsent(approvedDataset.getDacId(), d -> new HashSet<>())
                 .add(
                     new DatasetMailDTO(
+                        approvedDataset.getDatasetId(),
                         approvedDataset.getName(),
                         approvedDataset.getDatasetIdentifier(),
                         getDataLocationUrl(approvedDataset))));
@@ -564,7 +568,10 @@ public class VoteService implements ConsentLogger {
               .map(
                   d ->
                       new DatasetMailDTO(
-                          d.getName(), d.getDatasetIdentifier(), getDataLocationUrl(d)))
+                          d.getDatasetId(),
+                          d.getName(),
+                          d.getDatasetIdentifier(),
+                          getDataLocationUrl(d)))
               .toList();
       try {
         sendDataCustodianApprovalMessage(

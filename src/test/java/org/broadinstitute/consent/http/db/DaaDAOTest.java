@@ -226,6 +226,26 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testWasDaaLinkedToDac() {
+    Integer userId = createUserId();
+    Integer creatorDacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer adopterDacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer otherDacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer oldDaaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), creatorDacId);
+    Integer newDaaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), adopterDacId);
+    daaDAO.createDacDaaRelation(adopterDacId, oldDaaId, userId);
+    daaDAO.createDacDaaRelation(adopterDacId, newDaaId, userId);
+
+    assertFalse(daaDAO.isDaaLinkedToDac(adopterDacId, oldDaaId));
+    assertTrue(daaDAO.wasDaaLinkedToDac(adopterDacId, oldDaaId));
+    assertTrue(daaDAO.wasDaaLinkedToDac(creatorDacId, oldDaaId));
+    assertFalse(daaDAO.wasDaaLinkedToDac(otherDacId, oldDaaId));
+  }
+
+  @Test
   void testCreateDaaDacRelation() {
     Integer userId = createUserId();
     Integer dacId =

@@ -291,7 +291,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   /** Helper method to generate a DarCollection with a Dac, a Dataset, and a create User */
   private DarCollection setUpDarCollectionWithDacDataset() {
     User user = createUser();
-    String darCode = "DAR-" + randomInt(100, 1000);
+    String darCode = uniqueDarCode();
     DacAndDataset dacAndDataset = createDacAndDataset();
     DacAndDataset dacAndDataset2 = createDacAndDataset();
     Integer collectionId =

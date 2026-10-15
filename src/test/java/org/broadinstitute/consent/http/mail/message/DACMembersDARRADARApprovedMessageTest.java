@@ -18,7 +18,7 @@ class DACMembersDARRADARApprovedMessageTest extends AbstractMailMessageTest {
     User researcherUser = new User();
     researcherUser.setDisplayName("Researcher");
     List<DatasetMailDTO> datasetMailDTOs =
-        List.of(new DatasetMailDTO("dataset-name", "DUOS-00001", null));
+        List.of(new DatasetMailDTO(1, "dataset-name", "DUOS-00001", null));
 
     var message =
         new DACMembersDARRADARApprovedMessage(
@@ -48,7 +48,7 @@ class DACMembersDARRADARApprovedMessageTest extends AbstractMailMessageTest {
     researcherUser.setEmail("researcher@example.org");
     String datasetName = "dataset-name";
     List<DatasetMailDTO> datasetMailDTOs =
-        List.of(new DatasetMailDTO(datasetName, "DUOS-00001", null));
+        List.of(new DatasetMailDTO(1, datasetName, "DUOS-00001", null));
     String serverUrl = "http://localhost:8080/";
     String darCode = "DAR-0001";
     String referenceId = "abcd-12345";

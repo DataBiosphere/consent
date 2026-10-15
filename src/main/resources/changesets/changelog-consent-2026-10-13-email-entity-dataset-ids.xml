@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <!-- The datasets an email concerned when it was sent; null where the email did not record them. -->
+  <changeSet id="changelog-consent-2026-10-13-email-entity-dataset-ids" author="kmarete">
+    <addColumn tableName="email_entity">
+      <column name="dataset_ids" type="integer[]"/>
+    </addColumn>
+  </changeSet>
+</databaseChangeLog>

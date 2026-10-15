@@ -399,12 +399,20 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("oldDaaId") Integer oldDaaId,
       @PathParam("newDaaName") String newDaaName) {
     try {
-      daaService.findById(oldDaaId);
-      User user = duosUser.getUser();
+      if (!duosUser.getUser().verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId)) {
+        return Response.status(Status.FORBIDDEN).build();
+      }
       Dac dac = dacService.findById(dacId);
-      String dacName = dac.getName();
-      daaService.sendNewDaaEmails(user, oldDaaId, dacName, newDaaName);
-      return Response.ok().build();
+      daaService.findById(oldDaaId);
+      if (!daaService.isOrWasDaaLinkedToDac(dacId, oldDaaId)) {
+        throw new BadRequestException("The given DAC is not associated with the provided DAA.");
+      }
+      logInfo(
+          "User %d is sending new DAA emails for DAA %d"
+              .formatted(duosUser.getUser().getUserId(), oldDaaId));
+      return Response.ok()
+          .entity(daaService.sendNewDaaEmails(oldDaaId, dac.getName(), newDaaName))
+          .build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

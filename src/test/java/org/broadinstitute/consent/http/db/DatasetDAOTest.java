@@ -1701,7 +1701,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollectionWithDatasets(
       int dacId, User user, List<Dataset> datasets) {
-    String darCode = "DAR-" + randomInt(1, 999999);
+    String darCode = uniqueDarCode();
     Integer collectionId =
         darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     IntStream.range(0, datasets.size())
@@ -1716,7 +1716,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   private DarCollection createDarCollectionWithDatasetsNewModel(User user, List<Dataset> datasets) {
-    String darCode = "DAR-" + randomInt(1, 999999);
+    String darCode = uniqueDarCode();
     Date now = new Date();
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), now);
     List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).toList();
