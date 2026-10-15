@@ -109,13 +109,10 @@ class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDatasetId();
     Integer openAccess = createDataAccessElection(referenceId, datasetId).getElectionId();
+    // A legacy RP election, which a closeout cancels too
     Integer openRp =
         electionDAO.insertElection(
-            ElectionType.RP.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            referenceId,
-            datasetId);
+            "RP", ElectionStatus.OPEN.getValue(), new Date(), referenceId, datasetId);
     Integer closed =
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
