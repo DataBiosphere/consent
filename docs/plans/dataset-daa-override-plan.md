@@ -99,6 +99,8 @@ Add the column and carry it through the model and the DAO layer.
 
   PostgreSQL reads the old row in every `SET` expression, so the `CASE` sees the old `dac_id`.
 
+  Today only admin study conversion (`DatasetService.convertDatasetToStudy`) changes the DAC through these two methods. `updateDatasetByDatasetId` takes a `dacId`, but its callers pass the dataset's current DAC. Add the `CASE` to both methods, so that a future caller that changes the DAC also clears the override.
+
 **Tests:**
 - New datasets have no override.
 - The override can be set and cleared.
@@ -148,7 +150,7 @@ Then cover each workflow that reads these queries. consent has no integration te
 - `DaaResource.createDaaForDac` (`POST /api/daa/dac/{dacId}`): add the query parameter `setAsDacDefault`, default `true`.
 - Pass the parameter through `DaaService.createDaaWithFso` to `DaaServiceDAO.createDaaWithFso`, which calls `createDacDaaRelation` only when the value is `true`. The DAA still records the DAC as its `initial_dac_id`, so it counts as one of the DAC's DAAs (decision 1).
 - OpenAPI: document the parameter.
-- Do not change the second upload path. `FileStorageObjectService` calls `DaaService.createAndLinkDaaIdForDac` for a DAC document upload, and that call also makes the new DAA the DAC default. The picker (Task 8) does not use this path.
+- Do not change the second upload path. `FileStorageObjectService` calls `DaaService.createAndLinkDaaIdForDac` for a DAC document upload, and that call also makes the new DAA the DAC default. In duos-ui, `UploadDaaModal` uses this path when `isLiveUpload` is `true`, which is its default. The picker (Task 8) must not use this path, so it sets `isLiveUpload={false}`.
 
 **Tests:** with `false`, the DAA exists and is linked by `initial_dac_id` but not by `dac_daa`. With no parameter, the behavior is the same as today.
 
@@ -176,7 +178,7 @@ Implementation:
   1. For a non-null `daaId`, return 404 if the DAA does not exist.
   2. Return 400 if the DAA does not belong to the dataset's DAC (decision 1). Skip this check when `daaId` already is the dataset's override (a kept pin, decision 9), so that a re-save of the same pin succeeds.
   3. Update the row with the DAC id from the request.
-  4. If no row changed, the dataset moved to another DAC after the resource checked it. An admin or a chair can move a dataset (for example, through `PUT /api/dataset/v3/{datasetId}`). Throw `ConsentConflictException` (409).
+  4. If no row changed, the dataset moved to another DAC after the resource checked it. Only admin actions move a dataset: study conversion, DAC delete, and DAC externalize (Task 1). No chair can move a dataset, and `PUT /api/dataset/v3/{datasetId}` rejects a DAC change. Throw `ConsentConflictException` (409).
   5. Otherwise, return the fresh dataset. No reindex is needed, because the search index does not hold the DAA.
 - OpenAPI: the two path files and the 409 response.
 
@@ -196,7 +198,7 @@ The DAA ownership check (step 2) and the update (step 3) are separate operations
   - `findEffectiveDaa(dataset, daas)`: the override if it is set, else the DAA whose `dacs` contains the dataset's DAC. If the override is set but missing from `daas`, return `undefined`. Do not fall back to the default, because the backend requires the override.
   - `getRequiredDaaIds(datasets, daas)`: unique ids, ascending.
   - `findDatasetsWithUnresolvedOverride(datasets, daas)`: the datasets whose override is set but missing from `daas`.
-- **Unresolved override.** `getRequiredDaaIds` cannot include a DAA that it cannot find, so a submit would fail the backend's exact-set check. `GET /api/daa` returns every DAA, so this happens only when the list is stale or did not load. When `findDatasetsWithUnresolvedOverride` is not empty:
+- **Unresolved override.** `getRequiredDaaIds` cannot include a DAA that it cannot find, so a submit would fail the backend's exact-set check. `GET /api/daa` returns every DAA, so this happens only when the list is stale or did not load. Run the check only after `DAA.getDaas()` succeeds. Before that, the list is empty, so every dataset with an override would show as unresolved. `ProgressReportDataAccessAgreements.tsx` already has a `loading` state. `DataAccessAgreements.tsx` has none, so add one. When the list has loaded and `findDatasetsWithUnresolvedOverride` is not empty:
   - `DataAccessAgreements.tsx` shows an error that names the datasets and asks the researcher to reload the page, and disables the Attest button. Save Draft stays available.
   - `ProgressReportDataAccessAgreements.tsx` shows the same error, and the progress report form does not submit.
 - Use the helpers in the four places that repeat the DAC-only rule:
@@ -212,6 +214,7 @@ The DAA ownership check (step 2) and the update (step 3) are separate operations
 - Each of the four components shows or sends the override DAA.
 - `SelectableDatasets` for a submitted DAR still shows the snapshot DAA, also when the dataset now has a different override.
 - With an unresolved override, the DAR form shows the error and disables Attest, and the progress report form shows the error and does not submit.
+- While `DAA.getDaas()` is still loading, neither form shows the unresolved-override error.
 
 This task must deploy before Task 5 (see the task summary). If overrides could exist while the old form is live, the form would send the DAC default, and every DAR on an overridden dataset would fail validation.
 
@@ -233,7 +236,7 @@ This task must deploy before Task 5 (see the task summary). If overrides could e
   - The options always include the dataset's current override, also when it is no longer one of the DAC's DAAs (a kept pin, decision 9). Show such an option with its file name and "(no longer a DAC DAA)". If the DAA is missing from the loaded list, show it as "DAA-<id>". In both cases, keep it selected.
   - Everyone else sees the current DAA name as text, with "(DAC default)" when the dataset follows the default.
   - If the save fails, show an error and keep the old value. On a 409, also tell the chair to reload the page, because the dataset moved to another DAC.
-- `DacProfile.tsx`: load `DAA.getDaas()` with the DAC and its datasets, and add a "Data Access Agreement" column to the datasets grid. This needs some setup in the page:
+- `DacProfile.tsx`: load `DAA.getDaas()` in `loadProfile`, with the DAC and its datasets. The page embeds `EditDac`, where a chair can change or upload the DAC default. `handleEditClose` calls `loadProfile` again, so the list of DAAs, the "(current DAC default)" label, and the "Follow the DAC default" name stay current. Add a "Data Access Agreement" column to the datasets grid. This needs some setup in the page:
   - a chair check: `user.roles` has `Chairperson` for this `dacId`. Do not include admins, because the backend allows chairs only.
   - a `handleDatasetChange` handler that merges the returned dataset into its row.
   - the full `dataset` object on each grid row.
@@ -249,16 +252,17 @@ This task must deploy before Task 5 (see the task summary). If overrides could e
   - a dataset pinned to a shared DAA that the DAC no longer uses shows that DAA as selected, with "(no longer a DAC DAA)".
   - a failed save keeps the old value; a 409 shows the reload message.
 - The page: the column is present, a chair can edit, a member cannot.
+- The page: after `EditDac` closes with a new DAC default, the cell shows the new default in its labels and options.
 
 ### Task 8: Upload a new DAA from the picker (duos-ui)
 
 - `DAA.createDaa(file, dacId, options?)`: add an optional third argument, `{ setAsDacDefault?: boolean }`, that defaults to `true`. When the value is `false`, add `?setAsDacDefault=false` to the URL. The two existing calls in `EditDac.tsx` stay as they are and keep the current behavior.
-- `DatasetDaaCell`: add the option "Upload a new DAA…". It opens the existing `UploadDaaModal`. On save, the cell does three things:
+- `DatasetDaaCell`: add the option "Upload a new DAA…". It opens the existing `UploadDaaModal` with `isLiveUpload={false}`, as `EditDac` does. The default (`true`) uploads the file at once through `/api/document/DAC/{dacId}`, which makes it the DAC default for every dataset that follows the default (see Task 3). On save, the cell does three things:
   1. It uploads the file with `setAsDacDefault: false`.
   2. It adds the new DAA to the page's list.
   3. It pins the dataset to the new DAA.
 
-**Tests:** the URL parameter; a call with two arguments sends no parameter; the upload does not make the DAA the default, and then pins it to the dataset; a failed upload shows an error.
+**Tests:** the URL parameter; a call with two arguments sends no parameter; the cell opens the modal with `isLiveUpload={false}`, and a dropped file sends no request until save; the upload does not make the DAA the default, and then pins it to the dataset; a failed upload shows an error.
 
 ### Task 9: Show override-only DAAs on the SO DAA assignment page (duos-ui)
 
@@ -293,9 +297,9 @@ When a chair clears an override, the dataset requires the DAC default again, wit
 
 ## Out of scope (follow-up)
 
-**Notices for overrides.** This plan sends no email when an override is set, changed, or cleared (decision 10). A follow-up ticket can add one. It can model the email on the DAC default change flow (`POST /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}`, `DaaService.sendNewDaaEmails`).
+**Notices for overrides.** This plan sends no email when an override is set, changed, or cleared (decision 10). A follow-up ticket can add one.
 
-**The DAC default change email and pinned datasets.** When a DAC changes its default, duos-ui calls `sendNewDaaEmails`. The email goes to every researcher who has the old DAA, and to their SOs. It says that the new DAA applies to all future requests to the DAC. That is not true for a dataset that stays pinned to the old DAA (decision 9). This plan does not change the email. A follow-up ticket can change its text, or name the datasets that keep the old DAA.
+**The unused DAC default change email.** consent has an endpoint for an email about a new DAC default (`POST /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}`, `DaaService.sendNewDaaEmails`). duos-ui defines `DAA.sendDaaUpdateEmails` for it, but only a test calls it. `EditDac` changes the default through `DAA.addDaaToDac` or `DAA.createDaa`, and neither sends email. So today no email goes out when a DAC changes its default. If a follow-up ticket starts to send it, the text must change. It says that the new DAA applies to all future requests to the DAC, and that is not true for a dataset that stays pinned to the old DAA (decision 9).
 
 `DaaDAO.findByDarReferenceId` (the DAAs of a DAR, used by `DataAccessRequestResource`) returns the *current* DAAs of the DAR's datasets, not the DAAs that the researcher acknowledged at submit. This is already true today when a DAC changes its default DAA. Overrides make it happen more often. The `dar_dataset_daa_snapshot` table already holds the acknowledged DAAs, so a follow-up ticket can read from it. This plan changes the query only so that it resolves overrides (Task 2).
 
