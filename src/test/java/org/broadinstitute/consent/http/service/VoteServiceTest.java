@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -65,6 +66,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -1296,7 +1298,7 @@ class VoteServiceTest extends AbstractTestHelper {
           () -> service.updateVotesWithValue(votes, true, "synthetic rationale", voter));
       verify(voteServiceDAO, never()).updateVotesWithValue(any(), anyBoolean(), any());
     }
-    org.mockito.InOrder order = org.mockito.Mockito.inOrder(electionDAO, dataAccessRequestDAO);
+    InOrder order = inOrder(electionDAO, dataAccessRequestDAO);
     order.verify(electionDAO).findElectionsByIds(List.of(10));
     order.verify(dataAccessRequestDAO).lockCollectionsForReferenceIds(List.of("synthetic-dar"));
     order.verify(electionDAO).findElectionsByIds(List.of(10));

@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
@@ -51,6 +53,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
@@ -90,6 +93,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
@@ -636,7 +640,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
     // Datasets are read once for validation, then the closeout check and the authoritative
     // dataset list are read under the lock.
-    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).findDatasetIdsByCollectionId(parentDar.getCollectionId());
     order.verify(dataAccessRequestDAO).lockCollection(parentDar.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parentDar.getCollectionId());
@@ -749,10 +753,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .thenReturn(List.of(3));
     when(dataAccessRequestDAO.hasSubmittedCloseout(parent.getCollectionId())).thenReturn(true);
     assertThrows(
-        BadRequestException.class,
+        ConsentConflictException.class,
         () -> service.createProgressReport(user, closeout, parent, request));
     // The closeout check runs once, under the lock.
-    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(parent.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
     verify(dataAccessRequestDAO).hasSubmittedCloseout(parent.getCollectionId());
@@ -794,7 +798,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
       assertNotNull(service.createProgressReport(user, progressReport, parentDar, request));
       verify(dataAccessRequestDAO).insertProgressReport(any(), any(), any(), any(), any(), any());
     }
-    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO, electionDAO);
+    InOrder order = inOrder(dataAccessRequestDAO, electionDAO);
     order.verify(dataAccessRequestDAO).lockCollection(parentDar.getCollectionId());
     order.verify(electionDAO).findOpenElectionsByReferenceIds(List.of(parentDar.getReferenceId()));
     verify(electionDAO, never()).cancelOpenElectionsByCollectionId(any());
@@ -823,7 +827,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
     // A closeout ends the collection's open elections instead of being blocked by them.
     verify(electionDAO, never()).findOpenElectionsByReferenceIds(any());
-    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO, electionDAO);
+    InOrder order = inOrder(dataAccessRequestDAO, electionDAO);
     order.verify(dataAccessRequestDAO).lockCollection(parent.getCollectionId());
     order
         .verify(dataAccessRequestDAO)
@@ -847,7 +851,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.hasSubmittedCloseout(parentDar.getCollectionId())).thenReturn(true);
 
     assertThrows(
-        BadRequestException.class,
+        ConsentConflictException.class,
         () -> service.createProgressReport(user, progressReport, parentDar, request));
     verify(dataAccessRequestDAO, never())
         .insertProgressReport(any(), any(), any(), any(), any(), any());
@@ -896,6 +900,33 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> service.createProgressReport(user, progressReport, parentDar, request));
+  }
+
+  @Test
+  void createProgressReportReturnsConflictWhenTheLockCannotBeTaken() {
+    mockTransactionalDaos();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    // lock_timeout expired while another request held the collection lock.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("canceling statement due to lock timeout", "55P03"), null))
+        .when(dataAccessRequestDAO)
+        .lockCollection(parentDar.getCollectionId());
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.createProgressReport(user, progressReport, parentDar, request));
+    verify(dataAccessRequestDAO, never())
+        .insertProgressReport(any(), any(), any(), any(), any(), any());
   }
 
   private User createRequestingUser() {

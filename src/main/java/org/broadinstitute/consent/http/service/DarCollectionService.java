@@ -1009,6 +1009,9 @@ public class DarCollectionService implements ConsentLogger {
               e);
         }
         return getByCollectionId(user, collection.getDarCollectionId());
+      } catch (ConsentConflictException e) {
+        // A closed out collection is an expected rejection, not an error to alert on.
+        throw e;
       } catch (Exception e) {
         logException(
             "Exception creating elections and votes for collection: %s"
@@ -1479,13 +1482,19 @@ public class DarCollectionService implements ConsentLogger {
 
   private void approveDataAccessRequestBySigningOfficial(
       User signingOfficial, DataAccessRequest dar, ContainerRequest request) {
+    // Reject a user who can't approve before taking the lock, so they get a 403, not a 409.
+    validateSigningOfficialApproval(signingOfficial, dar);
     dataAccessRequestDAO.inTransaction(
         dao -> {
           // An approval lets DAC rules open elections, which a closed out collection rejects.
-          // Validate the row as it is under the lock, so two approvals can't both pass.
+          // Validate the row again under the lock, so two approvals can't both pass.
           CollectionLocks.lockOpenCollection(dao, dar.getCollectionId());
-          validateSigningOfficialApproval(
-              signingOfficial, dao.findByReferenceId(dar.getReferenceId()));
+          DataAccessRequest locked = dao.findByReferenceId(dar.getReferenceId());
+          if (locked == null) {
+            throw new NotFoundException(
+                "Data access request %s not found".formatted(dar.getReferenceId()));
+          }
+          validateSigningOfficialApproval(signingOfficial, locked);
           dao.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
           return null;
         });

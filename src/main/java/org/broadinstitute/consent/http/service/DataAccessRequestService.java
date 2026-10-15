@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
@@ -337,7 +338,8 @@ public class DataAccessRequestService implements ConsentLogger {
           transactionDAOs ->
               insertProgressReport(
                   user, progressReport, parentDar, userIsPreAuthedForDaas, transactionDAOs));
-    } catch (JdbiException _) {
+    } catch (JdbiException e) {
+      CollectionLocks.throwIfLockFailure(e);
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
@@ -378,7 +380,8 @@ public class DataAccessRequestService implements ConsentLogger {
     String referenceId = progressReport.getReferenceId();
     transactionalDarDAO.lockCollection(parentDar.getCollectionId());
     if (transactionalDarDAO.hasSubmittedCloseout(parentDar.getCollectionId())) {
-      throw new BadRequestException("Cannot create a progress report for a closed out collection");
+      throw new ConsentConflictException(
+          "Cannot create a progress report for a closed out collection");
     }
     boolean closeout = progressReport.getIsCloseoutProgressReport();
     if (closeout) {

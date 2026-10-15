@@ -16,6 +16,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -79,6 +80,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -826,7 +828,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = makeDAR();
     when(dataAccessRequestDAO.hasSubmittedCloseout(dar.getCollectionId())).thenReturn(true);
     assertThrows(
-        org.broadinstitute.consent.http.exceptions.ConsentConflictException.class,
+        ConsentConflictException.class,
         () ->
             service.openElectionAndApprove(
                 makeDacAutomationRuleGRU(),
@@ -834,7 +836,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
                 dar,
                 makeDataset(),
                 request));
-    org.mockito.InOrder order = org.mockito.Mockito.inOrder(dataAccessRequestDAO);
+    InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(dar.getCollectionId());
     verify(electionDAO, never()).insertElection(any(), any(), any(), any(), any());
