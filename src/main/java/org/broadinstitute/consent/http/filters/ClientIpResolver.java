@@ -72,8 +72,7 @@ public class ClientIpResolver {
     for (String entry : trustedProxies) {
       String pattern = entry.strip();
       String[] parts = pattern.split("/", 2);
-      if (!InetAddresses.isInetAddress(parts[0])
-          || (parts.length == 2 && !PREFIX.matcher(parts[1]).matches())) {
+      if (!isLiteral(parts[0]) || (parts.length == 2 && !PREFIX.matcher(parts[1]).matches())) {
         throw new IllegalArgumentException("Not an IP literal or CIDR range: " + entry);
       }
       this.trustedProxies.add(pattern);
@@ -120,10 +119,27 @@ public class ClientIpResolver {
     return trustedProxies.test(address);
   }
 
+  /**
+   * Parses an IP literal, or returns null. Jetty's {@code getRemoteAddr()} puts brackets around an
+   * IPv6 peer ({@code [0:0:0:0:0:0:0:1]}), which Guava rejects, so one pair is removed first.
+   */
   private static InetAddress parse(String value) {
-    if (value == null || !InetAddresses.isInetAddress(value)) {
+    if (value == null) {
       return null;
     }
-    return InetAddresses.forString(value);
+    String literal =
+        value.length() > 1 && value.startsWith("[") && value.endsWith("]")
+            ? value.substring(1, value.length() - 1)
+            : value;
+    return isLiteral(literal) ? InetAddresses.forString(literal) : null;
+  }
+
+  /**
+   * True for an IP literal without a scope. Guava accepts a scoped IPv6 literal such as {@code
+   * fe80::1%eth0}, but {@code forString} then throws for an unknown interface name. A scoped
+   * (link-local) address is never a real client behind a load balancer, so it is rejected.
+   */
+  private static boolean isLiteral(String value) {
+    return value.indexOf('%') < 0 && InetAddresses.isInetAddress(value);
   }
 }
