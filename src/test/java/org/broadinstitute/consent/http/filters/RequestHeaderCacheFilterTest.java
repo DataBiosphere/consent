@@ -72,45 +72,16 @@ class RequestHeaderCacheFilterTest {
     verify(claimsCache, never()).loadCache(any(), any());
   }
 
-  @Test
-  void testFilterDoesNotCacheOnOpenStatusRoute() throws Exception {
-    stubPath("/status");
-
-    filter.filter(requestContext);
-
-    verify(claimsCache, never()).loadCache(any(), any());
-  }
-
-  @Test
-  void testFilterDoesNotCacheOnMatrixParameterRoute() throws Exception {
-    stubPath("/api;x=1/user/me");
-
-    filter.filter(requestContext);
-
-    verify(claimsCache, never()).loadCache(any(), any());
-  }
-
-  @Test
-  void testFilterDoesNotCacheOnSwaggerRoute() throws Exception {
-    stubPath("/swagger/index.html");
-
-    filter.filter(requestContext);
-
-    verify(claimsCache, never()).loadCache(any(), any());
-  }
-
-  @Test
-  void testFilterDoesNotCacheOnRootRoute() throws Exception {
-    stubPath("/");
-
-    filter.filter(requestContext);
-
-    verify(claimsCache, never()).loadCache(any(), any());
-  }
-
-  @Test
-  void testFilterDoesNotCacheOnApiLookalikeRoute() throws Exception {
-    stubPath("/apidocs/index.html");
+  /**
+   * None of these routes is the authenticated /api route, so the filter must not fill the cache: an
+   * open route (/status, /), a route the sidecar does not authenticate (/swagger), a matrix
+   * parameter on the first segment (/api;x=1/...), and an /api lookalike prefix (/apidocs).
+   */
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"/status", "/", "/swagger/index.html", "/api;x=1/user/me", "/apidocs/index.html"})
+  void testFilterDoesNotCacheOnUnauthenticatedRoute(String rawPath) throws Exception {
+    stubPath(rawPath);
 
     filter.filter(requestContext);
 
