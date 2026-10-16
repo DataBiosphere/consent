@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriInfo;
+import java.net.URI;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ class RequestHeaderCacheFilterTest {
 
   @Mock private ClaimsCache claimsCache;
   @Mock private ContainerRequestContext requestContext;
+  @Mock private UriInfo uriInfo;
   @Mock private MultivaluedMap<String, String> headers;
 
   private RequestHeaderCacheFilter filter;
@@ -28,12 +31,19 @@ class RequestHeaderCacheFilterTest {
   @BeforeEach
   void setUp() {
     filter = new RequestHeaderCacheFilter(claimsCache);
-    when(requestContext.getHeaders()).thenReturn(headers);
+  }
+
+  /** Point the request at the given raw path, as the sidecar would see it. */
+  private void stubPath(String rawPath) {
+    when(requestContext.getUriInfo()).thenReturn(uriInfo);
+    when(uriInfo.getRequestUri()).thenReturn(URI.create("https://consent.local" + rawPath));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"Bearer test-token", "bearer test-token", "BEARER test-token"})
-  void testFilterStripsBeaererPrefixCaseInsensitively(String authHeader) throws Exception {
+  void testFilterStripsBearerPrefixCaseInsensitivelyOnApiRoute(String authHeader) throws Exception {
+    stubPath("/api/user/me");
+    when(requestContext.getHeaders()).thenReturn(headers);
     when(headers.getFirst(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
     filter.filter(requestContext);
@@ -42,7 +52,66 @@ class RequestHeaderCacheFilterTest {
   }
 
   @Test
-  void testFilterDoesNotCallLoadCacheWhenNoAuthorizationHeader() throws Exception {
+  void testFilterCachesOnBareApiRoute() throws Exception {
+    stubPath("/api");
+    when(requestContext.getHeaders()).thenReturn(headers);
+    when(headers.getFirst(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer test-token");
+
+    filter.filter(requestContext);
+
+    verify(claimsCache).loadCache("test-token", headers);
+  }
+
+  @Test
+  void testFilterDoesNotCallLoadCacheWhenNoAuthorizationHeaderOnApiRoute() throws Exception {
+    stubPath("/api/user/me");
+    when(requestContext.getHeaders()).thenReturn(headers);
+
+    filter.filter(requestContext);
+
+    verify(claimsCache, never()).loadCache(any(), any());
+  }
+
+  @Test
+  void testFilterDoesNotCacheOnOpenStatusRoute() throws Exception {
+    stubPath("/status");
+
+    filter.filter(requestContext);
+
+    verify(claimsCache, never()).loadCache(any(), any());
+  }
+
+  @Test
+  void testFilterDoesNotCacheOnMatrixParameterRoute() throws Exception {
+    stubPath("/api;x=1/user/me");
+
+    filter.filter(requestContext);
+
+    verify(claimsCache, never()).loadCache(any(), any());
+  }
+
+  @Test
+  void testFilterDoesNotCacheOnSwaggerRoute() throws Exception {
+    stubPath("/swagger/index.html");
+
+    filter.filter(requestContext);
+
+    verify(claimsCache, never()).loadCache(any(), any());
+  }
+
+  @Test
+  void testFilterDoesNotCacheOnRootRoute() throws Exception {
+    stubPath("/");
+
+    filter.filter(requestContext);
+
+    verify(claimsCache, never()).loadCache(any(), any());
+  }
+
+  @Test
+  void testFilterDoesNotCacheOnApiLookalikeRoute() throws Exception {
+    stubPath("/apidocs/index.html");
+
     filter.filter(requestContext);
 
     verify(claimsCache, never()).loadCache(any(), any());
