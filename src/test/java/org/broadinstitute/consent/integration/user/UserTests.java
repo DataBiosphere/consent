@@ -81,8 +81,8 @@ class UserTests extends ContainerTests {
    *
    * <p>Auth is performed by including the OAUTH2_CLAIM_* headers that the app's {@link
    * org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter} reads on an authenticated
-   * (/api) route and stores in {@link org.broadinstitute.consent.http.filters.ClaimsCache}, keyed by
-   * the Bearer token value. The auth filter then resolves the token → claims → user.
+   * (/api) route and stores in {@link org.broadinstitute.consent.http.filters.ClaimsCache}, keyed
+   * by the Bearer token value. The auth filter then resolves the token → claims → user.
    *
    * <p>The Sam {@code combinedState} stub email does not need to match the CI user email;
    * authentication resolves the DUOS user via {@code OAUTH2_CLAIM_email}, not the Sam response.
