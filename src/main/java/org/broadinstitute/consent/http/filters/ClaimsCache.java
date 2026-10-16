@@ -27,10 +27,13 @@ public class ClaimsCache {
   }
 
   /**
-   * Cache the claims of the first request that carries a token with an email claim. A request
-   * without one, such as a call to a public path that the proxy does not authenticate, stores
-   * nothing. Otherwise its empty entry would stay for the whole expiry window and fail every later
-   * authenticated request with the same token.
+   * Cache the claims of the first request that carries a token with an email claim.
+   *
+   * <p>{@link RequestHeaderCacheFilter} calls this only for requests on an authenticated route
+   * (/api), so claims from an open route can never enter the cache (DT-4316). This method keeps a
+   * second guard: a request whose claims have no email stores nothing. Otherwise its empty entry
+   * would stay for the whole expiry window and fail every later authenticated request with the same
+   * token.
    */
   public void loadCache(String token, MultivaluedMap<String, String> headers) {
     try {
