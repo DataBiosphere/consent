@@ -44,7 +44,7 @@ Nothing reads the tables yet. They give DT-4209 a stable key to hang DUOS identi
 | 7 | When do the rows become authoritative, and who owns it? | Deferred until after DT-4209. | **Jonathan Lawson** (ticket Q7) |
 | 8 | How does the DUOS team add biospecimens, and can that path send ids back? | Whatever tool they use must send each biospecimen's id back on edit, or every edit retires and recreates the rows. | **Confirm with Jonathan Lawson** before Task 3 deploys |
 | 9 | One generic asset table, or one per type? | One per type. The biospecimen fields share almost nothing with the others, and DT-4209 adds the cross-type catalog on top. | This plan |
-| 10 | Where does the conversion run? | A Liquibase changeset in SQL, following the 2026-09-02 promotion, so it runs once per environment with the deploy and needs no admin step. It locks `study_property` for its duration, because pods keep serving writes while Liquibase runs. | This plan |
+| 10 | Where does the conversion run? | A Liquibase changeset in SQL, following the 2026-09-02 promotion, so it runs once per environment with the deploy and needs no admin step. It runs in the write-frozen maintenance window described under [Rollback](#rollback); it also locks `study_property` for its duration, so a write the freeze misses waits for the conversion instead of racing it. | This plan |
 | 11 | When do API responses change type? | When Task 3 deploys, the asset endpoints and registration GET start returning integer ids for every study written from then on, and all studies after Task 6. The API-users notice goes out before Task 3's release and covers both steps. Task 4 documents `integer` or `string` in that release; Task 6 narrows it to `integer`. | This plan, per `CONTRIBUTING.md` "Breaking API changes" |
 
 ### Sync key
@@ -62,13 +62,13 @@ The server assigns the key. Alternatives considered and rejected:
 |---|---|---|---|---|
 | 1 | consent | Create the asset record tables and DAO | ~350 lines | Decision 1 |
 | 2 | duos-ui | Remove `biospecimenId` from the Data Library search fields | ~30 lines | — |
-| 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decisions 8 and 11; short-id count is zero |
+| 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decisions 8 and 11; short-id count is zero; id fields mapped in every environment |
 | 4 | consent | Document the asset id fields as `integer` or `string` in OpenAPI | ~100 lines | Ships in the same release as 3; DT-4299 merged |
 | 5 | duos-ui | Send server-assigned asset ids | ~250 lines | 3 deployed; DT-4302 merged |
 | 6 | consent | Convert existing registrations | ~400 lines | 3 deployed; Decision 5 |
 | 7 | duos-ui | Drop the position-based id fallback | ~100 lines | 6 run in production |
 
-Sizes include tests. Tasks are numbered in deploy order. **Task 2 deploys before Task 3**, because Task 3 starts indexing numeric biospecimen ids and a numeric field in the shared search query fails. **Task 3 deploys before Task 6 runs**, so no registration write can land after the conversion and leave an asset without a row.
+Sizes include tests. Tasks are numbered in deploy order. **Task 2 deploys before Task 3**, because Task 3 starts indexing numeric biospecimen ids and a numeric field in the shared search query fails. **The id fields are mapped explicitly before Task 3 deploys** (see Task 3), because until Task 6 runs the index holds numeric and string ids side by side. **Task 3 deploys before Task 6 runs**, so no registration write can land after the conversion and leave an asset without a row.
 
 ## Tasks
 
@@ -106,10 +106,48 @@ Add the storage. Nothing calls it yet.
 
 This is the core of the ticket.
 
-- Before deploy, count production elements whose `modelId`, `workspaceId` or `biospecimenId` is 1 to 10 digits, using the guarded CTE from [Task 6](#task-6-convert-existing-registrations-consent). No server ids exist yet, and the UI has only ever produced UUIDs, 13-digit `Date.now()` values and empty strings, so the expected count is zero. If it is not, stop and decide: once this task assigns row ids, a stale form holding such an id would update whichever asset has that row id.
+- Before deploy, count production elements whose `modelId`, `workspaceId` or `biospecimenId` is 1 to 10 digits. No server ids exist yet, and the UI has only ever produced UUIDs, 13-digit `Date.now()` values and empty strings, so the expected count is zero. If it is not, stop and decide: once this task assigns row ids, a stale form holding such an id would update whichever asset has that row id. The query reads promoted lists and lists still inside a legacy `assets` object, and filters each value's type in a `MATERIALIZED` CTE before any cast or `jsonb_each` call:
+
+  ```sql
+  WITH asset_rows AS MATERIALIZED (
+    SELECT lower(sp.key) AS key, sp.value::jsonb AS value
+    FROM study_property sp
+    WHERE lower(sp.key) IN ('models', 'workspaces', 'biospecimens', 'assets')
+      AND pg_input_is_valid(sp.value, 'jsonb')
+  ),
+  legacy_objects AS MATERIALIZED (
+    SELECT value FROM asset_rows
+    WHERE key = 'assets' AND jsonb_typeof(value) = 'object'
+  ),
+  legacy_lists AS MATERIALIZED (
+    SELECT lower(o.k) AS key, o.v AS value
+    FROM legacy_objects, jsonb_each(legacy_objects.value) AS o(k, v)
+  ),
+  lists AS MATERIALIZED (
+    SELECT key, value FROM asset_rows
+    WHERE key <> 'assets' AND jsonb_typeof(value) = 'array'
+    UNION ALL
+    SELECT key, value FROM legacy_lists
+    WHERE key IN ('models', 'workspaces', 'biospecimens') AND jsonb_typeof(value) = 'array'
+  ),
+  elements AS MATERIALIZED (
+    SELECT lists.key, e.element
+    FROM lists, jsonb_array_elements(lists.value) AS e(element)
+  )
+  SELECT key, count(*) AS short_ids
+  FROM elements
+  WHERE jsonb_typeof(element) = 'object'
+    AND coalesce(element ->> 'modelId', element ->> 'workspaceId', element ->> 'biospecimenId') ~ '^[0-9]{1,10}$'
+  GROUP BY key;
+  ```
+
+- Also before deploy, map the three id fields explicitly in every environment. The `dataset` index has no explicit mapping, and from this task until Task 6 runs it holds numeric ids for studies written since and string ids for the rest. If a new or rebuilt index first sees a numeric id, it maps the field as a number, and every dataset document whose study still has a UUID id fails to index. Add `study.assets.models.modelId`, `study.assets.workspaces.workspaceId` and `study.assets.biospecimens.biospecimenId` as `text` with a `keyword` subfield, the type dynamic mapping already gives a string, so existing queries behave the same:
+  - in an index template matching the `dataset` index, so a rebuilt index gets it;
+  - with `PUT dataset/_mapping` on each live index where a field is absent. Where a field is already numeric, the mapping cannot be changed in place: recreate the index from the template and reindex first.
+  - Record each environment's mapping before and after in the PR.
 
 - New `StudyAssetRecordSync`, a plain class like the composites in `service/dao`. `DatasetServiceDAO.insertDatasetRegistration` calls it after `executeInsertStudy`, and `updateStudy` calls it after `executeUpdateStudyReplaceProps`, with the same handle. A failure rolls back the whole registration write, as a dataset failure does.
-- On update, it first runs `SELECT study_id FROM study WHERE study_id = :studyId FOR UPDATE`, so two concurrent edits of one study run one after the other. Without the lock, one edit's retire cannot see the other's uncommitted inserts, and rows are left live with no entry.
+- On update, two concurrent edits of one study already run one after the other: `executeUpdateStudy` updates the `study` row before replacing the properties, and the second edit waits on that row lock until the first commits. The sync runs after that update in the same transaction, so it needs no lock of its own. A test pins the ordering, because moving the sync before the study update would let one edit's retire miss the other's uncommitted inserts and leave rows live with no entry.
 - For each type, it loads the study's live rows and used legacy keys, then reads the list the write just stored and applies this table to each entry in order. Each row can be claimed by at most one entry per write.
 
   | Incoming entry | Action |
@@ -135,7 +173,9 @@ This is the core of the ticket.
 - A UUID matching a live row's `legacy_key` updates that row.
 - Unknown client keys and non-object elements survive the write-back.
 - A sync failure rolls back the study and dataset writes.
-- Two concurrent updates of one study leave exactly one live row per entry of the last write.- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match. On an unconverted study it gives every entry a row, as Task 6 would.
+- Two concurrent updates of one study leave exactly one live row per entry of the last write.
+- A dataset document whose study has a UUID id and one whose study has an integer id both index against the explicit mapping.
+- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match. On an unconverted study it gives every entry a row, as Task 6 would.
 
 ### Task 4: Document the asset id fields as `integer` or `string` in OpenAPI (consent)
 
@@ -146,7 +186,7 @@ This is the core of the ticket.
 
 ### Task 5: Send server-assigned asset ids (duos-ui)
 
-- `src/types/model.ts`: `modelId`, `workspaceId` and `biospecimenId` become `number`, optional before the first save.
+- `src/types/model.ts`: `modelId`, `workspaceId` and `biospecimenId` become `number | string`, optional before the first save. Studies not written since Task 3 still return their client strings until Task 6 converts them; Task 7 narrows the type to `number`.
 - `AiModelAddEdit.tsx` and `WorkspaceAddEdit.tsx` stop generating ids. A new entry is sent without one; an edited entry keeps the id it was loaded with.
 - `AiModelList`, `WorkspaceList` and `BiospecimenList` key rows by `getItemKey`. An entry with no id yet (unsaved, or a biospecimen loaded before the conversion) gets a client-only key that is never sent.
 - `studyToDatasetSchemaSubmission` sends ids back unchanged, including biospecimens, which `BiospecimenList` passes through read-only.
@@ -199,9 +239,10 @@ This is the core of the ticket.
 ### Task 7: Drop the position-based id fallback (duos-ui)
 
 - `modelAsset.ts`, `workspaceAsset.ts` and `biospecimenAsset.ts` drop the `${studyId}-${index}` fallback.
+- `src/types/model.ts` narrows the three id fields from Task 5 to `number`, since every converted entry now has a row id.
 - The conversion leaves non-object elements in place without an id, so the three transforms skip any element that is not an object rather than rendering a row with an undefined id.
 
-**Tests** (vitest): rows use the numeric id, and a non-object element in the index response renders no row, for all three types.
+**Tests** (vitest): rows use the numeric id, the type check passes with the narrowed fields, and a non-object element in the index response renders no row, for all three types.
 
 ## Edge cases to cover in review
 
@@ -210,7 +251,7 @@ This is the core of the ticket.
 - A `Date.now()` id is a 13-digit number, outside the integer range. Task 3 checks the range before matching, and Task 6 never casts it.
 - An id copied from another study, or from a retired row, never updates that row. It creates a new row in the study being written.
 - A study is deleted: its rows go with it, by cascade.
-- Two concurrent edits of one study run one after the other, because Task 3 locks the study row. The last write wins, as it does for every other study property today.
+- Two concurrent edits of one study run one after the other, because the update writes the study row before the sync runs. The last write wins, as it does for every other study property today.
 - A registration write during the conversion waits on the `study_property` lock, then runs Task 3's sync against converted data.
 - The write-back must not touch any key except the id, including keys the backend does not know.
 
@@ -220,7 +261,7 @@ Before the production run of Task 6, restore a production snapshot to staging, r
 
 - compare each row field by field with the element it came from;
 - compare the Data Library's model, workspace and biospecimen tabs for a sample of studies, before and after, including a search on every tab;
-- read the `dataset` index mapping for `study.assets.*Id` in each environment, and record whether it is text or numeric;
+- read the `dataset` index mapping for `study.assets.*Id` in each environment, and confirm it is the explicit `text` mapping added before Task 3;
 - check that the report's skipped elements are all genuinely malformed.
 
 Zero unexplained differences is the gate for production.
@@ -231,8 +272,8 @@ Keep the tables in every case. They hold the only mapping from assigned ids to a
 
 - **Before Task 5 deploys:** revert Tasks 3 and 4 together. Ids already written into the JSON do no harm, because the old code treats ids as opaque strings.
 - **After Task 5 deploys:** revert Task 5 (and Task 7, if it shipped) first, so the UI generates ids and has its fallback again, then revert Tasks 3 and 4.
-- **Index mapping:** if any `study.assets.*Id` field is mapped as a number (checked in staging verification and again at rollback), a reverted UI's UUIDs would be rejected and those dataset documents would stop indexing. Before the reverted UI ships, recreate the `dataset` index with those fields mapped as `keyword`, reindex, and confirm that a workspace created from the reverted UI indexes.
-- **Restoring data:** the deploy that carries Task 6 runs in a maintenance window with every study write frozen (registration create and update, `patchStudyById` and `deleteStudyById`), drained before the backup and held until the post-conversion report is checked. At its start, back up `study_property` and the three asset tables in one consistent snapshot (one `pg_dump` run), since Liquibase runs the conversion with that deploy. A restore is valid only inside that window, because no study has been created, edited or deleted since the backup. Restore the four tables together or not at all; restoring the JSON alone leaves rows that no longer match it. After the window closes, recover with `syncStudy` over the current JSON instead of restoring. The snapshot predates the conversion, and Liquibase will not run the changeset again, so after a restore run `StudyAssetRecordSync.syncStudy` for every study, then reindex, before Task 7 is redeployed.
+- **Index mapping:** the explicit `text` mapping added before Task 3 accepts both a reverted UI's UUIDs and integer ids, so a rollback needs no index change. Confirm at rollback that each environment still has it, and that a workspace created from the reverted UI indexes.
+- **Restoring data:** the deploy that carries Task 6 runs in a maintenance window with every study write frozen (registration create and update, `patchStudyById`, `deleteStudyById`, and dataset deletes through `DELETE /api/dataset/{datasetId}`, since DT-4209's catalog references datasets too), drained before the backup and held until the post-conversion report is checked. At its start, back up `study_property` and the three asset tables in one consistent snapshot (one `pg_dump` run), since Liquibase runs the conversion with that deploy. A restore is valid only inside that window, because no study has been created, edited or deleted since the backup. Restore the four tables together or not at all; restoring the JSON alone leaves rows that no longer match it. Once DT-4209's catalog has shipped, the same `pg_dump` run includes `asset_catalog`, and the restore follows `asset-identifiers-plan.md` Rollback, since deleting the asset rows nulls the catalog's references. After the window closes, recover with `syncStudy` over the current JSON instead of restoring. The snapshot predates the conversion, and Liquibase will not run the changeset again, so after a restore run `StudyAssetRecordSync.syncStudy` for every study, then reindex, before Task 7 is redeployed.
 - **Redeploying after a rollback:** registrations created or edited while Task 3 was reverted changed their JSON without touching the rows. Redeploy Tasks 3 and 4, then run `syncStudy` for every study whose `create_date` or `update_date` is after the rollback (`insertStudy` leaves `update_date` null, so `update_date` alone misses new studies), and reindex.
 
 ## Out of scope (follow-up)
