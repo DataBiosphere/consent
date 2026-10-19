@@ -408,10 +408,9 @@ anchor. The registry's `navigable` property is false for masthead/hero and true 
 sections. Add stable DOM IDs to all types. Support short `navLabel` defaults/overrides and optional
 eyebrow copy separately from titles/subtitles.
 
-Use stable item IDs within each showcase for analytics and related-content references; the CI
-guard checks uniqueness. Hide related-workspace CTAs when the target item or section is absent or
-disabled. Richer resource/publication/program fields identified in the artifact review are optional
-typed fields, not an unrestricted metadata map.
+Use stable item IDs within each showcase for analytics; the CI guard checks uniqueness. Item
+fields are the Story 29 forms only (S1.1). The richer resource, publication and program fields and
+related-item links in the artifact review are excluded; adding any needs a product decision.
 
 Accept HTTPS URLs or same-origin internal paths beginning with one `/`. Reject `//host`, backslash
 variants, control characters, credentials, `javascript:`, `data:` and malformed encodings, in the CI
@@ -600,8 +599,8 @@ S1.1; the lookup feeds E3.
   - `all`: every public-eligible dataset, paged (`pageSize` default 100, maximum 200), for flagship
     full-catalog charts (S6.3). Use deterministic identifier ordering and a validated continuation
     cursor bound to the request filters; never offer an unbounded page or caller-supplied offset.
-  - `stats`: optional `scope` only; returns `studyCount` and `datasetCount` for the eligible datasets in
-    that scope (all public-eligible datasets without one) for the MVP hero (S1.1).
+  - `stats`: optional `scope` only; returns `studyCount` and `datasetCount` for the eligible
+    datasets in that scope (all public-eligible datasets without one) for the MVP hero (S1.1).
   A `section` parameter applies section-specific eligibility. Unknown modes, rankings or scope keys
   return 400. No-store cache headers; register in `ConsentModule`/`ConsentApplication`.
 - **Backend — hard limits:** reject JSON bodies over 64 KiB with 413 before deserialization, both
@@ -703,9 +702,9 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 
 - **Frontend:** implement `hero`, `latest-data-releases` and `open-access-datasets` as registry
   entries with matching config schemas. MVP hero shows live stats (studies and datasets in the
-  hero's configured `scope` from the S2.2 `stats` mode; tools from the config's enabled `featured-tools` and
-  `featured-workspaces` items), date-bounded announcements, CTA/onboarding links and optional
-  imagery. Preserve the observed desktop intro/onboarding/announcement hierarchy
+  hero's configured `scope` from the S2.2 `stats` mode; tools from the config's enabled
+  `featured-tools` and `featured-workspaces` items), date-bounded announcements, CTA/onboarding
+  links and optional imagery. Preserve the observed desktop intro/onboarding/announcement hierarchy
   and stacked mobile layout. Prefer a static decorative background for MVP. Carousel supports an
   explicit pause control, focus/hover pause, manual controls and reduced motion; inactive slides
   must leave both the tab order and accessibility tree. Use accessible consent tooltips rather than
@@ -728,10 +727,11 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 - **Frontend:** implement `featured-tools` and `featured-workspaces` with one shared resource-card
   primitive and separate registry entries. Fields: name, description, tags, optional thumbnail,
   launch URL and docs URL. Analysis apps allow at most one featured large card (CI guard).
-- **Frontend:** preserve the full-width featured app plus app grid and separate workspace shelf.
-  The artifact's publisher, difficulty, duration, related-item and clone/usage fields are excluded:
-  S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision. Use a validated external launch link rather than implying a
-  workspace-cloning API. Give every resource card an explicit accessible action. No Terra credentials or execution.
+- **Frontend:** preserve the full-width featured app plus app grid and separate workspace shelf. The
+  artifact's publisher, difficulty, duration, related-item and clone/usage fields are excluded: S1.1
+  limits item fields to the Story 29 forms; adding any other field needs a product decision. Use a
+  validated external launch link rather than implying a workspace-cloning API. Give every resource
+  card an explicit accessible action. No Terra credentials or execution.
 - **Acceptance/tests:** safe links open the intended resources, missing optional images have a
   stable layout, featured-card keyboard order is sensible, and two featured apps fail the guard.
 - **Dependencies/PR boundary:** S3.1 + S1.3.

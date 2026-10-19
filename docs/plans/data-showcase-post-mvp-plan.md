@@ -122,7 +122,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   types using E3's resource-card primitives and config schemas. Validate configured names/descriptions/tags/
   thumbnails/launch/docs URLs; add appropriate user-facing resource labels and empty states.
 - **Backend/frontend:** the artifact's version, runtime, environment, parameter-count, usage and
-  added-date fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision.
+  added-date fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other
+  field needs a product decision.
 - **Acceptance/tests:** each type independently supports config validation, item order, enabled/empty
   semantics, safe launch links and thumbnail alt handling. Test all three entries even if they
   share implementation. No execution, credential exchange or model hosting is implied by a card.
@@ -134,7 +135,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   approved icon/image and destination URL config schemas. Keep destinations explicit until the
   scoped-library decision is resolved; display only approved groupings.
 - **Backend/frontend:** preserve the research-area and initiative grid layouts. The artifact's
-  initiative groups, acronyms and availability badges are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision.
+  initiative groups, acronyms and availability badges are excluded. S1.1 limits item fields to the
+  Story 29 forms; adding any other field needs a product decision.
 - **Acceptance/tests:** group cards navigate correctly, internal filter links survive authentication,
   unsafe destinations fail both validators and public empty/disabled groups have no anchor.
 - **Dependencies/PR boundary:** E1/E3 patterns; independent of rollup implementation.
@@ -203,13 +205,12 @@ depend on E9 authoritative lifecycle events.
 #### S7.3 — Conference and education section family
 
 - **Backend/frontend:** implement `community-conference`, `where-else`, `training-workshops`,
-  `scholars-program`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference carries date/
-  timezone/location/description, optional past-event history and open-registration versus alert-signup
-  state. Where Else supports linked event tiles with optional date/location, reflecting the export;
-  a generic-links-only variant needs explicit product agreement. Program panels support Markdown
-  without raw HTML and CTA links; the artifact's structured lead/audience/deadline/focus facts and
-  session lists are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision. Workshops offer public signup and a private-training
-  request path (original Story 23). Preserve
+  `scholars-program`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference
+  carries dates with timezone, location, description and open-registration versus alert-signup
+  state. Where Else and the program panels carry a Markdown description (no raw HTML) and CTA links.
+  Workshops offer public signup and a private-training request path (original Story 23). S1.1 limits
+  item fields to the Story 29 forms, so the artifact's past-event history, event tiles, program
+  facts and session lists are excluded; adding any needs a product decision. Preserve
   season/year-only dates without inventing exact timestamps.
 - **Acceptance/tests:** explicit timezones render consistently; expired events do not claim upcoming
   registration. Alert signup requires S7.1/S7.2; inline workshop enrollment requires S7.4, while
@@ -394,7 +395,8 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
   rules and renderer together. Approved curated publications can launch before submission moderation;
   keep the prompt off until S10.2 is available.
 - **Backend/frontend:** the artifact's journal, authors, month, cited-dataset and related-workspace
-  fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision. Do not copy sample citations.
+  fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a
+  product decision. Do not copy sample citations.
 - **Acceptance/tests:** bounded citation/year validation, safe links, item ordering, no raw HTML,
   accessible cards and empty/disabled behavior. Publication presence alone does not substantiate
   a claimed clinical or program outcome.
