@@ -66,7 +66,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   and never rank on requests to ineligible datasets. Agree the threshold with privacy owners.
 - **Backend — performance:** start with bounded indexed queries computed per request; add short-lived
   caching or materialized rollups only if the ranking-cost experiment or production load justifies
-  it. Deterministic ties.
+  it. Deterministic ties. This replaces original Story 2's scheduled rollup job, cache and
+  invalidation path (S1.1 decision in the [contracts record](data-showcase-contracts.md)).
 - **Acceptance/tests:** fixed-clock data verifies time windows, duplicate requests, the minimum-count
   threshold, eligibility before ranking, scope filters, pins/exclusions, sparse counts, null
   participant values and tie order. No response contains request counts or requester identity.

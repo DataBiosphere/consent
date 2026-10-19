@@ -37,6 +37,7 @@ The delivery plan's proposals apply where none of these sources decides.
 | Tools count the items in enabled `featured-tools`, `new-workflow-tools`, `notebooks` and `ai-models`; workspaces are not tools | Decision |
 | Hero onboarding links to the workspaces shelf; a same-page link is hidden when its target section isn't visible | Original Story 18 |
 | Carousel: manual controls, keyboard access, reduced motion | Original Story 4; artifact review finding 2 |
+| Rankings, `stats` counts and charts are computed live on each request, not precomputed by a scheduled rollup job; caching or precomputation is added only if the ranking-cost experiment shows a need. Live results meet original Story 2's freshness goal | Decision; overrides original Story 2's rollup job, cache and invalidation path |
 | `latest-data-releases` is computed newest-first | Original Story 5 (release date descending) |
 | Its date: `dac_approval_date` for controlled datasets, `create_date` for open or external ones (the NewStudyDigest columns); no time window | Decision |
 | "New in DUOS" badge for datasets at most 30 days old (UTC dates) | Original Story 5 (badge); decision (window, label) |
