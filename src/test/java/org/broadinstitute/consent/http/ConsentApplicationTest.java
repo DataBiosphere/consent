@@ -121,6 +121,8 @@ class ConsentApplicationTest {
 
       invokeInitializeLiquibase(configuration);
 
+      verify(mockedLiquibase.constructed().getFirst())
+          .update(any(Contexts.class), any(LabelExpression.class));
       assertFalse(analyticsDuringUpdate.get());
     } finally {
       if (previous == null) {
