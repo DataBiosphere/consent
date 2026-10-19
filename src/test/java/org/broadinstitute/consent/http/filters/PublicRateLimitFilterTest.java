@@ -63,7 +63,8 @@ class PublicRateLimitFilterTest {
 
   private void mockPath(String path) {
     when(requestContext.getUriInfo()).thenReturn(uriInfo);
-    when(uriInfo.getPath()).thenReturn(path);
+    // The path as sent, still encoded; the segments are Jersey's decoded form of it.
+    when(uriInfo.getPath(false)).thenReturn(path);
     // Jersey's own parser, so the segments match what the filter gets at run time.
     when(uriInfo.getPathSegments()).thenReturn(UriComponent.decodePath(path, true));
   }
@@ -209,6 +210,21 @@ class PublicRateLimitFilterTest {
         .logWarn(
             "Showcase rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
                 + "path=showcase/datasets");
+  }
+
+  @Test
+  void testLogKeepsEncodedLineBreaksInThePath() {
+    // A decoded path would carry a real line break into the log message.
+    PublicRateLimitFilter filter = spy(buildFilter(1, 1, true));
+    mockRequest("showcase/datasets%0A%0Dforged", TRUSTED_PROXY, "192.0.2.1");
+
+    send(filter, 2);
+
+    verify(requestContext).abortWith(any());
+    verify(filter)
+        .logWarn(
+            "Showcase rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
+                + "path=showcase/datasets%0A%0Dforged");
   }
 
   @Test

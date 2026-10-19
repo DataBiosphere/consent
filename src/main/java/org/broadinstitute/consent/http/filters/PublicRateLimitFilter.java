@@ -32,8 +32,9 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
  *
  * <p>The key comes from {@link ClientIpResolver}. It believes the load balancer's {@code X-Real-IP}
  * only when the socket peer is a configured trusted proxy, so a direct caller cannot choose its own
- * key. Each 429 logs a warning with the key and its source, so the keying can be checked in a
- * deployed environment. The log is console only: a 429 is expected behavior, not an alert.
+ * key. Each 429 logs a warning with the key, its source and the encoded path, so the keying can be
+ * checked in a deployed environment. The log is console only: a 429 is expected behavior, not an
+ * alert.
  *
  * <p>Buckets live in-process, as in {@link RateLimitFilter}: each pod enforces {@code
  * requestsPerMinute / podCount}. The filter is {@code @PreMatching}, so it also counts requests to
@@ -84,7 +85,9 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
   @Override
   public void filter(ContainerRequestContext requestContext) {
     UriInfo uriInfo = requestContext.getUriInfo();
-    String path = uriInfo.getPath();
+    // Logged as the caller sent it (still encoded), so an encoded %0A or %0D stays visible in the
+    // log. Route matching uses the decoded segments instead.
+    String path = uriInfo.getPath(false);
     if (!isLimitedPath(uriInfo)) {
       return;
     }
