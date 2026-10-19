@@ -62,7 +62,7 @@ The server assigns the key. Alternatives considered and rejected:
 |---|---|---|---|---|
 | 1 | consent | Create the asset record tables and DAO | ~350 lines | Decision 1 |
 | 2 | duos-ui | Remove `biospecimenId` from the Data Library search fields | ~30 lines | — |
-| 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decisions 8 and 11 |
+| 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decisions 8 and 11; short-id count is zero |
 | 4 | consent | Make the asset id fields `integer` in OpenAPI | ~100 lines | Ships in the same release as 3; DT-4299 merged |
 | 5 | duos-ui | Send server-assigned asset ids | ~250 lines | 3 deployed; DT-4302 merged |
 | 6 | consent | Convert existing registrations | ~400 lines | 3 deployed; Decision 5 |
@@ -105,6 +105,8 @@ Add the storage. Nothing calls it yet.
 ### Task 3: Sync asset records on registration create and update (consent)
 
 This is the core of the ticket.
+
+- Before deploy, count production elements whose `modelId`, `workspaceId` or `biospecimenId` is 1 to 10 digits, using the guarded CTE from [Task 6](#task-6-convert-existing-registrations-consent). No server ids exist yet, and the UI has only ever produced UUIDs, 13-digit `Date.now()` values and empty strings, so the expected count is zero. If it is not, stop and decide: once this task assigns row ids, a stale form holding such an id would update whichever asset has that row id.
 
 - New `StudyAssetRecordSync`, a plain class like the composites in `service/dao`. `DatasetServiceDAO.insertDatasetRegistration` calls it after `executeInsertStudy`, and `updateStudy` calls it after `executeUpdateStudyReplaceProps`, with the same handle. A failure rolls back the whole registration write, as a dataset failure does.
 - On update, it first runs `SELECT study_id FROM study WHERE study_id = :studyId FOR UPDATE`, so two concurrent edits of one study run one after the other. Without the lock, one edit's retire cannot see the other's uncommitted inserts, and rows are left live with no entry.
@@ -171,8 +173,6 @@ This is the core of the ticket.
   GROUP BY key;
   ```
 
-  Also count, from the same CTE, elements whose `modelId`, `workspaceId` or `biospecimenId` is 1 to 10 digits. The UI has only ever produced UUIDs, 13-digit `Date.now()` values and empty strings, so the expected count is zero. If it is not, stop and decide before merging: after conversion, a stale form holding such an id would update whichever asset now has that row id.
-
   If any list is still under a differently cased key or inside a legacy `assets` object, the changeset first promotes it with the 2026-09-02 SQL extended to ignore case, keeping that changeset's precedence (an existing promoted property wins). If none is, record that in the PR and leave the step out.
 - Liquibase changeset `changelog-consent-<date>-study-asset-records-convert.xml`. It starts with `LOCK TABLE study_property IN SHARE ROW EXCLUSIVE MODE` (Decision 10) and uses `MATERIALIZED` CTEs that filter on key, `pg_input_is_valid` and `jsonb_typeof = 'array'` before any cast or `jsonb_array_elements` call. For each type, over `jsonb_array_elements … WITH ORDINALITY`:
   1. Skip any element that is not a JSON object.
@@ -205,7 +205,7 @@ This is the core of the ticket.
 ## Edge cases to cover in review
 
 - A form opened before the conversion submits UUIDs. The `legacy_key` match updates those rows. Models had empty ids, so they have no `legacy_key`: a stale form retires and recreates them, which costs their ids but loses no data.
-- A stale form holding a pre-conversion id of 1 to 10 digits would match another asset's row id. The UI has never produced one, and Task 6 stops if production holds any.
+- A stale form holding a pre-conversion id of 1 to 10 digits would match another asset's row id. The UI has never produced one, and Task 3 does not deploy if production holds any.
 - A `Date.now()` id is a 13-digit number, outside the integer range. Task 3 checks the range before matching, and Task 6 never casts it.
 - An id copied from another study, or from a retired row, never updates that row. It creates a new row in the study being written.
 - A study is deleted: its rows go with it, by cascade.
