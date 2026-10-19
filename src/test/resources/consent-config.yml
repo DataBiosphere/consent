@@ -63,7 +63,8 @@ rateLimit:
   enabled: true
   requestsPerMinute: 100
   podCount: 1
-# Deployed environments run Liquibase in an init-container and leave this false (the default).
-# Local databases are often restored from an older dump, so run the changesets at startup.
+# Optional. If you omit this block, runOnStartup is false and the application does not run the
+# Liquibase changesets at startup. Deployed environments omit it, because an init-container runs
+# the changesets. Local databases are often restored from an older dump, so run them at startup.
 liquibase:
   runOnStartup: true

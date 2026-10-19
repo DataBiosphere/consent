@@ -260,6 +260,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     bootstrap.addBundle(new JdbiExceptionsBundle());
   }
 
+  // liquibase.runOnStartup is an optional config flag that defaults to false. Deployed configs omit
+  // it, because an init-container runs the changesets. Local configs set it to true.
   private void runLiquibaseIfEnabled(ConsentConfiguration config) {
     if (!config.getLiquibaseConfiguration().isRunOnStartup()) {
       LOGGER.info("Skipping liquibase on startup; the init-container runs the changesets");

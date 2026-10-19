@@ -244,7 +244,7 @@ method, with values from `config/.env`. These flags are the only other local cha
 | `mailConfiguration.sendGridApiKey` | `-Ddw.mailConfiguration.sendGridApiKey=${SENDGRID_API_KEY}` | Placeholder in the template. Dev also replaces it. |
 | `googleStore.password` | `-Ddw.googleStore.password=` | Dev mounts a Yale key. Local uses ADC, per `DEVNOTES.md`. A blank value makes `GCSService` use ADC. |
 | `elasticSearch.authUser`, `authPassword` | Match `ELASTIC_PASSWORD` in compose | Dev sets these with flags for Elastic Cloud. |
-| `liquibase.runOnStartup` | `-Ddw.liquibase.runOnStartup=true` | Dev runs the changesets in an init-container, so the default is `false`. The local database comes from an older dump and needs the newer changesets. |
+| `liquibase.runOnStartup` | `-Ddw.liquibase.runOnStartup=true` | Optional flag; the dev template omits it, so it is `false`. Dev runs the changesets in an init-container. The local database comes from an older dump and needs the newer changesets. |
 
 The team runs the app only with compose, so these flags are only in the compose template.
 `DEVNOTES.md` does not need a separate list for other run methods.

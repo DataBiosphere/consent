@@ -41,9 +41,10 @@ Copy `src/test/resources/consent-config.yml` to `config/consent.yaml` (the `conf
 git-ignored) and fill in the values for your environment. The `googleStore` section is the only
 part that needs cloud credentials; see the next section.
 
-The application runs the Liquibase changesets at startup only when `liquibase.runOnStartup` is
-`true`. The default is `false`, because deployed environments run the changesets in an
-init-container before the pods start. The template sets it to `true`, because a local database
+`liquibase.runOnStartup` is an optional flag. The application runs the Liquibase changesets at
+startup only when the flag is `true`. If a config omits the flag or the whole `liquibase` block,
+the flag is `false`. Deployed configs omit it, because an init-container runs the changesets
+before the pods start. The template sets it to `true`, because a local database
 restored from an older dump needs the newer changesets. If you render `consent.yaml` from
 `terra-helmfile`, add this block yourself, or pass `-Ddw.liquibase.runOnStartup=true`:
 
