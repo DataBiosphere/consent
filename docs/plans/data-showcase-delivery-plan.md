@@ -94,7 +94,7 @@ plans are proposed implementation targets; existing reuse points are distinguish
 | Public resource pattern | `OAuthCustomAuthFilter` authenticates only `swagger/` and `api/` paths and skips every other path. `resources/StatusResource.java` and `SupportResource.java` sit outside them with no role annotation. `PublicFeatureFlagResource` carries `@PermitAll`, which grants nothing there (review on PR #3136 questions whether it belongs). `docs/API_GUIDELINES.md` (updated with this plan) asks for explicit role annotations on authenticated endpoints and none on unauthenticated resources | Model the public catalog lookup on `StatusResource`/`SupportResource`: outside `/api`, no `@Auth` parameter, no role annotation, as the guideline now says. |
 | Dataset identity and metadata | `models/Dataset.java`, `models/Study.java`, `db/DatasetDAO.java`, `service/DatasetService.java`; registration builder defines `accessManagement`, `numberOfParticipants`, `dbGaPPhsID` | Reuse authoritative properties. Participants, samples, bytes and release dates are different concepts; do not invent equivalences. |
 | Dataset identifiers | `Dataset.getDatasetIdentifier()` builds `DUOS-` + zero-padded `alias`, a database sequence | Identifiers differ per environment. Configs use production identifiers (section 3). |
-| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Adopted in S1.1 as the `latest-data-releases` date, so the shelf and the digest users already receive agree (section 2). The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
+| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Adopted in S1.1 as the `latest-data-releases` date (section 2). The digest's DAC-approved query has no access-type filter, so an open dataset that is later DAC-approved has its approval date in the digest and its `create_date` on the shelf. The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
 | Public visibility | `Study.publicVisibility`; existing Elasticsearch access-control planning | Anonymous cards need an explicit public projection and eligibility policy. |
 | Existing automation | `service/DACAutomationRuleService.java`, `rules/DACAutomationRuleType.java`, `matching/DataUseMatcherV5.java`, `service/MatchService.java` | Extend RADAR and its existing decision path; do not introduce a parallel grant engine. |
 | Public UI and sign-in | `duos-ui:src/routing/AppRoutes.tsx` places `/datalibrary`, study and dataset detail routes inside `Authenticated` | Public showcases can launch without making the entire library public; preserve intent through sign-in. |
@@ -207,49 +207,16 @@ seed data for a database later without changing how pages render.
   `status: 'hidden'` keeps a route off; it is not a privacy control. Merge only content that is
   cleared for public disclosure, including unannounced partner names.
 
-An index entry and its partner config, shown as JSON (illustrative values; S1.2 fixes the types).
-The index entry in `src/showcases/index.ts`:
+An index entry in `src/showcases/index.ts` (illustrative values; S1.2 fixes the types):
 
 ```json
 { "key": "example-partner", "title": "Example Partner Data", "route": "/showcase/example-partner",
   "status": "hidden", "flagship": false, "order": 3 }
 ```
 
-The `ShowcaseConfig` exported by `src/showcases/example-partner.ts`:
-
-```json
-{
-  "schemaVersion": 1,
-  "branding": {
-    "logo": { "src": "showcase/example-partner/logo.svg", "alt": "Example Partner" },
-    "theme": "blue"
-  },
-  "sections": {
-    "masthead": { "enabled": true },
-    "hero": {
-      "enabled": true,
-      "intro": "Discover Example Partner datasets in DUOS.",
-      "stats": ["studies", "datasets", "tools"],
-      "announcements": [
-        { "text": "New cohort available", "url": "/datalibrary", "startDate": "2026-10-01", "endDate": "2026-11-01" }
-      ]
-    },
-    "latest-data-releases": { "enabled": true, "ranking": "newest", "scope": { "dac": ["Example DAC"] }, "limit": 12 },
-    "open-access-datasets": { "enabled": true, "items": ["DUOS-000123", "DUOS-000456"] },
-    "featured-tools": {
-      "enabled": true,
-      "items": [
-        { "id": "terra", "name": "Terra", "description": "Analyze data in the cloud.", "launchUrl": "https://app.terra.bio/", "featured": true }
-      ]
-    },
-    "most-requested-datasets": { "enabled": false }
-  }
-}
-```
-
-This is a partial excerpt, not a guard-valid config: a real config has all 23 section keys and
-nav labels. A partner file merges `defaultShowcase` within `sections`, key by key, so it lists only
-what differs while every key stays present in fixed order.
+Complete flagship and partner `ShowcaseConfig` examples, with all 23 keys, are the S1.1 fixtures
+(duos-ui `test/fixtures/showcase/contracts.ts`). A partner file merges `defaultShowcase` within
+`sections`, key by key, so it lists only what differs while every key stays present in fixed order.
 
 **Revisit trigger for a database/admin UI:** content-only PRs routinely wait on release timing, or
 non-engineering owners need to edit without PRs. Measure with the section 8 lead-time metric.
@@ -282,7 +249,7 @@ that was considered, and records what this plan does instead.
 | Program engagement is measurable | Every Mixpanel event carries a slug | Showcase key on showcase-origin events and attributed handoffs. |
 | Program signups | Linking to an approved subscription or registration provider | A valid interim CTA after provider assessment; it does not complete E7. |
 | Workshop enrollment | Provider registration links | Preferred first delivery (S7.4). |
-| Impact presentation | Curated statistics, a static visual and an external link | Preferred first variant; it matches the export, and original Story 21 allows a static snapshot labeled as not live. A live embed is conditional (S10.3). |
+| Impact presentation | A through.bio data snapshot, a static visual and an external link | Preferred first variant; it matches the export, and original Story 21 allows a periodically refreshed snapshot of through.bio data, flagged as not live. A live embed is conditional (S10.3). |
 | Hero decoration | A static hero decoration | Preferred MVP variant, subject to design approval: no animation lifecycle or reduced-motion work. |
 
 These are qualitative comparisons, not effort estimates. Six initial sections and code-defined
@@ -292,7 +259,7 @@ content are **scope changes**, recorded as product decisions rather than equival
 
 | Experiment | Evidence to produce | Story / decision affected |
 | --- | --- | --- |
-| Public lookup spike | Known public/private synthetic datasets, field provenance, bounded query plan and response size for each lookup mode; count of public-eligible datasets and the size of an all-eligible response | S2.1/S2.2/S6.3 |
+| Public lookup spike | Known public/private synthetic datasets, field provenance, bounded query plan and response size for each lookup mode; count of public-eligible datasets, the size of an all-eligible response, and the cost of an unscoped `stats` count on every no-store page view | S2.1/S2.2/S6.3 |
 | Ranking query cost | Query plans and latency for newest, most requested and largest cohort at production scale, with eligibility and scope filters applied | S2.2/S6.1; whether rankings need caching or materialization |
 | Cross-environment lookup | Read-only production-data previews through the BFF public proxy or approved legacy CSP/CORS; functional request flows use environment-local synthetic records; colliding aliases cannot cross environments | S2.2/S3.2/S4.2 identifier decision |
 | Shared card slice | One dataset entry and one compute entry rendered from config and checked by the guard | S1.2/S3.3/S3.4 |
@@ -408,8 +375,9 @@ anchor. The registry's `navigable` property is false for masthead/hero and true 
 sections. Add stable DOM IDs to all types. Support short `navLabel` defaults/overrides and optional
 eyebrow copy separately from titles/subtitles.
 
-Use stable item IDs within each showcase for analytics; the CI guard checks uniqueness. Item
-fields are the Story 29 forms only (S1.1). The richer resource, publication and program fields and
+Use stable item IDs within each showcase for analytics; the CI guard checks uniqueness. Hide a
+same-page `#<section key>` link when its target section isn't visible. Item fields are the Story 29
+forms, plus a workflow `addedDate` (S1.1). The richer resource, publication and program fields and
 related-item links in the artifact review are excluded; adding any needs a product decision.
 
 Accept HTTPS URLs or same-origin internal paths beginning with one `/`. Reject `//host`, backslash
@@ -484,7 +452,8 @@ foundational portions of 26/31.
 #### S1.1 — Review the identified reference and settle implementable contracts
 
 - **Outcome:** recorded in the [contracts record](data-showcase-contracts.md), with
-  [fixtures](data-showcase-fixtures.ts) and the [original criteria](data-showcase-original-criteria.md).
+  fixtures (duos-ui `test/fixtures/showcase/contracts.ts`) and the
+  [original criteria](data-showcase-original-criteria.md).
 - **Implement:** use the completed [artifact review](data-showcase-artifact-review.md) and the
   export attached to DT-3904 to agree the production interpretation. Recover omitted original Jira criteria;
   reconcile the 21 anchor IDs versus 23 registry types, participant/sample semantics, richer card/
@@ -599,8 +568,9 @@ S1.1; the lookup feeds E3.
   - `all`: every public-eligible dataset, paged (`pageSize` default 100, maximum 200), for flagship
     full-catalog charts (S6.3). Use deterministic identifier ordering and a validated continuation
     cursor bound to the request filters; never offer an unbounded page or caller-supplied offset.
-  - `stats`: optional `scope` only; returns `studyCount` and `datasetCount` for the eligible
-    datasets in that scope (all public-eligible datasets without one) for the MVP hero (S1.1).
+  - `stats`: optional `scope` only; returns `studyCount` and `datasetCount` for the requestable
+    datasets (those a shelf can show) in that scope, or in the whole catalog without one, for the
+    MVP hero (S1.1).
   A `section` parameter applies section-specific eligibility. Unknown modes, rankings or scope keys
   return 400. No-store cache headers; register in `ConsentModule`/`ConsentApplication`.
 - **Backend — hard limits:** reject JSON bodies over 64 KiB with 413 before deserialization, both
@@ -630,8 +600,8 @@ S1.1; the lookup feeds E3.
 - **Acceptance/tests:** anonymous access works in every mode. Planted sensitive values in
   `piEmail`, `createUserEmail`, custodian emails, data location, certification files and an
   unapproved property never appear anywhere in a response body, including errors. Private,
-  hard-deleted, unapproved controlled and null-visibility records return no metadata and never appear in or affect a ranking; pins to
-  ineligible datasets are dropped; exclusions hold; ranking ties are deterministic with a fixed
+  hard-deleted, unapproved controlled and null-visibility records return no metadata, never appear
+  in or affect a ranking and leave `stats` counts unchanged; pins to ineligible datasets are dropped; exclusions hold; ranking ties are deterministic with a fixed
   clock. Swapping a private record for a nonexistent identifier produces equivalent response
   shape/status/diagnostics, including mixed batches; caller-supplied identifiers may be echoed.
   For every collection, string and numeric bound test the maximum and maximum-plus-one, including
@@ -643,8 +613,8 @@ S1.1; the lookup feeds E3.
   and directly at Consent, including with the authenticated limiter disabled. Query-count checks at
   maximum size. Document the Consent route in `assets/paths/` and `assets/api-docs.yaml`, plus the
   frontend proxy/configuration contract in duos-ui.
-- **Dependencies/PR boundary:** S2.1; `identifiers` mode and OpenAPI first, then `ranking`/`all`
-  modes, then the public proxy/configuration and mode-aware frontend client.
+- **Dependencies/PR boundary:** S2.1; `identifiers` mode and OpenAPI first, then `ranking`/`all`/`stats`
+  modes (`stats` is needed by the MVP hero), then the public proxy/configuration and mode-aware frontend client.
 
 ### E3 — Accessible public template and MVP sections (MVP)
 
@@ -702,8 +672,8 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 
 - **Frontend:** implement `hero`, `latest-data-releases` and `open-access-datasets` as registry
   entries with matching config schemas. MVP hero shows live stats (studies and datasets in the
-  hero's configured `scope` from the S2.2 `stats` mode; tools from the config's enabled
-  `featured-tools` and `featured-workspaces` items), date-bounded announcements, CTA/onboarding
+  hero's configured `scope` from the S2.2 `stats` mode; tools from the items in the config's
+  enabled tool sections; a 0 stat is hidden), date-bounded announcements, CTA/onboarding
   links and optional imagery. Preserve the observed desktop intro/onboarding/announcement hierarchy
   and stacked mobile layout. Prefer a static decorative background for MVP. Carousel supports an
   explicit pause control, focus/hover pause, manual controls and reduced motion; inactive slides
@@ -906,7 +876,8 @@ content/product, frontend/backend and the impact partner. Source: 19, 21, part o
 E1–E5; per-program agreement for any embed.
 - Publications are curated in config. Self-reports use an external form by default; native
   moderation is conditional.
-- Impact starts as an approved static summary plus a provider link; a live embed needs agreement.
+- Impact starts as a through.bio data snapshot flagged as not live, plus a provider link (original
+  Story 21); a live embed needs agreement.
 - Featured-library tiles retire only after per-partner parity.
 - Stories: S10.1 curated publications, S10.2 self-report submission, S10.3 impact presentation,
   S10.4 featured-library retirement.
@@ -1020,7 +991,7 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 | Public-bundle exposure | Merge only public-safe content; `hidden` is not a privacy control | Product/content | S4.1 and every showcase PR |
 | Review roles | CODEOWNERS or named reviewers for showcase paths; program owner approves copy in the PR | Product/frontend lead | S4.1 |
 | Workshop enrollment | Prefer provider links; native multi-session signup requires a separate provider enrollment contract | Program/frontend/backend | S7.4 |
-| Impact presentation | Prefer approved static summary/image plus provider link; live embed conditional on agreement | Product/partner | S10.3 |
+| Impact presentation | Prefer a through.bio data snapshot flagged as not live, plus provider link (original Story 21); live embed conditional on agreement | Product/partner | S10.3 |
 | MVP size | **Decided in S1.1:** six sections and the complete authoring/public workflow | Product | Recorded |
 | Branding | Theme presets or contrast-checked primary/accent overrides; fixed typography | Design | S1.1/S1.3 |
 | Public data exposure | Table-specific allowlist driving a dedicated projection query (no full `Dataset`/`Study` objects), explicit visibility policy, free-text field decisions; private/nonexistent IDs share `unavailable` | Catalog/AppSec | S2.1/S2.2 before anonymous lookup |

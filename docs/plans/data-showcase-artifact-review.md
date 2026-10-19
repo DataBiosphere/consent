@@ -149,7 +149,8 @@ epics. The artifact offers no backend evidence that would justify coupling these
   rules. The tooltip is not evidence that a new engine or free-text semantic matcher is necessary.
 - Prefer approved impact summary/stat content plus a provider link for the first impact release.
   Make iframe integration conditional on demonstrated value and agreement. Original Story 21
-  allows a static snapshot labeled as not live ([original criteria](data-showcase-original-criteria.md)).
+  allows a periodically refreshed snapshot of through.bio data, flagged as not live
+  ([original criteria](data-showcase-original-criteria.md)).
 - Prefer real provider registration links over a new workshop registration service initially.
   Native multi-session enrollment preserves more of the mockup interaction but introduces stable
   session IDs, provider enrollment outcomes, duplicate/partial-failure handling and cancellation.

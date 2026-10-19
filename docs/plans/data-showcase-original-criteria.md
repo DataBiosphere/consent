@@ -1,8 +1,8 @@
 # Data Showcase: original source criteria (DT-3904)
 
-Recorded for [DT-4272](https://broadworkbench.atlassian.net/browse/DT-4272) (S1.1). Where the
-current DT-3904 description says "Unchanged" or "Original acceptance criteria stand", this text is
-the authoritative source (product decision, 2026-10-19).
+Recorded for [DT-4272](https://broadworkbench.atlassian.net/browse/DT-4272) (S1.1). Product
+decided on 2026-10-19 that this text is authoritative for the original stories. It ranks second in
+the [contracts record](data-showcase-contracts.md)'s precedence.
 
 - **Source:** the DT-3904 description as saved on 2026-08-18 23:02 (America/New_York), taken from
   the Jira change history (the `fromString` of that description change). Not taken from the

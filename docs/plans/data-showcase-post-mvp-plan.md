@@ -3,7 +3,8 @@
 Companion to the [delivery plan](data-showcase-delivery-plan.md) for
 [DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904). The delivery plan details the MVP
 (E1–E5) and keeps a short outline of each epic below. This document holds the detailed post-MVP
-stories, moved here unchanged on 2026-10-09 so the MVP plan is easier to read. Each epic is
+stories, moved here on 2026-10-09 so the MVP plan is easier to read, and amended by the S1.1
+[contracts record](data-showcase-contracts.md). Each epic is
 re-planned before it starts, and this document is its starting point.
 
 Section and story references (section 3, S2.2, section 8 and so on) point to the delivery plan
@@ -103,8 +104,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   sum participants across datasets and label them unique people without deduplication evidence.
 - **Frontend:** initially support the observed disease-area and data-type bars plus access-mode
   donut, with an explicit multi-label/category policy. Account for external/unknown access modes;
-  do not force them into the three illustrated slices. Compute unique studies by study identity,
-  tool totals from defined resource scope, and bytes only from compatible authoritative measures.
+  do not force them into the three illustrated slices. Compute unique studies by study identity and
+  bytes only from compatible authoritative measures.
   The mockup's repeated 1,842 value is not evidence that study and dataset counts are equal.
 - **Frontend:** implement `datasets-at-a-glance`, chart selection in config,
   bar/donut visualizations and filter click-through using existing library query encoding. Provide
@@ -121,9 +122,10 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
 - **Backend/frontend:** add `new-workflow-tools`, `notebooks` and `ai-models` as distinct registry
   types using E3's resource-card primitives and config schemas. Validate configured names/descriptions/tags/
   thumbnails/launch/docs URLs; add appropriate user-facing resource labels and empty states.
-- **Backend/frontend:** the artifact's version, runtime, environment, parameter-count, usage and
-  added-date fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other
-  field needs a product decision.
+- **Backend/frontend:** workflow items carry an optional `addedDate` for a 30-day "New" badge
+  (original Story 15). The artifact's version, runtime, environment, parameter-count and usage
+  fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a
+  product decision.
 - **Acceptance/tests:** each type independently supports config validation, item order, enabled/empty
   semantics, safe launch links and thumbnail alt handling. Test all three entries even if they
   share implementation. No execution, credential exchange or model hosting is implied by a card.
@@ -420,23 +422,24 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
 
 #### S10.3 — through.bio impact presentation and agreement gate
 
-- **Preferred strategy:** implement `program-impact` as approved summary/stat content, attribution,
-  optional approved static image and a real external portfolio link. The inspected artifact uses
-  a static SVG illustration, not a live iframe. Original Story 21 allows a periodically refreshed
-  static snapshot, labeled as not live, when an embed isn't feasible.
-- **Backend/frontend:** define typed display mode (`summary` or `embed`), content provenance and
+- **Preferred strategy:** implement `program-impact` as a snapshot: stat banner values taken from
+  through.bio data (not hand-written copy) with their snapshot date, attribution, optional approved
+  static image and a real external portfolio link. The inspected artifact uses a static SVG
+  illustration, not a live iframe. Original Story 21 allows a periodically refreshed snapshot,
+  flagged as not live, when an embed isn't feasible.
+- **Backend/frontend:** use the typed display mode (`snapshot` or `embed`) from the S1.1 fixtures, content provenance and
   refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
   live embedding is selected, add an approved URL/provider allowlist, frame sandbox, CSP, lazy
   loading, accessible frame title and fallback link/message. Never fetch arbitrary URLs server-side
   or accept executable HTML/SVG in config; static images are bundled assets reviewed in the PR.
 - **Acceptance/tests:** off by default; enablement requires recorded program agreement/content
-  approval. For summary mode, test factual approved content, attribution, image alt and real safe
+  approval. For snapshot mode, test factual approved content, attribution, image alt and real safe
   links without iframe requests. Embed mode additionally tests rejected origins, blocked/slow
   frames and usability without third-party cookies. Do not port the illustrative clinical graph
   as factual evidence or treat a config flag as the external agreement itself.
 - **Dependencies/PR boundary:** per-program agreement and the initial mode, chosen by the product
   owner when S10.3 is planned; release independently
-  of science. A live embed is a separate follow-up slice if summary mode launches first.
+  of science. A live embed is a separate follow-up slice if snapshot mode launches first.
 
 #### S10.4 — Retire featured-library maintenance after parity
 
