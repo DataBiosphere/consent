@@ -90,7 +90,7 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   renderer tests reject request-total/trend fields and verify suppression of sparse timing metrics.
 - **Dependencies/PR boundary:** S6.1; deliver each shelf with its config schema and API fixtures.
 
-#### S6.3 — Curated-set charts and computed hero statistics
+#### S6.3 — Curated-set charts
 
 - **Frontend/backend:** for a curated set, aggregate client-side over the deduplicated union of
   eligible datasets already returned by the S2.2 lookup, which is bounded and needs no new endpoint.
@@ -106,13 +106,13 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   do not force them into the three illustrated slices. Compute unique studies by study identity,
   tool totals from defined resource scope, and bytes only from compatible authoritative measures.
   The mockup's repeated 1,842 value is not evidence that study and dataset counts are equal.
-- **Frontend:** implement `datasets-at-a-glance`, chart selection in config, hero computed/manual mode,
+- **Frontend:** implement `datasets-at-a-glance`, chart selection in config,
   bar/donut visualizations and filter click-through using existing library query encoding. Provide
   text/table equivalents, keyboard-operable filters and labels independent of color.
 - **Acceptance/tests:** repeated IDs count once, hidden/deleted records contribute nothing, the CI
   guard rejects full-catalog mode outside the flagship, empty charts are honest and aggregates agree with rendered
-  membership. Test the heading/filter/text-equivalent corrections in the artifact review; earlier
-  Jira accessibility criteria still require recovery in S1.1.
+  membership. Test the heading/filter/text-equivalent corrections in the artifact review and original
+  Story 13's accessibility criteria ([original criteria](data-showcase-original-criteria.md)).
 - **Dependencies/PR boundary:** E2 `all` mode; chart fields (disease area, data types) must first be
   approved and exposed in the S2.1 projection; query/aggregate tests before chart components.
 
@@ -206,8 +206,8 @@ depend on E9 authoritative lifecycle events.
 
 #### S7.3 — Conference and education section family
 
-- **Backend/frontend:** implement `community-conference`, `where-else`, `anvil-workshops`,
-  `anvil-scholars`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference carries date/
+- **Backend/frontend:** implement `community-conference`, `where-else`, `training-workshops`,
+  `scholars-program`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference carries date/
   timezone/location/description, optional past-event history and open-registration versus alert-signup
   state. Where Else supports linked event tiles with optional date/location, reflecting the export;
   a generic-links-only variant needs explicit product agreement. Program panels support Markdown
@@ -247,7 +247,8 @@ depend on E9 authoritative lifecycle events.
 **Outcome:** eligible requests receive auditable existing-system grants, while ambiguous/ineligible
 requests continue through manual review. **Owner:** consent/RADAR lead, DAC governance and frontend
 DAR owner. **Source:** 9–10 and instant metrics/rankings. **Dependencies:** governance can start
-at R0; production activation waits for the missing original criteria and explicit rule approval.
+at R0; production activation waits for explicit rule approval against original Stories 9–10
+([original criteria](data-showcase-original-criteria.md)).
 
 #### S8.1 — Ratify eligibility, matching and measurement policy
 
@@ -265,7 +266,7 @@ at R0; production activation waits for the missing original criteria and explici
 - **Alternative exit:** if existing RADAR rules satisfy all agreed launch cases, record that result
   and scope S8.2 to proven audit/idempotency/integration gaps; do not build a new matcher just because
   the source calls this an “engine.” S8.3/S8.4 still validate discovery claims and rollout metrics.
-- **Dependencies/PR boundary:** recovered source criteria; policy/test fixtures before rule coding.
+- **Dependencies/PR boundary:** original Stories 9–10; policy/test fixtures before rule coding.
 
 #### S8.2 — Extend the existing decision path safely
 
@@ -422,7 +423,7 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
 
 #### S10.3 — through.bio impact presentation and agreement gate
 
-- **Preferred strategy:** implement `anvil-impact` as approved summary/stat content, attribution,
+- **Preferred strategy:** implement `program-impact` as approved summary/stat content, attribution,
   optional approved static image and a real external portfolio link. The inspected artifact uses
   a static SVG illustration, not a live iframe. This option preserves its presentation intent with
   less integration work, but changes the ticket's embed-specific criterion and needs product agreement.
