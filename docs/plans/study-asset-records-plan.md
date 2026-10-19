@@ -6,7 +6,7 @@ Proposed. Ticket: [DT-4208](https://broadworkbench.atlassian.net/browse/DT-4208)
 
 Related plan: `asset-data-use-plan.md` ([DT-3810](https://broadworkbench.atlassian.net/browse/DT-3810), tickets under [DT-4297](https://broadworkbench.atlassian.net/browse/DT-4297)) changes some of the same files. See [Overlap with DT-3810](#overlap-with-dt-3810).
 
-Code references were checked against `consent` `develop` at `b9edc7c5` and `duos-ui` at `e203f95d`. Decision 1 must be answered before Task 1 starts.
+Code references were checked against `consent` `develop` at `b9edc7c5` and `duos-ui` at `e203f95d`.
 
 ## Overview
 
@@ -35,14 +35,14 @@ Nothing reads the tables yet. They give DT-4209 a stable key to hang DUOS identi
 
 | # | Question | Decision | Source |
 |---|---|---|---|
-| 1 | Biospecimen granularity: one row per vial, or a collection-level grouping? | One row per vial, with room for a later `study_biospecimen_collection` parent. Also ask whether biobanks supply a sample id that could be a unique key. | **Confirm with Jonathan Lawson** (ticket Q1, required) |
+| 1 | Biospecimen granularity: one row per vial, or a collection-level grouping? | One row per vial or sample. A later `study_biospecimen_collection` parent stays possible. | Jonathan Lawson, 2026-10-19 (ticket Q1) |
 | 2 | How do we tell an edited asset from a removed-and-replaced one? | The server-assigned id round-trips. An entry that comes back with its id is the same asset. See [Sync key](#sync-key). | This plan (ticket Q2) |
 | 3 | Delete or retire a removed asset? What about requests? | Retire (`retired_date`), never delete, so DT-4209's catalog can still resolve it. A retired row is never revived. Requests cannot target these assets yet; DT-4209 and later epics own that. | This plan (ticket Q3) |
 | 4 | Missing or malformed asset data during conversion | Never fail the run. A non-object element is skipped; a field of the wrong type is stored as null. Both keep their original JSON and are listed in the conversion report. | This plan (ticket Q4) |
 | 5 | How many assets exist in production? | Run the Task 6 inventory query against production before Task 6 merges, and record the numbers in its PR. | **Kevin Marete** (ticket Q5) |
 | 6 | Do exports, bookmarks or links rely on today's position-based ids? | Nothing in `consent` or `duos-ui` does. External use is unknown. | **Confirm with Jonathan Lawson** and support (ticket Q6) |
 | 7 | When do the rows become authoritative, and who owns it? | Deferred until after DT-4209. | **Jonathan Lawson** (ticket Q7) |
-| 8 | How does the DUOS team add biospecimens, and can that path send ids back? | Whatever tool they use must send each biospecimen's id back on edit, or every edit retires and recreates the rows. | **Confirm with Jonathan Lawson** before Task 3 deploys |
+| 8 | How are biospecimens added and edited, and can that path send ids back? | Like every other asset type, through the registration form and the API. The form has no biospecimen editor yet (`BiospecimenAddEdit` is a placeholder that redirects to the Data Library), so a follow-up ticket adds one, sending ids back as Task 5 does for models and workspaces. API callers send ids back as the OpenAPI contract describes. | Jonathan Lawson, 2026-10-19 |
 | 9 | One generic asset table, or one per type? | One per type. The biospecimen fields share almost nothing with the others, and DT-4209 adds the cross-type catalog on top. | This plan |
 | 10 | Where does the conversion run? | A Liquibase changeset in SQL, following the 2026-09-02 promotion, so it runs once per environment with the deploy and needs no admin step. It runs in the write-frozen maintenance window described under [Rollback](#rollback); it also locks `study_property` for its duration, so a write the freeze misses waits for the conversion instead of racing it. | This plan |
 | 11 | When do API responses change type? | When Task 3 deploys, the asset endpoints and registration GET start returning integer ids for every study written from then on, and all studies after Task 6. The API-users notice goes out before Task 3's release and covers both steps. Task 4 documents `integer` or `string` in that release; Task 6 narrows it to `integer`. | This plan, per `CONTRIBUTING.md` "Breaking API changes" |
@@ -60,9 +60,9 @@ The server assigns the key. Alternatives considered and rejected:
 
 | # | Repo | Task | Size (est.) | Depends on |
 |---|---|---|---|---|
-| 1 | consent | Create the asset record tables and DAO | ~350 lines | Decision 1 |
+| 1 | consent | Create the asset record tables and DAO | ~350 lines | — |
 | 2 | duos-ui | Remove `biospecimenId` from the Data Library search fields | ~30 lines | — |
-| 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decisions 8 and 11; short-id count is zero; id fields mapped in every environment |
+| 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decision 11; short-id count is zero; id fields mapped in every environment |
 | 4 | consent | Document the asset id fields as `integer` or `string` in OpenAPI | ~100 lines | Ships in the same release as 3; DT-4299 merged |
 | 5 | duos-ui | Send server-assigned asset ids | ~250 lines | 3 deployed; DT-4302 merged |
 | 6 | consent | Convert existing registrations | ~400 lines | 3 deployed; Decision 5 |
@@ -281,12 +281,13 @@ Keep the tables in every case. They hold the only mapping from assigned ids to a
 - Making the rows the source of truth instead of the registration (Decision 7).
 - DUOS identifiers and the cross-type catalog (DT-4209).
 - Governance, search or request changes.
+- Adding and editing biospecimens in the registration form (Decision 8).
 - Data use on biospecimens. DT-3810 leaves it out until its free-text `optionalDataUse` field is decided.
 
 ## Deploy order
 
 1. DT-4298 and DT-4299 (DT-3810 validation and OpenAPI) merge first. They are smaller and need no migration, and Task 3 then copies their fields from the start.
-2. Comms check-in and the API-users notice go out, and Decision 8 is confirmed.
+2. Comms check-in and the API-users notice go out.
 3. Task 1 and Task 2 deploy.
 4. Tasks 3 and 4 deploy in one release.
 5. Task 5 deploys.
