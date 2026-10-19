@@ -231,7 +231,7 @@ Keep the tables in every case. They hold the only mapping from assigned ids to a
 - **Before Task 5 deploys:** revert Tasks 3 and 4 together. Ids already written into the JSON do no harm, because the old code treats ids as opaque strings.
 - **After Task 5 deploys:** revert Task 5 (and Task 7, if it shipped) first, so the UI generates ids and has its fallback again, then revert Tasks 3 and 4.
 - **Index mapping:** if any `study.assets.*Id` field is mapped as a number (checked in staging verification and again at rollback), a reverted UI's UUIDs would be rejected and those dataset documents would stop indexing. Before the reverted UI ships, recreate the `dataset` index with those fields mapped as `keyword`, reindex, and confirm that a workspace created from the reverted UI indexes.
-- **Restoring data:** before the deploy that carries Task 6, back up `study_property` and the three asset tables in one consistent snapshot (one `pg_dump` run), since Liquibase runs the conversion with that deploy. Restore them together or not at all; restoring the JSON alone leaves rows that no longer match it. The snapshot predates the conversion, and Liquibase will not run the changeset again, so after a restore run `StudyAssetRecordSync.syncStudy` for every study, then reindex, before Task 7 is redeployed.
+- **Restoring data:** the deploy that carries Task 6 runs in a maintenance window with registration writes frozen, from the backup until the post-conversion report is checked. At its start, back up `study_property` and the three asset tables in one consistent snapshot (one `pg_dump` run), since Liquibase runs the conversion with that deploy. A restore is valid only inside that window, because no study has been created, edited or deleted since the backup. Restore the four tables together or not at all; restoring the JSON alone leaves rows that no longer match it. After the window closes, recover with `syncStudy` over the current JSON instead of restoring. The snapshot predates the conversion, and Liquibase will not run the changeset again, so after a restore run `StudyAssetRecordSync.syncStudy` for every study, then reindex, before Task 7 is redeployed.
 - **Redeploying after a rollback:** registrations created or edited while Task 3 was reverted changed their JSON without touching the rows. Redeploy Tasks 3 and 4, then run `syncStudy` for every study whose `create_date` or `update_date` is after the rollback (`insertStudy` leaves `update_date` null, so `update_date` alone misses new studies), and reindex.
 
 ## Out of scope (follow-up)
@@ -248,7 +248,7 @@ Keep the tables in every case. They hold the only mapping from assigned ids to a
 3. Task 1 and Task 2 deploy.
 4. Tasks 3 and 4 deploy in one release.
 5. Task 5 deploys.
-6. Staging verification, then the backup, then the deploy carrying Task 6. The reindex runs after it.
+6. Staging verification. Then, in a maintenance window with registration writes frozen, the backup, the deploy carrying Task 6, the report check and the reindex.
 7. Task 7 deploys.
 
 ## Overlap with DT-3810
