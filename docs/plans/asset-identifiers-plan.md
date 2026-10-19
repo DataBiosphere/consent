@@ -48,6 +48,7 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 - **A per-type number sequence, separate from the row id**, as datasets separate `alias` from `dataset_id`. Each asset would carry a second number, and the identifier would need a JSON write-back or a join on every read. The row id already has every property a public number needs. The split exists for datasets only because the alias predates them.
 - **A view over the four tables instead of a table.** A deleted dataset would vanish from it, so its identifier could no longer resolve, and a future request table could not reference it.
 - **Giving datasets a `D` letter.** That breaks the ticket's "unchanged" rule, and `DUOS-D…` already means a database id.
+- **Database triggers that write and stamp entries.** They would also cover old pods and ad hoc SQL, but the repo removed the alias trigger on 2026-09-17 in favour of explicit writes, and a trigger hides a write from the DAO and its tests. The remaining gaps are small, and the check reports them.
 - **`ON DELETE RESTRICT` instead of `SET NULL`.** Every delete path, ad hoc script and test cleanup that removes a dataset or study would have to clear the catalog first. With `SET NULL`, a delete outside the app's own paths leaves an orphan for the check to find, which is what the ticket asks for.
 
 ## Task summary
@@ -71,9 +72,9 @@ Sizes include tests. **Each backfill deploys in a later release than its write p
 - Liquibase changeset `changelog-consent-<date>-asset-catalog.xml` creates `asset_catalog`:
   - `catalog_id SERIAL PRIMARY KEY`, `asset_type TEXT NOT NULL` checked against `DATASET`, `MODEL`, `WORKSPACE`, `BIOSPECIMEN`, `asset_number INTEGER NOT NULL` checked `>= 0`, `create_date`, nullable `asset_removed_date`.
   - `dataset_id`, `model_id`, `workspace_id`, `biospecimen_id`, each a nullable foreign key to its table `ON DELETE SET NULL`, each with a partial unique index where not null.
-  - A unique index on `(asset_type, asset_number)`, a check that at most one reference is set, and a check that a set reference matches `asset_type`.
+  - A unique index on `(asset_type, asset_number)`, a check that at most one reference is set, a check that a set reference matches `asset_type`, and a check that a set `model_id`, `workspace_id` or `biospecimen_id` equals `asset_number` (Decision 6).
   - Then the dataset backfill SQL from Task 2, so that an old pod deleting an existing dataset during the rollout leaves an orphan the check stamps, rather than an identifier with no record.
-- `AssetType` enum carrying each type's letter (none for datasets). `AssetIdentifier.format(type, number)` and `AssetIdentifier.parse(text)`; `parse` ignores case, as `MailSendSearch` does, and rejects `DUOS-D…` and `DUOS-S…`. `Dataset.parseAliasToIdentifier` delegates to `format`, so dataset output is byte-for-byte the same.
+- `AssetType` enum carrying each type's letter (none for datasets). `AssetIdentifier.format(type, number)` and `AssetIdentifier.parse(text)`; `parse` ignores case and zero padding, as `MailSendSearch` does, accepts only digits from 0 to 2147483647, and rejects `DUOS-D…` and `DUOS-S…`. `Dataset.parseAliasToIdentifier` delegates to `format`, so dataset output is byte-for-byte the same, and `parseIdentifierToAlias` delegates to `parse`, restricted to datasets, so the dataset GET and the lookup accept the same forms.
 - `AssetCatalogDAO` (one contiguous text block per statement):
   - `insertDatasetEntry(datasetId)` reading the alias from the row, and `insertAssetEntry(type, rowId)` with the number set to the row id.
   - `ensureDatasetEntry(datasetId)` and `ensureStudyEntries(studyId)`, which insert any missing entry with `ON CONFLICT DO NOTHING`, covering every asset row of the study, live and retired. A dataset skipped by the conflict is a collision and is logged.
@@ -84,7 +85,7 @@ Sizes include tests. **Each backfill deploys in a later release than its write p
 - `deleteStudy` starts its final transaction with `SELECT study_id FROM study WHERE study_id = :studyId FOR UPDATE`, then calls `ensureStudyEntries` and `markRemovedByStudy`, then `deleteStudyByStudyId`. Stamping before the dataset loop would mark live assets removed if a dataset delete in the loop fails, because each one commits on its own. Taking the row lock first makes a concurrent registration update commit before the stamp, so its new rows are stamped too instead of surfacing as false orphans.
 
 **Tests** (`AssetCatalogDAOTest`, `AssetIdentifierTest`, `DatasetServiceDAOTest`):
-- `format` and `parse` round-trip every type, including alias 0 and a seven-digit number. `parse` accepts lower case and rejects `DUOS-D12`, `DUOS-S12`, an unknown letter and a blank.
+- `format` and `parse` round-trip every type, including alias 0 and a seven-digit number. `parse` accepts lower case and any zero padding, and rejects `DUOS-D12`, `DUOS-S12`, an unknown letter, a sign, a number above 2147483647 and a blank. `parseIdentifierToAlias` accepts `duos-000123`.
 - `Dataset.getDatasetIdentifier` is unchanged for a sample of aliases.
 - A duplicate `(asset_type, asset_number)`, two references on one entry, or a reference that does not match the type is rejected.
 - Registering a dataset adds one entry whose number is the alias. Deleting it stamps the entry and nulls `dataset_id`.
@@ -121,24 +122,24 @@ Sizes include tests. **Each backfill deploys in a later release than its write p
 
 - `AssetCatalogCheck` finds:
   1. Orphans: a null reference with no `asset_removed_date`, which means the asset was deleted outside the app's delete paths. The check stamps `asset_removed_date`, so each orphan is reported once.
-  2. Missing entries: a dataset or asset row with no entry. Reported every day until repaired.
-  3. Collisions: a missing entry whose number already belongs to another entry of its type.
+  2. Missing entries: a dataset or asset row with no entry.
+  3. Collisions: a missing dataset entry whose alias already belongs to another entry. Only an ad hoc insert can cause one, and repair cannot fix it.
   4. Mismatches: a dataset entry whose number differs from its dataset's current alias, which only an ad hoc `UPDATE` can cause.
-- Scheduling: a Dropwizard `Managed` executor on each pod wakes hourly. A short transaction takes `pg_try_advisory_xact_lock`, checks that the `last_run` in a one-row `asset_catalog_check_run` table is more than 23 hours old, updates it, and commits. Only the pod that claimed the run then runs the check, in its own transactions. The lock is released at commit, so a failed run cannot leave it held, and a check that fails is logged once and retried the next day rather than every hour.
-- Any finding is logged through `ConsentLogger.logException`, which reaches Sentry.
+- Scheduling: a Dropwizard `Managed` executor on each pod wakes hourly and claims the run with `UPDATE asset_catalog_check_run SET last_run = now() WHERE last_run < now() - interval '23 hours' RETURNING last_run` on a one-row table. Only the pod whose update returns a row runs the check, so it runs once a day across all pods, and a check that fails is logged once and retried the next day rather than every hour.
+- Findings are recorded in `asset_catalog_finding`, keyed by kind, type and number, with the date first seen. Only new findings are logged through `ConsentLogger.logException`, which reaches Sentry, so a collision that cannot be repaired alerts once rather than every day. A finding that is no longer present is cleared.
 - Admin endpoints, documented in an OpenAPI path spec:
-  - `GET /api/admin/asset-catalog/check` returns the three lists without changing anything.
-  - `POST /api/admin/asset-catalog/repair` inserts the missing entries, whose numbers follow from the alias or row id. Where the number belongs to a stamped entry of the same type with a null reference, which is what a partial restore or an ad hoc fix leaves behind, it relinks that entry and clears the stamp instead. It returns what it inserted, relinked and skipped. It never changes an entry that still references an asset.
+  - `GET /api/admin/asset-catalog/check` returns every current finding of the four kinds without changing anything.
+  - `POST /api/admin/asset-catalog/repair` inserts the missing entries, whose numbers follow from the alias or row id. For a model, workspace or biospecimen whose number belongs to a stamped entry with a null reference, which is what a partial restore leaves behind, it relinks that entry and clears the stamp instead; the number is the row id, so the row is the same asset. It never relinks a dataset entry: the alias could belong to a different dataset, so that case stays a collision. It returns what it inserted, relinked and skipped. It never changes an entry that still references an asset.
 
-**Tests** (`AssetCatalogCheckTest`, `AssetCatalogResourceTest`): each finding type is reported; an orphan is stamped and not reported again; a second run within 23 hours does nothing; a run that throws leaves no lock held and does not run again that day; repair relinks a stamped entry whose asset is back; the GET changes nothing; repair inserts only missing entries and skips collisions; both endpoints are admin-only.
+**Tests** (`AssetCatalogCheckTest`, `AssetCatalogResourceTest`): each finding type is reported; an orphan is stamped and not reported again; a second run within 23 hours does nothing; a run that throws does not run again that day; a finding alerts once, and is cleared when it goes away; repair relinks a stamped model entry whose row is back, and leaves a stamped dataset entry whose alias a new dataset reused; the GET changes nothing; repair inserts only missing entries and skips collisions; both endpoints are admin-only.
 
 ### Task 6: Return and resolve identifiers (consent)
 
 - New `StudyAssetIdentifiers.decorate`, applied by `StudyAssetService.getAssetsByType` and by `ElasticSearchService.toStudyTerm` to what `StudyAssets.assemble` returns. It adds `duosIdentifier` to each model, workspace and biospecimen entry whose id is a whole number from 1 to 2147483647, formatted by `AssetIdentifier`. `StudyAssets` itself is unchanged, so the registration GET (`SchemaFromStudy`) carries no identifier and nothing is stored in the JSON.
 - New `GET /api/asset-catalog/{identifier}`, for any authenticated user. It parses the identifier, finds the entry, and returns the canonical identifier, type and status: `LIVE`, `RETIRED` (the asset row has `retired_date`) or `REMOVED` (`asset_removed_date` is set).
-  - A live or retired asset is returned, with its asset id and study id, only when the caller can read its study, using the gate `StudyAssetService` uses; otherwise the response is 404, as for an unknown identifier, so private studies cannot be probed.
+  - A live dataset, model, workspace or biospecimen with that number wins over the entry: if the entry is missing, or stamped while a live row holds the number (a repair not yet run, or an alias collision), the lookup answers from the row, since that row is what shows the identifier.
+  - A live or retired asset is returned, with its asset id and study id, only when the caller can read it; otherwise the response is 404, as for an unknown identifier, so private studies cannot be probed. A model, workspace or biospecimen uses the study gate `StudyAssetService` uses. A dataset uses the read rule of the dataset GET (`DatasetService.findDatasetById(user, …)`), which also covers a dataset with no study.
   - A removed asset returns only its type and status.
-  - With no entry, it falls back to the dataset or asset row with that number, since the number follows from it, so an identifier shown before a repair still resolves.
   - An unparseable identifier returns 404.
 - Add `duosIdentifier` to `AiModel.yaml`, `Workspace.yaml` and `Biospecimen.yaml` as a read-only field, and the lookup in its own path spec. Both changes are additive, so no API-users notice is needed.
 - Add `study.assets.models.duosIdentifier`, `…workspaces.duosIdentifier` and `…biospecimens.duosIdentifier` to the enumerated paths in `es-access-contract.md` §B.5a, then reindex through `POST /api/dataset/index`.
@@ -146,16 +147,16 @@ Sizes include tests. **Each backfill deploys in a later release than its write p
 **Tests** (`StudyAssetIdentifiersTest`, `AssetCatalogResourceTest`, `ElasticSearchServiceTest`, `DatasetResourceTest`):
 - An in-range integer id gets its identifier. A string id, a missing id, 0, and a 13-digit `Date.now()` id get none.
 - The registration GET carries no `duosIdentifier`.
-- The lookup returns each status, returns 404 for a live asset in a study the caller cannot read, resolves an asset with no entry, accepts `DUOS-M-45` and returns `DUOS-M-000045`, and returns 404 for unknown, malformed, `DUOS-D…` and `DUOS-S…` identifiers.
+- The lookup returns each status, returns 404 for a live asset in a study the caller cannot read, resolves a dataset with no study, resolves an asset with no entry, answers LIVE for a dataset that reused a removed entry's alias, accepts `DUOS-M-45` and returns `DUOS-M-000045`, and returns 404 for unknown, malformed, `DUOS-D…` and `DUOS-S…` identifiers.
 
 ### Task 7: Show, search and link identifiers (duos-ui)
 
 Only if Decision 2 is yes.
 
 - The model, workspace and biospecimen tabs show `duosIdentifier`, and their `searchFields` include it, as `datasetAsset.ts` does with `datasetIdentifier`.
-- `NotFound` matches `DUOS-` prefixes ignoring case. For `/DUOS-M-…`, `/DUOS-W-…` and `/DUOS-B-…` it calls the lookup: a live asset opens its Data Library tab filtered to the identifier, and a retired or removed one shows that status instead of "page not found".
+- `NotFound` upper-cases the identifier before matching, so the case-sensitive checks downstream (`DatasetStatistics.getMatchPhrase`, the `DUOS-S` replace) see the canonical form. For `/DUOS-M-…`, `/DUOS-W-…` and `/DUOS-B-…` it calls the lookup: a live asset opens its Data Library tab filtered to the identifier, and a retired or removed one shows that status instead of "page not found".
 
-**Tests** (vitest): each tab renders and searches the identifier; each prefix routes to its tab in upper and lower case; a retired and a removed identifier show their status; `DUOS-000123`, `DUOS-D12` and `DUOS-S12` still route as today.
+**Tests** (vitest): each tab renders and searches the identifier; each prefix routes to its tab in upper and lower case; a retired and a removed identifier show their status; `DUOS-000123`, `DUOS-D12` and `DUOS-S12` still route as today, in upper and lower case.
 
 ## Edge cases to cover in review
 
