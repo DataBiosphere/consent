@@ -282,7 +282,7 @@ that was considered, and records what this plan does instead.
 | Program engagement is measurable | Every Mixpanel event carries a slug | Showcase key on showcase-origin events and attributed handoffs. |
 | Program signups | Linking to an approved subscription or registration provider | A valid interim CTA after provider assessment; it does not complete E7. |
 | Workshop enrollment | Provider registration links | Preferred first delivery (S7.4). |
-| Impact presentation | Curated statistics, a static visual and an external link | Preferred first variant; it matches the export but not the ticket's live embed, which is conditional (S10.3). |
+| Impact presentation | Curated statistics, a static visual and an external link | Preferred first variant; it matches the export, and original Story 21 allows a static snapshot labeled as not live. A live embed is conditional (S10.3). |
 | Hero decoration | A static hero decoration | Preferred MVP variant, subject to design approval: no animation lifecycle or reduced-motion work. |
 
 These are qualitative comparisons, not effort estimates. Six initial sections and code-defined
