@@ -33,7 +33,7 @@ The delivery plan's proposals apply where none of these sources decides.
 | Configs list production `DUOS-` identifiers; previews read production with DUOS handoffs disabled | Delivery plan section 3; approved |
 | Search submits to `/datalibrary` | Current DT-3904 Story 3 |
 | Hero stats are live: studies, datasets, tools | Original Story 4; MVP decision |
-| Study and dataset counts cover the showcase's scope (flagship: the whole public catalog); tools = enabled `featured-tools` and `featured-workspaces` items | Decision |
+| Study and dataset counts cover the hero's `scope` (none, as on the flagship: the whole public catalog); tools = enabled `featured-tools` and `featured-workspaces` items | Decision |
 | Carousel: manual controls, keyboard access, reduced motion | Original Story 4; artifact review findings 2 and 4 |
 | `latest-data-releases` is computed newest-first | Original Story 5 (release date descending) |
 | Its date is the NewStudyDigest date: `dac_approval_date` for controlled datasets, `create_date` for open or external ones; no time window | Decision |

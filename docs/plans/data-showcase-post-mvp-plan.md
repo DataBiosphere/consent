@@ -121,10 +121,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
 - **Backend/frontend:** add `new-workflow-tools`, `notebooks` and `ai-models` as distinct registry
   types using E3's resource-card primitives and config schemas. Validate configured names/descriptions/tags/
   thumbnails/launch/docs URLs; add appropriate user-facing resource labels and empty states.
-- **Backend/frontend:** add optional typed version, runtime/platform, notebook environment and
-  model parameter-count fields where approved content exists. Usage-in-workspaces and added-date
-  badges require defined sources/meaning. Keep these out of generic hand-entered analytics and
-  omit unavailable fields rather than making external telemetry a release dependency.
+- **Backend/frontend:** the artifact's version, runtime, environment, parameter-count, usage and
+  added-date fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision.
 - **Acceptance/tests:** each type independently supports config validation, item order, enabled/empty
   semantics, safe launch links and thumbnail alt handling. Test all three entries even if they
   share implementation. No execution, credential exchange or model hosting is implied by a card.
@@ -135,10 +133,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
 - **Backend/frontend:** add `research-area` and `research-initiative` with label, description,
   approved icon/image and destination URL config schemas. Keep destinations explicit until the
   scoped-library decision is resolved; display only approved groupings.
-- **Backend/frontend:** preserve research-area grids and initiative groups within the fixed section.
-  Add group ID/title, acronym/full name and optional dated availability badge to initiative items;
-  the export has four groups and thirteen cards, not one flat shelf. Group/item ordering does not
-  authorize section reordering. Avoid hardcoded group counts in editable eyebrow copy.
+- **Backend/frontend:** preserve the research-area and initiative grid layouts. The artifact's
+  initiative groups, acronyms and availability badges are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision.
 - **Acceptance/tests:** group cards navigate correctly, internal filter links survive authentication,
   unsafe destinations fail both validators and public empty/disabled groups have no anchor.
 - **Dependencies/PR boundary:** E1/E3 patterns; independent of rollup implementation.
@@ -211,8 +207,9 @@ depend on E9 authoritative lifecycle events.
   timezone/location/description, optional past-event history and open-registration versus alert-signup
   state. Where Else supports linked event tiles with optional date/location, reflecting the export;
   a generic-links-only variant needs explicit product agreement. Program panels support Markdown
-  without raw HTML, CTA links and structured lead/audience/deadline/focus facts. Workshops support
-  upcoming/recent sessions and a private-training CTA without exposing private material. Preserve
+  without raw HTML and CTA links; the artifact's structured lead/audience/deadline/focus facts and
+  session lists are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision. Workshops offer public signup and a private-training
+  request path (original Story 23). Preserve
   season/year-only dates without inventing exact timestamps.
 - **Acceptance/tests:** explicit timezones render consistently; expired events do not claim upcoming
   registration. Alert signup requires S7.1/S7.2; inline workshop enrollment requires S7.4, while
@@ -396,10 +393,8 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
   year, per-showcase labels/links and self-report prompt setting. Add the config schema, CI guard
   rules and renderer together. Approved curated publications can launch before submission moderation;
   keep the prompt off until S10.2 is available.
-- **Backend/frontend:** for reference parity, support optional journal, authors, month/date,
-  cited-dataset IDs and related-workspace item/link alongside the common fields. Resolve catalog
-  labels live and suppress related CTAs whose target is unavailable; do not copy sample citations
-  or imply the artifact's workspace associations have been scientifically verified.
+- **Backend/frontend:** the artifact's journal, authors, month, cited-dataset and related-workspace
+  fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision. Do not copy sample citations.
 - **Acceptance/tests:** bounded citation/year validation, safe links, item ordering, no raw HTML,
   accessible cards and empty/disabled behavior. Publication presence alone does not substantiate
   a claimed clinical or program outcome.
@@ -425,8 +420,8 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
 
 - **Preferred strategy:** implement `program-impact` as approved summary/stat content, attribution,
   optional approved static image and a real external portfolio link. The inspected artifact uses
-  a static SVG illustration, not a live iframe. This option preserves its presentation intent with
-  less integration work, but changes the ticket's embed-specific criterion and needs product agreement.
+  a static SVG illustration, not a live iframe. Original Story 21 allows a periodically refreshed
+  static snapshot, labeled as not live, when an embed isn't feasible.
 - **Backend/frontend:** define typed display mode (`summary` or `embed`), content provenance and
   refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
   live embedding is selected, add an approved URL/provider allowlist, frame sandbox, CSP, lazy
@@ -437,7 +432,8 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
   links without iframe requests. Embed mode additionally tests rejected origins, blocked/slow
   frames and usability without third-party cookies. Do not port the illustrative clinical graph
   as factual evidence or treat a config flag as the external agreement itself.
-- **Dependencies/PR boundary:** per-program agreement + S1.1 mode decision; release independently
+- **Dependencies/PR boundary:** per-program agreement and the initial mode, chosen by the product
+  owner when S10.3 is planned; release independently
   of science. A live embed is a separate follow-up slice if summary mode launches first.
 
 #### S10.4 — Retire featured-library maintenance after parity

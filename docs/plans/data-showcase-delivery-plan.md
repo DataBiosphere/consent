@@ -94,7 +94,7 @@ plans are proposed implementation targets; existing reuse points are distinguish
 | Public resource pattern | `OAuthCustomAuthFilter` authenticates only `swagger/` and `api/` paths and skips every other path. `resources/StatusResource.java` and `SupportResource.java` sit outside them with no role annotation. `PublicFeatureFlagResource` carries `@PermitAll`, which grants nothing there (review on PR #3136 questions whether it belongs). `docs/API_GUIDELINES.md` (updated with this plan) asks for explicit role annotations on authenticated endpoints and none on unauthenticated resources | Model the public catalog lookup on `StatusResource`/`SupportResource`: outside `/api`, no `@Auth` parameter, no role annotation, as the guideline now says. |
 | Dataset identity and metadata | `models/Dataset.java`, `models/Study.java`, `db/DatasetDAO.java`, `service/DatasetService.java`; registration builder defines `accessManagement`, `numberOfParticipants`, `dbGaPPhsID` | Reuse authoritative properties. Participants, samples, bytes and release dates are different concepts; do not invent equivalences. |
 | Dataset identifiers | `Dataset.getDatasetIdentifier()` builds `DUOS-` + zero-padded `alias`, a database sequence | Identifiers differ per environment. Configs use production identifiers (section 3). |
-| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Candidate date for `latest-data-releases`, so the shelf and the digest users already receive would agree. S1.1 decides (section 2). The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
+| Release dates | No “released in DUOS” field. The NewStudyDigest email already defines “newly available”: `dac_approval_date` for DAC-approved datasets, and `create_date` for open or external datasets, both in publicly visible studies (`DatasetDAO.getRecentDacApprovedDatasetStudyIds`, `getRecentlyCreatedOpenOrExternalDatasetStudyIds`, used by `EmailService.getRecentStudyInfoForDigestMessage`) | Adopted in S1.1 as the `latest-data-releases` date, so the shelf and the digest users already receive agree (section 2). The registration fields `embargoReleaseDate` and `alternativeDataSharingPlanTargetPublicReleaseDate` are a different concept. |
 | Public visibility | `Study.publicVisibility`; existing Elasticsearch access-control planning | Anonymous cards need an explicit public projection and eligibility policy. |
 | Existing automation | `service/DACAutomationRuleService.java`, `rules/DACAutomationRuleType.java`, `matching/DataUseMatcherV5.java`, `service/MatchService.java` | Extend RADAR and its existing decision path; do not introduce a parallel grant engine. |
 | Public UI and sign-in | `duos-ui:src/routing/AppRoutes.tsx` places `/datalibrary`, study and dataset detail routes inside `Authenticated` | Public showcases can launch without making the entire library public; preserve intent through sign-in. |
@@ -703,7 +703,7 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 
 - **Frontend:** implement `hero`, `latest-data-releases` and `open-access-datasets` as registry
   entries with matching config schemas. MVP hero shows live stats (studies and datasets in the
-  showcase's scope from the S2.2 `stats` mode; tools from the config's enabled `featured-tools` and
+  hero's configured `scope` from the S2.2 `stats` mode; tools from the config's enabled `featured-tools` and
   `featured-workspaces` items), date-bounded announcements, CTA/onboarding links and optional
   imagery. Preserve the observed desktop intro/onboarding/announcement hierarchy
   and stacked mobile layout. Prefer a static decorative background for MVP. Carousel supports an
@@ -729,10 +729,9 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
   primitive and separate registry entries. Fields: name, description, tags, optional thumbnail,
   launch URL and docs URL. Analysis apps allow at most one featured large card (CI guard).
 - **Frontend:** preserve the full-width featured app plus app grid and separate workspace shelf.
-  Add optional typed publisher, difficulty, estimated-duration and related-dataset/tool references
-  for workspace parity. Use a validated external launch link rather than implying a workspace-cloning
-  API. Only show clone/usage counts from a trusted identified source; omit them until available.
-  Give every resource card an explicit accessible action. No Terra credentials or execution.
+  The artifact's publisher, difficulty, duration, related-item and clone/usage fields are excluded:
+  S1.1 limits item fields to the Story 29 forms; adding any other field needs a product decision. Use a validated external launch link rather than implying a
+  workspace-cloning API. Give every resource card an explicit accessible action. No Terra credentials or execution.
 - **Acceptance/tests:** safe links open the intended resources, missing optional images have a
   stable layout, featured-card keyboard order is sensible, and two featured apps fail the guard.
 - **Dependencies/PR boundary:** S3.1 + S1.3.
@@ -865,7 +864,8 @@ Depends on: E1–E5 interfaces.
   totals, volume trends or timing sample counts.
 - Charts are computed client-side from S2.2's lookups, never from the
   authenticated Elasticsearch search.
-- Stories: S6.1 ranking modes, S6.2 most-requested and largest-cohort shelves, S6.3 charts, S6.4 workflows/notebooks/AI models, S6.5 research areas and initiatives.
+- Stories: S6.1 ranking modes, S6.2 most-requested and largest-cohort shelves, S6.3 charts,
+  S6.4 workflows/notebooks/AI models, S6.5 research areas and initiatives.
 
 **E7 — Program subscriptions, community and education.** Showcase opt-ins lead to managed
 delivery, not dead signup forms. Owner: notifications backend, frontend and
