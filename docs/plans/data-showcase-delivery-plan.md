@@ -578,7 +578,9 @@ S1.1; the lookup feeds E3.
   deduplication: `identifiers` maximum 200, `pin` maximum 50 and `exclude` maximum 200. Each approved
   scope key accepts at most 20 typed values; reject unknown keys, nested query objects and arbitrary
   strings in place of the agreed attribute types. Identifier strings are at most 32 characters
-  and must pass `Dataset.parseIdentifierToAlias`; continuation cursors are at most 512 characters.
+  and must pass `Dataset.parseIdentifierToAlias` and be in canonical form (S1.1: `DUOS-123` is
+  rejected because it would come back as `DUOS-000123`); continuation cursors are at most 512
+  characters.
   `limit` and `pageSize` must be positive integers within their caps; pins never increase the result
   beyond `limit`. Reject mode-incompatible fields and over-limit inputs with 400 before DAO calls.
   Publish these initial limits in OpenAPI and align the frontend guard. Revisit the numeric values

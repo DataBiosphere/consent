@@ -428,8 +428,8 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
   static image and a real external portfolio link. The inspected artifact uses a static SVG
   illustration, not a live iframe. Original Story 21 allows a periodically refreshed snapshot,
   flagged as not live, when an embed isn't feasible.
-- **Backend/frontend:** use the typed display mode (`snapshot` or `embed`) from the S1.1 fixtures, content provenance and
-  refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
+- **Backend/frontend:** use the typed display mode (`snapshot` or `embed`) from the S1.1 fixtures,
+  content provenance and refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
   live embedding is selected, add an approved URL/provider allowlist, frame sandbox, CSP, lazy
   loading, accessible frame title and fallback link/message. Never fetch arbitrary URLs server-side
   or accept executable HTML/SVG in config; static images are bundled assets reviewed in the PR.

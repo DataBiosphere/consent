@@ -33,6 +33,7 @@ The delivery plan's proposals apply where none of these sources decides.
 | Configs list canonical production `DUOS-` identifiers; previews read production with DUOS handoffs disabled | Decision (delivery plan section 3) |
 | Search submits to `/datalibrary` | Current DT-3904 Story 3 |
 | Hero stats are live: studies, datasets, tools; a stat that is 0 is hidden | Original Story 4; decision (MVP, hiding) |
+| No data-size stat: original Story 4's "total data size" is replaced by a dataset count, because DUOS has no trusted byte-size source | Decision |
 | Study and dataset counts use the requestable tier (the rows a shelf can show) within the hero's `scope`; no scope, as on the flagship, means the whole public catalog | Decision |
 | Tools count the items in enabled `featured-tools`, `new-workflow-tools`, `notebooks` and `ai-models`; workspaces are not tools | Decision |
 | Hero onboarding links to the workspaces shelf; a same-page link is hidden when its target section isn't visible | Original Story 18 |
@@ -77,19 +78,21 @@ DT-3904 itself is not edited.
 
 ## Fixtures and lookup examples
 
-duos-ui `test/fixtures/showcase/contracts.ts`, with `contracts.test.ts`, on branch
-`otchet-dt-4272-showcase-impl-contracts`, contains:
+duos-ui `test/fixtures/showcase/contracts.ts`, with `contracts.test.ts`
+([duos-ui#4029](https://github.com/DataBiosphere/duos-ui/pull/4029)), contains the following. S1.2
+moves the types to `src/types/showcase.ts`; the fixture configs and examples stay as test data.
 
 - `SECTION_KEYS`: all 23 keys in fixed order. The test checks that every config lists them in that
   order, enables only MVP sections and uses canonical identifiers.
 - Provisional section types, the section-to-ranking mapping, a flagship config and a partner config.
 - Lookup request and response examples for the `identifiers`, `ranking`, `all` and `stats` modes,
-  plus a 400 rejection.
+  plus 400 rejections for a field the mode doesn't accept and a non-canonical identifier.
 
 Contract rules the fixtures fix:
 
 - **Identifiers:** `DUOS-` plus the alias zero-padded to six digits, with no extra padding. Configs
   use this form and consent echoes it unchanged, so the page can match results to config order.
+  The lookup rejects any other form, such as `DUOS-123`, with 400.
 - **Dates:** `YYYY-MM-DD` in UTC; date ranges include both ends.
 - **`stats` mode** (new to S2.2): request `{ "mode": "stats", "scope"?: {...} }`, response
   `{ "studyCount", "datasetCount" }`. It counts requestable datasets within the scope and their
