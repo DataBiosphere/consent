@@ -117,6 +117,7 @@ This is the core of the ticket.
   | Anything else: no id, a blank id, a claimed or retired row's id, another study's id, or a number out of range | Insert a row. Keep a non-blank, non-integer id as `legacy_key` only if the study has never used it; otherwise `legacy_key` is null |
   | Live row not claimed by any entry | Retire the row |
 
+- Before applying the table, it rejects the write with 409 if any integer id matches a live row and also equals the `legacy_key` of a different live row of the study. Only a stale form can send that: an asset's pre-conversion id `"2"` became row 1 while another asset became row 2. The client must reload.
 - It mirrors what the write stored. When the write stores no property for a type, every live row of that type is retired; the update path deletes and reinserts all properties, so an absent list is a removed list.
 - It then sets each entry's id key to its row id and updates the `study_property` value. It works on the entries as parsed by `GsonUtil` and changes only the id key. It never maps an entry to a typed class, which would drop unknown client keys. A non-object element is left as it is and gets no row.
 - A field of the wrong type for its column (e.g. a non-numeric `age`) is stored as null and logged. The JSON keeps the original.
@@ -134,7 +135,8 @@ This is the core of the ticket.
 - Unknown client keys and non-object elements survive the write-back.
 - A sync failure rolls back the study and dataset writes.
 - Two concurrent updates of one study leave exactly one live row per entry of the last write.
-- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match.
+- An integer id that matches one live row and another live row's `legacy_key` returns 409 and changes nothing.
+- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match. On an unconverted study it gives every entry a row, as Task 6 would.
 
 ### Task 4: Make the asset id fields `integer` in OpenAPI (consent)
 
@@ -204,6 +206,7 @@ This is the core of the ticket.
 ## Edge cases to cover in review
 
 - A form opened before the conversion submits UUIDs. The `legacy_key` match updates those rows. Models had empty ids, so they have no `legacy_key`: a stale form retires and recreates them, which costs their ids but loses no data.
+- A stale form sends a short numeric pre-conversion id that is now another asset's row id. Task 3 returns 409 rather than updating the wrong asset.
 - A `Date.now()` id is a 13-digit number, outside the integer range. Task 3 checks the range before matching, and Task 6 never casts it.
 - An id copied from another study, or from a retired row, never updates that row. It creates a new row in the study being written.
 - A study is deleted: its rows go with it, by cascade.
@@ -228,8 +231,8 @@ Keep the tables in every case. They hold the only mapping from assigned ids to a
 
 - **Before Task 5 deploys:** revert Tasks 3 and 4 together. Ids already written into the JSON do no harm, because the old code treats ids as opaque strings.
 - **After Task 5 deploys:** revert Task 5 (and Task 7, if it shipped) first, so the UI generates ids and has its fallback again, then revert Tasks 3 and 4.
-- **Restoring data:** before the deploy that carries Task 6, back up `study_property` and the three asset tables in one consistent snapshot (one `pg_dump` run), since Liquibase runs the conversion with that deploy. Restore them together or not at all. Restoring the JSON alone leaves rows that no longer match it.
-- **Redeploying after a rollback:** registrations edited while Task 3 was reverted changed their JSON without touching the rows. Redeploy Tasks 3 and 4, then run `StudyAssetRecordSync.syncStudy` for every study with `update_date` after the rollback, and reindex. Task 6's changeset has already run and is not repeated.
+- **Restoring data:** before the deploy that carries Task 6, back up `study_property` and the three asset tables in one consistent snapshot (one `pg_dump` run), since Liquibase runs the conversion with that deploy. Restore them together or not at all; restoring the JSON alone leaves rows that no longer match it. The snapshot predates the conversion, and Liquibase will not run the changeset again, so after a restore run `StudyAssetRecordSync.syncStudy` for every study, then reindex, before Task 7 is redeployed.
+- **Redeploying after a rollback:** registrations created or edited while Task 3 was reverted changed their JSON without touching the rows. Redeploy Tasks 3 and 4, then run `syncStudy` for every study whose `create_date` or `update_date` is after the rollback (`insertStudy` leaves `update_date` null, so `update_date` alone misses new studies), and reindex.
 
 ## Out of scope (follow-up)
 
