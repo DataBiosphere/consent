@@ -620,6 +620,15 @@ S1.1; the lookup feeds E3.
   only when the immediate peer is the trusted proxy, otherwise uses the socket peer, so a caller
   cannot pick its own key by spoofing the header.
   Size it from the lookup/load spike and the pilot-load budget.
+  Implemented as `PublicRateLimitFilter` with `ClientIpResolver` (DT-4280), configured by
+  `rateLimit.showcase.requestsPerMinute` (default 120 per client IP for the deployment) and
+  `rateLimit.showcase.trustedProxies` (default loopback, the Apache sidecar). The key is the
+  `X-Real-IP` that the Google load balancer sets from the ingress chart's `BackendConfig`, not
+  `X-Forwarded-For`: in dev, `X-Forwarded-For` reached the sidecar with only a Google front-end
+  address. Each 429 logs the key and its source. Before DT-4275 exposes the endpoint, verify in dev
+  that the key is the caller's address and that a client-supplied `X-Real-IP` does not change it.
+  Requests through the BFF get the BFF's outbound address as the key, so all BFF users share one
+  bucket until the BFF forwards the browser address in a header that Consent believes (DT-4275).
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
   configuration, legacy CSP/CORS/preflight, and public-route rate limit. Document preview versus
   functional-test environment configuration. This transport work is required for MVP.

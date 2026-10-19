@@ -41,6 +41,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
+import org.broadinstitute.consent.http.filters.PublicRateLimitFilter;
 import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -542,6 +543,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private RateLimitFilter providesRateLimitFilter() {
     return new RateLimitFilter(config.getRateLimitConfiguration());
+  }
+
+  @Provides
+  @Singleton
+  private PublicRateLimitFilter providesPublicRateLimitFilter() {
+    return new PublicRateLimitFilter(config.getRateLimitConfiguration());
   }
 
   @Provides
