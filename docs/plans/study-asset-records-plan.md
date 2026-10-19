@@ -27,7 +27,7 @@ Every model, workspace and biospecimen that a study registers gets its own perma
 2. On every registration write, match each incoming asset to its row by id, update or insert it, retire rows whose asset was removed, and write the assigned ids back into the registration JSON.
 3. Convert existing registrations once: create a row for every asset and write its id into the JSON.
 4. duos-ui stops generating ids, sends the server's id back on edit, and then drops the position fallback.
-5. The OpenAPI id fields become `integer`, released with the sync after API users are told.
+5. The OpenAPI id fields allow `integer` or `string` when the sync ships, after API users are told, and become `integer` once the conversion has run.
 
 Nothing reads the tables yet. They give DT-4209 a stable key to hang DUOS identifiers on.
 
@@ -45,7 +45,7 @@ Nothing reads the tables yet. They give DT-4209 a stable key to hang DUOS identi
 | 8 | How does the DUOS team add biospecimens, and can that path send ids back? | Whatever tool they use must send each biospecimen's id back on edit, or every edit retires and recreates the rows. | **Confirm with Jonathan Lawson** before Task 3 deploys |
 | 9 | One generic asset table, or one per type? | One per type. The biospecimen fields share almost nothing with the others, and DT-4209 adds the cross-type catalog on top. | This plan |
 | 10 | Where does the conversion run? | A Liquibase changeset in SQL, following the 2026-09-02 promotion, so it runs once per environment with the deploy and needs no admin step. It locks `study_property` for its duration, because pods keep serving writes while Liquibase runs. | This plan |
-| 11 | When do API responses change type? | When Task 3 deploys, the asset endpoints and registration GET start returning integer ids. The API-users notice goes out before that release, and Task 4's OpenAPI change ships in it. | This plan, per `CONTRIBUTING.md` "Breaking API changes" |
+| 11 | When do API responses change type? | When Task 3 deploys, the asset endpoints and registration GET start returning integer ids for every study written from then on, and all studies after Task 6. The API-users notice goes out before Task 3's release and covers both steps. Task 4 documents `integer` or `string` in that release; Task 6 narrows it to `integer`. | This plan, per `CONTRIBUTING.md` "Breaking API changes" |
 
 ### Sync key
 
@@ -63,7 +63,7 @@ The server assigns the key. Alternatives considered and rejected:
 | 1 | consent | Create the asset record tables and DAO | ~350 lines | Decision 1 |
 | 2 | duos-ui | Remove `biospecimenId` from the Data Library search fields | ~30 lines | — |
 | 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4298 merged; Decisions 8 and 11; short-id count is zero |
-| 4 | consent | Make the asset id fields `integer` in OpenAPI | ~100 lines | Ships in the same release as 3; DT-4299 merged |
+| 4 | consent | Document the asset id fields as `integer` or `string` in OpenAPI | ~100 lines | Ships in the same release as 3; DT-4299 merged |
 | 5 | duos-ui | Send server-assigned asset ids | ~250 lines | 3 deployed; DT-4302 merged |
 | 6 | consent | Convert existing registrations | ~400 lines | 3 deployed; Decision 5 |
 | 7 | duos-ui | Drop the position-based id fallback | ~100 lines | 6 run in production |
@@ -137,12 +137,12 @@ This is the core of the ticket.
 - A sync failure rolls back the study and dataset writes.
 - Two concurrent updates of one study leave exactly one live row per entry of the last write.- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match. On an unconverted study it gives every entry a row, as Task 6 would.
 
-### Task 4: Make the asset id fields `integer` in OpenAPI (consent)
+### Task 4: Document the asset id fields as `integer` or `string` in OpenAPI (consent)
 
-- `AiModel.yaml`, `Workspace.yaml` and `Biospecimen.yaml`: the id fields become `integer`, described as server-assigned. The description notes that a string is still accepted on input.
+- `AiModel.yaml`, `Workspace.yaml` and `Biospecimen.yaml`: the id fields become `oneOf: [integer, string]`, described as server-assigned. Studies not written since Task 3 still return their client strings until Task 6 converts them, so the contract cannot narrow yet. Task 6 narrows it to `integer`; input keeps accepting a string.
 - Ships in the same release as Task 3, which is when responses change (Decision 11). Before that release, check in with Comms and send the notice to `api-users@firecloud.org`, as `CONTRIBUTING.md` "Breaking API changes" requires.
 
-**Tests:** the OpenAPI bundle builds, and the existing registration round-trip tests pass with integer ids.
+**Tests:** the OpenAPI bundle builds, and the existing registration round-trip tests pass with integer and string ids.
 
 ### Task 5: Send server-assigned asset ids (duos-ui)
 
@@ -182,6 +182,7 @@ This is the core of the ticket.
   5. Rebuild the array in the same order from that CTE, setting each element's id with `jsonb_set`. Every other key is kept.
 - After deploy, reindex through the admin `POST /api/dataset/index`, since each dataset document embeds its study's assets. The id keys keep their names, so the enumerated `study.assets.*` paths in `es-access-contract.md` §B.5a are unchanged.
 - Commit a report query beside the changeset: per type, the elements in the JSON, rows created, ids kept, and elements skipped with study id and position. Run it before and after in each environment.
+- In the same PR, narrow the three OpenAPI id fields from Task 4 to `integer` for responses, since every converted entry now has a row id.
 - Run [Staging verification](#staging-verification) before the production deploy.
 
 **Tests** (`StudyAssetRecordsMigrationTest`, following `StudyAssetsMigrationTest`, which reads the SQL out of the shipped changeset and runs it against seeded rows):
