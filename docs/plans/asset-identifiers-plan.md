@@ -4,7 +4,7 @@
 
 Proposed. Ticket: [DT-4209](https://broadworkbench.atlassian.net/browse/DT-4209), the second story of the Stable Asset Identity epic ([DT-4207](https://broadworkbench.atlassian.net/browse/DT-4207)). It builds on `study-asset-records-plan.md` ([DT-4208](https://broadworkbench.atlassian.net/browse/DT-4208)) and refers to that plan's tasks as "DT-4208 Task N".
 
-Code references were checked against `consent` `develop` at `b9edc7c5` and `duos-ui` at `e203f95d`. DT-4208 Decision 1 (biospecimen granularity) must be answered before Task 1 starts.
+Code references were checked against `consent` `develop` at `b9edc7c5` and `duos-ui` at `e203f95d`. Decision 1 (the identifier format) must be confirmed before Task 1 starts.
 
 ## Overview
 
@@ -39,8 +39,8 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 | 6 | Where does a model, workspace or biospecimen number come from? | Its DT-4208 row id. It is already permanent, server-assigned, increasing within its type and never reused, so `modelId` 45 is `DUOS-M-000045`. | This plan |
 | 7 | Where does a dataset number come from? | `dataset.alias`, unchanged. The catalog copies it at insert. Nothing in the app changes an alias afterwards, and the check reports an entry whose number no longer matches. | This plan (ticket: existing identifiers unchanged) |
 | 8 | What happens to an entry when its asset goes away? | A retired asset row keeps its entry, which still points at it. Deleting a dataset or a study stamps `asset_removed_date` on its entries in the transaction that deletes the rows, and the foreign key sets the reference to null. An entry whose reference is null without that stamp is an orphan. | This plan |
-| 9 | Is biospecimen granularity settled? | No. DT-4208 Decision 1 decides whether `DUOS-B-…` names a vial or a collection. This plan assumes a vial; a later collection level would take its own letter. | DT-4208 Decision 1 |
-| 10 | Numbers are increasing but have gaps. Is that acceptable? | Proposed: yes. A rolled-back registration still consumes its sequence values, and a retired-and-recreated asset takes a new number, so `DUOS-M-000046` may not exist. Dataset aliases already behave this way. Gap-free numbering would need a counter row that serializes every asset write. | **Confirm with Jonathan Lawson** (ticket: "numbered sequentially") |
+| 9 | Does `DUOS-B-…` name a vial or a collection? | A vial or sample, since DT-4208 Decision 1 settled one row per vial. A later collection level would take its own letter. | DT-4208 Decision 1 |
+| 10 | Numbers are increasing but have gaps. Is that acceptable? | Yes. A rolled-back registration still consumes its sequence values, and a retired-and-recreated asset takes a new number, so `DUOS-M-000046` may not exist. Dataset aliases already behave this way. Gap-free numbering would need a counter row that serializes every asset write. | Jonathan Lawson, 2026-10-19 |
 | 11 | What is the canonical form? | `AssetIdentifier.format`: at least six digits, zero-padded. `parse` accepts only that exact form, as the dataset endpoints do today (`DatasetService.findDatasetByIdentifier` rejects `DUOS-5` for `DUOS-000005`), so one asset has exactly one identifier. duos-ui upper-cases a pasted identifier before routing. | This plan |
 
 ### Alternatives considered
@@ -55,7 +55,7 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 
 | # | Repo | Task | Size (est.) | Depends on |
 |---|---|---|---|---|
-| 1 | consent | Catalog table, DAO, identifier format, and the dataset write and delete paths | ~400 lines | DT-4208 Task 1; DT-4208 Decision 1 |
+| 1 | consent | Catalog table, DAO, identifier format, and the dataset write and delete paths | ~400 lines | DT-4208 Task 1; Decision 1 |
 | 2 | consent | Catch up dataset entries | ~100 lines | 1 deployed |
 | 3 | consent | Add catalog entries from the asset sync | ~200 lines | 1; ships with or after DT-4208 Task 3 |
 | 4 | consent | Backfill asset entries | ~150 lines | 3 deployed; DT-4208 Task 6 run in production |
