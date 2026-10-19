@@ -12,4 +12,6 @@ RUN mvn clean package -Dmaven.test.skip=true --no-transfer-progress
 
 # Published
 FROM us.gcr.io/broad-dsp-gcr-public/base/jre:25-jre
+# Liquibase 4.30+ sends usage analytics by default. That call can stall where egress is closed.
+ENV LIQUIBASE_ANALYTICS_ENABLED=false
 COPY --from=build /usr/src/app/target/consent.jar /opt/consent.jar

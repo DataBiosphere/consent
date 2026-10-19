@@ -41,6 +41,17 @@ Copy `src/test/resources/consent-config.yml` to `config/consent.yaml` (the `conf
 git-ignored) and fill in the values for your environment. The `googleStore` section is the only
 part that needs cloud credentials; see the next section.
 
+The application runs the Liquibase changesets at startup only when `liquibase.runOnStartup` is
+`true`. The default is `false`, because deployed environments run the changesets in an
+init-container before the pods start. The template sets it to `true`, because a local database
+restored from an older dump needs the newer changesets. If you render `consent.yaml` from
+`terra-helmfile`, add this block yourself, or pass `-Ddw.liquibase.runOnStartup=true`:
+
+```yaml
+liquibase:
+  runOnStartup: true
+```
+
 ### Google Cloud Storage credentials
 
 Local development does **not** use a service account key file. Leave `googleStore.password`

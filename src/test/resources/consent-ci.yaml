@@ -79,3 +79,7 @@ rateLimit:
   requestsPerMinute: 100
   podCount: 1
 
+# Integration tests start on an empty database, so the application must build the schema.
+liquibase:
+  runOnStartup: true
+

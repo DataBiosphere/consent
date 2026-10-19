@@ -42,6 +42,9 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull @JsonProperty
   private final RateLimitConfiguration rateLimit = new RateLimitConfiguration();
 
+  @Valid @NotNull @JsonProperty
+  private final LiquibaseConfiguration liquibase = new LiquibaseConfiguration();
+
   public DataSourceFactory getDataSourceFactory() {
     return database;
   }
@@ -72,5 +75,9 @@ public class ConsentConfiguration extends Configuration {
 
   public RateLimitConfiguration getRateLimitConfiguration() {
     return rateLimit;
+  }
+
+  public LiquibaseConfiguration getLiquibaseConfiguration() {
+    return liquibase;
   }
 }
