@@ -43,8 +43,9 @@ part that needs cloud credentials; see the next section.
 
 `liquibase.runOnStartup` is an optional flag. The application runs the Liquibase changesets at
 startup only when the flag is `true`. If a config omits the flag or the whole `liquibase` block,
-the flag is `false`. Deployed configs omit it, because an init-container runs the changesets
-before the pods start. The template sets it to `true`, because a local database
+the flag is `false`. Environments that run the Liquibase migration Job omit it. In
+`terra-helmfile`, that Job is a separate Kubernetes Job that Argo CD runs before the deployment
+(sync-wave `-1`). The template sets it to `true`, because a local database
 restored from an older dump needs the newer changesets. If you render `consent.yaml` from
 `terra-helmfile`, add this block yourself, or pass `-Ddw.liquibase.runOnStartup=true`:
 

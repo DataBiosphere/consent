@@ -7,10 +7,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * {@code runOnStartup} in it. In both cases {@code runOnStartup} is {@code false} and the
  * application does not run the Liquibase changesets at startup.
  *
- * <p>In deployed environments, an init-container runs the changesets before the pods start, so
- * deployed configs omit this block. Local development databases are often restored from an older
- * dump and need the newer changesets, so set {@code runOnStartup: true} in a local config to run
- * them when the application starts.
+ * <p>Environments that run the separate Liquibase migration Job omit this block. Argo CD runs that
+ * Job before the deployment, so the changesets are already applied when the application starts.
+ * Local development databases are often restored from an older dump and need the newer changesets,
+ * so set {@code runOnStartup: true} in a local config to run them when the application starts.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LiquibaseConfiguration {
