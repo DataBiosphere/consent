@@ -117,7 +117,6 @@ This is the core of the ticket.
   | Anything else: no id, a blank id, a claimed or retired row's id, another study's id, or a number out of range | Insert a row. Keep a non-blank, non-integer id as `legacy_key` only if the study has never used it; otherwise `legacy_key` is null |
   | Live row not claimed by any entry | Retire the row |
 
-- Before applying the table, it rejects the write with 409 if any integer id matches a live row and also equals the `legacy_key` of a different live row of the study. Only a stale form can send that: an asset's pre-conversion id `"2"` became row 1 while another asset became row 2. The client must reload.
 - It mirrors what the write stored. When the write stores no property for a type, every live row of that type is retired; the update path deletes and reinserts all properties, so an absent list is a removed list.
 - It then sets each entry's id key to its row id and updates the `study_property` value. It works on the entries as parsed by `GsonUtil` and changes only the id key. It never maps an entry to a typed class, which would drop unknown client keys. A non-object element is left as it is and gets no row.
 - A field of the wrong type for its column (e.g. a non-numeric `age`) is stored as null and logged. The JSON keeps the original.
@@ -134,9 +133,7 @@ This is the core of the ticket.
 - A UUID matching a live row's `legacy_key` updates that row.
 - Unknown client keys and non-object elements survive the write-back.
 - A sync failure rolls back the study and dataset writes.
-- Two concurrent updates of one study leave exactly one live row per entry of the last write.
-- An integer id that matches one live row and another live row's `legacy_key` returns 409 and changes nothing.
-- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match. On an unconverted study it gives every entry a row, as Task 6 would.
+- Two concurrent updates of one study leave exactly one live row per entry of the last write.- `syncStudy` on a study whose JSON gained, lost and changed entries outside the sync inserts, retires and updates to match. On an unconverted study it gives every entry a row, as Task 6 would.
 
 ### Task 4: Make the asset id fields `integer` in OpenAPI (consent)
 
@@ -174,6 +171,8 @@ This is the core of the ticket.
   GROUP BY key;
   ```
 
+  Also count, from the same CTE, elements whose `modelId`, `workspaceId` or `biospecimenId` is 1 to 10 digits. The UI has only ever produced UUIDs, 13-digit `Date.now()` values and empty strings, so the expected count is zero. If it is not, stop and decide before merging: after conversion, a stale form holding such an id would update whichever asset now has that row id.
+
   If any list is still under a differently cased key or inside a legacy `assets` object, the changeset first promotes it with the 2026-09-02 SQL extended to ignore case, keeping that changeset's precedence (an existing promoted property wins). If none is, record that in the PR and leave the step out.
 - Liquibase changeset `changelog-consent-<date>-study-asset-records-convert.xml`. It starts with `LOCK TABLE study_property IN SHARE ROW EXCLUSIVE MODE` (Decision 10) and uses `MATERIALIZED` CTEs that filter on key, `pg_input_is_valid` and `jsonb_typeof = 'array'` before any cast or `jsonb_array_elements` call. For each type, over `jsonb_array_elements … WITH ORDINALITY`:
   1. Skip any element that is not a JSON object.
@@ -206,7 +205,7 @@ This is the core of the ticket.
 ## Edge cases to cover in review
 
 - A form opened before the conversion submits UUIDs. The `legacy_key` match updates those rows. Models had empty ids, so they have no `legacy_key`: a stale form retires and recreates them, which costs their ids but loses no data.
-- A stale form sends a short numeric pre-conversion id that is now another asset's row id. Task 3 returns 409 rather than updating the wrong asset.
+- A stale form holding a pre-conversion id of 1 to 10 digits would match another asset's row id. The UI has never produced one, and Task 6 stops if production holds any.
 - A `Date.now()` id is a 13-digit number, outside the integer range. Task 3 checks the range before matching, and Task 6 never casts it.
 - An id copied from another study, or from a retired row, never updates that row. It creates a new row in the study being written.
 - A study is deleted: its rows go with it, by cascade.
