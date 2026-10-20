@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed implementation plan for migrating dataset/study registration away from backend JSON Schema validation.
+Completed in [#2978](https://github.com/DataBiosphere/consent/pull/2978) ([DT-3596](https://broadworkbench.atlassian.net/browse/DT-3596), [DT-3597](https://broadworkbench.atlassian.net/browse/DT-3597)), merged 2026-07-17. Registration now validates typed request models (`StudyRegistrationRequest`, `RegistrationRequestMapper`), and `dataset-registration-schema_v1.json` has been removed. The rest of this document describes the state before that work.
 
 ## Context
 
