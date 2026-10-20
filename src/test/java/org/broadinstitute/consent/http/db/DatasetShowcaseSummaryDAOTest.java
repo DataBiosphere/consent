@@ -71,6 +71,8 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
         "controlled|null|false|excluded",
         "null|OPEN|false|open",
         "controlled|open|false|excluded",
+        "'\fcontrolled\u000B'|open|false|excluded",
+        "'\fopen\u000B'|null|false|open",
         "bogus|open|false|open",
         "bogus|null|true|null",
         "bogus|null|false|excluded",

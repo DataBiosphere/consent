@@ -754,10 +754,8 @@ WHERE dar.submission_date > now() - interval '8760 hours'
   }
 
   /**
-   * Eligibility: the study is publicly visible, and the dataset is open or external, or DAC
-   * approved. Access management follows {@link Dataset#getAccessManagement()}: the current property
-   * wins over the legacy one, keys match ignoring case, values are trimmed and lower-cased, and
-   * unrecognized values are skipped.
+   * Eligibility: a public study, and open or external access or DAC approval. Access follows {@link
+   * Dataset#getAccessManagement()}: current key before legacy, case-insensitive, trimmed.
    */
   @UseRowMapper(ShowcaseDatasetSummaryMapper.class)
   @SqlQuery(
@@ -772,12 +770,14 @@ WHERE dar.submission_date > now() - interval '8760 hours'
       INNER JOIN study s ON s.study_id = d.study_id
       LEFT JOIN dac ON dac.dac_id = d.dac_id
       LEFT JOIN LATERAL (
-          SELECT LOWER(BTRIM(am.property_value, E' \\t\\n\\r')) AS value
+          SELECT LOWER(
+              REGEXP_REPLACE(am.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g')) AS value
           FROM dataset_property am
           WHERE am.dataset_id = d.dataset_id
               AND LOWER(am.schema_property)
                   IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
-              AND LOWER(BTRIM(am.property_value, E' \\t\\n\\r'))
+              AND LOWER(
+                  REGEXP_REPLACE(am.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g'))
                   IN ('open', 'controlled', 'external')
           ORDER BY LOWER(am.schema_property) = LOWER(:accessManagementProperty) DESC,
               am.property_id
