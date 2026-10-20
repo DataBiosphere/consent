@@ -116,7 +116,7 @@ defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
 | `dacName` | `dac.name` through `dataset.dac_id` | string | yes | |
 | `consentCodes` | `dataset.data_use` | string[] | no | Codes only (`GRU`, `HMB`, `DS`, `OTHER`, ...), in `TranslationUtil.translateSummary` order; free-text values and disease labels are omitted |
 | `participantCount` | `dataset_property` `numberOfParticipants` | integer (participants) | yes | Trimmed and parsed as an integer; null if missing, non-integer or negative |
-| `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD`, UTC | yes | |
+| `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD`, UTC | yes | Date part of the stored timestamp (no time zone column), not shifted by the JVM time zone |
 | `accessUrl` | `dataset_property` `url` | string | yes | Open and external only; absolute `http`/`https` with a host and no user info; null otherwise |
 | `species` | `study_property` `species` | string | yes | Trimmed; null if blank |
 
@@ -128,6 +128,14 @@ present as `null`. When a property has several rows, the row with the lowest id 
 
 Omitted: study description and phenotype (free text), PI name, data types, file formats, data size
 (no trusted byte source), `translated_data_use` (embeds free text).
+
+### S2.2 requirements
+
+- Write the response entity with `GsonUtil.buildGsonNullSerializer()`. The default
+  `JerseyGsonProvider` uses `GsonUtil.getInstance()`, which drops null fields. Add a resource-level
+  test that the serialized keys equal `ShowcasePublicField.jsonNames()`.
+- `DatasetDAO.findShowcaseSummaries` has no limit on the number of aliases. Enforce the
+  200-identifier cap before calling it.
 
 ### Eligibility
 
