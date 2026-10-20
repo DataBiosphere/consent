@@ -4,7 +4,7 @@
 
 Proposed. Ticket: [DT-4209](https://broadworkbench.atlassian.net/browse/DT-4209), the second story of the Stable Asset Identity epic ([DT-4207](https://broadworkbench.atlassian.net/browse/DT-4207)). It builds on `study-asset-records-plan.md` ([DT-4208](https://broadworkbench.atlassian.net/browse/DT-4208)) and refers to that plan's tasks as "DT-4208 Task N".
 
-Code references were checked against `consent` `develop` at `b9edc7c5` and `duos-ui` at `e203f95d`. Decision 1 (the identifier format) must be confirmed before Task 1 starts.
+Code references were checked against `consent` `develop` at `b9edc7c5` and `duos-ui` at `e203f95d`.
 
 ## Overview
 
@@ -25,17 +25,17 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 2. Every dataset insert and every new asset row from DT-4208's sync adds an entry in the same transaction. Deleting a dataset or a study stamps its entries removed, creating any that are missing first.
 3. Backfill entries for existing datasets, keeping each alias, and for every row DT-4208 created.
 4. Provide admin check and repair endpoints for orphaned entries and assets without an entry.
-5. Return each asset's identifier from the asset endpoints and the search index, and resolve any identifier, live, retired or removed, through a lookup endpoint. Showing and searching it in duos-ui waits on Decision 2.
+5. Return each asset's identifier from the asset endpoints and the search index, and resolve any identifier, live, retired or removed, through a lookup endpoint. duos-ui shows it and makes it searchable.
 
 ## Decisions
 
 | # | Question | Decision | Source |
 |---|---|---|---|
-| 1 | Identifier format and prefixes | `DUOS-M-000045` (model), `DUOS-W-000012` (workspace), `DUOS-B-000301` (biospecimen): six digits zero-padded, more when the number outgrows them, as datasets do. Datasets keep `DUOS-000123` with no letter. `D` and `S` are never used as type letters, because `DUOS-D…` and `DUOS-S…` already mean a dataset database id and a study id in duos-ui. | **Confirm with Jonathan Lawson** (ticket Q1) |
-| 2 | Are the identifiers shown to users, and searchable? | Proposed: yes, as dataset identifiers are. The API, index and lookup return them either way (Task 7); duos-ui display and search (Task 8) waits on the answer. | **Confirm with Jonathan Lawson** (ticket Q2) |
-| 3 | Can an identifier be reused after its asset is removed? | No. Model, workspace and biospecimen numbers are serial row ids, which are never reissued. Dataset numbers come from `dataset_alias_seq`, which never goes back; only an ad hoc insert with an explicit alias could reuse a deleted dataset's number. That dataset gets no entry, and the collision is logged, and the check reports it (Tasks 2 and 6) rather than failing the registration. The entry outlives its asset, so the identifier resolves, as retired or removed (Task 7). An ad hoc alias reuse is the one way to break this: the identifier then names the new dataset until someone fixes the alias by hand, and the check reports it. | This plan (ticket Q3); confirm with Jonathan Lawson |
-| 4 | Will publications, presentations, IP and funding stay non-requestable? | Planned as yes. If one becomes requestable, it takes a new type letter and a column here, with no change to existing identifiers. | **Jonathan Lawson** (ticket Q4) |
-| 5 | How often does the orphan check run, and who is alerted? | Proposed: on demand, through admin check and repair endpoints, as `POST /api/dataset/index` works today; consent has no scheduled jobs. Drift comes only from ad hoc SQL, a restore, or old pods during a rollout or revert, so whoever does one of those calls the check afterwards. Nothing alerts on its own; a schedule can wrap the same check later if one is needed. | **Jonathan Lawson** (ticket Q5) |
+| 1 | Identifier format and prefixes | `DUOS-M-000045` (model), `DUOS-W-000012` (workspace), `DUOS-B-000301` (biospecimen): six digits zero-padded, more when the number outgrows them, as datasets do. Datasets keep `DUOS-000123` with no letter. `D` and `S` are never used as type letters, because `DUOS-D…` and `DUOS-S…` already mean a dataset database id and a study id in duos-ui. | Jonathan Lawson, 2026-10-19 |
+| 2 | Are the identifiers shown to users, and searchable? | Yes, as dataset identifiers are; searching by identifier is a requirement. The API, index and lookup return them (Task 7), and duos-ui shows and searches them (Task 8). | Jonathan Lawson, 2026-10-19 |
+| 3 | Can an identifier be reused after its asset is removed? | No. Model, workspace and biospecimen numbers are serial row ids, which are never reissued. Dataset numbers come from `dataset_alias_seq`, which never goes back; only an ad hoc insert with an explicit alias could reuse a deleted dataset's number. That dataset gets no entry, and the collision is logged, and the check reports it (Tasks 2 and 6) rather than failing the registration. The entry outlives its asset, so the identifier resolves, as retired or removed (Task 7). An ad hoc alias reuse is the one way to break this: the identifier then names the new dataset until someone fixes the alias by hand, and the check reports it. | Jonathan Lawson, 2026-10-19 |
+| 4 | Will publications, presentations, IP and funding stay non-requestable? | Yes. If one becomes requestable, it takes a new type letter and a column here, with no change to existing identifiers. | Jonathan Lawson, 2026-10-19 |
+| 5 | How often does the orphan check run, and who is alerted? | On demand, through admin check and repair endpoints, as `POST /api/dataset/index` works today; consent has no scheduled jobs. Drift comes only from ad hoc SQL, a restore, or old pods during a rollout or revert, so whoever does one of those calls the check afterwards. Nothing alerts on its own; a schedule can wrap the same check later if one is needed. | Engineering; Jonathan Lawson deferred, 2026-10-19 |
 | 6 | Where does a model, workspace or biospecimen number come from? | Its DT-4208 row id. It is already permanent, server-assigned, increasing within its type and never reused, so `modelId` 45 is `DUOS-M-000045`. | This plan |
 | 7 | Where does a dataset number come from? | `dataset.alias`, unchanged. The catalog copies it at insert. Nothing in the app changes an alias afterwards, and the check reports an entry whose number no longer matches. | This plan (ticket: existing identifiers unchanged) |
 | 8 | What happens to an entry when its asset goes away? | A retired asset row keeps its entry, which still points at it. Deleting a dataset or a study stamps `asset_removed_date` on its entries in the transaction that deletes the rows, and the foreign key sets the reference to null. An entry whose reference is null without that stamp is an orphan. | This plan |
@@ -62,7 +62,7 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 | 5 | consent | Backfill asset entries | ~150 lines | 4 deployed; DT-4208 Task 6 run in production |
 | 6 | consent | Add the integrity check and repair endpoints | ~200 lines | 5 run |
 | 7 | consent | Return and resolve identifiers | ~400 lines | 5 run |
-| 8 | duos-ui | Show, search and link identifiers | ~250 lines | 7 deployed; Decision 2 |
+| 8 | duos-ui | Show, search and link identifiers | ~250 lines | 7 deployed |
 
 Sizes include tests. Tasks are numbered in deploy order. **Each backfill deploys in a later release than its write path**, because Liquibase runs while old pods are still serving: an asset created by an old pod after the backfill ran would otherwise have no entry. An asset deleted before its backfill keeps its identifier, because the delete paths create the missing entry before stamping it (Task 2). Task 2's changeset also runs the dataset backfill once, so every dataset that exists before new pods serve has an entry; Task 3 repeats it for datasets that old pods created during the rollout. Task 1 can deploy on its own: a dataset deleted before Task 2 has no entry, as one deleted before this plan does.
 
@@ -194,7 +194,7 @@ Expose each asset's identifier, and resolve any identifier back to its asset.
 
 ### Task 8: Show, search and link identifiers (duos-ui)
 
-Only if Decision 2 is yes. Show the identifiers in the Data Library and route pasted identifiers to their asset.
+Show the identifiers in the Data Library and route pasted identifiers to their asset.
 
 - The model, workspace and biospecimen tabs show `duosIdentifier`, and their `searchFields` include it, as `datasetAsset.ts` does with `datasetIdentifier`.
 - `NotFound` upper-cases the identifier before matching, so the case-sensitive checks downstream (`DatasetStatistics.getMatchPhrase`, the `DUOS-S` replace) see the canonical form. For `/DUOS-M-…`, `/DUOS-W-…` and `/DUOS-B-…` it calls the lookup: a live asset opens its Data Library tab filtered to the identifier, and a retired or removed one shows that status instead of "page not found".
@@ -254,7 +254,7 @@ Keep `asset_catalog` in every case. It is the only record of removed assets' ide
 6. DT-4208 Task 5 deploys, and DT-4208 Task 6 runs in its maintenance window, backing up `asset_catalog` with the other tables.
 7. Task 5 deploys.
 8. Tasks 6 and 7 deploy. Then call `GET /api/admin/asset-catalog/check`, and `POST /api/admin/asset-catalog/repair` if it reports anything.
-9. Task 8 deploys, if Decision 2 is yes.
+9. Task 8 deploys.
 
 ## Overlap with DT-4208
 
