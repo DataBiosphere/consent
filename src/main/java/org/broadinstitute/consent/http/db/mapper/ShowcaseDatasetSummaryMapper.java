@@ -7,8 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.ZoneOffset;
+import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +49,7 @@ public class ShowcaseDatasetSummaryMapper
         rs.getString("dac_name"),
         TranslationUtil.summaryCodes(dataUseParser.parseDataUse(rs.getString("data_use"))),
         participantCount(firstValue(datasetProperties, ShowcasePublicField.PARTICIPANT_COUNT)),
-        utcDate(rs.getTimestamp("available_date")),
+        storedDate(rs.getObject("available_date", LocalDateTime.class)),
         accessUrl,
         StringUtils.trimToNull(firstValue(studyProperties, ShowcasePublicField.SPECIES)));
   }
@@ -84,11 +83,9 @@ public class ShowcaseDatasetSummaryMapper
     }
   }
 
-  private static String utcDate(Timestamp timestamp) {
-    if (timestamp == null) {
-      return null;
-    }
-    return timestamp.toInstant().atOffset(ZoneOffset.UTC).toLocalDate().toString();
+  /** The date part of a stored timestamp, unaffected by the JVM time zone. */
+  private static String storedDate(LocalDateTime timestamp) {
+    return timestamp == null ? null : timestamp.toLocalDate().toString();
   }
 
   private static String safeUrl(String value) {
