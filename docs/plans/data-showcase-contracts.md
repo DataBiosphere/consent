@@ -99,7 +99,54 @@ Contract rules the fixtures fix:
   distinct studies, follows the same body, scope and no-store rules as the other modes, and rejects
   other fields with 400.
 
-Field names, nullability and the `scope` vocabulary stay provisional until S2.1.
+S2.1 sets the field names, nullability and `scope` vocabulary below. Data stewards and AppSec still
+have to approve them (open gates).
+
+## S2.1 catalog projection
+
+Record for [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274). `ShowcasePublicField`
+defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
+`DatasetDAO.findShowcaseSummaries` reads them.
+
+| Field | Source | Type | Null | Rule |
+| --- | --- | --- | --- | --- |
+| `identifier` | `dataset.alias` | string | no | `DUOS-` plus the alias padded to six digits |
+| `title` | `dataset.name` | string | no | |
+| `accessManagement` | `dataset_property` `accessManagement`, then legacy `consentGroup.accessManagement` | `open`, `controlled`, `external` | yes | Keys match ignoring case; values are trimmed and lower-cased; unrecognized values are skipped; null when no value is recognized |
+| `dacName` | `dac.name` through `dataset.dac_id` | string | yes | |
+| `consentCodes` | `dataset.data_use` | string[] | no | Codes only (`GRU`, `HMB`, `DS`, `OTHER`, ...), in `TranslationUtil.translateSummary` order; free-text values and disease labels are omitted |
+| `participantCount` | `dataset_property` `numberOfParticipants` | integer (participants) | yes | Trimmed and parsed as an integer; null if missing, non-integer or negative |
+| `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD`, UTC | yes | |
+| `accessUrl` | `dataset_property` `url` | string | yes | Open and external only; absolute `http`/`https` with a host and no user info; null otherwise |
+| `species` | `study_property` `species` | string | yes | Trimmed; null if blank |
+
+When a property has several rows, the row with the lowest id is used. The query reads only
+`dataset_property.schema_property IN (numberOfParticipants, url)` and
+`study_property.key IN (species)`, plus the two access-management keys used for eligibility.
+
+Omitted: study description and phenotype (free text), PI name, data types, file formats, data size
+(no trusted byte source), `translated_data_use` (embeds free text).
+
+### Eligibility
+
+A dataset is returned only if all of these hold:
+
+1. It has a study, and `study.public_visibility = true` (the column is `NOT NULL`).
+2. `accessManagement` is `open` or `external`, or `dataset.dac_approval = true`. Controlled datasets,
+   and datasets without a recognized access value, need DAC approval.
+
+Admin, creator and custodian exceptions do not apply. Deleted datasets are absent because they are
+hard-deleted. Eligibility inputs are not returned.
+
+### `scope` vocabulary
+
+`ShowcaseScopeKey`:
+
+| Key | Column | Values |
+| --- | --- | --- |
+| `dac` | `dac.name` | DAC names, exact match |
+
+The values for one key are alternatives (any one can match). Multiple keys must all match.
 
 ## Open gates
 
@@ -107,5 +154,5 @@ Field names, nullability and the `scope` vocabulary stay provisional until S2.1.
 | --- | --- | --- |
 | Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. Not yet held. | Designer | S3.1–S3.4 |
 | Rebranded artifact supplied; artifact review updated with its hash | Product owner | — |
-| S2.1 field names, nullability and `scope` vocabulary | Consent catalog lead, data stewards, AppSec | S2.2 |
+| S2.1 field definitions and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
 | Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, designer, consent lead, duos-ui lead | Closing DT-4272 |

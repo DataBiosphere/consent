@@ -12,11 +12,13 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,6 +45,46 @@ class TranslationUtilTest extends AbstractTestHelper {
   void setUpClass() {
     when(jdbi.onDemand(OntologyDAO.class)).thenReturn(ontologyDAO);
     service = new TranslationUtil(jdbi);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Male", "Female"})
+  void testSummaryCodesMatchTranslateSummary(String gender) {
+    OntologyTerm term = initializeDiseaseTerm();
+    DataUse dataUse =
+        new DataUseBuilder()
+            .setGeneralUse(true)
+            .setDiseaseRestrictions(List.of(term.id()))
+            .setHmbResearch(true)
+            .setPopulationOriginsAncestry(true)
+            .setOther("free text primary")
+            .setMethodsResearch(true)
+            .setNonProfitUse(true)
+            .setSecondaryOther("free text secondary")
+            .setEthicsApprovalRequired(true)
+            .setCollaboratorRequired(true)
+            .setGeographicalRestrictions("free text region")
+            .setGeneticStudiesOnly(true)
+            .setPublicationResults(true)
+            .setPublicationMoratorium("2026-01-01")
+            .setControl(true)
+            .setGender(gender)
+            .setPediatric(true)
+            .setPopulation(true)
+            .build();
+    DataUseSummary summary = service.translateSummary(dataUse);
+    List<String> expected =
+        Stream.concat(summary.getPrimary().stream(), summary.getSecondary().stream())
+            .map(DataUseTerm::getCode)
+            .distinct()
+            .toList();
+
+    assertEquals(expected, TranslationUtil.summaryCodes(dataUse));
+  }
+
+  @Test
+  void testSummaryCodesNullDataUse() {
+    assertEquals(List.of(), TranslationUtil.summaryCodes(null));
   }
 
   @Test

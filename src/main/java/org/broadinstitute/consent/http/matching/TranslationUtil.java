@@ -7,9 +7,11 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -272,6 +274,81 @@ public class TranslationUtil implements ConsentLogger {
     summary.setPrimary(primary);
     summary.setSecondary(secondary);
     return summary;
+  }
+
+  /**
+   * List the codes of {@link #translateSummary(DataUse)}, primary then secondary, without their
+   * descriptions or free-text values. {@code DS} does not depend on an ontology lookup here.
+   *
+   * @param dataUse The DataUse
+   * @return Distinct codes in summary order
+   */
+  // Suppress warning for method complexity (S3776). Mirrors translateSummary.
+  @SuppressWarnings({"java:S3776"})
+  public static List<String> summaryCodes(DataUse dataUse) {
+    Set<String> codes = new LinkedHashSet<>();
+    if (Objects.isNull(dataUse)) {
+      return List.of();
+    }
+    if (BooleanUtils.isTrue(dataUse.getGeneralUse())) {
+      codes.add("GRU");
+    }
+    if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
+      codes.add("DS");
+    }
+    if (BooleanUtils.isTrue(dataUse.getHmbResearch())) {
+      codes.add("HMB");
+    }
+    if (BooleanUtils.isTrue(dataUse.getPopulationOriginsAncestry())) {
+      codes.add("NPOA");
+    }
+    if (StringUtils.isNotBlank(dataUse.getOther())) {
+      codes.add("OTHER");
+    }
+    if (BooleanUtils.isTrue(dataUse.getMethodsResearch())) {
+      codes.add("NMDS");
+    }
+    if (BooleanUtils.isTrue(dataUse.getNonProfitUse())) {
+      codes.add("NPU");
+    }
+    if (StringUtils.isNotBlank(dataUse.getSecondaryOther())) {
+      codes.add("OTHER");
+    }
+    if (BooleanUtils.isTrue(dataUse.getEthicsApprovalRequired())) {
+      codes.add("IRB");
+    }
+    if (BooleanUtils.isTrue(dataUse.getCollaboratorRequired())) {
+      codes.add("COL");
+    }
+    if (StringUtils.isNotBlank(dataUse.getGeographicalRestrictions())) {
+      codes.add("GS");
+    }
+    if (BooleanUtils.isTrue(dataUse.getGeneticStudiesOnly())) {
+      codes.add("GSO");
+    }
+    if (BooleanUtils.isTrue(dataUse.getPublicationResults())) {
+      codes.add("PUB");
+    }
+    if (StringUtils.isNotBlank(dataUse.getPublicationMoratorium())) {
+      codes.add("MOR");
+    }
+    if (BooleanUtils.isTrue(dataUse.getControls())) {
+      codes.add("NCTRL");
+    }
+    String gender = Optional.ofNullable(dataUse.getGender()).orElse("na");
+    if (gender.equalsIgnoreCase(MALE)) {
+      codes.add("POP-M");
+    }
+    if (gender.equalsIgnoreCase(FEMALE)) {
+      codes.add("POP-F");
+    }
+    if (BooleanUtils.isTrue(dataUse.getPediatric())) {
+      codes.add("POP-PD");
+    }
+    if (BooleanUtils.isTrue(dataUse.getPopulation())) {
+      codes.add("POP");
+    }
+    return List.copyOf(codes);
   }
 
   protected List<OntologyTerm> findTermsByIds(List<String> ids) {
