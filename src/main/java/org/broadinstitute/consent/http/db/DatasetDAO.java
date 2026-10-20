@@ -14,7 +14,9 @@ import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetStudySummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
+import org.broadinstitute.consent.http.db.mapper.ShowcaseDatasetSummaryMapper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.ShowcasePublicField;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -22,6 +24,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.resources.Resource;
@@ -736,4 +739,81 @@ WHERE dar.submission_date > now() - interval '8760 hours'
           AND dataset_property.property_value IN ('open', 'external')
 """)
   List<Integer> getRecentlyCreatedOpenOrExternalDatasetStudyIds();
+
+  /** Showcase summaries of the eligible datasets among the aliases, ordered by alias. */
+  default List<ShowcaseDatasetSummary> findShowcaseSummaries(Collection<Integer> aliases) {
+    if (aliases.isEmpty()) {
+      return List.of();
+    }
+    return findShowcaseSummaries(
+        aliases,
+        ShowcasePublicField.datasetPropertyAllowlist(),
+        ShowcasePublicField.studyPropertyAllowlist(),
+        Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
+        Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
+  }
+
+  /**
+   * Eligibility: the study is publicly visible, and the dataset is open or external, or DAC
+   * approved. Access management follows {@link Dataset#getAccessManagement()}: the current property
+   * wins over the legacy one, keys match ignoring case, values are trimmed and lower-cased, and
+   * unrecognized values are skipped.
+   */
+  @UseRowMapper(ShowcaseDatasetSummaryMapper.class)
+  @SqlQuery(
+      """
+      SELECT d.alias, d.name, dac.name AS dac_name, d.data_use,
+          access.value AS access_management,
+          CASE WHEN access.value IN ('open', 'external') THEN d.create_date
+              ELSE d.dac_approval_date END AS available_date,
+          dataset_props.properties AS dataset_properties,
+          study_props.properties AS study_properties
+      FROM dataset d
+      INNER JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN dac ON dac.dac_id = d.dac_id
+      LEFT JOIN LATERAL (
+          SELECT LOWER(BTRIM(am.property_value, E' \\t\\n\\r')) AS value
+          FROM dataset_property am
+          WHERE am.dataset_id = d.dataset_id
+              AND LOWER(am.schema_property)
+                  IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
+              AND LOWER(BTRIM(am.property_value, E' \\t\\n\\r'))
+                  IN ('open', 'controlled', 'external')
+          ORDER BY LOWER(am.schema_property) = LOWER(:accessManagementProperty) DESC,
+              am.property_id
+          LIMIT 1
+      ) access ON TRUE
+      LEFT JOIN LATERAL (
+          SELECT jsonb_object_agg(p.schema_property, p.property_value) AS properties
+          FROM (
+              SELECT DISTINCT ON (dp.schema_property) dp.schema_property, dp.property_value
+              FROM dataset_property dp
+              WHERE dp.dataset_id = d.dataset_id
+                  AND dp.schema_property IN (<datasetPropertyAllowlist>)
+              ORDER BY dp.schema_property, dp.property_id
+          ) p
+      ) dataset_props ON TRUE
+      LEFT JOIN LATERAL (
+          SELECT jsonb_object_agg(p.key, p.value) AS properties
+          FROM (
+              SELECT DISTINCT ON (sp.key) sp.key, sp.value
+              FROM study_property sp
+              WHERE sp.study_id = s.study_id
+                  AND sp.key IN (<studyPropertyAllowlist>)
+              ORDER BY sp.key, sp.study_property_id
+          ) p
+      ) study_props ON TRUE
+      WHERE d.alias IN (<aliases>)
+          AND s.public_visibility = true
+          AND (access.value IN ('open', 'external') OR d.dac_approval = true)
+      ORDER BY d.alias
+      """)
+  List<ShowcaseDatasetSummary> findShowcaseSummaries(
+      @BindList(value = "aliases", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> aliases,
+      @BindList(value = "datasetPropertyAllowlist", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<String> datasetPropertyAllowlist,
+      @BindList(value = "studyPropertyAllowlist", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<String> studyPropertyAllowlist,
+      @Bind("accessManagementProperty") String accessManagementProperty,
+      @Bind("legacyAccessManagementProperty") String legacyAccessManagementProperty);
 }
