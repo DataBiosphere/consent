@@ -2,28 +2,26 @@ package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.jackson.Jackson;
-import java.util.ArrayList;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ShowcasePublicField;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
 class ShowcaseDatasetSummaryTest {
 
-  private final ObjectMapper mapper = Jackson.newObjectMapper();
+  /** Responses must use the null-serializing Gson so that every key is present. */
+  private final Gson gson = GsonUtil.buildGsonNullSerializer();
 
   @Test
-  void testSerializedKeysEqualAllowlist() throws Exception {
+  void testSerializedKeysEqualAllowlist() {
     ShowcaseDatasetSummary summary =
         new ShowcaseDatasetSummary(null, null, null, null, null, null, null, null, null);
-    JsonNode json = mapper.valueToTree(summary);
-    List<String> keys = new ArrayList<>();
-    json.fieldNames().forEachRemaining(keys::add);
+    JsonObject json = gson.toJsonTree(summary).getAsJsonObject();
 
-    assertEquals(ShowcasePublicField.jsonNames(), keys);
+    assertEquals(ShowcasePublicField.jsonNames(), List.copyOf(json.keySet()));
   }
 
   @Test

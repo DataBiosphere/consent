@@ -120,7 +120,9 @@ defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
 | `accessUrl` | `dataset_property` `url` | string | yes | Open and external only; absolute `http`/`https` with a host and no user info; null otherwise |
 | `species` | `study_property` `species` | string | yes | Trimmed; null if blank |
 
-When a property has several rows, the row with the lowest id is used. The query reads only
+Responses serialize the summary with `GsonUtil.buildGsonNullSerializer()`, so a null field is
+present as `null`. When a property has several rows, the row with the lowest id is used. Older
+`# of participants` rows with no `schema_property` are not read, so their count is null. The query reads only
 `dataset_property.schema_property IN (numberOfParticipants, url)` and
 `study_property.key IN (species)`, plus the two access-management keys used for eligibility.
 
