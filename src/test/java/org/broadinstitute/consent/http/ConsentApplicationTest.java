@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,14 +18,16 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.concurrent.atomic.AtomicReference;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.analytics.configuration.AnalyticsArgs;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.exception.LiquibaseException;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.junit.jupiter.api.BeforeEach;
+import org.broadinstitute.consent.http.configurations.LiquibaseConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,16 +48,86 @@ class ConsentApplicationTest {
   @Mock private DatabaseFactory databaseFactory;
   @Mock private Database database;
 
-  @BeforeEach
-  void setUp() {
-    when(configuration.getDataSourceFactory()).thenReturn(dataSourceFactory);
-    when(dataSourceFactory.getUrl()).thenReturn(URL);
-    when(dataSourceFactory.getUser()).thenReturn(USER);
-    when(dataSourceFactory.getPassword()).thenReturn(PASSWORD);
+  @Test
+  void runLiquibaseIfEnabledSkipsLiquibaseByDefault() throws Exception {
+    when(configuration.getLiquibaseConfiguration()).thenReturn(new LiquibaseConfiguration());
+
+    try (var mockedDriverManager = mockStatic(DriverManager.class);
+        var mockedLiquibase = mockConstruction(Liquibase.class)) {
+      invoke("runLiquibaseIfEnabled", configuration);
+
+      mockedDriverManager.verify(() -> DriverManager.getConnection(any(), any(), any()), never());
+      assertEquals(0, mockedLiquibase.constructed().size());
+    }
+  }
+
+  @Test
+  void runLiquibaseIfEnabledRunsUpdateWhenEnabled() throws Exception {
+    LiquibaseConfiguration liquibaseConfiguration = new LiquibaseConfiguration();
+    liquibaseConfiguration.setRunOnStartup(true);
+    when(configuration.getLiquibaseConfiguration()).thenReturn(liquibaseConfiguration);
+    stubDataSource();
+
+    try (var mockedDriverManager = mockStatic(DriverManager.class);
+        var mockedDatabaseFactory = mockStatic(DatabaseFactory.class);
+        var mockedLiquibase = mockConstruction(Liquibase.class)) {
+      mockedDriverManager
+          .when(() -> DriverManager.getConnection(URL, USER, PASSWORD))
+          .thenReturn(connection);
+      mockedDatabaseFactory.when(DatabaseFactory::getInstance).thenReturn(databaseFactory);
+      when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
+
+      invoke("runLiquibaseIfEnabled", configuration);
+
+      verify(mockedLiquibase.constructed().getFirst())
+          .update(any(Contexts.class), any(LabelExpression.class));
+    }
+  }
+
+  @Test
+  void initializeLiquibaseDisablesAnalytics() throws Exception {
+    // Scope values take precedence over system properties, so the update must see false even when
+    // the JVM enables analytics.
+    String analyticsKey = AnalyticsArgs.ENABLED.getKey();
+    String previous = System.setProperty(analyticsKey, "true");
+    AtomicReference<Boolean> analyticsDuringUpdate = new AtomicReference<>();
+    stubDataSource();
+    try (var mockedDriverManager = mockStatic(DriverManager.class);
+        var mockedDatabaseFactory = mockStatic(DatabaseFactory.class);
+        var mockedLiquibase =
+            mockConstruction(
+                Liquibase.class,
+                (mock, context) ->
+                    doAnswer(
+                            invocation -> {
+                              analyticsDuringUpdate.set(AnalyticsArgs.ENABLED.getCurrentValue());
+                              return null;
+                            })
+                        .when(mock)
+                        .update(any(Contexts.class), any(LabelExpression.class)))) {
+      mockedDriverManager
+          .when(() -> DriverManager.getConnection(URL, USER, PASSWORD))
+          .thenReturn(connection);
+      mockedDatabaseFactory.when(DatabaseFactory::getInstance).thenReturn(databaseFactory);
+      when(databaseFactory.findCorrectDatabaseImplementation(any())).thenReturn(database);
+
+      invokeInitializeLiquibase(configuration);
+
+      verify(mockedLiquibase.constructed().getFirst())
+          .update(any(Contexts.class), any(LabelExpression.class));
+      assertFalse(analyticsDuringUpdate.get());
+    } finally {
+      if (previous == null) {
+        System.clearProperty(analyticsKey);
+      } else {
+        System.setProperty(analyticsKey, previous);
+      }
+    }
   }
 
   @Test
   void initializeLiquibaseClosesConnectionAfterSuccessfulUpdate() throws Exception {
+    stubDataSource();
     try (var mockedDriverManager = mockStatic(DriverManager.class);
         var mockedDatabaseFactory = mockStatic(DatabaseFactory.class);
         var mockedLiquibase = mockConstruction(Liquibase.class)) {
@@ -72,6 +148,7 @@ class ConsentApplicationTest {
   @Test
   void initializeLiquibaseClosesConnectionWhenUpdateFails() throws Exception {
     LiquibaseException liquibaseException = new LiquibaseException("update failed");
+    stubDataSource();
 
     try (var mockedDriverManager = mockStatic(DriverManager.class);
         var mockedDatabaseFactory = mockStatic(DatabaseFactory.class);
@@ -99,10 +176,22 @@ class ConsentApplicationTest {
     }
   }
 
+  // Only the tests that open a connection read the datasource, so they stub it themselves. This
+  // keeps strict stubbing: a skipped run never reads these values.
+  private void stubDataSource() {
+    when(configuration.getDataSourceFactory()).thenReturn(dataSourceFactory);
+    when(dataSourceFactory.getUrl()).thenReturn(URL);
+    when(dataSourceFactory.getUser()).thenReturn(USER);
+    when(dataSourceFactory.getPassword()).thenReturn(PASSWORD);
+  }
+
   private void invokeInitializeLiquibase(ConsentConfiguration configuration) throws Exception {
+    invoke("initializeLiquibase", configuration);
+  }
+
+  private void invoke(String methodName, ConsentConfiguration configuration) throws Exception {
     Method method =
-        ConsentApplication.class.getDeclaredMethod(
-            "initializeLiquibase", ConsentConfiguration.class);
+        ConsentApplication.class.getDeclaredMethod(methodName, ConsentConfiguration.class);
     method.setAccessible(true);
     try {
       method.invoke(consentApplication, configuration);

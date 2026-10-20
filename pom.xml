@@ -79,6 +79,10 @@
             -Dguice_custom_class_loading=CHILD
             --enable-native-access=ALL-UNNAMED
           </argLine>
+          <systemPropertyVariables>
+            <!-- Liquibase 4.30+ sends usage analytics by default; keep tests off the network -->
+            <liquibase.analytics.enabled>false</liquibase.analytics.enabled>
+          </systemPropertyVariables>
           <excludedGroups>${excludedTestGroups}</excludedGroups>
         </configuration>
       </plugin>

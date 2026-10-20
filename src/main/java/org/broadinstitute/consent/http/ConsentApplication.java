@@ -26,6 +26,7 @@ import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
 import liquibase.Scope;
+import liquibase.analytics.configuration.AnalyticsArgs;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -149,11 +150,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
   @Override
   public void run(ConsentConfiguration config, Environment env) {
 
-    try {
-      initializeLiquibase(config);
-    } catch (LiquibaseException e) {
-      LOGGER.error("Exception initializing liquibase", e);
-    }
+    runLiquibaseIfEnabled(config);
 
     final Injector injector = Guice.createInjector(new ConsentModule(config, env));
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
@@ -263,13 +260,28 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     bootstrap.addBundle(new JdbiExceptionsBundle());
   }
 
+  // liquibase.runOnStartup is an optional config flag that defaults to false. Environments that run
+  // the separate Liquibase migration Job omit it. Local configs set it to true.
+  private void runLiquibaseIfEnabled(ConsentConfiguration config) {
+    if (!config.getLiquibaseConfiguration().isRunOnStartup()) {
+      LOGGER.info("Skipping liquibase on startup; liquibase.runOnStartup is false");
+      return;
+    }
+    try {
+      initializeLiquibase(config);
+    } catch (LiquibaseException e) {
+      LOGGER.error("Exception initializing liquibase", e);
+    }
+  }
+
   private void initializeLiquibase(ConsentConfiguration config) throws LiquibaseException {
     // Route Liquibase UI output through LoggerUIService instead of writing to System.out.
     // See https://github.com/liquibase/liquibase/issues/2396 for more info.
+    // Liquibase 4.30+ sends usage analytics by default. That call can stall where egress is closed.
     try {
       Scope.child(
-          Scope.Attr.ui,
-          new LoggerUIService(),
+          Map.of(
+              Scope.Attr.ui.name(), new LoggerUIService(), AnalyticsArgs.ENABLED.getKey(), false),
           () -> {
             try (Connection connection =
                 DriverManager.getConnection(
