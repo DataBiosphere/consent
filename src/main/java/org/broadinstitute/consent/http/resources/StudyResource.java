@@ -244,7 +244,7 @@ public class StudyResource extends Resource {
       List<Dataset> datasets = datasetService.findStudyDatasets(user, study);
       DatasetRegistrationSchemaV1 registration =
           new DatasetRegistrationSchemaV1Builder().build(study, datasets);
-      String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
+      String entity = GsonUtil.getRegistrationInstance().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

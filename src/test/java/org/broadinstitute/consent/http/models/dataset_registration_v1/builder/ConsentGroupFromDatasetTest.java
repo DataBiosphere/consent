@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.requestLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -15,7 +16,10 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ConsentGroupFromDatasetTest extends AbstractTestHelper {
 
@@ -48,6 +52,19 @@ class ConsentGroupFromDatasetTest extends AbstractTestHelper {
 
     assertNotNull(result);
     assertEquals(AccessManagement.OPEN, result.getAccessManagement());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Not Determined", "NOT_DETERMINED"})
+  void testBuildReadsDataLocationByValueOrConstantName(String storedValue) {
+    ConsentGroupFromDataset builder = new ConsentGroupFromDataset();
+    Dataset dataset = createMockDataset();
+    dataset.addProperty(
+        createDatasetProperty(dataset, dataLocation, PropertyType.String, storedValue));
+
+    ConsentGroup result = builder.build(dataset);
+
+    assertEquals(DataLocation.NOT_DETERMINED, result.getDataLocation());
   }
 
   @Test
