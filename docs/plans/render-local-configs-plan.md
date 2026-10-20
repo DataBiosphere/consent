@@ -244,6 +244,7 @@ method, with values from `config/.env`. These flags are the only other local cha
 | `mailConfiguration.sendGridApiKey` | `-Ddw.mailConfiguration.sendGridApiKey=${SENDGRID_API_KEY}` | Placeholder in the template. Dev also replaces it. |
 | `googleStore.password` | `-Ddw.googleStore.password=` | Dev mounts a Yale key. Local uses ADC, per `DEVNOTES.md`. A blank value makes `GCSService` use ADC. |
 | `elasticSearch.authUser`, `authPassword` | Match `ELASTIC_PASSWORD` in compose | Dev sets these with flags for Elastic Cloud. |
+| `liquibase.runOnStartup` | `-Ddw.liquibase.runOnStartup=true` | Optional flag; the dev template omits it, so it is `false`. Dev runs the changesets in a separate Liquibase migration Job. The local database comes from an older dump and needs the newer changesets. |
 
 The team runs the app only with compose, so these flags are only in the compose template.
 `DEVNOTES.md` does not need a separate list for other run methods.
@@ -255,7 +256,7 @@ This is the full list of differences between the local stack and dev:
 | Where | Change |
 |---|---|
 | `local-values.yaml` | `elasticSearchServers`, `replicas` |
-| `-Ddw.*` flags | Database user and password, SendGrid key, `googleStore.password`, Elasticsearch credentials |
+| `-Ddw.*` flags | Database user and password, SendGrid key, `googleStore.password`, Elasticsearch credentials, `liquibase.runOnStartup` |
 | Compose | No Sentry DSN. No Cloud SQL proxy: the database is a local Postgres container. |
 
 A pull request that adds a row to this table must give the reason in the PR.

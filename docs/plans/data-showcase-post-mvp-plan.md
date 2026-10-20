@@ -3,7 +3,8 @@
 Companion to the [delivery plan](data-showcase-delivery-plan.md) for
 [DT-3904](https://broadworkbench.atlassian.net/browse/DT-3904). The delivery plan details the MVP
 (E1–E5) and keeps a short outline of each epic below. This document holds the detailed post-MVP
-stories, moved here unchanged on 2026-10-09 so the MVP plan is easier to read. Each epic is
+stories, moved here on 2026-10-09 so the MVP plan is easier to read, and amended by the S1.1
+[contracts record](data-showcase-contracts.md). Each epic is
 re-planned before it starts, and this document is its starting point.
 
 Section and story references (section 3, S2.2, section 8 and so on) point to the delivery plan
@@ -65,7 +66,8 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   and never rank on requests to ineligible datasets. Agree the threshold with privacy owners.
 - **Backend — performance:** start with bounded indexed queries computed per request; add short-lived
   caching or materialized rollups only if the ranking-cost experiment or production load justifies
-  it. Deterministic ties.
+  it. Deterministic ties. This replaces original Story 2's scheduled rollup job, cache and
+  invalidation path (S1.1 decision in the [contracts record](data-showcase-contracts.md)).
 - **Acceptance/tests:** fixed-clock data verifies time windows, duplicate requests, the minimum-count
   threshold, eligibility before ranking, scope filters, pins/exclusions, sparse counts, null
   participant values and tie order. No response contains request counts or requester identity.
@@ -90,7 +92,7 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   renderer tests reject request-total/trend fields and verify suppression of sparse timing metrics.
 - **Dependencies/PR boundary:** S6.1; deliver each shelf with its config schema and API fixtures.
 
-#### S6.3 — Curated-set charts and computed hero statistics
+#### S6.3 — Curated-set charts
 
 - **Frontend/backend:** for a curated set, aggregate client-side over the deduplicated union of
   eligible datasets already returned by the S2.2 lookup, which is bounded and needs no new endpoint.
@@ -103,16 +105,16 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
   sum participants across datasets and label them unique people without deduplication evidence.
 - **Frontend:** initially support the observed disease-area and data-type bars plus access-mode
   donut, with an explicit multi-label/category policy. Account for external/unknown access modes;
-  do not force them into the three illustrated slices. Compute unique studies by study identity,
-  tool totals from defined resource scope, and bytes only from compatible authoritative measures.
+  do not force them into the three illustrated slices. Compute unique studies by study identity and
+  bytes only from compatible authoritative measures.
   The mockup's repeated 1,842 value is not evidence that study and dataset counts are equal.
-- **Frontend:** implement `datasets-at-a-glance`, chart selection in config, hero computed/manual mode,
+- **Frontend:** implement `datasets-at-a-glance`, chart selection in config,
   bar/donut visualizations and filter click-through using existing library query encoding. Provide
   text/table equivalents, keyboard-operable filters and labels independent of color.
 - **Acceptance/tests:** repeated IDs count once, hidden/deleted records contribute nothing, the CI
   guard rejects full-catalog mode outside the flagship, empty charts are honest and aggregates agree with rendered
-  membership. Test the heading/filter/text-equivalent corrections in the artifact review; earlier
-  Jira accessibility criteria still require recovery in S1.1.
+  membership. Test the heading/filter/text-equivalent corrections in the artifact review and original
+  Story 13's accessibility criteria ([original criteria](data-showcase-original-criteria.md)).
 - **Dependencies/PR boundary:** E2 `all` mode; chart fields (disease area, data types) must first be
   approved and exposed in the S2.1 projection; query/aggregate tests before chart components.
 
@@ -121,10 +123,10 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
 - **Backend/frontend:** add `new-workflow-tools`, `notebooks` and `ai-models` as distinct registry
   types using E3's resource-card primitives and config schemas. Validate configured names/descriptions/tags/
   thumbnails/launch/docs URLs; add appropriate user-facing resource labels and empty states.
-- **Backend/frontend:** add optional typed version, runtime/platform, notebook environment and
-  model parameter-count fields where approved content exists. Usage-in-workspaces and added-date
-  badges require defined sources/meaning. Keep these out of generic hand-entered analytics and
-  omit unavailable fields rather than making external telemetry a release dependency.
+- **Backend/frontend:** workflow items carry an optional `addedDate` for a 30-day "New" badge
+  (original Story 15). The artifact's version, runtime, environment, parameter-count and usage
+  fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a
+  product decision.
 - **Acceptance/tests:** each type independently supports config validation, item order, enabled/empty
   semantics, safe launch links and thumbnail alt handling. Test all three entries even if they
   share implementation. No execution, credential exchange or model hosting is implied by a card.
@@ -135,10 +137,9 @@ decisions. **Owner:** catalog/analytics backend owner + frontend discovery owner
 - **Backend/frontend:** add `research-area` and `research-initiative` with label, description,
   approved icon/image and destination URL config schemas. Keep destinations explicit until the
   scoped-library decision is resolved; display only approved groupings.
-- **Backend/frontend:** preserve research-area grids and initiative groups within the fixed section.
-  Add group ID/title, acronym/full name and optional dated availability badge to initiative items;
-  the export has four groups and thirteen cards, not one flat shelf. Group/item ordering does not
-  authorize section reordering. Avoid hardcoded group counts in editable eyebrow copy.
+- **Backend/frontend:** preserve the research-area and initiative grid layouts. The artifact's
+  initiative groups, acronyms and availability badges are excluded. S1.1 limits item fields to the
+  Story 29 forms; adding any other field needs a product decision.
 - **Acceptance/tests:** group cards navigate correctly, internal filter links survive authentication,
   unsafe destinations fail both validators and public empty/disabled groups have no anchor.
 - **Dependencies/PR boundary:** E1/E3 patterns; independent of rollup implementation.
@@ -206,13 +207,13 @@ depend on E9 authoritative lifecycle events.
 
 #### S7.3 — Conference and education section family
 
-- **Backend/frontend:** implement `community-conference`, `where-else`, `anvil-workshops`,
-  `anvil-scholars`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference carries date/
-  timezone/location/description, optional past-event history and open-registration versus alert-signup
-  state. Where Else supports linked event tiles with optional date/location, reflecting the export;
-  a generic-links-only variant needs explicit product agreement. Program panels support Markdown
-  without raw HTML, CTA links and structured lead/audience/deadline/focus facts. Workshops support
-  upcoming/recent sessions and a private-training CTA without exposing private material. Preserve
+- **Backend/frontend:** implement `community-conference`, `where-else`, `training-workshops`,
+  `scholars-program`, `tech-policy-interns` with typed config schemas and CI guard rules. Conference
+  carries dates with timezone, location, description and open-registration versus alert-signup
+  state. Where Else and the program panels carry a Markdown description (no raw HTML) and CTA links.
+  Workshops offer public signup and a private-training request path (original Story 23). S1.1 limits
+  item fields to the Story 29 forms, so the artifact's past-event history, event tiles, program
+  facts and session lists are excluded; adding any needs a product decision. Preserve
   season/year-only dates without inventing exact timestamps.
 - **Acceptance/tests:** explicit timezones render consistently; expired events do not claim upcoming
   registration. Alert signup requires S7.1/S7.2; inline workshop enrollment requires S7.4, while
@@ -247,7 +248,8 @@ depend on E9 authoritative lifecycle events.
 **Outcome:** eligible requests receive auditable existing-system grants, while ambiguous/ineligible
 requests continue through manual review. **Owner:** consent/RADAR lead, DAC governance and frontend
 DAR owner. **Source:** 9–10 and instant metrics/rankings. **Dependencies:** governance can start
-at R0; production activation waits for the missing original criteria and explicit rule approval.
+at R0; production activation waits for explicit rule approval against original Stories 9–10
+([original criteria](data-showcase-original-criteria.md)).
 
 #### S8.1 — Ratify eligibility, matching and measurement policy
 
@@ -265,7 +267,7 @@ at R0; production activation waits for the missing original criteria and explici
 - **Alternative exit:** if existing RADAR rules satisfy all agreed launch cases, record that result
   and scope S8.2 to proven audit/idempotency/integration gaps; do not build a new matcher just because
   the source calls this an “engine.” S8.3/S8.4 still validate discovery claims and rollout metrics.
-- **Dependencies/PR boundary:** recovered source criteria; policy/test fixtures before rule coding.
+- **Dependencies/PR boundary:** original Stories 9–10; policy/test fixtures before rule coding.
 
 #### S8.2 — Extend the existing decision path safely
 
@@ -395,10 +397,9 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
   year, per-showcase labels/links and self-report prompt setting. Add the config schema, CI guard
   rules and renderer together. Approved curated publications can launch before submission moderation;
   keep the prompt off until S10.2 is available.
-- **Backend/frontend:** for reference parity, support optional journal, authors, month/date,
-  cited-dataset IDs and related-workspace item/link alongside the common fields. Resolve catalog
-  labels live and suppress related CTAs whose target is unavailable; do not copy sample citations
-  or imply the artifact's workspace associations have been scientifically verified.
+- **Backend/frontend:** the artifact's journal, authors, month, cited-dataset and related-workspace
+  fields are excluded. S1.1 limits item fields to the Story 29 forms; adding any other field needs a
+  product decision. Do not copy sample citations.
 - **Acceptance/tests:** bounded citation/year validation, safe links, item ordering, no raw HTML,
   accessible cards and empty/disabled behavior. Publication presence alone does not substantiate
   a claimed clinical or program outcome.
@@ -422,22 +423,24 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
 
 #### S10.3 — through.bio impact presentation and agreement gate
 
-- **Preferred strategy:** implement `anvil-impact` as approved summary/stat content, attribution,
-  optional approved static image and a real external portfolio link. The inspected artifact uses
-  a static SVG illustration, not a live iframe. This option preserves its presentation intent with
-  less integration work, but changes the ticket's embed-specific criterion and needs product agreement.
-- **Backend/frontend:** define typed display mode (`summary` or `embed`), content provenance and
-  refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
+- **Preferred strategy:** implement `program-impact` as a snapshot: stat banner values taken from
+  through.bio data (not hand-written copy) with their snapshot date, attribution, optional approved
+  static image and a real external portfolio link. The inspected artifact uses a static SVG
+  illustration, not a live iframe. Original Story 21 allows a periodically refreshed snapshot,
+  flagged as not live, when an embed isn't feasible.
+- **Backend/frontend:** use the typed display mode (`snapshot` or `embed`) from the S1.1 fixtures,
+  content provenance and refresh ownership. Implement only the agreed initial mode and reject unsupported settings. If
   live embedding is selected, add an approved URL/provider allowlist, frame sandbox, CSP, lazy
   loading, accessible frame title and fallback link/message. Never fetch arbitrary URLs server-side
   or accept executable HTML/SVG in config; static images are bundled assets reviewed in the PR.
 - **Acceptance/tests:** off by default; enablement requires recorded program agreement/content
-  approval. For summary mode, test factual approved content, attribution, image alt and real safe
+  approval. For snapshot mode, test factual approved content, attribution, image alt and real safe
   links without iframe requests. Embed mode additionally tests rejected origins, blocked/slow
   frames and usability without third-party cookies. Do not port the illustrative clinical graph
   as factual evidence or treat a config flag as the external agreement itself.
-- **Dependencies/PR boundary:** per-program agreement + S1.1 mode decision; release independently
-  of science. A live embed is a separate follow-up slice if summary mode launches first.
+- **Dependencies/PR boundary:** per-program agreement and the initial mode, chosen by the product
+  owner when S10.3 is planned; release independently
+  of science. A live embed is a separate follow-up slice if snapshot mode launches first.
 
 #### S10.4 — Retire featured-library maintenance after parity
 

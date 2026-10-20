@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.configurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,6 +13,9 @@ import jakarta.validation.constraints.Positive;
  * requestsPerMinute} must be at least {@code podCount}, otherwise every pod would round its share
  * up to a 1-request-per-minute floor and the deployment-wide aggregate would exceed the configured
  * limit.
+ *
+ * <p>{@code showcase} configures the separate anonymous limit for the public {@code showcase/}
+ * routes. It ignores {@code enabled} and {@code requestsPerMinute}, and shares {@code podCount}.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RateLimitConfiguration {
@@ -21,6 +25,9 @@ public class RateLimitConfiguration {
   @NotNull @Positive private Integer requestsPerMinute;
 
   @NotNull @Positive private Integer podCount;
+
+  @Valid @NotNull
+  private PublicRateLimitConfiguration showcase = new PublicRateLimitConfiguration();
 
   public boolean isEnabled() {
     return enabled;
@@ -46,6 +53,14 @@ public class RateLimitConfiguration {
     this.podCount = podCount;
   }
 
+  public PublicRateLimitConfiguration getShowcase() {
+    return showcase;
+  }
+
+  public void setShowcase(PublicRateLimitConfiguration showcase) {
+    this.showcase = showcase;
+  }
+
   @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue
   @AssertTrue(
       message =
@@ -53,5 +68,13 @@ public class RateLimitConfiguration {
               + "1-request-per-minute floor and the deployment-wide aggregate exceeds the configured limit")
   public boolean isRequestsPerMinuteAtLeastPodCount() {
     return requestsPerMinute == null || podCount == null || requestsPerMinute >= podCount;
+  }
+
+  @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue
+  @AssertTrue(
+      message =
+          "showcase.requestsPerMinute must be >= podCount, for the same reason as requestsPerMinute")
+  public boolean isShowcaseRequestsPerMinuteAtLeastPodCount() {
+    return showcase == null || podCount == null || showcase.getRequestsPerMinute() >= podCount;
   }
 }

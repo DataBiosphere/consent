@@ -37,6 +37,9 @@ import org.broadinstitute.consent.http.models.AuthUser;
  * practice. Skipping rather than falling back to a shared anonymous bucket also means that if that
  * assumption is ever broken by an unrelated infrastructure change, this filter fails open instead
  * of turning an auth outage into a total API lockout.
+ *
+ * <p>The public {@code showcase/} routes have their own anonymous limit in {@link
+ * PublicRateLimitFilter}.
  */
 @Provider
 @Priority(Priorities.USER)
@@ -80,11 +83,14 @@ public class RateLimitFilter implements ContainerRequestFilter {
     }
     ConsumptionProbe probe = buckets.getUnchecked(key).tryConsumeAndReturnRemaining(1);
     if (!probe.isConsumed()) {
-      long retryAfterSeconds =
-          Math.max(1, Math.ceilDiv(probe.getNanosToWaitForRefill(), 1_000_000_000L));
-      requestContext.abortWith(
-          Response.status(429).header("Retry-After", String.valueOf(retryAfterSeconds)).build());
+      requestContext.abortWith(tooManyRequests(probe));
     }
+  }
+
+  static Response tooManyRequests(ConsumptionProbe probe) {
+    long retryAfterSeconds =
+        Math.max(1, Math.ceilDiv(probe.getNanosToWaitForRefill(), 1_000_000_000L));
+    return Response.status(429).header("Retry-After", String.valueOf(retryAfterSeconds)).build();
   }
 
   private String extractKey(ContainerRequestContext requestContext) {

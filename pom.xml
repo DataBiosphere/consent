@@ -19,7 +19,7 @@
     <logback.version>1.6.5</logback.version>
     <postgres.version>42.7.14</postgres.version>
     <surefire.version>3.6.0</surefire.version>
-    <swagger.ui.version>5.33.1</swagger.ui.version>
+    <swagger.ui.version>5.33.2</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
     <commons.csv.version>1.14.1</commons.csv.version>
@@ -79,6 +79,10 @@
             -Dguice_custom_class_loading=CHILD
             --enable-native-access=ALL-UNNAMED
           </argLine>
+          <systemPropertyVariables>
+            <!-- Liquibase 4.30+ sends usage analytics by default; keep tests off the network -->
+            <liquibase.analytics.enabled>false</liquibase.analytics.enabled>
+          </systemPropertyVariables>
           <excludedGroups>${excludedTestGroups}</excludedGroups>
         </configuration>
       </plugin>
@@ -502,7 +506,7 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.60.0</version>
+        <version>8.61.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
