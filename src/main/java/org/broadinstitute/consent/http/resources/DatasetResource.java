@@ -141,7 +141,7 @@ public class DatasetResource extends Resource {
       }
       URI uri =
           UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId())).build();
-      String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
+      String entity = GsonUtil.getRegistrationInstance().toJson(createdRegistration);
       return Response.created(uri).entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -296,7 +296,7 @@ public class DatasetResource extends Resource {
       }
       DatasetRegistrationSchemaV1 registration =
           new DatasetRegistrationSchemaV1Builder().build(dataset.getStudy(), List.of(dataset));
-      String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
+      String entity = GsonUtil.getRegistrationInstance().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
