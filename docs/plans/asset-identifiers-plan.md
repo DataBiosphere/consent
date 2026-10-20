@@ -8,7 +8,7 @@ Code references were checked against `consent` `develop` at `b9edc7c5` and `duos
 
 ## Overview
 
-Every requestable asset (dataset, model, workspace, biospecimen) gets one entry in a new `asset_catalog` table, with a DUOS identifier that is unique within its type. Existing dataset identifiers stay exactly as they are. An identifier keeps resolving after its asset is retired or deleted. A daily check reports entries whose asset vanished without going through the app, and assets that have no entry.
+Every requestable asset (dataset, model, workspace, biospecimen) gets one entry in a new `asset_catalog` table, with a DUOS identifier that is unique within its type. Existing dataset identifiers stay exactly as they are. An identifier keeps resolving after its asset is retired or deleted. An admin check reports entries whose asset vanished without going through the app, and assets that have no entry, and an admin repair fixes what it can.
 
 ### How identifiers work today
 
@@ -24,7 +24,7 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 1. Add `asset_catalog`, one row per asset of any type, holding its type, its number and a reference to the asset.
 2. Every dataset insert and every new asset row from DT-4208's sync adds an entry in the same transaction. Deleting a dataset or a study stamps its entries removed, creating any that are missing first.
 3. Backfill entries for existing datasets, keeping each alias, and for every row DT-4208 created.
-4. Run a daily integrity check that reports orphaned entries and assets without an entry.
+4. Provide admin check and repair endpoints for orphaned entries and assets without an entry.
 5. Return each asset's identifier from the asset endpoints and the search index, and resolve any identifier, live, retired or removed, through a lookup endpoint. Showing and searching it in duos-ui waits on Decision 2.
 
 ## Decisions
@@ -33,9 +33,9 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 |---|---|---|---|
 | 1 | Identifier format and prefixes | `DUOS-M-000045` (model), `DUOS-W-000012` (workspace), `DUOS-B-000301` (biospecimen): six digits zero-padded, more when the number outgrows them, as datasets do. Datasets keep `DUOS-000123` with no letter. `D` and `S` are never used as type letters, because `DUOS-D…` and `DUOS-S…` already mean a dataset database id and a study id in duos-ui. | **Confirm with Jonathan Lawson** (ticket Q1) |
 | 2 | Are the identifiers shown to users, and searchable? | Proposed: yes, as dataset identifiers are. The API, index and lookup return them either way (Task 6); duos-ui display and search (Task 7) waits on the answer. | **Confirm with Jonathan Lawson** (ticket Q2) |
-| 3 | Can an identifier be reused after its asset is removed? | No. Model, workspace and biospecimen numbers are serial row ids, which are never reissued. Dataset numbers come from `dataset_alias_seq`, which never goes back; only an ad hoc insert with an explicit alias could reuse a deleted dataset's number. That dataset gets no entry, and the collision is logged and reported by the check (Tasks 1 and 5) rather than failing the registration. The entry outlives its asset, so the identifier resolves, as retired or removed (Task 6). An ad hoc alias reuse is the one way to break this: the identifier then names the new dataset until someone fixes the alias by hand, and the check alerts on it. | This plan (ticket Q3); confirm with Jonathan Lawson |
+| 3 | Can an identifier be reused after its asset is removed? | No. Model, workspace and biospecimen numbers are serial row ids, which are never reissued. Dataset numbers come from `dataset_alias_seq`, which never goes back; only an ad hoc insert with an explicit alias could reuse a deleted dataset's number. That dataset gets no entry, and the collision is logged, and the check reports it (Tasks 1 and 5) rather than failing the registration. The entry outlives its asset, so the identifier resolves, as retired or removed (Task 6). An ad hoc alias reuse is the one way to break this: the identifier then names the new dataset until someone fixes the alias by hand, and the check reports it. | This plan (ticket Q3); confirm with Jonathan Lawson |
 | 4 | Will publications, presentations, IP and funding stay non-requestable? | Planned as yes. If one becomes requestable, it takes a new type letter and a column here, with no change to existing identifiers. | **Jonathan Lawson** (ticket Q4) |
-| 5 | How often does the orphan check run, and who is alerted? | Proposed: once a day, with findings sent to Sentry, which the dev team already watches. Who else is alerted is open. | **Jonathan Lawson** (ticket Q5) |
+| 5 | How often does the orphan check run, and who is alerted? | Proposed: on demand, through admin check and repair endpoints, as `POST /api/dataset/index` works today; consent has no scheduled jobs. Drift comes only from ad hoc SQL, a restore, or old pods during a rollout or revert, so whoever does one of those calls the check afterwards. Nothing alerts on its own; a schedule can wrap the same check later if one is needed. | **Jonathan Lawson** (ticket Q5) |
 | 6 | Where does a model, workspace or biospecimen number come from? | Its DT-4208 row id. It is already permanent, server-assigned, increasing within its type and never reused, so `modelId` 45 is `DUOS-M-000045`. | This plan |
 | 7 | Where does a dataset number come from? | `dataset.alias`, unchanged. The catalog copies it at insert. Nothing in the app changes an alias afterwards, and the check reports an entry whose number no longer matches. | This plan (ticket: existing identifiers unchanged) |
 | 8 | What happens to an entry when its asset goes away? | A retired asset row keeps its entry, which still points at it. Deleting a dataset or a study stamps `asset_removed_date` on its entries in the transaction that deletes the rows, and the foreign key sets the reference to null. An entry whose reference is null without that stamp is an orphan. | This plan |
@@ -59,7 +59,7 @@ Every requestable asset (dataset, model, workspace, biospecimen) gets one entry 
 | 2 | consent | Catch up dataset entries | ~100 lines | 1 deployed |
 | 3 | consent | Add catalog entries from the asset sync | ~200 lines | 1; ships with or after DT-4208 Task 3 |
 | 4 | consent | Backfill asset entries | ~150 lines | 3 deployed; DT-4208 Task 6 run in production |
-| 5 | consent | Daily integrity check and repair | ~350 lines | 4 run |
+| 5 | consent | Integrity check and repair endpoints | ~200 lines | 4 run |
 | 6 | consent | Return and resolve identifiers | ~400 lines | 4 run |
 | 7 | duos-ui | Show, search and link identifiers | ~250 lines | 6 deployed; Decision 2 |
 
@@ -73,7 +73,7 @@ Sizes include tests. **Each backfill deploys in a later release than its write p
   - `catalog_id SERIAL PRIMARY KEY`, `asset_type TEXT NOT NULL` checked against `DATASET`, `MODEL`, `WORKSPACE`, `BIOSPECIMEN`, `asset_number INTEGER NOT NULL` checked `>= 0`, `create_date TIMESTAMPTZ NOT NULL DEFAULT now()`, nullable `asset_removed_date`.
   - `dataset_id`, `model_id`, `workspace_id`, `biospecimen_id`, each a nullable foreign key to its table `ON DELETE SET NULL`, each with a partial unique index where not null.
   - A unique index on `(asset_type, asset_number)`, a check that at most one reference is set, a check that a set reference matches `asset_type`, and a check that a set `model_id`, `workspace_id` or `biospecimen_id` equals `asset_number` (Decision 6).
-  - Then the dataset backfill, from a `sqlFile` that Task 2's changeset also references, lock statements included, so the two runs are identical, and so that an old pod deleting an existing dataset during the rollout leaves an orphan the check stamps, rather than an identifier with no record.
+  - Then the dataset backfill, from a `sqlFile` that Task 2's changeset also references, lock statements included, so the two runs are identical, and so that an old pod deleting an existing dataset during the rollout leaves an orphan that repair stamps, rather than an identifier with no record.
 - `AssetType` enum carrying each type's letter (none for datasets). `AssetIdentifier.format(type, number)` and `AssetIdentifier.parse(text)`; `parse` accepts only the canonical form (Decision 11), with a number from 0 to 2147483647, and rejects `DUOS-D…` and `DUOS-S…`. `Dataset.parseAliasToIdentifier` delegates to `format`, so dataset output is byte-for-byte the same. `parseIdentifierToAlias` and its callers are unchanged: it accepts any padding, and `DatasetService` rejects a non-canonical identifier afterwards by comparing it with the formatted alias. `AssetIdentifier.parse` enforces the canonical form itself.
 - `AssetCatalogDAO` (one contiguous text block per statement), attached with `handle.attach` wherever it joins an existing transaction:
   - `insertDatasetEntry(datasetId)` reading the alias from the row, and `insertAssetEntry(type, rowId)` with the number set to the row id.
@@ -113,32 +113,30 @@ Sizes include tests. **Each backfill deploys in a later release than its write p
 
 ### Task 4: Backfill asset entries (consent)
 
-- Changeset `changelog-consent-<date>-asset-catalog-assets.xml` inserts an entry for every `study_model`, `study_workspace` and `study_biospecimen` row with none, retired rows included, numbered by the row id, with `ON CONFLICT DO NOTHING`. A row skipped because a stamped entry holds its number is a relinkable finding (Task 5); the commit includes a report query that lists any. It sets a short `lock_timeout` and locks the three tables in `SHARE ROW EXCLUSIVE` mode in one `LOCK TABLE` statement, in the order the sync writes them (models, workspaces, biospecimens), and inserts everything in one transaction, so its entries share that transaction's `now()`. A lock conflict, or a deadlock with a live write, aborts one side: either the deploy is retried or one write fails, and no identifier is wrong. It is idempotent.
+- Changeset `changelog-consent-<date>-asset-catalog-assets.xml` inserts an entry for every `study_model`, `study_workspace` and `study_biospecimen` row with none, retired rows included, numbered by the row id, with `ON CONFLICT DO NOTHING`. A row skipped because an entry with a null reference holds its number is a relinkable finding (Task 5); the commit includes a report query that lists any. It sets a short `lock_timeout` and locks the three tables in `SHARE ROW EXCLUSIVE` mode in one `LOCK TABLE` statement, in the order the sync writes them (models, workspaces, biospecimens), and inserts everything in one transaction, so its entries share that transaction's `now()`. A lock conflict, or a deadlock with a live write, aborts one side: either the deploy is retried or one write fails, and no identifier is wrong. It is idempotent.
 - It runs after DT-4208 Task 6 has run in production, so the conversion's rows are covered.
 
 **Tests** (`AssetCatalogAssetsMigrationTest`): live and retired rows each get one entry with their row id; rows that already have one are left alone; a second run changes nothing.
 
-### Task 5: Daily integrity check and repair (consent)
+### Task 5: Integrity check and repair endpoints (consent)
 
 - `AssetCatalogCheck` finds:
-  1. Orphans: a null reference with no `asset_removed_date`, which means the asset was deleted outside the app's delete paths. The check stamps `asset_removed_date`, so each orphan is reported once.
+  1. Orphans: a null reference with no `asset_removed_date`, which means the asset was deleted outside the app's delete paths.
   2. Missing entries: a dataset or asset row with no entry, whose number is free.
   3. Collisions: a dataset with no entry whose alias already belongs to another entry. Reported only here, not also as missing. Only an ad hoc insert can cause one, and repair cannot fix it.
   4. Mismatches: a dataset entry whose number differs from its dataset's current alias, which only an ad hoc `UPDATE` can cause.
-  5. Relinkable: a model, workspace or biospecimen row with no entry whose number belongs to a stamped entry, which a restore done without the catalog leaves behind. Repair relinks it.
-- A changeset creates `asset_catalog_check_run`, seeded with one row whose `last_run` is `-infinity` so the first wake runs the check, and `asset_catalog_finding`.
-- Scheduling: a Dropwizard `Managed` executor on each pod wakes hourly and claims the run with `UPDATE asset_catalog_check_run SET last_run = now() WHERE last_run < now() - interval '23 hours' RETURNING last_run` on a one-row table. Only the pod whose update returns a row runs the check, so it runs once a day across all pods, and a check that fails is logged once and retried the next day rather than every hour.
-- Findings are recorded in `asset_catalog_finding`, keyed by kind, type and number, with the date first seen. Only new findings are logged through `ConsentLogger.logException`, which reaches Sentry, so a collision that cannot be repaired alerts once rather than every day. A finding that is no longer present is cleared.
+  5. Relinkable: a model, workspace or biospecimen row with no entry whose number belongs to an entry of its type with a null reference, which a restore done without the catalog leaves behind. Repair relinks it. Such an entry is reported here, not also as an orphan.
+- Nothing runs on a schedule and no new table is needed. The check runs when an admin calls it, after ad hoc SQL or a restore, as `POST /api/dataset/index` does for the search index.
 - Admin endpoints, documented in an OpenAPI path spec:
   - `GET /api/admin/asset-catalog/check` returns every current finding of the five kinds without changing anything.
-  - `POST /api/admin/asset-catalog/repair` inserts the missing entries, whose numbers follow from the alias or row id. For a model, workspace or biospecimen whose number belongs to a stamped entry with a null reference, which is what a partial restore leaves behind, it relinks that entry and clears the stamp instead; the number is the row id, so the row is the same asset. It never relinks a dataset entry: the alias could belong to a different dataset, so that case stays a collision. It returns what it inserted, relinked and skipped. It never changes an entry that still references an asset.
+  - `POST /api/admin/asset-catalog/repair` inserts the missing entries, whose numbers follow from the alias or row id. For a model, workspace or biospecimen whose number belongs to an entry with a null reference, which is what a partial restore leaves behind, it relinks that entry and clears any stamp instead; the number is the row id, so the row is the same asset. It never relinks a dataset entry: the alias could belong to a different dataset, so that case stays a collision. Then it stamps `asset_removed_date` on the remaining orphans. It runs in one transaction and inserts with `ON CONFLICT DO NOTHING`, so a concurrent repair or registration is skipped rather than failing it. It returns what it inserted, relinked, stamped and skipped. It never changes an entry that still references an asset.
 
-**Tests** (`AssetCatalogCheckTest`, `AssetCatalogResourceTest`): each finding type is reported; an orphan is stamped and not reported again; a second run within 23 hours does nothing; a run that throws does not run again that day; a finding alerts once, and is cleared when it goes away; repair relinks a stamped model entry whose row is back, and leaves a stamped dataset entry whose alias a new dataset reused; the GET changes nothing; repair inserts only missing entries and skips collisions; both endpoints are admin-only.
+**Tests** (`AssetCatalogCheckTest`, `AssetCatalogResourceTest`): each finding type is reported; repair stamps an orphan, which is then no longer reported; repair relinks a model entry whose reference a restore nulled, rather than stamping it; repair relinks a stamped model entry whose row is back, and leaves a stamped dataset entry whose alias a new dataset reused; the GET changes nothing; repair inserts only missing entries and skips collisions; the GET reports an unstamped model entry with a null reference whose row exists as relinkable only, not as an orphan; a second repair changes nothing; both endpoints are admin-only.
 
 ### Task 6: Return and resolve identifiers (consent)
 
 - New `StudyAssetIdentifiers.decorate`, applied by `StudyAssetService.getAssetsByType` to the list `StudyAssets.findAssetList` returns, and by `ElasticSearchService.toStudyTerm` to the map `StudyAssets.assemble` returns. It adds `duosIdentifier` to each model, workspace and biospecimen entry whose id is a whole number from 1 to 2147483647, formatted by `AssetIdentifier`. `StudyAssets` itself is unchanged, so the registration GET (`SchemaFromStudy`) carries no identifier and nothing is stored in the JSON.
-- New `GET /api/asset-catalog/{identifier}`, for any authenticated user. It parses the identifier, finds the entry, and returns the canonical identifier, type and status: `LIVE`, `RETIRED` (the asset row has `retired_date`) or `REMOVED` (`asset_removed_date` is set, or the reference is null and the check has not stamped it yet).
+- New `GET /api/asset-catalog/{identifier}`, for any authenticated user. It parses the identifier, finds the entry, and returns the canonical identifier, type and status: `LIVE`, `RETIRED` (the asset row has `retired_date`) or `REMOVED` (`asset_removed_date` is set, or the reference is null and repair has not stamped it yet).
   - An existing dataset, model, workspace or biospecimen row with that number wins over the entry: if the entry is missing, or has no reference while a row holds the number (a repair not yet run, or an alias collision), the lookup answers from the row, as live or retired, since that row is what shows the identifier.
   - A live or retired asset is returned, with its asset id and study id, only when the caller can read it; otherwise the response is 404, as for an unknown identifier, so private studies cannot be probed. A model, workspace or biospecimen uses the study gate `StudyAssetService` uses. A dataset uses the read rule of the dataset GET (`DatasetService.findDatasetById(user, …)`), which also covers a dataset with no study.
   - A removed asset returns only its type and status, to any authenticated user. That reveals only that the number was once used, which the numbering already implies.
@@ -164,9 +162,9 @@ Only if Decision 2 is yes.
 
 - A dataset created by an old pod while Task 1 is rolling out has no entry until Task 2 runs; the same holds for assets and Tasks 3 and 4. The check reports any that remain. If one is deleted first, the delete path creates and stamps its entry.
 - A stale form that retires and recreates a model (DT-4208 edge cases) gives it a new identifier; the old one resolves as retired.
-- A dataset or study deleted by ad hoc SQL leaves an orphan, which the check reports once.
+- A dataset or study deleted by ad hoc SQL leaves an orphan, which the check reports until repair stamps it.
 - An ad hoc dataset insert with an explicit alias that a deleted dataset used gets no entry; the check and repair report it as a collision. If that dataset is later deleted, the collision is logged, and its identifier has no record of its own.
-- An old pod deleting a dataset during Task 1's rollout leaves an orphan, which the check stamps, because the changeset backfilled every existing dataset. Only a dataset that an old pod both creates and deletes during the rollout loses its identifier.
+- An old pod deleting a dataset during Task 1's rollout leaves an orphan, which repair stamps, because the changeset backfilled every existing dataset. Only a dataset that an old pod both creates and deletes during the rollout loses its identifier.
 - An identifier with a letter passed to `Dataset.parseIdentifierToAlias` (e.g. the dataset registration GET) still throws `IllegalArgumentException`, as any malformed identifier does today.
 - `asset_number` is an `INTEGER`, matching the alias range check and the serial ids.
 
@@ -174,10 +172,10 @@ Only if Decision 2 is yes.
 
 Keep `asset_catalog` in every case. It is the only record of removed assets' identifiers.
 
-- **Tasks 1 and 3:** revert the code, and prefer a fix forward. Datasets and assets created while it is reverted get no entry; one that is also deleted before the redeploy loses its identifier, and one deleted with an entry leaves an orphan the check stamps. After redeploying, run the repair, or, before Task 5 exists, re-run the Task 2 or Task 4 SQL by hand; both are idempotent.
+- **Tasks 1 and 3:** revert the code, and prefer a fix forward. Datasets and assets created while it is reverted get no entry; one that is also deleted before the redeploy loses its identifier, and one deleted with an entry leaves an orphan for repair to stamp. After redeploying, run the repair, or, before Task 5 exists, re-run the Task 2 or Task 4 SQL by hand; both are idempotent.
 - **Tasks 2 and 4:** the backfills only insert. To undo one, delete the entries whose `create_date` equals that backfill's transaction timestamp, and whose reference is still set and whose `asset_removed_date` is null. Never delete a stamped entry: it may be the only record of a deleted asset's identifier.
-- **DT-4208 data restore:** once Task 1 has shipped, DT-4208's conversion-window backup must include `asset_catalog` in the same `pg_dump` run, and the window's freeze must cover dataset deletes too. A restore touches only the catalog's `MODEL`, `WORKSPACE` and `BIOSPECIMEN` rows, in one transaction: delete those rows, delete the asset tables' rows, reload the asset tables, then reload those rows from the dump. Never `TRUNCATE … CASCADE`: it empties the whole catalog, dataset entries and removal records included. `DATASET` entries are left alone. Restoring the asset tables without their catalog rows would null the references, and the check would then stamp live assets as removed; repair relinks them, but the restore should not depend on it.
-- **Task 5:** revert the code. Orphans stamped meanwhile keep their stamp, which is correct.
+- **DT-4208 data restore:** once Task 1 has shipped, DT-4208's conversion-window backup must include `asset_catalog` in the same `pg_dump` run, and the window's freeze must cover dataset deletes too. A restore touches only the catalog's `MODEL`, `WORKSPACE` and `BIOSPECIMEN` rows, in one transaction: delete those rows, delete the asset tables' rows, reload the asset tables, then reload those rows from the dump. Never `TRUNCATE … CASCADE`: it empties the whole catalog, dataset entries and removal records included. `DATASET` entries are left alone. Restoring the asset tables without their catalog rows would null the references. Repair relinks them by row id, but the restore should not depend on it.
+- **Task 5:** revert the code. Entries that repair inserted, relinked or stamped stay, which is correct.
 - **Task 6:** removing `duosIdentifier` or the lookup is a breaking change once it has shipped, so prefer a fix forward. If it must be reverted, follow `CONTRIBUTING.md` "Breaking API changes", then reindex.
 - **Task 7:** revert; it reads only what Task 6 returns.
 
@@ -195,7 +193,7 @@ Keep `asset_catalog` in every case. It is the only record of removed assets' ide
 4. DT-4208 Tasks 3 and 4 deploy, with Task 3 here.
 5. DT-4208 Task 5 deploys, and DT-4208 Task 6 runs in its maintenance window, backing up `asset_catalog` with the other tables.
 6. Task 4 deploys.
-7. Tasks 5 and 6 deploy.
+7. Tasks 5 and 6 deploy. Then call `GET /api/admin/asset-catalog/check`, and `POST /api/admin/asset-catalog/repair` if it reports anything.
 8. Task 7 deploys, if Decision 2 is yes.
 
 ## Overlap with DT-4208
