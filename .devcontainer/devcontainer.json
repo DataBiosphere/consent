@@ -7,8 +7,16 @@
             "jdkDistro": "tem",
             "installMaven": true
         },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+        "ghcr.io/devcontainers/features/docker-in-docker:4": {
             "moby": false
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "anthropic.claude-code",
+                "openai.chatgpt"
+            ]
         }
     },
     "remoteUser": "vscode"
