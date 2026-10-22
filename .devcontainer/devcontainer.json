@@ -11,6 +11,15 @@
             "moby": false
         }
     },
+    "initializeCommand": "mkdir -p \"$HOME/.claude\" \"$HOME/.codex\"",
+    "mounts": [
+        "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+        "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind"
+    ],
+    "containerEnv": {
+        "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+        "CODEX_HOME": "/home/vscode/.codex"
+    },
     "customizations": {
         "vscode": {
             "extensions": [
