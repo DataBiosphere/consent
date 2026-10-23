@@ -4,6 +4,9 @@
 # the dev values and scripts/templates/local-values.yaml. The rendered files are the reference
 # for local config: do not edit them. Put a local change in local-values.yaml, with its reason.
 #
+# The script also sets PROXY_IMAGE in the .env file of the output folder to the proxy image of the
+# rendered deployment, so the local proxy is the same as the dev proxy.
+#
 # You MUST have helm and git installed. Without --helmfile_dir, you MUST also have git read
 # access to broadinstitute/terra-helmfile, over HTTPS or SSH. This script does not need the VPN.
 #
@@ -26,7 +29,8 @@ OUTPUT_DIR="$REPO_ROOT/config"
 usage() {
   cat << EOF
 Usage: $0 [OPTION]...
-Render consent.yaml, site.conf and oauth2.conf from the consent chart in terra-helmfile.
+Render consent.yaml, site.conf and oauth2.conf from the consent chart in terra-helmfile, and
+set PROXY_IMAGE in .env.
 
   --helmfile_ref REF   The terra-helmfile branch or tag to render. Defaults to master.
   --helmfile_dir DIR   Render a local terra-helmfile checkout as it is, with changes that are
@@ -163,7 +167,8 @@ render() {
     -f "$SOURCE_DIR/values/app/consent/live/dev.yaml" \
     -f "$LOCAL_VALUES" \
     --show-only templates/configmap.yaml \
-    --show-only templates/proxy-configmap.yaml > "$WORK_DIR/rendered.yaml" \
+    --show-only templates/proxy-configmap.yaml \
+    --show-only templates/deployment.yaml > "$WORK_DIR/rendered.yaml" \
     || error "helm template failed for the consent chart."
 
   local stage="$WORK_DIR/out"
@@ -181,10 +186,19 @@ render() {
   done
   grep -q 'ProxyPass' "$stage/site.conf" || error "The rendered site.conf has no ProxyPass. Update scripts/render-chart-configs.sh."
 
+  # The image of the consent-proxy container in the rendered deployment, with all value overrides.
+  local proxy_image
+  proxy_image=$(awk '
+    /^ *- name: consent-proxy *$/ { on = 1; next }
+    on && /^ *image:/ { gsub(/"/, ""); print $2; exit }
+  ' "$WORK_DIR/rendered.yaml")
+  [[ -n "$proxy_image" ]] || error "The rendered deployment has no consent-proxy image. Update scripts/render-chart-configs.sh."
+
   # Move the files into place only after all three are good.
   mkdir -p "$OUTPUT_DIR"
   mv "$stage/consent.yaml" "$stage/oauth2.conf" "$stage/site.conf" "$OUTPUT_DIR/"
-  echo "Wrote consent.yaml, site.conf and oauth2.conf to $OUTPUT_DIR"
+  env_set "$OUTPUT_DIR/.env" PROXY_IMAGE "$proxy_image"
+  echo "Wrote consent.yaml, site.conf and oauth2.conf to $OUTPUT_DIR, and set PROXY_IMAGE to $proxy_image"
 }
 
 parse_cli_args "$@"
