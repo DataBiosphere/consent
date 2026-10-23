@@ -165,7 +165,9 @@ others=$(find "$CONFIG_DIR" -maxdepth 1 -type f \( -name '*.sql' -o -name '*.sql
 if [[ -n "$others" ]]; then
   echo
   echo "These dumps in $CONFIG_DIR were not made by this script. Delete them when you no longer need them:"
-  echo "$others" | sed 's/^/  /'
+  while IFS= read -r name; do
+    echo "  $name"
+  done <<< "$others"
 fi
 
 echo
