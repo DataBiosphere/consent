@@ -35,6 +35,39 @@ docker build . -t consent
 
 This image can then be run with the proper configuration files provided.
 
+### Dev Container
+
+If you use Visual Studio Code (VSCode) and Docker, you can use the Dev Container configuration. The
+container makes the local config files for you, the same way as the `duos-ui` Dev Container. When
+the container is created, it runs [setup-devcontainer.sh](scripts/setup-devcontainer.sh), which
+installs `gcloud`, asks for a `gcloud` login, and runs [render-configs.sh](scripts/render-configs.sh)
+with `--all true`.
+
+1. Connect the host to the non-split Broad VPN. Make sure that the host's git credentials can read
+   `broadinstitute/terra-helmfile`. VSCode shares them with the container.
+
+2. Open the project in VSCode. When the notification in the bottom right corner asks about the Dev
+   Container, click "Reopen in container".
+
+3. When the setup script asks for the `gcloud` login, complete it in the browser that opens.
+
+4. If the setup fails (for example, the VPN is down), fix the issue. Then rebuild the container,
+   or run the script again. Every 3 months the certs rotate. Run the script again to make the
+   files again. It does not make a new database dump when one exists.
+
+   ```sh
+   ./scripts/setup-devcontainer.sh
+   ```
+
+5. To run the stack in the container, the app also needs Application Default Credentials. Run
+   `gcloud auth application-default login` in the container.
+
+You can run the stack in the container (Docker-in-Docker) or on the host. Both use the same
+`config/` files. The container forwards ports 27443, 7777 and 9200 to the host. Run
+`./scripts/index-es.sh` where the stack runs.
+
+If you do not use the Dev Container, run `render-configs.sh` yourself. See the next section.
+
 ### Render Configs
 
 [render-configs.sh](scripts/render-configs.sh) makes the files in `config/` (git-ignored) that the
