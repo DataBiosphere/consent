@@ -45,16 +45,19 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 | `server.crt`, `server.key`, `ca-bundle.crt` | The `local-dev-cert` secret in the dev cluster | Always |
 | `consent.yaml`, `site.conf`, `oauth2.conf` | The consent chart in `terra-helmfile`, with the dev values and [local-values.yaml](scripts/templates/local-values.yaml) | `--write_chart_configs true` |
 | `docker-compose.yaml`, `.env` | [docker-compose.yaml](scripts/templates/docker-compose.yaml) in this repo, and values from the dev cluster | `--write_compose true` |
+| `consentdb-dev-DATE.sql.gz` | The dev Cloud SQL database, through [export-db.sh](scripts/export-db.sh) | `--export_db true` |
 
-You need `gcloud`, `kubectl`, `helm`, `git` and `openssl`, and the non-split Broad VPN for the
-cluster steps. The chart configs need read access to `broadinstitute/terra-helmfile`, with git
-HTTPS credentials or a GitHub SSH key. The script tries HTTPS first, then SSH. The script stops at
-the first step that fails, and that step leaves the old files as they were. The first time, run:
+You need `gcloud`, `kubectl`, `helm`, `git`, `docker`, `jq`, `openssl` and `gzip`, and the
+non-split Broad VPN for the cluster steps. The chart configs need read access to
+`broadinstitute/terra-helmfile`, with git HTTPS credentials or a GitHub SSH key. The script tries
+HTTPS first, then SSH. The script stops at the first step that fails, and that step leaves the
+old files as they were. The first time, run:
 
 ```bash
 ./scripts/render-configs.sh --all true
 mvn clean compile
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+./scripts/index-es.sh
 ```
 
 * After a cert rotation, run `./scripts/render-configs.sh` with no options.
@@ -76,8 +79,25 @@ change. The local database uses the dev database user and password from `consent
 same values that `duos-ui` writes to its `.env.local`. So the `duos-ui` compose mode against a
 local consent stack (`docker-compose.consent.yaml`) connects with no change.
 
-The local database loads the dump that `CONSENT_DB_DUMP` in `config/.env` names. Put a dump file in
-`config/`, and set `CONSENT_DB_DUMP` to its file name.
+#### Database dump
+
+`./scripts/render-configs.sh --export_db true` (or [export-db.sh](scripts/export-db.sh)) writes a
+new dump of the dev database. Use `--db_env staging` for staging. The script never exports prod.
+It keeps only the newest dump, and it sets `CONSENT_DB_DUMP` in `config/.env`.
+
+A dump holds real user data. Do not copy, share or upload it. Make a new one with the script.
+
+The local database loads the dump only when its container is new. After a new dump, run
+`docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml rm -sfv sqlproxy`,
+start the stack again, and run `./scripts/index-es.sh`. The `-v` also removes the data volume of
+the old container, which holds a copy of the old dump.
+
+#### Elasticsearch index
+
+[index-es.sh](scripts/index-es.sh) fills the local `dataset` index from the local database, with
+the admin endpoint `POST /api/dataset/index`. It uses a `gcloud auth print-access-token` token, so
+your gcloud account must have the Admin role in the loaded database. Run it after the stack starts,
+and after each new dump. The script fails if a dataset does not index.
 
 #### Liquibase
 
@@ -138,6 +158,7 @@ Make the config first (see "Render Configs"), then:
 ```bash
 mvn clean compile
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+./scripts/index-es.sh
 ```
 
 The compose template starts the app from `target/classes`, so run `mvn clean compile` after each
