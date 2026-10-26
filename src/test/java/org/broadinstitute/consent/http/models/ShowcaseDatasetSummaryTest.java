@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class ShowcaseDatasetSummaryTest {
 
   /** Responses must use the null-serializing Gson so that every key is present. */
-  private final Gson gson = GsonUtil.buildGsonNullSerializer();
+  private final Gson gson = GsonUtil.getNullSerializingInstance();
 
   @Test
   void testSerializedKeysEqualAllowlist() {
