@@ -747,15 +747,17 @@ WHERE dar.submission_date > now() - interval '8760 hours'
     }
     return findShowcaseSummaries(
         aliases,
-        ShowcasePublicField.datasetPropertyAllowlist(),
-        ShowcasePublicField.studyPropertyAllowlist(),
+        ShowcasePublicField.datasetPropertyAllowlist().stream().map(String::toLowerCase).toList(),
+        ShowcasePublicField.studyPropertyAllowlist().stream().map(String::toLowerCase).toList(),
         Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
         Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
   }
 
   /**
-   * Eligibility: a public study, and open or external access or DAC approval. Access follows {@link
-   * Dataset#getAccessManagement()}: current key before legacy, case-insensitive, trimmed.
+   * Eligibility: a public study, and open or external access or approval by a DAC that is not
+   * deleted. Access follows {@link Dataset#getAccessManagement()}: current key before legacy,
+   * case-insensitive, trimmed. Allowlisted properties match their lower-cased names, skip blank
+   * values, and are keyed by lower-cased name.
    */
   @UseRowMapper(ShowcaseDatasetSummaryMapper.class)
   @SqlQuery(
@@ -768,44 +770,51 @@ WHERE dar.submission_date > now() - interval '8760 hours'
           study_props.properties AS study_properties
       FROM dataset d
       INNER JOIN study s ON s.study_id = d.study_id
-      LEFT JOIN dac ON dac.dac_id = d.dac_id
+      LEFT JOIN dac ON dac.dac_id = d.dac_id AND dac.deleted IS NOT TRUE
       LEFT JOIN LATERAL (
-          SELECT LOWER(
-              REGEXP_REPLACE(am.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g')) AS value
-          FROM dataset_property am
-          WHERE am.dataset_id = d.dataset_id
-              AND LOWER(am.schema_property)
-                  IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
-              AND LOWER(
-                  REGEXP_REPLACE(am.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g'))
-                  IN ('open', 'controlled', 'external')
-          ORDER BY LOWER(am.schema_property) = LOWER(:accessManagementProperty) DESC,
-              am.property_id
+          SELECT am.value
+          FROM (
+              SELECT LOWER(
+                      REGEXP_REPLACE(
+                          p.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g')) AS value,
+                  LOWER(p.schema_property) = LOWER(:accessManagementProperty) AS is_current,
+                  p.property_id
+              FROM dataset_property p
+              WHERE p.dataset_id = d.dataset_id
+                  AND LOWER(p.schema_property)
+                      IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
+          ) am
+          WHERE am.value IN ('open', 'controlled', 'external')
+          ORDER BY am.is_current DESC, am.property_id
           LIMIT 1
       ) access ON TRUE
       LEFT JOIN LATERAL (
-          SELECT jsonb_object_agg(p.schema_property, p.property_value) AS properties
+          SELECT jsonb_object_agg(p.name, p.property_value) AS properties
           FROM (
-              SELECT DISTINCT ON (dp.schema_property) dp.schema_property, dp.property_value
+              SELECT DISTINCT ON (LOWER(dp.schema_property))
+                  LOWER(dp.schema_property) AS name, dp.property_value
               FROM dataset_property dp
               WHERE dp.dataset_id = d.dataset_id
-                  AND dp.schema_property IN (<datasetPropertyAllowlist>)
-              ORDER BY dp.schema_property, dp.property_id
+                  AND LOWER(dp.schema_property) IN (<datasetPropertyAllowlist>)
+                  AND dp.property_value !~ '^[\\x01-\\x20]*$'
+              ORDER BY LOWER(dp.schema_property), dp.property_id
           ) p
       ) dataset_props ON TRUE
       LEFT JOIN LATERAL (
-          SELECT jsonb_object_agg(p.key, p.value) AS properties
+          SELECT jsonb_object_agg(p.name, p.value) AS properties
           FROM (
-              SELECT DISTINCT ON (sp.key) sp.key, sp.value
+              SELECT DISTINCT ON (LOWER(sp.key)) LOWER(sp.key) AS name, sp.value
               FROM study_property sp
               WHERE sp.study_id = s.study_id
-                  AND sp.key IN (<studyPropertyAllowlist>)
-              ORDER BY sp.key, sp.study_property_id
+                  AND LOWER(sp.key) IN (<studyPropertyAllowlist>)
+                  AND sp.value !~ '^[\\x01-\\x20]*$'
+              ORDER BY LOWER(sp.key), sp.study_property_id
           ) p
       ) study_props ON TRUE
       WHERE d.alias IN (<aliases>)
           AND s.public_visibility = true
-          AND (access.value IN ('open', 'external') OR d.dac_approval = true)
+          AND (access.value IN ('open', 'external')
+              OR (d.dac_approval = true AND dac.dac_id IS NOT NULL))
       ORDER BY d.alias
       """)
   List<ShowcaseDatasetSummary> findShowcaseSummaries(

@@ -117,11 +117,13 @@ defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
 | `consentCodes` | `dataset.data_use` | string[] | no | Codes only (`GRU`, `HMB`, `DS`, `OTHER`, ...), in `TranslationUtil.translateSummary` order; free-text values and disease labels are omitted |
 | `participantCount` | `dataset_property` `numberOfParticipants` | integer (participants) | yes | Trimmed and parsed as an integer; null if missing, non-integer or negative |
 | `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD` | yes | Date part of the stored timestamp, not shifted by the reader's JVM time zone. The columns have no time zone, so the date is UTC only if the writer ran in UTC |
-| `accessUrl` | `dataset_property` `url`, then legacy `consentGroup.url` | string | yes | Open and external only; absolute `http`/`https` with a host and no user info; null otherwise |
+| `accessUrl` | `dataset_property` `url`, then legacy `consentGroup.url` | string | yes | Open and external only; absolute `http`/`https` with an authority (host, optionally a port) and no user info; null otherwise |
 | `species` | `study_property` `species` | string | yes | Trimmed; null if blank. Free text with no length limit; needs the steward decision below |
 
 Responses serialize the summary with `GsonUtil.getNullSerializingInstance()`, so a null field is
-present as `null`. When a property has several rows, the row with the lowest id is used. Older
+present as `null`. Property names match ignoring case, as `Dataset.getAccessManagement()` and the
+registration reader do. Blank values are skipped, and when a property has several non-blank rows,
+the row with the lowest id is used. Older
 `# of participants` rows with no `schema_property` are not read, so their count is null. The query reads only
 `dataset_property.schema_property IN (numberOfParticipants, url, consentGroup.url)` and
 `study_property.key IN (species)`, plus the two access-management keys used for eligibility.
@@ -146,8 +148,12 @@ it.
 A dataset is returned only if all of these hold:
 
 1. It has a study, and `study.public_visibility = true` (the column is `NOT NULL`).
-2. `accessManagement` is `open` or `external`, or `dataset.dac_approval = true`. Controlled datasets,
-   and datasets without a recognized access value, need DAC approval.
+2. `accessManagement` is `open` or `external`, or `dataset.dac_approval = true` and the dataset has
+   a DAC that is not soft-deleted. Controlled datasets, and datasets without a recognized access
+   value, need that approval; without a DAC a reader would have no one to ask.
+
+`dacName` is null when the DAC is soft-deleted. Deleting a DAC through the app already clears
+`dac_id` and `dac_approval` on its datasets.
 
 Admin, creator and custodian exceptions do not apply. Deleted datasets are absent because they are
 hard-deleted. Eligibility inputs are not returned.

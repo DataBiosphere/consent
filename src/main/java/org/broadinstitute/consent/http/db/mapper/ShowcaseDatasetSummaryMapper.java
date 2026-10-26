@@ -22,7 +22,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 /**
  * Maps a {@code DatasetDAO.findShowcaseSummaries} row. Property values arrive as JSON objects keyed
- * by the allowlisted property name; anything the allowlist does not name is ignored.
+ * by the lower-cased allowlisted property name; anything the allowlist does not name is ignored.
  */
 public class ShowcaseDatasetSummaryMapper
     implements RowMapper<ShowcaseDatasetSummary>, RowMapperHelper {
@@ -63,7 +63,7 @@ public class ShowcaseDatasetSummaryMapper
 
   private static String firstValue(JsonObject properties, ShowcasePublicField field) {
     for (String name : field.getSourceNames()) {
-      JsonElement value = properties.get(name);
+      JsonElement value = properties.get(name.toLowerCase(Locale.ROOT));
       if (value != null && !value.isJsonNull()) {
         return value.getAsString();
       }
@@ -88,6 +88,11 @@ public class ShowcaseDatasetSummaryMapper
     return timestamp == null ? null : timestamp.toLocalDate().toString();
   }
 
+  /**
+   * An absolute http(s) URL with an authority and no user info. The authority is checked as text
+   * because {@link URI#getHost()} is null for hosts with an underscore or a non-ASCII character,
+   * and {@link URI#getRawUserInfo()} is then null too.
+   */
   private static String safeUrl(String value) {
     String url = StringUtils.trimToNull(value);
     if (url == null) {
@@ -97,8 +102,8 @@ public class ShowcaseDatasetSummaryMapper
       URI uri = new URI(url);
       if (uri.getScheme() == null
           || !URL_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT))
-          || StringUtils.isBlank(uri.getHost())
-          || uri.getRawUserInfo() != null) {
+          || StringUtils.isBlank(uri.getRawAuthority())
+          || uri.getRawAuthority().contains("@")) {
         return null;
       }
       return url;

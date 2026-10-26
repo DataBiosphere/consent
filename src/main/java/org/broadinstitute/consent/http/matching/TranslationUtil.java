@@ -278,7 +278,9 @@ public class TranslationUtil implements ConsentLogger {
 
   /**
    * List the codes of {@link #translateSummary(DataUse)}, primary then secondary, without their
-   * descriptions or free-text values. {@code DS} does not depend on an ontology lookup here.
+   * descriptions or free-text values. Two differences from that summary: a code appears once, so a
+   * primary and a secondary {@code OTHER} merge into one; and {@code DS} appears whenever there are
+   * disease restrictions, while the summary drops it when no ontology label resolves.
    *
    * @param dataUse The DataUse
    * @return Distinct codes in summary order

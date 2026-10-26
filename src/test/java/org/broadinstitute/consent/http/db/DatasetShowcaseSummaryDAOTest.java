@@ -81,7 +81,8 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
         "null|null|false|excluded",
       })
   void testAccessClassification(String current, String legacy, boolean approved, String expected) {
-    Integer id = insertDataset("Example Cohort", publicStudyId, null);
+    Integer dacId = dacDAO.createDac("Example DAC", "synthetic", user.getUserId());
+    Integer id = insertDataset("Example Cohort", publicStudyId, dacId);
     if (current != null) {
       insertProperty(id, ACCESS, current);
     }
@@ -185,6 +186,57 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testApprovalNeedsALiveDac() {
+    Integer dacId = dacDAO.createDac("Example DAC", "synthetic", user.getUserId());
+    Integer noDac = insertDataset("Example Cohort A", publicStudyId, null);
+    Integer deletedDac = insertDataset("Example Cohort B", publicStudyId, dacId);
+    Integer openWithDeletedDac = insertDataset("Example Cohort C", publicStudyId, dacId);
+    for (Integer id : List.of(noDac, deletedDac)) {
+      insertProperty(id, ACCESS, "controlled");
+      approve(id);
+    }
+    insertProperty(openWithDeletedDac, ACCESS, "open");
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    List<ShowcaseDatasetSummary> summaries = find(noDac, deletedDac, openWithDeletedDac);
+    assertEquals(
+        List.of(identifier(openWithDeletedDac)),
+        summaries.stream().map(ShowcaseDatasetSummary::identifier).toList());
+    assertNull(summaries.getFirst().dacName());
+  }
+
+  @Test
+  void testPropertyNamesIgnoreCase() {
+    Integer id = insertDataset("Example Cohort", publicStudyId, null);
+    insertProperty(id, ACCESS, "open");
+    insertProperty(id, "NumberOfParticipants", "12");
+    insertProperty(id, "consentGroup.URL", "https://example.org/data");
+    studyDAO.insertStudyProperty(publicStudyId, "Species", "string", "Human");
+
+    ShowcaseDatasetSummary summary = find(id).getFirst();
+    assertEquals(12, summary.participantCount());
+    assertEquals("https://example.org/data", summary.accessUrl());
+    assertEquals("Human", summary.species());
+  }
+
+  @Test
+  void testBlankPropertyRowsAreSkipped() {
+    Integer id = insertDataset("Example Cohort", publicStudyId, null);
+    insertProperty(id, ACCESS, "open");
+    insertProperty(id, "numberOfParticipants", " ");
+    insertProperty(id, "numberOfParticipants", "30");
+    insertProperty(id, "url", "\t");
+    insertProperty(id, "consentGroup.url", "https://example.org/legacy");
+    studyDAO.insertStudyProperty(publicStudyId, "species", "string", "");
+    studyDAO.insertStudyProperty(publicStudyId, "species", "string", "Human");
+
+    ShowcaseDatasetSummary summary = find(id).getFirst();
+    assertEquals(30, summary.participantCount());
+    assertEquals("https://example.org/legacy", summary.accessUrl());
+    assertEquals("Human", summary.species());
+  }
+
+  @Test
   void testLegacyUrlIsReadAfterCurrentUrl() {
     Integer legacyOnly = insertDataset("Example Cohort A", publicStudyId, null);
     Integer both = insertDataset("Example Cohort B", publicStudyId, null);
@@ -223,7 +275,23 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
 
   @ParameterizedTest
   @CsvSource({
+    "https://my_host.example.org/data",
+    "https://exämple.org/data",
+    "https://example.org:8443/data",
+  })
+  void testUrlWithUnusualHostIsKept(String url) {
+    Integer id = insertDataset("Example Cohort", publicStudyId, null);
+    insertProperty(id, ACCESS, "open");
+    insertProperty(id, "url", url);
+
+    assertEquals(url, find(id).getFirst().accessUrl());
+  }
+
+  @ParameterizedTest
+  @CsvSource({
     "javascript:alert(1)",
+    "https://user@my_host.example.org/data",
+    "https:///data",
     "ftp://example.org/data",
     "//example.org/data",
     "https://user@example.org/data",
