@@ -60,7 +60,7 @@ public class ConsentGroupFromDataset {
       }
       String dataLocationVal = findStringDSPropValue(dataset.getProperties(), dataLocation);
       if (Objects.nonNull(dataLocationVal)) {
-        consentGroup.setDataLocation(DataLocation.fromValue(dataLocationVal));
+        consentGroup.setDataLocation(parseDataLocation(dataLocationVal));
       }
       String urlVal = findStringDSPropValue(dataset.getProperties(), url);
       if (Objects.nonNull(urlVal)) {
@@ -82,6 +82,15 @@ public class ConsentGroupFromDataset {
       return consentGroup;
     }
     return null;
+  }
+
+  // A dataset PATCH accepts the constant name as well as the value, and stores whichever it got.
+  private DataLocation parseDataLocation(String dataLocationVal) {
+    try {
+      return DataLocation.fromValue(dataLocationVal);
+    } catch (IllegalArgumentException e) {
+      return DataLocation.valueOf(dataLocationVal);
+    }
   }
 
   /**

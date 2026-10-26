@@ -13,6 +13,12 @@ public class GsonUtil {
 
   private static Gson instance;
 
+  private static final Gson REGISTRATION_INSTANCE =
+      gsonBuilderWithAdapters()
+          .serializeNulls()
+          .registerTypeAdapterFactory(new JsonValueEnumTypeAdapterFactory())
+          .create();
+
   public static Gson getInstance() {
     if (Objects.isNull(instance)) {
       instance = buildGson();
@@ -24,8 +30,11 @@ public class GsonUtil {
     return gsonBuilderWithAdapters().create();
   }
 
-  public static Gson buildGsonNullSerializer() {
-    return gsonBuilderWithAdapters().serializeNulls().create();
+  /**
+   * Writes registration documents: nulls included, and enums as their Jackson {@code @JsonValue}.
+   */
+  public static Gson getRegistrationInstance() {
+    return REGISTRATION_INSTANCE;
   }
 
   public static GsonBuilder gsonBuilderWithAdapters() {

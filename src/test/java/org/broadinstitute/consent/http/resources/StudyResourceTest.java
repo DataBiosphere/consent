@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
@@ -266,6 +268,27 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetRegistrationFromStudyWritesEnumsAsTheirValues() throws Exception {
+    Study study = createMockStudy();
+    when(datasetService.findStudyByIdForRead(user, study.getStudyId())).thenReturn(study);
+    when(datasetService.findStudyDatasets(user, study)).thenReturn(mockDatasets);
+    when(duosUser.getUser()).thenReturn(user);
+
+    try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
+      String entity = response.getEntity().toString();
+      assertTrue(entity.contains("\"accessManagement\":\"" + AccessManagement.OPEN.value() + "\""));
+      assertTrue(
+          entity.contains("\"dataLocation\":\"" + DataLocation.NOT_DETERMINED.value() + "\""));
+      // The update endpoint reads the registration with Jackson, so a read document must parse
+      // there.
+      DatasetRegistrationSchemaV1 parsed =
+          new ObjectMapper().readValue(entity, DatasetRegistrationSchemaV1.class);
+      assertEquals(
+          AccessManagement.OPEN, parsed.getConsentGroups().getFirst().getAccessManagement());
     }
   }
 
