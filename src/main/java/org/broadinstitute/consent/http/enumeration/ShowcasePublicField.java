@@ -42,7 +42,10 @@ public enum ShowcasePublicField {
   ACCESS_URL(
       "accessUrl",
       Source.DATASET_PROPERTY,
-      List.of(DatasetRegistrationSchemaV1Builder.url),
+      // Older dataset-registration records persisted the consent-group path, as for access.
+      List.of(
+          DatasetRegistrationSchemaV1Builder.url,
+          "consentGroup." + DatasetRegistrationSchemaV1Builder.url),
       "string",
       null,
       true),

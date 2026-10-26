@@ -13,7 +13,8 @@ import java.util.List;
  * @param dacName name of the reviewing DAC
  * @param consentCodes consent codes such as {@code GRU} or {@code HMB}, without free-text values
  * @param participantCount number of participants
- * @param availableDate "new in DUOS" date, {@code YYYY-MM-DD} in UTC
+ * @param availableDate "new in DUOS" date, {@code YYYY-MM-DD}, the date part of the stored
+ *     timestamp
  * @param accessUrl http(s) provider link for open and external datasets; null for others
  * @param species study species
  */

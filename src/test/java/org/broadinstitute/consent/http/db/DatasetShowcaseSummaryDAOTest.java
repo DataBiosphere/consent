@@ -185,6 +185,21 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testLegacyUrlIsReadAfterCurrentUrl() {
+    Integer legacyOnly = insertDataset("Example Cohort A", publicStudyId, null);
+    Integer both = insertDataset("Example Cohort B", publicStudyId, null);
+    for (Integer id : List.of(legacyOnly, both)) {
+      insertProperty(id, ACCESS, "open");
+      insertProperty(id, "consentGroup.url", "https://example.org/legacy");
+    }
+    insertProperty(both, "url", "https://example.org/current");
+
+    assertEquals(
+        List.of("https://example.org/legacy", "https://example.org/current"),
+        find(legacyOnly, both).stream().map(ShowcaseDatasetSummary::accessUrl).toList());
+  }
+
+  @Test
   void testDuplicatePropertyUsesFirstRow() {
     Integer id = insertDataset("Example Cohort", publicStudyId, null);
     insertProperty(id, ACCESS, "open");

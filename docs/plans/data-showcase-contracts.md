@@ -116,18 +116,22 @@ defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
 | `dacName` | `dac.name` through `dataset.dac_id` | string | yes | |
 | `consentCodes` | `dataset.data_use` | string[] | no | Codes only (`GRU`, `HMB`, `DS`, `OTHER`, ...), in `TranslationUtil.translateSummary` order; free-text values and disease labels are omitted |
 | `participantCount` | `dataset_property` `numberOfParticipants` | integer (participants) | yes | Trimmed and parsed as an integer; null if missing, non-integer or negative |
-| `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD`, UTC | yes | Date part of the stored timestamp (no time zone column), not shifted by the JVM time zone |
-| `accessUrl` | `dataset_property` `url` | string | yes | Open and external only; absolute `http`/`https` with a host and no user info; null otherwise |
-| `species` | `study_property` `species` | string | yes | Trimmed; null if blank |
+| `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD` | yes | Date part of the stored timestamp, not shifted by the reader's JVM time zone. The columns have no time zone, so the date is UTC only if the writer ran in UTC |
+| `accessUrl` | `dataset_property` `url`, then legacy `consentGroup.url` | string | yes | Open and external only; absolute `http`/`https` with a host and no user info; null otherwise |
+| `species` | `study_property` `species` | string | yes | Trimmed; null if blank. Free text with no length limit; needs the steward decision below |
 
 Responses serialize the summary with `GsonUtil.getNullSerializingInstance()`, so a null field is
 present as `null`. When a property has several rows, the row with the lowest id is used. Older
 `# of participants` rows with no `schema_property` are not read, so their count is null. The query reads only
-`dataset_property.schema_property IN (numberOfParticipants, url)` and
+`dataset_property.schema_property IN (numberOfParticipants, url, consentGroup.url)` and
 `study_property.key IN (species)`, plus the two access-management keys used for eligibility.
 
 Omitted: study description and phenotype (free text), PI name, data types, file formats, data size
 (no trusted byte source), `translated_data_use` (embeds free text).
+
+Open decision: `species` is free text in the registration schema and study template, so it could
+hold an email or a long note. Data stewards decide whether to approve it as is, truncate it, or omit
+it.
 
 ### S2.2 requirements
 
@@ -164,5 +168,5 @@ The values for one key are alternatives (any one can match). Multiple keys must 
 | --- | --- | --- |
 | Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. Not yet held. | Designer | S3.1–S3.4 |
 | Rebranded artifact supplied; artifact review updated with its hash | Product owner | — |
-| S2.1 field definitions and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
+| S2.1 field definitions (including the `species` free-text decision) and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
 | Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, designer, consent lead, duos-ui lead | Closing DT-4272 |

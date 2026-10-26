@@ -37,7 +37,8 @@ class ShowcaseDatasetSummaryTest {
   @Test
   void testPropertyAllowlists() {
     assertEquals(
-        List.of("numberOfParticipants", "url"), ShowcasePublicField.datasetPropertyAllowlist());
+        List.of("numberOfParticipants", "url", "consentGroup.url"),
+        ShowcasePublicField.datasetPropertyAllowlist());
     assertEquals(List.of("species"), ShowcasePublicField.studyPropertyAllowlist());
   }
 }
