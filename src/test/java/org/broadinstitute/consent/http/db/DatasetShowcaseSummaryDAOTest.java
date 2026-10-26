@@ -283,6 +283,9 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
         "https://exämple.org/data|https://xn--exmple-cua.org/data",
         "https://\u0435xample.org/data|https://xn--xample-2of.org/data",
         "https://ex\u200Bample.org/data|https://example.org/data",
+        "https://ex\u00E4mple.org:000443/data|https://xn--exmple-cua.org:000443/data",
+        "https://127.0.0.1:8080/data|https://127.0.0.1:8080/data",
+        "https://[::1]/data|https://[::1]/data",
       })
   void testUrlHostIsKeptInAsciiForm(String url, String expected) {
     Integer id = insertDataset("Example Cohort", publicStudyId, null);
@@ -308,6 +311,10 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
     "https://1.2.3.4.5/data",
     "https://\u202Eevil.com/data",
     "https://\u200B/data",
+    "https://fa\u00DF.de/data",
+    "https://\u03C3\u03C2.example.org/data",
+    "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.org/data",
+    "https://my_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.org/data",
     "ftp://example.org/data",
     "//example.org/data",
     "https://user@example.org/data",
@@ -317,6 +324,15 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
     Integer id = insertDataset("Example Cohort", publicStudyId, null);
     insertProperty(id, ACCESS, "open");
     insertProperty(id, "url", url);
+
+    assertNull(find(id).getFirst().accessUrl());
+  }
+
+  @Test
+  void testVeryLongHostIsDropped() {
+    Integer id = insertDataset("Example Cohort", publicStudyId, null);
+    insertProperty(id, ACCESS, "open");
+    insertProperty(id, "url", "https://_" + ".a".repeat(5000) + "/data");
 
     assertNull(find(id).getFirst().accessUrl());
   }

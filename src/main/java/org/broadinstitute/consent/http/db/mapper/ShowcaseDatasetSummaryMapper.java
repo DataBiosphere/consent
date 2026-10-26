@@ -33,13 +33,15 @@ public class ShowcaseDatasetSummaryMapper
   private static final Set<String> DIRECT_ACCESS =
       Set.of(AccessManagement.OPEN.value(), AccessManagement.EXTERNAL.value());
   private static final Set<String> URL_SCHEMES = Set.of("http", "https");
+  private static final int MAX_HOST_LENGTH = 253;
   // A host with no brackets, colons or "@", then an optional port.
-  private static final Pattern REGISTRY_AUTHORITY =
-      Pattern.compile("([^:\\[\\]@]+)(?::(\\d{1,5}))?");
-  private static final Pattern ASCII_HOST =
-      Pattern.compile(
-          "(?i)[a-z0-9_](?:[a-z0-9_-]*[a-z0-9_])?(?:\\.[a-z0-9_](?:[a-z0-9_-]*[a-z0-9_])?)*\\.?");
-  private static final Pattern NUMERIC_LAST_LABEL = Pattern.compile("(?:.*\\.)?\\d+\\.?");
+  private static final Pattern REGISTRY_AUTHORITY = Pattern.compile("([^:\\[\\]@]+)(?::(\\d+))?");
+  private static final Pattern HOST_LABEL =
+      Pattern.compile("(?i)[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?");
+  private static final Pattern IPV4 = Pattern.compile("\\d{1,3}(?:\\.\\d{1,3}){3}");
+  // Characters that IDNA2003 (java.net.IDN) and browsers' UTS 46 map to different hosts.
+  private static final Pattern IDNA_DEVIATION =
+      Pattern.compile("[\\u00DF\\u03C2\\u200C\\u200D\\u1E9E]");
 
   private final DataUseParser dataUseParser = new DataUseParser();
 
@@ -119,17 +121,21 @@ public class ShowcaseDatasetSummaryMapper
         return null;
       }
       if (uri.getHost() != null) {
-        return uri.getRawUserInfo() == null && validPort(uri.getPort()) ? url : null;
+        String host = uri.getHost();
+        boolean ipLiteral = host.startsWith("[") || IPV4.matcher(host).matches();
+        return uri.getRawUserInfo() == null
+                && validPort(uri.getPort())
+                && (ipLiteral || validHostName(host))
+            ? url
+            : null;
       }
       Matcher matcher = REGISTRY_AUTHORITY.matcher(authority);
-      if (!matcher.matches()) {
+      if (!matcher.matches() || IDNA_DEVIATION.matcher(matcher.group(1)).find()) {
         return null;
       }
       String host = IDN.toASCII(matcher.group(1));
       String port = matcher.group(2);
-      if (!ASCII_HOST.matcher(host).matches()
-          || NUMERIC_LAST_LABEL.matcher(host).matches()
-          || (port != null && !validPort(Integer.parseInt(port)))) {
+      if (!validHostName(host) || (port != null && !validPort(Integer.parseInt(port)))) {
         return null;
       }
       String asciiAuthority = port == null ? host : host + ":" + port;
@@ -141,6 +147,24 @@ public class ShowcaseDatasetSummaryMapper
     } catch (URISyntaxException | IllegalArgumentException _) {
       return null;
     }
+  }
+
+  /**
+   * Dot-separated labels of up to 63 characters, at most 253 in all, and a last label that is not
+   * only digits.
+   */
+  private static boolean validHostName(String host) {
+    String name = host.endsWith(".") ? host.substring(0, host.length() - 1) : host;
+    if (name.isEmpty() || name.length() > MAX_HOST_LENGTH) {
+      return false;
+    }
+    String[] labels = name.split("\\.", -1);
+    for (String label : labels) {
+      if (!HOST_LABEL.matcher(label).matches()) {
+        return false;
+      }
+    }
+    return !StringUtils.isNumeric(labels[labels.length - 1]);
   }
 
   /** {@link URI#getPort()} gives -1 when there is no port. */
