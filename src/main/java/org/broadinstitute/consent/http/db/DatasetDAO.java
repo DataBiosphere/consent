@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.ApprovedDatasetReducer;
@@ -747,8 +748,12 @@ WHERE dar.submission_date > now() - interval '8760 hours'
     }
     return findShowcaseSummaries(
         aliases,
-        ShowcasePublicField.datasetPropertyAllowlist().stream().map(String::toLowerCase).toList(),
-        ShowcasePublicField.studyPropertyAllowlist().stream().map(String::toLowerCase).toList(),
+        ShowcasePublicField.datasetPropertyAllowlist().stream()
+            .map(name -> name.toLowerCase(Locale.ROOT))
+            .toList(),
+        ShowcasePublicField.studyPropertyAllowlist().stream()
+            .map(name -> name.toLowerCase(Locale.ROOT))
+            .toList(),
         Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
         Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
   }

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.net.IDN;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.ResultSet;
@@ -10,6 +11,8 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.ShowcasePublicField;
@@ -30,6 +33,13 @@ public class ShowcaseDatasetSummaryMapper
   private static final Set<String> DIRECT_ACCESS =
       Set.of(AccessManagement.OPEN.value(), AccessManagement.EXTERNAL.value());
   private static final Set<String> URL_SCHEMES = Set.of("http", "https");
+  // A host with no brackets, colons or "@", then an optional port.
+  private static final Pattern REGISTRY_AUTHORITY =
+      Pattern.compile("([^:\\[\\]@]+)(?::(\\d{1,5}))?");
+  private static final Pattern ASCII_HOST =
+      Pattern.compile(
+          "(?i)[a-z0-9_](?:[a-z0-9_-]*[a-z0-9_])?(?:\\.[a-z0-9_](?:[a-z0-9_-]*[a-z0-9_])?)*\\.?");
+  private static final Pattern NUMERIC_LAST_LABEL = Pattern.compile("(?:.*\\.)?\\d+\\.?");
 
   private final DataUseParser dataUseParser = new DataUseParser();
 
@@ -89,9 +99,10 @@ public class ShowcaseDatasetSummaryMapper
   }
 
   /**
-   * An absolute http(s) URL with an authority and no user info. The authority is checked as text
-   * because {@link URI#getHost()} is null for hosts with an underscore or a non-ASCII character,
-   * and {@link URI#getRawUserInfo()} is then null too.
+   * An absolute http(s) URL whose authority is a host and an optional port from 1 to 65535, with no
+   * user info. {@link URI#getHost()} is null for a host with an underscore or a non-ASCII
+   * character, so that authority is parsed here. A non-ASCII host is returned in its ASCII
+   * (punycode) form, so a homograph or a bidi control never reaches the page as text.
    */
   private static String safeUrl(String value) {
     String url = StringUtils.trimToNull(value);
@@ -100,15 +111,40 @@ public class ShowcaseDatasetSummaryMapper
     }
     try {
       URI uri = new URI(url);
-      if (uri.getScheme() == null
-          || !URL_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT))
-          || StringUtils.isBlank(uri.getRawAuthority())
-          || uri.getRawAuthority().contains("@")) {
+      String scheme = uri.getScheme();
+      String authority = uri.getRawAuthority();
+      if (scheme == null
+          || !URL_SCHEMES.contains(scheme.toLowerCase(Locale.ROOT))
+          || authority == null) {
         return null;
       }
-      return url;
-    } catch (URISyntaxException _) {
+      if (uri.getHost() != null) {
+        return uri.getRawUserInfo() == null && validPort(uri.getPort()) ? url : null;
+      }
+      Matcher matcher = REGISTRY_AUTHORITY.matcher(authority);
+      if (!matcher.matches()) {
+        return null;
+      }
+      String host = IDN.toASCII(matcher.group(1));
+      String port = matcher.group(2);
+      if (!ASCII_HOST.matcher(host).matches()
+          || NUMERIC_LAST_LABEL.matcher(host).matches()
+          || (port != null && !validPort(Integer.parseInt(port)))) {
+        return null;
+      }
+      String asciiAuthority = port == null ? host : host + ":" + port;
+      // The raw authority follows "scheme://" verbatim, so the rest of the URL is unchanged.
+      return scheme
+          + "://"
+          + asciiAuthority
+          + url.substring(scheme.length() + "://".length() + authority.length());
+    } catch (URISyntaxException | IllegalArgumentException _) {
       return null;
     }
+  }
+
+  /** {@link URI#getPort()} gives -1 when there is no port. */
+  private static boolean validPort(int port) {
+    return port == -1 || (port >= 1 && port <= 65535);
   }
 }

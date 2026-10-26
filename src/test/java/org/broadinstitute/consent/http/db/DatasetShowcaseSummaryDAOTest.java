@@ -274,17 +274,22 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @CsvSource({
-    "https://my_host.example.org/data",
-    "https://exämple.org/data",
-    "https://example.org:8443/data",
-  })
-  void testUrlWithUnusualHostIsKept(String url) {
+  @CsvSource(
+      delimiter = '|',
+      value = {
+        "https://my_host.example.org/data|https://my_host.example.org/data",
+        "https://example.org:8443/data|https://example.org:8443/data",
+        "https://my_host.example.org:8443/data?q=1|https://my_host.example.org:8443/data?q=1",
+        "https://exämple.org/data|https://xn--exmple-cua.org/data",
+        "https://\u0435xample.org/data|https://xn--xample-2of.org/data",
+        "https://ex\u200Bample.org/data|https://example.org/data",
+      })
+  void testUrlHostIsKeptInAsciiForm(String url, String expected) {
     Integer id = insertDataset("Example Cohort", publicStudyId, null);
     insertProperty(id, ACCESS, "open");
     insertProperty(id, "url", url);
 
-    assertEquals(url, find(id).getFirst().accessUrl());
+    assertEquals(expected, find(id).getFirst().accessUrl());
   }
 
   @ParameterizedTest
@@ -292,6 +297,17 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
     "javascript:alert(1)",
     "https://user@my_host.example.org/data",
     "https:///data",
+    "https://:443/data",
+    "https://example.org:abc/data",
+    "https://example.org:99999/data",
+    "https://my_host.example.org:0/data",
+    "https://a:b:c/data",
+    "https://-/data",
+    "https://.../data",
+    "https://%00/data",
+    "https://1.2.3.4.5/data",
+    "https://\u202Eevil.com/data",
+    "https://\u200B/data",
     "ftp://example.org/data",
     "//example.org/data",
     "https://user@example.org/data",

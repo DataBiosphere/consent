@@ -117,7 +117,7 @@ defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
 | `consentCodes` | `dataset.data_use` | string[] | no | Codes only (`GRU`, `HMB`, `DS`, `OTHER`, ...), in `TranslationUtil.translateSummary` order; free-text values and disease labels are omitted |
 | `participantCount` | `dataset_property` `numberOfParticipants` | integer (participants) | yes | Trimmed and parsed as an integer; null if missing, non-integer or negative |
 | `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD` | yes | Date part of the stored timestamp, not shifted by the reader's JVM time zone. The columns have no time zone, so the date is UTC only if the writer ran in UTC |
-| `accessUrl` | `dataset_property` `url`, then legacy `consentGroup.url` | string | yes | Open and external only; absolute `http`/`https` with an authority (host, optionally a port) and no user info; null otherwise |
+| `accessUrl` | `dataset_property` `url`, then legacy `consentGroup.url` | string | yes | Open and external only; absolute `http`/`https` with a valid host, an optional port from 1 to 65535, and no user info; a non-ASCII host is returned in ASCII (punycode) form; null otherwise |
 | `species` | `study_property` `species` | string | yes | Trimmed; null if blank. Free text with no length limit; needs the steward decision below |
 
 Responses serialize the summary with `GsonUtil.getNullSerializingInstance()`, so a null field is
