@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -200,9 +201,9 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
     studyDAO.insertStudyProperty(publicStudyId, "species", "string", "   ");
 
     ShowcaseDatasetSummary summary = find(id).getFirst();
-    assertEquals(null, summary.participantCount());
-    assertEquals(null, summary.accessUrl());
-    assertEquals(null, summary.species());
+    assertNull(summary.participantCount());
+    assertNull(summary.accessUrl());
+    assertNull(summary.species());
   }
 
   @ParameterizedTest
@@ -218,7 +219,7 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
     insertProperty(id, ACCESS, "open");
     insertProperty(id, "url", url);
 
-    assertEquals(null, find(id).getFirst().accessUrl());
+    assertNull(find(id).getFirst().accessUrl());
   }
 
   @Test
