@@ -4,11 +4,11 @@
 # ("Render Configs") and docs/plans/render-local-configs-plan.md.
 #
 # A run with no options writes only the certs, which rotate every 3 months. Other options turn
-# on the other files.
+# on the other files. --all turns on all of them.
 #
-# You MUST be on the non-split Broad VPN for the cert step, which reads the dev cluster. You MUST
-# be logged in with gcloud. The chart configs need git read access to
-# broadinstitute/terra-helmfile, over HTTPS or SSH.
+# You MUST be on the non-split Broad VPN for the steps that read the dev cluster: the certs, and
+# the .env values that an old .env does not have. You MUST be logged in with gcloud. The chart
+# configs need git read access to broadinstitute/terra-helmfile, over HTTPS or SSH.
 #
 # Each step writes to a staging folder first, and moves its files into place only when the step
 # succeeds. The script stops at the first step that fails, and that step leaves the old files as
@@ -23,6 +23,7 @@ REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 
+COMPOSE_TEMPLATE="$SCRIPT_DIR/templates/docker-compose.yaml"
 ZONE="us-central1-a"
 CLUSTER="terra-dev"
 
@@ -33,18 +34,25 @@ HELMFILE_REF_SET="false"
 HELMFILE_DIR=""
 CONFIG_DIR="$REPO_ROOT/config"
 WRITE_CHART_CONFIGS="false"
+WRITE_COMPOSE="false"
+FETCH_SENDGRID="false"
+ALL="false"
 
 usage() {
   cat << EOF
 Usage: $0 [OPTION]...
 Make the local config files in config/. With no options, write only the certs.
 
-  --project PROJECT                 Google project of the dev cluster, for the certs.
-                                    Defaults to broad-dsde-dev.
+  --project PROJECT                 Google project of the dev cluster, for the certs and dev
+                                    secrets. Defaults to broad-dsde-dev.
   --helmfile_ref REF                The terra-helmfile branch or tag to render. Defaults to master.
   --helmfile_dir DIR                Render a local terra-helmfile checkout as it is, with changes
                                     that are not committed. Cannot be used with --helmfile_ref.
   --write_chart_configs true|false  Write consent.yaml, site.conf and oauth2.conf. Defaults to false.
+  --write_compose true|false        Write docker-compose.yaml and .env. Defaults to false.
+  --fetch_sendgrid true|false       Put the dev SendGrid key in .env. Defaults to false.
+  --all true|false                  Write the certs, the chart configs and the compose files.
+                                    Defaults to false.
   --config_dir DIR                  Where to write the files. Defaults to config/ in the repo root.
   --help                            Show this help.
 EOF
@@ -65,6 +73,9 @@ parse_cli_args() {
       --helmfile_ref) HELMFILE_REF=$2; HELMFILE_REF_SET="true" ;;
       --helmfile_dir) HELMFILE_DIR=$2 ;;
       --write_chart_configs) check_bool "$1" "$2"; WRITE_CHART_CONFIGS=$2 ;;
+      --write_compose) check_bool "$1" "$2"; WRITE_COMPOSE=$2 ;;
+      --fetch_sendgrid) check_bool "$1" "$2"; FETCH_SENDGRID=$2 ;;
+      --all) check_bool "$1" "$2"; ALL=$2 ;;
       --config_dir) CONFIG_DIR=$2 ;;
       *) error "Unknown option: $1. Try --help to see a list of all options." ;;
     esac
@@ -97,6 +108,14 @@ use_cluster() {
   CLUSTER_READY="true"
 }
 
+# Print a value from a secret in the terra-dev namespace. Fail if it is empty.
+dev_secret() {
+  local value
+  value=$(kubectl --request-timeout=30s -n terra-dev get secret "$1" -o "go-template={{ index .data \"$2\" | base64decode }}")
+  [[ -n "$value" ]] || error "$1 in the terra-dev namespace has no $2."
+  echo "$value"
+}
+
 write_certs() {
   local stage="$STAGE_DIR/certs" f
   use_cluster
@@ -121,6 +140,76 @@ write_chart_configs() {
   fi
   "$SCRIPT_DIR/render-chart-configs.sh" --output_dir "$stage" "${source_args[@]}"
   mv "$stage/consent.yaml" "$stage/site.conf" "$stage/oauth2.conf" "$CONFIG_DIR/"
+  env_set "$ENV_FILE" PROXY_IMAGE "$(env_get "$stage/.env" PROXY_IMAGE)"
+}
+
+write_compose() {
+  local stage="$STAGE_DIR/compose" pg_user pg_password es sendgrid b2c
+  echo "Writing docker-compose.yaml and .env"
+  mkdir -p "$stage"
+
+  # Values in an old .env carry forward, so a new render never loses them. The script reads the
+  # cluster only for values that the old .env does not have.
+  pg_user=$(env_get "$ENV_FILE" POSTGRES_USER)
+  pg_password=$(env_get "$ENV_FILE" POSTGRES_PASSWORD)
+  if [[ -z "$pg_user" || -z "$pg_password" ]]; then
+    # The dev database credentials, which duos-ui also writes to its .env.local. With them, the
+    # duos-ui compose mode against a local consent stack connects with no change.
+    use_cluster
+    pg_user=$(dev_secret consent-secrets databaseUser)
+    pg_password=$(dev_secret consent-secrets databasePassword)
+  fi
+  b2c=$(env_get "$ENV_FILE" B2C_APPLICATION_ID)
+  if [[ -z "$b2c" ]]; then
+    use_cluster
+    b2c=$(dev_secret consent-proxy-b2c-secrets application-id)
+  fi
+  if [[ "$FETCH_SENDGRID" == "true" ]]; then
+    use_cluster
+    sendgrid=$(dev_secret consent-secrets sendgridApiKey)
+  else
+    sendgrid=$(env_get "$ENV_FILE" SENDGRID_API_KEY)
+    [[ -n "$sendgrid" ]] || sendgrid="placeholder"
+  fi
+  es=$(env_get "$ENV_FILE" ELASTIC_PASSWORD)
+  [[ -n "$es" ]] || es="devpassword"
+
+  # Start from the old .env, so the lines that this script does not manage carry forward, as in
+  # duos-ui. PROXY_IMAGE is one of them: the chart step sets it.
+  if [[ -f "$ENV_FILE" ]]; then
+    cp "$ENV_FILE" "$stage/.env"
+  else
+    cat > "$stage/.env" << EOF
+# Written by scripts/render-configs.sh. Values in an old .env carry forward. This file holds
+# secrets: do not share it. docker-compose.yaml reads it.
+EOF
+  fi
+  chmod 600 "$stage/.env"
+  env_set "$stage/.env" POSTGRES_USER "$pg_user"
+  env_set "$stage/.env" POSTGRES_PASSWORD "$pg_password"
+  env_set "$stage/.env" SENDGRID_API_KEY "$sendgrid"
+  env_set "$stage/.env" ELASTIC_PASSWORD "$es"
+  env_set "$stage/.env" B2C_APPLICATION_ID "$b2c"
+  cp "$COMPOSE_TEMPLATE" "$stage/docker-compose.yaml"
+
+  # Back up the old files, then move the new ones into place.
+  if [[ -f "$ENV_FILE" ]]; then
+    cp -p "$ENV_FILE" "$ENV_FILE.bak"
+    chmod 600 "$ENV_FILE.bak"
+  fi
+  if [[ -f "$CONFIG_DIR/docker-compose.yaml" ]] && ! cmp -s "$COMPOSE_TEMPLATE" "$CONFIG_DIR/docker-compose.yaml"; then
+    cp -p "$CONFIG_DIR/docker-compose.yaml" "$CONFIG_DIR/docker-compose.yaml.bak"
+  fi
+  mv "$stage/.env" "$ENV_FILE"
+  mv "$stage/docker-compose.yaml" "$CONFIG_DIR/docker-compose.yaml"
+
+  # Compose stops if a -f file does not exist. Never change an override that exists.
+  if [[ ! -e "$CONFIG_DIR/docker-compose.override.yaml" ]]; then
+    cat > "$CONFIG_DIR/docker-compose.override.yaml" << 'EOF'
+# Changes to docker-compose.yaml for your own machine. render-configs.sh never changes this file.
+services: {}
+EOF
+  fi
 }
 
 parse_cli_args "$@"
@@ -128,6 +217,7 @@ mkdir -p "$CONFIG_DIR" || error "Could not make $CONFIG_DIR."
 # config/ holds secrets. Mode 700 keeps other users on this machine out of it.
 chmod 700 "$CONFIG_DIR"
 CONFIG_DIR=$(cd "$CONFIG_DIR" && pwd)
+ENV_FILE="$CONFIG_DIR/.env"
 
 # WORK_DIR holds the kubeconfig. STAGE_DIR is in config/, so each move into place is a rename on
 # the same file system. The trap removes both on each exit, also on Ctrl-C.
@@ -139,7 +229,22 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
+if [[ "$ALL" == "true" ]]; then
+  WRITE_CHART_CONFIGS="true"
+  WRITE_COMPOSE="true"
+fi
+
 write_certs
 if [[ "$WRITE_CHART_CONFIGS" == "true" ]]; then
   write_chart_configs
+fi
+if [[ "$WRITE_COMPOSE" == "true" ]]; then
+  write_compose
+fi
+
+if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then
+  echo
+  echo "Next steps:"
+  echo "  mvn clean compile"
+  echo "  docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d"
 fi
