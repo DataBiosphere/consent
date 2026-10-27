@@ -47,11 +47,11 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 | `docker-compose.yaml`, `.env` | [docker-compose.yaml](scripts/templates/docker-compose.yaml) in this repo, and values from the dev cluster | `--write_compose true` |
 | `consentdb-dev-DATE.sql.gz` | The dev Cloud SQL database, through [export-db.sh](scripts/export-db.sh) | `--export_db true` |
 
-You need `gcloud`, `kubectl`, `helm`, `git`, `docker`, `jq`, `openssl` and `gzip`, and the
-non-split Broad VPN for the cluster steps. The chart configs need read access to
+You need `gcloud`, `gke-gcloud-auth-plugin`, `kubectl`, `helm`, `git`, `docker`, `jq`, `openssl`
+and `gzip`, and the non-split Broad VPN for the cluster steps. The chart configs need read access to
 `broadinstitute/terra-helmfile`, with git HTTPS credentials or a GitHub SSH key. The script tries
-HTTPS first, then SSH. The script stops at the first step that fails, and that step leaves the
-old files as they were. The first time, run:
+HTTPS first, then SSH. The script stops at the first step that fails, and that step leaves the old
+files as they were. The first time, run:
 
 ```bash
 ./scripts/render-configs.sh --all true

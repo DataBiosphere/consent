@@ -116,7 +116,10 @@ dump_valid() {
 CLUSTER_READY="false"
 use_cluster() {
   [[ "$CLUSTER_READY" == "false" ]] || return 0
-  command -v kubectl > /dev/null || error "Missing tool: kubectl."
+  for tool in gcloud kubectl; do
+    command -v "$tool" > /dev/null || error "Missing tool: $tool."
+  done
+  command -v gke-gcloud-auth-plugin > /dev/null || error "Missing tool: gke-gcloud-auth-plugin. Run: gcloud components install gke-gcloud-auth-plugin"
   [[ -n "$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2> /dev/null)" ]] || error "Google Cloud is not logged in. Run: gcloud auth login"
   echo "Getting credentials for the $CLUSTER cluster"
   export KUBECONFIG="$WORK_DIR/kubeconfig"
@@ -136,7 +139,8 @@ dev_secret() {
 }
 
 write_certs() {
-  local stage="$STAGE_DIR/certs" f
+  local stage="$STAGE_DIR/certs" f cert_pub key_pub
+  command -v openssl > /dev/null || error "Missing tool: openssl."
   use_cluster
   echo "Writing server.crt, server.key and ca-bundle.crt"
   mkdir -p "$stage"
@@ -147,7 +151,11 @@ write_certs() {
   for f in server.crt server.key ca-bundle.crt; do
     [[ -s "$stage/$f" ]] || error "kubectl returned an empty $f."
   done
-  openssl x509 -noout -in "$stage/server.crt" || error "server.crt is not a certificate."
+  # A missing value makes kubectl write "<no value>", so check what each file holds.
+  cert_pub=$(openssl x509 -noout -pubkey -in "$stage/server.crt" 2> /dev/null) || error "server.crt is not a certificate."
+  key_pub=$(openssl pkey -pubout -in "$stage/server.key" 2> /dev/null) || error "server.key is not a private key."
+  [[ "$cert_pub" == "$key_pub" ]] || error "server.key does not match server.crt."
+  openssl x509 -noout -in "$stage/ca-bundle.crt" 2> /dev/null || error "ca-bundle.crt is not a certificate."
   mv "$stage/server.crt" "$stage/server.key" "$stage/ca-bundle.crt" "$CONFIG_DIR/"
 }
 
@@ -233,11 +241,14 @@ EOF
 }
 
 parse_cli_args "$@"
-mkdir -p "$CONFIG_DIR" || error "Could not make $CONFIG_DIR."
 # config/ holds secrets and a database dump. Mode 700 keeps other users on this machine out of it.
 # The files in it can then have the modes that the containers need: the Postgres image reads the
-# dump as the postgres user, not as the owner of the file.
-chmod 700 "$CONFIG_DIR"
+# dump as the postgres user, not as the owner of the file. The script sets the mode only on config/
+# and on a folder that it makes, not on an existing folder such as ~.
+if [[ ! -d "$CONFIG_DIR" || "$CONFIG_DIR" == "$REPO_ROOT/config" ]]; then
+  mkdir -p "$CONFIG_DIR" || error "Could not make $CONFIG_DIR."
+  chmod 700 "$CONFIG_DIR"
+fi
 CONFIG_DIR=$(cd "$CONFIG_DIR" && pwd)
 ENV_FILE="$CONFIG_DIR/.env"
 
