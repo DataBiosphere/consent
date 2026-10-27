@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.elastic_search;
 
-import com.google.gson.internal.LinkedTreeMap;
+import java.util.List;
+import java.util.Map;
 
 public class ElasticSearchHits {
 
@@ -10,7 +11,7 @@ public class ElasticSearchHits {
     this.hits = hits;
   }
 
-  public LinkedTreeMap[] getHits() {
+  public List<Map<String, Object>> getHits() {
     return hits.getHits();
   }
 }

@@ -1123,6 +1123,28 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     }
   }
 
+  /** Each hit's {@code _source} is returned as a map, whatever map class Gson builds (DT-4367). */
+  @Test
+  @SuppressWarnings("unchecked")
+  void testSearchDatasetsReturnsHitSources() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+    // As in testSearchDatasets, one body serves both the validation and the search response.
+    mockElasticSearchResponse(
+        """
+        {"valid":true,"hits":{"hits":[
+          {"_id":"1","_source":{"datasetId":7,"study":{"name":"Study One"}}},
+          {"_id":"2","_source":{"datasetId":8}}]}}""");
+
+    try (var response = service.searchDatasets(query)) {
+      assertEquals(200, response.getStatus());
+      List<Map<String, Object>> sources = (List<Map<String, Object>>) response.getEntity();
+      assertEquals(2, sources.size());
+      assertEquals(7L, sources.get(0).get("datasetId"));
+      assertEquals("Study One", ((Map<String, Object>) sources.get(0).get("study")).get("name"));
+      assertEquals(8L, sources.get(1).get("datasetId"));
+    }
+  }
+
   @Test
   void testSearchDatasetsStream() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
