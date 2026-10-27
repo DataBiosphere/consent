@@ -108,6 +108,11 @@ Record for [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274). `Show
 defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
 `DatasetDAO.findShowcaseSummaries` reads them.
 
+Pending: `DatasetDAO.findShowcaseSummaries` is added by
+[#3184](https://github.com/DataBiosphere/consent/pull/3184). Until it merges, the query rules in this
+section (property matching, row choice, eligibility and the identifier cap) describe planned
+behavior.
+
 | Field | Source | Type | Null | Rule |
 | --- | --- | --- | --- | --- |
 | `identifier` | `dataset.alias` | string | no | `DUOS-` plus the alias padded to six digits |
