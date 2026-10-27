@@ -43,29 +43,35 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 | File | Source | Option |
 |---|---|---|
 | `server.crt`, `server.key`, `ca-bundle.crt` | The `local-dev-cert` secret in the dev cluster | Always |
+| `consent.yaml`, `site.conf`, `oauth2.conf` | The consent chart in `terra-helmfile`, with the dev values and [local-values.yaml](scripts/templates/local-values.yaml) | `--write_chart_configs true` |
 
-You need `gcloud`, `kubectl` and `openssl`, and the non-split Broad VPN for the cluster steps. The
-script stops at the first step that fails, and that step leaves the old files as they were. Run:
+You need `gcloud`, `kubectl`, `helm`, `git` and `openssl`, and the non-split Broad VPN for the
+cluster steps. The chart configs need read access to `broadinstitute/terra-helmfile`, with git
+HTTPS credentials or a GitHub SSH key. The script tries HTTPS first, then SSH. The script stops at
+the first step that fails, and that step leaves the old files as they were. The first time, run:
 
 ```bash
-./scripts/render-configs.sh
+./scripts/render-configs.sh --write_chart_configs true
 ```
 
-Every 3 months the certs rotate. Run the script again to get the new certs.
+* After a cert rotation, run `./scripts/render-configs.sh` with no options.
+* To test a `terra-helmfile` branch, run `./scripts/render-configs.sh --write_chart_configs true
+  --helmfile_ref my-branch`. For changes that are not pushed, use `--helmfile_dir
+  ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
+  [render-chart-configs.sh](scripts/render-chart-configs.sh) on its own.
 
-### Configure
+The rendered files are the same as the files that dev runs. The only local changes are in
+`local-values.yaml`. See [the plan](docs/plans/render-local-configs-plan.md#all-local-changes).
 
-Copy `src/test/resources/consent-config.yml` to `config/consent.yaml` (the `config/` directory is
-git-ignored) and fill in the values for your environment. The `googleStore` section is the only
-part that needs cloud credentials; see the next section.
+#### Liquibase
 
 `liquibase.runOnStartup` is an optional flag. The application runs the Liquibase changesets at
 startup only when the flag is `true`. If a config omits the flag or the whole `liquibase` block,
 the flag is `false`. Environments that run the Liquibase migration Job omit it. In
 `terra-helmfile`, that Job is a separate Kubernetes Job that Argo CD runs before the deployment
-(sync-wave `-1`). The template sets it to `true`, because a local database
-restored from an older dump needs the newer changesets. If you render `consent.yaml` from
-`terra-helmfile`, add this block yourself, or pass `-Ddw.liquibase.runOnStartup=true`:
+(sync-wave `-1`). So the rendered `consent.yaml` has no `liquibase` block. A local database
+restored from an older dump needs the newer changesets, so pass
+`-Ddw.liquibase.runOnStartup=true`, or add this block to your config:
 
 ```yaml
 liquibase:
