@@ -93,7 +93,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./${CONSENT_DB_DUMP:?No database dump. Set CONSENT_DB_DUMP in config/.env to a dump file in config/}:/docker-entrypoint-initdb.d/consent.sql.gz:ro
+      - ./${CONSENT_DB_DUMP:?No database dump. Run ./scripts/render-configs.sh --export_db true}:/docker-entrypoint-initdb.d/consent.sql.gz:ro
     environment:
       PGGSSENCMODE: disable
       POSTGRES_DB: consent

@@ -35,6 +35,8 @@ HELMFILE_DIR=""
 CONFIG_DIR="$REPO_ROOT/config"
 WRITE_CHART_CONFIGS="false"
 WRITE_COMPOSE="false"
+EXPORT_DB="false"
+DB_ENV="dev"
 FETCH_SENDGRID="false"
 ALL="false"
 
@@ -44,15 +46,17 @@ Usage: $0 [OPTION]...
 Make the local config files in config/. With no options, write only the certs.
 
   --project PROJECT                 Google project of the dev cluster, for the certs and dev
-                                    secrets. Defaults to broad-dsde-dev.
+                                    secrets. Defaults to broad-dsde-dev. The export never uses it.
   --helmfile_ref REF                The terra-helmfile branch or tag to render. Defaults to master.
   --helmfile_dir DIR                Render a local terra-helmfile checkout as it is, with changes
                                     that are not committed. Cannot be used with --helmfile_ref.
   --write_chart_configs true|false  Write consent.yaml, site.conf and oauth2.conf. Defaults to false.
   --write_compose true|false        Write docker-compose.yaml and .env. Defaults to false.
+  --export_db true|false            Write a new database dump. Defaults to false.
+  --db_env dev|staging              The environment to export. Defaults to dev. Prod is refused.
   --fetch_sendgrid true|false       Put the dev SendGrid key in .env. Defaults to false.
-  --all true|false                  Write the certs, the chart configs and the compose files.
-                                    Defaults to false.
+  --all true|false                  Write the certs, the chart configs and the compose files. Also
+                                    export a dump if config/ has no dump. Defaults to false.
   --config_dir DIR                  Where to write the files. Defaults to config/ in the repo root.
   --help                            Show this help.
 EOF
@@ -74,6 +78,8 @@ parse_cli_args() {
       --helmfile_dir) HELMFILE_DIR=$2 ;;
       --write_chart_configs) check_bool "$1" "$2"; WRITE_CHART_CONFIGS=$2 ;;
       --write_compose) check_bool "$1" "$2"; WRITE_COMPOSE=$2 ;;
+      --export_db) check_bool "$1" "$2"; EXPORT_DB=$2 ;;
+      --db_env) DB_ENV=$2 ;;
       --fetch_sendgrid) check_bool "$1" "$2"; FETCH_SENDGRID=$2 ;;
       --all) check_bool "$1" "$2"; ALL=$2 ;;
       --config_dir) CONFIG_DIR=$2 ;;
@@ -85,9 +91,22 @@ parse_cli_args() {
   if [[ "$HELMFILE_REF_SET" == "true" && -n "$HELMFILE_DIR" ]]; then
     error "Use --helmfile_ref or --helmfile_dir, not both."
   fi
+  # export-db.sh checks this too. Check it here so that no other step runs first.
+  case "$DB_ENV" in
+    dev | staging) ;;
+    prod) error "This script never exports prod. Use --db_env dev or --db_env staging." ;;
+    *) error "--db_env must be dev or staging, not '$DB_ENV'." ;;
+  esac
   if [[ -n "$HELMFILE_DIR" ]]; then
     HELMFILE_DIR=$(cd "$HELMFILE_DIR" 2> /dev/null && pwd) || error "--helmfile_dir: no such folder."
   fi
+}
+
+# True if .env names a dump that exists.
+dump_valid() {
+  local dump
+  dump=$(env_get "$ENV_FILE" CONSENT_DB_DUMP)
+  [[ -n "$dump" && -s "$CONFIG_DIR/$dump" ]]
 }
 
 # Get the credentials for the dev cluster, one time. The script uses its own kubeconfig, so the
@@ -175,7 +194,8 @@ write_compose() {
   [[ -n "$es" ]] || es="devpassword"
 
   # Start from the old .env, so the lines that this script does not manage carry forward, as in
-  # duos-ui. PROXY_IMAGE is one of them: the chart step sets it.
+  # duos-ui. CONSENT_DB_DUMP and PROXY_IMAGE are two of them: the export step and the chart step
+  # set them.
   if [[ -f "$ENV_FILE" ]]; then
     cp "$ENV_FILE" "$stage/.env"
   else
@@ -214,7 +234,9 @@ EOF
 
 parse_cli_args "$@"
 mkdir -p "$CONFIG_DIR" || error "Could not make $CONFIG_DIR."
-# config/ holds secrets. Mode 700 keeps other users on this machine out of it.
+# config/ holds secrets and a database dump. Mode 700 keeps other users on this machine out of it.
+# The files in it can then have the modes that the containers need: the Postgres image reads the
+# dump as the postgres user, not as the owner of the file.
 chmod 700 "$CONFIG_DIR"
 CONFIG_DIR=$(cd "$CONFIG_DIR" && pwd)
 ENV_FILE="$CONFIG_DIR/.env"
@@ -232,6 +254,10 @@ trap 'exit 130' INT TERM
 if [[ "$ALL" == "true" ]]; then
   WRITE_CHART_CONFIGS="true"
   WRITE_COMPOSE="true"
+  # --all makes a dump only when there is none. A dump is large, and the old one stays valid.
+  if ! dump_valid; then
+    EXPORT_DB="true"
+  fi
 fi
 
 write_certs
@@ -241,10 +267,14 @@ fi
 if [[ "$WRITE_COMPOSE" == "true" ]]; then
   write_compose
 fi
+if [[ "$EXPORT_DB" == "true" ]]; then
+  "$SCRIPT_DIR/export-db.sh" --db_env "$DB_ENV" --config_dir "$CONFIG_DIR"
+fi
 
 if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then
   echo
   echo "Next steps:"
   echo "  mvn clean compile"
   echo "  docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d"
+  echo "  ./scripts/index-es.sh"
 fi
