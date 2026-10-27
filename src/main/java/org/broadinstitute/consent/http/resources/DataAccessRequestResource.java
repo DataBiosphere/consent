@@ -755,7 +755,8 @@ public class DataAccessRequestResource extends Resource {
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     } else {
       logWarn(
-          "DataAccessRequest '" + dataAccessRequest.getReferenceId() + "' has an invalid userId");
+          String.format(
+              "DataAccessRequest '%s' has an invalid userId", dataAccessRequest.getReferenceId()));
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
 
