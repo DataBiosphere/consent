@@ -7,11 +7,11 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -42,6 +42,7 @@ public class TranslationUtil implements ConsentLogger {
   public static final String NPU =
       "Use is limited to non-profit and non-commercial research. [NPU]";
   protected static final String OTHER = "Other restrictions: %s.";
+  private static final String OTHER_CODE = "OTHER";
   protected static final String SECONDARY_OTHER = "Secondary other restrictions: %s.";
   protected static final String ETHICS_APPROVAL = "Local ethics committee approval is required.";
   protected static final String COLLABORATION_REQUIRED =
@@ -59,6 +60,83 @@ public class TranslationUtil implements ConsentLogger {
   protected static final String RS_PD = "Data use is limited to pediatric research. [RS-PD]";
   protected static final String POP =
       "Future use for study variation in the general population (e.g. calling variants and/or studying their distribution). [POP]";
+
+  /**
+   * One entry of the dataset summary, shared by {@link #translateSummary(DataUse)} and {@link
+   * #summaryCodes(DataUse)}. A null description leaves the entry out of the summary only.
+   */
+  private record SummaryRule(
+      String code,
+      boolean primary,
+      Predicate<DataUse> applies,
+      BiFunction<TranslationUtil, DataUse, String> description) {}
+
+  /** The summary entries, in summary order. */
+  private static final List<SummaryRule> SUMMARY_RULES =
+      List.of(
+          new SummaryRule("GRU", true, d -> BooleanUtils.isTrue(d.getGeneralUse()), (t, d) -> GRU),
+          new SummaryRule(
+              "DS",
+              true,
+              d -> d.getDiseaseRestrictions() != null && !d.getDiseaseRestrictions().isEmpty(),
+              TranslationUtil::diseaseDescription),
+          new SummaryRule("HMB", true, d -> BooleanUtils.isTrue(d.getHmbResearch()), (t, d) -> HMB),
+          new SummaryRule(
+              "NPOA",
+              true,
+              d -> BooleanUtils.isTrue(d.getPopulationOriginsAncestry()),
+              (t, d) -> POA),
+          new SummaryRule(
+              OTHER_CODE,
+              true,
+              d -> StringUtils.isNotBlank(d.getOther()),
+              (t, d) -> String.format(OTHER, d.getOther())),
+          new SummaryRule(
+              "NMDS", false, d -> BooleanUtils.isTrue(d.getMethodsResearch()), (t, d) -> NMDS),
+          new SummaryRule(
+              "NPU", false, d -> BooleanUtils.isTrue(d.getNonProfitUse()), (t, d) -> NPU),
+          new SummaryRule(
+              OTHER_CODE,
+              false,
+              d -> StringUtils.isNotBlank(d.getSecondaryOther()),
+              (t, d) -> String.format(SECONDARY_OTHER, d.getSecondaryOther())),
+          new SummaryRule(
+              "IRB",
+              false,
+              d -> BooleanUtils.isTrue(d.getEthicsApprovalRequired()),
+              (t, d) -> ETHICS_APPROVAL),
+          new SummaryRule(
+              "COL",
+              false,
+              d -> BooleanUtils.isTrue(d.getCollaboratorRequired()),
+              (t, d) -> COLLABORATION_REQUIRED),
+          new SummaryRule(
+              "GS",
+              false,
+              d -> StringUtils.isNotBlank(d.getGeographicalRestrictions()),
+              (t, d) -> String.format(GEO_RESTRICTION, d.getGeographicalRestrictions())),
+          new SummaryRule(
+              "GSO", false, d -> BooleanUtils.isTrue(d.getGeneticStudiesOnly()), (t, d) -> GSO),
+          new SummaryRule(
+              "PUB",
+              false,
+              d -> BooleanUtils.isTrue(d.getPublicationResults()),
+              (t, d) -> PUB_REQUIRED),
+          new SummaryRule(
+              "MOR",
+              false,
+              d -> StringUtils.isNotBlank(d.getPublicationMoratorium()),
+              (t, d) -> String.format(PUB_MORATORIUM, d.getPublicationMoratorium())),
+          new SummaryRule(
+              "NCTRL", false, d -> BooleanUtils.isTrue(d.getControls()), (t, d) -> NCTRL),
+          new SummaryRule(
+              "POP-M", false, d -> MALE.equalsIgnoreCase(d.getGender()), (t, d) -> RS_M),
+          new SummaryRule(
+              "POP-F", false, d -> FEMALE.equalsIgnoreCase(d.getGender()), (t, d) -> RS_FM),
+          new SummaryRule(
+              "POP-PD", false, d -> BooleanUtils.isTrue(d.getPediatric()), (t, d) -> RS_PD),
+          new SummaryRule(
+              "POP", false, d -> BooleanUtils.isTrue(d.getPopulation()), (t, d) -> POP));
 
   private final OntologyDAO ontologyDAO;
   private final Gson gson = GsonUtil.getInstance();
@@ -177,100 +255,21 @@ public class TranslationUtil implements ConsentLogger {
    * @param dataUse The DataUse
    * @return DataUseSummary The structured summary
    */
-  // Suppress warning for method complexity (S3776). Due for reevaluation after initial migration
-  @SuppressWarnings({"java:S3776"})
   public DataUseSummary translateSummary(DataUse dataUse) {
     DataUseSummary summary = new DataUseSummary();
-    List<DataUseTerm> primary = new ArrayList<>();
-    List<DataUseTerm> secondary = new ArrayList<>();
     if (Objects.isNull(dataUse)) {
       return summary;
     }
-
-    if (BooleanUtils.isTrue(dataUse.getGeneralUse())) {
-      primary.add(new DataUseTerm("GRU", GRU));
-    }
-
-    if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
-      List<String> labels = findLabelsForTermIds(dataUse.getDiseaseRestrictions());
-      if (!labels.isEmpty()) {
-        primary.add(new DataUseTerm("DS", String.format(DS, String.join(", ", labels))));
+    List<DataUseTerm> primary = new ArrayList<>();
+    List<DataUseTerm> secondary = new ArrayList<>();
+    for (SummaryRule rule : SUMMARY_RULES) {
+      if (rule.applies().test(dataUse)) {
+        String description = rule.description().apply(this, dataUse);
+        if (description != null) {
+          (rule.primary() ? primary : secondary).add(new DataUseTerm(rule.code(), description));
+        }
       }
     }
-
-    if (BooleanUtils.isTrue(dataUse.getHmbResearch())) {
-      primary.add(new DataUseTerm("HMB", HMB));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getPopulationOriginsAncestry())) {
-      primary.add(new DataUseTerm("NPOA", POA));
-    }
-
-    if (StringUtils.isNotBlank(dataUse.getOther())) {
-      primary.add(new DataUseTerm("OTHER", String.format(OTHER, dataUse.getOther())));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getMethodsResearch())) {
-      secondary.add(new DataUseTerm("NMDS", NMDS));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getNonProfitUse())) {
-      secondary.add(new DataUseTerm("NPU", NPU));
-    }
-
-    if (StringUtils.isNotBlank(dataUse.getSecondaryOther())) {
-      secondary.add(
-          new DataUseTerm("OTHER", String.format(SECONDARY_OTHER, dataUse.getSecondaryOther())));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getEthicsApprovalRequired())) {
-      secondary.add(new DataUseTerm("IRB", ETHICS_APPROVAL));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getCollaboratorRequired())) {
-      secondary.add(new DataUseTerm("COL", COLLABORATION_REQUIRED));
-    }
-
-    if (StringUtils.isNotBlank(dataUse.getGeographicalRestrictions())) {
-      secondary.add(
-          new DataUseTerm(
-              "GS", String.format(GEO_RESTRICTION, dataUse.getGeographicalRestrictions())));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getGeneticStudiesOnly())) {
-      secondary.add(new DataUseTerm("GSO", GSO));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getPublicationResults())) {
-      secondary.add(new DataUseTerm("PUB", PUB_REQUIRED));
-    }
-
-    if (StringUtils.isNotBlank(dataUse.getPublicationMoratorium())) {
-      secondary.add(
-          new DataUseTerm(
-              "MOR", String.format(PUB_MORATORIUM, dataUse.getPublicationMoratorium())));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getControls())) {
-      secondary.add(new DataUseTerm("NCTRL", NCTRL));
-    }
-
-    if (Optional.ofNullable(dataUse.getGender()).orElse("na").equalsIgnoreCase(MALE)) {
-      secondary.add(new DataUseTerm("POP-M", RS_M));
-    }
-
-    if (Optional.ofNullable(dataUse.getGender()).orElse("na").equalsIgnoreCase(FEMALE)) {
-      secondary.add(new DataUseTerm("POP-F", RS_FM));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getPediatric())) {
-      secondary.add(new DataUseTerm("POP-PD", RS_PD));
-    }
-
-    if (BooleanUtils.isTrue(dataUse.getPopulation())) {
-      secondary.add(new DataUseTerm("POP", POP));
-    }
-
     summary.setPrimary(primary);
     summary.setSecondary(secondary);
     return summary;
@@ -285,72 +284,21 @@ public class TranslationUtil implements ConsentLogger {
    * @param dataUse The DataUse
    * @return Distinct codes in summary order
    */
-  // Suppress warning for method complexity (S3776). Mirrors translateSummary.
-  @SuppressWarnings({"java:S3776"})
   public static List<String> summaryCodes(DataUse dataUse) {
-    Set<String> codes = new LinkedHashSet<>();
     if (Objects.isNull(dataUse)) {
       return List.of();
     }
-    if (BooleanUtils.isTrue(dataUse.getGeneralUse())) {
-      codes.add("GRU");
-    }
-    if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
-      codes.add("DS");
-    }
-    if (BooleanUtils.isTrue(dataUse.getHmbResearch())) {
-      codes.add("HMB");
-    }
-    if (BooleanUtils.isTrue(dataUse.getPopulationOriginsAncestry())) {
-      codes.add("NPOA");
-    }
-    if (StringUtils.isNotBlank(dataUse.getOther())) {
-      codes.add("OTHER");
-    }
-    if (BooleanUtils.isTrue(dataUse.getMethodsResearch())) {
-      codes.add("NMDS");
-    }
-    if (BooleanUtils.isTrue(dataUse.getNonProfitUse())) {
-      codes.add("NPU");
-    }
-    if (StringUtils.isNotBlank(dataUse.getSecondaryOther())) {
-      codes.add("OTHER");
-    }
-    if (BooleanUtils.isTrue(dataUse.getEthicsApprovalRequired())) {
-      codes.add("IRB");
-    }
-    if (BooleanUtils.isTrue(dataUse.getCollaboratorRequired())) {
-      codes.add("COL");
-    }
-    if (StringUtils.isNotBlank(dataUse.getGeographicalRestrictions())) {
-      codes.add("GS");
-    }
-    if (BooleanUtils.isTrue(dataUse.getGeneticStudiesOnly())) {
-      codes.add("GSO");
-    }
-    if (BooleanUtils.isTrue(dataUse.getPublicationResults())) {
-      codes.add("PUB");
-    }
-    if (StringUtils.isNotBlank(dataUse.getPublicationMoratorium())) {
-      codes.add("MOR");
-    }
-    if (BooleanUtils.isTrue(dataUse.getControls())) {
-      codes.add("NCTRL");
-    }
-    String gender = Optional.ofNullable(dataUse.getGender()).orElse("na");
-    if (gender.equalsIgnoreCase(MALE)) {
-      codes.add("POP-M");
-    }
-    if (gender.equalsIgnoreCase(FEMALE)) {
-      codes.add("POP-F");
-    }
-    if (BooleanUtils.isTrue(dataUse.getPediatric())) {
-      codes.add("POP-PD");
-    }
-    if (BooleanUtils.isTrue(dataUse.getPopulation())) {
-      codes.add("POP");
-    }
-    return List.copyOf(codes);
+    return SUMMARY_RULES.stream()
+        .filter(rule -> rule.applies().test(dataUse))
+        .map(SummaryRule::code)
+        .distinct()
+        .toList();
+  }
+
+  /** The DS description, or null when no ontology label resolves. */
+  private String diseaseDescription(DataUse dataUse) {
+    List<String> labels = findLabelsForTermIds(dataUse.getDiseaseRestrictions());
+    return labels.isEmpty() ? null : String.format(DS, String.join(", ", labels));
   }
 
   protected List<OntologyTerm> findTermsByIds(List<String> ids) {
