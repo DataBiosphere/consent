@@ -99,7 +99,80 @@ Contract rules the fixtures fix:
   distinct studies, follows the same body, scope and no-store rules as the other modes, and rejects
   other fields with 400.
 
-Field names, nullability and the `scope` vocabulary stay provisional until S2.1.
+S2.1 sets the field names, nullability and `scope` vocabulary below. Data stewards and AppSec still
+have to approve them (open gates).
+
+## S2.1 catalog projection
+
+Record for [DT-4274](https://broadworkbench.atlassian.net/browse/DT-4274). `ShowcasePublicField`
+defines the fields, `ShowcaseDatasetSummary` returns them in this order, and
+`DatasetDAO.findShowcaseSummaries` reads them.
+
+Pending: `DatasetDAO.findShowcaseSummaries` is added by
+[#3184](https://github.com/DataBiosphere/consent/pull/3184). Until it merges, the query rules in this
+section (property matching, row choice, eligibility and the identifier cap) describe planned
+behavior.
+
+| Field | Source | Type | Null | Rule |
+| --- | --- | --- | --- | --- |
+| `identifier` | `dataset.alias` | string | no | `DUOS-` plus the alias padded to six digits |
+| `title` | `dataset.name` | string | no | |
+| `accessManagement` | `dataset_property` `accessManagement`, then legacy `consentGroup.accessManagement` | `open`, `controlled`, `external` | yes | Keys match ignoring case; values are trimmed and lower-cased; unrecognized values are skipped; null when no value is recognized |
+| `dacName` | `dac.name` through `dataset.dac_id` | string | yes | |
+| `consentCodes` | `dataset.data_use` | string[] | no | Codes only (`GRU`, `HMB`, `DS`, `OTHER`, ...), in `TranslationUtil.translateSummary` order; free-text values and disease labels are omitted |
+| `participantCount` | `dataset_property` `numberOfParticipants` | integer (participants) | yes | Trimmed and parsed as an integer; null if missing, non-integer or negative |
+| `availableDate` | `dataset.create_date` (open, external) or `dataset.dac_approval_date` (others) | `YYYY-MM-DD` | yes | Date part of the stored timestamp, not shifted by the reader's JVM time zone. The columns have no time zone, so the date is UTC only if the writer ran in UTC |
+| `accessUrl` | `dataset_property` `url`, then legacy `consentGroup.url` | string | yes | Open and external only; absolute `http`/`https` with a valid host, an optional port from 1 to 65535, and no user info; a non-ASCII host is returned in ASCII (punycode) form; null otherwise |
+| `species` | `study_property` `species` | string | yes | Trimmed; null if blank. Free text with no length limit; needs the steward decision below |
+
+Responses serialize the summary with `GsonUtil.getNullSerializingInstance()`, so a null field is
+present as `null`. Property names match ignoring case, as `Dataset.getAccessManagement()` and the
+registration reader do. Blank values are skipped, and when a property has several non-blank rows,
+the row with the lowest id is used. Older
+`# of participants` rows with no `schema_property` are not read, so their count is null. The query reads only
+`dataset_property.schema_property IN (numberOfParticipants, url, consentGroup.url)` and
+`study_property.key IN (species)`, plus the two access-management keys used for eligibility.
+
+Omitted: study description and phenotype (free text), PI name, data types, file formats, data size
+(no trusted byte source), `translated_data_use` (embeds free text).
+
+Open decision: `species` is free text in the registration schema and study template, so it could
+hold an email or a long note. Data stewards decide whether to approve it as is, truncate it, or omit
+it.
+
+### S2.2 requirements
+
+- Write the response entity with `GsonUtil.getNullSerializingInstance()`. The default
+  `JerseyGsonProvider` uses `GsonUtil.getInstance()`, which drops null fields. Add a resource-level
+  test that the serialized keys equal `ShowcasePublicField.jsonNames()`.
+- `DatasetDAO.findShowcaseSummaries` has no limit on the number of aliases. Enforce the
+  200-identifier cap before calling it.
+
+### Eligibility
+
+A dataset is returned only if all of these hold:
+
+1. It has a study, and `study.public_visibility = true` (the column is `NOT NULL`).
+2. `accessManagement` is `open` or `external`, or `dataset.dac_approval = true` and the dataset has
+   a DAC that is not soft-deleted. Controlled datasets, and datasets without a recognized access
+   value, need that approval; without a DAC a reader would have no one to ask.
+
+`dacName` is null when the DAC is soft-deleted. Deleting a DAC through the app already clears
+`dac_id` and `dac_approval` on its datasets.
+
+Admin, creator and custodian exceptions do not apply. Deleted datasets are absent because they are
+hard-deleted. Eligibility inputs are not returned.
+
+### `scope` vocabulary
+
+S2.2 adds the code for this vocabulary with the query that uses it. The key-to-column mapping
+lives in that DAO query, not in an enum.
+
+| Key | Column | Values |
+| --- | --- | --- |
+| `dac` | `dac.name` | DAC names, exact match |
+
+The values for one key are alternatives (any one can match). Multiple keys must all match.
 
 ## Open gates
 
@@ -107,5 +180,5 @@ Field names, nullability and the `scope` vocabulary stay provisional until S2.1.
 | --- | --- | --- |
 | Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. Not yet held. | Designer | S3.1–S3.4 |
 | Rebranded artifact supplied; artifact review updated with its hash | Product owner | — |
-| S2.1 field names, nullability and `scope` vocabulary | Consent catalog lead, data stewards, AppSec | S2.2 |
+| S2.1 field definitions (including the `species` free-text decision) and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
 | Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, designer, consent lead, duos-ui lead | Closing DT-4272 |
