@@ -1,15 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.RecordComponent;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.ShowcasePublicField;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.User;
@@ -357,7 +361,27 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
   private List<ShowcaseDatasetSummary> find(Integer... datasetIds) {
     List<Integer> aliases =
         List.of(datasetIds).stream().map(id -> datasetDAO.findDatasetById(id).getAlias()).toList();
-    return datasetDAO.findShowcaseSummaries(aliases);
+    List<ShowcaseDatasetSummary> summaries = datasetDAO.findShowcaseSummaries(aliases);
+    summaries.forEach(DatasetShowcaseSummaryDAOTest::assertNonNullableFieldsSet);
+    return summaries;
+  }
+
+  /** Each field that {@link ShowcasePublicField} marks not nullable has a value. */
+  private static void assertNonNullableFieldsSet(ShowcaseDatasetSummary summary) {
+    for (RecordComponent component : ShowcaseDatasetSummary.class.getRecordComponents()) {
+      ShowcasePublicField field =
+          Arrays.stream(ShowcasePublicField.values())
+              .filter(f -> f.getJsonName().equals(component.getName()))
+              .findFirst()
+              .orElseThrow();
+      if (!field.isNullable()) {
+        try {
+          assertNotNull(component.getAccessor().invoke(summary), component.getName());
+        } catch (ReflectiveOperationException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }
   }
 
   private String identifier(Integer datasetId) {

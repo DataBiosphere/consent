@@ -129,26 +129,35 @@ public class ShowcaseDatasetSummaryMapper
             ? url
             : null;
       }
-      Matcher matcher = REGISTRY_AUTHORITY.matcher(authority);
-      if (!matcher.matches() || IDNA_DEVIATION.matcher(matcher.group(1)).find()) {
-        return null;
-      }
-      // validHostName checks the ASCII result, and that result is what the URL publishes.
-      // nosemgrep: gitlab.find_sec_bugs.IMPROPER_UNICODE-1
-      String host = IDN.toASCII(matcher.group(1));
-      String port = matcher.group(2);
-      if (!validHostName(host) || (port != null && !validPort(Integer.parseInt(port)))) {
-        return null;
-      }
-      String asciiAuthority = port == null ? host : host + ":" + port;
-      // The raw authority follows "scheme://" verbatim, so the rest of the URL is unchanged.
-      return scheme
-          + "://"
-          + asciiAuthority
-          + url.substring(scheme.length() + "://".length() + authority.length());
+      return asciiHostUrl(url, scheme, authority);
     } catch (URISyntaxException | IllegalArgumentException _) {
       return null;
     }
+  }
+
+  /**
+   * The URL with its host in ASCII, for an authority that {@link URI} parses without a host (a host
+   * with an underscore or a non-ASCII character). Null when the host or port is not valid. Throws
+   * {@link IllegalArgumentException} when the host cannot be converted or the port is not a number.
+   */
+  private static String asciiHostUrl(String url, String scheme, String authority) {
+    Matcher matcher = REGISTRY_AUTHORITY.matcher(authority);
+    if (!matcher.matches() || IDNA_DEVIATION.matcher(matcher.group(1)).find()) {
+      return null;
+    }
+    // validHostName checks the ASCII result, and that result is what the URL publishes.
+    // nosemgrep: gitlab.find_sec_bugs.IMPROPER_UNICODE-1
+    String host = IDN.toASCII(matcher.group(1));
+    String port = matcher.group(2);
+    if (!validHostName(host) || (port != null && !validPort(Integer.parseInt(port)))) {
+      return null;
+    }
+    String asciiAuthority = port == null ? host : host + ":" + port;
+    // The raw authority follows "scheme://" verbatim, so the rest of the URL is unchanged.
+    return scheme
+        + "://"
+        + asciiAuthority
+        + url.substring(scheme.length() + "://".length() + authority.length());
   }
 
   /**
