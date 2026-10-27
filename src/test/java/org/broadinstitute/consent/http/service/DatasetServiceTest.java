@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.ALTERNATIVE_DATA_SHARING_PLAN;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanFileName;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -2400,6 +2401,24 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertNull(result.getNihInstitutionalCertificationFile());
     assertNull(result.getStudy().getAlternativeDataSharingPlan());
     assertFalse(hasPlanFileNameProperty(result.getStudy()));
+  }
+
+  /** The study has the plan file but no plan property, as after an upload to /api/document. */
+  @Test
+  void testFindDatasetByIdKeepsPlanFlagForResearcherWhenStudyHasNoPlanProperty() {
+    Dataset dataset = datasetWithCertification(publicStudyWithPlan());
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    Dataset result =
+        datasetService.findDatasetById(userWithRoles(UserRoles.RESEARCHER), dataset.getDatasetId());
+
+    assertNull(result.getStudy().getAlternativeDataSharingPlan());
+    assertTrue(
+        result.getStudy().getProperties().stream()
+            .anyMatch(
+                p ->
+                    ALTERNATIVE_DATA_SHARING_PLAN.equals(p.getKey())
+                        && Boolean.TRUE.equals(p.getValue())));
   }
 
   @Test

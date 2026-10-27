@@ -57,7 +57,8 @@ properties:
     description: >-
       Metadata about the study's alternative data sharing plan (if present). Absent, together
       with the `alternativeDataSharingPlanFileName` property, when the caller does not have the
-      Admin, Data Submitter, or Chairperson role.
+      Admin, Data Submitter, or Chairperson role. For those callers, a study with a plan file has
+      the boolean `alternativeDataSharingPlan` property set to true.
   createDate:
     type: string
     format: date-time

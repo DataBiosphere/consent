@@ -76,7 +76,8 @@ properties:
     $ref: './FileStorageObject.yaml'
     description: >-
       Metadata about the dataset's NIH Institutional Certification. Absent when the caller does
-      not have the Admin, Data Submitter, Chairperson, or Member role.
+      not have the Admin, Data Submitter, Chairperson, or Member role. Always absent from the
+      datasets in DAR collection responses.
   updateUserId:
     type: integer
     format: int32

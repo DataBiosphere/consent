@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.ALTERNATIVE_DATA_SHARING_PLAN;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanFileName;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
@@ -612,9 +613,18 @@ public class DatasetService implements ConsentLogger {
     return dataset;
   }
 
-  /** See {@link #redactRestrictedFiles(Dataset, User)}. */
+  /**
+   * See {@link #redactRestrictedFiles(Dataset, User)}. Older studies and plan uploads through
+   * /api/document/study have the file but not the boolean property, so the property is set here
+   * before the file is removed. All users then see the same plan flag in the registration schema.
+   */
   private Study redactRestrictedFiles(Study study, User user) {
     if (study != null && !hasAnyRole(user, FileStorageObjectService.STUDY_READ_ROLES)) {
+      if (study.getAlternativeDataSharingPlan() != null) {
+        study.getProperties().removeIf(p -> ALTERNATIVE_DATA_SHARING_PLAN.equals(p.getKey()));
+        study.addProperty(
+            new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN, Boolean.TRUE, PropertyType.Boolean));
+      }
       study.setAlternativeDataSharingPlan(null);
       study.getProperties().removeIf(p -> alternativeDataSharingPlanFileName.equals(p.getKey()));
     }
