@@ -133,6 +133,8 @@ public class ShowcaseDatasetSummaryMapper
       if (!matcher.matches() || IDNA_DEVIATION.matcher(matcher.group(1)).find()) {
         return null;
       }
+      // validHostName checks the ASCII result, and that result is what the URL publishes.
+      // nosemgrep: gitlab.find_sec_bugs.IMPROPER_UNICODE-1
       String host = IDN.toASCII(matcher.group(1));
       String port = matcher.group(2);
       if (!validHostName(host) || (port != null && !validPort(Integer.parseInt(port)))) {
