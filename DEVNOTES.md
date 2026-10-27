@@ -46,10 +46,11 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 | `consent.yaml`, `site.conf`, `oauth2.conf` | The consent chart in `terra-helmfile`, with the dev values and [local-values.yaml](scripts/templates/local-values.yaml) | `--write_chart_configs true` |
 | `docker-compose.yaml`, `.env` | [docker-compose.yaml](scripts/templates/docker-compose.yaml) in this repo, and values from the dev cluster | `--write_compose true` |
 
-You need `gcloud`, `kubectl`, `helm`, `git` and `openssl`, and the non-split Broad VPN for the
-cluster steps. The chart configs need read access to `broadinstitute/terra-helmfile`, with git
-HTTPS credentials or a GitHub SSH key. The script tries HTTPS first, then SSH. The script stops at
-the first step that fails, and that step leaves the old files as they were. The first time, run:
+You need `gcloud`, `gke-gcloud-auth-plugin`, `kubectl`, `helm`, `git` and `openssl`, and the
+non-split Broad VPN for the cluster steps. The chart configs need read access to
+`broadinstitute/terra-helmfile`, with git HTTPS credentials or a GitHub SSH key. The script tries
+HTTPS first, then SSH. The script stops at the first step that fails, and that step leaves the old
+files as they were. The first time, run:
 
 ```bash
 ./scripts/render-configs.sh --all true
