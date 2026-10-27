@@ -27,10 +27,12 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -79,6 +81,7 @@ import org.broadinstitute.consent.http.rules.DACRuleAssignment;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
@@ -1120,6 +1123,42 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     try (var response = service.searchDatasets(query)) {
       assertEquals(200, response.getStatus());
+    }
+  }
+
+  /**
+   * The JSON that clients such as duos-ui receive: an array of the hits' {@code _source} objects,
+   * written by {@link JerseyGsonProvider} as the endpoint writes it (DT-4367).
+   */
+  @Test
+  void testSearchDatasetsResponseJson() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+    // As in testSearchDatasets, one body serves both the validation and the search response.
+    mockElasticSearchResponse(
+        """
+        {"valid":true,"hits":{"hits":[
+          {"_id":"1","_source":{"datasetId":7,"study":{"name":"Study One","dataTypes":["WGS","RNA"]},
+            "participantCount":12.5,"description":null}},
+          {"_id":"2","_source":{"datasetId":8}}]}}""");
+
+    try (var response = service.searchDatasets(query)) {
+      Object entity = response.getEntity();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      new JerseyGsonProvider()
+          .writeTo(
+              entity,
+              entity.getClass(),
+              entity.getClass(),
+              new Annotation[0],
+              MediaType.APPLICATION_JSON_TYPE,
+              null,
+              out);
+
+      assertEquals(
+          """
+          [{"datasetId":7,"study":{"name":"Study One","dataTypes":["WGS","RNA"]},\
+          "participantCount":12.5},{"datasetId":8}]""",
+          out.toString(StandardCharsets.UTF_8));
     }
   }
 
