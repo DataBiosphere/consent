@@ -50,13 +50,14 @@ public class FileStorageObjectService implements ConsentLogger {
       new UserRoles[] {UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER};
   private static final UserRoles[] DATASET_WRITE_ROLES =
       new UserRoles[] {UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
-  private static final UserRoles[] DATASET_READ_ROLES =
+  // Package-private: DatasetService hides these files' metadata from users outside these roles.
+  static final UserRoles[] DATASET_READ_ROLES =
       new UserRoles[] {
         UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER
       };
   private static final UserRoles[] STUDY_WRITE_ROLES =
       new UserRoles[] {UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
-  private static final UserRoles[] STUDY_READ_ROLES =
+  static final UserRoles[] STUDY_READ_ROLES =
       new UserRoles[] {UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
 
   private final GCSService gcsService;

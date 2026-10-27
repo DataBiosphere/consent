@@ -775,8 +775,10 @@ public class DarCollectionService implements ConsentLogger {
             ? List.of()
             : dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
     if (!datasetIds.isEmpty()) {
+      // Researchers read these datasets, and most of them cannot retrieve the NIH Institutional
+      // Certification, so the datasets are loaded without it (DT-2259).
       Map<Integer, Dataset> datasetMap =
-          datasetDAO.findDatasetsByIdList(datasetIds).stream()
+          datasetDAO.findDatasetsByIdListWithoutFiles(datasetIds).stream()
               .distinct()
               .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 

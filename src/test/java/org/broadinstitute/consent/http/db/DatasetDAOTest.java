@@ -414,6 +414,23 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindDatasetsByIdListWithoutFilesLeavesOutTheNihFile() {
+    Dataset dataset = insertDataset();
+    createFileStorageObject(
+        dataset.getDatasetId().toString(),
+        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
+        Instant.now());
+
+    List<Dataset> foundDatasets =
+        datasetDAO.findDatasetsByIdListWithoutFiles(List.of(dataset.getDatasetId()));
+
+    assertEquals(1, foundDatasets.size());
+    assertEquals(dataset.getDatasetId(), foundDatasets.getFirst().getDatasetId());
+    assertEquals(dataset.getName(), foundDatasets.getFirst().getName());
+    assertNull(foundDatasets.getFirst().getNihInstitutionalCertificationFile());
+  }
+
+  @Test
   void testFindDatasetsByAlias() {
     Dataset dataset1 = insertDataset();
     Dataset dataset2 = insertDataset();
