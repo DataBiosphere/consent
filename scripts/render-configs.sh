@@ -63,7 +63,9 @@ parse_cli_args() {
 CLUSTER_READY="false"
 use_cluster() {
   [[ "$CLUSTER_READY" == "false" ]] || return 0
-  command -v kubectl > /dev/null || error "Missing tool: kubectl."
+  for tool in gcloud kubectl; do
+    command -v "$tool" > /dev/null || error "Missing tool: $tool."
+  done
   [[ -n "$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2> /dev/null)" ]] || error "Google Cloud is not logged in. Run: gcloud auth login"
   echo "Getting credentials for the $CLUSTER cluster"
   export KUBECONFIG="$WORK_DIR/kubeconfig"
@@ -76,6 +78,7 @@ use_cluster() {
 
 write_certs() {
   local stage="$STAGE_DIR/certs" f
+  command -v openssl > /dev/null || error "Missing tool: openssl."
   use_cluster
   echo "Writing server.crt, server.key and ca-bundle.crt"
   mkdir -p "$stage"
