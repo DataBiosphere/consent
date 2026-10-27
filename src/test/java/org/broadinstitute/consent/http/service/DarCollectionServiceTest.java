@@ -208,10 +208,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = generateMockDarCollection(datasets);
     List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).sorted().toList();
 
-    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.copyOf(datasets));
+    when(datasetDAO.findDatasetsByIdListWithoutFiles(anyList())).thenReturn(List.copyOf(datasets));
     when(dataAccessRequestDAO.findAllDARDatasetRelations(any())).thenReturn(datasetIds);
 
     collection = service.addDatasetsToCollection(collection);
+    // Researchers read these datasets, so they must come without the NIH certification (DT-2259).
+    verify(datasetDAO, never()).findDatasetsByIdList(anyList());
     assertNotNull(collection);
 
     Set<Dataset> datasetsFromCollection = collection.getDatasets();

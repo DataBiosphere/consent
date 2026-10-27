@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanFileName;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,6 +62,7 @@ import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
@@ -2340,5 +2342,160 @@ class DatasetServiceTest extends AbstractTestHelper {
               return dataset;
             })
         .toList();
+  }
+
+  // ======= DT-2259: restricted file metadata on dataset and study reads =======
+
+  private static User userWithRoles(UserRoles... roles) {
+    User user = new User();
+    user.setUserId(500);
+    user.setEmail("reader@example.com");
+    Stream.of(roles).forEach(r -> user.addRole(new UserRole(r.getRoleId(), r.getRoleName())));
+    return user;
+  }
+
+  /** A public study with a plan file and the plan's file name as a study property. */
+  private static Study publicStudyWithPlan() {
+    Study study = new Study();
+    study.setStudyId(30);
+    study.setCreateUserId(99);
+    study.setPublicVisibility(true);
+    FileStorageObject plan = new FileStorageObject();
+    plan.setFileName("plan.pdf");
+    study.setAlternativeDataSharingPlan(plan);
+    StudyProperty fileNameProperty = new StudyProperty();
+    fileNameProperty.setKey(alternativeDataSharingPlanFileName);
+    fileNameProperty.setType(PropertyType.String);
+    fileNameProperty.setValue("plan.pdf");
+    study.addProperties(fileNameProperty);
+    study.addDatasetIds(Set.of(31));
+    return study;
+  }
+
+  private static Dataset datasetWithCertification(Study study) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(31);
+    dataset.setCreateUserId(99);
+    dataset.setStudyId(study.getStudyId());
+    dataset.setStudy(study);
+    FileStorageObject certification = new FileStorageObject();
+    certification.setFileName("certification.pdf");
+    dataset.setNihInstitutionalCertificationFile(certification);
+    return dataset;
+  }
+
+  private static boolean hasPlanFileNameProperty(Study study) {
+    return study.getProperties().stream()
+        .anyMatch(p -> alternativeDataSharingPlanFileName.equals(p.getKey()));
+  }
+
+  @Test
+  void testFindDatasetByIdHidesRestrictedFilesFromResearcher() {
+    Dataset dataset = datasetWithCertification(publicStudyWithPlan());
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    Dataset result =
+        datasetService.findDatasetById(userWithRoles(UserRoles.RESEARCHER), dataset.getDatasetId());
+
+    assertNull(result.getNihInstitutionalCertificationFile());
+    assertNull(result.getStudy().getAlternativeDataSharingPlan());
+    assertFalse(hasPlanFileNameProperty(result.getStudy()));
+  }
+
+  @Test
+  void testFindDatasetByIdKeepsRestrictedFilesForDataSubmitter() {
+    Dataset dataset = datasetWithCertification(publicStudyWithPlan());
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    Dataset result =
+        datasetService.findDatasetById(
+            userWithRoles(UserRoles.DATASUBMITTER), dataset.getDatasetId());
+
+    assertEquals("certification.pdf", result.getNihInstitutionalCertificationFile().getFileName());
+    assertEquals("plan.pdf", result.getStudy().getAlternativeDataSharingPlan().getFileName());
+    assertTrue(hasPlanFileNameProperty(result.getStudy()));
+  }
+
+  /**
+   * A DAC member can retrieve a dataset's certification but not a study's plan, so the member sees
+   * only the certification.
+   */
+  @Test
+  void testFindDatasetByIdForReadShowsMemberOnlyTheCertification() {
+    Dataset dataset = datasetWithCertification(publicStudyWithPlan());
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    Dataset result =
+        datasetService.findDatasetByIdForRead(
+            userWithRoles(UserRoles.MEMBER), dataset.getDatasetId());
+
+    assertNotNull(result.getNihInstitutionalCertificationFile());
+    assertNull(result.getStudy().getAlternativeDataSharingPlan());
+    assertFalse(hasPlanFileNameProperty(result.getStudy()));
+  }
+
+  @Test
+  void testFindDatasetByIdentifierHidesRestrictedFilesFromResearcher() {
+    Dataset dataset = datasetWithCertification(publicStudyWithPlan());
+    dataset.setAlias(31);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findDatasetByAlias(31)).thenReturn(dataset);
+
+    Dataset result =
+        datasetService.findDatasetByIdentifier(
+            userWithRoles(UserRoles.RESEARCHER), dataset.getDatasetIdentifier());
+
+    assertNull(result.getNihInstitutionalCertificationFile());
+    assertNull(result.getStudy().getAlternativeDataSharingPlan());
+  }
+
+  @Test
+  void testFindDatasetsByIdsHidesRestrictedFilesFromResearcher() {
+    Dataset dataset = datasetWithCertification(publicStudyWithPlan());
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset));
+
+    List<Dataset> result =
+        datasetService.findDatasetsByIds(userWithRoles(UserRoles.RESEARCHER), List.of(31));
+
+    assertNull(result.getFirst().getNihInstitutionalCertificationFile());
+  }
+
+  @Test
+  void testFindStudyByIdForReadHidesPlanFromResearcher() {
+    Study study = publicStudyWithPlan();
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+
+    Study result =
+        datasetService.findStudyByIdForRead(
+            userWithRoles(UserRoles.RESEARCHER), study.getStudyId());
+
+    assertNull(result.getAlternativeDataSharingPlan());
+    assertFalse(hasPlanFileNameProperty(result));
+  }
+
+  @Test
+  void testFindStudyByIdForReadKeepsPlanForAdmin() {
+    Study study = publicStudyWithPlan();
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+
+    Study result =
+        datasetService.findStudyByIdForRead(userWithRoles(UserRoles.ADMIN), study.getStudyId());
+
+    assertEquals("plan.pdf", result.getAlternativeDataSharingPlan().getFileName());
+    assertTrue(hasPlanFileNameProperty(result));
+  }
+
+  @Test
+  void testFindStudyDatasetsHidesCertificationFromResearcher() {
+    Study study = publicStudyWithPlan();
+    Dataset dataset = datasetWithCertification(study);
+    dataset.setStudy(null);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset));
+
+    List<Dataset> result =
+        datasetService.findStudyDatasets(userWithRoles(UserRoles.RESEARCHER), study);
+
+    assertEquals(1, result.size());
+    assertNull(result.getFirst().getNihInstitutionalCertificationFile());
   }
 }

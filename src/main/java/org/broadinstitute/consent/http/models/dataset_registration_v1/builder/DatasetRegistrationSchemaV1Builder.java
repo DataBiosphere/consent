@@ -33,6 +33,7 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String
       controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation =
           "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation";
+  public static final String alternativeDataSharingPlan = "alternativeDataSharingPlan";
   public static final String alternativeDataSharingPlanReasons =
       "alternativeDataSharingPlanReasons";
   public static final String alternativeDataSharingPlanExplanation =
