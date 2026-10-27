@@ -18,9 +18,6 @@ set -o pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
-# shellcheck source=lib/common.sh
-source "$SCRIPT_DIR/lib/common.sh"
-
 ZONE="us-central1-a"
 CLUSTER="terra-dev"
 
@@ -67,7 +64,7 @@ CLUSTER_READY="false"
 use_cluster() {
   [[ "$CLUSTER_READY" == "false" ]] || return 0
   command -v kubectl > /dev/null || error "Missing tool: kubectl."
-  [[ -n "$(gcloud_account)" ]] || error "Google Cloud is not logged in. Run: gcloud auth login"
+  [[ -n "$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2> /dev/null)" ]] || error "Google Cloud is not logged in. Run: gcloud auth login"
   echo "Getting credentials for the $CLUSTER cluster"
   export KUBECONFIG="$WORK_DIR/kubeconfig"
   gcloud container clusters get-credentials "$CLUSTER" --zone "$ZONE" --project "$PROJECT" > /dev/null 2>&1 \
