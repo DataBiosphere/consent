@@ -13,8 +13,14 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
  */
 public enum ShowcasePublicField {
   IDENTIFIER(
-      "identifier", Source.DERIVED, List.of("dataset.alias"), PropertyTable.NONE, "string", false),
-  TITLE("title", Source.COLUMN, List.of("dataset.name"), PropertyTable.NONE, "string", false),
+      "identifier",
+      Source.DERIVED,
+      List.of("dataset.alias"),
+      PropertyTable.NONE,
+      JsonType.STRING,
+      false),
+  TITLE(
+      "title", Source.COLUMN, List.of("dataset.name"), PropertyTable.NONE, JsonType.STRING, false),
   ACCESS_MANAGEMENT(
       "accessManagement",
       Source.DERIVED,
@@ -23,29 +29,30 @@ public enum ShowcasePublicField {
           Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY),
       // The projection reads these keys in its eligibility subquery, not through the allowlist.
       PropertyTable.NONE,
-      "string",
+      JsonType.STRING,
       true),
-  DAC_NAME("dacName", Source.COLUMN, List.of("dac.name"), PropertyTable.NONE, "string", true),
+  DAC_NAME(
+      "dacName", Source.COLUMN, List.of("dac.name"), PropertyTable.NONE, JsonType.STRING, true),
   CONSENT_CODES(
       "consentCodes",
       Source.DERIVED,
       List.of("dataset.data_use"),
       PropertyTable.NONE,
-      "string[]",
+      JsonType.STRING_ARRAY,
       false),
   PARTICIPANT_COUNT(
       "participantCount",
       Source.DATASET_PROPERTY,
       List.of(DatasetRegistrationSchemaV1Builder.numberOfParticipants),
       PropertyTable.DATASET,
-      "integer",
+      JsonType.INTEGER,
       true),
   AVAILABLE_DATE(
       "availableDate",
       Source.DERIVED,
       List.of("dataset.dac_approval_date", "dataset.create_date"),
       PropertyTable.NONE,
-      "date",
+      JsonType.DATE,
       true),
   ACCESS_URL(
       "accessUrl",
@@ -55,15 +62,28 @@ public enum ShowcasePublicField {
           DatasetRegistrationSchemaV1Builder.url,
           "consentGroup." + DatasetRegistrationSchemaV1Builder.url),
       PropertyTable.DATASET,
-      "string",
+      JsonType.STRING,
       true),
   SPECIES(
       "species",
       Source.STUDY_PROPERTY,
       List.of(DatasetRegistrationSchemaV1Builder.species),
       PropertyTable.STUDY,
-      "string",
+      JsonType.STRING,
       true);
+
+  /**
+   * The JSON type names of the field table. A holder class, because enum constants cannot refer to
+   * the enum's own static fields.
+   */
+  private static final class JsonType {
+    static final String STRING = "string";
+    static final String STRING_ARRAY = "string[]";
+    static final String INTEGER = "integer";
+    static final String DATE = "date";
+
+    private JsonType() {}
+  }
 
   /** Where a field's value comes from. */
   public enum Source {
