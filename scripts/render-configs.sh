@@ -66,6 +66,7 @@ use_cluster() {
   for tool in gcloud kubectl; do
     command -v "$tool" > /dev/null || error "Missing tool: $tool."
   done
+  command -v gke-gcloud-auth-plugin > /dev/null || error "Missing tool: gke-gcloud-auth-plugin. Run: gcloud components install gke-gcloud-auth-plugin"
   [[ -n "$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2> /dev/null)" ]] || error "Google Cloud is not logged in. Run: gcloud auth login"
   echo "Getting credentials for the $CLUSTER cluster"
   export KUBECONFIG="$WORK_DIR/kubeconfig"

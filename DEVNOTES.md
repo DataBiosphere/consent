@@ -44,8 +44,9 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 |---|---|---|
 | `server.crt`, `server.key`, `ca-bundle.crt` | The `local-dev-cert` secret in the dev cluster | Always |
 
-You need `gcloud`, `kubectl` and `openssl`, and the non-split Broad VPN for the cluster steps. The
-script stops at the first step that fails, and that step leaves the old files as they were. Run:
+You need `gcloud`, `gke-gcloud-auth-plugin`, `kubectl` and `openssl`, and the non-split Broad VPN
+for the cluster steps. The script stops at the first step that fails, and that step leaves the old
+files as they were. Run:
 
 ```bash
 ./scripts/render-configs.sh
