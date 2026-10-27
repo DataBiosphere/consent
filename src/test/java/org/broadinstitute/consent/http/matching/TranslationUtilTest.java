@@ -10,8 +10,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -72,19 +75,103 @@ class TranslationUtilTest extends AbstractTestHelper {
             .setPediatric(true)
             .setPopulation(true)
             .build();
-    DataUseSummary summary = service.translateSummary(dataUse);
-    List<String> expected =
-        Stream.concat(summary.getPrimary().stream(), summary.getSecondary().stream())
-            .map(DataUseTerm::getCode)
-            .distinct()
-            .toList();
 
-    assertEquals(expected, TranslationUtil.summaryCodes(dataUse));
+    assertEquals(codesOf(service.translateSummary(dataUse)), TranslationUtil.summaryCodes(dataUse));
   }
 
   @Test
   void testSummaryCodesNullDataUse() {
     assertEquals(List.of(), TranslationUtil.summaryCodes(null));
+  }
+
+  /**
+   * Sets each {@link DataUse} field on its own. A field added to {@code DataUse} fails this test
+   * until it gets a summary code or is listed in {@link #FIELDS_WITHOUT_CODE}.
+   */
+  @Test
+  void testEveryDataUseFieldHasACodeOrIsListed() throws IllegalAccessException {
+    OntologyTerm term = initializeDiseaseTerm();
+    for (Field field : DataUse.class.getDeclaredFields()) {
+      if (Modifier.isStatic(field.getModifiers())) {
+        continue;
+      }
+      DataUse dataUse = new DataUse();
+      field.setAccessible(true);
+      field.set(dataUse, sampleValue(field, term));
+      List<String> codes = TranslationUtil.summaryCodes(dataUse);
+
+      assertEquals(codesOf(service.translateSummary(dataUse)), codes, field.getName());
+      assertEquals(
+          FIELDS_WITHOUT_CODE.contains(field.getName()),
+          codes.isEmpty(),
+          field.getName() + " needs a summary code or an entry in FIELDS_WITHOUT_CODE");
+    }
+  }
+
+  @Test
+  void testSummaryCodesKeepDSWithoutLabel() {
+    OntologyTerm term =
+        new OntologyTerm("DOID_" + randomInt(1, 100), "term label", "term definition");
+    term.setLabel("");
+    String json = GsonUtil.getInstance().toJson(List.of(term));
+    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
+        .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
+    DataUse dataUse = new DataUseBuilder().setDiseaseRestrictions(List.of(term.id())).build();
+
+    assertEquals(List.of(), codesOf(service.translateSummary(dataUse)));
+    assertEquals(List.of("DS"), TranslationUtil.summaryCodes(dataUse));
+  }
+
+  @Test
+  void testSummaryCodesSecondaryOtherOnly() {
+    DataUse dataUse = new DataUseBuilder().setSecondaryOther("free text secondary").build();
+
+    assertEquals(List.of("OTHER"), TranslationUtil.summaryCodes(dataUse));
+  }
+
+  @Test
+  void testSummaryCodesMergePrimaryAndSecondaryOther() {
+    DataUse dataUse =
+        new DataUseBuilder()
+            .setHmbResearch(true)
+            .setOther("free text primary")
+            .setMethodsResearch(true)
+            .setSecondaryOther("free text secondary")
+            .build();
+
+    assertEquals(List.of("HMB", "OTHER", "NMDS"), TranslationUtil.summaryCodes(dataUse));
+  }
+
+  /** {@link DataUse} fields that no summary code covers. */
+  private static final Set<String> FIELDS_WITHOUT_CODE =
+      Set.of(
+          "aiLlmUse",
+          "illegalBehavior",
+          "sexualDiseases",
+          "stigmatizeDiseases",
+          "vulnerablePopulations",
+          "psychologicalTraits",
+          "notHealth");
+
+  private static Object sampleValue(Field field, OntologyTerm term) {
+    if (field.getType() == Boolean.class) {
+      return true;
+    }
+    if (field.getType() == List.class) {
+      return List.of(term.id());
+    }
+    if (field.getType() == String.class) {
+      return field.getName().equals("gender") ? "Male" : "free text";
+    }
+    throw new IllegalStateException("No sample value for DataUse." + field.getName());
+  }
+
+  /** The distinct codes of a summary, primary then secondary. */
+  private static List<String> codesOf(DataUseSummary summary) {
+    return Stream.concat(summary.getPrimary().stream(), summary.getSecondary().stream())
+        .map(DataUseTerm::getCode)
+        .distinct()
+        .toList();
   }
 
   @Test
