@@ -19,6 +19,9 @@ public class GsonUtil {
           .registerTypeAdapterFactory(new JsonValueEnumTypeAdapterFactory())
           .create();
 
+  private static final Gson NULL_SERIALIZING_INSTANCE =
+      gsonBuilderWithAdapters().serializeNulls().create();
+
   public static Gson getInstance() {
     if (Objects.isNull(instance)) {
       instance = buildGson();
@@ -35,6 +38,11 @@ public class GsonUtil {
    */
   public static Gson getRegistrationInstance() {
     return REGISTRATION_INSTANCE;
+  }
+
+  /** Writes null fields as {@code null} instead of dropping them. */
+  public static Gson getNullSerializingInstance() {
+    return NULL_SERIALIZING_INSTANCE;
   }
 
   public static GsonBuilder gsonBuilderWithAdapters() {
