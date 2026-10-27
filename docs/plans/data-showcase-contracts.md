@@ -165,7 +165,8 @@ hard-deleted. Eligibility inputs are not returned.
 
 ### `scope` vocabulary
 
-`ShowcaseScopeKey`:
+S2.2 adds the code for this vocabulary with the query that uses it. The key-to-column mapping
+lives in that DAO query, not in an enum.
 
 | Key | Column | Values |
 | --- | --- | --- |
