@@ -78,7 +78,7 @@ use_cluster() {
 }
 
 write_certs() {
-  local stage="$STAGE_DIR/certs" f
+  local stage="$STAGE_DIR/certs" f cert_pub key_pub
   command -v openssl > /dev/null || error "Missing tool: openssl."
   use_cluster
   echo "Writing server.crt, server.key and ca-bundle.crt"
@@ -90,14 +90,21 @@ write_certs() {
   for f in server.crt server.key ca-bundle.crt; do
     [[ -s "$stage/$f" ]] || error "kubectl returned an empty $f."
   done
-  openssl x509 -noout -in "$stage/server.crt" || error "server.crt is not a certificate."
+  # A missing value makes kubectl write "<no value>", so check what each file holds.
+  cert_pub=$(openssl x509 -noout -pubkey -in "$stage/server.crt" 2> /dev/null) || error "server.crt is not a certificate."
+  key_pub=$(openssl pkey -pubout -in "$stage/server.key" 2> /dev/null) || error "server.key is not a private key."
+  [[ "$cert_pub" == "$key_pub" ]] || error "server.key does not match server.crt."
+  openssl x509 -noout -in "$stage/ca-bundle.crt" 2> /dev/null || error "ca-bundle.crt is not a certificate."
   mv "$stage/server.crt" "$stage/server.key" "$stage/ca-bundle.crt" "$CONFIG_DIR/"
 }
 
 parse_cli_args "$@"
-mkdir -p "$CONFIG_DIR" || error "Could not make $CONFIG_DIR."
-# config/ holds secrets. Mode 700 keeps other users on this machine out of it.
-chmod 700 "$CONFIG_DIR"
+# config/ holds secrets. Mode 700 keeps other users on this machine out of it. The script sets the
+# mode only on config/ and on a folder that it makes, not on an existing folder such as ~.
+if [[ ! -d "$CONFIG_DIR" || "$CONFIG_DIR" == "$REPO_ROOT/config" ]]; then
+  mkdir -p "$CONFIG_DIR" || error "Could not make $CONFIG_DIR."
+  chmod 700 "$CONFIG_DIR"
+fi
 CONFIG_DIR=$(cd "$CONFIG_DIR" && pwd)
 
 # WORK_DIR holds the kubeconfig. STAGE_DIR is in config/, so each move into place is a rename on
