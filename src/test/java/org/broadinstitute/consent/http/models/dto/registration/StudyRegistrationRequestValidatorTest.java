@@ -17,6 +17,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -785,9 +786,9 @@ class StudyRegistrationRequestValidatorTest {
     StudyRegistrationRequest registration = createValidRegistration();
     registration.setWorkspaces(
         List.of(Map.of("accessManagement", "open", "dataUse", Map.of("generalUse", true))));
-    List<String> violations = validator.collectViolations(registration);
-    assertEquals(1, violations.size());
-    assertTrue(violations.getFirst().startsWith("workspaces[0].dataUse: "));
+    assertEquals(
+        List.of("workspaces[0].dataUse: " + DataUsePrimaryValidator.VALIDATION_MESSAGE),
+        validator.collectViolations(registration));
   }
 
   @Test
@@ -800,7 +801,7 @@ class StudyRegistrationRequestValidatorTest {
     assertEquals(
         List.of(
             "models[0].accessManagement: must be one of open, controlled, external",
-            "workspaces[0].dataUse: must be a valid data use object"),
+            "workspaces[0].dataUse: must be a data use object"),
         validator.collectViolations(registration));
   }
 

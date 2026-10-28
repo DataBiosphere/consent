@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
@@ -73,13 +74,13 @@ public final class AssetDataUse {
     if (rawDataUse == null) {
       return violations;
     }
-    Optional<DataUse> dataUse = dataUse(rawDataUse);
-    if (dataUse.isEmpty()) {
-      violations.add("%s.%s: must be a valid data use object".formatted(location, DATA_USE));
+    ReadDataUse dataUse = readDataUse(rawDataUse);
+    if (dataUse.problem() != null) {
+      violations.add("%s.%s: %s".formatted(location, DATA_USE, dataUse.problem()));
     } else if (rawAccess == null || access.isPresent()) {
       // An invalid access management is already reported, and the primary rule depends on it.
       try {
-        DataUsePrimaryValidator.validate(dataUse.get(), access.orElse(null));
+        DataUsePrimaryValidator.validate(dataUse.value(), access.orElse(null));
       } catch (BadRequestException e) {
         violations.add("%s.%s: %s".formatted(location, DATA_USE, e.getMessage()));
       }
@@ -93,19 +94,33 @@ public final class AssetDataUse {
         .findFirst();
   }
 
-  private static Optional<DataUse> dataUse(Object raw) {
+  private record ReadDataUse(DataUse value, String problem) {}
+
+  /**
+   * The raw map is what gets stored, so it must read back exactly: Gson would otherwise coerce
+   * {@code "yes"} to false and skip unknown keys, validating something other than what is stored.
+   */
+  private static ReadDataUse readDataUse(Object raw) {
     if (!(raw instanceof Map<?, ?>)) {
-      return Optional.empty();
+      return new ReadDataUse(null, "must be a data use object");
     }
     Gson gson = GsonUtil.getInstance();
+    JsonObject sent = gson.toJsonTree(raw).getAsJsonObject();
+    DataUse dataUse;
     try {
-      return Optional.ofNullable(gson.fromJson(gson.toJsonTree(raw), DataUse.class));
+      dataUse = gson.fromJson(sent, DataUse.class);
     } catch (JsonParseException e) {
-      return Optional.empty();
+      return new ReadDataUse(null, "must be a data use object");
     }
+    JsonObject read = gson.toJsonTree(dataUse).getAsJsonObject();
+    List<String> unread =
+        sent.keySet().stream().filter(key -> !sent.get(key).equals(read.get(key))).toList();
+    return unread.isEmpty()
+        ? new ReadDataUse(dataUse, null)
+        : new ReadDataUse(null, "unknown or mistyped fields " + String.join(", ", unread));
   }
 
-  private static Map<?, ?> withoutSummary(Map<?, ?> entry) {
+  private static Object withoutSummary(Map<?, ?> entry) {
     if (!entry.containsKey(DATA_USE_SUMMARY)) {
       return entry;
     }

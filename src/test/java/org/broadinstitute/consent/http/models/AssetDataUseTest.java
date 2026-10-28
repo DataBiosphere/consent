@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,6 +31,7 @@ class AssetDataUseTest {
 
     assertTrue(prepared.violations().isEmpty());
     assertEquals(entries, prepared.stored());
+    assertNotSame(entries, prepared.stored());
   }
 
   @Test
@@ -83,9 +85,43 @@ class AssetDataUseTest {
 
     assertEquals(
         List.of(
-            "workspaces[0].dataUse: must be a valid data use object",
-            "workspaces[1].dataUse: must be a valid data use object"),
+            "workspaces[0].dataUse: must be a data use object",
+            "workspaces[1].dataUse: must be a data use object"),
         prepared.violations());
+  }
+
+  /** Gson would coerce or skip these, so the check would pass on values that are stored as sent. */
+  @Test
+  void testDataUseFieldsThatDoNotReadBackExactlyAreReported() {
+    Map<String, Object> mistyped = new LinkedHashMap<>();
+    mistyped.put("generalUse", "yes");
+    mistyped.put("hmbResearch", true);
+    mistyped.put("other", true);
+    mistyped.put("diseaseRestrictions", List.of(1));
+    List<Object> entries =
+        List.of(
+            Map.of("accessManagement", "open", "dataUse", Map.of("hmb", true)),
+            Map.of("dataUse", mistyped));
+
+    Prepared prepared = AssetDataUse.prepare(StudyAssets.MODELS, entries);
+
+    assertEquals(
+        List.of(
+            "models[0].dataUse: unknown or mistyped fields hmb",
+            "models[1].dataUse: unknown or mistyped fields generalUse, other, diseaseRestrictions"),
+        prepared.violations());
+  }
+
+  @Test
+  void testNullDataUseFieldsAreTreatedAsAbsent() {
+    Map<String, Object> dataUse = new LinkedHashMap<>();
+    dataUse.put("hmbResearch", true);
+    dataUse.put("generalUse", null);
+
+    Prepared prepared =
+        AssetDataUse.prepare(StudyAssets.MODELS, List.of(Map.of("dataUse", dataUse)));
+
+    assertTrue(prepared.violations().isEmpty());
   }
 
   @Test

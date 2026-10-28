@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -508,8 +509,11 @@ class StudyUpdateRequestValidatorTest {
     BadRequestException e =
         assertThrows(
             BadRequestException.class, () -> validator.validate(study, datasets, registration));
-    assertTrue(e.getMessage().startsWith("models[0].accessManagement: "));
-    assertTrue(e.getMessage().contains("; workspaces[0].dataUse: "));
+    assertEquals(
+        "models[0].accessManagement: must be one of open, controlled, external; "
+            + "workspaces[0].dataUse: "
+            + DataUsePrimaryValidator.VALIDATION_MESSAGE,
+        e.getMessage());
   }
 
   @Test
