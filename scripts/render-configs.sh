@@ -163,20 +163,12 @@ write_certs() {
 }
 
 write_chart_configs() {
-  local stage="$STAGE_DIR/chart" f
   local source_args=(--helmfile_ref "$HELMFILE_REF")
   if [[ -n "$HELMFILE_DIR" ]]; then
     source_args=(--helmfile_dir "$HELMFILE_DIR")
   fi
-  "$SCRIPT_DIR/render-chart-configs.sh" --output_dir "$stage" "${source_args[@]}"
-  # Back up each old file that changes, so that a hand-made consent.yaml is not lost.
-  for f in consent.yaml site.conf oauth2.conf; do
-    if [[ -f "$CONFIG_DIR/$f" ]] && ! cmp -s "$stage/$f" "$CONFIG_DIR/$f"; then
-      cp -p "$CONFIG_DIR/$f" "$CONFIG_DIR/$f.bak"
-    fi
-  done
-  move_into_place "$stage" "$CONFIG_DIR" consent.yaml site.conf oauth2.conf
-  env_set "$ENV_FILE" PROXY_IMAGE "$(env_get "$stage/.env" PROXY_IMAGE)"
+  # The chart script stages its files and backs up each old file that changes.
+  "$SCRIPT_DIR/render-chart-configs.sh" --output_dir "$CONFIG_DIR" "${source_args[@]}"
 }
 
 write_compose() {
@@ -229,14 +221,7 @@ EOF
   env_set "$stage/.env" B2C_APPLICATION_ID "$b2c"
   cp "$COMPOSE_TEMPLATE" "$stage/docker-compose.yaml"
 
-  # Back up the old files, then move the new ones into place.
-  if [[ -f "$ENV_FILE" ]]; then
-    cp -p "$ENV_FILE" "$ENV_FILE.bak"
-    chmod 600 "$ENV_FILE.bak"
-  fi
-  if [[ -f "$CONFIG_DIR/docker-compose.yaml" ]] && ! cmp -s "$COMPOSE_TEMPLATE" "$CONFIG_DIR/docker-compose.yaml"; then
-    cp -p "$CONFIG_DIR/docker-compose.yaml" "$CONFIG_DIR/docker-compose.yaml.bak"
-  fi
+  # This backs up each old file that changes.
   move_into_place "$stage" "$CONFIG_DIR" .env docker-compose.yaml
 
   # Compose stops if a -f file does not exist. Never change an override that exists.

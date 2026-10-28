@@ -27,10 +27,16 @@ env_set() {
   fi
   tmp=$(mktemp "$(dirname "$file")/.env.XXXXXX")
   chmod 600 "$tmp"
-  if [[ -f "$file" ]]; then
-    grep -vE "^${key}=" "$file" > "$tmp" || true
-  fi
-  printf "%s='%s'\n" "$key" "$value" >> "$tmp"
+  # Replace the first KEY line where it is, so that the order of the lines does not change and a
+  # run with no new values writes the same file. Remove other KEY lines. If no line has KEY, add it
+  # at the end. ENVIRON passes the line with no change: awk -v changes a backslash.
+  local src="$file"
+  [[ -f "$file" ]] || src=/dev/null
+  ENV_LINE="$key='$value'" awk -v k="$key=" '
+    index($0, k) == 1 { if (!done) print ENVIRON["ENV_LINE"]; done = 1; next }
+    { print }
+    END { if (!done) print ENVIRON["ENV_LINE"] }
+  ' "$src" > "$tmp"
   mv "$tmp" "$file"
 }
 
@@ -66,13 +72,21 @@ clone_helmfile() {
 # Move FILES from STAGE into DEST. STAGE must be on the same file system as DEST, so that each move
 # is a rename. A rename into a folder that the script can write fails only if the target is a
 # folder. So check all the targets first: then a step does not stop with only some files moved.
+# Before the move, copy each old file that changes to FILE.<time>.bak, so that a hand-made file
+# is never lost. Each run that changes a file makes a new backup, and keeps the old backups.
 move_into_place() {
-  local stage="$1" dest="$2" f
+  local stage="$1" dest="$2" f stamp
   shift 2
   for f in "$@"; do
     if [[ -d "$dest/$f" ]]; then
       echo "ERROR: $dest/$f is a folder. Remove it, then run the script again." >&2
       exit 1
+    fi
+  done
+  stamp=$(date +%Y%m%d-%H%M%S)
+  for f in "$@"; do
+    if [[ -f "$dest/$f" ]] && ! cmp -s "$stage/$f" "$dest/$f"; then
+      cp -p "$dest/$f" "$dest/$f.$stamp.bak"
     fi
   done
   for f in "$@"; do
