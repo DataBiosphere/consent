@@ -58,11 +58,13 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
     service = new ShowcaseCatalogService(datasetDAO);
   }
 
+  /** A pin in another DAC, or in none, is outside the scope and is dropped. */
   @Test
   void testDacScope() {
     String inX = approvedDataset("2026-10-01 00:00:00", dacX);
     String inY = approvedDataset("2026-10-02 00:00:00", dacY);
     String openInX = dataset("open", "2026-10-03T12:00:00Z", dacX);
+    String openNoDac = dataset("open", "2026-10-04T12:00:00Z", null);
 
     assertEquals(
         List.of(openInX, inX),
@@ -71,7 +73,7 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
                 ShowcaseSection.LATEST_DATA_RELEASES,
                 new ShowcaseScope(List.of("Example DAC X")),
                 12,
-                List.of(inY),
+                List.of(inY, openNoDac),
                 List.of())));
     assertEquals(
         List.of(),
