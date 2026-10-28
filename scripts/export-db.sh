@@ -15,6 +15,8 @@
 
 set -eu
 set -o pipefail
+# With CDPATH, `cd DIR` can print DIR, and then $(cd DIR && pwd) has the path two times.
+unset CDPATH
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
