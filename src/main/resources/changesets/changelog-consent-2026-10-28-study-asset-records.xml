@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!-- Columns follow Task 1 of docs/plans/study-asset-records-plan.md. Enum fields are text so a new value needs no migration. -->
+  <changeSet id="changelog-consent-2026-10-28-study-asset-records" author="kmarete">
+    <createTable tableName="study_model">
+      <column name="model_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="study_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="legacy_key" type="TEXT"/>
+      <column name="name" type="TEXT"/>
+      <column name="description" type="TEXT"/>
+      <column name="url" type="TEXT"/>
+      <column name="cloud" type="TEXT[]"/>
+      <column name="format" type="TEXT"/>
+      <column name="license" type="TEXT"/>
+      <column name="trained_on_datasets" type="TEXT[]"/>
+      <column name="maintainer" type="JSONB"/>
+      <column name="tags" type="TEXT[]"/>
+      <column name="access_management" type="TEXT"/>
+      <column name="data_use" type="JSONB"/>
+      <column name="create_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="update_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="retired_date" type="TIMESTAMP WITH TIME ZONE"/>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="study_model" baseColumnNames="study_id" referencedTableName="study" referencedColumnNames="study_id" constraintName="fk_study_model_study" onDelete="CASCADE"/>
+    <createIndex tableName="study_model" indexName="idx_study_model_study_id">
+      <column name="study_id"/>
+    </createIndex>
+    <sql>CREATE UNIQUE INDEX uq_study_model_legacy_key ON study_model (study_id, legacy_key) WHERE legacy_key IS NOT NULL</sql>
+
+    <createTable tableName="study_workspace">
+      <column name="workspace_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="study_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="legacy_key" type="TEXT"/>
+      <column name="name" type="TEXT"/>
+      <column name="platform" type="TEXT"/>
+      <column name="url" type="TEXT"/>
+      <column name="cloud" type="TEXT[]"/>
+      <column name="description" type="TEXT"/>
+      <column name="tools" type="TEXT[]"/>
+      <column name="access" type="TEXT"/>
+      <column name="tags" type="TEXT[]"/>
+      <column name="access_management" type="TEXT"/>
+      <column name="data_use" type="JSONB"/>
+      <column name="create_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="update_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="retired_date" type="TIMESTAMP WITH TIME ZONE"/>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="study_workspace" baseColumnNames="study_id" referencedTableName="study" referencedColumnNames="study_id" constraintName="fk_study_workspace_study" onDelete="CASCADE"/>
+    <createIndex tableName="study_workspace" indexName="idx_study_workspace_study_id">
+      <column name="study_id"/>
+    </createIndex>
+    <sql>CREATE UNIQUE INDEX uq_study_workspace_legacy_key ON study_workspace (study_id, legacy_key) WHERE legacy_key IS NOT NULL</sql>
+
+    <createTable tableName="study_biospecimen">
+      <column name="biospecimen_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="study_id" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="legacy_key" type="TEXT"/>
+      <column name="sample_id" type="TEXT"/>
+      <column name="donor_id" type="TEXT"/>
+      <column name="specimen_type" type="TEXT"/>
+      <column name="preservation_method" type="TEXT"/>
+      <column name="preservation_details" type="TEXT"/>
+      <column name="date_of_collection" type="TEXT"/>
+      <column name="post_mortem_interval_value" type="NUMERIC"/>
+      <column name="post_mortem_interval_unit" type="TEXT"/>
+      <column name="sex" type="TEXT"/>
+      <column name="age" type="NUMERIC"/>
+      <column name="race" type="TEXT"/>
+      <column name="country_of_origin" type="TEXT"/>
+      <column name="extracted_diagnoses" type="TEXT[]"/>
+      <column name="pathology" type="TEXT"/>
+      <column name="organization" type="TEXT"/>
+      <column name="source_site" type="TEXT"/>
+      <column name="optional_data_use" type="TEXT"/>
+      <column name="create_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="update_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="retired_date" type="TIMESTAMP WITH TIME ZONE"/>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="study_biospecimen" baseColumnNames="study_id" referencedTableName="study" referencedColumnNames="study_id" constraintName="fk_study_biospecimen_study" onDelete="CASCADE"/>
+    <createIndex tableName="study_biospecimen" indexName="idx_study_biospecimen_study_id">
+      <column name="study_id"/>
+    </createIndex>
+    <sql>CREATE UNIQUE INDEX uq_study_biospecimen_legacy_key ON study_biospecimen (study_id, legacy_key) WHERE legacy_key IS NOT NULL</sql>
+
+    <!-- True when an asset id in the registration JSON could be a row id: a positive int4, as a number or plain digits. -->
+    <sql splitStatements="false">
+      CREATE FUNCTION asset_id_in_row_form(id jsonb) RETURNS boolean
+      LANGUAGE sql IMMUTABLE AS $$
+        SELECT CASE jsonb_typeof(id)
+          WHEN 'string' THEN CASE WHEN id #>> '{}' ~ '^[1-9][0-9]{0,9}$'
+                                  THEN (id #>> '{}')::bigint &lt;= 2147483647
+                                  ELSE false END
+          WHEN 'number' THEN id::numeric BETWEEN 1 AND 2147483647 AND id::numeric = trunc(id::numeric)
+          ELSE false
+        END
+      $$
+    </sql>
+  </changeSet>
+</databaseChangeLog>
