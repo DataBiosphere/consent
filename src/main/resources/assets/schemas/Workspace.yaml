@@ -31,24 +31,22 @@ properties:
     description: The tools available in the workspace.
   access:
     type: string
-    description: The access level of the workspace.
+    deprecated: true
+    description: Free-text access level of the workspace. Superseded by `accessManagement`.
   accessManagement:
-    type: string
     description: How access to the workspace is managed.
-    enum:
-      - open
-      - controlled
-      - external
+    allOf:
+      - $ref: './AccessManagement.yaml'
   dataUse:
     description: >-
       The workspace's data use terms. Optional. Each field must have its documented type, and
       unknown fields are rejected. With `open` access management it must have no primary
       term; otherwise, including when access management is absent, exactly one.
     allOf:
-      - $ref: './DataUseObject.yaml'
+      - $ref: './DataUse.yaml'
   dataUseSummary:
     readOnly: true
-    description: The translated `dataUse` terms. Computed by the server and never stored; ignored on write.
+    description: The translated `dataUse` terms, computed by the server on read. Never stored; ignored on write.
     allOf:
       - $ref: './DataUseSummary.yaml'
   tags:

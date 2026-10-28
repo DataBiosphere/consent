@@ -6,27 +6,9 @@ properties:
     items:
       type: integer
   dataUse:
-    type: object
     description: Translated data use terms shared by the group's datasets, in the same shape the dataset search index returns
-    properties:
-      primary:
-        type: array
-        items:
-          type: object
-          properties:
-            code:
-              type: string
-            description:
-              type: string
-      secondary:
-        type: array
-        items:
-          type: object
-          properties:
-            code:
-              type: string
-            description:
-              type: string
+    allOf:
+      - $ref: './DataUseSummary.yaml'
   datasets:
     type: array
     description: The datasets in this group

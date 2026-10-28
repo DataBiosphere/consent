@@ -4,8 +4,8 @@ properties:
   primary:
     type: array
     items:
-      $ref: './DataUse.yaml'
+      $ref: './DataUseTerm.yaml'
   secondary:
     type: array
     items:
-      $ref: './DataUse.yaml'
+      $ref: './DataUseTerm.yaml'

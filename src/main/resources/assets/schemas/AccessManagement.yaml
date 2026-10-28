@@ -1,0 +1,6 @@
+type: string
+description: How access is managed
+enum:
+  - controlled
+  - open
+  - external

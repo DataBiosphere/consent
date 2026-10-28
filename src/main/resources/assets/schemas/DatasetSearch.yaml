@@ -7,20 +7,9 @@ properties:
     type: string
     description: The public DUOS identifier for a dataset
   dataUse:
-    type: object
-    title: DatasetSearchDataUse
     description: The data use associated with the dataset
-    properties:
-      primary:
-        type: array
-        description: The primary data uses associated with the dataset
-        items:
-          $ref: '../schemas/DataUse.yaml'
-      secondary:
-        type: array
-        description: The secondary data uses associated with the dataset
-        items:
-          $ref: '../schemas/DataUse.yaml'
+    allOf:
+      - $ref: './DataUseSummary.yaml'
   dacId:
     type: integer
     description: The unique identifier for a DAC
