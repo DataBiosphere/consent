@@ -110,11 +110,10 @@ public class RegistrationRequestMapper {
         PropertyType.Json,
         request -> {
           List<Object> values =
-              AssetDataUse.prepare(
-                      key,
-                      StudyAssets.promotedValue(
-                          getTopLevelValue.apply(request), request.getAssets(), key))
-                  .stored();
+              AssetDataUse.withoutSummaries(
+                  key,
+                  StudyAssets.promotedValue(
+                      getTopLevelValue.apply(request), request.getAssets(), key));
           return values == null ? null : GsonUtil.getInstance().toJson(values);
         });
   }

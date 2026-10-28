@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.broadinstitute.consent.http.models.AssetDataUse.Prepared;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,11 +26,10 @@ class AssetDataUseTest {
             Map.of("accessManagement", "controlled", "dataUse", Map.of("hmbResearch", true)),
             Map.of("dataUse", Map.of("generalUse", true, "nonProfitUse", true)));
 
-    Prepared prepared = AssetDataUse.prepare(key, entries);
-
-    assertTrue(prepared.violations().isEmpty());
-    assertEquals(entries, prepared.stored());
-    assertNotSame(entries, prepared.stored());
+    assertTrue(AssetDataUse.violations(key, entries, List.of()).isEmpty());
+    List<Object> stored = AssetDataUse.withoutSummaries(key, entries);
+    assertEquals(entries, stored);
+    assertNotSame(entries, stored);
   }
 
   @Test
@@ -39,21 +37,22 @@ class AssetDataUseTest {
     List<Object> entries =
         List.of(Map.of("name", "fine"), Map.of("name", "bad", "accessManagement", "Open"));
 
-    Prepared prepared = AssetDataUse.prepare(StudyAssets.MODELS, entries);
+    List<String> violations = AssetDataUse.violations(StudyAssets.MODELS, entries, List.of());
 
     assertEquals(
         List.of("models[1].accessManagement: must be one of open, controlled, external"),
-        prepared.violations());
+        violations);
   }
 
   @Test
   void testNonStringAccessManagementIsReported() {
-    Prepared prepared =
-        AssetDataUse.prepare(StudyAssets.WORKSPACES, List.of(Map.of("accessManagement", 1)));
+    List<String> violations =
+        AssetDataUse.violations(
+            StudyAssets.WORKSPACES, List.of(Map.of("accessManagement", 1)), List.of());
 
     assertEquals(
         List.of("workspaces[0].accessManagement: must be one of open, controlled, external"),
-        prepared.violations());
+        violations);
   }
 
   @Test
@@ -64,14 +63,57 @@ class AssetDataUseTest {
             Map.of("dataUse", Map.of("generalUse", true, "hmbResearch", true)),
             Map.of("accessManagement", "external", "dataUse", Map.of()));
 
-    Prepared prepared = AssetDataUse.prepare(StudyAssets.MODELS, entries);
+    List<String> violations = AssetDataUse.violations(StudyAssets.MODELS, entries, List.of());
 
     assertEquals(
         List.of(
             "models[0].dataUse: " + DataUsePrimaryValidator.VALIDATION_MESSAGE,
             "models[1].dataUse: " + DataUsePrimaryValidator.VALIDATION_MESSAGE,
             "models[2].dataUse: " + DataUsePrimaryValidator.VALIDATION_MESSAGE),
-        prepared.violations());
+        violations);
+  }
+
+  @Test
+  void testFieldThatGsonRejectsIsNamed() {
+    Map<String, Object> dataUse = new LinkedHashMap<>();
+    dataUse.put("generalUse", 1);
+    dataUse.put("hmbResearch", true);
+    dataUse.put("diseaseRestrictions", "x");
+
+    List<String> violations =
+        AssetDataUse.violations(StudyAssets.MODELS, List.of(Map.of("dataUse", dataUse)), List.of());
+
+    assertEquals(
+        List.of("models[0].dataUse: unknown or mistyped fields generalUse, diseaseRestrictions"),
+        violations);
+  }
+
+  @Test
+  void testEntryMatchingAStoredEntryIsNotChecked() {
+    Map<String, Object> stored =
+        Map.of("name", "old", "accessManagement", "Open", "dataUse", Map.of("hmb", true));
+    Map<String, Object> renamed =
+        Map.of("name", "new", "accessManagement", "Open", "dataUse", Map.of("hmb", true));
+    Map<String, Object> changed =
+        Map.of("name", "new", "accessManagement", "open", "dataUse", Map.of("hmb", true));
+
+    List<String> violations =
+        AssetDataUse.violations(StudyAssets.MODELS, List.of(renamed, changed), List.of(stored));
+
+    assertEquals(List.of("models[1].dataUse: unknown or mistyped fields hmb"), violations);
+  }
+
+  @Test
+  void testStoredPairCopiedIntoAnotherEntryIsChecked() {
+    Map<String, Object> stored = Map.of("name", "old", "accessManagement", "Open");
+    Map<String, Object> copy = Map.of("name", "copy", "accessManagement", "Open");
+
+    List<String> violations =
+        AssetDataUse.violations(StudyAssets.MODELS, List.of(stored, copy), List.of(stored));
+
+    assertEquals(
+        List.of("models[1].accessManagement: must be one of open, controlled, external"),
+        violations);
   }
 
   @Test
@@ -81,13 +123,13 @@ class AssetDataUseTest {
             Map.of("dataUse", "HMB"),
             Map.of("dataUse", Map.of("diseaseRestrictions", "not a list")));
 
-    Prepared prepared = AssetDataUse.prepare(StudyAssets.WORKSPACES, entries);
+    List<String> violations = AssetDataUse.violations(StudyAssets.WORKSPACES, entries, List.of());
 
     assertEquals(
         List.of(
             "workspaces[0].dataUse: must be a data use object",
-            "workspaces[1].dataUse: must be a data use object"),
-        prepared.violations());
+            "workspaces[1].dataUse: unknown or mistyped fields diseaseRestrictions"),
+        violations);
   }
 
   /** Gson would coerce or skip these, so the check would pass on values that are stored as sent. */
@@ -103,13 +145,13 @@ class AssetDataUseTest {
             Map.of("accessManagement", "open", "dataUse", Map.of("hmb", true)),
             Map.of("dataUse", mistyped));
 
-    Prepared prepared = AssetDataUse.prepare(StudyAssets.MODELS, entries);
+    List<String> violations = AssetDataUse.violations(StudyAssets.MODELS, entries, List.of());
 
     assertEquals(
         List.of(
             "models[0].dataUse: unknown or mistyped fields hmb",
             "models[1].dataUse: unknown or mistyped fields generalUse, other, diseaseRestrictions"),
-        prepared.violations());
+        violations);
   }
 
   @Test
@@ -118,21 +160,22 @@ class AssetDataUseTest {
     dataUse.put("hmbResearch", true);
     dataUse.put("generalUse", null);
 
-    Prepared prepared =
-        AssetDataUse.prepare(StudyAssets.MODELS, List.of(Map.of("dataUse", dataUse)));
+    List<String> violations =
+        AssetDataUse.violations(StudyAssets.MODELS, List.of(Map.of("dataUse", dataUse)), List.of());
 
-    assertTrue(prepared.violations().isEmpty());
+    assertTrue(violations.isEmpty());
   }
 
   @Test
   void testInvalidAccessManagementSkipsThePrimaryRule() {
-    Prepared prepared =
-        AssetDataUse.prepare(
+    List<String> violations =
+        AssetDataUse.violations(
             StudyAssets.MODELS,
-            List.of(Map.of("accessManagement", "public", "dataUse", Map.of("generalUse", true))));
+            List.of(Map.of("accessManagement", "public", "dataUse", Map.of("generalUse", true))),
+            List.of());
 
-    assertEquals(1, prepared.violations().size());
-    assertTrue(prepared.violations().getFirst().startsWith("models[0].accessManagement"));
+    assertEquals(1, violations.size());
+    assertTrue(violations.getFirst().startsWith("models[0].accessManagement"));
   }
 
   @Test
@@ -143,9 +186,8 @@ class AssetDataUseTest {
     entry.put("accessManagement", "open");
     entry.put("alpha", "kept");
 
-    Prepared prepared = AssetDataUse.prepare(StudyAssets.MODELS, List.of(entry));
-
-    Map<?, ?> stored = (Map<?, ?>) prepared.stored().getFirst();
+    Map<?, ?> stored =
+        (Map<?, ?>) AssetDataUse.withoutSummaries(StudyAssets.MODELS, List.of(entry)).getFirst();
     assertEquals(List.of("zeta", "accessManagement", "alpha"), List.copyOf(stored.keySet()));
     assertTrue(entry.containsKey("dataUseSummary"), "the input entry is not changed");
   }
@@ -154,20 +196,18 @@ class AssetDataUseTest {
   void testOtherAssetTypesAndNonMapEntriesPassThrough() {
     List<Object> publications =
         List.of(Map.of("accessManagement", "nope", "dataUseSummary", "kept"));
-    Prepared other = AssetDataUse.prepare(StudyAssets.PUBLICATIONS, publications);
-    assertSame(publications, other.stored());
-    assertTrue(other.violations().isEmpty());
+    assertSame(publications, AssetDataUse.withoutSummaries(StudyAssets.PUBLICATIONS, publications));
+    assertTrue(
+        AssetDataUse.violations(StudyAssets.PUBLICATIONS, publications, List.of()).isEmpty());
 
     List<Object> nonMaps = List.of("a string", 42);
-    Prepared models = AssetDataUse.prepare(StudyAssets.MODELS, nonMaps);
-    assertEquals(nonMaps, models.stored());
-    assertTrue(models.violations().isEmpty());
+    assertEquals(nonMaps, AssetDataUse.withoutSummaries(StudyAssets.MODELS, nonMaps));
+    assertTrue(AssetDataUse.violations(StudyAssets.MODELS, nonMaps, List.of()).isEmpty());
   }
 
   @Test
   void testNullListPassesThrough() {
-    Prepared prepared = AssetDataUse.prepare(StudyAssets.MODELS, null);
-    assertNull(prepared.stored());
-    assertTrue(prepared.violations().isEmpty());
+    assertNull(AssetDataUse.withoutSummaries(StudyAssets.MODELS, null));
+    assertTrue(AssetDataUse.violations(StudyAssets.MODELS, null, List.of()).isEmpty());
   }
 }

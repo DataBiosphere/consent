@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import jakarta.ws.rs.BadRequestException;
@@ -36,29 +37,50 @@ public final class AssetDataUse {
   private AssetDataUse() {}
 
   /**
-   * @param stored The entries to persist: as sent, less any {@code dataUseSummary}, which is
-   *     derived on read and only arrives when a client sends back what a read returned
-   * @param violations One message per invalid field, prefixed with its location
+   * One message per invalid field of one asset list, prefixed with its location. Never throws.
+   *
+   * @param storedEntries The study's entries as stored. Each stored access management and data use
+   *     pair excuses one sent entry with the same pair, so values saved before this validation
+   *     existed do not block unrelated edits, but copying one into a new entry is still checked.
    */
-  public record Prepared(List<Object> stored, List<String> violations) {}
-
-  /** Validates the entries of one asset list. Never throws; a null list passes through as null. */
-  public static Prepared prepare(String assetKey, List<Object> entries) {
+  public static List<String> violations(
+      String assetKey, List<Object> entries, List<Object> storedEntries) {
     if (entries == null || !ASSET_KEYS.contains(assetKey)) {
-      return new Prepared(entries, List.of());
+      return List.of();
     }
-    List<Object> stored = new ArrayList<>(entries.size());
+    List<StoredFields> unmatched =
+        storedEntries.stream()
+            .filter(Map.class::isInstance)
+            .map(entry -> StoredFields.of((Map<?, ?>) entry))
+            .collect(Collectors.toCollection(ArrayList::new));
     List<String> violations = new ArrayList<>();
     for (int i = 0; i < entries.size(); i++) {
-      Object entry = entries.get(i);
-      if (entry instanceof Map<?, ?> map) {
+      if (entries.get(i) instanceof Map<?, ?> map && !unmatched.remove(StoredFields.of(map))) {
         violations.addAll(entryViolations("%s[%d]".formatted(assetKey, i), map));
-        stored.add(withoutSummary(map));
-      } else {
-        stored.add(entry);
       }
     }
-    return new Prepared(stored, violations);
+    return violations;
+  }
+
+  /**
+   * The entries to persist: as sent, less any {@code dataUseSummary}, which is derived on read and
+   * only arrives when a client sends back what a read returned. A null list stays null.
+   */
+  public static List<Object> withoutSummaries(String assetKey, List<Object> entries) {
+    if (entries == null || !ASSET_KEYS.contains(assetKey)) {
+      return entries;
+    }
+    return entries.stream()
+        .map(entry -> entry instanceof Map<?, ?> map ? withoutSummary(map) : entry)
+        .toList();
+  }
+
+  private record StoredFields(JsonElement accessManagement, JsonElement dataUse) {
+    static StoredFields of(Map<?, ?> entry) {
+      Gson gson = GsonUtil.getInstance();
+      return new StoredFields(
+          gson.toJsonTree(entry.get(ACCESS_MANAGEMENT)), gson.toJsonTree(entry.get(DATA_USE)));
+    }
   }
 
   private static List<String> entryViolations(String location, Map<?, ?> entry) {
@@ -88,10 +110,16 @@ public final class AssetDataUse {
     return violations;
   }
 
+  /** Matches case exactly, as consent groups do. */
   private static Optional<AccessManagement> accessManagement(Object raw) {
-    return Arrays.stream(AccessManagement.values())
-        .filter(value -> value.value().equals(raw))
-        .findFirst();
+    if (!(raw instanceof String value)) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.of(AccessManagement.fromValue(value));
+    } catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
   }
 
   private record ReadDataUse(DataUse value, String problem) {}
@@ -99,6 +127,7 @@ public final class AssetDataUse {
   /**
    * The raw map is what gets stored, so it must read back exactly: Gson would otherwise coerce
    * {@code "yes"} to false and skip unknown keys, validating something other than what is stored.
+   * On a mismatch each field is read on its own, so that one Gson rejects outright is still named.
    */
   private static ReadDataUse readDataUse(Object raw) {
     if (!(raw instanceof Map<?, ?>)) {
@@ -106,18 +135,28 @@ public final class AssetDataUse {
     }
     Gson gson = GsonUtil.getInstance();
     JsonObject sent = gson.toJsonTree(raw).getAsJsonObject();
-    DataUse dataUse;
     try {
-      dataUse = gson.fromJson(sent, DataUse.class);
+      DataUse dataUse = gson.fromJson(sent, DataUse.class);
+      if (sent.equals(gson.toJsonTree(dataUse))) {
+        return new ReadDataUse(dataUse, null);
+      }
     } catch (JsonParseException e) {
-      return new ReadDataUse(null, "must be a data use object");
+      // Fall through to name the fields that do not read back.
     }
-    JsonObject read = gson.toJsonTree(dataUse).getAsJsonObject();
     List<String> unread =
-        sent.keySet().stream().filter(key -> !sent.get(key).equals(read.get(key))).toList();
-    return unread.isEmpty()
-        ? new ReadDataUse(dataUse, null)
-        : new ReadDataUse(null, "unknown or mistyped fields " + String.join(", ", unread));
+        sent.keySet().stream().filter(key -> !readsBack(gson, key, sent.get(key))).toList();
+    return new ReadDataUse(null, "unknown or mistyped fields " + String.join(", ", unread));
+  }
+
+  private static boolean readsBack(Gson gson, String key, JsonElement value) {
+    JsonObject field = new JsonObject();
+    field.add(key, value);
+    try {
+      return value.equals(
+          gson.toJsonTree(gson.fromJson(field, DataUse.class)).getAsJsonObject().get(key));
+    } catch (JsonParseException e) {
+      return false;
+    }
   }
 
   private static Object withoutSummary(Map<?, ?> entry) {

@@ -37,7 +37,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
     validateConditionalFields(registration);
     validateEmailFields(registration);
     validateDateFields(registration);
-    validateAssets(registration);
+    validateAssets(existingStudy, registration);
     validateConsentGroupMembership(existingStudy, registration);
     validateConsentGroupNameChanges(existingDatasets, registration);
     validateConsentGroupRemoval(existingStudy, registration);
@@ -61,8 +61,8 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
     }
   }
 
-  private void validateAssets(StudyUpdateRequest registration) {
-    List<String> violations = collectAssetViolations(registration);
+  private void validateAssets(Study existingStudy, StudyUpdateRequest registration) {
+    List<String> violations = collectAssetViolations(registration, existingStudy.getProperties());
     if (!violations.isEmpty()) {
       throw new BadRequestException(String.join("; ", violations));
     }
