@@ -36,13 +36,21 @@ clone_helmfile() {
 # Move FILES from STAGE into DEST. STAGE must be on the same file system as DEST, so that each move
 # is a rename. A rename into a folder that the script can write fails only if the target is a
 # folder. So check all the targets first: then a step does not stop with only some files moved.
+# Before the move, copy each old file that changes to FILE.<time>.bak, so that a hand-made file
+# is never lost. Each run that changes a file makes a new backup, and keeps the old backups.
 move_into_place() {
-  local stage="$1" dest="$2" f
+  local stage="$1" dest="$2" f stamp
   shift 2
   for f in "$@"; do
     if [[ -d "$dest/$f" ]]; then
       echo "ERROR: $dest/$f is a folder. Remove it, then run the script again." >&2
       exit 1
+    fi
+  done
+  stamp=$(date +%Y%m%d-%H%M%S)
+  for f in "$@"; do
+    if [[ -f "$dest/$f" ]] && ! cmp -s "$stage/$f" "$dest/$f"; then
+      cp -p "$dest/$f" "$dest/$f.$stamp.bak"
     fi
   done
   for f in "$@"; do

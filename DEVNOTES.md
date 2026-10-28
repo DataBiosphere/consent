@@ -63,8 +63,9 @@ files as they were. Run:
 
 The rendered files are the same as the files that dev runs, except for the values in
 `local-values.yaml`. For all the local changes, see
-[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). The script copies each old
-file that changes to a `.bak` file before it replaces it.
+[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). Both scripts copy each old
+file that changes to a backup with the time in its name, such as
+`consent.yaml.20261028-153000.bak`, before they replace it. They keep the old backups.
 
 The rendered `consent.yaml` keeps the placeholders from the chart for `database.user`,
 `database.password`, `mailConfiguration.sendGridApiKey` and `googleStore.password`. Dev replaces
