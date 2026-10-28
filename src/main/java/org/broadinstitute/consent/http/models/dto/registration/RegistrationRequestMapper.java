@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.AssetDataUse;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.StudyAssets;
@@ -109,7 +110,11 @@ public class RegistrationRequestMapper {
         PropertyType.Json,
         request -> {
           List<Object> values =
-              StudyAssets.promotedValue(getTopLevelValue.apply(request), request.getAssets(), key);
+              AssetDataUse.prepare(
+                      key,
+                      StudyAssets.promotedValue(
+                          getTopLevelValue.apply(request), request.getAssets(), key))
+                  .stored();
           return values == null ? null : GsonUtil.getInstance().toJson(values);
         });
   }

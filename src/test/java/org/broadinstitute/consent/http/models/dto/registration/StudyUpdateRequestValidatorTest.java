@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.dto.registration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,7 @@ import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -482,6 +484,45 @@ class StudyUpdateRequestValidatorTest {
     registration.setConsentGroups(null);
     // null consent groups skips membership, name-change, removal, and new-group checks
     assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
+  }
+
+  // ── Model and workspace data use (update path) ──────────────────────────
+
+  @Test
+  void testValidate_assetFields_validAccepted() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(
+        List.of(Map.of("accessManagement", "controlled", "dataUse", Map.of("hmbResearch", true))));
+    registration.setWorkspaces(List.of(Map.of("name", "no new fields")));
+    assertTrue(validator.validate(study, datasets, registration));
+  }
+
+  @Test
+  void testValidate_badAssetFields_rejectedWithEveryViolation() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(List.of(Map.of("accessManagement", "restricted")));
+    registration.setWorkspaces(
+        List.of(Map.of("dataUse", Map.of("generalUse", true, "hmbResearch", true))));
+    BadRequestException e =
+        assertThrows(
+            BadRequestException.class, () -> validator.validate(study, datasets, registration));
+    assertTrue(e.getMessage().startsWith("models[0].accessManagement: "));
+    assertTrue(e.getMessage().contains("; workspaces[0].dataUse: "));
+  }
+
+  @Test
+  void testValidate_legacyAssetEntries_validated() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setAssets(Map.of("workspaces", List.of(Map.of("accessManagement", "nope"))));
+    BadRequestException e =
+        assertThrows(
+            BadRequestException.class, () -> validator.validate(study, datasets, registration));
+    assertEquals(
+        "workspaces[0].accessManagement: must be one of open, controlled, external",
+        e.getMessage());
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
