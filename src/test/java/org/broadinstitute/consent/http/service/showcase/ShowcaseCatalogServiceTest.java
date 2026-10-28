@@ -116,6 +116,26 @@ class ShowcaseCatalogServiceTest {
                 List.of("DUOS-000002"))));
   }
 
+  /** An open pin with no DAC is outside a DAC scope; the scope list is immutable, as parsed. */
+  @Test
+  void testScopedRankingDropsPinWithoutDac() {
+    when(datasetDAO.findShowcaseSummaries(List.of(1)))
+        .thenReturn(List.of(summary("DUOS-000001", "open")));
+    when(datasetDAO.findShowcaseNewestAliases(true, List.of("Example DAC"), List.of(1), 12))
+        .thenReturn(List.of());
+
+    assertEquals(
+        List.of(),
+        service.lookupRanking(
+            new ShowcaseRankingLookup(
+                ShowcaseSection.OPEN_ACCESS_DATASETS,
+                ShowcaseRanking.NEWEST,
+                new ShowcaseScope(List.copyOf(List.of("Example DAC"))),
+                12,
+                List.of("DUOS-000001"),
+                List.of())));
+  }
+
   private List<Object> lookup(String... identifiers) {
     return service.lookupIdentifiers(
         new ShowcaseIdentifiersLookup(ShowcaseSection.OPEN_ACCESS_DATASETS, List.of(identifiers)));

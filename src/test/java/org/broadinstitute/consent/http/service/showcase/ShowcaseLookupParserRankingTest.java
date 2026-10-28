@@ -59,7 +59,20 @@ class ShowcaseLookupParserRankingTest {
 
   @ParameterizedTest
   @ValueSource(
-      strings = {"0", "51", "-1", "1.5", "\"12\"", "null", "true", "[12]", "1e400", "99999999999"})
+      strings = {
+        "0",
+        "51",
+        "-1",
+        "1.5",
+        "\"12\"",
+        "null",
+        "true",
+        "[12]",
+        "1e400",
+        "99999999999",
+        "1e2147483648",
+        "1e-2147483649"
+      })
   void testLimitOutOfRange(String limit) {
     assertRejected(
         "{ %s, \"limit\": %s }".formatted(LATEST, limit),

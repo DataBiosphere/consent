@@ -55,13 +55,17 @@ final class ShowcaseRequestFields {
     if (!isNumber(value) || value.getAsString().length() > MAX_NUMBER_TEXT) {
       throw new ShowcaseLookupException(rangeError);
     }
-    BigDecimal number = value.getAsBigDecimal();
-    if (number.signum() <= 0
-        || number.compareTo(BigDecimal.valueOf(max)) > 0
-        || number.stripTrailingZeros().scale() > 0) {
-      throw new ShowcaseLookupException(rangeError);
+    try {
+      BigDecimal number = value.getAsBigDecimal();
+      if (number.signum() > 0
+          && number.compareTo(BigDecimal.valueOf(max)) <= 0
+          && number.stripTrailingZeros().scale() <= 0) {
+        return number.intValueExact();
+      }
+    } catch (NumberFormatException | ArithmeticException e) {
+      // An exponent that Gson or BigDecimal cannot hold, such as 1e2147483648, is out of range too.
     }
-    return number.intValueExact();
+    throw new ShowcaseLookupException(rangeError);
   }
 
   /** Canonical identifiers without duplicates, in the order first submitted. */
