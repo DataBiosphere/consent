@@ -1,10 +1,15 @@
 package org.broadinstitute.consent.http.service.showcase;
 
 import com.google.inject.Inject;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
@@ -12,8 +17,9 @@ import org.broadinstitute.consent.http.models.ShowcaseLookupResponse;
 import org.broadinstitute.consent.http.models.ShowcaseUnavailableResult;
 
 /**
- * Answers the public Data Showcase lookup from the S2.1 catalog projection, so no mode can return a
- * field that the projection does not.
+ * Answers the public Data Showcase lookup from the S2.1 catalog projection. Rankings read aliases
+ * only, and every summary comes from the projection, so no mode can return a field that the
+ * projection does not.
  */
 public class ShowcaseCatalogService {
 
@@ -29,6 +35,7 @@ public class ShowcaseCatalogService {
     return switch (lookup) {
       case ShowcaseIdentifiersLookup identifiers ->
           new ShowcaseLookupResponse(lookupIdentifiers(identifiers));
+      case ShowcaseRankingLookup ranking -> new ShowcaseLookupResponse(lookupRanking(ranking));
     };
   }
 
@@ -39,15 +46,8 @@ public class ShowcaseCatalogService {
    * nonexistent one get the same result.
    */
   public List<Object> lookupIdentifiers(ShowcaseIdentifiersLookup lookup) {
-    if (lookup.identifiers().isEmpty()) {
-      return List.of();
-    }
-    List<Integer> aliases =
-        lookup.identifiers().stream().map(Dataset::parseIdentifierToAlias).toList();
     Map<String, ShowcaseDatasetSummary> eligible =
-        datasetDAO.findShowcaseSummaries(aliases).stream()
-            .filter(lookup.section()::admits)
-            .collect(Collectors.toMap(ShowcaseDatasetSummary::identifier, Function.identity()));
+        summariesByIdentifier(lookup.identifiers(), lookup.section(), null);
     return lookup.identifiers().stream()
         .<Object>map(
             identifier -> {
@@ -55,5 +55,70 @@ public class ShowcaseCatalogService {
               return summary != null ? summary : new ShowcaseUnavailableResult(identifier);
             })
         .toList();
+  }
+
+  /**
+   * Eligible pins first, in their order, then the ranked datasets, up to the limit. A pin outside
+   * the section or the scope is dropped, an exclusion wins over a pin, and pins never take the
+   * result past the limit. Ranking runs after eligibility, so a hidden dataset never takes a place.
+   */
+  public List<ShowcaseDatasetSummary> lookupRanking(ShowcaseRankingLookup lookup) {
+    Set<String> exclusions = Set.copyOf(lookup.exclusions());
+    List<String> candidatePins =
+        lookup.pins().stream().filter(pin -> !exclusions.contains(pin)).toList();
+    Map<String, ShowcaseDatasetSummary> eligiblePins =
+        summariesByIdentifier(candidatePins, lookup.section(), lookup.scope());
+    List<ShowcaseDatasetSummary> pins =
+        candidatePins.stream()
+            .map(eligiblePins::get)
+            .filter(Objects::nonNull)
+            .limit(lookup.limit())
+            .toList();
+
+    Set<String> notRanked = new LinkedHashSet<>(lookup.exclusions());
+    notRanked.addAll(lookup.pins());
+    List<Integer> rankedAliases =
+        datasetDAO.findShowcaseNewestAliases(
+            lookup.section().isOpenAccessOnly(),
+            lookup.scope() == null ? null : lookup.scope().dacNames(),
+            aliases(notRanked),
+            lookup.limit() - pins.size());
+    Map<String, ShowcaseDatasetSummary> ranked =
+        summariesByIdentifier(identifiers(rankedAliases), lookup.section(), lookup.scope());
+
+    return Stream.concat(
+            pins.stream(),
+            rankedAliases.stream()
+                .map(Dataset::parseAliasToIdentifier)
+                .map(ranked::get)
+                .filter(Objects::nonNull))
+        .toList();
+  }
+
+  /** The summaries among the identifiers that the section and the scope admit, in one query. */
+  private Map<String, ShowcaseDatasetSummary> summariesByIdentifier(
+      Collection<String> identifiers, ShowcaseSection section, ShowcaseScope scope) {
+    if (identifiers.isEmpty()) {
+      return Map.of();
+    }
+    return datasetDAO.findShowcaseSummaries(aliases(identifiers)).stream()
+        .filter(section::admits)
+        .filter(summary -> inScope(summary, scope))
+        .collect(Collectors.toMap(ShowcaseDatasetSummary::identifier, Function.identity()));
+  }
+
+  /** The SQL matches {@code dac.name} the same way: exact, and a deleted DAC never matches. */
+  private static boolean inScope(ShowcaseDatasetSummary summary, ShowcaseScope scope) {
+    return scope == null
+        || scope.dacNames() == null
+        || scope.dacNames().contains(summary.dacName());
+  }
+
+  private static List<Integer> aliases(Collection<String> identifiers) {
+    return identifiers.stream().map(Dataset::parseIdentifierToAlias).toList();
+  }
+
+  private static List<String> identifiers(List<Integer> aliases) {
+    return aliases.stream().map(Dataset::parseAliasToIdentifier).toList();
   }
 }

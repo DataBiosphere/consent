@@ -94,6 +94,28 @@ class ShowcaseCatalogServiceTest {
     verifyNoInteractions(datasetDAO);
   }
 
+  /** An excluded pin stays out, an ineligible pin is dropped, and ranked pins are not repeated. */
+  @Test
+  void testRankingPutsEligiblePinsFirst() {
+    when(datasetDAO.findShowcaseSummaries(List.of(3, 4)))
+        .thenReturn(List.of(summary("DUOS-000004", "open")));
+    when(datasetDAO.findShowcaseNewestAliases(true, null, List.of(2, 3, 4), 1))
+        .thenReturn(List.of(5));
+    when(datasetDAO.findShowcaseSummaries(List.of(5)))
+        .thenReturn(List.of(summary("DUOS-000005", "open")));
+
+    assertEquals(
+        List.of(summary("DUOS-000004", "open"), summary("DUOS-000005", "open")),
+        service.lookupRanking(
+            new ShowcaseRankingLookup(
+                ShowcaseSection.OPEN_ACCESS_DATASETS,
+                ShowcaseRanking.NEWEST,
+                null,
+                2,
+                List.of("DUOS-000002", "DUOS-000003", "DUOS-000004"),
+                List.of("DUOS-000002"))));
+  }
+
   private List<Object> lookup(String... identifiers) {
     return service.lookupIdentifiers(
         new ShowcaseIdentifiersLookup(ShowcaseSection.OPEN_ACCESS_DATASETS, List.of(identifiers)));

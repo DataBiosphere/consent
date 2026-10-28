@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service.showcase;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,9 @@ import org.broadinstitute.consent.http.models.Dataset;
  * ShowcaseLookupException} whose message names only the caller's input and the contract's limits.
  */
 final class ShowcaseRequestFields {
+
+  /** Longer number text cannot be an integer within any lookup limit. */
+  private static final int MAX_NUMBER_TEXT = 20;
 
   private final Map<String, JsonElement> fields;
   private final String mode;
@@ -37,28 +42,36 @@ final class ShowcaseRequestFields {
   }
 
   String requiredString(String name) {
-    JsonElement value = required(name);
-    if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
-      throw new ShowcaseLookupException("Field \"%s\" must be a string".formatted(name));
-    }
-    return value.getAsString();
+    return string(name, required(name));
   }
 
-  /**
-   * Canonical identifiers without duplicates, in the order first submitted. The entries are counted
-   * before duplicates are removed, so that repeats cannot get past the cap.
-   */
+  /** An integer from 1 to {@code max}, or {@code fallback} when the field is absent. */
+  int optionalCount(String name, int max, int fallback) {
+    JsonElement value = fields.get(name);
+    if (value == null) {
+      return fallback;
+    }
+    String rangeError = "Field \"%s\" must be an integer from 1 to %d".formatted(name, max);
+    if (!isNumber(value) || value.getAsString().length() > MAX_NUMBER_TEXT) {
+      throw new ShowcaseLookupException(rangeError);
+    }
+    BigDecimal number = value.getAsBigDecimal();
+    if (number.signum() <= 0
+        || number.compareTo(BigDecimal.valueOf(max)) > 0
+        || number.stripTrailingZeros().scale() > 0) {
+      throw new ShowcaseLookupException(rangeError);
+    }
+    return number.intValueExact();
+  }
+
+  /** Canonical identifiers without duplicates, in the order first submitted. */
   List<String> requiredIdentifiers(String name, int max) {
-    List<String> entries = strings(name, required(name));
-    if (entries.size() > max) {
-      throw new ShowcaseLookupException(
-          "Field \"%s\" has more than %d entries".formatted(name, max));
-    }
-    Set<String> unique = new LinkedHashSet<>();
-    for (int index = 0; index < entries.size(); index++) {
-      unique.add(canonicalIdentifier(name, entries.get(index), index));
-    }
-    return List.copyOf(unique);
+    return identifiers(name, required(name), max);
+  }
+
+  List<String> optionalIdentifiers(String name, int max) {
+    JsonElement value = fields.get(name);
+    return value == null ? List.of() : identifiers(name, value, max);
   }
 
   private JsonElement required(String name) {
@@ -67,6 +80,38 @@ final class ShowcaseRequestFields {
       throw new ShowcaseLookupException("Missing field \"%s\"".formatted(name));
     }
     return value;
+  }
+
+  private static String string(String name, JsonElement value) {
+    if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+      throw new ShowcaseLookupException("Field \"%s\" must be a string".formatted(name));
+    }
+    return value.getAsString();
+  }
+
+  private static boolean isNumber(JsonElement value) {
+    return value instanceof JsonPrimitive primitive && primitive.isNumber();
+  }
+
+  /**
+   * Counts the submitted entries before duplicates are removed, so that repeats cannot get past the
+   * cap.
+   */
+  private static List<String> identifiers(String name, JsonElement value, int max) {
+    List<String> entries = strings(name, value);
+    checkCount(name, entries.size(), max);
+    Set<String> unique = new LinkedHashSet<>();
+    for (int index = 0; index < entries.size(); index++) {
+      unique.add(canonicalIdentifier(name, entries.get(index), index));
+    }
+    return List.copyOf(unique);
+  }
+
+  private static void checkCount(String name, int count, int max) {
+    if (count > max) {
+      throw new ShowcaseLookupException(
+          "Field \"%s\" has more than %d entries".formatted(name, max));
+    }
   }
 
   private static List<String> strings(String name, JsonElement value) {
