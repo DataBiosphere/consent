@@ -41,7 +41,8 @@ public final class AssetDataUse {
    *
    * @param storedEntries The study's entries as stored. Each stored access management and data use
    *     pair excuses one sent entry with the same pair, so values saved before this validation
-   *     existed do not block unrelated edits, but copying one into a new entry is still checked.
+   *     existed do not block unrelated edits. Entries are matched by pair, not identity, so only
+   *     sending more copies of a pair than are stored is caught.
    */
   public static List<String> violations(
       String assetKey, List<Object> entries, List<Object> storedEntries) {
