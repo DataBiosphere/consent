@@ -153,20 +153,38 @@ extract_key() {
   ' "$file"
 }
 
-render() {
-  local values="$WORK_DIR/values"
-  mkdir -p "$values"
-  render_values "$SOURCE_DIR/values/app/global.yaml.gotmpl" "$values/1-global.yaml"
-  render_values "$SOURCE_DIR/values/app/global/live.yaml.gotmpl" "$values/2-global-live.yaml"
-  render_values "$SOURCE_DIR/values/app/consent/live.yaml.gotmpl" "$values/4-consent-live.yaml"
+# The value layers of the consent release in dev, in the order of helmfile.yaml in terra-helmfile.
+# Each layer can be a .yaml.gotmpl file, a .yaml file, or both. Like helmfile, skip a missing file.
+VALUE_LAYERS=(
+  values/app/global
+  values/app/global/live
+  values/app/global/live/dev
+  charts/consent/values/live
+  charts/consent/values/live/dev
+  values/app/consent
+  values/app/consent/live
+  values/app/consent/live/dev
+)
 
-  # The same order as helmfile, with the local values last.
+render() {
+  local values="$WORK_DIR/values" layer n=0 value_args=()
+  mkdir -p "$values"
+  [[ -f "$SOURCE_DIR/values/app/consent/live/dev.yaml" ]] \
+    || error "terra-helmfile has no values/app/consent/live/dev.yaml. The layout changed. Update scripts/render-chart-configs.sh."
+  for layer in "${VALUE_LAYERS[@]}"; do
+    if [[ -f "$SOURCE_DIR/$layer.yaml.gotmpl" ]]; then
+      n=$((n + 1))
+      render_values "$SOURCE_DIR/$layer.yaml.gotmpl" "$values/$n.yaml"
+      value_args+=(-f "$values/$n.yaml")
+    fi
+    if [[ -f "$SOURCE_DIR/$layer.yaml" ]]; then
+      value_args+=(-f "$SOURCE_DIR/$layer.yaml")
+    fi
+  done
+
+  # The local values go last.
   helm template consent "$WORK_DIR/charts/consent" \
-    -f "$values/1-global.yaml" \
-    -f "$values/2-global-live.yaml" \
-    -f "$SOURCE_DIR/values/app/global/live/dev.yaml" \
-    -f "$values/4-consent-live.yaml" \
-    -f "$SOURCE_DIR/values/app/consent/live/dev.yaml" \
+    "${value_args[@]}" \
     -f "$LOCAL_VALUES" \
     --show-only templates/configmap.yaml \
     --show-only templates/proxy-configmap.yaml \

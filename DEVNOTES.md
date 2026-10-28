@@ -66,9 +66,10 @@ docker compose -f config/docker-compose.yaml -f config/docker-compose.override.y
 
 The rendered files are the same as the files that dev runs. The only local changes are in
 `local-values.yaml` and in the `-Ddw.*` flags of the compose template. See
-[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). The script copies each old
-file that changes to a `.bak` file before it replaces it. Put changes for your own
-machine in `config/docker-compose.override.yaml`. The script never changes that file. Name both
+[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). The scripts copy each old
+file that changes to a backup with the time in its name, such as
+`consent.yaml.20261028-153000.bak`, before they replace it. They keep the old backups. Put changes
+for your own machine in `config/docker-compose.override.yaml`. The script never changes that file. Name both
 compose files in each `docker compose` command: Compose does not load the override file on its own
 when a command has `-f`.
 
