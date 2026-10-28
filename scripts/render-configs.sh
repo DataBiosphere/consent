@@ -161,12 +161,18 @@ write_certs() {
 }
 
 write_chart_configs() {
-  local stage="$STAGE_DIR/chart"
+  local stage="$STAGE_DIR/chart" f
   local source_args=(--helmfile_ref "$HELMFILE_REF")
   if [[ -n "$HELMFILE_DIR" ]]; then
     source_args=(--helmfile_dir "$HELMFILE_DIR")
   fi
   "$SCRIPT_DIR/render-chart-configs.sh" --output_dir "$stage" "${source_args[@]}"
+  # Back up each old file that changes, so that a hand-made consent.yaml is not lost.
+  for f in consent.yaml site.conf oauth2.conf; do
+    if [[ -f "$CONFIG_DIR/$f" ]] && ! cmp -s "$stage/$f" "$CONFIG_DIR/$f"; then
+      cp -p "$CONFIG_DIR/$f" "$CONFIG_DIR/$f.bak"
+    fi
+  done
   mv "$stage/consent.yaml" "$stage/site.conf" "$stage/oauth2.conf" "$CONFIG_DIR/"
   env_set "$ENV_FILE" PROXY_IMAGE "$(env_get "$stage/.env" PROXY_IMAGE)"
 }

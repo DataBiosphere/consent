@@ -2,26 +2,21 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.ElectionFields;
 import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+/**
+ * Maps one row to one Election. This mapper must stay stateless: ElectionDAO registers it at the
+ * class level, so JDBI shares one instance across every call for the life of the application.
+ */
 public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
-
-  private final Map<Integer, Election> electionMap = new HashMap<>();
 
   @Override
   public Election map(ResultSet r, StatementContext ctx) throws SQLException {
-    Election election;
-    if (electionMap.containsKey(r.getInt(ElectionFields.ID.getValue()))) {
-      election = electionMap.get(r.getInt(ElectionFields.ID.getValue()));
-    } else {
-      election = new Election();
-      election.setElectionId(r.getInt(ElectionFields.ID.getValue()));
-    }
+    Election election = new Election();
+    election.setElectionId(r.getInt(ElectionFields.ID.getValue()));
     if (hasColumn(r, ElectionFields.TYPE.getValue())
         && r.getString(ElectionFields.TYPE.getValue()) != null) {
       election.setElectionType(r.getString(ElectionFields.TYPE.getValue()));
@@ -78,7 +73,6 @@ public class ElectionMapper implements RowMapper<Election>, RowMapperHelper {
         && r.getString(ElectionFields.ARCHIVED.getValue()) != null) {
       election.setArchived(r.getBoolean(ElectionFields.ARCHIVED.getValue()));
     }
-    electionMap.put(election.getElectionId(), election);
     return election;
   }
 }

@@ -301,6 +301,32 @@ class ElectionDAOTest extends DAOTestHelper {
     assertEquals(v.getVote(), election.getFinalVote());
   }
 
+  // DT-1952: ElectionDAO registers ElectionMapper at the class level, so JDBI shares one mapper
+  // instance across calls. A mapper that caches elections by id returns the earlier vote here.
+  @Test
+  void testFindElectionWithFinalVoteById_ReflectsClearedFinalVote() {
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
+    User user = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection("DAR-1952", user.getUserId(), FIXED_DATE);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
+    Dataset d = createDataset();
+    Election e = createDataAccessElection(dar.getReferenceId(), d.getDatasetId());
+    Integer voteId =
+        voteDAO.insertVote(chair.getUserId(), e.getElectionId(), VoteType.FINAL.getValue());
+    updateVote(true, "rationale", FIXED_DATE, voteId, false, e.getElectionId(), FIXED_DATE, false);
+
+    Election before = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    assertTrue(before.getFinalVote());
+    assertEquals("rationale", before.getFinalRationale());
+
+    updateVote(null, null, FIXED_DATE, voteId, false, e.getElectionId(), FIXED_DATE, false);
+
+    Election after = electionDAO.findElectionWithFinalVoteById(e.getElectionId());
+    assertNull(after.getFinalVote());
+    assertNull(after.getFinalRationale());
+  }
+
   @Test
   void testFindElectionsByReferenceIdCase1() {
     DataAccessRequest dar = createDataAccessRequestV3();

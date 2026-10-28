@@ -7,7 +7,7 @@
             "jdkDistro": "tem",
             "installMaven": true
         },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+        "ghcr.io/devcontainers/features/docker-in-docker:4": {
             "moby": false
         },
         "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
@@ -17,5 +17,22 @@
     },
     "postCreateCommand": "./scripts/setup-devcontainer.sh",
     "forwardPorts": [27443, 7777, 9200],
+    "initializeCommand": "mkdir -p \"$HOME/.claude\" \"$HOME/.codex\"",
+    "mounts": [
+        "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+        "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind"
+    ],
+    "containerEnv": {
+        "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+        "CODEX_HOME": "/home/vscode/.codex"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "anthropic.claude-code",
+                "openai.chatgpt"
+            ]
+        }
+    },
     "remoteUser": "vscode"
 }

@@ -33,6 +33,16 @@ class GsonUtilTest {
   }
 
   @Test
+  void testNullSerializingInstanceKeepsNullFields() {
+    JsonObject jsonObject =
+        GsonUtil.getNullSerializingInstance().toJsonTree(new Vote()).getAsJsonObject();
+
+    assertTrue(jsonObject.has("displayName"));
+    assertTrue(jsonObject.get("displayName").isJsonNull());
+    assertFalse(GsonUtil.getInstance().toJsonTree(new Vote()).getAsJsonObject().has("displayName"));
+  }
+
+  @Test
   void testInstantJson() {
     Gson gson = GsonUtil.buildGson();
 

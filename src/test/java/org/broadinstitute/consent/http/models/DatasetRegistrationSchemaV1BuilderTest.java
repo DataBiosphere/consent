@@ -99,6 +99,25 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNull(schemaV1.getStudyId());
   }
 
+  /**
+   * DatasetService removes the plan file for users who cannot retrieve it. The study property still
+   * tells those users that the study has a plan.
+   */
+  @Test
+  void testBuildSchemaReadsPlanFlagFromPropertyWithoutFile() {
+    Study study = new Study();
+    StudyProperty planProperty = new StudyProperty();
+    planProperty.setKey("alternativeDataSharingPlan");
+    planProperty.setType(PropertyType.Boolean);
+    planProperty.setValue(true);
+    study.addProperties(planProperty);
+
+    DatasetRegistrationSchemaV1 schemaV1 =
+        new DatasetRegistrationSchemaV1Builder().build(study, List.of());
+
+    assertEquals(Boolean.TRUE, schemaV1.getAlternativeDataSharingPlan());
+  }
+
   @Test
   void testBuildSchemaWithStudyProps() {
     DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
