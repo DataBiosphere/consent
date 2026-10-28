@@ -649,7 +649,7 @@ public class ElasticSearchService implements ConsentLogger {
               .fromJson(
                   element,
                   new com.google.gson.reflect.TypeToken<Map<String, Object>>() {}.getType());
-      // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
+      // Otherwise the value is a Map that Gson built from JSON
     } else if (value instanceof Map) {
       objectMap = (Map<String, Object>) value;
       // Fallback: try to parse as JSON string

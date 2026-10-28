@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.ALTERNATIVE_DATA_SHARING_PLAN;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanAccessManagement;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanDataReleased;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanDataSubmitted;
@@ -124,7 +125,11 @@ public class SchemaFromStudy {
         findStringPropValue(
             study.getProperties(),
             controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation));
-    if (Objects.nonNull(study.getAlternativeDataSharingPlan())) {
+    // DatasetService removes the plan file for users who cannot retrieve it, so the study property
+    // also counts. Those users can still see that the study has a plan.
+    if (Objects.nonNull(study.getAlternativeDataSharingPlan())
+        || Boolean.TRUE.equals(
+            findBooleanPropValue(study.getProperties(), ALTERNATIVE_DATA_SHARING_PLAN))) {
       schemaV1.setAlternativeDataSharingPlan(Boolean.TRUE);
     }
     schemaV1.setAlternativeDataSharingPlanReasons(findListADSPRPropValue(study.getProperties()));

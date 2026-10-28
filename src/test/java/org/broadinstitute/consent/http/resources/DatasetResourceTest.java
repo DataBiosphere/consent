@@ -826,18 +826,15 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
     user.setUserId(1);
-    Dataset dataset = new Dataset();
-    Study study = new Study();
-    study.setStudyId(1);
-    dataset.setStudy(study);
-    dataset.setStudyId(study.getStudyId());
+    Dataset dataset = createMockDatasetInStudy();
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any()))
         .thenReturn(List.of(dataset));
-    when(datasetService.findStudy(anyInt())).thenReturn(study);
+    when(datasetService.findStudy(anyInt())).thenReturn(dataset.getStudy());
     String schemaV1 = createDatasetRegistrationMock(user);
 
     try (var response = resource.createDatasetRegistration(duosUser, null, schemaV1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+      assertRegistrationEnumsWrittenAsValues(response.getEntity().toString());
     }
   }
 
@@ -947,14 +944,25 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetRegistrationFromDatasetIdentifier() {
+  void testGetRegistrationFromDatasetIdentifier() throws IOException {
     Dataset dataset = createMockDatasetInStudy();
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
 
-    Response response =
-        resource.getRegistrationFromDatasetIdentifier(duosUser, dataset.getDatasetIdentifier());
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response =
+        resource.getRegistrationFromDatasetIdentifier(duosUser, dataset.getDatasetIdentifier())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertRegistrationEnumsWrittenAsValues(response.getEntity().toString());
+    }
+  }
+
+  // The update endpoint parses registrations with Jackson, so a returned one must parse there.
+  private void assertRegistrationEnumsWrittenAsValues(String entity) throws IOException {
+    assertTrue(entity.contains("\"accessManagement\":\"" + AccessManagement.OPEN.value() + "\""));
+    assertTrue(entity.contains("\"dataLocation\":\"" + DataLocation.NOT_DETERMINED.value() + "\""));
+    DatasetRegistrationSchemaV1 parsed =
+        new ObjectMapper().readValue(entity, DatasetRegistrationSchemaV1.class);
+    assertEquals(AccessManagement.OPEN, parsed.getConsentGroups().getFirst().getAccessManagement());
   }
 
   @Test
