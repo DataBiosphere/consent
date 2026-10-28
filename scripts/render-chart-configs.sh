@@ -15,6 +15,8 @@
 
 set -eu
 set -o pipefail
+# With CDPATH, `cd DIR` can print DIR, and then $(cd DIR && pwd) has the path two times.
+unset CDPATH
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
@@ -171,8 +173,7 @@ render() {
     --show-only templates/deployment.yaml > "$WORK_DIR/rendered.yaml" \
     || error "helm template failed for the consent chart."
 
-  local stage="$WORK_DIR/out"
-  mkdir -p "$stage"
+  local stage="$STAGE_DIR"
   extract_key consent.yaml "$WORK_DIR/rendered.yaml" > "$stage/consent.yaml"
   extract_key oauth2-config "$WORK_DIR/rendered.yaml" > "$stage/oauth2.conf"
   extract_key apache-httpd-proxy-config "$WORK_DIR/rendered.yaml" > "$stage/site.conf"
@@ -195,8 +196,7 @@ render() {
   [[ -n "$proxy_image" ]] || error "The rendered deployment has no consent-proxy image. Update scripts/render-chart-configs.sh."
 
   # Move the files into place only after all three are good.
-  mkdir -p "$OUTPUT_DIR"
-  mv "$stage/consent.yaml" "$stage/oauth2.conf" "$stage/site.conf" "$OUTPUT_DIR/"
+  move_into_place "$stage" "$OUTPUT_DIR" consent.yaml oauth2.conf site.conf
   env_set "$OUTPUT_DIR/.env" PROXY_IMAGE "$proxy_image"
   echo "Wrote consent.yaml, site.conf and oauth2.conf to $OUTPUT_DIR, and set PROXY_IMAGE to $proxy_image"
 }
@@ -206,8 +206,19 @@ command -v helm > /dev/null || error "Rendering the chart needs helm. See https:
 command -v git > /dev/null || error "Rendering the chart needs git."
 check_local_values
 
+# config/ holds secrets. Mode 700 keeps other users on this machine out of it. The script sets the
+# mode only on config/ and on a folder that it makes, not on an existing folder such as ~.
+if [[ ! -d "$OUTPUT_DIR" || "$OUTPUT_DIR" == "$REPO_ROOT/config" ]]; then
+  mkdir -p "$OUTPUT_DIR" || error "Could not make $OUTPUT_DIR."
+  chmod 700 "$OUTPUT_DIR"
+fi
+
+# WORK_DIR holds the clone and the build. STAGE_DIR is in the output folder, so the move into place
+# is a rename on the same file system. The trap removes both on each exit, also on Ctrl-C.
 WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/render-chart-configs.XXXXXX")
-trap 'rm -rf "$WORK_DIR"' EXIT
+STAGE_DIR=$(mktemp -d "$OUTPUT_DIR/.render-chart.XXXXXX")
+trap 'rm -rf "$WORK_DIR" "$STAGE_DIR"' EXIT
+trap 'exit 130' INT TERM
 
 get_source
 build_dependencies
