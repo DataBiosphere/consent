@@ -1014,13 +1014,34 @@ WHERE dar.submission_date > now() - interval '8760 hours'
         Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
   }
 
+  /** The joins and the eligibility rule repeat {@link #findShowcaseNewestAliases}; see there. */
   @RegisterConstructorMapper(ShowcaseStatsResponse.class)
   @SqlQuery(
-      "SELECT COUNT(DISTINCT d.study_id) AS study_count, COUNT(*) AS dataset_count "
-          + SHOWCASE_ELIGIBILITY_JOINS
-          + "WHERE "
-          + SHOWCASE_ELIGIBLE
-          + """
+      """
+      SELECT COUNT(DISTINCT d.study_id) AS study_count, COUNT(*) AS dataset_count
+      FROM dataset d
+      INNER JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN dac ON dac.dac_id = d.dac_id AND dac.deleted IS NOT TRUE
+      LEFT JOIN LATERAL (
+          SELECT am.value
+          FROM (
+              SELECT LOWER(
+                      REGEXP_REPLACE(
+                          p.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g')) AS value,
+                  LOWER(p.schema_property) = LOWER(:accessManagementProperty) AS is_current,
+                  p.property_id
+              FROM dataset_property p
+              WHERE p.dataset_id = d.dataset_id
+                  AND LOWER(p.schema_property)
+                      IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
+          ) am
+          WHERE am.value IN ('open', 'controlled', 'external')
+          ORDER BY am.is_current DESC, am.property_id
+          LIMIT 1
+      ) access ON TRUE
+      WHERE s.public_visibility = true
+          AND (access.value IN ('open', 'external')
+              OR (d.dac_approval = true AND dac.dac_id IS NOT NULL))
           AND (:scopeByDac = false OR dac.name IN (<dacNames>))
       """)
   ShowcaseStatsResponse countShowcaseDatasets(
