@@ -14,9 +14,34 @@ import org.broadinstitute.consent.http.models.Dataset;
 final class ShowcaseRequestFields {
 
   private final Map<String, JsonElement> fields;
+  private final String mode;
 
-  ShowcaseRequestFields(Map<String, JsonElement> fields) {
+  ShowcaseRequestFields(Map<String, JsonElement> fields, String mode) {
     this.fields = fields;
+    this.mode = mode;
+  }
+
+  String mode() {
+    return mode;
+  }
+
+  void rejectUnrecognized(Set<String> allowed) {
+    fields.keySet().stream()
+        .filter(name -> !allowed.contains(name))
+        .findFirst()
+        .ifPresent(
+            name -> {
+              throw new ShowcaseLookupException(
+                  "Unrecognized field \"%s\" for mode \"%s\"".formatted(name, mode));
+            });
+  }
+
+  String requiredString(String name) {
+    JsonElement value = required(name);
+    if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+      throw new ShowcaseLookupException("Field \"%s\" must be a string".formatted(name));
+    }
+    return value.getAsString();
   }
 
   /**

@@ -123,7 +123,8 @@ class ShowcaseRequestFieldsTest {
   }
 
   private static ShowcaseRequestFields fields(String body) {
-    return new ShowcaseRequestFields(ShowcaseJsonBody.read(body.getBytes(StandardCharsets.UTF_8)));
+    return new ShowcaseRequestFields(
+        ShowcaseJsonBody.read(body.getBytes(StandardCharsets.UTF_8)), "test");
   }
 
   private static void assertRejected(Executable read, String message) {
