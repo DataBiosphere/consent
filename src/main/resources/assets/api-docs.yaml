@@ -1229,6 +1229,8 @@ paths:
     $ref: './paths/ontologySearch.yaml'
   /ontology/autocomplete:
     $ref: './paths/ontologyAutocomplete.yaml'
+  /showcase/datasets:
+    $ref: './paths/showcaseDatasets.yaml'
   /status:
     get:
       summary: System Health Status

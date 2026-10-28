@@ -1,0 +1,15 @@
+type: object
+description: >
+  The result for an identifier with no public summary. Nonexistent, private, deleted and
+  section-ineligible datasets all get this same result.
+additionalProperties: false
+required:
+  - identifier
+  - status
+properties:
+  identifier:
+    type: string
+    description: The identifier as submitted.
+  status:
+    type: string
+    enum: [unavailable]

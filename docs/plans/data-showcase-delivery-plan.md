@@ -586,6 +586,11 @@ S1.1; the lookup feeds E3.
   beyond `limit`. Reject mode-incompatible fields and over-limit inputs with 400 before DAO calls.
   Publish these initial limits in OpenAPI and align the frontend guard. Revisit the numeric values
   only through a reviewed contract change backed by the lookup/load spike.
+  The `identifiers` mode and these limits are implemented as `PublicShowcaseCatalogResource`,
+  `ShowcaseLookupParser` and `ShowcaseCatalogService` (DT-4275, PR 1 of 3). The resource reads
+  the raw body, so the 64 KiB check covers a declared length and a chunked body. The
+  `open-access-datasets` section admits `open` datasets only. PR 2 adds `ranking` and `all`;
+  PR 3 adds `stats`.
 - **Backend — rate limit:** add an anonymous per-client-IP rate limit for `/showcase/*` in Consent
   (section 3, Failure/limits): either extend `RateLimitFilter` with a public-path branch or add a
   dedicated filter. It answers 429 with `Retry-After` and is enabled independently of the
@@ -601,7 +606,7 @@ S1.1; the lookup feeds E3.
   address. Each 429 logs the key and its source. Before DT-4275 exposes the endpoint, verify in dev
   that the key is the caller's address and that a client-supplied `X-Real-IP` does not change it.
   Requests through the BFF get the BFF's outbound address as the key, so all BFF users share one
-  bucket until the BFF forwards the browser address in a header that Consent believes (DT-4275).
+  bucket until the BFF forwards the browser address in a header that Consent believes (DT-4281).
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
   configuration, legacy CSP/CORS/preflight, and public-route rate limit. Document preview versus
   functional-test environment configuration. This transport work is required for MVP.

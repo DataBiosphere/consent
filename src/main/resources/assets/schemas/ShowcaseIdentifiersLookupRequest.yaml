@@ -1,0 +1,25 @@
+type: object
+description: An editorial lookup of up to 200 datasets for one showcase section.
+additionalProperties: false
+required:
+  - mode
+  - section
+  - identifiers
+properties:
+  mode:
+    type: string
+    enum: [identifiers]
+  section:
+    type: string
+    enum: [open-access-datasets]
+    description: The showcase section whose eligibility rules apply.
+  identifiers:
+    type: array
+    maxItems: 200
+    description: >
+      Canonical dataset identifiers. The 200-entry limit counts entries before duplicates are
+      removed.
+    items:
+      type: string
+      maxLength: 32
+      pattern: '^DUOS-(\d{6}|[1-9]\d{6,})$'
