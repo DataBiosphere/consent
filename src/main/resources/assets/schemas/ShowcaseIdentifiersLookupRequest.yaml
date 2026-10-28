@@ -20,6 +20,4 @@ properties:
       Canonical dataset identifiers. The 200-entry limit counts entries before duplicates are
       removed.
     items:
-      type: string
-      maxLength: 32
-      pattern: '^DUOS-(\d{6}|[1-9]\d{6,})$'
+      $ref: './ShowcaseIdentifier.yaml'

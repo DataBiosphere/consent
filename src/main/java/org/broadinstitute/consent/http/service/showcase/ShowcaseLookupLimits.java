@@ -19,6 +19,9 @@ public final class ShowcaseLookupLimits {
   /** Submitted {@code exclude} entries, counted before duplicates are removed. */
   public static final int MAX_EXCLUSIONS = 200;
 
+  /** Submitted values for one {@code scope} key. */
+  public static final int MAX_SCOPE_VALUES = 20;
+
   public static final int MAX_IDENTIFIER_LENGTH = 32;
 
   public static final int DEFAULT_RANKING_LIMIT = 12;

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** The {@code ranking} mode. The {@code scope} field follows in the next pull request. */
+/** The {@code ranking} mode. */
 class ShowcaseLookupParserRankingTest {
 
   private static final String NEWEST = "\"mode\": \"ranking\", \"ranking\": \"newest\"";
@@ -23,7 +23,7 @@ class ShowcaseLookupParserRankingTest {
         parse(
             """
             { "mode": "ranking", "section": "latest-data-releases", "ranking": "newest",
-              "limit": 12,
+              "scope": { "dac": ["Example DAC", "Example DAC"] }, "limit": 12,
               "pin": ["DUOS-000789"], "exclude": ["DUOS-000111", "DUOS-000111"] }
             """);
 
@@ -31,7 +31,7 @@ class ShowcaseLookupParserRankingTest {
         new ShowcaseRankingLookup(
             ShowcaseSection.LATEST_DATA_RELEASES,
             ShowcaseRanking.NEWEST,
-            null,
+            new ShowcaseScope(List.of("Example DAC")),
             12,
             List.of("DUOS-000789"),
             List.of("DUOS-000111")),
@@ -49,6 +49,16 @@ class ShowcaseLookupParserRankingTest {
             List.of(),
             List.of()),
         parse("{ %s, \"section\": \"open-access-datasets\" }".formatted(NEWEST)));
+  }
+
+  @Test
+  void testScopeWithoutKeysHasNoDacFilter() {
+    assertEquals(new ShowcaseScope(null), ranking("\"scope\": {}").scope());
+  }
+
+  @Test
+  void testEmptyDacScopeIsKept() {
+    assertEquals(new ShowcaseScope(List.of()), ranking("\"scope\": { \"dac\": [] }").scope());
   }
 
   @ParameterizedTest
@@ -98,6 +108,53 @@ class ShowcaseLookupParserRankingTest {
         "Identifier \"DUOS-789\" is not canonical; use \"DUOS-000789\"");
   }
 
+  @Test
+  void testMaximumScopeValues() {
+    String names =
+        String.join(", ", IntStream.range(0, 20).mapToObj(i -> "\"DAC " + i + "\"").toList());
+    assertEquals(
+        20, ranking("\"scope\": { \"dac\": [%s] }".formatted(names)).scope().dacNames().size());
+  }
+
+  @Test
+  void testOneOverMaximumScopeValues() {
+    String names = String.join(", ", Collections.nCopies(21, "\"Example DAC\""));
+    assertRejected(
+        "{ %s, \"scope\": { \"dac\": [%s] } }".formatted(LATEST, names),
+        "Field \"scope.dac\" has more than 20 entries");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"\"dac\"", "[]", "null", "1"})
+  void testScopeMustBeAnObject(String scope) {
+    assertRejected(
+        "{ %s, \"scope\": %s }".formatted(LATEST, scope), "Field \"scope\" must be an object");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"study", "institution", "DAC", "$where"})
+  void testUnknownScopeKey(String key) {
+    assertRejected(
+        "{ %s, \"scope\": { \"%s\": [\"x\"] } }".formatted(LATEST, key),
+        "Unrecognized scope key \"" + key + "\"");
+  }
+
+  /** A nested query object, or a value that is not a string, is not a DAC name. */
+  @ParameterizedTest
+  @ValueSource(strings = {"\"Example DAC\"", "{ \"$ne\": \"\" }", "[1]", "[null]", "[true]"})
+  void testDacScopeMustBeStrings(String value) {
+    assertRejected(
+        "{ %s, \"scope\": { \"dac\": %s } }".formatted(LATEST, value),
+        "Field \"scope.dac\" must be an array of strings");
+  }
+
+  @Test
+  void testDuplicateScopeKey() {
+    assertRejected(
+        "{ %s, \"scope\": { \"dac\": [\"A\"], \"dac\": [\"B\"] } }".formatted(LATEST),
+        "Duplicate field \"dac\"");
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"most-requested-datasets", "hero", ""})
   void testUnknownRankingSection(String section) {
@@ -123,11 +180,17 @@ class ShowcaseLookupParserRankingTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"identifiers", "scope", "items", "pageSize", "cursor"})
+  @ValueSource(strings = {"identifiers", "items", "pageSize", "cursor"})
   void testFieldNotAllowedInRankingMode(String field) {
     assertRejected(
         "{ %s, \"%s\": 1 }".formatted(LATEST, field),
         "Unrecognized field \"%s\" for mode \"ranking\"".formatted(field));
+  }
+
+  @Test
+  void testNestingCap() {
+    assertRejected(
+        "{ %s, \"scope\": { \"dac\": [[\"x\"]] } }".formatted(LATEST), ShowcaseJsonBody.TOO_DEEP);
   }
 
   private static ShowcaseRankingLookup ranking(String fields) {

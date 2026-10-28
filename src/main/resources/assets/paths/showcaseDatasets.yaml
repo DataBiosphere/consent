@@ -6,20 +6,28 @@ post:
     `/api` and needs no authentication. Each client IP is rate limited (429 with `Retry-After`).
     Every response has `Cache-Control: no-store`.
 
-    The `identifiers` mode resolves an editorial list of canonical `DUOS-` identifiers in one
-    query. The result has one entry for each unique identifier, in the order first submitted:
-    a summary when the dataset is eligible for the section, otherwise an `unavailable` result.
-    Nonexistent, private, deleted and section-ineligible datasets get the same `unavailable`
-    result. The `open-access-datasets` section admits open-access datasets only.
+    Modes:
+      * `identifiers`: resolves an editorial list of canonical `DUOS-` identifiers in one query.
+        The result has one entry for each unique identifier, in the order first submitted: a
+        summary when the dataset is eligible for the section, otherwise an `unavailable`
+        result. Nonexistent, private, deleted and section-ineligible datasets get the same
+        `unavailable` result.
+      * `ranking`: a computed shelf (`newest`), with optional `scope`, `limit`, `pin` and
+        `exclude`. Hidden datasets never appear in or affect a ranking.
+
+    The `open-access-datasets` section admits open-access datasets only.
 
     Hard limits (contract values, also enforced by the BFF proxy and the duos-ui guard):
       * Request body: at most 65536 bytes (64 KiB), else 413 before the body is parsed.
-      * `identifiers`: at most 200 entries, counted before duplicates are removed.
+      * `identifiers` and `exclude`: at most 200 entries; `pin`: at most 50. Entries are
+        counted before duplicates are removed.
+      * `scope.dac`: at most 20 values. `limit`: 1 to 50 (default 12).
       * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`).
       * Unknown modes, unknown sections, duplicate fields and fields that do not belong to the
-        mode get a 400 before any data is read.
+        mode get a 400 before any data is read. JSON nested deeper than a scope value list gets
+        a 400.
 
-    The `ranking`, `all` and `stats` modes are not available yet.
+    The `all` and `stats` modes are not available yet.
   security: []
   tags:
     - Data Showcase
@@ -28,7 +36,9 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../schemas/ShowcaseIdentifiersLookupRequest.yaml'
+          oneOf:
+            - $ref: '../schemas/ShowcaseIdentifiersLookupRequest.yaml'
+            - $ref: '../schemas/ShowcaseRankingLookupRequest.yaml'
         example:
           mode: identifiers
           section: open-access-datasets
@@ -37,7 +47,7 @@ post:
             - DUOS-000999
   responses:
     200:
-      description: One result for each unique identifier, in the order first submitted
+      description: A `datasets` list
       headers:
         Cache-Control:
           schema:

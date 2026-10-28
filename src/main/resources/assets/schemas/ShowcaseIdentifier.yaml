@@ -1,0 +1,4 @@
+type: string
+maxLength: 32
+pattern: '^DUOS-(\d{6}|[1-9]\d{6,})$'
+description: Canonical dataset identifier, `DUOS-` plus the alias padded to six digits.
