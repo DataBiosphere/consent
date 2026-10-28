@@ -49,20 +49,33 @@ You need `gcloud`, `gke-gcloud-auth-plugin`, `kubectl`, `helm`, `git` and `opens
 non-split Broad VPN for the cluster steps. The chart configs need read access to
 `broadinstitute/terra-helmfile`, with git HTTPS credentials or a GitHub SSH key. The script tries
 HTTPS first, then SSH. The script stops at the first step that fails, and that step leaves the old
-files as they were. The first time, run:
+files as they were. Run:
 
 ```bash
-./scripts/render-configs.sh --write_chart_configs true
+./scripts/render-configs.sh
 ```
 
-* After a cert rotation, run `./scripts/render-configs.sh` with no options.
-* To test a `terra-helmfile` branch, run `./scripts/render-configs.sh --write_chart_configs true
-  --helmfile_ref my-branch`. For changes that are not pushed, use `--helmfile_dir
-  ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
+* After a cert rotation, run the script again to get the new certs.
+* To render the chart configs, run `./scripts/render-configs.sh --write_chart_configs true`. To test
+  a `terra-helmfile` branch, add `--helmfile_ref my-branch`. For changes that are not pushed, use
+  `--helmfile_dir ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
   [render-chart-configs.sh](scripts/render-chart-configs.sh) on its own.
 
-The rendered files are the same as the files that dev runs. The only local changes are in
-`local-values.yaml`. See [the plan](docs/plans/render-local-configs-plan.md#all-local-changes).
+The rendered files are the same as the files that dev runs, except for the values in
+`local-values.yaml`. For all the local changes, see
+[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). The script copies each old
+file that changes to a `.bak` file before it replaces it.
+
+The rendered `consent.yaml` keeps the placeholders from the chart for `database.user`,
+`database.password`, `mailConfiguration.sendGridApiKey` and `googleStore.password`. Dev replaces
+them with `-Ddw` flags at startup. The local compose files will do the same, but they are not in
+this repo yet. Until then, run the app with the `consent.yaml` from the next section.
+
+### Configure
+
+Copy `src/test/resources/consent-config.yml` to `config/consent.yaml` (the `config/` directory is
+git-ignored) and fill in the values for your environment. The `googleStore` section is the only
+part that needs cloud credentials; see the next section.
 
 #### Liquibase
 
