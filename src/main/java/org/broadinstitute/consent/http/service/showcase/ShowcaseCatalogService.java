@@ -123,11 +123,15 @@ public class ShowcaseCatalogService {
         .collect(Collectors.toMap(ShowcaseDatasetSummary::identifier, Function.identity()));
   }
 
-  /** The SQL matches {@code dac.name} the same way: exact, and a deleted DAC never matches. */
+  /**
+   * The SQL matches {@code dac.name} the same way: exact, and a deleted DAC never matches. A
+   * dataset with no DAC is outside every DAC scope; the null check also keeps an immutable list
+   * from throwing on {@code contains(null)}.
+   */
   private static boolean inScope(ShowcaseDatasetSummary summary, ShowcaseScope scope) {
     return scope == null
         || scope.dacNames() == null
-        || scope.dacNames().contains(summary.dacName());
+        || (summary.dacName() != null && scope.dacNames().contains(summary.dacName()));
   }
 
   private static List<Integer> aliases(Collection<String> identifiers) {
