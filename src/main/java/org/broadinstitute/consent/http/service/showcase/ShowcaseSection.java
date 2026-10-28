@@ -14,16 +14,16 @@ public enum ShowcaseSection {
   OPEN_ACCESS_DATASETS(
       "open-access-datasets", summary -> "open".equals(summary.accessManagement()));
 
-  private final String key;
+  private final String slug;
   private final Predicate<ShowcaseDatasetSummary> eligibility;
 
-  ShowcaseSection(String key, Predicate<ShowcaseDatasetSummary> eligibility) {
-    this.key = key;
+  ShowcaseSection(String slug, Predicate<ShowcaseDatasetSummary> eligibility) {
+    this.slug = slug;
     this.eligibility = eligibility;
   }
 
   public String getKey() {
-    return key;
+    return slug;
   }
 
   /** True when a catalog-eligible summary can also appear in this section. */
@@ -32,7 +32,7 @@ public enum ShowcaseSection {
   }
 
   /** The section with this exact key. */
-  public static Optional<ShowcaseSection> fromKey(String key) {
-    return Arrays.stream(values()).filter(section -> section.key.equals(key)).findFirst();
+  public static Optional<ShowcaseSection> fromKey(String requested) {
+    return Arrays.stream(values()).filter(section -> section.slug.equals(requested)).findFirst();
   }
 }
