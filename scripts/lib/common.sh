@@ -27,10 +27,16 @@ env_set() {
   fi
   tmp=$(mktemp "$(dirname "$file")/.env.XXXXXX")
   chmod 600 "$tmp"
-  if [[ -f "$file" ]]; then
-    grep -vE "^${key}=" "$file" > "$tmp" || true
-  fi
-  printf "%s='%s'\n" "$key" "$value" >> "$tmp"
+  # Replace the first KEY line where it is, so that the order of the lines does not change and a
+  # run with no new values writes the same file. Remove other KEY lines. If no line has KEY, add it
+  # at the end. ENVIRON passes the line with no change: awk -v changes a backslash.
+  local src="$file"
+  [[ -f "$file" ]] || src=/dev/null
+  ENV_LINE="$key='$value'" awk -v k="$key=" '
+    index($0, k) == 1 { if (!done) print ENVIRON["ENV_LINE"]; done = 1; next }
+    { print }
+    END { if (!done) print ENVIRON["ENV_LINE"] }
+  ' "$src" > "$tmp"
   mv "$tmp" "$file"
 }
 
