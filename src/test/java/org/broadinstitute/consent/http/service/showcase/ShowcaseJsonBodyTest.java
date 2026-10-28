@@ -102,6 +102,13 @@ class ShowcaseJsonBodyTest {
     assertEquals(ShowcaseJsonBody.NOT_A_JSON_OBJECT, exception.getMessage());
   }
 
+  /** Gson would skip it; the BFF's {@code JSON.parse} would not. */
+  @ParameterizedTest
+  @ValueSource(strings = {"\uFEFF{}", "\uFEFF{\"mode\": \"stats\"}"})
+  void testLeadingByteOrderMark(String body) {
+    assertRejected(body, ShowcaseJsonBody.NOT_A_JSON_OBJECT);
+  }
+
   private static Map<String, JsonElement> read(String body) {
     return ShowcaseJsonBody.read(body.getBytes(StandardCharsets.UTF_8));
   }
