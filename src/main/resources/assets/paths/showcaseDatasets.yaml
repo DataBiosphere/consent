@@ -14,6 +14,8 @@ post:
         `unavailable` result.
       * `ranking`: a computed shelf (`newest`), with optional `scope`, `limit`, `pin` and
         `exclude`. Hidden datasets never appear in or affect a ranking.
+      * `all`: one page of every public-eligible dataset in identifier order, with a
+        `nextCursor` for the next page (null on the last page).
 
     The `open-access-datasets` section admits open-access datasets only.
 
@@ -21,13 +23,14 @@ post:
       * Request body: at most 65536 bytes (64 KiB), else 413 before the body is parsed.
       * `identifiers` and `exclude`: at most 200 entries; `pin`: at most 50. Entries are
         counted before duplicates are removed.
-      * `scope.dac`: at most 20 values. `limit`: 1 to 50 (default 12).
+      * `scope.dac`: at most 20 values. `limit`: 1 to 50 (default 12). `pageSize`: 1 to 200
+        (default 100). `cursor`: at most 512 characters.
       * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`).
       * Unknown modes, unknown sections, duplicate fields and fields that do not belong to the
         mode get a 400 before any data is read. JSON nested deeper than a scope value list gets
         a 400.
 
-    The `all` and `stats` modes are not available yet.
+    The `stats` mode is not available yet.
   security: []
   tags:
     - Data Showcase
@@ -39,6 +42,7 @@ post:
           oneOf:
             - $ref: '../schemas/ShowcaseIdentifiersLookupRequest.yaml'
             - $ref: '../schemas/ShowcaseRankingLookupRequest.yaml'
+            - $ref: '../schemas/ShowcaseAllLookupRequest.yaml'
         example:
           mode: identifiers
           section: open-access-datasets
@@ -47,7 +51,9 @@ post:
             - DUOS-000999
   responses:
     200:
-      description: A `datasets` list
+      description: >
+        `identifiers` and `ranking`: a `datasets` list. `all`: a `datasets` page and
+        `nextCursor`.
       headers:
         Cache-Control:
           schema:
@@ -56,7 +62,9 @@ post:
       content:
         application/json:
           schema:
-            $ref: '../schemas/ShowcaseLookupResponse.yaml'
+            oneOf:
+              - $ref: '../schemas/ShowcaseLookupResponse.yaml'
+              - $ref: '../schemas/ShowcasePageResponse.yaml'
     400:
       description: The request breaks the lookup contract
       content:

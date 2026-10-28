@@ -27,5 +27,10 @@ public final class ShowcaseLookupLimits {
   public static final int DEFAULT_RANKING_LIMIT = 12;
   public static final int MAX_RANKING_LIMIT = 50;
 
+  public static final int DEFAULT_PAGE_SIZE = 100;
+  public static final int MAX_PAGE_SIZE = 200;
+
+  public static final int MAX_CURSOR_LENGTH = 512;
+
   private ShowcaseLookupLimits() {}
 }

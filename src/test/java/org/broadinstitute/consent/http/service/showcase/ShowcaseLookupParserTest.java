@@ -94,7 +94,7 @@ class ShowcaseLookupParserTest {
 
   /** The other modes arrive in later pull requests; until then they are unknown. */
   @ParameterizedTest
-  @ValueSource(strings = {"all", "stats", "IDENTIFIERS", ""})
+  @ValueSource(strings = {"stats", "IDENTIFIERS", "Ranking", ""})
   void testUnknownMode(String mode) {
     assertRejected("{ \"mode\": %s }".formatted(quoted(mode)), "Unknown mode \"" + mode + "\"");
   }
