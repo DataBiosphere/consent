@@ -40,6 +40,9 @@ final class ShowcaseJsonBody {
 
   /** The top-level fields in the order sent. */
   static Map<String, JsonElement> read(byte[] body) {
+    if (startsWithByteOrderMark(body)) {
+      throw new ShowcaseLookupException(NOT_A_JSON_OBJECT);
+    }
     try (JsonReader reader = new JsonReader(strictUtf8(body))) {
       reader.setStrictness(Strictness.STRICT);
       if (reader.peek() != JsonToken.BEGIN_OBJECT) {
@@ -94,6 +97,17 @@ final class ShowcaseJsonBody {
     if (depth >= MAX_DEPTH) {
       throw new ShowcaseLookupException(TOO_DEEP);
     }
+  }
+
+  /**
+   * Gson skips a leading byte order mark even when strict, but a strict reader such as {@code
+   * JSON.parse} in the BFF refuses it. Refuse it here too, so both sides accept the same bodies.
+   */
+  private static boolean startsWithByteOrderMark(byte[] body) {
+    return body.length >= 3
+        && body[0] == (byte) 0xEF
+        && body[1] == (byte) 0xBB
+        && body[2] == (byte) 0xBF;
   }
 
   /** Malformed UTF-8 fails the read instead of turning into replacement characters. */
