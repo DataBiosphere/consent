@@ -3,9 +3,11 @@ description: The translated primary and secondary data use terms of a Data Use o
 properties:
   primary:
     type: array
+    description: The primary data use terms; empty when there are none
     items:
       $ref: './DataUseTerm.yaml'
   secondary:
     type: array
+    description: The secondary data use terms; empty when there are none
     items:
       $ref: './DataUseTerm.yaml'

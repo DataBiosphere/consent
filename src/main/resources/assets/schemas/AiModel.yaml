@@ -1,5 +1,7 @@
 type: object
 description: An AI Model object.
+allOf:
+  - $ref: './AssetDataUse.yaml'
 properties:
   modelId:
     type: string
@@ -36,22 +38,6 @@ properties:
     description: The maintainer of the model.
     allOf:
       - $ref: './Maintainer.yaml'
-  accessManagement:
-    description: How access to the model is managed.
-    allOf:
-      - $ref: './AccessManagement.yaml'
-  dataUse:
-    description: >-
-      The model's data use terms. Optional. Each field must have its documented type, and
-      unknown fields are rejected. With `open` access management it must have no primary
-      term; otherwise, including when access management is absent, exactly one.
-    allOf:
-      - $ref: './DataUse.yaml'
-  dataUseSummary:
-    readOnly: true
-    description: The translated `dataUse` terms, computed by the server on read. Never stored; ignored on write.
-    allOf:
-      - $ref: './DataUseSummary.yaml'
   tags:
     type: array
     items:

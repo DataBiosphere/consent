@@ -1,5 +1,7 @@
 type: object
 description: An analysis Workspace object.
+allOf:
+  - $ref: './AssetDataUse.yaml'
 properties:
   workspaceId:
     type: string
@@ -33,22 +35,6 @@ properties:
     type: string
     deprecated: true
     description: Free-text access level of the workspace. Superseded by `accessManagement`.
-  accessManagement:
-    description: How access to the workspace is managed.
-    allOf:
-      - $ref: './AccessManagement.yaml'
-  dataUse:
-    description: >-
-      The workspace's data use terms. Optional. Each field must have its documented type, and
-      unknown fields are rejected. With `open` access management it must have no primary
-      term; otherwise, including when access management is absent, exactly one.
-    allOf:
-      - $ref: './DataUse.yaml'
-  dataUseSummary:
-    readOnly: true
-    description: The translated `dataUse` terms, computed by the server on read. Never stored; ignored on write.
-    allOf:
-      - $ref: './DataUseSummary.yaml'
   tags:
     type: array
     items:

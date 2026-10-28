@@ -46,7 +46,7 @@ properties:
     description: Publishing results to the scientific community is required (PUB)
   publicationMoratorium:
     type: [string, 'null']
-    description: Publication moratorium end date (MOR)
+    description: Publication moratorium end date (MOR), as free text shown in the summary as sent
   aiLlmUse:
     type: [boolean, 'null']
     description: Use for AI and large language model development
@@ -55,7 +55,7 @@ properties:
     description: Use as a control set for other diseases is prohibited (NCTRL)
   gender:
     type: [string, 'null']
-    description: Research limited to one sex, `Male` (POP-M) or `Female` (POP-F)
+    description: Research limited to one sex, `Male` (POP-M) or `Female` (POP-F), matched ignoring case; other values are stored but have no effect
   pediatric:
     type: [boolean, 'null']
     description: Pediatric research only (POP-PD)
