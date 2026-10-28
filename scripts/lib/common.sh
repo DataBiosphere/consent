@@ -55,7 +55,10 @@ clone_helmfile() {
   # The SSH error is above. Show the HTTPS error too, because it can be the useful one, for
   # example when REF does not exist.
   echo "The HTTPS clone said:" >&2
-  echo "$https_error" | sed 's/^/  /' >&2
+  local line
+  while IFS= read -r line; do
+    echo "  $line" >&2
+  done <<< "$https_error"
   echo "ERROR: Could not clone terra-helmfile at $ref over HTTPS or SSH. Check that $ref exists, and that your git credentials or SSH key can read broadinstitute/terra-helmfile." >&2
   return 1
 }
