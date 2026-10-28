@@ -32,6 +32,25 @@ properties:
   access:
     type: string
     description: The access level of the workspace.
+  accessManagement:
+    type: string
+    description: How access to the workspace is managed.
+    enum:
+      - open
+      - controlled
+      - external
+  dataUse:
+    description: >-
+      The workspace's data use terms. Optional. Each field must have its documented type, and
+      unknown fields are rejected. With `open` access management it must have no primary
+      term; otherwise, including when access management is absent, exactly one.
+    allOf:
+      - $ref: './DataUseObject.yaml'
+  dataUseSummary:
+    readOnly: true
+    description: The translated `dataUse` terms. Computed by the server and never stored; ignored on write.
+    allOf:
+      - $ref: './DataUseSummary.yaml'
   tags:
     type: array
     items:

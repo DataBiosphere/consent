@@ -1,0 +1,11 @@
+type: object
+description: The translated primary and secondary data use terms of a Data Use object
+properties:
+  primary:
+    type: array
+    items:
+      $ref: './DataUse.yaml'
+  secondary:
+    type: array
+    items:
+      $ref: './DataUse.yaml'

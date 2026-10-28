@@ -1,0 +1,82 @@
+type: object
+description: >-
+  The Data Use question/answer set. Absent or null fields are unset. See the
+  [schema definition](https://consent-ontology.dsde-prod.broadinstitute.org/schemas/data-use).
+properties:
+  generalUse:
+    type: boolean
+    description: General research use (GRU), a primary term
+  hmbResearch:
+    type: boolean
+    description: Health/medical/biomedical research (HMB), a primary term
+  diseaseRestrictions:
+    type: array
+    description: Disease ontology IRIs for disease-specific research (DS), a primary term
+    items:
+      type: string
+  populationOriginsAncestry:
+    type: boolean
+    description: Populations, origins or ancestry research (POA), a primary term
+  other:
+    type: string
+    description: Other primary restriction, as free text (OTHER)
+  methodsResearch:
+    type: boolean
+    description: Methods development research (NMDS)
+  nonProfitUse:
+    type: boolean
+    description: Non-profit and non-commercial use only (NPU)
+  secondaryOther:
+    type: string
+    description: Other secondary restriction, as free text
+  ethicsApprovalRequired:
+    type: boolean
+    description: Local ethics committee approval is required (IRB)
+  collaboratorRequired:
+    type: boolean
+    description: Collaboration with the primary study investigators is required (COL)
+  geographicalRestrictions:
+    type: string
+    description: Geographical restrictions, as free text (GS)
+  geneticStudiesOnly:
+    type: boolean
+    description: Genetic studies only (GSO)
+  publicationResults:
+    type: boolean
+    description: Publishing results to the scientific community is required (PUB)
+  publicationMoratorium:
+    type: string
+    description: Publication moratorium end date (MOR)
+  aiLlmUse:
+    type: boolean
+    description: Use for AI and large language model development
+  controls:
+    type: boolean
+    description: Use as a control set for other diseases is prohibited (NCTRL)
+  gender:
+    type: string
+    description: Research limited to one sex, `Male` (RS-M) or `Female` (RS-FM)
+  pediatric:
+    type: boolean
+    description: Pediatric research only (RS-PD)
+  population:
+    type: boolean
+    description: Study of variation in the general population (POP)
+  illegalBehavior:
+    type: boolean
+    description: Research purpose studies illegal behavior
+  sexualDiseases:
+    type: boolean
+    description: Research purpose studies sexual diseases
+  stigmatizeDiseases:
+    type: boolean
+    description: Research purpose studies stigmatizing diseases
+  vulnerablePopulations:
+    type: boolean
+    description: Research purpose studies vulnerable populations
+  psychologicalTraits:
+    type: boolean
+    description: Research purpose studies psychological traits
+  notHealth:
+    type: boolean
+    description: Research purpose is not health related

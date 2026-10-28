@@ -28,7 +28,7 @@ put:
     content:
       application/json:
         schema:
-          type: object
+          $ref: '../schemas/DataUseObject.yaml'
         example: { "generalUse": false, "hmbResearch": true, "diseaseRestrictions": ["http://purl.obolibrary.org/obo/DOID_602"] }
   tags:
     - Admin
