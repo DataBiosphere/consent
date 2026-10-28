@@ -17,6 +17,8 @@
 
 set -eu
 set -o pipefail
+# With CDPATH, `cd DIR` can print DIR, and then $(cd DIR && pwd) has the path two times.
+unset CDPATH
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
@@ -118,7 +120,7 @@ write_certs() {
   key_pub=$(openssl pkey -pubout -in "$stage/server.key" 2> /dev/null) || error "server.key is not a private key."
   [[ "$cert_pub" == "$key_pub" ]] || error "server.key does not match server.crt."
   openssl x509 -noout -in "$stage/ca-bundle.crt" 2> /dev/null || error "ca-bundle.crt is not a certificate."
-  mv "$stage/server.crt" "$stage/server.key" "$stage/ca-bundle.crt" "$CONFIG_DIR/"
+  move_into_place "$stage" "$CONFIG_DIR" server.crt server.key ca-bundle.crt
 }
 
 write_chart_configs() {
@@ -134,10 +136,14 @@ write_chart_configs() {
       cp -p "$CONFIG_DIR/$f" "$CONFIG_DIR/$f.bak"
     fi
   done
-  mv "$stage/consent.yaml" "$stage/site.conf" "$stage/oauth2.conf" "$CONFIG_DIR/"
+  move_into_place "$stage" "$CONFIG_DIR" consent.yaml site.conf oauth2.conf
 }
 
 parse_cli_args "$@"
+# Check this before the certs step, which is slow.
+if [[ "$WRITE_CHART_CONFIGS" == "false" && ( "$HELMFILE_REF_SET" == "true" || -n "$HELMFILE_DIR" ) ]]; then
+  error "--helmfile_ref and --helmfile_dir need --write_chart_configs true."
+fi
 # config/ holds secrets. Mode 700 keeps other users on this machine out of it. The script sets the
 # mode only on config/ and on a folder that it makes, not on an existing folder such as ~.
 if [[ ! -d "$CONFIG_DIR" || "$CONFIG_DIR" == "$REPO_ROOT/config" ]]; then

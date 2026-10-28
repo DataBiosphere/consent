@@ -10,9 +10,10 @@
 clone_helmfile() {
   local ref="$1" dest="$2"
   shift 2
+  local https_error
   rm -rf "$dest"
-  if GIT_TERMINAL_PROMPT=0 git clone --quiet --depth 1 --branch "$ref" "$@" \
-    https://github.com/broadinstitute/terra-helmfile.git "$dest" 2> /dev/null; then
+  if https_error=$(GIT_TERMINAL_PROMPT=0 git clone --quiet --depth 1 --branch "$ref" "$@" \
+    https://github.com/broadinstitute/terra-helmfile.git "$dest" 2>&1); then
     return 0
   fi
   echo "Could not clone terra-helmfile over HTTPS. Trying SSH." >&2
@@ -21,8 +22,29 @@ clone_helmfile() {
     git@github.com:broadinstitute/terra-helmfile.git "$dest"; then
     return 0
   fi
-  echo "ERROR: Could not clone terra-helmfile at $ref over HTTPS or SSH. Check that your git credentials or SSH key can read broadinstitute/terra-helmfile." >&2
+  # The SSH error is above. Show the HTTPS error too, because it can be the useful one, for
+  # example when REF does not exist.
+  echo "The HTTPS clone said:" >&2
+  echo "$https_error" | sed 's/^/  /' >&2
+  echo "ERROR: Could not clone terra-helmfile at $ref over HTTPS or SSH. Check that $ref exists, and that your git credentials or SSH key can read broadinstitute/terra-helmfile." >&2
   return 1
+}
+
+# Move FILES from STAGE into DEST. STAGE must be on the same file system as DEST, so that each move
+# is a rename. A rename into a folder that the script can write fails only if the target is a
+# folder. So check all the targets first: then a step does not stop with only some files moved.
+move_into_place() {
+  local stage="$1" dest="$2" f
+  shift 2
+  for f in "$@"; do
+    if [[ -d "$dest/$f" ]]; then
+      echo "ERROR: $dest/$f is a folder. Remove it, then run the script again." >&2
+      exit 1
+    fi
+  done
+  for f in "$@"; do
+    mv "$stage/$f" "$dest/$f"
+  done
 }
 
 # Check that a flag value is true or false.
