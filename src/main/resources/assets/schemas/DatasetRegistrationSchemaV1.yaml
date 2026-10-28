@@ -178,7 +178,8 @@ properties:
   alternativeDataSharingPlan:
     type: boolean
     description: Are you requesting an Alternative Data Sharing Plan for samples that
-      cannot be shared through a public repository or database?
+      cannot be shared through a public repository or database? In responses, true when the
+      study has a plan file or the study property is true.
   alternativeDataSharingPlanReasons:
     type: array
     description: Please mark the reasons for which you are requesting an Alternative Data Sharing Plan (check all that apply)
@@ -198,7 +199,8 @@ properties:
     description: Explanation of Request
   alternativeDataSharingPlanFileName:
     type: string
-    description: Upload your alternative sharing plan (file upload)
+    description: Upload your alternative sharing plan (file upload). Absent from responses when
+      the caller does not have the Admin, Data Submitter, or Chairperson role.
   alternativeDataSharingPlanDataSubmitted:
     type: string
     description: Upload your alternative sharing plan (file upload)

@@ -321,8 +321,8 @@ owner approves the ranking and scope in the PR rather than a list. Ranking runs 
 so private datasets never influence or appear in a ranked shelf.
 
 Two illustrative shelf fragments (the outer names are labels, not registry keys), and the lookup
-request each produces. The `scope.dac` key and its value type are provisional until S2.1 fixes the
-scope vocabulary:
+request each produces. S2.1 fixed the scope vocabulary (`scope.dac`, exact DAC names; see the S2.1
+section of `data-showcase-contracts.md`):
 
 ```json
 {
@@ -347,12 +347,13 @@ scope vocabulary:
   "scope": { "dac": ["Example DAC"] }, "limit": 12, "pin": ["DUOS-000789"], "exclude": ["DUOS-000111"] }
 ```
 
-Each returned summary carries only S2.1's approved fields. The field names below are proposed and
-finalized in S2.1:
+Each returned summary carries only S2.1's approved fields, listed in the S2.1 section of
+`data-showcase-contracts.md`. Every key is present; unknown values are `null`:
 
 ```json
 { "identifier": "DUOS-000789", "title": "Example Cohort", "accessManagement": "controlled",
-  "dacName": "Example DAC", "participantCount": 5400, "availableDate": "2026-09-30" }
+  "dacName": "Example DAC", "consentCodes": ["HMB"], "participantCount": 5400,
+  "availableDate": "2026-09-30", "accessUrl": null, "species": null }
 ```
 
 An unresolved identifier returns a separate response variant,

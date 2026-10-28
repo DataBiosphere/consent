@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.ALTERNATIVE_DATA_SHARING_PLAN;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanFileName;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -17,6 +19,7 @@ import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,7 +120,7 @@ public class DatasetService implements ConsentLogger {
     if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {
       return null;
     }
-    return verifyPublicVisibilityAccess(d, user);
+    return redactRestrictedFiles(verifyPublicVisibilityAccess(d, user), user);
   }
 
   /**
@@ -144,7 +147,7 @@ public class DatasetService implements ConsentLogger {
     if (d.getStudyId() != null && populateStudy) {
       d.setStudy(studyDAO.findStudyById(d.getStudyId()));
     }
-    return verifyPublicVisibilityAccess(d, user);
+    return redactRestrictedFiles(verifyPublicVisibilityAccess(d, user), user);
   }
 
   protected List<DatasetStudySummary> verifyPublicVisibilityAccess(
@@ -341,7 +344,7 @@ public class DatasetService implements ConsentLogger {
 
   public Dataset findDatasetById(User user, Integer id) {
     Dataset dataset = datasetDAO.findDatasetById(id);
-    return verifyPublicVisibilityAccess(dataset, user);
+    return redactRestrictedFiles(verifyPublicVisibilityAccess(dataset, user), user);
   }
 
   /**
@@ -367,7 +370,7 @@ public class DatasetService implements ConsentLogger {
     if (basis == null) {
       throw new ForbiddenException("User does not have permission");
     }
-    return new DatasetRead(dataset, basis);
+    return new DatasetRead(redactRestrictedFiles(dataset, user), basis);
   }
 
   /**
@@ -461,7 +464,7 @@ public class DatasetService implements ConsentLogger {
     if (study == null) {
       throw new NotFoundException("Entity not found");
     }
-    return verifyStudyVisibilityAccess(study, user);
+    return redactRestrictedFiles(verifyStudyVisibilityAccess(study, user), user);
   }
 
   public List<DatasetStudySummary> findAllDatasetStudySummaries(User user) {
@@ -545,6 +548,7 @@ public class DatasetService implements ConsentLogger {
   public List<Dataset> findDatasetsByIds(User user, List<Integer> datasetIds) {
     return datasetDAO.findDatasetsByIdList(datasetIds).stream()
         .filter(d -> verifyPublicVisibilityAccess(d, user) != null)
+        .map(d -> redactRestrictedFiles(d, user))
         .toList();
   }
 
@@ -582,7 +586,53 @@ public class DatasetService implements ConsentLogger {
     return datasets.stream()
         .filter(d -> Objects.equals(d.getStudyId(), study.getStudyId()))
         .filter(d -> studyReadable || verifyPublicVisibilityAccess(d, user) != null)
+        .map(d -> redactRestrictedFiles(d, user))
         .toList();
+  }
+
+  /**
+   * Removes the NIH Institutional Certification and the Alternative Data Sharing Plan from a
+   * dataset that a user reads, unless that user can retrieve those documents.
+   *
+   * <p>A user who can read a dataset or study cannot always retrieve its documents. The documents
+   * API in {@link FileStorageObjectService} gives them only to the roles in its read role sets, so
+   * a user outside those roles must not see the file metadata either, the file name in particular.
+   * The study also stores the plan's file name as a property, so that property goes too.
+   *
+   * <p>The rule must not be stricter than the role check on the NIH certification download, which
+   * reads the file from {@link #findDatasetById(User, Integer)}.
+   */
+  private Dataset redactRestrictedFiles(Dataset dataset, User user) {
+    if (dataset == null) {
+      return null;
+    }
+    if (!hasAnyRole(user, FileStorageObjectService.DATASET_READ_ROLES)) {
+      dataset.setNihInstitutionalCertificationFile(null);
+    }
+    redactRestrictedFiles(dataset.getStudy(), user);
+    return dataset;
+  }
+
+  /**
+   * See {@link #redactRestrictedFiles(Dataset, User)}. Older studies and plan uploads through
+   * /api/document/study have the file but not the boolean property, so the property is set here
+   * before the file is removed. All users then see the same plan flag in the registration schema.
+   */
+  private Study redactRestrictedFiles(Study study, User user) {
+    if (study != null && !hasAnyRole(user, FileStorageObjectService.STUDY_READ_ROLES)) {
+      if (study.getAlternativeDataSharingPlan() != null) {
+        study.getProperties().removeIf(p -> ALTERNATIVE_DATA_SHARING_PLAN.equals(p.getKey()));
+        study.addProperty(
+            new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN, Boolean.TRUE, PropertyType.Boolean));
+      }
+      study.setAlternativeDataSharingPlan(null);
+      study.getProperties().removeIf(p -> alternativeDataSharingPlanFileName.equals(p.getKey()));
+    }
+    return study;
+  }
+
+  private static boolean hasAnyRole(User user, UserRoles... roles) {
+    return Arrays.stream(roles).anyMatch(user::hasUserRole);
   }
 
   public List<ApprovedDataset> getApprovedDatasets(User user) {
