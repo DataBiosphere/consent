@@ -19,6 +19,13 @@ public class GsonUtil {
           .registerTypeAdapterFactory(new JsonValueEnumTypeAdapterFactory())
           .create();
 
+  private static final Gson NULL_SERIALIZING_INSTANCE =
+      gsonBuilderWithAdapters().serializeNulls().create();
+
+  /**
+   * The default instance, also used by {@link JerseyGsonProvider} for request and response bodies.
+   * Drops null fields and ignores Jackson's {@code @JsonValue} on enums.
+   */
   public static Gson getInstance() {
     if (Objects.isNull(instance)) {
       instance = buildGson();
@@ -35,6 +42,15 @@ public class GsonUtil {
    */
   public static Gson getRegistrationInstance() {
     return REGISTRATION_INSTANCE;
+  }
+
+  /**
+   * Writes null fields as {@code null} instead of dropping them, for responses that must always
+   * have every key, such as the planned Data Showcase summaries. Unlike {@link
+   * #getRegistrationInstance()}, it ignores Jackson's {@code @JsonValue} on enums.
+   */
+  public static Gson getNullSerializingInstance() {
+    return NULL_SERIALIZING_INSTANCE;
   }
 
   public static GsonBuilder gsonBuilderWithAdapters() {
