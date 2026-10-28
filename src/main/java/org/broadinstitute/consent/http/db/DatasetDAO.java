@@ -26,11 +26,13 @@ import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
+import org.broadinstitute.consent.http.models.ShowcaseStatsResponse;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -986,6 +988,39 @@ WHERE dar.submission_date > now() - interval '8760 hours'
   List<Integer> findShowcaseAliasPage(
       @Bind("afterAlias") int afterAlias,
       @Bind("limit") int limit,
+      @Bind("accessManagementProperty") String accessManagementProperty,
+      @Bind("legacyAccessManagementProperty") String legacyAccessManagementProperty);
+
+  /**
+   * The catalog-eligible datasets and their distinct studies, for the {@code stats} mode.
+   *
+   * @param dacNames exact DAC names to count, or null for the whole catalog; an empty list counts
+   *     nothing
+   */
+  default ShowcaseStatsResponse countShowcaseDatasets(Collection<String> dacNames) {
+    if (dacNames != null && dacNames.isEmpty()) {
+      return new ShowcaseStatsResponse(0, 0);
+    }
+    return countShowcaseDatasets(
+        dacNames != null,
+        dacNames == null ? List.of() : dacNames,
+        Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
+        Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
+  }
+
+  @RegisterConstructorMapper(ShowcaseStatsResponse.class)
+  @SqlQuery(
+      "SELECT COUNT(DISTINCT d.study_id) AS study_count, COUNT(*) AS dataset_count "
+          + SHOWCASE_ELIGIBILITY_JOINS
+          + "WHERE "
+          + SHOWCASE_ELIGIBLE
+          + """
+          AND (:scopeByDac = false OR dac.name IN (<dacNames>))
+      """)
+  ShowcaseStatsResponse countShowcaseDatasets(
+      @Bind("scopeByDac") boolean scopeByDac,
+      @BindList(value = "dacNames", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<String> dacNames,
       @Bind("accessManagementProperty") String accessManagementProperty,
       @Bind("legacyAccessManagementProperty") String legacyAccessManagementProperty);
 }

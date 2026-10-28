@@ -20,12 +20,15 @@ import java.util.List;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.ShowcaseLookupResponse;
 import org.broadinstitute.consent.http.models.ShowcasePageResponse;
+import org.broadinstitute.consent.http.models.ShowcaseStatsResponse;
 import org.broadinstitute.consent.http.models.ShowcaseUnavailableResult;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseAllLookup;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseCatalogService;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseIdentifiersLookup;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupLimits;
+import org.broadinstitute.consent.http.service.showcase.ShowcaseScope;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseSection;
+import org.broadinstitute.consent.http.service.showcase.ShowcaseStatsLookup;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,6 +107,21 @@ class PublicShowcaseCatalogResourceTest {
     assertNoStore(response);
     assertEquals(
         JsonParser.parseString("{ \"datasets\": [], \"nextCursor\": null }"),
+        JsonParser.parseString(response.readEntity(String.class)));
+  }
+
+  /** The duos-ui {@code lookupExamples} partner hero example. */
+  @Test
+  void testStats() {
+    when(service.lookup(new ShowcaseStatsLookup(new ShowcaseScope(List.of("Example DAC")))))
+        .thenReturn(new ShowcaseStatsResponse(14, 37));
+
+    Response response = post("{ \"mode\": \"stats\", \"scope\": { \"dac\": [\"Example DAC\"] } }");
+
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    assertNoStore(response);
+    assertEquals(
+        JsonParser.parseString("{ \"studyCount\": 14, \"datasetCount\": 37 }"),
         JsonParser.parseString(response.readEntity(String.class)));
   }
 

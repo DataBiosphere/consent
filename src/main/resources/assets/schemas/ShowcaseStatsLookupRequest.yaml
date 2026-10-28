@@ -1,0 +1,13 @@
+type: object
+description: >
+  Counts for a hero: the catalog-eligible datasets in the scope, or in the whole catalog without
+  one, and their distinct studies. Section rules do not apply.
+additionalProperties: false
+required:
+  - mode
+properties:
+  mode:
+    type: string
+    enum: [stats]
+  scope:
+    $ref: './ShowcaseScope.yaml'

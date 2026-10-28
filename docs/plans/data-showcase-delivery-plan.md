@@ -595,7 +595,8 @@ S1.1; the lookup feeds E3.
   versioned and bound to the mode. Decisions pending review: pins must pass section and scope
   eligibility but need no date; `scope.dac: []` matches nothing; same-date ties are in
   ascending identifier order; the ranking sections that S6.1 adds answer "Unknown section"
-  until then.
+  until then. The `stats` mode counts catalog-eligible datasets, with no section rule, and
+  their distinct studies in one query; `scope.dac: []` counts nothing.
 - **Backend — rate limit:** add an anonymous per-client-IP rate limit for `/showcase/*` in Consent
   (section 3, Failure/limits): either extend `RateLimitFilter` with a public-path branch or add a
   dedicated filter. It answers 429 with `Retry-After` and is enabled independently of the

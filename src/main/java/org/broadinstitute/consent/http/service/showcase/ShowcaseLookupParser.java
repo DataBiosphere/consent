@@ -10,7 +10,7 @@ import java.util.Set;
  * ShowcaseJsonBody}). Every field must belong to the request's mode, and every value must have the
  * agreed type and stay within {@link ShowcaseLookupLimits}.
  *
- * <p>The {@code stats} mode follows in a later pull request and is an unknown mode until then.
+ * <p>The {@code stats} mode takes an optional {@code scope} and nothing else.
  */
 public final class ShowcaseLookupParser {
 
@@ -25,11 +25,13 @@ public final class ShowcaseLookupParser {
   private static final String ALL = "all";
   private static final String PAGE_SIZE = "pageSize";
   private static final String CURSOR = "cursor";
+  private static final String STATS = "stats";
 
   private static final Set<String> IDENTIFIERS_FIELDS = Set.of(MODE, SECTION, IDENTIFIERS);
   private static final Set<String> RANKING_FIELDS =
       Set.of(MODE, SECTION, RANKING, SCOPE, LIMIT, PIN, EXCLUDE);
   private static final Set<String> ALL_FIELDS = Set.of(MODE, PAGE_SIZE, CURSOR);
+  private static final Set<String> STATS_FIELDS = Set.of(MODE, SCOPE);
 
   private ShowcaseLookupParser() {}
 
@@ -44,6 +46,7 @@ public final class ShowcaseLookupParser {
       case IDENTIFIERS -> identifiersLookup(request);
       case RANKING -> rankingLookup(request);
       case ALL -> allLookup(request);
+      case STATS -> statsLookup(request);
       default -> throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(mode));
     };
   }
@@ -90,6 +93,11 @@ public final class ShowcaseLookupParser {
     Integer afterAlias =
         request.optionalString(CURSOR).map(ShowcaseLookupParser::cursor).orElse(null);
     return new ShowcaseAllLookup(pageSize, afterAlias);
+  }
+
+  private static ShowcaseStatsLookup statsLookup(ShowcaseRequestFields request) {
+    request.rejectUnrecognized(STATS_FIELDS);
+    return new ShowcaseStatsLookup(request.optionalScope(SCOPE).orElse(null));
   }
 
   private static int cursor(String cursor) {

@@ -92,9 +92,9 @@ class ShowcaseLookupParserTest {
     assertRejected("{ %s, \"identifiers\": [] }".formatted(SECTION), "Missing field \"mode\"");
   }
 
-  /** The other modes arrive in later pull requests; until then they are unknown. */
+  /** Mode names match exactly. */
   @ParameterizedTest
-  @ValueSource(strings = {"stats", "IDENTIFIERS", "Ranking", ""})
+  @ValueSource(strings = {"STATS", "count", "IDENTIFIERS", "Ranking", ""})
   void testUnknownMode(String mode) {
     assertRejected("{ \"mode\": %s }".formatted(quoted(mode)), "Unknown mode \"" + mode + "\"");
   }
