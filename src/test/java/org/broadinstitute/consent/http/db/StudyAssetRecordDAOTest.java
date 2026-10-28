@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonParser;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.models.StudyAssetKey;
@@ -215,6 +216,33 @@ class StudyAssetRecordDAOTest extends DAOTestHelper {
     assetDAO.retireModelsExcept(studyId, List.of());
 
     assertEquals(0, assetDAO.retireModelsExcept(studyId, List.of()));
+  }
+
+  @Test
+  void testRetireRejectsANullListOrNullId() {
+    Integer studyId = insertStudy();
+    assetDAO.insertModels(List.of(model(null, studyId, null, "A")));
+    List<Integer> withNull = new ArrayList<>();
+    withNull.add(null);
+
+    assertThrows(IllegalArgumentException.class, () -> assetDAO.retireModelsExcept(studyId, null));
+    assertThrows(
+        IllegalArgumentException.class, () -> assetDAO.retireModelsExcept(studyId, withNull));
+    assertThrows(
+        IllegalArgumentException.class, () -> assetDAO.retireWorkspacesExcept(studyId, null));
+    assertThrows(
+        IllegalArgumentException.class, () -> assetDAO.retireBiospecimensExcept(studyId, withNull));
+    assertEquals(1, assetDAO.findLiveModels(studyId).size());
+  }
+
+  @Test
+  void testEmptyBatchesReturnEmpty() {
+    assertTrue(assetDAO.insertModels(List.of()).isEmpty());
+    assertTrue(assetDAO.insertWorkspaces(List.of()).isEmpty());
+    assertTrue(assetDAO.insertBiospecimens(List.of()).isEmpty());
+    assertEquals(0, assetDAO.updateModels(List.of()).length);
+    assertEquals(0, assetDAO.updateWorkspaces(List.of()).length);
+    assertEquals(0, assetDAO.updateBiospecimens(List.of()).length);
   }
 
   @Test

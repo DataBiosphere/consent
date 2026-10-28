@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.models.StudyAssetKey;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
 import org.broadinstitute.consent.http.models.StudyModelRecord;
@@ -69,7 +70,11 @@ public interface StudyAssetRecordDAO {
       UPDATE study_model SET retired_date = now(), update_date = now()
       WHERE study_id = :studyId AND retired_date IS NULL AND model_id <> ALL(:keepIds)
       """)
-  int retireModelsExcept(@Bind("studyId") Integer studyId, @Bind("keepIds") List<Integer> keepIds);
+  int retireModelsNotIn(@Bind("studyId") Integer studyId, @Bind("keepIds") List<Integer> keepIds);
+
+  default int retireModelsExcept(Integer studyId, List<Integer> keepIds) {
+    return retireModelsNotIn(studyId, requireKeepIds(keepIds));
+  }
 
   @SqlBatch(
       """
@@ -119,8 +124,12 @@ public interface StudyAssetRecordDAO {
       UPDATE study_workspace SET retired_date = now(), update_date = now()
       WHERE study_id = :studyId AND retired_date IS NULL AND workspace_id <> ALL(:keepIds)
       """)
-  int retireWorkspacesExcept(
+  int retireWorkspacesNotIn(
       @Bind("studyId") Integer studyId, @Bind("keepIds") List<Integer> keepIds);
+
+  default int retireWorkspacesExcept(Integer studyId, List<Integer> keepIds) {
+    return retireWorkspacesNotIn(studyId, requireKeepIds(keepIds));
+  }
 
   @SqlBatch(
       """
@@ -180,6 +189,18 @@ public interface StudyAssetRecordDAO {
       UPDATE study_biospecimen SET retired_date = now(), update_date = now()
       WHERE study_id = :studyId AND retired_date IS NULL AND biospecimen_id <> ALL(:keepIds)
       """)
-  int retireBiospecimensExcept(
+  int retireBiospecimensNotIn(
       @Bind("studyId") Integer studyId, @Bind("keepIds") List<Integer> keepIds);
+
+  default int retireBiospecimensExcept(Integer studyId, List<Integer> keepIds) {
+    return retireBiospecimensNotIn(studyId, requireKeepIds(keepIds));
+  }
+
+  /** {@code <> ALL} is NULL, so retires nothing, when the list or any element is null. */
+  private static List<Integer> requireKeepIds(List<Integer> keepIds) {
+    if (keepIds == null || keepIds.stream().anyMatch(Objects::isNull)) {
+      throw new IllegalArgumentException("keepIds must be a list with no null ids");
+    }
+    return keepIds;
+  }
 }
