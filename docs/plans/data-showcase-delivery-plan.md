@@ -591,7 +591,8 @@ S1.1; the lookup feeds E3.
   first, then `ranking` (`newest`) and `all`, then `stats`. The resource reads the raw body, so
   the 64 KiB check covers a declared length and a chunked body. The `open-access-datasets`
   section admits `open` datasets only. Rankings and pages read aliases only and then the S2.1
-  projection, through the shared `DatasetDAO.SHOWCASE_ELIGIBLE` SQL. The `all` cursor is opaque,
+  projection; each query repeats the summary query's eligibility SQL as one literal, because
+  Semgrep blocks joined `@SqlQuery` strings. The `all` cursor is opaque,
   versioned and bound to the mode. Decisions pending review: pins must pass section and scope
   eligibility but need no date; `scope.dac: []` matches nothing; same-date ties are in
   ascending identifier order; the ranking sections that S6.1 adds answer "Unknown section"
