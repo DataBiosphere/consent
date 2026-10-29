@@ -733,6 +733,39 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testSyncStudyUsesTheListReadsUseAndWritesOnlyItsRow() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(studyId, "Models", json, "\"not a list\"");
+    studyDAO.insertStudyProperty(studyId, "models", json, "[{\"name\": \"A\"}]");
+    studyDAO.insertStudyProperty(studyId, "models", json, "[{\"name\": \"B\"}]");
+
+    syncStudy(studyId);
+
+    List<StudyModelRecord> rows = assetDAO.findModelsByStudyId(studyId);
+    assertEquals(List.of("A"), rows.stream().map(StudyModelRecord::name).toList());
+    List<String> values = storedValues(studyId, "models");
+    assertEquals("\"not a list\"", values.get(0));
+    assertEquals(
+        rows.getFirst().modelId(),
+        idOf(JsonParser.parseString(values.get(1)).getAsJsonArray(), 0, "modelId"));
+    assertEquals("[{\"name\": \"B\"}]", values.get(2));
+  }
+
+  @Test
+  void testSyncStudyChangesOnlyTheAssetsRowItMovedFrom() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{\"models\": [{\"name\": \"A\"}]}");
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{\"models\": [{\"name\": \"B\"}]}");
+
+    syncStudy(studyId);
+
+    assertEquals("A", assetDAO.findModelsByStudyId(studyId).getFirst().name());
+    assertEquals(List.of("{\"models\": [{\"name\": \"B\"}]}"), storedValues(studyId, "assets"));
+  }
+
+  @Test
   void testSyncStudyLeavesTheRowsOfAMalformedList() throws Exception {
     Integer studyId = create(prop("models", "[{\"name\": \"A\"}]"));
     studyDAO.updateStudyProperty(studyId, "models", PropertyType.Json.toString(), "[{");
@@ -930,6 +963,23 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
                 .bind("key", key)
                 .mapTo(Integer.class)
                 .one());
+  }
+
+  /** Every row of a key in any case, in insertion order. */
+  private List<String> storedValues(Integer studyId, String key) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    SELECT value FROM study_property
+                    WHERE study_id = :studyId AND lower(key) = lower(:key)
+                    ORDER BY study_property_id
+                    """)
+                .bind("studyId", studyId)
+                .bind("key", key)
+                .mapTo(String.class)
+                .list());
   }
 
   private String storedValue(Integer studyId, String key) {

@@ -34,11 +34,17 @@ public interface StudyAssetRecordDAO {
   @RegisterConstructorMapper(StoredStudyProperty.class)
   @SqlQuery(
       """
-      SELECT key, type, value FROM study_property
+      SELECT study_property_id, key, type, value FROM study_property
       WHERE study_id = :studyId
       ORDER BY study_property_id
       """)
   List<StoredStudyProperty> findStudyProperties(@Bind("studyId") Integer studyId);
+
+  @SqlUpdate("UPDATE study_property SET value = :value WHERE study_property_id = :id")
+  void updateStudyPropertyValue(@Bind("id") Integer studyPropertyId, @Bind("value") String value);
+
+  @SqlUpdate("DELETE FROM study_property WHERE study_property_id = :id")
+  void deleteStudyProperty(@Bind("id") Integer studyPropertyId);
 
   @SqlBatch(
       """

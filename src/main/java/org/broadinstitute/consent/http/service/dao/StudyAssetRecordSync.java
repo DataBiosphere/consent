@@ -198,40 +198,38 @@ public class StudyAssetRecordSync implements ConsentLogger {
     JsonObject legacy = assetsProp.map(p -> parse(p).getAsJsonObject()).orElseGet(JsonObject::new);
     boolean movedAny = false;
     for (AssetType<?> type : TYPES) {
-      Optional<StoredStudyProperty> promoted = findProperty(props, type.key());
-      if (promoted.isPresent()) {
-        syncStored(dao, studyDAO, studyId, type, promoted.get());
+      List<StoredStudyProperty> promoted =
+          props.stream().filter(p -> type.key().equalsIgnoreCase(p.key())).toList();
+      // As StudyAssets reads it: the first row in any case that holds a list.
+      Optional<StoredStudyProperty> list =
+          promoted.stream().filter(p -> parse(p) instanceof JsonArray).findFirst();
+      if (list.isPresent()) {
+        syncStored(dao, studyId, type, list.get());
+      } else if (!promoted.isEmpty()) {
+        logWarn(
+            "Study %d: %s is not a list, so its rows were left as they are"
+                .formatted(studyId, type.key()));
       } else {
         movedAny |= moveLegacyList(dao, studyDAO, studyId, type, legacy);
       }
     }
     if (movedAny) {
-      StoredStudyProperty stored = assetsProp.orElseThrow();
+      Integer assetsId = assetsProp.orElseThrow().studyPropertyId();
       if (legacy.isEmpty()) {
-        studyDAO.deleteStudyPropertyByKey(studyId, stored.key());
+        dao.deleteStudyProperty(assetsId);
       } else {
-        studyDAO.updateStudyProperty(studyId, stored.key(), stored.type(), legacy.toString());
+        dao.updateStudyPropertyValue(assetsId, legacy.toString());
       }
     }
   }
 
   private void syncStored(
-      StudyAssetRecordDAO dao,
-      StudyDAO studyDAO,
-      Integer studyId,
-      AssetType<?> type,
-      StoredStudyProperty stored) {
-    JsonElement list = parse(stored);
-    if (list == null || !list.isJsonArray()) {
-      logWarn(
-          "Study %d: %s is not a list, so its rows were left as they are"
-              .formatted(studyId, type.key()));
-      return;
-    }
+      StudyAssetRecordDAO dao, Integer studyId, AssetType<?> type, StoredStudyProperty stored) {
+    JsonArray list = parse(stored).getAsJsonArray();
     String before = list.toString();
-    sync(dao, studyId, type, list.getAsJsonArray());
+    sync(dao, studyId, type, list);
     if (!list.toString().equals(before)) {
-      studyDAO.updateStudyProperty(studyId, stored.key(), stored.type(), list.toString());
+      dao.updateStudyPropertyValue(stored.studyPropertyId(), list.toString());
     }
   }
 
@@ -260,11 +258,6 @@ public class StudyAssetRecordSync implements ConsentLogger {
             studyDAO.insertStudyProperty(
                 studyId, type.key(), PropertyType.Json.toString(), entries.toString()));
     return legacyKey.isPresent();
-  }
-
-  private static Optional<StoredStudyProperty> findProperty(
-      List<StoredStudyProperty> props, String key) {
-    return props.stream().filter(p -> key.equalsIgnoreCase(p.key())).findFirst();
   }
 
   private static JsonElement parse(StoredStudyProperty prop) {
