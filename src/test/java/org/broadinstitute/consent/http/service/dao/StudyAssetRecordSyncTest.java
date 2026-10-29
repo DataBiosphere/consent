@@ -203,14 +203,56 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testIdsThatAreNotTextOrNumbersGetNewRowsWithoutLegacyKeys() throws Exception {
+    Integer studyId = create(prop("models", "[{\"modelId\": {\"a\": 1}}, {\"modelId\": true}]"));
+
+    List<StudyModelRecord> rows = assetDAO.findModelsByStudyId(studyId);
+    assertEquals(2, rows.size());
+    assertTrue(rows.stream().allMatch(row -> row.legacyKey() == null));
+    assertEquals(
+        rows.stream().map(StudyModelRecord::modelId).toList(),
+        ids(stored(studyId, "models"), "modelId"));
+  }
+
+  @Test
+  void testAPropertyWithNoValueRetiresItsRows() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"A\"}]"));
+    List<StudyProperty> props = List.of(new StudyProperty("models", null, PropertyType.Json));
+
+    jdbi.useTransaction(
+        handle -> new StudyAssetRecordSync().syncRegistration(handle, studyId, props));
+
+    assertTrue(assetDAO.findLiveModels(studyId).isEmpty());
+  }
+
+  @Test
+  void testAnUpdateThatMissesALiveRowFails() {
+    int[] missed = {1, 0};
+
+    StudyAssetRecordSync.requireAllLive(new int[] {1, 1}, 1, "models");
+    assertThrows(
+        IllegalStateException.class,
+        () -> StudyAssetRecordSync.requireAllLive(missed, 1, "models"));
+  }
+
+  @Test
   void testFieldsOfTheWrongTypeAreStoredAsNull() throws Exception {
     Integer studyId =
-        create(prop("models", "[{\"name\": 5, \"cloud\": [1], \"maintainer\": \"Lab\"}]"));
+        create(
+            prop(
+                "models",
+                """
+                [{"name": 5, "cloud": [1], "maintainer": "Lab", "description": {"a": 1},
+                  "tags": "t", "trainedOnDatasets": [{}], "url": null}]"""));
 
     StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
     assertNull(row.name());
     assertNull(row.cloud());
     assertNull(row.maintainer());
+    assertNull(row.description());
+    assertNull(row.tags());
+    assertNull(row.trainedOnDatasets());
+    assertNull(row.url());
     assertEquals(5, stored(studyId, "models").get(0).getAsJsonObject().get("name").getAsInt());
   }
 
@@ -294,6 +336,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
       delimiter = '|',
       value = {
         "7|7",
+        "true|",
         "7.0|7",
         "7e0|7",
         "7e-1|",

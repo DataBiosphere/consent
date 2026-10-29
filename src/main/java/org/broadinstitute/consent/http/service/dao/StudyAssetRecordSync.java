@@ -19,6 +19,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -220,7 +221,15 @@ public class StudyAssetRecordSync implements ConsentLogger {
   }
 
   private static String nonBlank(String value) {
-    return value == null || value.isBlank() ? null : value;
+    return StringUtils.isBlank(value) ? null : value;
+  }
+
+  /** The study row lock keeps a matched row live, so any other count is a bug. */
+  static void requireAllLive(int[] updateCounts, Integer studyId, String key) {
+    if (Arrays.stream(updateCounts).anyMatch(count -> count != 1)) {
+      throw new IllegalStateException(
+          "Study %d: a matched %s row was not live".formatted(studyId, key));
+    }
   }
 
   /** A type's live rows, each of which one entry per write can claim. */
@@ -272,10 +281,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
     }
 
     void apply(StudyAssetRecordDAO dao, Integer studyId, AssetType<R> type) {
-      if (!updates.isEmpty()
-          && Arrays.stream(type.update().apply(dao, updates)).anyMatch(count -> count != 1)) {
-        throw new IllegalStateException(
-            "Study %d: a matched %s row was not live".formatted(studyId, type.key()));
+      if (!updates.isEmpty()) {
+        requireAllLive(type.update().apply(dao, updates), studyId, type.key());
       }
       List<Integer> newIds = inserts.isEmpty() ? List.of() : type.insert().apply(dao, inserts);
       List<Integer> keepIds = new ArrayList<>(matchedIds);
