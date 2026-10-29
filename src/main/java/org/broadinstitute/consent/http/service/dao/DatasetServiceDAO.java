@@ -265,8 +265,7 @@ public class DatasetServiceDAO implements ConsentLogger {
   public StudyUpdateResult updateStudy(
       StudyUpdate studyUpdate,
       List<DatasetUpdate> datasetUpdates,
-      List<DatasetServiceDAO.DatasetInsert> datasetInserts)
-      throws SQLException {
+      List<DatasetServiceDAO.DatasetInsert> datasetInserts) {
     List<Integer> insertedDatasetIds = new ArrayList<>();
     jdbi.useTransaction(
         handle -> {
