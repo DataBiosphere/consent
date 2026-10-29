@@ -235,7 +235,7 @@ The rendered `site.conf` sends traffic to `localhost:8080`. In a pod, the proxy 
 one network, so `localhost` is the app. Local compose does the same: the proxy service uses
 `network_mode: service:app`. The script then does not need to change `site.conf`.
 
-The local values file has only two values:
+The local values file has only three values:
 
 ```yaml
 # The dev Elasticsearch hosts do not exist on a laptop. Use the compose `elastic` service.
@@ -243,7 +243,14 @@ elasticSearchServers:
   - elastic
 # One local instance. The chart uses this value for rateLimit.podCount.
 replicas: 1
+# Dev runs the Liquibase changesets in a separate Job before the deployment. Local has no such Job,
+# and a local database restored from an older dump needs the newer changesets.
+liquibaseRunOnStartup: true
 ```
+
+The chart adds the `liquibase.runOnStartup: true` block to `consent.yaml` only when
+`liquibaseRunOnStartup` is true. `terra-helmfile` added this value on 2026-10-27. If the rendered
+`consent.yaml` has no such block, for example from an older ref, the script shows a warning.
 
 All other values come from dev. This includes `rateLimit.enabled: true`, the database pool size,
 the JSON log layouts and `ServerName localhost`.
@@ -261,7 +268,6 @@ method, with values from `config/.env`. These flags are the only other local cha
 | `mailConfiguration.sendGridApiKey` | `-Ddw.mailConfiguration.sendGridApiKey=${SENDGRID_API_KEY}` | Placeholder in the template. Dev also replaces it. |
 | `googleStore.password` | `-Ddw.googleStore.password=` | Dev mounts a Yale key. Local uses ADC, per `DEVNOTES.md`. A blank value makes `GCSService` use ADC. |
 | `elasticSearch.authUser`, `authPassword` | Match `ELASTIC_PASSWORD` in compose | Dev sets these with flags for Elastic Cloud. |
-| `liquibase.runOnStartup` | `-Ddw.liquibase.runOnStartup=true` | Optional flag; the dev template omits it, so it is `false`. Dev runs the changesets in a separate Liquibase migration Job. The local database comes from an older dump and needs the newer changesets. |
 
 The team runs the app only with compose, so these flags are only in the compose template.
 `DEVNOTES.md` does not need a separate list for other run methods.
@@ -272,8 +278,8 @@ This is the full list of differences between the local stack and dev:
 
 | Where | Change |
 |---|---|
-| `local-values.yaml` | `elasticSearchServers`, `replicas` |
-| `-Ddw.*` flags | Database user and password, SendGrid key, `googleStore.password`, Elasticsearch credentials, `liquibase.runOnStartup` |
+| `local-values.yaml` | `elasticSearchServers`, `replicas`, `liquibaseRunOnStartup` |
+| `-Ddw.*` flags | Database user and password, SendGrid key, `googleStore.password`, Elasticsearch credentials |
 | Compose | No Sentry DSN. No Cloud SQL proxy: the database is a local Postgres container. |
 
 A pull request that adds a row to this table must give the reason in the PR.

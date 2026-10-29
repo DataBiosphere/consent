@@ -10,3 +10,7 @@ elasticSearchServers:
 
 # One local instance. The chart uses this value for rateLimit.podCount.
 replicas: 1
+
+# Dev runs the Liquibase changesets in a separate Job before the deployment. Local has no such Job,
+# and a local database restored from an older dump needs the newer changesets.
+liquibaseRunOnStartup: true
