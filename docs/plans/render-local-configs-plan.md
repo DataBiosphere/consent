@@ -235,7 +235,7 @@ The rendered `site.conf` sends traffic to `localhost:8080`. In a pod, the proxy 
 one network, so `localhost` is the app. Local compose does the same: the proxy service uses
 `network_mode: service:app`. The script then does not need to change `site.conf`.
 
-The local values file has only two values:
+The local values file has only three values:
 
 ```yaml
 # The dev Elasticsearch hosts do not exist on a laptop. Use the compose `elastic` service.
@@ -243,7 +243,14 @@ elasticSearchServers:
   - elastic
 # One local instance. The chart uses this value for rateLimit.podCount.
 replicas: 1
+# Dev runs the Liquibase changesets in a separate Job before the deployment. Local has no such Job,
+# and a local database restored from an older dump needs the newer changesets.
+liquibaseRunOnStartup: true
 ```
+
+The chart adds the `liquibase.runOnStartup: true` block to `consent.yaml` only when
+`liquibaseRunOnStartup` is true. `terra-helmfile` added this value on 2026-10-27. If the rendered
+`consent.yaml` has no such block, for example from an older ref, the script shows a warning.
 
 All other values come from dev. This includes `rateLimit.enabled: true`, the database pool size,
 the JSON log layouts and `ServerName localhost`.
@@ -261,7 +268,6 @@ method, with values from `config/.env`. These flags are the only other local cha
 | `mailConfiguration.sendGridApiKey` | `-Ddw.mailConfiguration.sendGridApiKey=${SENDGRID_API_KEY}` | Placeholder in the template. Dev also replaces it. |
 | `googleStore.password` | `-Ddw.googleStore.password=` | Dev mounts a Yale key. Local uses ADC, per `DEVNOTES.md`. A blank value makes `GCSService` use ADC. |
 | `elasticSearch.authUser`, `authPassword` | Match `ELASTIC_PASSWORD` in compose | Dev sets these with flags for Elastic Cloud. |
-| `liquibase.runOnStartup` | `-Ddw.liquibase.runOnStartup=true` | Optional flag; the dev template omits it, so it is `false`. Dev runs the changesets in a separate Liquibase migration Job. The local database comes from an older dump and needs the newer changesets. |
 
 The team runs the app only with compose, so these flags are only in the compose template.
 `DEVNOTES.md` does not need a separate list for other run methods.
@@ -272,8 +278,8 @@ This is the full list of differences between the local stack and dev:
 
 | Where | Change |
 |---|---|
-| `local-values.yaml` | `elasticSearchServers`, `replicas` |
-| `-Ddw.*` flags | Database user and password, SendGrid key, `googleStore.password`, Elasticsearch credentials, `liquibase.runOnStartup` |
+| `local-values.yaml` | `elasticSearchServers`, `replicas`, `liquibaseRunOnStartup` |
+| `-Ddw.*` flags | Database user and password, SendGrid key, `googleStore.password`, Elasticsearch credentials |
 | Compose | No Sentry DSN. No Cloud SQL proxy: the database is a local Postgres container. |
 
 A pull request that adds a row to this table must give the reason in the PR.
@@ -586,8 +592,8 @@ its base.
 | PR | Changes | Base |
 |---|---|---|
 | 1. Base and certs | This plan. `scripts/render-configs.sh` with the cert step, staged writes and the cluster check. A "Render Configs" section in `DEVNOTES.md`. (`DEVNOTES.md` already links to this section, but the section does not exist.) | `develop` |
-| 2. Chart configs | `scripts/render-chart-configs.sh`, `scripts/lib/common.sh` (shared helpers), `scripts/templates/local-values.yaml`, and the `--write_chart_configs`, `--helmfile_ref` and `--helmfile_dir` flags. `DEVNOTES.md` loses the "Configure" section, which tells developers to copy `src/test/resources/consent-config.yml` by hand. | PR 1 |
-| 3. Compose | `scripts/templates/docker-compose.yaml`, the `.env` step, `PROXY_IMAGE` from the chart step, and the `--write_compose`, `--fetch_sendgrid` and `--all` flags. Each compose command in `DEVNOTES.md` names both compose files. `DEVNOTES.md` loses the hand-made compose stanzas. | PR 2 |
+| 2. Chart configs | `scripts/render-chart-configs.sh`, `scripts/lib/common.sh` (shared helpers), `scripts/templates/local-values.yaml`, and the `--write_chart_configs`, `--helmfile_ref` and `--helmfile_dir` flags. Each step copies each old file that changes to a backup with the time in its name, such as `consent.yaml.20261028-153000.bak`. The rendered `consent.yaml` keeps the chart placeholders until PR 3 adds the `-Ddw.*` flags, so `DEVNOTES.md` keeps the "Configure" section. | PR 1 |
+| 3. Compose | `scripts/templates/docker-compose.yaml`, the `.env` step, `PROXY_IMAGE` from the chart step, and the `--write_compose`, `--fetch_sendgrid` and `--all` flags. Each compose command in `DEVNOTES.md` names both compose files. `DEVNOTES.md` loses the hand-made compose stanzas, and the "Configure" section, which tells developers to copy `src/test/resources/consent-config.yml` by hand. | PR 2 |
 | 4. Dump and index | `scripts/export-db.sh`, `scripts/index-es.sh`, and the `--export_db` and `--db_env` flags. `--all` also makes a dump when there is none. `scripts/db-connect.sh` moves to `cloud-sql-proxy` v2. It runs on the host and uses `psql`, so it keeps a host proxy on `127.0.0.1`. It uses port 5433, because the local compose database publishes port 5432. | PR 3 |
 | 5. Dev Container | `scripts/setup-devcontainer.sh`. In `.devcontainer/devcontainer.json`, the `kubectl-helm-minikube` feature, `postCreateCommand` and `forwardPorts`. `devcontainer-lock.json`. A "Dev Container" section in `DEVNOTES.md`, like the one in `duos-ui`. | PR 4 |
 
