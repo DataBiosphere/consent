@@ -37,6 +37,7 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
     validateConditionalFields(registration);
     validateEmailFields(registration);
     validateDateFields(registration);
+    validateAssets(existingStudy, registration);
     validateConsentGroupMembership(existingStudy, registration);
     validateConsentGroupNameChanges(existingDatasets, registration);
     validateConsentGroupRemoval(existingStudy, registration);
@@ -57,6 +58,13 @@ public class StudyUpdateRequestValidator extends StudyRegistrationRequestValidat
     Set<String> studyNames = datasetService.findAllStudyNames();
     if (studyNames.contains(registration.getStudyName())) {
       throw new BadRequestException("Invalid change to Study Name");
+    }
+  }
+
+  private void validateAssets(Study existingStudy, StudyUpdateRequest registration) {
+    List<String> violations = collectAssetViolations(registration, existingStudy.getProperties());
+    if (!violations.isEmpty()) {
+      throw new BadRequestException(String.join("; ", violations));
     }
   }
 

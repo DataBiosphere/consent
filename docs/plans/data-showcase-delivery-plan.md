@@ -173,9 +173,10 @@ database design would have stored: all 23 section keys in a `sections` object, t
 section, branding, nav labels and a `schemaVersion`. Keeping that shape means configs could become
 seed data for a database later without changing how pages render.
 
-- **Shared defaults.** A `defaultShowcase` object holds standard section enablement, nav labels,
-  neutral copy and the default theme. Partner configs spread it and override what differs, so a
-  new partner file is short. There is no separate template mechanism.
+- **Shared defaults.** A `defaultShowcase` object holds standard section enablement and the
+  default theme. Default nav labels belong to the section registry (S3.1); partners supply copy at
+  intake (S4.1) and the program owner approves it. Partner configs spread it and override what
+  differs, so a new partner file is short. There is no separate template mechanism.
 - **Keys.** The key is the stable identity used in routes, analytics and future subscriptions.
   It matches `^[a-z0-9]+(-[a-z0-9]+)*$`, cannot be `data` or `flagship`, and is never
   renamed or reused; a retired-keys list in the index is checked by the CI guard. Exactly one
@@ -491,9 +492,9 @@ foundational portions of 26/31.
 #### S1.3 — Shared defaults, assets and time-bounded content
 
 - **Frontend:** add `defaultShowcase` and a small set of accessible theme presets; primary/accent
-  overrides pass a CI contrast check in light and dark themes. Add the date-window filter with an
-  injectable clock for announcements, events and deadlines. Set the per-showcase asset budget and
-  lazy-loading convention.
+  overrides pass a CI contrast check in the light theme (dark themes are deferred until after the
+  MVP: DT-4376). Add the date-window filter with an injectable clock for announcements, events and
+  deadlines. Set the per-showcase asset budget and lazy-loading convention.
 - **Acceptance/tests:** a partner config that only overrides branding renders correctly; low-
   contrast overrides fail CI; fixed-clock tests show items appearing and expiring without a code
   change; over-budget assets fail CI.
@@ -654,10 +655,11 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
   loaders. Registry entries own fixed order, component, item type, default labels, `navigable` and
   renderability. Generate `/data` and `/showcase/:key` routes from the index, outside `Authenticated`.
 - **Frontend:** share accessible shelf, grid, featured-card and structured-panel primitives while
-  preserving their registry-specific layouts. Use template-owned typography and scoped light/dark
-  tokens; confirm whether system dark mode is part of the approved MVP. Reuse the application
-  footer with real destinations. Do not port the artifact's embedded fonts/assets and inline script
-  wholesale or treat its CSS as a production accessibility implementation.
+  preserving their registry-specific layouts. Use template-owned typography and scoped theme
+  tokens, so a dark theme can be added later; system dark mode is not part of the MVP (product
+  decision, 2026-10-28; DT-4376). Reuse the application footer with real destinations. Do not port
+  the artifact's embedded fonts/assets and inline script wholesale or treat its CSS as a production
+  accessibility implementation.
 - **Frontend/server:** gate routes by index `status` and a rollout flag, use S2.2's mode-aware
   public client, validate image origins and the configured legacy lookup origin, and retain the
   existing BFF CSP through same-origin proxying. Add no session dependency for anonymous reads.
