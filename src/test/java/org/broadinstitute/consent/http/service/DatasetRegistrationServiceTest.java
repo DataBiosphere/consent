@@ -1161,6 +1161,47 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     verify(gcsService).deleteDocument("plan");
   }
 
+  @Test
+  void testFailureAfterTheRegistrationWriteKeepsUploadedFiles() throws Exception {
+    User user = mock();
+    StudyRegistrationRequest schema = createRandomCompleteDatasetRegistration(user);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "plan"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetDAO.findDatasetsByIdList(any())).thenThrow(new RuntimeException("read failed"));
+
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            datasetRegistrationService.createDatasetsFromRegistration(
+                schema, user, Map.of("alternativeDataSharingPlan", textFile())));
+
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
+  @Test
+  void testFailedDatasetUpdateDeletesUploadedFiles() throws Exception {
+    User user = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(2);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "cert"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    doThrow(new SQLException("rejected")).when(datasetServiceDAO).updateDataset(any());
+
+    assertThrows(
+        SQLException.class,
+        () ->
+            datasetRegistrationService.updateDataset(
+                1,
+                user,
+                new org.broadinstitute.consent.http.models.DatasetUpdate("name", 2, List.of()),
+                Map.of("consentGroups[0].nihInstitutionalCertificationFile", textFile())));
+
+    verify(gcsService).deleteDocument("cert");
+  }
+
   private static FormDataBodyPart textFile() {
     FormDataBodyPart bodyPart = mock();
     when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
