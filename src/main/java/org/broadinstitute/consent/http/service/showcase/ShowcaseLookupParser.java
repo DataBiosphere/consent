@@ -50,7 +50,8 @@ public final class ShowcaseLookupParser {
     request.rejectUnrecognized(IDENTIFIERS_FIELDS);
     ShowcaseSection section = section(request);
     if (!section.isEditorial()) {
-      throw unknownSection(section.getSlug(), request);
+      throw new ShowcaseLookupException(
+          "Section \"%s\" does not take mode \"%s\"".formatted(section.getSlug(), request.mode()));
     }
     return new ShowcaseIdentifiersLookup(
         section, request.requiredIdentifiers(IDENTIFIERS, ShowcaseLookupLimits.MAX_IDENTIFIERS));

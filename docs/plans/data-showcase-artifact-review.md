@@ -67,7 +67,7 @@ blocks. They are not requirements; design sets the production values in S1.1.
 | Distinct app, research and event grids | App grid 3→1 columns at 900px; research area 2→1 at 760px; initiatives 3→2→1 at 900/600px; Where Else 4→2→1 at 900/520px | Shared primitives can have fixed per-type variants; a universal card-strip renderer would lose important visual structure. |
 | Two-column conference, workshop and program panels | Collapse at 760px; facts/history remain separate from description | Typed settings/forms must support structured information where visual fidelity matters. |
 | Serif headings, sans-serif body, monospaced labels/figures | Fraunces, IBM Plex Sans, IBM Plex Mono; blue/gray palette and subdued borders | Use template-owned typography and accessible theme tokens. Custom per-partner fonts are not necessary to reproduce the design. |
-| System light/dark modes | `prefers-color-scheme` plus `data-theme` overrides | Theme/contrast QA needs both supported modes; no visible mode switch or theme persistence is implemented. |
+| System light/dark modes | `prefers-color-scheme` plus `data-theme` overrides | The MVP supports the light theme only (product decision, 2026-10-28); dark mode and its theme/contrast QA are deferred to [DT-4376](https://broadworkbench.atlassian.net/browse/DT-4376). No visible mode switch or theme persistence is implemented. |
 | Decorative animated hero | `heroCanvas`, marked `aria-hidden`; requestAnimationFrame loop with reduced-motion still frame | A static CSS/SVG decoration is a simpler proposed MVP equivalent. Animation is not needed for discovery or publishing. |
 | Footer outside the section registry | Documentation, DACs, policies, support, GitHub and attribution | Reuse the app footer or provide approved fixed links. Do not create a 24th editable section implicitly. |
 
@@ -131,8 +131,9 @@ handling. These do not establish WCAG AA compliance. Specific implementation wor
 7. Charts include visible counts/legend and an SVG label, but their filter links are placeholders.
    Provide complete text/table equivalents and real keyboard-operable filter links. The illustrated
    three-way access breakdown also needs a policy for external/unknown catalog access types.
-8. Verify all supported light/dark foreground/background combinations, including faint metadata and
-   text on accent buttons. Do not assume the mockup palette passes contrast because a theme exists.
+8. Verify all supported foreground/background combinations, including faint metadata and text on
+   accent buttons. The MVP supports the light theme only; dark-theme combinations are checked in
+   DT-4376. Do not assume the mockup palette passes contrast because a theme exists.
 
 These findings extend S3.1–S3.3, S6.3 and S5.3 acceptance checks. They are corrections needed to
 deliver the requested quality bar, not reasons to discard the visual template.

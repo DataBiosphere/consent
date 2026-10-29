@@ -454,3 +454,18 @@ partner owner. **Source:** 19, 21, follow-up portion of 31. **Dependencies:** E1
   avoid deleting query definitions still used elsewhere. Prepare a distinct Jira ticket after MVP;
   no automatic retirement triggered by the first flagship publication.
 - **Dependencies/PR boundary:** proven E5 launch + partner-by-partner parity, not simply E1–E4 complete.
+
+## Deferred from the MVP
+
+### Dark theme support ([DT-4376](https://broadworkbench.atlassian.net/browse/DT-4376))
+
+- **Decision:** product confirmed on 2026-10-28 that the MVP doesn't need dark themes, so S1.3
+  checks branding contrast against the light background only and S3.1 ships the light theme.
+- **Implement:** decide with design and product how a dark theme is chosen (system
+  `prefers-color-scheme`, an explicit override, or both); add dark colours to each theme preset;
+  extend the CI contrast check to the dark background, including labels on accent buttons; render
+  the dark colours when the dark theme is active.
+- **Acceptance/tests:** each preset has design-approved light and dark palettes; low-contrast
+  overrides fail CI in both themes; a showcase renders in the dark theme with no partner config
+  changes.
+- **Dependencies/PR boundary:** S1.3 theme presets and the S3.1 page template.
