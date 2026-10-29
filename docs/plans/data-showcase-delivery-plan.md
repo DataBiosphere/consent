@@ -497,9 +497,9 @@ foundational portions of 26/31.
   overrides pass a CI contrast check in the light theme (dark themes are deferred until after the
   MVP: DT-4376). Add the date-window filter with an injectable clock for announcements, events and
   deadlines. Set the per-showcase asset budget and lazy-loading convention.
-- **Acceptance/tests:** a partner config that only overrides branding renders correctly; low-
-  contrast overrides fail CI; fixed-clock tests show items appearing and expiring without a code
-  change; over-budget assets fail CI.
+- **Acceptance/tests:** a partner config that turns on a few sections and changes only the
+  branding renders those sections with the new theme; low-contrast overrides fail CI; fixed-clock
+  tests show items appearing and expiring without a code change; over-budget assets fail CI.
 - **Dependencies/PR boundary:** S1.2.
 
 ### E2 — Public-safe live catalog lookup (MVP)
