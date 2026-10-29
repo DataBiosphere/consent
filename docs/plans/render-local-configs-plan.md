@@ -612,7 +612,7 @@ The team answered the open questions from the first review:
 | Which environments can the export script use? | Dev by default. Staging with an option. Never prod. | `--db_env dev\|staging`. The script refuses `prod`, and no flag overrides this. |
 | Does anyone use `sqlproxy.env` or `tcell_agent.config`? | No. | The script does not write them. PRs 2 and 3 remove the old hand-made steps from the docs. |
 | Does anyone run the app outside compose? | No. The team runs the app with compose from a terminal. | The `-Ddw.*` flags are only in the compose template. No IntelliJ steps. |
-| How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. The script can delete older dumps. | [Data Handling](#data-handling): `config/` has mode `700`, only the newest dump stays, no sharing. |
+| How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. A new dump replaces the old dump of the same environment. | [Data Handling](#data-handling): `config/` has mode `700`, one dump for each environment, no sharing. |
 | Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | PR 5 supports both modes. `forwardPorts` is for the container mode. The host mode does not change. |
 | Where does the config get rendered? | Inside the Dev Container, as in `duos-ui` (DT-4206, DT-4236). | `setup-devcontainer.sh` installs `gcloud` and runs `render-configs.sh`. The features install `kubectl` and `helm`. The host `~/.config/gcloud` mount is not needed. |
 | How much testing? | A minimum. | Six checks in [Verification](#verification). |
