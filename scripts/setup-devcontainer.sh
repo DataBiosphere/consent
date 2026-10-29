@@ -11,13 +11,16 @@ set -o pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# On failure, tell the developer how to recover. Most failures come from a missing VPN
-# connection, which blocks kubectl.
+# On failure, name the step that failed, and tell the developer how to recover.
+STEP="the tool install"
 on_exit() {
   local status=$?
   if ((status != 0)); then
     echo >&2
-    echo "Dev Container setup failed. Are you connected to the non-split Broad VPN?" >&2
+    echo "Dev Container setup failed at $STEP." >&2
+    if [[ "$STEP" == "render-configs.sh" ]]; then
+      echo "Are you connected to the non-split Broad VPN?" >&2
+    fi
     echo "Fix the issue, then rebuild the container or run: ./scripts/setup-devcontainer.sh" >&2
   fi
 }
@@ -38,8 +41,11 @@ install_tools() {
 # The compose template mounts the Application Default Credentials into the app.
 install_consent_config() {
   printf "\n"
+  STEP="gcloud auth login"
   gcloud auth login
+  STEP="gcloud auth application-default login"
   gcloud auth application-default login
+  STEP="render-configs.sh"
   ./scripts/render-configs.sh --all true
 }
 

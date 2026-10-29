@@ -51,19 +51,22 @@ with `--all true`.
 
 3. The setup script asks for two `gcloud` logins on each run: `gcloud auth login`, then
    `gcloud auth application-default login`. The app needs the second one. Complete each login
-   in the browser that opens.
+   in the browser that opens. If no browser opens, open the URL that `gcloud` prints, and paste
+   the code back into the terminal.
 
 4. If the setup fails (for example, the VPN is down), fix the issue. Then rebuild the container,
    or run the script again. Every 3 months the certs rotate. Run the script again to make the
-   files again. It does not make a new database dump when one exists.
+   files again. It does not make a new database dump when `config/.env` names one that exists.
 
    ```sh
    ./scripts/setup-devcontainer.sh
    ```
 
 You can run the stack in the container (Docker-in-Docker) or on the host. Both use the same
-`config/` files. The container forwards ports 27443, 7777 and 9200 to the host. Run
-`./scripts/index-es.sh` where the stack runs.
+`config/` files. Run only one stack at a time, because both use ports 27443, 7777 and 9200. When
+the stack runs in the container, VSCode forwards these ports to the host. If a host port is in
+use, VSCode picks another port and shows it in the Ports view. Run `./scripts/index-es.sh` where
+the stack runs.
 
 If you do not use the Dev Container, run `render-configs.sh` yourself. See the next section.
 
