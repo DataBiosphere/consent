@@ -2,11 +2,13 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class StudyAssetRecordSyncTest extends DAOTestHelper {
 
@@ -157,6 +161,97 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testStaleFormMatchesByLegacyKey() throws Exception {
+    Integer studyId = create(prop("workspaces", "[{\"workspaceId\": \"u-1\", \"name\": \"Old\"}]"));
+    int row = idOf(stored(studyId, "workspaces"), 0, "workspaceId");
+
+    update(studyId, prop("workspaces", "[{\"workspaceId\": \"u-1\", \"name\": \"New\"}]"));
+
+    List<StudyWorkspaceRecord> rows = assetDAO.findWorkspacesByStudyId(studyId);
+    assertEquals(1, rows.size());
+    assertEquals("New", rows.getFirst().name());
+    assertEquals(row, idOf(stored(studyId, "workspaces"), 0, "workspaceId"));
+  }
+
+  @Test
+  void testAnIdInRowFormNeverMatchesALegacyKey() throws Exception {
+    Integer studyId =
+        create(prop("workspaces", "[{\"workspaceId\": \"2147483000.0\", \"name\": \"Old\"}]"));
+
+    update(studyId, prop("workspaces", "[{\"workspaceId\": 2147483000.0, \"name\": \"New\"}]"));
+
+    List<StudyWorkspaceRecord> rows = assetDAO.findWorkspacesByStudyId(studyId);
+    assertEquals(2, rows.size());
+    assertEquals("Old", rows.getFirst().name());
+    assertNotNull(rows.getFirst().retiredDate());
+  }
+
+  @Test
+  void testWriteBackChangesOnlyTheIdKey() throws Exception {
+    String list =
+        """
+        [{"modelId": "", "extra": {"n": 12345678901234567890, "f": 1.50}, "age": "old"},
+         "not an object", 42]""";
+    Integer studyId = create(prop("models", list));
+
+    JsonArray models = stored(studyId, "models");
+    JsonObject model = models.get(0).getAsJsonObject();
+    assertEquals("{\"n\":12345678901234567890,\"f\":1.50}", model.get("extra").toString());
+    assertEquals("not an object", models.get(1).getAsString());
+    assertEquals("42", models.get(2).toString());
+    assertEquals(1, assetDAO.findModelsByStudyId(studyId).size());
+  }
+
+  @Test
+  void testFieldsOfTheWrongTypeAreStoredAsNull() throws Exception {
+    Integer studyId =
+        create(prop("models", "[{\"name\": 5, \"cloud\": [1], \"maintainer\": \"Lab\"}]"));
+
+    StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
+    assertNull(row.name());
+    assertNull(row.cloud());
+    assertNull(row.maintainer());
+    assertEquals(5, stored(studyId, "models").get(0).getAsJsonObject().get("name").getAsInt());
+  }
+
+  @Test
+  void testNulCharactersAreStrippedFromColumnsOnly() throws Exception {
+    Integer studyId =
+        create(prop("models", "[{\"name\": \"a\\u0000b\", \"dataUse\": {\"x\": \"\\u0000c\"}}]"));
+
+    StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
+    assertEquals("ab", row.name());
+    assertEquals(JsonParser.parseString("{\"x\": \"c\"}"), JsonParser.parseString(row.dataUse()));
+    assertEquals(
+        "a\u0000b", stored(studyId, "models").get(0).getAsJsonObject().get("name").getAsString());
+
+    Integer other = create(prop("workspaces", "[{\"workspaceId\": \"a\\u0000b\"}]"));
+    assertNull(assetDAO.findWorkspacesByStudyId(other).getFirst().legacyKey());
+  }
+
+  @Test
+  void testARetiredRowsLegacyKeyIsNotReused() throws Exception {
+    Integer studyId = create(prop("workspaces", "[{\"workspaceId\": \"u-1\"}]"));
+    update(studyId, prop("workspaces", "[]"));
+
+    update(studyId, prop("workspaces", "[{\"workspaceId\": \"u-1\"}]"));
+
+    List<StudyWorkspaceRecord> rows = assetDAO.findWorkspacesByStudyId(studyId);
+    assertEquals(2, rows.size());
+    assertNull(rows.get(1).legacyKey());
+    assertNull(rows.get(1).retiredDate());
+  }
+
+  @Test
+  void testAStoredValueThatIsNotAListLeavesTheRowsAlone() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"M\"}]"));
+
+    update(studyId, prop("models", "{\"name\": \"M\"}"));
+
+    assertEquals(1, assetDAO.findLiveModels(studyId).size());
+  }
+
+  @Test
   void testAFailedCreateRollsBackTheStudyItsRowsAndDatasets() {
     String name = UUID.randomUUID().toString();
     int modelRows = countModelRows();
@@ -192,6 +287,31 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
     assertEquals(1, assetDAO.findLiveModels(studyId).size());
     assertEquals(before, stored(studyId, "models").toString());
+  }
+
+  @ParameterizedTest
+  @CsvSource(
+      delimiter = '|',
+      value = {
+        "7|7",
+        "7.0|7",
+        "7e0|7",
+        "7e-1|",
+        "\"7\"|7",
+        "\"2147483647\"|2147483647",
+        "\"007\"|",
+        "\"00000000001\"|",
+        "7.5|",
+        "2147483648|",
+        "\"3000000000\"|",
+        "\"5d2a1c34-8c1b-4a7e-9f0e-2b6c5d4e3f21\"|",
+        "\"\"|",
+        "null|",
+        "0|",
+        "-7|"
+      })
+  void testRowIdForm(String json, Integer expected) {
+    assertEquals(expected, StudyAssetRecordSync.rowId(JsonParser.parseString(json)));
   }
 
   private Integer create(StudyProperty... props) throws Exception {
