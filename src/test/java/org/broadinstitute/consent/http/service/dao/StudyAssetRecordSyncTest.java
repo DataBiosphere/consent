@@ -396,12 +396,11 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     return studyDAO.findStudyByName(name).getStudyId();
   }
 
-  private void update(Integer studyId, StudyProperty... props) throws Exception {
+  private void update(Integer studyId, StudyProperty... props) {
     update(studyId, List.of(), props);
   }
 
-  private void update(Integer studyId, List<DatasetInsert> datasets, StudyProperty... props)
-      throws Exception {
+  private void update(Integer studyId, List<DatasetInsert> datasets, StudyProperty... props) {
     Study study = studyDAO.findStudyById(studyId);
     serviceDAO.updateStudy(
         new StudyUpdate(
