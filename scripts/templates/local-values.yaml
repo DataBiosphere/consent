@@ -1,0 +1,16 @@
+# Helm values for local development. scripts/render-chart-configs.sh applies this file last,
+# after the terra-helmfile values for dev. Each value here is a difference from dev, so keep the
+# list short and give the reason for each value.
+#
+# Do not put a secret in this file. It is tracked. Secrets go only in config/.env.
+
+# The dev Elasticsearch hosts do not exist on a laptop. Use the compose `elastic` service.
+elasticSearchServers:
+  - elastic
+
+# One local instance. The chart uses this value for rateLimit.podCount.
+replicas: 1
+
+# Dev runs the Liquibase changesets in a separate Job before the deployment. Local has no such Job,
+# and a local database restored from an older dump needs the newer changesets.
+liquibaseRunOnStartup: true
