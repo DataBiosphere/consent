@@ -107,8 +107,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     matchDAO.insertMatch(match);
 
-    assertThrows(
-        Exception.class, () -> serviceDAO.deleteDataset(dataset, dataset.getCreateUserId()));
+    Integer userId = dataset.getCreateUserId();
+
+    assertThrows(Exception.class, () -> serviceDAO.deleteDataset(dataset, userId));
 
     assertNotNull(datasetDAO.findDatasetById(dataset.getDatasetId()));
     assertTrue(datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).isEmpty());
