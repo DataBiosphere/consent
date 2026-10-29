@@ -158,13 +158,16 @@ write_compose() {
 
   # Values in an old .env carry forward, so a new render never loses them. The script reads the
   # cluster only for values that the old .env does not have.
+  # The dev database credentials, which duos-ui also writes to its .env.local. With them, the
+  # duos-ui compose mode against a local consent stack connects with no change.
   pg_user=$(env_get "$ENV_FILE" POSTGRES_USER)
-  pg_password=$(env_get "$ENV_FILE" POSTGRES_PASSWORD)
-  if [[ -z "$pg_user" || -z "$pg_password" ]]; then
-    # The dev database credentials, which duos-ui also writes to its .env.local. With them, the
-    # duos-ui compose mode against a local consent stack connects with no change.
+  if [[ -z "$pg_user" ]]; then
     use_cluster
     pg_user=$(dev_secret consent-secrets databaseUser)
+  fi
+  pg_password=$(env_get "$ENV_FILE" POSTGRES_PASSWORD)
+  if [[ -z "$pg_password" ]]; then
+    use_cluster
     pg_password=$(dev_secret consent-secrets databasePassword)
   fi
   b2c=$(env_get "$ENV_FILE" B2C_APPLICATION_ID)
@@ -199,6 +202,11 @@ EOF
   env_set "$stage/.env" ELASTIC_PASSWORD "$es"
   env_set "$stage/.env" B2C_APPLICATION_ID "$b2c"
   cp "$COMPOSE_TEMPLATE" "$stage/docker-compose.yaml"
+  # ../target works only when the compose file is in config/ of the repo. In another folder, use
+  # the absolute path of target/.
+  if [[ "$CONFIG_DIR" != "$REPO_ROOT/config" ]]; then
+    sed "s#- \.\./target:/opt/target#- $REPO_ROOT/target:/opt/target#" "$COMPOSE_TEMPLATE" > "$stage/docker-compose.yaml"
+  fi
 
   # This backs up each old file that changes.
   move_into_place "$stage" "$CONFIG_DIR" .env docker-compose.yaml
@@ -220,6 +228,9 @@ fi
 # Check this before the certs step, which is slow.
 if [[ "$WRITE_CHART_CONFIGS" == "false" && ( "$HELMFILE_REF_SET" == "true" || -n "$HELMFILE_DIR" ) ]]; then
   error "--helmfile_ref and --helmfile_dir need --write_chart_configs true or --all true."
+fi
+if [[ "$WRITE_COMPOSE" == "false" && "$FETCH_SENDGRID" == "true" ]]; then
+  error "--fetch_sendgrid needs --write_compose true or --all true."
 fi
 # config/ holds secrets. Mode 700 keeps other users on this machine out of it. The script sets the
 # mode only on config/ and on a folder that it makes, not on an existing folder such as ~.
@@ -249,8 +260,15 @@ if [[ "$WRITE_COMPOSE" == "true" ]]; then
 fi
 
 if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then
+  compose_dir="$CONFIG_DIR"
+  if [[ "$CONFIG_DIR" == "$REPO_ROOT/config" ]]; then
+    compose_dir="config"
+  fi
   echo
   echo "Next steps:"
+  if [[ -z "$(env_get "$ENV_FILE" CONSENT_DB_DUMP)" ]]; then
+    echo "  Put a database dump in $compose_dir/, and set CONSENT_DB_DUMP in $compose_dir/.env to its file name."
+  fi
   echo "  mvn clean compile"
-  echo "  docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d"
+  echo "  docker compose -f $compose_dir/docker-compose.yaml -f $compose_dir/docker-compose.override.yaml up -d"
 fi
