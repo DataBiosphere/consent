@@ -24,11 +24,8 @@ properties:
     description: The dataset id of the consent group
   accessManagement:
     description: Access Management
-    type: string
-    enum:
-      - controlled
-      - open
-      - external
+    allOf:
+      - $ref: './AccessManagement.yaml'
   numberOfParticipants:
     type: number
     description: Number of Participants
