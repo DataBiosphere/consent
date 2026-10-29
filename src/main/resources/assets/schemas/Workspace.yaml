@@ -1,5 +1,7 @@
 type: object
 description: An analysis Workspace object.
+allOf:
+  - $ref: './AssetDataUse.yaml'
 properties:
   workspaceId:
     type: string
@@ -31,7 +33,8 @@ properties:
     description: The tools available in the workspace.
   access:
     type: string
-    description: The access level of the workspace.
+    deprecated: true
+    description: Free-text access level of the workspace. Superseded by `accessManagement`.
   tags:
     type: array
     items:
