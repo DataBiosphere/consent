@@ -7,13 +7,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.inject.Injector;
 import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.jersey.setup.JerseyEnvironment;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
@@ -28,6 +32,8 @@ import liquibase.database.DatabaseFactory;
 import liquibase.exception.LiquibaseException;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.LiquibaseConfiguration;
+import org.broadinstitute.consent.http.configurations.ShowcaseConfiguration;
+import org.broadinstitute.consent.http.resources.PublicShowcaseCatalogResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -183,6 +189,32 @@ class ConsentApplicationTest {
     when(dataSourceFactory.getUrl()).thenReturn(URL);
     when(dataSourceFactory.getUser()).thenReturn(USER);
     when(dataSourceFactory.getPassword()).thenReturn(PASSWORD);
+  }
+
+  @Test
+  void registerPublicShowcaseLookupSkipsTheRouteByDefault() {
+    when(configuration.getShowcaseConfiguration()).thenReturn(new ShowcaseConfiguration());
+    JerseyEnvironment jersey = mock(JerseyEnvironment.class);
+    Injector injector = mock(Injector.class);
+
+    ConsentApplication.registerPublicShowcaseLookup(configuration, jersey, injector);
+
+    verifyNoInteractions(jersey, injector);
+  }
+
+  @Test
+  void registerPublicShowcaseLookupAddsTheRouteWhenEnabled() {
+    ShowcaseConfiguration showcase = new ShowcaseConfiguration();
+    showcase.setPublicLookupEnabled(true);
+    when(configuration.getShowcaseConfiguration()).thenReturn(showcase);
+    JerseyEnvironment jersey = mock(JerseyEnvironment.class);
+    Injector injector = mock(Injector.class);
+    PublicShowcaseCatalogResource resource = mock(PublicShowcaseCatalogResource.class);
+    when(injector.getInstance(PublicShowcaseCatalogResource.class)).thenReturn(resource);
+
+    ConsentApplication.registerPublicShowcaseLookup(configuration, jersey, injector);
+
+    verify(jersey).register(resource);
   }
 
   private void invokeInitializeLiquibase(ConsentConfiguration configuration) throws Exception {

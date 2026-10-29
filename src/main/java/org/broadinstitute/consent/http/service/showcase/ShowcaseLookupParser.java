@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.showcase;
 
+import static org.broadinstitute.consent.http.service.showcase.ShowcaseLookupException.echoed;
+
 import com.google.gson.JsonElement;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +35,7 @@ public final class ShowcaseLookupParser {
     if (IDENTIFIERS.equals(mode)) {
       return identifiersLookup(request);
     }
-    throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(mode));
+    throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(echoed(mode)));
   }
 
   private static ShowcaseIdentifiersLookup identifiersLookup(ShowcaseRequestFields request) {
@@ -45,7 +47,8 @@ public final class ShowcaseLookupParser {
             .orElseThrow(
                 () ->
                     new ShowcaseLookupException(
-                        "Unknown section \"%s\" for mode \"%s\"".formatted(slug, request.mode())));
+                        "Unknown section \"%s\" for mode \"%s\""
+                            .formatted(echoed(slug), request.mode())));
     return new ShowcaseIdentifiersLookup(
         section, request.requiredIdentifiers(IDENTIFIERS, ShowcaseLookupLimits.MAX_IDENTIFIERS));
   }
