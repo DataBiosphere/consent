@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.dto.registration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
@@ -11,15 +12,19 @@ import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -482,6 +487,75 @@ class StudyUpdateRequestValidatorTest {
     registration.setConsentGroups(null);
     // null consent groups skips membership, name-change, removal, and new-group checks
     assertDoesNotThrow(() -> validator.validate(study, datasets, registration));
+  }
+
+  // ── Model and workspace data use (update path) ──────────────────────────
+
+  @Test
+  void testValidate_assetFields_validAccepted() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(
+        List.of(Map.of("accessManagement", "controlled", "dataUse", Map.of("hmbResearch", true))));
+    registration.setWorkspaces(List.of(Map.of("name", "no new fields")));
+    assertTrue(validator.validate(study, datasets, registration));
+  }
+
+  @Test
+  void testValidate_badAssetFields_rejectedWithEveryViolation() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(List.of(Map.of("accessManagement", "restricted")));
+    registration.setWorkspaces(
+        List.of(Map.of("dataUse", Map.of("generalUse", true, "hmbResearch", true))));
+    BadRequestException e =
+        assertThrows(
+            BadRequestException.class, () -> validator.validate(study, datasets, registration));
+    assertEquals(
+        "models[0].accessManagement: must be one of open, controlled, external; "
+            + "workspaces[0].dataUse: "
+            + DataUsePrimaryValidator.VALIDATION_MESSAGE,
+        e.getMessage());
+  }
+
+  @Test
+  void testValidate_legacyAssetEntries_validated() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setAssets(Map.of("workspaces", List.of(Map.of("accessManagement", "nope"))));
+    BadRequestException e =
+        assertThrows(
+            BadRequestException.class, () -> validator.validate(study, datasets, registration));
+    assertEquals(
+        "workspaces[0].accessManagement: must be one of open, controlled, external",
+        e.getMessage());
+  }
+
+  /** The UI sends back the summary a read returned, so an edit must not be rejected for it. */
+  @Test
+  void testValidate_dataUseWithReturnedSummary_accepted() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(
+        List.of(
+            Map.of(
+                "accessManagement", "controlled",
+                "dataUse", Map.of("hmbResearch", true),
+                "dataUseSummary", Map.of("primary", List.of(), "secondary", List.of()))));
+    assertTrue(validator.validate(study, datasets, registration));
+  }
+
+  @Test
+  void testValidate_storedInvalidAssetFields_doNotBlockUnrelatedEdits() {
+    Study study = createMockStudy();
+    StudyProperty models = new StudyProperty();
+    models.setKey("models");
+    models.setType(PropertyType.Json);
+    models.setValue("[{\"name\":\"old\",\"accessManagement\":\"Open\"}]");
+    study.addProperty(models);
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(List.of(Map.of("name", "new", "accessManagement", "Open")));
+    assertTrue(validator.validate(study, datasets, registration));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

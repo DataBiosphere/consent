@@ -273,6 +273,31 @@ class RegistrationRequestMapperTest extends AbstractTestHelper {
     assertTrue(findProp(props, "assets").isEmpty());
   }
 
+  /** A summary that a read returned and the client sent back is derived data, so it is dropped. */
+  @Test
+  void testAssetDataUseSummaryIsNotStored() {
+    StudyRegistrationRequest request = new StudyRegistrationRequest();
+    request.setModels(
+        List.of(
+            Map.of(
+                "modelId", "m-1",
+                "dataUse", Map.of("hmbResearch", true),
+                "dataUseSummary", Map.of("primary", List.of()))));
+    request.setAssets(
+        Map.of(
+            "workspaces",
+            List.of(Map.of("workspaceId", "w-1", "dataUseSummary", Map.of("primary", List.of())))));
+
+    List<StudyProperty> props = mapper.toStudyProperties(request);
+
+    String models = findProp(props, "models").orElseThrow().getValue().toString();
+    assertTrue(models.contains("hmbResearch"));
+    assertFalse(models.contains("dataUseSummary"));
+    String workspaces = findProp(props, "workspaces").orElseThrow().getValue().toString();
+    assertTrue(workspaces.contains("w-1"));
+    assertFalse(workspaces.contains("dataUseSummary"));
+  }
+
   private Optional<StudyProperty> findProp(List<StudyProperty> props, String key) {
     return props.stream().filter(p -> p.getKey().equals(key)).findFirst();
   }

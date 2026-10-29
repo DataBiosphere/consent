@@ -62,9 +62,18 @@ class ShowcaseLookupParserTest {
         "{ \"mode\": \"identifiers\", \"identifiers\": [] }", "Missing field \"section\"");
   }
 
+  /** A real section that the identifiers mode cannot serve says so. */
+  @Test
+  void testSectionThatTakesNoIdentifiers() {
+    assertRejected(
+        "{ \"mode\": \"identifiers\", \"section\": \"latest-data-releases\", \"identifiers\": [] }",
+        "Section \"latest-data-releases\" does not take mode \"identifiers\"");
+  }
+
+  /** Section names match exactly. */
   @ParameterizedTest
-  @ValueSource(strings = {"latest-data-releases", "hero", "Open-Access-Datasets", ""})
-  void testSectionThatTakesNoIdentifiers(String section) {
+  @ValueSource(strings = {"hero", "Open-Access-Datasets", ""})
+  void testUnknownSection(String section) {
     assertRejected(
         "{ \"mode\": \"identifiers\", \"section\": %s, \"identifiers\": [] }"
             .formatted(quoted(section)),
