@@ -267,7 +267,7 @@ if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then
   echo
   echo "Next steps:"
   if [[ -z "$(env_get "$ENV_FILE" CONSENT_DB_DUMP)" ]]; then
-    echo "  Put a database dump in $compose_dir/, and set CONSENT_DB_DUMP in $compose_dir/.env to its file name."
+    echo "  Put a .sql or .sql.gz database dump in $compose_dir/, and set CONSENT_DB_DUMP in $compose_dir/.env to its file name."
   fi
   echo "  mvn clean compile"
   echo "  docker compose -f $compose_dir/docker-compose.yaml -f $compose_dir/docker-compose.override.yaml up -d"

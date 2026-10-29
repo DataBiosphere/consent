@@ -54,7 +54,7 @@ files as they were. The first time, run:
 
 ```bash
 ./scripts/render-configs.sh --all true
-# Put a database dump in config/, and set CONSENT_DB_DUMP in config/.env to its file name.
+# Put a .sql or .sql.gz database dump in config/, and set CONSENT_DB_DUMP in config/.env to its file name.
 mvn clean compile
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ```
@@ -81,7 +81,20 @@ same values that `duos-ui` writes to its `.env.local`. So the `duos-ui` compose 
 local consent stack (`docker-compose.consent.yaml`) connects with no change.
 
 The local database loads the dump that `CONSENT_DB_DUMP` in `config/.env` names. Put a dump file in
-`config/`, and set `CONSENT_DB_DUMP` to its file name.
+`config/`, and set `CONSENT_DB_DUMP` to its file name. The name must end in `.sql` or `.sql.gz`.
+The Postgres image ignores other files, and the database is then empty.
+
+The database is in the `consent_pgdata` volume, so it stays after `docker compose down`. The image
+loads the dump only into an empty volume. To load a new dump, or to try again after a load that
+failed, remove the volume and start the stack again:
+
+```bash
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml rm -sf sqlproxy
+docker volume rm consent_pgdata
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+```
+
+If the load fails, `docker logs localdb` shows the error.
 
 #### Liquibase
 

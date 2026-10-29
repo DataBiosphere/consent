@@ -299,7 +299,8 @@ can:
 | App flags | The `-Ddw.*` flags above. No `-Dsentry.dsn`. | Local errors must not go to the shared Sentry project. They make false alerts. |
 | ADC | Mount `${GCLOUD_ADC_FILE:-~/.config/gcloud/application_default_credentials.json}` and set `GOOGLE_APPLICATION_CREDENTIALS` | Replaces the JSON key. See `DEVNOTES.md`. The variable name is the same as in `duos-ui`. The app image runs as root, so a mode `600` ADC file works on Linux too. |
 | Start order | A Postgres healthcheck and `depends_on: condition: service_healthy` | Replaces `wait-for-it.sh`. |
-| Database dump | `CONSENT_DB_DUMP` from `.env` | The export step sets it. |
+| Database dump | `CONSENT_DB_DUMP` from `.env`, mounted with its own name | The export step sets it. The Postgres image picks the load command from the extension (`.sql` or `.sql.gz`). |
+| Database data | The named volume `pgdata` | The database stays after `docker compose down`. The image loads the dump only into an empty volume. |
 | Elasticsearch | The stanza from `DEVNOTES.md`, with a named volume | One copy of the ES setup, with X-Pack security on. |
 
 `.env` holds `POSTGRES_USER`, `POSTGRES_PASSWORD`, `SENDGRID_API_KEY`, `ELASTIC_PASSWORD`,
