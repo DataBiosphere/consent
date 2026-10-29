@@ -84,3 +84,7 @@ rateLimit:
 liquibase:
   runOnStartup: true
 
+
+# Optional. If you omit this block, the anonymous showcase lookup is off. See ShowcaseConfiguration.
+showcase:
+  publicLookupEnabled: true
