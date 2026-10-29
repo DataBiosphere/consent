@@ -199,7 +199,7 @@ class DaaServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateDaaWithFsoDBError() throws Exception {
+  void testCreateDaaWithFsoDBError() {
     when(contentDisposition.getFileName()).thenReturn("file.txt");
     doThrow(new UnableToExecuteStatementException("db error"))
         .when(daaServiceDAO)

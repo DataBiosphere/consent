@@ -1040,7 +1040,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchDatasetSuccess() throws Exception {
+  void testPatchDatasetSuccess() {
     int datasetId = 1;
     User user = new User();
     DatasetPatch patch = mock();

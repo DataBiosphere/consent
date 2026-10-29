@@ -988,7 +988,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
+  void testUpdateDatasetByDatasetIntakeSuccess() throws IOException {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(any(), anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any()))

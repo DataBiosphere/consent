@@ -286,7 +286,7 @@ public class DatasetRegistrationService implements ConsentLogger {
    */
   public Dataset updateDataset(
       Integer datasetId, User user, DatasetUpdate update, Map<String, FormDataBodyPart> files)
-      throws IOException, SQLException {
+      throws IOException {
 
     if (Objects.isNull(update.getName())) {
       throw new BadRequestException("Dataset name is required");

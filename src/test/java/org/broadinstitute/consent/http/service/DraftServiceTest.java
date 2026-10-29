@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -75,13 +74,13 @@ class DraftServiceTest {
   }
 
   @Test
-  void testInsertDraftThrows() throws SQLException {
+  void testInsertDraftThrows() {
     doThrow(new BadRequestException("Bad Request")).when(draftServiceDAO).insertDraft(any());
     assertThrows(BadRequestException.class, () -> draftService.insertDraft(null));
   }
 
   @Test
-  void testInsertDraft() throws SQLException {
+  void testInsertDraft() {
     doNothing().when(draftServiceDAO).insertDraft(draft);
     assertDoesNotThrow(() -> draftService.insertDraft(draft));
   }
@@ -111,7 +110,7 @@ class DraftServiceTest {
   }
 
   @Test
-  void testaddAttachments() throws SQLException, RuntimeException {
+  void testaddAttachments() {
     Map<String, FormDataBodyPart> files = new HashMap<>();
     files.put("test", new FormDataBodyPart("test", "test"));
     FileStorageObject fileStorageObject = new FileStorageObject();
@@ -122,17 +121,19 @@ class DraftServiceTest {
   }
 
   @Test
-  void testDeleteAttachment() throws SQLException {
+  void testDeleteAttachment() {
     doNothing().when(draftServiceDAO).deleteDraftAttachment(any(), any(), anyInt());
     assertDoesNotThrow(() -> draftService.deleteDraftAttachment(null, null, 1));
   }
 
   @Test
-  void testDeleteAttachmentThrows() throws SQLException {
-    doThrow(new SQLException("Couldn't delete document"))
+  void testDeleteAttachmentThrows() {
+    doThrow(new UnableToExecuteStatementException("Couldn't delete document"))
         .when(draftServiceDAO)
         .deleteDraftAttachment(any(), any(), anyInt());
-    assertThrows(SQLException.class, () -> draftService.deleteDraftAttachment(null, null, 1));
+    assertThrows(
+        UnableToExecuteStatementException.class,
+        () -> draftService.deleteDraftAttachment(null, null, 1));
   }
 
   @Test
@@ -150,7 +151,7 @@ class DraftServiceTest {
   }
 
   @Test
-  void testUpdateDraft() throws SQLException {
+  void testUpdateDraft() {
     DraftInterface updatedDraft = new DraftStudyDataset("{}", user);
     updatedDraft.setUpdateDate(new Date());
     when(draftServiceDAO.updateDraft(draft, user)).thenReturn(updatedDraft);
@@ -159,13 +160,13 @@ class DraftServiceTest {
   }
 
   @Test
-  void testDeleteDraft() throws SQLException {
+  void testDeleteDraft() {
     doNothing().when(draftServiceDAO).deleteDraft(draft, user);
     draftService.deleteDraft(draft, user);
   }
 
   @Test
-  void testDeleteDraftThrows() throws SQLException {
+  void testDeleteDraftThrows() {
     doThrow(new UnableToExecuteStatementException("delete failed."))
         .when(draftServiceDAO)
         .deleteDraft(draft, user);

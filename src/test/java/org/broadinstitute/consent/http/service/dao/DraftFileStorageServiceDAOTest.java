@@ -20,7 +20,6 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,7 +52,7 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testCreateDraftFile() throws SQLException {
+  void testCreateDraftFile() {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(4);
@@ -71,7 +70,7 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDraftFiles() throws SQLException {
+  void testDeleteDraftFiles() {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);

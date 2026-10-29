@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -103,15 +102,14 @@ public class DraftServiceDAO {
   }
 
   public List<FileStorageObject> addAttachments(
-      DraftInterface draft, User user, Map<String, FormDataBodyPart> files) throws SQLException {
+      DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
     List<FileStorageObject> storedFiles =
         draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files);
     draftDAO.updateDraftByDraftUUID(draft.getUUID(), new Date().toInstant(), user.getUserId());
     return storedFiles;
   }
 
-  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)
-      throws SQLException {
+  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId) {
     Optional<FileStorageObject> fileStorageObjectToDelete =
         draft.getStoredFiles().stream()
             .filter(fileStorageObject -> fileStorageObject.getFileStorageObjectId().equals(fileId))

@@ -793,7 +793,7 @@ class DatasetServiceTest extends AbstractTestHelper {
    * its search documents are touched.
    */
   @Test
-  void testDeleteStudyWithAnInUseDatasetTouchesNothing() throws Exception {
+  void testDeleteStudyWithAnInUseDatasetTouchesNothing() {
     Study study = new Study();
     study.setStudyId(1);
     study.addDatasetIds(Set.of(1, 2));
@@ -1589,7 +1589,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchStudy() throws Exception {
+  void testPatchStudy() {
     Study study = new Study();
     study.setStudyId(1);
     study.setName("Study Name");
@@ -2104,7 +2104,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   // ==================== patchStudy – exception path ====================
 
   @Test
-  void testPatchStudy_ExceptionThrowsInternalServerError() throws Exception {
+  void testPatchStudy_ExceptionThrowsInternalServerError() {
     Study study = new Study();
     study.setStudyId(1);
     User user = new User();
@@ -2127,7 +2127,7 @@ class DatasetServiceTest extends AbstractTestHelper {
    * exception, so "PI institution 999999 does not exist" reached the caller as an opaque 500.
    */
   @Test
-  void testPatchStudy_BadRequestKeepsItsStatus() throws Exception {
+  void testPatchStudy_BadRequestKeepsItsStatus() {
     Study study = new Study();
     study.setStudyId(1);
     User user = new User();

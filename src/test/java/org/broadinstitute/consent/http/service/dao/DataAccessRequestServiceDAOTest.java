@@ -46,7 +46,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateByReferenceId() throws Exception {
+  void testUpdateByReferenceId() {
 
     Dataset datasetOne = createDataset();
     Dataset datasetTwo = createDataset();
@@ -102,7 +102,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateByReferenceId_NullCollectionId() throws Exception {
+  void testUpdateByReferenceId_NullCollectionId() {
     Dataset dataset = createDataset();
     User user = createUser();
     Calendar cal = Calendar.getInstance();

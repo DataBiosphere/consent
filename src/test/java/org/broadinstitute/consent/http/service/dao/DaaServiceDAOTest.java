@@ -88,7 +88,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testCreateDaa_nullFsoSuccess() throws Exception {
+  void testCreateDaa_nullFsoSuccess() {
     User user = createUser();
     Integer dacId =
         dacDAO.createDac(

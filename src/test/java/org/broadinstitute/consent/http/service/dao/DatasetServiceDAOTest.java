@@ -571,7 +571,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDatasetWithProps() throws Exception {
+  void testUpdateDatasetWithProps() {
     Dataset dataset = createDataset();
 
     // Set up two existing props for updating
@@ -1199,7 +1199,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testPatchDataset() throws Exception {
+  void testPatchDataset() {
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     Dictionary one =
         dictionaries.stream().filter(d -> d.getKeyId().equals(1)).findFirst().orElse(null);
@@ -1303,7 +1303,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {"   "})
-  void testPatchDatasetWithNullAndEmptyNames(String input) throws Exception {
+  void testPatchDatasetWithNullAndEmptyNames(String input) {
     Dataset dataset = createDataset();
     User user = userDAO.findUserById(dataset.getCreateUserId());
     DatasetPatch patch = new DatasetPatch(input, List.of());
