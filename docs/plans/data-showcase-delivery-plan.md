@@ -173,10 +173,12 @@ database design would have stored: all 23 section keys in a `sections` object, t
 section, branding, nav labels and a `schemaVersion`. Keeping that shape means configs could become
 seed data for a database later without changing how pages render.
 
-- **Shared defaults.** A `defaultShowcase` object holds standard section enablement and the
-  default theme. Default nav labels belong to the section registry (S3.1); partners supply copy at
-  intake (S4.1) and the program owner approves it. Partner configs spread it and override what
-  differs, so a new partner file is short. There is no separate template mechanism.
+- **Shared defaults.** A `defaultShowcase` object holds all 23 section keys, every one off, and the
+  default theme. A partner turns each section on in its own config, so the section's ranking and
+  scope are reviewed and approved in that partner's PR; no section, computed shelves included, turns
+  on for every partner by default. Default nav labels belong to the section registry (S3.1); partners
+  supply copy at intake (S4.1) and the program owner approves it. Partner configs spread it and
+  override what differs, so a new partner file is short. There is no separate template mechanism.
 - **Keys.** The key is the stable identity used in routes, analytics and future subscriptions.
   It matches `^[a-z0-9]+(-[a-z0-9]+)*$`, cannot be `data` or `flagship`, and is never
   renamed or reused; a retired-keys list in the index is checked by the CI guard. Exactly one
