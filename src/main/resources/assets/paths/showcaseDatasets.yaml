@@ -4,7 +4,11 @@ post:
   description: |
     Anonymous, read-only lookup of public Data Showcase dataset summaries. The route is outside
     `/api` and needs no authentication. Each client IP is rate limited (429 with `Retry-After`).
-    Every response has `Cache-Control: no-store`.
+    The route exists only in a deployment that sets `showcase.publicLookupEnabled: true`; it is
+    off by default, and the path is then a 404.
+    Every response from the lookup itself (200, 400, 413 and 500) has `Cache-Control: no-store`.
+    A 404, 415 or 429 that the server builds before the lookup runs does not, and none of them
+    carries dataset data.
 
     The `identifiers` mode resolves an editorial list of canonical `DUOS-` identifiers in one
     query. The result has one entry for each unique identifier, in the order first submitted:
@@ -15,7 +19,8 @@ post:
     Hard limits (contract values, also enforced by the BFF proxy and the duos-ui guard):
       * Request body: at most 65536 bytes (64 KiB), else 413 before the body is parsed.
       * `identifiers`: at most 200 entries, counted before duplicates are removed.
-      * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`).
+      * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`),
+        with a number no larger than 2147483647.
       * Unknown modes, unknown sections, duplicate fields and fields that do not belong to the
         mode get a 400 before any data is read.
 
