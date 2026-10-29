@@ -531,21 +531,18 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   void testARowFormBiospecimenIdThatClaimsNoRowIsRejected() throws Exception {
     String name = UUID.randomUUID().toString();
 
-    assertThrows(
-        BadRequestException.class,
-        () -> create(name, List.of(), prop("biospecimens", "[{\"biospecimenId\": \"12345\"}]")));
+    List<DatasetInsert> none = List.of();
+    StudyProperty rowForm = prop("biospecimens", "[{\"biospecimenId\": \"12345\"}]");
+    assertThrows(BadRequestException.class, () -> create(name, none, rowForm));
     assertNull(studyDAO.findStudyByName(name));
 
     Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));
     int row = idOf(stored(studyId, "biospecimens"), 0, "biospecimenId");
-    assertThrows(
-        BadRequestException.class,
-        () ->
-            update(
-                studyId,
-                prop(
-                    "biospecimens",
-                    "[{\"biospecimenId\": %d}, {\"biospecimenId\": %d}]".formatted(row, row))));
+    StudyProperty repeated =
+        prop(
+            "biospecimens",
+            "[{\"biospecimenId\": %d}, {\"biospecimenId\": %d}]".formatted(row, row));
+    assertThrows(BadRequestException.class, () -> update(studyId, repeated));
     assertEquals(List.of("S-1"), sampleIds(stored(studyId, "biospecimens")));
   }
 
@@ -558,9 +555,8 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     update(studyId, prop("biospecimens", "[]"));
 
     for (String id : List.of(String.valueOf(otherId), String.valueOf(retired), "12345678")) {
-      assertThrows(
-          BadRequestException.class,
-          () -> update(studyId, prop("biospecimens", "[{\"biospecimenId\": %s}]".formatted(id))));
+      StudyProperty unmatched = prop("biospecimens", "[{\"biospecimenId\": %s}]".formatted(id));
+      assertThrows(BadRequestException.class, () -> update(studyId, unmatched));
     }
     update(
         studyId,

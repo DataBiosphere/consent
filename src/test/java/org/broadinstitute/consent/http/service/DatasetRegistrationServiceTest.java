@@ -1131,11 +1131,11 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(datasetServiceDAO.insertDatasetRegistration(any(), any()))
         .thenThrow(new BadRequestException("rejected"));
 
+    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", textFile());
+
     assertThrows(
         BadRequestException.class,
-        () ->
-            datasetRegistrationService.createDatasetsFromRegistration(
-                schema, user, Map.of("alternativeDataSharingPlan", textFile())));
+        () -> datasetRegistrationService.createDatasetsFromRegistration(schema, user, files));
 
     verify(gcsService).deleteDocument("plan");
   }
@@ -1152,11 +1152,11 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(datasetServiceDAO.updateStudy(any(), any(), any()))
         .thenThrow(new BadRequestException("rejected"));
 
+    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", textFile());
+
     assertThrows(
         BadRequestException.class,
-        () ->
-            datasetRegistrationService.updateStudyFromRegistration(
-                1, schema, user, Map.of("alternativeDataSharingPlan", textFile())));
+        () -> datasetRegistrationService.updateStudyFromRegistration(1, schema, user, files));
 
     verify(gcsService).deleteDocument("plan");
   }
@@ -1170,11 +1170,11 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(new Dac());
     when(datasetDAO.findDatasetsByIdList(any())).thenThrow(new RuntimeException("read failed"));
 
+    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", textFile());
+
     assertThrows(
         RuntimeException.class,
-        () ->
-            datasetRegistrationService.createDatasetsFromRegistration(
-                schema, user, Map.of("alternativeDataSharingPlan", textFile())));
+        () -> datasetRegistrationService.createDatasetsFromRegistration(schema, user, files));
 
     verify(gcsService, never()).deleteDocument(any());
   }
@@ -1190,14 +1190,13 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(gcsService.hasBytes(any())).thenReturn(true);
     doThrow(new SQLException("rejected")).when(datasetServiceDAO).updateDataset(any());
 
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate("name", 2, List.of());
+    Map<String, FormDataBodyPart> files =
+        Map.of("consentGroups[0].nihInstitutionalCertificationFile", textFile());
+
     assertThrows(
-        SQLException.class,
-        () ->
-            datasetRegistrationService.updateDataset(
-                1,
-                user,
-                new org.broadinstitute.consent.http.models.DatasetUpdate("name", 2, List.of()),
-                Map.of("consentGroups[0].nihInstitutionalCertificationFile", textFile())));
+        SQLException.class, () -> datasetRegistrationService.updateDataset(1, user, update, files));
 
     verify(gcsService).deleteDocument("cert");
   }
