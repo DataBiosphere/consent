@@ -9,9 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import jakarta.ws.rs.BadRequestException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -19,6 +23,7 @@ import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
 import org.broadinstitute.consent.http.models.StudyModelRecord;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.StudyWorkspaceRecord;
@@ -386,6 +391,169 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertEquals(before, stored(studyId, "models").toString());
   }
 
+  @Test
+  void testBiospecimenFieldsAndIdAreStored() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                """
+                [{"biospecimenId": "S-1", "age": 40.5, "extractedDiagnoses": ["x"],
+                  "postMortemInterval": {"value": 6, "unit": "HOURS"}}]"""));
+
+    StudyBiospecimenRecord row = assetDAO.findBiospecimensByStudyId(studyId).getFirst();
+    assertEquals("S-1", row.legacyKey());
+    assertEquals("S-1", row.sampleId());
+    assertEquals(new BigDecimal("40.5"), row.age());
+    assertEquals(List.of("x"), row.extractedDiagnoses());
+    assertEquals(new BigDecimal("6"), row.postMortemIntervalValue());
+    assertEquals("HOURS", row.postMortemIntervalUnit());
+    JsonObject entry = stored(studyId, "biospecimens").get(0).getAsJsonObject();
+    assertEquals(row.biospecimenId(), entry.get("biospecimenId").getAsInt());
+    assertEquals("S-1", entry.get("sampleId").getAsString());
+  }
+
+  @Test
+  void testBiospecimenFieldsOfTheWrongTypeAreStoredAsNull() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                """
+                [{"biospecimenId": "S-1", "age": "forty", "postMortemInterval": 6},
+                 {"biospecimenId": "S-2", "postMortemInterval": {"value": "six", "unit": "HOURS"}}]"""));
+
+    List<StudyBiospecimenRecord> rows = assetDAO.findBiospecimensByStudyId(studyId);
+    assertNull(rows.get(0).age());
+    assertNull(rows.get(0).postMortemIntervalValue());
+    assertNull(rows.get(1).postMortemIntervalValue());
+    assertEquals("HOURS", rows.get(1).postMortemIntervalUnit());
+  }
+
+  @Test
+  void testSampleIdsAreKeptCopiedOrStringified() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                """
+                [{"biospecimenId": "a", "sampleId": "kept"},
+                 {"biospecimenId": "b", "sampleId": 12345678901234567890},
+                 {"biospecimenId": "c", "sampleId": " "},
+                 {"biospecimenId": 1700000000000},
+                 {"biospecimenId": 12345678901234567890},
+                 {"biospecimenId": 12.5},
+                 {"biospecimenId": "S-1"},
+                 {"biospecimenId": 0},
+                 {"biospecimenId": -5},
+                 {"biospecimenId": 1E+10}]"""));
+
+    JsonArray entries = stored(studyId, "biospecimens");
+    List<String> expected =
+        Arrays.asList(
+            "kept",
+            "12345678901234567890",
+            "c",
+            "1700000000000",
+            "12345678901234567890",
+            null,
+            "S-1",
+            "0",
+            "-5",
+            "10000000000");
+    assertEquals(expected, sampleIds(entries));
+    assertTrue(entries.get(1).getAsJsonObject().get("sampleId").getAsJsonPrimitive().isString());
+    assertEquals(
+        expected,
+        assetDAO.findBiospecimensByStudyId(studyId).stream()
+            .map(StudyBiospecimenRecord::sampleId)
+            .toList());
+  }
+
+  @Test
+  void testARowIdMatchKeepsOrClearsTheSampleId() throws Exception {
+    Integer studyId =
+        create(
+            prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}, {\"biospecimenId\": \"S-2\"}]"));
+    JsonArray entries = stored(studyId, "biospecimens");
+    int first = idOf(entries, 0, "biospecimenId");
+    int second = idOf(entries, 1, "biospecimenId");
+
+    update(
+        studyId,
+        prop(
+            "biospecimens",
+            "[{\"biospecimenId\": %d, \"sampleId\": null}, {\"biospecimenId\": %d, \"sampleId\": \"\"}]"
+                .formatted(first, second)));
+
+    assertEquals(Arrays.asList("S-1", ""), sampleIds(stored(studyId, "biospecimens")));
+    List<StudyBiospecimenRecord> rows = assetDAO.findBiospecimensByStudyId(studyId);
+    assertEquals("S-1", rows.get(0).sampleId());
+    assertNull(rows.get(1).sampleId());
+  }
+
+  @Test
+  void testAStaleFormKeepsTheBiospecimenSampleId() throws Exception {
+    Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));
+
+    update(studyId, prop("biospecimens", "[{\"biospecimenId\": \"S-1\", \"donorId\": \"D\"}]"));
+
+    List<StudyBiospecimenRecord> rows = assetDAO.findBiospecimensByStudyId(studyId);
+    assertEquals(1, rows.size());
+    assertEquals("S-1", rows.getFirst().sampleId());
+    assertEquals("D", rows.getFirst().donorId());
+    assertEquals(List.of("S-1"), sampleIds(stored(studyId, "biospecimens")));
+  }
+
+  @Test
+  void testARowFormBiospecimenIdThatClaimsNoRowIsRejected() throws Exception {
+    String name = UUID.randomUUID().toString();
+
+    assertThrows(
+        BadRequestException.class,
+        () -> create(name, List.of(), prop("biospecimens", "[{\"biospecimenId\": \"12345\"}]")));
+    assertNull(studyDAO.findStudyByName(name));
+
+    Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));
+    int row = idOf(stored(studyId, "biospecimens"), 0, "biospecimenId");
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            update(
+                studyId,
+                prop(
+                    "biospecimens",
+                    "[{\"biospecimenId\": %d}, {\"biospecimenId\": %d}]".formatted(row, row))));
+    assertEquals(List.of("S-1"), sampleIds(stored(studyId, "biospecimens")));
+  }
+
+  @Test
+  void testRowFormBiospecimenIdsThatClaimNoRowNeedASampleId() throws Exception {
+    Integer other = create(prop("biospecimens", "[{\"biospecimenId\": \"O-1\"}]"));
+    int otherId = idOf(stored(other, "biospecimens"), 0, "biospecimenId");
+    Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));
+    int retired = idOf(stored(studyId, "biospecimens"), 0, "biospecimenId");
+    update(studyId, prop("biospecimens", "[]"));
+
+    for (String id : List.of(String.valueOf(otherId), String.valueOf(retired), "12345678")) {
+      assertThrows(
+          BadRequestException.class,
+          () -> update(studyId, prop("biospecimens", "[{\"biospecimenId\": %s}]".formatted(id))));
+    }
+    update(
+        studyId,
+        prop(
+            "biospecimens", "[{\"biospecimenId\": %d, \"sampleId\": \"S-9\"}]".formatted(retired)));
+
+    List<StudyBiospecimenRecord> live =
+        assetDAO.findBiospecimensByStudyId(studyId).stream()
+            .filter(row -> row.retiredDate() == null)
+            .toList();
+    assertEquals(1, live.size());
+    assertNotEquals(retired, live.getFirst().biospecimenId());
+    assertEquals("S-9", live.getFirst().sampleId());
+  }
+
   @ParameterizedTest
   @CsvSource(
       delimiter = '|',
@@ -490,6 +658,16 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
   private static int idOf(JsonArray entries, int index, String idKey) {
     return entries.get(index).getAsJsonObject().get(idKey).getAsInt();
+  }
+
+  private static List<String> sampleIds(JsonArray entries) {
+    List<String> sampleIds = new ArrayList<>();
+    entries.forEach(
+        e -> {
+          JsonElement sampleId = e.getAsJsonObject().get("sampleId");
+          sampleIds.add(sampleId == null ? null : sampleId.getAsString());
+        });
+    return sampleIds;
   }
 
   private static List<Integer> ids(JsonArray entries, String idKey) {

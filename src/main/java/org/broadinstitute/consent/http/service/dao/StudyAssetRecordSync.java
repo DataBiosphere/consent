@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import jakarta.ws.rs.BadRequestException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.StudyAssetKey;
 import org.broadinstitute.consent.http.models.StudyAssets;
+import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
 import org.broadinstitute.consent.http.models.StudyModelRecord;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.StudyWorkspaceRecord;
@@ -41,6 +43,8 @@ import org.jdbi.v3.core.Handle;
  */
 public class StudyAssetRecordSync implements ConsentLogger {
 
+  private static final String BIOSPECIMEN_ID = "biospecimenId";
+  private static final String SAMPLE_ID = "sampleId";
   private static final Pattern ROW_ID = Pattern.compile("[1-9]\\d{0,9}");
   private static final BigDecimal MAX_ROW_ID = BigDecimal.valueOf(Integer.MAX_VALUE);
   // Code points, as SQL counts them; at 4 bytes each this fits the legacy_key index's row limit.
@@ -100,7 +104,42 @@ public class StudyAssetRecordSync implements ConsentLogger {
               StudyAssetRecordDAO::findUsedWorkspaceLegacyKeys,
               StudyAssetRecordDAO::insertWorkspaces,
               StudyAssetRecordDAO::updateWorkspaces,
-              StudyAssetRecordDAO::retireWorkspacesExcept));
+              StudyAssetRecordDAO::retireWorkspacesExcept),
+          new AssetType<>(
+              StudyAssets.BIOSPECIMENS,
+              BIOSPECIMEN_ID,
+              (id, studyId, legacyKey, f) -> {
+                Fields interval = f.nested("postMortemInterval");
+                return new StudyBiospecimenRecord(
+                    id,
+                    studyId,
+                    legacyKey,
+                    nonBlank(f.text(SAMPLE_ID)),
+                    f.text("donorId"),
+                    f.text("specimenType"),
+                    f.text("preservationMethod"),
+                    f.text("preservationDetails"),
+                    f.text("dateOfCollection"),
+                    interval.number("value"),
+                    interval.text("unit"),
+                    f.text("sex"),
+                    f.number("age"),
+                    f.text("race"),
+                    f.text("countryOfOrigin"),
+                    f.texts("extractedDiagnoses"),
+                    f.text("pathology"),
+                    f.text("organization"),
+                    f.text("sourceSite"),
+                    f.text("optionalDataUse"),
+                    null,
+                    null,
+                    null);
+              },
+              StudyAssetRecordDAO::findLiveBiospecimens,
+              StudyAssetRecordDAO::findUsedBiospecimenLegacyKeys,
+              StudyAssetRecordDAO::insertBiospecimens,
+              StudyAssetRecordDAO::updateBiospecimens,
+              StudyAssetRecordDAO::retireBiospecimensExcept));
 
   /**
    * Syncs every asset type against the properties a registration write just stored, then stores
@@ -138,6 +177,9 @@ public class StudyAssetRecordSync implements ConsentLogger {
       return;
     }
     Set<String> usedLegacyKeys = new HashSet<>(type.findUsedLegacyKeys().apply(dao, studyId));
+    boolean biospecimens = type.key().equals(StudyAssets.BIOSPECIMENS);
+    Map<Integer, String> rowSampleIds =
+        biospecimens ? dao.findLiveBiospecimenSampleIds(studyId) : Map.of();
     Map<String, Long> idCounts =
         entries.asList().stream()
             .filter(JsonElement::isJsonObject)
@@ -154,6 +196,9 @@ public class StudyAssetRecordSync implements ConsentLogger {
       JsonObject entry = entries.get(i).getAsJsonObject();
       JsonElement id = entry.get(type.idKey());
       Integer match = live.claim(id);
+      if (biospecimens) {
+        settleSampleId(entry, rowId(id), match, rowSampleIds.get(match), i);
+      }
       Fields fields = new Fields(entry);
       if (match != null) {
         writes.update(entry, match, type.toRecord().build(match, studyId, null, fields));
@@ -186,6 +231,47 @@ public class StudyAssetRecordSync implements ConsentLogger {
             && text.codePointCount(0, text.length()) <= MAX_LEGACY_KEY_LENGTH
         ? text
         : null;
+  }
+
+  /** Decision 12 of study-asset-records-plan.md: a biospecimen's own id lives in sampleId. */
+  private static void settleSampleId(
+      JsonObject entry, Integer rowId, Integer match, String rowSampleId, int position) {
+    JsonElement sample = entry.get(SAMPLE_ID);
+    boolean absent = sample == null || sample.isJsonNull();
+    if (!absent && !isBlankString(sample)) {
+      if (sample.isJsonPrimitive() && sample.getAsJsonPrimitive().isNumber()) {
+        entry.addProperty(SAMPLE_ID, sample.getAsString());
+      }
+      return;
+    }
+    String original = copyableId(entry.get(BIOSPECIMEN_ID));
+    if (original != null) {
+      entry.addProperty(SAMPLE_ID, original);
+    } else if (rowId != null && match == null) {
+      throw new BadRequestException(
+          "Biospecimen at index %d: biospecimenId is server-assigned; send the sample id in sampleId"
+              .formatted(position));
+    } else if (absent && rowSampleId != null) {
+      entry.addProperty(SAMPLE_ID, rowSampleId);
+    }
+  }
+
+  /** A non-blank string, or a whole number as plain digits, that is not in row-id form. */
+  private static String copyableId(JsonElement id) {
+    if (id == null || !id.isJsonPrimitive() || rowId(id) != null) {
+      return null;
+    }
+    JsonPrimitive value = id.getAsJsonPrimitive();
+    if (value.isString()) {
+      return nonBlank(value.getAsString());
+    }
+    if (value.isNumber()) {
+      BigDecimal number = value.getAsBigDecimal();
+      return number.stripTrailingZeros().scale() <= 0
+          ? number.toBigIntegerExact().toString()
+          : null;
+    }
+    return null;
   }
 
   /**
@@ -222,6 +308,12 @@ public class StudyAssetRecordSync implements ConsentLogger {
     }
     JsonPrimitive value = id.getAsJsonPrimitive();
     return value.isString() || value.isNumber() ? nonBlank(value.getAsString()) : null;
+  }
+
+  private static boolean isBlankString(JsonElement value) {
+    return value.isJsonPrimitive()
+        && value.getAsJsonPrimitive().isString()
+        && value.getAsString().isBlank();
   }
 
   private static String nonBlank(String value) {
@@ -305,10 +397,17 @@ public class StudyAssetRecordSync implements ConsentLogger {
   private static final class Fields {
 
     private final JsonObject entry;
-    private final List<String> wrongType = new ArrayList<>();
+    private final String prefix;
+    private final List<String> wrongType;
 
     Fields(JsonObject entry) {
+      this(entry, "", new ArrayList<>());
+    }
+
+    private Fields(JsonObject entry, String prefix, List<String> wrongType) {
       this.entry = entry;
+      this.prefix = prefix;
+      this.wrongType = wrongType;
     }
 
     String text(String key) {
@@ -345,13 +444,34 @@ public class StudyAssetRecordSync implements ConsentLogger {
       return value.isJsonObject() ? NulCharacters.stripFromJsonText(value.toString()) : wrong(key);
     }
 
+    BigDecimal number(String key) {
+      JsonElement value = present(key);
+      if (value == null) {
+        return null;
+      }
+      return value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()
+          ? value.getAsBigDecimal()
+          : wrong(key);
+    }
+
+    /** The fields of a nested object; one of the wrong type reads as an empty object. */
+    Fields nested(String key) {
+      JsonElement value = present(key);
+      if (value != null && !value.isJsonObject()) {
+        wrong(key);
+      }
+      JsonObject object =
+          value != null && value.isJsonObject() ? value.getAsJsonObject() : new JsonObject();
+      return new Fields(object, prefix + key + ".", wrongType);
+    }
+
     private JsonElement present(String key) {
       JsonElement value = entry.get(key);
       return value == null || value.isJsonNull() ? null : value;
     }
 
     private <T> T wrong(String key) {
-      wrongType.add(key);
+      wrongType.add(prefix + key);
       return null;
     }
   }
