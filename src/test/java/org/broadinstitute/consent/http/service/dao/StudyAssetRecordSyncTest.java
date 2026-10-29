@@ -766,6 +766,30 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testSyncStudyNeedsATransaction() throws Exception {
+    Integer studyId = create();
+    StudyAssetRecordSync sync = new StudyAssetRecordSync();
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> jdbi.useHandle(handle -> sync.syncStudy(handle, studyId)));
+  }
+
+  @Test
+  void testSyncStudyReadsTheFirstNonEmptyAssetsObject() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{}");
+    studyDAO.insertStudyProperty(studyId, "assets", json, "[1]");
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{\"models\": [{\"name\": \"A\"}]}");
+
+    syncStudy(studyId);
+
+    assertEquals("A", assetDAO.findModelsByStudyId(studyId).getFirst().name());
+    assertEquals(List.of("{}", "[1]"), storedValues(studyId, "assets"));
+  }
+
+  @Test
   void testSyncStudyLeavesTheRowsOfAMalformedList() throws Exception {
     Integer studyId = create(prop("models", "[{\"name\": \"A\"}]"));
     studyDAO.updateStudyProperty(studyId, "models", PropertyType.Json.toString(), "[{");

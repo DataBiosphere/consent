@@ -262,7 +262,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
 
   private static JsonElement parse(StoredStudyProperty prop) {
     try {
-      return prop.value() == null ? null : JsonParser.parseString(prop.value());
+      return JsonParser.parseString(prop.value());
     } catch (JsonParseException e) {
       return null;
     }
