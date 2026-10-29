@@ -240,18 +240,15 @@ class StudyAssetRecordDAOTest extends DAOTestHelper {
     Integer studyId = insertStudy();
     Integer modelId = assetDAO.insertModels(List.of(model(null, studyId, null, "A"))).get(0);
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> assetDAO.updateModels(List.of(model(null, studyId, null, "B"))));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> assetDAO.updateModels(List.of(model(modelId, null, null, "B"))));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> assetDAO.updateWorkspaces(List.of(workspace(null, studyId, null, "B"))));
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> assetDAO.updateBiospecimens(List.of(biospecimen(null, studyId, null, "B"))));
+    List<StudyModelRecord> noRowId = List.of(model(null, studyId, null, "B"));
+    List<StudyModelRecord> noStudyId = List.of(model(modelId, null, null, "B"));
+    List<StudyWorkspaceRecord> workspaces = List.of(workspace(null, studyId, null, "B"));
+    List<StudyBiospecimenRecord> biospecimens = List.of(biospecimen(null, studyId, null, "B"));
+
+    assertThrows(IllegalArgumentException.class, () -> assetDAO.updateModels(noRowId));
+    assertThrows(IllegalArgumentException.class, () -> assetDAO.updateModels(noStudyId));
+    assertThrows(IllegalArgumentException.class, () -> assetDAO.updateWorkspaces(workspaces));
+    assertThrows(IllegalArgumentException.class, () -> assetDAO.updateBiospecimens(biospecimens));
     assertEquals("A", assetDAO.findModelsByStudyId(studyId).get(0).name());
   }
 
