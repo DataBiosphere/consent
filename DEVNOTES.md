@@ -64,8 +64,8 @@ with `--all true`.
 
 You can run the stack in the container (Docker-in-Docker) or on the host. Both use the same
 `config/` files. Run only one stack at a time, because both use ports 27443, 7777 and 9200. When
-the stack runs in the container, VSCode forwards these ports to the host. If a host port is in
-use, VSCode picks another port and shows it in the Ports view. Run `./scripts/index-es.sh` where
+the stack runs in the container, VSCode detects these ports and offers to forward them to the
+host. Choose the ports to forward in the Ports view. Run `./scripts/index-es.sh` where
 the stack runs.
 
 If you do not use the Dev Container, run `render-configs.sh` yourself. See the next section.

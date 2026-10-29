@@ -17,11 +17,6 @@
         }
     },
     "postCreateCommand": "./scripts/setup-devcontainer.sh",
-    "portsAttributes": {
-        "27443": { "label": "Consent proxy", "onAutoForward": "notify" },
-        "7777": { "label": "Consent debugger", "onAutoForward": "silent" },
-        "9200": { "label": "Elasticsearch", "onAutoForward": "silent" }
-    },
     "initializeCommand": "mkdir -p \"$HOME/.claude\" \"$HOME/.codex\"",
     "mounts": [
         "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
