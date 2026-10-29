@@ -1122,6 +1122,56 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFailedRegistrationWriteDeletesUploadedFiles() throws Exception {
+    User user = mock();
+    StudyRegistrationRequest schema = createRandomCompleteDatasetRegistration(user);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "plan"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetServiceDAO.insertDatasetRegistration(any(), any()))
+        .thenThrow(new BadRequestException("rejected"));
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            datasetRegistrationService.createDatasetsFromRegistration(
+                schema, user, Map.of("alternativeDataSharingPlan", textFile())));
+
+    verify(gcsService).deleteDocument("plan");
+  }
+
+  @Test
+  void testFailedStudyUpdateDeletesUploadedFiles() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "plan"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    when(gcsService.deleteDocument("plan")).thenThrow(new RuntimeException("delete failed"));
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenThrow(new BadRequestException("rejected"));
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            datasetRegistrationService.updateStudyFromRegistration(
+                1, schema, user, Map.of("alternativeDataSharingPlan", textFile())));
+
+    verify(gcsService).deleteDocument("plan");
+  }
+
+  private static FormDataBodyPart textFile() {
+    FormDataBodyPart bodyPart = mock();
+    when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
+    when(bodyPart.getContentDisposition())
+        .thenReturn(FormDataContentDisposition.name("file").fileName("plan.txt").build());
+    when(bodyPart.getValueAs(any()))
+        .thenReturn(new ByteArrayInputStream("plan".getBytes(StandardCharsets.UTF_8)));
+    return bodyPart;
+  }
+
+  @Test
   void testUpdateStudyFromRegistrationCapturesPiEmail() throws Exception {
     User user = mock();
     StudyUpdateRequest schema =
