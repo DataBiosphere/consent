@@ -32,9 +32,6 @@ services:
       - -Ddw.googleStore.password=
       - -Ddw.elasticSearch.authUser=elastic
       - -Ddw.elasticSearch.authPassword=${ELASTIC_PASSWORD}
-      # Dev runs the changesets in a separate Liquibase migration Job, so the chart omits this
-      # flag. The local database comes from an older dump and needs the newer changesets.
-      - -Ddw.liquibase.runOnStartup=true
       # No -Dsentry.dsn: local errors must not go to the shared Sentry project.
       - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:7777
       - -Xms2G
