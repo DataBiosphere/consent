@@ -68,3 +68,7 @@ rateLimit:
 # it. Local databases are often restored from an older dump, so run them at startup.
 liquibase:
   runOnStartup: true
+
+# Optional. If you omit this block, the anonymous showcase lookup is off. See ShowcaseConfiguration.
+showcase:
+  publicLookupEnabled: true

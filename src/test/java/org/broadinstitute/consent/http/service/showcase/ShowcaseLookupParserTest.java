@@ -99,6 +99,23 @@ class ShowcaseLookupParserTest {
     assertRejected("{ \"mode\": %s }".formatted(quoted(mode)), "Unknown mode \"" + mode + "\"");
   }
 
+  /** Long caller values come back cut, so a 400 never repeats a large request. */
+  @Test
+  void testLongEchoedValuesAreCut() {
+    String value = "v".repeat(60 * 1024);
+    String cut = "v".repeat(ShowcaseLookupException.MAX_ECHOED_LENGTH) + "…";
+
+    assertRejected("{ \"mode\": %s }".formatted(quoted(value)), "Unknown mode \"" + cut + "\"");
+    assertRejected(
+        "{ \"mode\": \"identifiers\", \"section\": %s, \"identifiers\": [] }"
+            .formatted(quoted(value)),
+        "Unknown section \"" + cut + "\" for mode \"identifiers\"");
+    assertRejected(
+        "{ \"mode\": \"identifiers\", %s, \"identifiers\": [], %s: 1 }"
+            .formatted(SECTION, quoted(value)),
+        "Unrecognized field \"" + cut + "\" for mode \"identifiers\"");
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"1", "null", "[\"identifiers\"]", "{}", "true"})
   void testModeMustBeAString(String mode) {

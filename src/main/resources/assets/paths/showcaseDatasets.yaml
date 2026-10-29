@@ -4,7 +4,11 @@ post:
   description: |
     Anonymous, read-only lookup of public Data Showcase dataset summaries. The route is outside
     `/api` and needs no authentication. Each client IP is rate limited (429 with `Retry-After`).
-    Every response has `Cache-Control: no-store`.
+    The route exists only in a deployment that sets `showcase.publicLookupEnabled: true`; it is
+    off by default, and the path is then a 404.
+    Every response from the lookup itself (200, 400, 413 and 500) has `Cache-Control: no-store`.
+    A 404, 415 or 429 that the server builds before the lookup runs does not, and none of them
+    carries dataset data.
 
     Modes:
       * `identifiers`: resolves an editorial list of canonical `DUOS-` identifiers in one query.
@@ -25,7 +29,8 @@ post:
         counted before duplicates are removed.
       * `scope.dac`: at most 20 values. `limit`: 1 to 50 (default 12). `pageSize`: 1 to 200
         (default 100). `cursor`: at most 512 characters.
-      * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`).
+      * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`),
+        with a number no larger than 2147483647.
       * Unknown modes, unknown sections, duplicate fields and fields that do not belong to the
         mode get a 400 before any data is read. JSON nested deeper than a scope value list gets
         a 400.
