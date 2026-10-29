@@ -36,7 +36,7 @@ container setup turnkey") and DT-4257 (a compose mode against the remote dev con
 |---|---|---|
 | `render-configs.sh` | Writes `server.crt`, `server.key` and `ca-bundle.crt` from the `local-dev` namespace. Optional flags write `.env.local`, `public/config.json` and `site.conf`. It writes the certs to a staging folder, and moves them into place only after all three succeed. It has no preflight. It stops at the first error (`set -e`). | VPN, `gcloud`, `kubectl`, `jq`, `openssl` |
 | `render-site-conf.sh` | Renders `site.conf` from the duos chart template in `terra-helmfile`. It clones the repo with `git` over HTTPS, then over SSH, with `GIT_TERMINAL_PROMPT=0`. It fails if helm syntax remains after the render. | `git` read access to `terra-helmfile` |
-| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. It installs `gcloud` and the GKE auth plugin with `apt-get`, runs `gcloud auth login`, then runs `render-configs.sh` with every write flag. On a failure it exits non-zero and asks about the VPN. Each run makes all files again. | Nothing before the run |
+| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. It installs `gcloud` and the GKE auth plugin with `apt-get`, runs `gcloud auth login` and `gcloud auth application-default login`, then runs `render-configs.sh` with every write flag. On a failure it exits non-zero and asks about the VPN. Each run makes all files again. | Nothing before the run |
 | `render-accounts.sh` | Writes test service account keys to a gitignored env file. It writes to a temp file first, so a failure keeps the old file. | `gcloud`, `jq` |
 
 The `duos-ui` Dev Container uses a stock image with no Dockerfile, and it has no `gh`. VSCode
@@ -477,11 +477,10 @@ There is no Dockerfile and no `gh`, as in `duos-ui`.
 `setup-devcontainer.sh` follows the `duos-ui` script:
 
 1. Install `gcloud`, the GKE auth plugin, `jq`, `openssl` and `gzip` with `apt-get`.
-2. Run `gcloud auth login`, if no account is active.
+2. Run `gcloud auth login` and `gcloud auth application-default login`, on each run, as
+   `duos-ui` does. So each build, rebuild or manual run has fresh credentials.
 3. Run `render-configs.sh --all true`. Each run makes all files again, except the dump: `--all`
    makes a dump only when there is none.
-4. If there is no ADC file, print the command for the container mode:
-   `gcloud auth application-default login`.
 
 On a failure, the script exits non-zero, asks about the VPN, and says to run it again. A run after
 a cert rotation renews the certs.

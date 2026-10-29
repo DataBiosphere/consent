@@ -49,7 +49,9 @@ with `--all true`.
 2. Open the project in VSCode. When the notification in the bottom right corner asks about the Dev
    Container, click "Reopen in container".
 
-3. When the setup script asks for the `gcloud` login, complete it in the browser that opens.
+3. The setup script asks for two `gcloud` logins on each run: `gcloud auth login`, then
+   `gcloud auth application-default login`. The app needs the second one. Complete each login
+   in the browser that opens.
 
 4. If the setup fails (for example, the VPN is down), fix the issue. Then rebuild the container,
    or run the script again. Every 3 months the certs rotate. Run the script again to make the
@@ -58,9 +60,6 @@ with `--all true`.
    ```sh
    ./scripts/setup-devcontainer.sh
    ```
-
-5. To run the stack in the container, the app also needs Application Default Credentials. Run
-   `gcloud auth application-default login` in the container.
 
 You can run the stack in the container (Docker-in-Docker) or on the host. Both use the same
 `config/` files. The container forwards ports 27443, 7777 and 9200 to the host. Run

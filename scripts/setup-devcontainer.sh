@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Runs after the Dev Container is created. Installs gcloud, asks for a gcloud login, then makes
+# Runs after the Dev Container is created. Installs gcloud, asks for the gcloud logins, then makes
 # the local config files with render-configs.sh --all true. This follows the duos-ui script. Each
 # step can run again safely, so run this script again after a failure or when the certs rotate.
 #
@@ -34,18 +34,13 @@ install_tools() {
   sudo apt-get install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin jq openssl gzip
 }
 
+# Log in on each run, as duos-ui does, so each build, rebuild or manual run has fresh credentials.
+# The compose template mounts the Application Default Credentials into the app.
 install_consent_config() {
-  if [[ -z "$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2> /dev/null)" ]]; then
-    printf "\n"
-    gcloud auth login
-  fi
+  printf "\n"
+  gcloud auth login
+  gcloud auth application-default login
   ./scripts/render-configs.sh --all true
-  # The compose template mounts this file into the app. Only the container mode needs it here:
-  # a developer who runs compose on the host uses the file on the host.
-  if [[ ! -f "$HOME/.config/gcloud/application_default_credentials.json" ]]; then
-    echo
-    echo "To run the stack in this container, run: gcloud auth application-default login"
-  fi
 }
 
 install_tools
