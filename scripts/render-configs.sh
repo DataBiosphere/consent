@@ -276,7 +276,7 @@ if [[ "$WRITE_COMPOSE" == "true" ]]; then
   write_compose
 fi
 if [[ "$EXPORT_DB" == "true" ]]; then
-  "$SCRIPT_DIR/export-db.sh" --db_env "$DB_ENV" --config_dir "$CONFIG_DIR"
+  "$SCRIPT_DIR/export-db.sh" "$DB_ENV" "$CONFIG_DIR"
 fi
 
 if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then

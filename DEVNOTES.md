@@ -78,7 +78,7 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 | `server.crt`, `server.key`, `ca-bundle.crt` | The `local-dev-cert` secret in the dev cluster | Always |
 | `consent.yaml`, `site.conf`, `oauth2.conf` | The consent chart in `terra-helmfile`, with the dev values and [local-values.yaml](scripts/templates/local-values.yaml) | `--write_chart_configs true` |
 | `docker-compose.yaml`, `.env` | [docker-compose.yaml](scripts/templates/docker-compose.yaml) in this repo, and values from the dev cluster | `--write_compose true` |
-| `consentdb-dev-DATE.sql.gz` | The dev Cloud SQL database, through [export-db.sh](scripts/export-db.sh) | `--export_db true` |
+| `consentdb-dev.sql.gz` | The dev Cloud SQL database, through [export-db.sh](scripts/export-db.sh) | `--export_db true` |
 
 You need `gcloud`, `gke-gcloud-auth-plugin`, `kubectl`, `helm`, `git`, `docker`, `jq`, `openssl`
 and `gzip`, and the non-split Broad VPN for the cluster steps. The chart configs need read access to
@@ -117,8 +117,9 @@ local consent stack (`docker-compose.consent.yaml`) connects with no change.
 #### Database dump
 
 `./scripts/render-configs.sh --export_db true` (or [export-db.sh](scripts/export-db.sh)) writes a
-new dump of the dev database. Use `--db_env staging` for staging. The script never exports prod.
-It keeps only the newest dump, and it sets `CONSENT_DB_DUMP` in `config/.env`.
+new dump of the dev database. Use `--db_env staging` (or `./scripts/export-db.sh staging`) for
+staging. The script never exports prod. A new dump replaces the old dump of the same environment,
+and the script sets `CONSENT_DB_DUMP` in `config/.env`.
 
 A dump holds real user data. Do not copy, share or upload it. Make a new one with the script.
 
@@ -132,7 +133,8 @@ the old container, which holds a copy of the old dump.
 [index-es.sh](scripts/index-es.sh) fills the local `dataset` index from the local database, with
 the admin endpoint `POST /api/dataset/index`. It uses a `gcloud auth print-access-token` token, so
 your gcloud account must have the Admin role in the loaded database. Run it after the stack starts,
-and after each new dump. The script fails if a dataset does not index.
+and after each new dump. The script deletes the old index first, and it fails if a dataset does
+not index.
 
 #### Liquibase
 
