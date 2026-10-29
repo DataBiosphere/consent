@@ -1,8 +1,82 @@
 type: object
+description: >-
+  The Data Use question/answer set. Absent or null fields are unset. See the
+  [schema definition](https://consent-ontology.dsde-prod.broadinstitute.org/schemas/data-use).
 properties:
-  code:
-    type: string
-    description: The data use code
-  description:
-    type: string
-    description: The data use description
+  generalUse:
+    type: [boolean, 'null']
+    description: General research use (GRU), a primary term
+  hmbResearch:
+    type: [boolean, 'null']
+    description: Health/medical/biomedical research (HMB), a primary term
+  diseaseRestrictions:
+    type: [array, 'null']
+    description: Disease ontology IRIs for disease-specific research (DS), a primary term
+    items:
+      type: string
+  populationOriginsAncestry:
+    type: [boolean, 'null']
+    description: Populations, origins or ancestry (POA), a primary term; summarized as `NPOA`
+  other:
+    type: [string, 'null']
+    description: Other primary restriction, as free text (OTHER)
+  methodsResearch:
+    type: [boolean, 'null']
+    description: Methods development research (NMDS)
+  nonProfitUse:
+    type: [boolean, 'null']
+    description: Non-profit and non-commercial use only (NPU)
+  secondaryOther:
+    type: [string, 'null']
+    description: Other secondary restriction, as free text (OTHER)
+  ethicsApprovalRequired:
+    type: [boolean, 'null']
+    description: Local ethics committee approval is required (IRB)
+  collaboratorRequired:
+    type: [boolean, 'null']
+    description: Collaboration with the primary study investigators is required (COL)
+  geographicalRestrictions:
+    type: [string, 'null']
+    description: Geographical restrictions, as free text (GS)
+  geneticStudiesOnly:
+    type: [boolean, 'null']
+    description: Genetic studies only (GSO)
+  publicationResults:
+    type: [boolean, 'null']
+    description: Publishing results to the scientific community is required (PUB)
+  publicationMoratorium:
+    type: [string, 'null']
+    description: Publication moratorium end date (MOR), as free text shown in the summary as sent
+  aiLlmUse:
+    type: [boolean, 'null']
+    description: Use for AI and large language model development
+  controls:
+    type: [boolean, 'null']
+    description: Use as a control set for other diseases is prohibited (NCTRL)
+  gender:
+    type: [string, 'null']
+    description: Research limited to one sex, `Male` (POP-M) or `Female` (POP-F), matched ignoring case; other values are stored but have no effect
+  pediatric:
+    type: [boolean, 'null']
+    description: Pediatric research only (POP-PD)
+  population:
+    type: [boolean, 'null']
+    description: Study of variation in the general population (POP)
+  illegalBehavior:
+    type: [boolean, 'null']
+    description: Research purpose studies illegal behavior
+  sexualDiseases:
+    type: [boolean, 'null']
+    description: Research purpose studies sexual diseases
+  stigmatizeDiseases:
+    type: [boolean, 'null']
+    description: Research purpose studies stigmatizing diseases
+  vulnerablePopulations:
+    type: [boolean, 'null']
+    description: Research purpose studies vulnerable populations
+  psychologicalTraits:
+    type: [boolean, 'null']
+    description: Research purpose studies psychological traits
+  notHealth:
+    type: [boolean, 'null']
+    description: Research purpose is not health related

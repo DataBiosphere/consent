@@ -5,11 +5,15 @@ import jakarta.ws.rs.BadRequestException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.broadinstitute.consent.http.models.AssetDataUse;
+import org.broadinstitute.consent.http.models.StudyAssets;
+import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
@@ -39,10 +43,40 @@ public class StudyRegistrationRequestValidator {
     collectConditionalFieldViolations(registration, errors);
     collectEmailFieldViolations(registration, errors);
     collectDateFieldViolations(registration, errors);
+    errors.addAll(collectAssetViolations(registration, null));
     if (consentGroups(registration).isEmpty()) {
       errors.add("At least one Dataset is required");
     }
     return new ArrayList<>(errors);
+  }
+
+  /**
+   * The violations of the model and workspace entries, read from the same lists that persistence
+   * stores, so an entry sent only inside the legacy {@code assets} object is still checked.
+   *
+   * @param storedProperties The study's properties as stored, or null for a new study
+   */
+  public List<String> collectAssetViolations(
+      StudyRegistrationRequest registration, Collection<StudyProperty> storedProperties) {
+    List<String> errors = new ArrayList<>();
+    errors.addAll(
+        assetViolations(
+            registration, StudyAssets.MODELS, registration.getModels(), storedProperties));
+    errors.addAll(
+        assetViolations(
+            registration, StudyAssets.WORKSPACES, registration.getWorkspaces(), storedProperties));
+    return errors;
+  }
+
+  private static List<String> assetViolations(
+      StudyRegistrationRequest registration,
+      String key,
+      List<Object> topLevel,
+      Collection<StudyProperty> storedProperties) {
+    return AssetDataUse.violations(
+        key,
+        StudyAssets.promotedValue(topLevel, registration.getAssets(), key),
+        new StudyAssets().findAssetList(storedProperties, key));
   }
 
   /** The violations of one consent group, independent of its siblings. */

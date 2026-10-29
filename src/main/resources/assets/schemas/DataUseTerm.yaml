@@ -1,0 +1,8 @@
+type: object
+properties:
+  code:
+    type: string
+    description: The data use code
+  description:
+    type: string
+    description: The data use description
