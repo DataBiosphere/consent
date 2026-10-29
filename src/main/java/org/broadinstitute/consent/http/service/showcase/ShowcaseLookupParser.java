@@ -40,16 +40,22 @@ public final class ShowcaseLookupParser {
 
   private static ShowcaseIdentifiersLookup identifiersLookup(ShowcaseRequestFields request) {
     request.rejectUnrecognized(IDENTIFIERS_FIELDS);
-    String slug = request.requiredString(SECTION);
-    ShowcaseSection section =
-        ShowcaseSection.fromSlug(slug)
-            .filter(ShowcaseSection::isEditorial)
-            .orElseThrow(
-                () ->
-                    new ShowcaseLookupException(
-                        "Unknown section \"%s\" for mode \"%s\""
-                            .formatted(echoed(slug), request.mode())));
+    ShowcaseSection section = section(request);
+    if (!section.isEditorial()) {
+      throw new ShowcaseLookupException(
+          "Section \"%s\" does not take mode \"%s\"".formatted(section.getSlug(), request.mode()));
+    }
     return new ShowcaseIdentifiersLookup(
         section, request.requiredIdentifiers(IDENTIFIERS, ShowcaseLookupLimits.MAX_IDENTIFIERS));
+  }
+
+  private static ShowcaseSection section(ShowcaseRequestFields request) {
+    String slug = request.requiredString(SECTION);
+    return ShowcaseSection.fromSlug(slug)
+        .orElseThrow(
+            () ->
+                new ShowcaseLookupException(
+                    "Unknown section \"%s\" for mode \"%s\""
+                        .formatted(echoed(slug), request.mode())));
   }
 }
