@@ -3,7 +3,7 @@ description: A Biospecimen object.
 properties:
   biospecimenId:
     type: [integer, string]
-    description: Server-assigned id. Omit it for a new entry and send it back unchanged on an edit; put the submitter's id in sampleId, since an id in server-id form (a whole number from 1 to 2147483647) that matches none of the study's biospecimens is rejected with a 400 when sampleId is missing.
+    description: Server-assigned id. Omit it for a new entry and send it back unchanged on an edit; put the submitter's id in sampleId, since an id in server-id form (a whole number from 1 to 2147483647, sent as a number or as a digit string like "42" with no leading zero) that matches none of the study's biospecimens is rejected with a 400 when sampleId is missing or blank.
   sampleId:
     type: string
     description: The submitter's own identifier for the sample, stored as text. When absent or blank it is copied from the original biospecimenId unless that id is in server-id form; an edit that omits it keeps the stored value, and a blank clears it.
