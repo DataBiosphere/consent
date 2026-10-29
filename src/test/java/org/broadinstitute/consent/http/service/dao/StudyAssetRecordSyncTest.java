@@ -431,6 +431,28 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testIdsAndSampleIdsThatAreNotTextOrNumbersAreNotCopied() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                """
+                [{"biospecimenId": "a", "sampleId": {"x": 1}},
+                 {"biospecimenId": {"x": 1}},
+                 {"biospecimenId": true},
+                 {"age": {"years": 40}}]"""));
+
+    JsonArray entries = stored(studyId, "biospecimens");
+    assertEquals("{\"x\":1}", entries.get(0).getAsJsonObject().get("sampleId").toString());
+    assertNull(entries.get(1).getAsJsonObject().get("sampleId"));
+    assertNull(entries.get(2).getAsJsonObject().get("sampleId"));
+    assertNull(entries.get(3).getAsJsonObject().get("sampleId"));
+    List<StudyBiospecimenRecord> rows = assetDAO.findBiospecimensByStudyId(studyId);
+    assertNull(rows.get(0).sampleId());
+    assertNull(rows.get(3).age());
+  }
+
+  @Test
   void testSampleIdsAreKeptCopiedOrStringified() throws Exception {
     Integer studyId =
         create(
