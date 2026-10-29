@@ -33,9 +33,9 @@ properties:
     type: string
     description: Dataset Name
   dataUse:
-    type: object
-    title: StudyConversionDataUse
     description: Data Use
+    allOf:
+      - $ref: './DataUse.yaml'
   dacId:
     type: number
     description: The DAC Id
