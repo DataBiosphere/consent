@@ -96,7 +96,12 @@ services:
       # database needs the password from config/.env.
       - 5432:5432
     volumes:
-      - ./${CONSENT_DB_DUMP:?No database dump. Run ./scripts/render-configs.sh --export_db true}:/docker-entrypoint-initdb.d/consent.sql.gz:ro
+      # The image picks the load command from the file extension: .sql or .sql.gz. It ignores a
+      # file with another extension, and the database is then empty.
+      - ./${CONSENT_DB_DUMP:?No database dump. Run ./scripts/render-configs.sh --export_db true}:/docker-entrypoint-initdb.d/${CONSENT_DB_DUMP}:ro
+      # The database stays after `docker compose down`. The image loads the dump only into an
+      # empty volume. See DEVNOTES.md to load a new dump.
+      - pgdata:/var/lib/postgresql/data
     environment:
       PGGSSENCMODE: disable
       POSTGRES_DB: consent
@@ -150,3 +155,4 @@ services:
 
 volumes:
   elastic:
+  pgdata:
