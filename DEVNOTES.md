@@ -125,10 +125,21 @@ and the script sets `CONSENT_DB_DUMP` in `config/.env`.
 
 A dump holds real user data. Do not copy, share or upload it. Make a new one with the script.
 
-The local database loads the dump only when its container is new. After a new dump, run
-`docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml rm -sfv sqlproxy`,
-start the stack again, and run `./scripts/index-es.sh`. The `-v` also removes the data volume of
-the old container, which holds a copy of the old dump.
+You can use a dump from another source. Its name must end in `.sql` or `.sql.gz`. The Postgres
+image ignores other files, and the database is then empty.
+
+The database is in the `consent_pgdata` volume, so it stays after `docker compose down`. The image
+loads the dump only into an empty volume. To load a new dump, or to try again after a load that
+failed, remove the volume, start the stack again, and run `./scripts/index-es.sh`:
+
+```bash
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml rm -sf sqlproxy
+docker volume rm consent_pgdata
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+./scripts/index-es.sh
+```
+
+If the load fails, `docker logs localdb` shows the error.
 
 #### Elasticsearch index
 
