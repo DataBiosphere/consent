@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.dto.registration.StudyRegistration
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.jdbi.v3.core.HandleConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -770,9 +771,10 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     Integer studyId = create();
     StudyAssetRecordSync sync = new StudyAssetRecordSync();
 
-    assertThrows(
-        IllegalStateException.class,
-        () -> jdbi.useHandle(handle -> sync.syncStudy(handle, studyId)));
+    HandleConsumer<RuntimeException> outsideATransaction =
+        handle -> sync.syncStudy(handle, studyId);
+
+    assertThrows(IllegalStateException.class, () -> jdbi.useHandle(outsideATransaction));
   }
 
   @Test
