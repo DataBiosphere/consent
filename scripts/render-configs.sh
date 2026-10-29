@@ -3,10 +3,12 @@
 # Makes the local config in config/ that config/docker-compose.yaml needs. See DEVNOTES.md
 # ("Render Configs") and docs/plans/render-local-configs-plan.md.
 #
-# Writes the certs, which rotate every 3 months.
+# A run with no options writes only the certs, which rotate every 3 months. Other options turn
+# on the other files.
 #
-# You MUST be on the non-split Broad VPN, because the cert step reads the dev cluster. You MUST
-# be logged in with gcloud.
+# You MUST be on the non-split Broad VPN for the cert step, which reads the dev cluster. You MUST
+# be logged in with gcloud. The chart configs need git read access to
+# broadinstitute/terra-helmfile, over HTTPS or SSH.
 #
 # Each step writes to a staging folder first, and moves its files into place only when the step
 # succeeds. The script stops at the first step that fails, and that step leaves the old files as
@@ -15,23 +17,36 @@
 
 set -eu
 set -o pipefail
+# With CDPATH, `cd DIR` can print DIR, and then $(cd DIR && pwd) has the path two times.
+unset CDPATH
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+# shellcheck source=lib/common.sh
+source "$SCRIPT_DIR/lib/common.sh"
+
 ZONE="us-central1-a"
 CLUSTER="terra-dev"
 
 # Default values that command line options can change.
 PROJECT="broad-dsde-dev"
+HELMFILE_REF="master"
+HELMFILE_REF_SET="false"
+HELMFILE_DIR=""
 CONFIG_DIR="$REPO_ROOT/config"
+WRITE_CHART_CONFIGS="false"
 
 usage() {
   cat << EOF
 Usage: $0 [OPTION]...
-Write the certs for the local proxy to config/.
+Make the local config files in config/. With no options, write only the certs.
 
   --project PROJECT                 Google project of the dev cluster, for the certs.
                                     Defaults to broad-dsde-dev.
+  --helmfile_ref REF                The terra-helmfile branch or tag to render. Defaults to master.
+  --helmfile_dir DIR                Render a local terra-helmfile checkout as it is, with changes
+                                    that are not committed. Cannot be used with --helmfile_ref.
+  --write_chart_configs true|false  Write consent.yaml, site.conf and oauth2.conf. Defaults to false.
   --config_dir DIR                  Where to write the files. Defaults to config/ in the repo root.
   --help                            Show this help.
 EOF
@@ -49,11 +64,21 @@ parse_cli_args() {
     [[ $# -ge 2 ]] || error "Option $1 needs a value. Try --help to see a list of all options."
     case "$1" in
       --project) PROJECT=$2 ;;
+      --helmfile_ref) HELMFILE_REF=$2; HELMFILE_REF_SET="true" ;;
+      --helmfile_dir) HELMFILE_DIR=$2 ;;
+      --write_chart_configs) check_bool "$1" "$2"; WRITE_CHART_CONFIGS=$2 ;;
       --config_dir) CONFIG_DIR=$2 ;;
       *) error "Unknown option: $1. Try --help to see a list of all options." ;;
     esac
     shift 2
   done
+
+  if [[ "$HELMFILE_REF_SET" == "true" && -n "$HELMFILE_DIR" ]]; then
+    error "Use --helmfile_ref or --helmfile_dir, not both."
+  fi
+  if [[ -n "$HELMFILE_DIR" ]]; then
+    HELMFILE_DIR=$(cd "$HELMFILE_DIR" 2> /dev/null && pwd) || error "--helmfile_dir: no such folder."
+  fi
 }
 
 # Get the credentials for the dev cluster, one time. The script uses its own kubeconfig, so the
@@ -95,10 +120,23 @@ write_certs() {
   key_pub=$(openssl pkey -pubout -in "$stage/server.key" 2> /dev/null) || error "server.key is not a private key."
   [[ "$cert_pub" == "$key_pub" ]] || error "server.key does not match server.crt."
   openssl x509 -noout -in "$stage/ca-bundle.crt" 2> /dev/null || error "ca-bundle.crt is not a certificate."
-  mv "$stage/server.crt" "$stage/server.key" "$stage/ca-bundle.crt" "$CONFIG_DIR/"
+  move_into_place "$stage" "$CONFIG_DIR" server.crt server.key ca-bundle.crt
+}
+
+write_chart_configs() {
+  local source_args=(--helmfile_ref "$HELMFILE_REF")
+  if [[ -n "$HELMFILE_DIR" ]]; then
+    source_args=(--helmfile_dir "$HELMFILE_DIR")
+  fi
+  # The chart script stages its files and backs up each old file that changes.
+  "$SCRIPT_DIR/render-chart-configs.sh" --output_dir "$CONFIG_DIR" "${source_args[@]}"
 }
 
 parse_cli_args "$@"
+# Check this before the certs step, which is slow.
+if [[ "$WRITE_CHART_CONFIGS" == "false" && ( "$HELMFILE_REF_SET" == "true" || -n "$HELMFILE_DIR" ) ]]; then
+  error "--helmfile_ref and --helmfile_dir need --write_chart_configs true."
+fi
 # config/ holds secrets. Mode 700 keeps other users on this machine out of it. The script sets the
 # mode only on config/ and on a folder that it makes, not on an existing folder such as ~.
 if [[ ! -d "$CONFIG_DIR" || "$CONFIG_DIR" == "$REPO_ROOT/config" ]]; then
@@ -118,3 +156,6 @@ trap cleanup EXIT
 trap 'exit 130' INT TERM
 
 write_certs
+if [[ "$WRITE_CHART_CONFIGS" == "true" ]]; then
+  write_chart_configs
+fi
