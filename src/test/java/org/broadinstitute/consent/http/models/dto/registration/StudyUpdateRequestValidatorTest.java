@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,19 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     assertTrue(validator.validate(study, datasets, registration));
+  }
+
+  @Test
+  void testValidate_assetListOverTheCap_rejected() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setAssets(
+        Map.of(
+            "workspaces",
+            Collections.nCopies(
+                StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE + 1, Map.of("name", "x"))));
+    assertThrows(
+        BadRequestException.class, () -> validator.validate(study, datasets, registration));
   }
 
   // ── Study name uniqueness ────────────────────────────────────────────────

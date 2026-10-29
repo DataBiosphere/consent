@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -38,6 +39,29 @@ class StudyRegistrationRequestValidatorTest {
   void testCollectViolations_valid() {
     StudyRegistrationRequest registration = createValidRegistration();
     assertTrue(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_assetListOverTheCap() {
+    StudyRegistrationRequest topLevel = createValidRegistration();
+    topLevel.setBiospecimens(entries(StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE + 1));
+    StudyRegistrationRequest legacy = createValidRegistration();
+    legacy.setAssets(
+        Map.of("Models", entries(StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE + 1)));
+    StudyRegistrationRequest atCap = createValidRegistration();
+    atCap.setWorkspaces(entries(StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE));
+
+    assertTrue(
+        validator
+            .collectViolations(topLevel)
+            .contains("biospecimens can list at most 1000 entries"));
+    assertTrue(
+        validator.collectViolations(legacy).contains("models can list at most 1000 entries"));
+    assertTrue(validator.collectViolations(atCap).isEmpty());
+  }
+
+  private static List<Object> entries(int size) {
+    return Collections.nCopies(size, Map.of("name", "x"));
   }
 
   // ── Required fields & invalid values ─────────────────────────────────────
