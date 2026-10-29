@@ -307,11 +307,10 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
             List.of(),
             List.of());
 
-    assertThrows(
-        NullPointerException.class,
-        () ->
-            create(
-                name, List.of(dataset, failingDataset()), prop("models", "[{\"name\": \"M\"}]")));
+    List<DatasetInsert> datasets = List.of(dataset, failingDataset());
+    StudyProperty models = prop("models", "[{\"name\": \"M\"}]");
+
+    assertThrows(NullPointerException.class, () -> create(name, datasets, models));
 
     assertNull(studyDAO.findStudyByName(name));
     assertEquals(modelRows, countModelRows());
@@ -323,9 +322,10 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     Integer studyId = create(prop("models", "[{\"name\": \"M\"}]"));
     String before = stored(studyId, "models").toString();
 
-    assertThrows(
-        NullPointerException.class,
-        () -> update(studyId, List.of(failingDataset()), prop("models", "[]")));
+    List<DatasetInsert> datasets = List.of(failingDataset());
+    StudyProperty models = prop("models", "[]");
+
+    assertThrows(NullPointerException.class, () -> update(studyId, datasets, models));
 
     assertEquals(1, assetDAO.findLiveModels(studyId).size());
     assertEquals(before, stored(studyId, "models").toString());
