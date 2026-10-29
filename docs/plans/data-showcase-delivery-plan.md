@@ -612,6 +612,11 @@ S1.1; the lookup feeds E3.
   `X-Forwarded-For`: in dev, `X-Forwarded-For` reached the sidecar with only a Google front-end
   address. Each 429 logs the key and its source. Before DT-4275 exposes the endpoint, verify in dev
   that the key is the caller's address and that a client-supplied `X-Real-IP` does not change it.
+  Done on dev 2026-10-28: a request with a spoofed `X-Real-IP` gave 429 logs with the real
+  client address as the key and `source=REAL_IP_HEADER`, so the load balancer overwrites the
+  header and the Apache sidecar passes it on (the same check is in duos-ui #4064). DT-4275 also
+  gates the route on `showcase.publicLookupEnabled` (off by default); an environment turns it
+  on only after the S2.1 field approval in the contracts "Open gates" table is recorded.
   Requests through the BFF get the BFF's outbound address as the key, so all BFF users share one
   bucket until the BFF forwards the browser address in a header that Consent believes (DT-4281).
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
