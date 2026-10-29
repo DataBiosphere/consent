@@ -204,6 +204,10 @@ render() {
     fi
   done
   grep -q 'ProxyPass' "$stage/site.conf" || error "The rendered site.conf has no ProxyPass. Update scripts/render-chart-configs.sh."
+  # A terra-helmfile ref from before 2026-10-27 does not have the liquibaseRunOnStartup chart value.
+  if ! grep -qE '^  runOnStartup: true' "$stage/consent.yaml"; then
+    echo "WARNING: The rendered consent.yaml does not run the Liquibase changesets at startup. This terra-helmfile ref has no liquibaseRunOnStartup chart value. Start the app with -Ddw.liquibase.runOnStartup=true." >&2
+  fi
 
   # The image of the consent-proxy container in the rendered deployment, with all value overrides.
   local proxy_image

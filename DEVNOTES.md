@@ -140,14 +140,18 @@ and after each new dump. The script fails if a dataset does not index.
 startup only when the flag is `true`. If a config omits the flag or the whole `liquibase` block,
 the flag is `false`. Environments that run the Liquibase migration Job omit it. In
 `terra-helmfile`, that Job is a separate Kubernetes Job that Argo CD runs before the deployment
-(sync-wave `-1`). So the rendered `consent.yaml` has no `liquibase` block. The compose template
-passes `-Ddw.liquibase.runOnStartup=true`, because a local database restored from an older dump
-needs the newer changesets. If you run the app another way, add this block to your config:
+(sync-wave `-1`). A local database restored from an older dump needs the newer changesets. So
+`local-values.yaml` sets the chart value `liquibaseRunOnStartup: true`, and the rendered
+`consent.yaml` has this block:
 
 ```yaml
 liquibase:
   runOnStartup: true
 ```
+
+A `terra-helmfile` ref from before 2026-10-27 does not have this chart value. With such a ref, the
+script shows a warning, and the rendered `consent.yaml` has no `liquibase` block. Then pass
+`-Ddw.liquibase.runOnStartup=true` when you start the app.
 
 ### Google Cloud Storage credentials
 
