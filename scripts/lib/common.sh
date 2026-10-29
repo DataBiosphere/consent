@@ -11,6 +11,11 @@ env_get() {
   local file="$1" key="$2" val
   [[ -f "$file" ]] || return 0
   val=$(grep -E "^${key}=" "$file" | tail -1 | cut -d= -f2- || true)
+  # The scripts write KEY='value'. Another form, such as a comment after the value, a $ or a
+  # backslash in double quotes, can read back as a different value.
+  if [[ -n "$val" && ! $val =~ ^\'[^\']*\'$ ]]; then
+    echo "WARNING: $key in $file is not in the form $key='value'. The scripts can change how Compose reads it. Put the value in single quotes." >&2
+  fi
   if [[ $val == \'*\' || $val == \"*\" ]]; then
     val=${val:1:${#val}-2}
   fi
@@ -87,6 +92,8 @@ move_into_place() {
   for f in "$@"; do
     if [[ -f "$dest/$f" ]] && ! cmp -s "$stage/$f" "$dest/$f"; then
       cp -p "$dest/$f" "$dest/$f.$stamp.bak"
+      # A backup can hold secrets, for example of .env, so it never keeps a wider mode.
+      chmod 600 "$dest/$f.$stamp.bak"
     fi
   done
   for f in "$@"; do

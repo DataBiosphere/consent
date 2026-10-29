@@ -177,7 +177,7 @@ Broad serves https://local.dsde-dev.broadinstitute.org:27443).
 
 ### Debugging
 
-Port 7777 is open in the configured docker compose.
+Port 7777 is open in the configured docker compose, on `127.0.0.1` only.
 Set up a remote debug configuration pointing to `local.dsde-dev.broadinstitute.org`
 and the defaults should be correct.
 

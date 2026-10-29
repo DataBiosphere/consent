@@ -217,9 +217,13 @@ render() {
   ' "$WORK_DIR/rendered.yaml")
   [[ -n "$proxy_image" ]] || error "The rendered deployment has no consent-proxy image. Update scripts/render-chart-configs.sh."
 
-  # Move the files into place only after all three are good.
-  move_into_place "$stage" "$OUTPUT_DIR" consent.yaml oauth2.conf site.conf
-  env_set "$OUTPUT_DIR/.env" PROXY_IMAGE "$proxy_image"
+  # Set PROXY_IMAGE in a staged copy of .env, so that .env moves with the configs and gets the
+  # same backup. Move the files into place only after all four are good.
+  if [[ -f "$OUTPUT_DIR/.env" ]]; then
+    cp -p "$OUTPUT_DIR/.env" "$stage/.env"
+  fi
+  env_set "$stage/.env" PROXY_IMAGE "$proxy_image"
+  move_into_place "$stage" "$OUTPUT_DIR" consent.yaml oauth2.conf site.conf .env
   echo "Wrote consent.yaml, site.conf and oauth2.conf to $OUTPUT_DIR, and set PROXY_IMAGE to $proxy_image"
 }
 
