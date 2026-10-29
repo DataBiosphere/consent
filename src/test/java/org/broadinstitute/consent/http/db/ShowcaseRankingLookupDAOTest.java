@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -161,13 +162,21 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
     assertEquals(3, statements);
   }
 
+  /**
+   * Each kind of hidden dataset sits between eligible ones: a private study, an unapproved
+   * controlled dataset and an approved dataset of a deleted DAC.
+   */
   @Test
   void testPagesEndAndSkipHiddenDatasets() {
+    Integer deletedDac = dacDAO.createDac("Example DAC Z", "synthetic", user.getUserId());
     List<String> eligible = new ArrayList<>();
     for (int i = 0; i < 5; i++) {
       eligible.add(dataset("open", "2026-10-01T12:00:00Z", null));
       dataset(privateStudyId, "open", "2026-10-01T12:00:00Z", null);
+      dataset("controlled", "2026-10-01T12:00:00Z", dacX);
+      approvedDataset("2026-10-01 12:00:00", deletedDac);
     }
+    dacDAO.deleteDac(deletedDac, user.getUserId());
 
     List<String> seen = new ArrayList<>();
     List<Integer> pageSizes = new ArrayList<>();
@@ -202,15 +211,21 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
     assertNull(page.nextCursor());
   }
 
+  /** One more dataset than a full page, so the look-ahead row and a full summary read both run. */
   @Test
   void testMaximumPageIsTwoQueries() {
-    IntStream.range(0, 3).forEach(i -> dataset("open", "2026-10-01T12:00:00Z", null));
+    IntStream.range(0, ShowcaseLookupLimits.MAX_PAGE_SIZE + 1)
+        .forEach(i -> dataset("open", "2026-10-01T12:00:00Z", null));
+    AtomicReference<ShowcasePageResponse> page = new AtomicReference<>();
 
     int statements =
         countStatements(
-            () -> service.lookupPage(allLookup(ShowcaseLookupLimits.MAX_PAGE_SIZE, null)));
+            () ->
+                page.set(service.lookupPage(allLookup(ShowcaseLookupLimits.MAX_PAGE_SIZE, null))));
 
     assertEquals(2, statements);
+    assertEquals(ShowcaseLookupLimits.MAX_PAGE_SIZE, page.get().datasets().size());
+    assertNotNull(page.get().nextCursor());
   }
 
   private List<ShowcaseDatasetSummary> rank(
