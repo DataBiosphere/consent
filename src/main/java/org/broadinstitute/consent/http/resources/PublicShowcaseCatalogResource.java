@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.service.showcase.ShowcaseCatalogService;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupException;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupLimits;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupParser;
+import org.broadinstitute.consent.http.util.ContentLength;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.eclipse.jetty.http.BadMessageException;
 
@@ -62,7 +63,7 @@ public class PublicShowcaseCatalogResource extends Resource {
   public Response lookupDatasets(
       @HeaderParam(HttpHeaders.CONTENT_LENGTH) String contentLength, InputStream body) {
     try {
-      if (declaredLength(contentLength) > ShowcaseLookupLimits.MAX_BODY_BYTES) {
+      if (ContentLength.declared(contentLength) > ShowcaseLookupLimits.MAX_BODY_BYTES) {
         return error(Response.Status.REQUEST_ENTITY_TOO_LARGE, TOO_LARGE_MESSAGE);
       }
       byte[] bytes = readBody(body);
@@ -91,21 +92,6 @@ public class PublicShowcaseCatalogResource extends Resource {
       return body.readNBytes(ShowcaseLookupLimits.MAX_BODY_BYTES + 1);
     } catch (IOException | BadMessageException e) {
       throw new ShowcaseLookupException(UNREADABLE_BODY_MESSAGE);
-    }
-  }
-
-  /**
-   * Read as a long, so that the header of a multi-gigabyte body is not lost to an int overflow. A
-   * missing or malformed header counts as unknown, and the bounded read decides.
-   */
-  private static long declaredLength(String header) {
-    if (header == null || header.isBlank()) {
-      return -1;
-    }
-    try {
-      return Long.parseLong(header.trim());
-    } catch (NumberFormatException e) {
-      return -1;
     }
   }
 
