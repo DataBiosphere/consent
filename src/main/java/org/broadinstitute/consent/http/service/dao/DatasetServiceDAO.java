@@ -123,13 +123,8 @@ public class DatasetServiceDAO implements ConsentLogger {
       throws SQLException {
     final List<Integer> createdDatasets = new ArrayList<>();
 
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          // By default, new connections are set to auto-commit which breaks our rollback strategy.
-          // Turn that off for this connection. This will not affect existing or new connections and
-          // only applies to the current one in this handle.
-          handle.getConnection().setAutoCommit(false);
-
           Integer studyId = null;
           if (Objects.nonNull(study)) {
             studyId = executeInsertStudy(handle, study);
@@ -149,8 +144,6 @@ public class DatasetServiceDAO implements ConsentLogger {
 
             createdDatasets.add(datasetId);
           }
-
-          handle.commit();
         });
     return createdDatasets;
   }
@@ -273,9 +266,8 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetServiceDAO.DatasetInsert> datasetInserts)
       throws SQLException {
     List<Integer> insertedDatasetIds = new ArrayList<>();
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           executeUpdateStudyReplaceProps(handle, studyUpdate);
           for (DatasetUpdate datasetUpdate : datasetUpdates) {
             executeUpdateDatasetWithFiles(
@@ -301,7 +293,6 @@ public class DatasetServiceDAO implements ConsentLogger {
                     insert.files);
             insertedDatasetIds.add(insertedId);
           }
-          handle.commit();
         });
     return new StudyUpdateResult(
         studyDAO.findStudyById(studyUpdate.studyId), List.copyOf(insertedDatasetIds));
