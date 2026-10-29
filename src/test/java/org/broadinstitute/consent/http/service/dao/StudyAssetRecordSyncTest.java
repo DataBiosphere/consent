@@ -431,7 +431,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
-  void testIdsAndSampleIdsThatAreNotTextOrNumbersAreNotCopied() throws Exception {
+  void testIdsAndSampleIdsThatAreNotTextOrNumbersAreNotKept() throws Exception {
     Integer studyId =
         create(
             prop(
@@ -442,13 +442,9 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
                  {"biospecimenId": true},
                  {"age": {"years": 40}}]"""));
 
-    JsonArray entries = stored(studyId, "biospecimens");
-    assertEquals("{\"x\":1}", entries.get(0).getAsJsonObject().get("sampleId").toString());
-    assertNull(entries.get(1).getAsJsonObject().get("sampleId"));
-    assertNull(entries.get(2).getAsJsonObject().get("sampleId"));
-    assertNull(entries.get(3).getAsJsonObject().get("sampleId"));
+    assertEquals(Arrays.asList("a", null, null, null), sampleIds(stored(studyId, "biospecimens")));
     List<StudyBiospecimenRecord> rows = assetDAO.findBiospecimensByStudyId(studyId);
-    assertNull(rows.get(0).sampleId());
+    assertEquals("a", rows.get(0).sampleId());
     assertNull(rows.get(3).age());
   }
 
@@ -515,8 +511,9 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
-  void testAStaleFormKeepsTheBiospecimenSampleId() throws Exception {
-    Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));
+  void testAStaleFormCopiesItsIdOverTheStoredSampleId() throws Exception {
+    Integer studyId =
+        create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\", \"sampleId\": \"old\"}]"));
 
     update(studyId, prop("biospecimens", "[{\"biospecimenId\": \"S-1\", \"donorId\": \"D\"}]"));
 
@@ -528,12 +525,104 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testRowIdMatchesKeepOrStringifyTheSampleId() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                """
+                [{"biospecimenId": "S-1"}, {"biospecimenId": "S-2"}, {"biospecimenId": "S-3"}]"""));
+    JsonArray entries = stored(studyId, "biospecimens");
+    List<Integer> rows = ids(entries, "biospecimenId");
+
+    update(
+        studyId,
+        prop(
+            "biospecimens",
+            """
+            [{"biospecimenId": %d}, {"biospecimenId": %d, "sampleId": 42},
+             {"biospecimenId": %d, "sampleId": true}]"""
+                .formatted(rows.get(0), rows.get(1), rows.get(2))));
+
+    assertEquals(List.of("S-1", "42", "S-3"), sampleIds(stored(studyId, "biospecimens")));
+    assertEquals(
+        List.of("S-1", "42", "S-3"),
+        assetDAO.findBiospecimensByStudyId(studyId).stream()
+            .map(StudyBiospecimenRecord::sampleId)
+            .toList());
+  }
+
+  @Test
+  void testALegacyKeyMatchKeepsTheSampleItSends() throws Exception {
+    Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));
+
+    update(studyId, prop("biospecimens", "[{\"biospecimenId\": \"S-1\", \"sampleId\": 2.5}]"));
+
+    StudyBiospecimenRecord row = assetDAO.findBiospecimensByStudyId(studyId).getFirst();
+    assertEquals("2.5", row.sampleId());
+    assertEquals(List.of("2.5"), sampleIds(stored(studyId, "biospecimens")));
+  }
+
+  @Test
+  void testASecondWriteOfSettledEntriesChangesNothing() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                "[{\"biospecimenId\": \"S-1\"}, {\"biospecimenId\": 7, \"sampleId\": \"x\"}]"));
+    String settled = stored(studyId, "biospecimens").toString();
+
+    update(studyId, prop("biospecimens", settled));
+
+    assertEquals(settled, stored(studyId, "biospecimens").toString());
+    assertEquals(2, assetDAO.findBiospecimensByStudyId(studyId).size());
+  }
+
+  @Test
+  void testNumbersGsonCannotReadAreStoredAsNull() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "biospecimens",
+                "[{\"biospecimenId\": 1e+10001, \"sampleId\": \"S\", \"age\": 1e-10001}]"));
+
+    StudyBiospecimenRecord row = assetDAO.findBiospecimensByStudyId(studyId).getFirst();
+    assertNull(row.age());
+    assertEquals("S", row.sampleId());
+  }
+
+  @Test
+  void testRequestNumbersReachTheSyncWithEveryDigit() throws Exception {
+    StudyRegistrationRequest request =
+        RegistrationRequestMapper.requestObjectMapper()
+            .readValue(
+                """
+                {"biospecimens": [{"biospecimenId": 12345678901234567890.0},
+                                  {"biospecimenId": "b", "sampleId": 1E+10}]}""",
+                StudyRegistrationRequest.class);
+    StudyProperty biospecimens =
+        new RegistrationRequestMapper()
+            .toStudyProperties(request).stream()
+                .filter(p -> p.getKey().equals("biospecimens"))
+                .findFirst()
+                .orElseThrow();
+
+    Integer studyId = create(biospecimens);
+
+    assertEquals(
+        List.of("12345678901234567890", "1E+10"), sampleIds(stored(studyId, "biospecimens")));
+  }
+
+  @Test
   void testARowFormBiospecimenIdThatClaimsNoRowIsRejected() throws Exception {
     String name = UUID.randomUUID().toString();
 
     List<DatasetInsert> none = List.of();
     StudyProperty rowForm = prop("biospecimens", "[{\"biospecimenId\": \"12345\"}]");
+    StudyProperty oddSample =
+        prop("biospecimens", "[{\"biospecimenId\": 12345, \"sampleId\": {}}]");
     assertThrows(BadRequestException.class, () -> create(name, none, rowForm));
+    assertThrows(BadRequestException.class, () -> create(name, none, oddSample));
     assertNull(studyDAO.findStudyByName(name));
 
     Integer studyId = create(prop("biospecimens", "[{\"biospecimenId\": \"S-1\"}]"));

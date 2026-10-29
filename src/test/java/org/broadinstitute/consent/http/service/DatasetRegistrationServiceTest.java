@@ -77,6 +77,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1188,7 +1189,9 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "cert"));
     when(gcsService.hasBytes(any())).thenReturn(true);
-    doThrow(new SQLException("rejected")).when(datasetServiceDAO).updateDataset(any());
+    doThrow(new UnableToExecuteStatementException("rejected"))
+        .when(datasetServiceDAO)
+        .updateDataset(any());
 
     org.broadinstitute.consent.http.models.DatasetUpdate update =
         new org.broadinstitute.consent.http.models.DatasetUpdate("name", 2, List.of());
@@ -1196,7 +1199,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
         Map.of("consentGroups[0].nihInstitutionalCertificationFile", textFile());
 
     assertThrows(
-        SQLException.class, () -> datasetRegistrationService.updateDataset(1, user, update, files));
+        UnableToExecuteStatementException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, files));
 
     verify(gcsService).deleteDocument("cert");
   }

@@ -237,9 +237,10 @@ public class StudyAssetRecordSync implements ConsentLogger {
   private static void settleSampleId(
       JsonObject entry, Integer rowId, Integer match, String rowSampleId, int position) {
     JsonElement sample = entry.get(SAMPLE_ID);
-    boolean absent = sample == null || sample.isJsonNull();
+    // A sampleId of another type cannot be stored, so it must not block the copy or the 400.
+    boolean absent = !isTextOrNumber(sample);
     if (!absent && !isBlankString(sample)) {
-      if (sample.isJsonPrimitive() && sample.getAsJsonPrimitive().isNumber()) {
+      if (sample.getAsJsonPrimitive().isNumber()) {
         entry.addProperty(SAMPLE_ID, sample.getAsString());
       }
       return;
@@ -265,13 +266,10 @@ public class StudyAssetRecordSync implements ConsentLogger {
     if (value.isString()) {
       return nonBlank(value.getAsString());
     }
-    if (value.isNumber()) {
-      BigDecimal number = value.getAsBigDecimal();
-      return number.stripTrailingZeros().scale() <= 0
-          ? number.toBigIntegerExact().toString()
-          : null;
-    }
-    return null;
+    BigDecimal number = decimal(value);
+    return number != null && number.stripTrailingZeros().scale() <= 0
+        ? number.toBigIntegerExact().toString()
+        : null;
   }
 
   /**
@@ -290,15 +288,13 @@ public class StudyAssetRecordSync implements ConsentLogger {
           ? Integer.valueOf(text)
           : null;
     }
-    if (value.isNumber()) {
-      BigDecimal number = value.getAsBigDecimal();
-      return number.signum() > 0
-              && number.compareTo(MAX_ROW_ID) <= 0
-              && number.stripTrailingZeros().scale() <= 0
-          ? number.intValueExact()
-          : null;
-    }
-    return null;
+    BigDecimal number = decimal(value);
+    return number != null
+            && number.signum() > 0
+            && number.compareTo(MAX_ROW_ID) <= 0
+            && number.stripTrailingZeros().scale() <= 0
+        ? number.intValueExact()
+        : null;
   }
 
   /** An id's text for matching and keeping as a legacy key: a non-blank string or a number. */
@@ -310,10 +306,23 @@ public class StudyAssetRecordSync implements ConsentLogger {
     return value.isString() || value.isNumber() ? nonBlank(value.getAsString()) : null;
   }
 
+  /** A number's value, or null for a non-number or one whose exponent Gson will not parse. */
+  private static BigDecimal decimal(JsonPrimitive value) {
+    try {
+      return value.isNumber() ? value.getAsBigDecimal() : null;
+    } catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
+  private static boolean isTextOrNumber(JsonElement value) {
+    return value != null
+        && value.isJsonPrimitive()
+        && (value.getAsJsonPrimitive().isString() || value.getAsJsonPrimitive().isNumber());
+  }
+
   private static boolean isBlankString(JsonElement value) {
-    return value.isJsonPrimitive()
-        && value.getAsJsonPrimitive().isString()
-        && value.getAsString().isBlank();
+    return value.getAsJsonPrimitive().isString() && value.getAsString().isBlank();
   }
 
   private static String nonBlank(String value) {
@@ -449,9 +458,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
       if (value == null) {
         return null;
       }
-      return value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()
-          ? value.getAsBigDecimal()
-          : wrong(key);
+      BigDecimal number = value.isJsonPrimitive() ? decimal(value.getAsJsonPrimitive()) : null;
+      return number != null ? number : wrong(key);
     }
 
     /** The fields of a nested object; one of the wrong type reads as an empty object. */
