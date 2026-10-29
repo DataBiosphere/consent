@@ -43,7 +43,12 @@ public interface StudyAssetRecordDAO {
           data_use = :dataUse::jsonb, update_date = now()
       WHERE model_id = :modelId AND study_id = :studyId AND retired_date IS NULL
       """)
-  int[] updateModels(@BindMethods List<StudyModelRecord> models);
+  int[] updateModelRows(@BindMethods List<StudyModelRecord> models);
+
+  default int[] updateModels(List<StudyModelRecord> models) {
+    models.forEach(r -> requireIds(r.modelId(), r.studyId()));
+    return updateModelRows(models);
+  }
 
   @RegisterConstructorMapper(StudyModelRecord.class)
   @SqlQuery("SELECT * FROM study_model WHERE study_id = :studyId ORDER BY model_id")
@@ -97,7 +102,12 @@ public interface StudyAssetRecordDAO {
           access_management = :accessManagement, data_use = :dataUse::jsonb, update_date = now()
       WHERE workspace_id = :workspaceId AND study_id = :studyId AND retired_date IS NULL
       """)
-  int[] updateWorkspaces(@BindMethods List<StudyWorkspaceRecord> workspaces);
+  int[] updateWorkspaceRows(@BindMethods List<StudyWorkspaceRecord> workspaces);
+
+  default int[] updateWorkspaces(List<StudyWorkspaceRecord> workspaces) {
+    workspaces.forEach(r -> requireIds(r.workspaceId(), r.studyId()));
+    return updateWorkspaceRows(workspaces);
+  }
 
   @RegisterConstructorMapper(StudyWorkspaceRecord.class)
   @SqlQuery("SELECT * FROM study_workspace WHERE study_id = :studyId ORDER BY workspace_id")
@@ -162,7 +172,12 @@ public interface StudyAssetRecordDAO {
           optional_data_use = :optionalDataUse, update_date = now()
       WHERE biospecimen_id = :biospecimenId AND study_id = :studyId AND retired_date IS NULL
       """)
-  int[] updateBiospecimens(@BindMethods List<StudyBiospecimenRecord> biospecimens);
+  int[] updateBiospecimenRows(@BindMethods List<StudyBiospecimenRecord> biospecimens);
+
+  default int[] updateBiospecimens(List<StudyBiospecimenRecord> biospecimens) {
+    biospecimens.forEach(r -> requireIds(r.biospecimenId(), r.studyId()));
+    return updateBiospecimenRows(biospecimens);
+  }
 
   @RegisterConstructorMapper(StudyBiospecimenRecord.class)
   @SqlQuery("SELECT * FROM study_biospecimen WHERE study_id = :studyId ORDER BY biospecimen_id")
@@ -202,5 +217,12 @@ public interface StudyAssetRecordDAO {
       throw new IllegalArgumentException("keepIds must be a list with no null ids");
     }
     return keepIds;
+  }
+
+  /** A null id matches no row, which would look the same as a retired one. */
+  private static void requireIds(Integer rowId, Integer studyId) {
+    if (rowId == null || studyId == null) {
+      throw new IllegalArgumentException("Updates need a row id and a study id");
+    }
   }
 }

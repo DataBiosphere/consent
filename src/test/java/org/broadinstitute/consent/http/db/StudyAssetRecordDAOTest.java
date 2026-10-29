@@ -236,6 +236,26 @@ class StudyAssetRecordDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateRejectsANullRowIdOrStudyId() {
+    Integer studyId = insertStudy();
+    Integer modelId = assetDAO.insertModels(List.of(model(null, studyId, null, "A"))).get(0);
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> assetDAO.updateModels(List.of(model(null, studyId, null, "B"))));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> assetDAO.updateModels(List.of(model(modelId, null, null, "B"))));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> assetDAO.updateWorkspaces(List.of(workspace(null, studyId, null, "B"))));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> assetDAO.updateBiospecimens(List.of(biospecimen(null, studyId, null, "B"))));
+    assertEquals("A", assetDAO.findModelsByStudyId(studyId).get(0).name());
+  }
+
+  @Test
   void testEmptyBatchesReturnEmpty() {
     assertTrue(assetDAO.insertModels(List.of()).isEmpty());
     assertTrue(assetDAO.insertWorkspaces(List.of()).isEmpty());
