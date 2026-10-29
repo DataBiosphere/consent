@@ -95,6 +95,26 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testAFailedDatasetDeleteRollsBack() {
+    Dataset dataset = createDataset();
+    Match match = new Match();
+    match.setDatasetId(dataset.getDatasetId());
+    match.setPurpose(UUID.randomUUID().toString());
+    match.setMatch(true);
+    match.setFailed(false);
+    match.setAbstain(false);
+    match.setCreateDate(new Date());
+    match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
+    matchDAO.insertMatch(match);
+
+    assertThrows(
+        Exception.class, () -> serviceDAO.deleteDataset(dataset, dataset.getCreateUserId()));
+
+    assertNotNull(datasetDAO.findDatasetById(dataset.getDatasetId()));
+    assertTrue(datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).isEmpty());
+  }
+
+  @Test
   void testInsertDatasets() throws Exception {
 
     Dac dac = createDac();

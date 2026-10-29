@@ -248,12 +248,11 @@ class DraftServiceDAOTest extends DAOTestHelper {
   void testAFailedDocumentDeleteKeepsTheAttachment() throws Exception {
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
-    FileStorageObject file = draft.getStoredFiles().iterator().next();
+    Integer fileId = draft.getStoredFiles().iterator().next().getFileStorageObjectId();
     when(gcsService.deleteDocument(anyString())).thenThrow(new IllegalStateException("gcs down"));
 
     assertThrows(
-        NotFoundException.class,
-        () -> draftServiceDAO.deleteDraftAttachment(draft, user, file.getFileStorageObjectId()));
+        NotFoundException.class, () -> draftServiceDAO.deleteDraftAttachment(draft, user, fileId));
 
     assertThat(
         draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(1));

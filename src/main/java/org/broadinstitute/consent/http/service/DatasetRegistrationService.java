@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 
 /**
  * Specialized service class which specifically handles the process of registering a new dataset
@@ -92,7 +93,7 @@ public class DatasetRegistrationService implements ConsentLogger {
     try {
       datasetServiceDAO.patchDataset(datasetId, user, patch);
       return datasetDAO.findDatasetById(datasetId);
-    } catch (SQLException ex) {
+    } catch (JdbiException ex) {
       logException(ex);
       throw new InternalServerErrorException("An error occurred while patching the dataset.");
     }

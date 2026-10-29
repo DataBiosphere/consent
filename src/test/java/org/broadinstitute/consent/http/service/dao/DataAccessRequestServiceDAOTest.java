@@ -141,7 +141,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateByReferenceIdRollsBackOnAJavaException() throws Exception {
+  void testUpdateByReferenceIdRollsBackOnAJavaException() {
     Dataset dataset = createDataset();
     User user = createUser();
     String referenceId = randomAlphanumeric(10);

@@ -40,6 +40,7 @@ import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -165,8 +166,11 @@ class DraftServiceTest {
 
   @Test
   void testDeleteDraftThrows() throws SQLException {
-    doThrow(new SQLException("delete failed.")).when(draftServiceDAO).deleteDraft(draft, user);
-    assertThrows(SQLException.class, () -> draftService.deleteDraft(draft, user));
+    doThrow(new UnableToExecuteStatementException("delete failed."))
+        .when(draftServiceDAO)
+        .deleteDraft(draft, user);
+    assertThrows(
+        UnableToExecuteStatementException.class, () -> draftService.deleteDraft(draft, user));
   }
 
   @Test

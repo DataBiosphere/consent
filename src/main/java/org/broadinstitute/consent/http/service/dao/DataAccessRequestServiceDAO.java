@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -53,8 +52,7 @@ public class DataAccessRequestServiceDAO {
                     handle.attach(ElectionDAO.class))));
   }
 
-  public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar)
-      throws SQLException {
+  public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
     final String updateDataByReferenceId =

@@ -7,7 +7,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -67,7 +66,6 @@ import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.JdbiException;
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
@@ -729,17 +727,7 @@ public class DataAccessRequestService implements ConsentLogger {
     if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
-    try {
-      return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
-    } catch (SQLException e) {
-      // If I simply rethrow the error then I'll have to redefine any method that
-      // calls this function to "throw SQLException"
-      // Instead I'm going to throw an UnableToExecuteStatementException
-      // Response class will catch it, log it, and throw a 500 through the
-      // "unableToExecuteExceptionHandler"
-      // on the Resource class, just like it would with a SQLException
-      throw new UnableToExecuteStatementException(e.getMessage());
-    }
+    return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
   }
 
   /**

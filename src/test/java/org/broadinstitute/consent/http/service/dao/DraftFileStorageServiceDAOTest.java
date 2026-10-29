@@ -106,6 +106,25 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     verify(gcsService).deleteDocument(anyString());
   }
 
+  @Test
+  void testAFailedRowInsertDeletesTheUploadedDocument() {
+    User user = createUser();
+    UUID associatedUUID = UUID.randomUUID();
+    FormDataBodyPart failing = getFormDataBodyPartMock("failing");
+    when(failing.getMediaType())
+        .thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE)
+        .thenThrow(new IllegalStateException("no media type"));
+
+    assertThrows(
+        ServerErrorException.class,
+        () ->
+            draftFileStorageServiceDAO.storeDraftFiles(
+                associatedUUID, user, Map.of("failing", failing)));
+
+    assertTrue(fileStorageObjectDAO.findFilesByEntityId(associatedUUID.toString()).isEmpty());
+    verify(gcsService).deleteDocument(anyString());
+  }
+
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
     Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
     IntStream.range(0, count)

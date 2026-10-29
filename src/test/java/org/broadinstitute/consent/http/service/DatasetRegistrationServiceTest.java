@@ -77,6 +77,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1054,11 +1055,13 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchDatasetThrowsOnSQLException() throws Exception {
+  void testPatchDatasetThrowsOnDatabaseError() {
     int datasetId = 1;
     User user = new User();
     DatasetPatch patch = mock();
-    doThrow(new SQLException("boom")).when(datasetServiceDAO).patchDataset(anyInt(), any(), any());
+    doThrow(new UnableToExecuteStatementException("boom"))
+        .when(datasetServiceDAO)
+        .patchDataset(anyInt(), any(), any());
 
     assertThrows(
         InternalServerErrorException.class,

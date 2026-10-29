@@ -6,7 +6,6 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +35,7 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   }
 
   public List<FileStorageObject> storeDraftFiles(
-      UUID associatedId, User user, Map<String, FormDataBodyPart> files) throws SQLException {
+      UUID associatedId, User user, Map<String, FormDataBodyPart> files) {
     List<FileStorageObject> fileStorageObjects = new ArrayList<>();
     jdbi.useTransaction(
         _ -> {
@@ -53,7 +52,7 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
 
   /** Deletes a file's row, then its document, so a failed document delete keeps the row. */
   public void deleteStoredFile(FileStorageObject fileStorageObject, User user)
-      throws SQLException, NotFoundException {
+      throws NotFoundException {
     jdbi.useTransaction(
         _ -> {
           try {

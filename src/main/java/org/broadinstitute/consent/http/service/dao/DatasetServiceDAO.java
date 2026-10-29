@@ -84,7 +84,7 @@ public class DatasetServiceDAO implements ConsentLogger {
    * Deletes a study and the given datasets, which the caller loads and checks for deletability. A
    * study does not carry its datasets, so they are passed alongside it.
    */
-  public void deleteStudy(Study study, List<Dataset> datasets, User user) throws Exception {
+  public void deleteStudy(Study study, List<Dataset> datasets, User user) {
     jdbi.useTransaction(
         handle -> {
           datasets.forEach(
@@ -380,7 +380,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     }
   }
 
-  public void updateDataset(DatasetUpdate updates) throws SQLException {
+  public void updateDataset(DatasetUpdate updates) {
     jdbi.useTransaction(
         handle -> {
           try {
@@ -425,7 +425,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     executeInsertFiles(handle, uploadedFiles, userId, datasetId.toString());
   }
 
-  public void patchDataset(Integer datasetId, User user, DatasetPatch patch) throws SQLException {
+  public void patchDataset(Integer datasetId, User user, DatasetPatch patch) {
     jdbi.useTransaction(
         handle -> {
           try {
@@ -461,7 +461,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
   }
 
-  public Study patchStudy(Study study, User user, StudyPatch patch) throws SQLException {
+  public Study patchStudy(Study study, User user, StudyPatch patch) {
     jdbi.useTransaction(
         handle -> {
           // Convert the patch to a StudyUpdate for reuse of existing methods

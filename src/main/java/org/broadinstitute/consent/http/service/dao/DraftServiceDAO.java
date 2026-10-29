@@ -32,7 +32,7 @@ public class DraftServiceDAO {
     this.draftFileStorageServiceDAO = draftFileStorageServiceDAO;
   }
 
-  public void insertDraft(DraftInterface draft) throws SQLException, BadRequestException {
+  public void insertDraft(DraftInterface draft) throws BadRequestException {
     strip(draft);
     jdbi.useTransaction(
         handle -> {
@@ -51,7 +51,7 @@ public class DraftServiceDAO {
         });
   }
 
-  public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
+  public DraftInterface updateDraft(DraftInterface draft, User user) {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
     strip(draft);
@@ -127,7 +127,7 @@ public class DraftServiceDAO {
     }
   }
 
-  public void deleteDraft(DraftInterface draft, User user) throws SQLException, NotFoundException {
+  public void deleteDraft(DraftInterface draft, User user) throws NotFoundException {
     jdbi.useTransaction(
         _ -> {
           draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
