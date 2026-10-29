@@ -69,6 +69,15 @@ class ShowcaseJsonBodyTest {
         "{ \"scope\": { \"dac\": [\"A\"], \"dac\": [\"B\"] } }", "Duplicate field \"dac\"");
   }
 
+  @Test
+  void testLongDuplicateFieldIsCut() {
+    String name = "f".repeat(60 * 1024);
+
+    assertRejected(
+        "{ \"%s\": 1, \"%s\": 2 }".formatted(name, name),
+        "Duplicate field \"%s…\"".formatted("f".repeat(ShowcaseLookupException.MAX_ECHOED_LENGTH)));
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {

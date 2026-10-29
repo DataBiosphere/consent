@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.showcase;
 
+import static org.broadinstitute.consent.http.service.showcase.ShowcaseLookupException.echoed;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -73,7 +75,7 @@ final class ShowcaseJsonBody {
     while (reader.hasNext()) {
       String name = reader.nextName();
       if (object.has(name)) {
-        throw new ShowcaseLookupException("Duplicate field \"%s\"".formatted(name));
+        throw new ShowcaseLookupException("Duplicate field \"%s\"".formatted(echoed(name)));
       }
       object.add(name, readValue(reader, depth + 1));
     }

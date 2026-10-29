@@ -129,6 +129,17 @@ class ShowcaseLookupParserRankingTest {
   }
 
   @Test
+  void testLongRankingIsCut() {
+    String ranking = "r".repeat(60 * 1024);
+
+    assertRejected(
+        "{ \"mode\": \"ranking\", \"section\": \"latest-data-releases\", \"ranking\": \"%s\" }"
+            .formatted(ranking),
+        "Unknown ranking \"%s…\" for section \"latest-data-releases\""
+            .formatted("r".repeat(ShowcaseLookupException.MAX_ECHOED_LENGTH)));
+  }
+
+  @Test
   void testMissingRanking() {
     assertRejected(
         "{ \"mode\": \"ranking\", \"section\": \"latest-data-releases\" }",
