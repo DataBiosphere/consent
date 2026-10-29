@@ -122,7 +122,9 @@ The first release implements six section types: `masthead`, `hero`, `latest-data
 shelf (section 3): consent ranks eligible datasets on every page load, so nobody maintains the list
 by hand. **S1.1 adopted the date below** (2026-10-19); other sections point here. The “new in DUOS” date reuses the NewStudyDigest signals (section 1), one date per dataset: `create_date` for
 open and external datasets, and `dac_approval_date` for DAC-approved controlled datasets. A dataset
-with no applicable date is left off the shelf, and ties break by identifier. The shelf ranks all
+with no applicable date is left out of the ranked part of the shelf, and ties break by identifier.
+A pinned dataset can appear without a date: a pin is a choice made by hand, and the pin still
+must pass the eligibility and section checks. The shelf ranks all
 eligible datasets with no 24-hour window; the digest keeps its window. `create_date` records row
 insertion. `dac_approval_date` records the last approval-state update, so for a currently approved
 dataset it is when the DAC approved it; older rows may have none. Neither records a provider's
