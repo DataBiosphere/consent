@@ -63,17 +63,27 @@ public class StudyRegistrationRequestValidator {
    */
   public List<String> collectAssetViolations(
       StudyRegistrationRequest registration, Collection<StudyProperty> storedProperties) {
+    Optional<String> models =
+        sizeViolation(registration, StudyAssets.MODELS, registration.getModels());
+    Optional<String> workspaces =
+        sizeViolation(registration, StudyAssets.WORKSPACES, registration.getWorkspaces());
     List<String> errors = new ArrayList<>();
-    errors.addAll(
-        assetViolations(
-            registration, StudyAssets.MODELS, registration.getModels(), storedProperties));
-    errors.addAll(
-        assetViolations(
-            registration, StudyAssets.WORKSPACES, registration.getWorkspaces(), storedProperties));
-    sizeViolation(registration, StudyAssets.MODELS, registration.getModels())
-        .ifPresent(errors::add);
-    sizeViolation(registration, StudyAssets.WORKSPACES, registration.getWorkspaces())
-        .ifPresent(errors::add);
+    // A list over the cap gets one error, not one per entry.
+    if (models.isEmpty()) {
+      errors.addAll(
+          assetViolations(
+              registration, StudyAssets.MODELS, registration.getModels(), storedProperties));
+    }
+    if (workspaces.isEmpty()) {
+      errors.addAll(
+          assetViolations(
+              registration,
+              StudyAssets.WORKSPACES,
+              registration.getWorkspaces(),
+              storedProperties));
+    }
+    models.ifPresent(errors::add);
+    workspaces.ifPresent(errors::add);
     sizeViolation(registration, StudyAssets.BIOSPECIMENS, registration.getBiospecimens())
         .ifPresent(errors::add);
     return errors;

@@ -60,6 +60,18 @@ class StudyRegistrationRequestValidatorTest {
     assertTrue(validator.collectViolations(atCap).isEmpty());
   }
 
+  @Test
+  void testCollectViolations_aListOverTheCapIsNotCheckedEntryByEntry() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setModels(
+        Collections.nCopies(
+            StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE + 1,
+            Map.of("name", "x", "accessManagement", "nope")));
+
+    assertEquals(
+        List.of("models can list at most 1000 entries"), validator.collectViolations(registration));
+  }
+
   private static List<Object> entries(int size) {
     return Collections.nCopies(size, Map.of("name", "x"));
   }
