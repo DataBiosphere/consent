@@ -187,6 +187,22 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testAnIdTooLongForTheIndexKeepsNoLegacyKey() throws Exception {
+    String longest = "k".repeat(255);
+    String tooLong = "k".repeat(256);
+
+    Integer studyId =
+        create(
+            prop(
+                "models",
+                "[{\"modelId\": \"%s\"}, {\"modelId\": \"%s\"}]".formatted(longest, tooLong)));
+
+    List<StudyModelRecord> rows = assetDAO.findModelsByStudyId(studyId);
+    assertEquals(longest, rows.get(0).legacyKey());
+    assertNull(rows.get(1).legacyKey());
+  }
+
+  @Test
   void testWriteBackChangesOnlyTheIdKey() throws Exception {
     String list =
         """
