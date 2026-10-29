@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -163,6 +164,7 @@ class DraftServiceTest {
   void testDeleteDraft() {
     doNothing().when(draftServiceDAO).deleteDraft(draft, user);
     draftService.deleteDraft(draft, user);
+    verify(draftServiceDAO).deleteDraft(draft, user);
   }
 
   @Test

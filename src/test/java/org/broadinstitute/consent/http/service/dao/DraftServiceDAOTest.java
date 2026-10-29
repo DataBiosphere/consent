@@ -25,7 +25,6 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -71,7 +70,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testCreateDraft() throws SQLException {
+  void testCreateDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
@@ -135,7 +134,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDraftStripsTheCharacterFromARenamedDraft() throws SQLException {
+  void testUpdateDraftStripsTheCharacterFromARenamedDraft() {
     // The rename endpoint takes its body as text, which can carry the character with no escaping.
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
@@ -146,7 +145,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testThinUserIsReturnedFromDraft() throws SQLException {
+  void testThinUserIsReturnedFromDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(user.getRoles(), hasSize(greaterThan(0)));
@@ -155,7 +154,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetAuthorizedDraft() throws SQLException {
+  void testGetAuthorizedDraft() {
     User goodUser = createUser();
     User badUser = createUser();
     User adminUser = createUser();
@@ -177,7 +176,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testChairpersonCannotReadAnotherUsersDraft() throws SQLException {
+  void testChairpersonCannotReadAnotherUsersDraft() {
     // Reaching the draft endpoints does not make a chairperson an owner.
     User owner = createUser();
     User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
@@ -189,7 +188,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testChairpersonCanReadTheirOwnDraft() throws SQLException {
+  void testChairpersonCanReadTheirOwnDraft() {
     User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     DraftInterface draft = createDraft(chairperson, 1);
 
@@ -199,7 +198,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDataSubmitterCannotReadAnotherUsersDraft() throws SQLException {
+  void testDataSubmitterCannotReadAnotherUsersDraft() {
     // The validation endpoint admits data submitters too, so this is asserted, not assumed.
     User owner = createUser();
     User dataSubmitter = createUserWithRole(UserRoles.DATASUBMITTER.getRoleId());
@@ -211,7 +210,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDataSubmitterCanReadTheirOwnDraft() throws SQLException {
+  void testDataSubmitterCanReadTheirOwnDraft() {
     User dataSubmitter = createUserWithRole(UserRoles.DATASUBMITTER.getRoleId());
     DraftInterface draft = createDraft(dataSubmitter, 1);
 
@@ -259,7 +258,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testAddAttachmentToDraft() throws SQLException {
+  void testAddAttachmentToDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Map<String, FormDataBodyPart> files = getRandomFiles(1);
@@ -270,7 +269,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteAttachmentFromDraft() throws SQLException {
+  void testDeleteAttachmentFromDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Set<FileStorageObject> storedFiles = draft.getStoredFiles();
@@ -283,7 +282,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteAttachmentFromDraft_NotFound() throws SQLException {
+  void testDeleteAttachmentFromDraft_NotFound() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
     assertThrows(
@@ -292,7 +291,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDraft() throws SQLException {
+  void testUpdateDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
     String updatedJson = "{\"study\": \"My example study\"}";
@@ -313,7 +312,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @NotNull
-  private DraftInterface createDraft(User user, int numberOfFiles) throws SQLException {
+  private DraftInterface createDraft(User user, int numberOfFiles) {
     DraftStudyDataset draft = new DraftStudyDataset("{}", user);
     draftServiceDAO.insertDraft(draft);
     Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);

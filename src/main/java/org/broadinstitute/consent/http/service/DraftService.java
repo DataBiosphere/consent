@@ -41,8 +41,7 @@ public class DraftService implements ConsentLogger {
   }
 
   public List<FileStorageObject> addAttachments(
-      DraftInterface draft, User user, Map<String, FormDataBodyPart> files)
-      throws RuntimeException {
+      DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
     return draftServiceDAO.addAttachments(draft, user, files);
   }
 

@@ -95,6 +95,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeletingADatasetWithNoNameAuditsItsIdentifier() throws Exception {
+    Dataset dataset = createDataset();
+    dataset.setName(null);
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
+    assertEquals(dataset.getDatasetIdentifier(), audits.getFirst().getName());
+  }
+
+  @Test
   void testAFailedDatasetDeleteRollsBack() {
     Dataset dataset = createDataset();
     Match match = new Match();
