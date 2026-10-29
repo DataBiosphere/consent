@@ -6,19 +6,23 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -81,6 +85,25 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     assertThrows(
         NotFoundException.class,
         () -> draftFileStorageServiceDAO.deleteStoredFile(new FileStorageObject(), user));
+  }
+
+  @Test
+  void testAFailedFileStoresNothing() {
+    User user = createUser();
+    UUID associatedUUID = UUID.randomUUID();
+    Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
+    FormDataBodyPart failing = mock(FormDataBodyPart.class);
+    when(failing.getValueAs(InputStream.class)).thenThrow(new IllegalStateException("unreadable"));
+    testFiles.put("failing", failing);
+
+    ServerErrorException error =
+        assertThrows(
+            ServerErrorException.class,
+            () -> draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, testFiles));
+    assertEquals(500, error.getResponse().getStatus());
+
+    assertTrue(fileStorageObjectDAO.findFilesByEntityId(associatedUUID.toString()).isEmpty());
+    verify(gcsService).deleteDocument(anyString());
   }
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {

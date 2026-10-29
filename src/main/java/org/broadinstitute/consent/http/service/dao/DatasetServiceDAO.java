@@ -59,26 +59,25 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   public void deleteDataset(Dataset dataset, Integer userId) throws Exception {
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
-          // Some legacy dataset names can be null
-          String dsAuditName =
-              Objects.nonNull(dataset.getName())
-                  ? dataset.getName()
-                  : dataset.getDatasetIdentifier();
           try {
-            addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, AuditActions.DELETE);
-            datasetAuthorizationReaderDAO.deleteByDatasetId(dataset.getDatasetId());
-            datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
-            datasetDAO.deleteDatasetById(dataset.getDatasetId());
+            executeDeleteDataset(dataset, userId);
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
+  }
+
+  private void executeDeleteDataset(Dataset dataset, Integer userId) {
+    // Some legacy dataset names can be null
+    String dsAuditName =
+        Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
+    addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, AuditActions.DELETE);
+    datasetAuthorizationReaderDAO.deleteByDatasetId(dataset.getDatasetId());
+    datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
+    datasetDAO.deleteDatasetById(dataset.getDatasetId());
   }
 
   /**
@@ -86,15 +85,13 @@ public class DatasetServiceDAO implements ConsentLogger {
    * study does not carry its datasets, so they are passed alongside it.
    */
   public void deleteStudy(Study study, List<Dataset> datasets, User user) throws Exception {
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           datasets.forEach(
               d -> {
                 try {
-                  deleteDataset(d, user.getUserId());
+                  executeDeleteDataset(d, user.getUserId());
                 } catch (Exception e) {
-                  handle.rollback();
                   logException(e);
                   throw new DatasetDeletionException(e);
                 }
@@ -102,11 +99,9 @@ public class DatasetServiceDAO implements ConsentLogger {
           try {
             studyDAO.deleteStudyByStudyId(study.getStudyId());
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
   }
 
@@ -194,9 +189,8 @@ public class DatasetServiceDAO implements ConsentLogger {
    */
   public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
       throws SQLException {
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           Dataset dataset = datasetDAO.findDatasetById(datasetId);
           AuditActions action = indexDate == null ? AuditActions.DEINDEXED : AuditActions.INDEXED;
           String dsAuditName =
@@ -205,11 +199,9 @@ public class DatasetServiceDAO implements ConsentLogger {
             datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexDate);
             addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, action);
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
   }
 
@@ -389,12 +381,8 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   public void updateDataset(DatasetUpdate updates) throws SQLException {
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          // By default, new connections are set to auto-commit which breaks our rollback strategy.
-          // Turn that off for this connection. This will not affect existing or new connections and
-          // only applies to the current one in this handle.
-          handle.getConnection().setAutoCommit(false);
           try {
             executeUpdateDatasetWithFiles(
                 handle,
@@ -406,11 +394,9 @@ public class DatasetServiceDAO implements ConsentLogger {
                 updates.files(),
                 true);
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
   }
 
@@ -440,18 +426,15 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   public void patchDataset(Integer datasetId, User user, DatasetPatch patch) throws SQLException {
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           try {
             executePatchDataset(
                 handle, datasetId, patch.name(), user.getUserId(), patch.properties());
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
   }
 
@@ -479,9 +462,8 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   public Study patchStudy(Study study, User user, StudyPatch patch) throws SQLException {
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           // Convert the patch to a StudyUpdate for reuse of existing methods
           StudyUpdate studyUpdate = convertToStudyUpdate(study, user, patch);
           try {
@@ -490,11 +472,9 @@ public class DatasetServiceDAO implements ConsentLogger {
             deleteBlankPatchedStudyProps(handle, study.getStudyId(), patch);
             retireLegacyPiInstitutionProp(handle, study.getStudyId(), patch);
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
     return studyDAO.findStudyById(study.getStudyId());
   }

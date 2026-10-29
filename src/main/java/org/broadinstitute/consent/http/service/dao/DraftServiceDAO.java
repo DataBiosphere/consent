@@ -34,9 +34,8 @@ public class DraftServiceDAO {
 
   public void insertDraft(DraftInterface draft) throws SQLException, BadRequestException {
     strip(draft);
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.insert(
                 draft.getName(),
@@ -46,11 +45,9 @@ public class DraftServiceDAO {
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
-            handle.rollback();
             throw new BadRequestException(
                 "Error submitting draft.  Drafts require valid json to be submitted.", e);
           }
-          handle.commit();
         });
   }
 
@@ -58,9 +55,8 @@ public class DraftServiceDAO {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
     strip(draft);
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.updateDraftByDraftUUID(
                 draft.getName(),
@@ -70,11 +66,9 @@ public class DraftServiceDAO {
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
-            handle.rollback();
             throw new BadRequestException(
                 "Error updating draft.  Drafts require valid json to be updated.", e);
           }
-          handle.commit();
         });
     return getAuthorizedDraft(draft.getUUID(), user);
   }
@@ -134,21 +128,12 @@ public class DraftServiceDAO {
   }
 
   public void deleteDraft(DraftInterface draft, User user) throws SQLException, NotFoundException {
-    jdbi.useHandle(
-        handle -> {
-          try {
-            handle.useTransaction(
-                _ -> {
-                  draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
-                  for (FileStorageObject fileStorageObject : draft.getStoredFiles()) {
-                    draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);
-                  }
-                });
-          } catch (Exception e) {
-            handle.rollback();
-            throw e;
-          }
-          handle.commit();
+    jdbi.useTransaction(
+        _ -> {
+          draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
+          draftFileStorageServiceDAO.deleteFileRows(draft.getStoredFiles(), user);
         });
+    // After the commit, so a failed document delete cannot leave a row whose file is gone.
+    draftFileStorageServiceDAO.deleteDocuments(draft.getStoredFiles(), draft.getUUID());
   }
 }

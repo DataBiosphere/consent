@@ -72,6 +72,8 @@ post:
       description: User not authorized to upload file attachments
     404:
       description: The draft cannot be found.
+    500:
+      description: A file could not be stored, so none of the attachments were added.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

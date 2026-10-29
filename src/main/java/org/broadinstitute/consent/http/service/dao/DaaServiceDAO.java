@@ -32,9 +32,8 @@ public class DaaServiceDAO implements ConsentLogger {
   public Integer createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso)
       throws SQLException {
     List<Integer> createdDaaIds = new ArrayList<>();
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           Instant now = Instant.now();
           try {
             Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
@@ -60,11 +59,9 @@ public class DaaServiceDAO implements ConsentLogger {
                   now);
             }
           } catch (Exception e) {
-            handle.rollback();
             logException(e);
             throw e;
           }
-          handle.commit();
         });
     return createdDaaIds.isEmpty() ? null : createdDaaIds.getFirst();
   }

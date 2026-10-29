@@ -134,6 +134,8 @@ class DaaServiceDAOTest extends DAOTestHelper {
     assertThrows(
         IllegalArgumentException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
+    // The check runs after the DAA insert, so the DAA must be rolled back with it.
+    assertNull(daaDAO.findByDacId(dacId));
   }
 
   @Test

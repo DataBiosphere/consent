@@ -650,6 +650,26 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(AuditActions.UPDATE.name(), audits.getFirst().getAction());
   }
 
+  /** A file with no blob fails after the dataset row and its audit are written. */
+  @Test
+  void testAFailedDatasetUpdateRollsBack() {
+    Dataset dataset = createDataset();
+    int audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size();
+    DatasetUpdate update =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            "renamed",
+            dataset.getCreateUserId(),
+            dataset.getDacId(),
+            List.of(),
+            List.of(new FileStorageObject()));
+
+    assertThrows(NullPointerException.class, () -> serviceDAO.updateDataset(update));
+
+    assertEquals(dataset.getName(), datasetDAO.findDatasetById(dataset.getDatasetId()).getName());
+    assertEquals(audits, datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size());
+  }
+
   @Test
   void testUpdateStudyDetails() throws Exception {
     Study study = createStudy(null, null, null);
@@ -1035,13 +1055,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             });
   }
 
-  /**
-   * Pins today's partial-failure behavior. Each dataset is deleted in its own handle, which commits
-   * on its own, so a failure partway through the study keeps the datasets already deleted and
-   * leaves the study and the remaining datasets in place.
-   */
+  /** A study delete is all or nothing: a failure partway keeps every dataset and the study. */
   @Test
-  void testDeleteStudyFailingPartwayKeepsEarlierDatasetDeletes() throws Exception {
+  void testDeleteStudyFailingPartwayDeletesNothing() throws Exception {
     Study study = createStudy(null, null, null);
     List<Dataset> datasets =
         datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds())).stream()
@@ -1066,7 +1082,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertThrows(
         DatasetDeletionException.class, () -> serviceDAO.deleteStudy(study, datasets, user));
 
-    assertNull(datasetDAO.findDatasetById(first.getDatasetId()));
+    assertNotNull(datasetDAO.findDatasetById(first.getDatasetId()));
     assertNotNull(datasetDAO.findDatasetById(second.getDatasetId()));
     assertNotNull(studyDAO.findStudyById(study.getStudyId()));
   }

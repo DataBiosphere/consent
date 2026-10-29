@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -227,6 +228,35 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertThat(loadedDrafts, hasSize(1));
     draftServiceDAO.deleteDraft(loadedDrafts.iterator().next(), user);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(0));
+  }
+
+  @Test
+  void testDeleteDraftSurvivesAFailedDocumentDelete() throws Exception {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 2);
+    when(gcsService.deleteDocument(anyString())).thenThrow(new IllegalStateException("gcs down"));
+
+    draftServiceDAO.deleteDraft(draft, user);
+
+    assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(0));
+    for (FileStorageObject file : draft.getStoredFiles()) {
+      assertTrue(fileStorageObjectDAO.findFileById(file.getFileStorageObjectId()).getDeleted());
+    }
+  }
+
+  @Test
+  void testAFailedDocumentDeleteKeepsTheAttachment() throws Exception {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 1);
+    FileStorageObject file = draft.getStoredFiles().iterator().next();
+    when(gcsService.deleteDocument(anyString())).thenThrow(new IllegalStateException("gcs down"));
+
+    assertThrows(
+        NotFoundException.class,
+        () -> draftServiceDAO.deleteDraftAttachment(draft, user, file.getFileStorageObjectId()));
+
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(1));
   }
 
   @Test
