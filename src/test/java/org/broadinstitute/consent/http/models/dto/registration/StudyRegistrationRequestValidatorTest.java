@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
+import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -757,6 +759,58 @@ class StudyRegistrationRequestValidatorTest {
   void testCheckNumberOfParticipantsRequired_present() {
     ConsentGroupRequest cg = createValidConsentGroup();
     assertDoesNotThrow(() -> validator.checkNumberOfParticipantsRequired(cg));
+  }
+
+  // ── Model and workspace data use ─────────────────────────────────────────
+
+  @Test
+  void testCollectViolations_assetFields_validAccepted() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setModels(
+        List.of(Map.of("accessManagement", "controlled", "dataUse", Map.of("hmbResearch", true))));
+    registration.setWorkspaces(List.of(Map.of("accessManagement", "open")));
+    assertTrue(validator.collectViolations(registration).isEmpty());
+  }
+
+  @Test
+  void testCollectViolations_badModelAccessManagement_reported() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setModels(List.of(Map.of("accessManagement", "restricted")));
+    assertEquals(
+        List.of("models[0].accessManagement: must be one of open, controlled, external"),
+        validator.collectViolations(registration));
+  }
+
+  @Test
+  void testCollectViolations_badWorkspaceDataUse_reported() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setWorkspaces(
+        List.of(Map.of("accessManagement", "open", "dataUse", Map.of("generalUse", true))));
+    assertEquals(
+        List.of("workspaces[0].dataUse: " + DataUsePrimaryValidator.VALIDATION_MESSAGE),
+        validator.collectViolations(registration));
+  }
+
+  @Test
+  void testCollectViolations_legacyAssetEntries_validated() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setAssets(
+        Map.of(
+            "models", List.of(Map.of("accessManagement", "nope")),
+            "workspaces", List.of(Map.of("dataUse", "GRU"))));
+    assertEquals(
+        List.of(
+            "models[0].accessManagement: must be one of open, controlled, external",
+            "workspaces[0].dataUse: must be a data use object"),
+        validator.collectViolations(registration));
+  }
+
+  @Test
+  void testCollectViolations_topLevelAssetsWinOverLegacy() {
+    StudyRegistrationRequest registration = createValidRegistration();
+    registration.setModels(List.of());
+    registration.setAssets(Map.of("models", List.of(Map.of("accessManagement", "nope"))));
+    assertTrue(validator.collectViolations(registration).isEmpty());
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

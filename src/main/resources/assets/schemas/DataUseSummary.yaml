@@ -1,0 +1,13 @@
+type: object
+description: The translated primary and secondary data use terms of a Data Use object
+properties:
+  primary:
+    type: array
+    description: The primary data use terms; empty when the data use has none of these terms; absent when there is no data use
+    items:
+      $ref: './DataUseTerm.yaml'
+  secondary:
+    type: array
+    description: The secondary data use terms; empty when the data use has none of these terms; absent when there is no data use
+    items:
+      $ref: './DataUseTerm.yaml'

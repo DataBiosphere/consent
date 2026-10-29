@@ -1,5 +1,7 @@
 type: object
 description: An AI Model object.
+allOf:
+  - $ref: './AssetDataUse.yaml'
 properties:
   modelId:
     type: string

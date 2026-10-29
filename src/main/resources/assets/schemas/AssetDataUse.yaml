@@ -1,0 +1,25 @@
+type: object
+description: The access management and data use fields shared by models and workspaces.
+properties:
+  accessManagement:
+    description: How access to the entry is managed. Null means unset.
+    anyOf:
+      - $ref: './AccessManagement.yaml'
+      - type: 'null'
+  dataUse:
+    description: >-
+      The entry's data use terms. Optional; null means unset. Each field must have its
+      documented type, and unknown fields are rejected. With `open` access management it must
+      have no primary term; otherwise, including when access management is absent, exactly
+      one. An update does not re-check an access management and data use pair the study
+      already stores.
+    anyOf:
+      - allOf:
+          - $ref: './DataUse.yaml'
+        unevaluatedProperties: false
+      - type: 'null'
+  dataUseSummary:
+    readOnly: true
+    description: The translated `dataUse` terms, computed by the server on read. Never stored; ignored on write.
+    allOf:
+      - $ref: './DataUseSummary.yaml'
