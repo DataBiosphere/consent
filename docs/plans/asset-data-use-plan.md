@@ -114,7 +114,7 @@ Rules for the module:
 - Only `models` and `workspaces` change. Other keys and non-map entries pass through.
 - Unknown keys in an entry stay, in their order. No input is changed.
 - `stored` never contains `dataUseSummary`. `withSummaries` removes any stored summary before it adds a fresh one.
-- A missing `dataUse` or `accessManagement` is valid. `prepare` never throws. It returns messages such as `models[2].accessManagement: must be one of open, controlled, external`.
+- A missing `dataUse` or `accessManagement` is valid. On update, an entry whose access management and data use pair is already stored is not re-checked; each stored pair excuses one sent entry, matched by pair rather than identity. `violations` never throws. It returns messages such as `models[2].accessManagement: must be one of open, controlled, external`.
 - A malformed stored `dataUse` gets no summary and a `logWarn`. An ontology database error propagates, as it does for datasets.
 - `withSummaries` memoises within one call, so identical `dataUse` values cost one ontology lookup.
 - Other asset types can use the module later. To add a type, add its key to the list of asset types that the module handles. The callers do not change. Each new type still needs its own UI work, and Biospecimen first needs a decision on its free-text `optionalDataUse` field.
