@@ -49,6 +49,7 @@ public class DatasetServiceDAO implements ConsentLogger {
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final DatasetDAO datasetDAO;
   private final StudyDAO studyDAO;
+  private final StudyAssetRecordSync assetRecordSync = new StudyAssetRecordSync();
 
   @Inject
   public DatasetServiceDAO(Jdbi jdbi) {
@@ -128,6 +129,7 @@ public class DatasetServiceDAO implements ConsentLogger {
           Integer studyId = null;
           if (Objects.nonNull(study)) {
             studyId = executeInsertStudy(handle, study);
+            assetRecordSync.syncRegistration(handle, studyId, study.props());
           }
 
           for (DatasetInsert insert : datasets) {
@@ -269,6 +271,8 @@ public class DatasetServiceDAO implements ConsentLogger {
     jdbi.useTransaction(
         handle -> {
           executeUpdateStudyReplaceProps(handle, studyUpdate);
+          // After the study row update, whose lock serializes concurrent edits of one study.
+          assetRecordSync.syncRegistration(handle, studyUpdate.studyId(), studyUpdate.props());
           for (DatasetUpdate datasetUpdate : datasetUpdates) {
             executeUpdateDatasetWithFiles(
                 handle,
