@@ -116,6 +116,49 @@ class ShowcaseCatalogServiceTest {
                 List.of("DUOS-000002"))));
   }
 
+  /** A catalog-eligible pin that the section does not admit is dropped. */
+  @Test
+  void testRankingDropsPinOutsideTheSection() {
+    when(datasetDAO.findShowcaseSummaries(List.of(1, 2)))
+        .thenReturn(List.of(summary("DUOS-000001", "controlled"), summary("DUOS-000002", "open")));
+    when(datasetDAO.findShowcaseNewestAliases(true, null, List.of(1, 2), 11)).thenReturn(List.of());
+
+    assertEquals(
+        List.of(summary("DUOS-000002", "open")),
+        service.lookupRanking(
+            new ShowcaseRankingLookup(
+                ShowcaseSection.OPEN_ACCESS_DATASETS,
+                ShowcaseRanking.NEWEST,
+                null,
+                12,
+                List.of("DUOS-000001", "DUOS-000002"),
+                List.of())));
+  }
+
+  /** More eligible pins than the limit: the first ones fill it, and nothing is left to rank. */
+  @Test
+  void testPinsStopAtTheLimit() {
+    when(datasetDAO.findShowcaseSummaries(List.of(1, 2, 3)))
+        .thenReturn(
+            List.of(
+                summary("DUOS-000001", "open"),
+                summary("DUOS-000002", "open"),
+                summary("DUOS-000003", "open")));
+    when(datasetDAO.findShowcaseNewestAliases(true, null, List.of(1, 2, 3), 0))
+        .thenReturn(List.of());
+
+    assertEquals(
+        List.of(summary("DUOS-000001", "open"), summary("DUOS-000002", "open")),
+        service.lookupRanking(
+            new ShowcaseRankingLookup(
+                ShowcaseSection.OPEN_ACCESS_DATASETS,
+                ShowcaseRanking.NEWEST,
+                null,
+                2,
+                List.of("DUOS-000001", "DUOS-000002", "DUOS-000003"),
+                List.of())));
+  }
+
   /** An open pin with no DAC is outside a DAC scope; the scope list is immutable, as parsed. */
   @Test
   void testScopedRankingDropsPinWithoutDac() {
