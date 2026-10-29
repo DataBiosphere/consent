@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.showcase;
 
+import static org.broadinstitute.consent.http.service.showcase.ShowcaseLookupException.echoed;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -41,7 +43,7 @@ final class ShowcaseRequestFields {
         .ifPresent(
             name -> {
               throw new ShowcaseLookupException(
-                  "Unrecognized field \"%s\" for mode \"%s\"".formatted(name, mode));
+                  "Unrecognized field \"%s\" for mode \"%s\"".formatted(echoed(name), mode));
             });
   }
 
@@ -102,7 +104,7 @@ final class ShowcaseRequestFields {
         .ifPresent(
             scopeName -> {
               throw new ShowcaseLookupException(
-                  "Unrecognized scope key \"%s\"".formatted(scopeName));
+                  "Unrecognized scope key \"%s\"".formatted(echoed(scopeName)));
             });
     JsonElement dac = scope.get(DAC_SCOPE);
     if (dac == null) {

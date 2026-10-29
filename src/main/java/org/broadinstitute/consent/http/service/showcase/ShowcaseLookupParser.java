@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.showcase;
 
+import static org.broadinstitute.consent.http.service.showcase.ShowcaseLookupException.echoed;
+
 import com.google.gson.JsonElement;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +49,7 @@ public final class ShowcaseLookupParser {
       case RANKING -> rankingLookup(request);
       case ALL -> allLookup(request);
       case STATS -> statsLookup(request);
-      default -> throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(mode));
+      default -> throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(echoed(mode)));
     };
   }
 
@@ -72,7 +74,7 @@ public final class ShowcaseLookupParser {
                 () ->
                     new ShowcaseLookupException(
                         "Unknown ranking \"%s\" for section \"%s\""
-                            .formatted(rankingSlug, section.getSlug())));
+                            .formatted(echoed(rankingSlug), section.getSlug())));
     return new ShowcaseRankingLookup(
         section,
         ranking,
@@ -117,6 +119,6 @@ public final class ShowcaseLookupParser {
   private static ShowcaseLookupException unknownSection(
       String slug, ShowcaseRequestFields request) {
     return new ShowcaseLookupException(
-        "Unknown section \"%s\" for mode \"%s\"".formatted(slug, request.mode()));
+        "Unknown section \"%s\" for mode \"%s\"".formatted(echoed(slug), request.mode()));
   }
 }

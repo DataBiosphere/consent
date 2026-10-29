@@ -3,10 +3,12 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
@@ -15,8 +17,12 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
+import org.broadinstitute.consent.http.enumeration.ShowcasePublicField;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.ShowcaseLookupResponse;
 import org.broadinstitute.consent.http.models.ShowcasePageResponse;
@@ -30,6 +36,8 @@ import org.broadinstitute.consent.http.service.showcase.ShowcaseScope;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseSection;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseStatsLookup;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
+import org.eclipse.jetty.http.BadMessageException;
+import org.eclipse.jetty.io.EofException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -81,7 +89,11 @@ class PublicShowcaseCatalogResourceTest {
 
     assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
     assertNoStore(response);
-    // Every summary key is present, and an unknown value is null.
+    JsonObject body = JsonParser.parseString(response.readEntity(String.class)).getAsJsonObject();
+    // The summary keys are exactly the public allowlist, and an unknown value is null.
+    assertEquals(
+        Set.copyOf(ShowcasePublicField.jsonNames()),
+        body.getAsJsonArray("datasets").get(0).getAsJsonObject().keySet());
     assertEquals(
         JsonParser.parseString(
             """
@@ -92,7 +104,7 @@ class PublicShowcaseCatalogResourceTest {
                 "accessUrl": "https://example.org/open-cohort", "species": null },
               { "identifier": "DUOS-000999", "status": "unavailable" } ] }
             """),
-        JsonParser.parseString(response.readEntity(String.class)));
+        body);
   }
 
   /** The last page still has the key, as null. */
@@ -209,6 +221,22 @@ class PublicShowcaseCatalogResourceTest {
             .lookupDatasets(null, new ByteArrayInputStream(body));
 
     assertEquals(Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), response.getStatus());
+    verifyNoInteractions(service);
+  }
+
+  /** An aborted upload or a broken chunked body is the client's fault: a 400, not a 500. */
+  @ParameterizedTest
+  @ValueSource(classes = {EofException.class, BadMessageException.class})
+  void testClientReadErrorIsABadRequest(Class<? extends Throwable> failure) throws Exception {
+    InputStream body = mock(InputStream.class);
+    when(body.readNBytes(anyInt())).thenThrow(failure);
+
+    Response response = new PublicShowcaseCatalogResource(service).lookupDatasets(null, body);
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertEquals(
+        PublicShowcaseCatalogResource.UNREADABLE_BODY_MESSAGE,
+        ((Error) response.getEntity()).message());
     verifyNoInteractions(service);
   }
 

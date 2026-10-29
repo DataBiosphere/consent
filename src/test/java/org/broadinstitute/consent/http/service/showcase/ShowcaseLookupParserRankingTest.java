@@ -152,6 +152,16 @@ class ShowcaseLookupParserRankingTest {
         "Unrecognized scope key \"" + key + "\"");
   }
 
+  @Test
+  void testLongScopeKeyIsCut() {
+    String key = "k".repeat(60 * 1024);
+
+    assertRejected(
+        "{ %s, \"scope\": { \"%s\": [\"x\"] } }".formatted(LATEST, key),
+        "Unrecognized scope key \"%s…\""
+            .formatted("k".repeat(ShowcaseLookupException.MAX_ECHOED_LENGTH)));
+  }
+
   /** A nested query object, or a value that is not a string, is not a DAC name. */
   @ParameterizedTest
   @ValueSource(strings = {"\"Example DAC\"", "{ \"$ne\": \"\" }", "[1]", "[null]", "[true]"})
@@ -183,6 +193,17 @@ class ShowcaseLookupParserRankingTest {
         "{ \"mode\": \"ranking\", \"section\": \"latest-data-releases\", \"ranking\": \"%s\" }"
             .formatted(ranking),
         "Unknown ranking \"" + ranking + "\" for section \"latest-data-releases\"");
+  }
+
+  @Test
+  void testLongRankingIsCut() {
+    String ranking = "r".repeat(60 * 1024);
+
+    assertRejected(
+        "{ \"mode\": \"ranking\", \"section\": \"latest-data-releases\", \"ranking\": \"%s\" }"
+            .formatted(ranking),
+        "Unknown ranking \"%s…\" for section \"latest-data-releases\""
+            .formatted("r".repeat(ShowcaseLookupException.MAX_ECHOED_LENGTH)));
   }
 
   @Test
