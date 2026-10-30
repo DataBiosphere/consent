@@ -4,8 +4,8 @@ allOf:
   - $ref: './AssetDataUse.yaml'
 properties:
   workspaceId:
-    type: string
-    description: The unique identifier for the workspace.
+    type: [integer, string]
+    description: Server-assigned id. Omit it for a new entry and send it back unchanged on an edit; an id matching none of the study's entries starts a new entry with a new id, and an unconverted study may still return a client string.
   studyId:
     type: string
     description: The study ID associated with the workspace.

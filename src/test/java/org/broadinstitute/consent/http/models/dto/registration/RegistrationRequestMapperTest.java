@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import java.util.List;
 import java.util.Map;
@@ -217,6 +219,31 @@ class RegistrationRequestMapperTest extends AbstractTestHelper {
     assertTrue(findProp(props, "funding").isPresent());
     // Nothing unpromoted was sent, so no legacy assets property is stored
     assertTrue(findProp(props, "assets").isEmpty());
+  }
+
+  /** Parsed with Jackson, as the registration resources parse a request. */
+  @Test
+  void testAssetIdsKeepTheirTypeWhetherIntegerOrString() throws Exception {
+    String list = "[{\"%1$s\": 7}, {\"%1$s\": \"s-1\"}, {\"%1$s\": 1700000000000}]";
+    StudyRegistrationRequest request =
+        new ObjectMapper()
+            .readValue(
+                "{\"models\": %s, \"workspaces\": %s, \"biospecimens\": %s}"
+                    .formatted(
+                        list.formatted("modelId"),
+                        list.formatted("workspaceId"),
+                        list.formatted("biospecimenId")),
+                StudyRegistrationRequest.class);
+
+    List<StudyProperty> props = mapper.toStudyProperties(request);
+
+    Map.of("models", "modelId", "workspaces", "workspaceId", "biospecimens", "biospecimenId")
+        .forEach(
+            (key, idKey) ->
+                assertEquals(
+                    JsonParser.parseString(list.formatted(idKey)),
+                    JsonParser.parseString(
+                        findProp(props, key).orElseThrow().getValue().toString())));
   }
 
   /**
