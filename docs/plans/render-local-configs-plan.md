@@ -36,7 +36,7 @@ container setup turnkey") and DT-4257 (a compose mode against the remote dev con
 |---|---|---|
 | `render-configs.sh` | Writes `server.crt`, `server.key` and `ca-bundle.crt` from the `local-dev` namespace. Optional flags write `.env.local`, `public/config.json` and `site.conf`. It writes the certs to a staging folder, and moves them into place only after all three succeed. It has no preflight. It stops at the first error (`set -e`). | VPN, `gcloud`, `kubectl`, `jq`, `openssl` |
 | `render-site-conf.sh` | Renders `site.conf` from the duos chart template in `terra-helmfile`. It clones the repo with `git` over HTTPS, then over SSH, with `GIT_TERMINAL_PROMPT=0`. It fails if helm syntax remains after the render. | `git` read access to `terra-helmfile` |
-| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. It installs `gcloud` and the GKE auth plugin with `apt-get`, runs `gcloud auth login`, then runs `render-configs.sh` with every write flag. On a failure it exits non-zero and asks about the VPN. Each run makes all files again. | Nothing before the run |
+| `setup-devcontainer.sh` | Runs as the Dev Container `postCreateCommand`. It installs `gcloud` and the GKE auth plugin with `apt-get`, runs `gcloud auth login` and `gcloud auth application-default login`, then runs `render-configs.sh` with every write flag. On a failure it exits non-zero and asks about the VPN. Each run makes all files again. | Nothing before the run |
 | `render-accounts.sh` | Writes test service account keys to a gitignored env file. It writes to a temp file first, so a failure keeps the old file. | `gcloud`, `jq` |
 
 The `duos-ui` Dev Container uses a stock image with no Dockerfile, and it has no `gh`. VSCode
@@ -471,18 +471,17 @@ Changes to `.devcontainer/`:
 |---|---|
 | `devcontainer.json`: add the `kubectl-helm-minikube` feature, and update `devcontainer-lock.json` | For `kubectl` and `helm`. |
 | `devcontainer.json`: `"postCreateCommand": "./scripts/setup-devcontainer.sh"` | The same hook as `duos-ui`. |
-| `devcontainer.json`: `forwardPorts` 27443, 7777 and 9200 | For the container mode. Docker-in-Docker publishes ports inside the container only. |
+| `devcontainer.json`: no `forwardPorts` and no `portsAttributes` | The developer chooses which ports to forward. In the container mode, VSCode detects the ports that the stack publishes and offers to forward them. A fixed `forwardPorts` would hold the host ports while the container is open, so the host mode could not use them. |
 
 There is no Dockerfile and no `gh`, as in `duos-ui`.
 
 `setup-devcontainer.sh` follows the `duos-ui` script:
 
 1. Install `gcloud`, the GKE auth plugin, `jq`, `openssl` and `gzip` with `apt-get`.
-2. Run `gcloud auth login`, if no account is active.
+2. Run `gcloud auth login` and `gcloud auth application-default login`, on each run, as
+   `duos-ui` does. So each build, rebuild or manual run has fresh credentials.
 3. Run `render-configs.sh --all true`. Each run makes all files again, except the dump: `--all`
    makes a dump only when there is none.
-4. If there is no ADC file, print the command for the container mode:
-   `gcloud auth application-default login`.
 
 On a failure, the script exits non-zero, asks about the VPN, and says to run it again. A run after
 a cert rotation renews the certs.
@@ -569,7 +568,7 @@ its base.
 | 2. Chart configs | `scripts/render-chart-configs.sh`, `scripts/lib/common.sh` (shared helpers), `scripts/templates/local-values.yaml`, and the `--write_chart_configs`, `--helmfile_ref` and `--helmfile_dir` flags. Each step copies each old file that changes to a backup with the time in its name, such as `consent.yaml.20261028-153000.bak`. The rendered `consent.yaml` keeps the chart placeholders until PR 3 adds the `-Ddw.*` flags, so `DEVNOTES.md` keeps the "Configure" section. | PR 1 |
 | 3. Compose | `scripts/templates/docker-compose.yaml`, the `.env` step, `PROXY_IMAGE` from the chart step, and the `--write_compose`, `--fetch_sendgrid` and `--all` flags. Each compose command in `DEVNOTES.md` names both compose files. `DEVNOTES.md` loses the hand-made compose stanzas, and the "Configure" section, which tells developers to copy `src/test/resources/consent-config.yml` by hand. | PR 2 |
 | 4. Dump and index | `scripts/export-db.sh`, `scripts/index-es.sh`, and the `--export_db` and `--db_env` flags. `--all` also makes a dump when there is none. `scripts/db-connect.sh` moves to `cloud-sql-proxy` v2. It runs on the host and uses `psql`, so it keeps a host proxy on `127.0.0.1`. It uses port 5433, because the local compose database publishes port 5432. | PR 3 |
-| 5. Dev Container | `scripts/setup-devcontainer.sh`. In `.devcontainer/devcontainer.json`, the `kubectl-helm-minikube` feature, `postCreateCommand` and `forwardPorts`. `devcontainer-lock.json`. A "Dev Container" section in `DEVNOTES.md`, like the one in `duos-ui`. | PR 4 |
+| 5. Dev Container | `scripts/setup-devcontainer.sh`. In `.devcontainer/devcontainer.json`, the `kubectl-helm-minikube` feature, `postCreateCommand`. `devcontainer-lock.json`. A "Dev Container" section in `DEVNOTES.md`, like the one in `duos-ui`. | PR 4 |
 
 PR 3 needs the output of PR 2 to test. The `index-es.sh` test in PR 4 needs a running stack from
 PR 3 and a dump from the export in PR 4.
@@ -614,7 +613,7 @@ The team answered the open questions from the first review:
 | Does anyone use `sqlproxy.env` or `tcell_agent.config`? | No. | The script does not write them. PRs 2 and 3 remove the old hand-made steps from the docs. |
 | Does anyone run the app outside compose? | No. The team runs the app with compose from a terminal. | The `-Ddw.*` flags are only in the compose template. No IntelliJ steps. |
 | How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. A new dump replaces the old dump of the same environment. | [Data Handling](#data-handling): `config/` has mode `700`, one dump for each environment, no sharing. |
-| Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | PR 5 supports both modes. `forwardPorts` is for the container mode. The host mode does not change. |
+| Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | PR 5 supports both modes. The developer chooses which ports VSCode forwards in the container mode. The host mode does not change. |
 | Where does the config get rendered? | Inside the Dev Container, as in `duos-ui` (DT-4206, DT-4236). | `setup-devcontainer.sh` installs `gcloud` and runs `render-configs.sh`. The features install `kubectl` and `helm`. The host `~/.config/gcloud` mount is not needed. |
 | How much testing? | A minimum. | Six checks in [Verification](#verification). |
 | Where do the checks go? | First: in `render-configs.sh`. Changed on 2026-10-23: no preflight, as in `duos-ui` after DT-4236. | The script stops at the first failure. Staged writes and the fast VPN check stay (PR 1). |
