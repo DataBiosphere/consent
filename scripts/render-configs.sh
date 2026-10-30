@@ -207,16 +207,11 @@ write_compose() {
 
   # Start from the old .env, so the lines that this script does not manage carry forward, as in
   # duos-ui. CONSENT_DB_DUMP and PROXY_IMAGE are two of them: the export step and the chart step
-  # set them.
+  # set them. With no old .env, env_set starts a new file with the header.
   if [[ -f "$ENV_FILE" ]]; then
     cp "$ENV_FILE" "$stage/.env"
-  else
-    cat > "$stage/.env" << EOF
-# Written by scripts/render-configs.sh. Values in an old .env carry forward. This file holds
-# secrets: do not share it. docker-compose.yaml reads it.
-EOF
+    chmod 600 "$stage/.env"
   fi
-  chmod 600 "$stage/.env"
   env_set "$stage/.env" POSTGRES_USER "$pg_user"
   env_set "$stage/.env" POSTGRES_PASSWORD "$pg_password"
   env_set "$stage/.env" SENDGRID_API_KEY "$sendgrid"
