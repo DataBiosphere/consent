@@ -860,4 +860,141 @@ WHERE dar.submission_date > now() - interval '8760 hours'
           Collection<String> studyPropertyAllowlist,
       @Bind("accessManagementProperty") String accessManagementProperty,
       @Bind("legacyAccessManagementProperty") String legacyAccessManagementProperty);
+
+  /**
+   * The aliases of the newest eligible datasets, newest date first and then in alias order. A
+   * dataset with no date is left out. This returns aliases only; the caller reads the summaries
+   * with {@link #findShowcaseSummaries(Collection)}.
+   *
+   * @param openAccessOnly true to keep open-access datasets only
+   * @param dacNames exact DAC names to keep, or null for no DAC scope; an empty list keeps none
+   * @param excludedAliases aliases never to return, or null for none
+   * @param limit the most aliases to return
+   */
+  default List<Integer> findShowcaseNewestAliases(
+      boolean openAccessOnly,
+      Collection<String> dacNames,
+      Collection<Integer> excludedAliases,
+      int limit) {
+    if (limit <= 0 || (dacNames != null && dacNames.isEmpty())) {
+      return List.of();
+    }
+    return findShowcaseNewestAliases(
+        openAccessOnly,
+        dacNames != null,
+        dacNames == null ? List.of() : dacNames,
+        excludedAliases != null && !excludedAliases.isEmpty(),
+        excludedAliases == null ? List.of() : excludedAliases,
+        limit,
+        Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
+        Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
+  }
+
+  /**
+   * The joins and the eligibility rule repeat {@link #findShowcaseSummaries(Collection, Collection,
+   * Collection, String, String)} word for word, and the date is its {@code available_date}; change
+   * them together. The SQL is one literal, not joined constants, so that Semgrep's injection rule
+   * sees no string building. Each optional filter has its own switch, because an empty list binds
+   * as {@code IN (NULL)}, which matches nothing; with the switch off, the filter is true whatever
+   * the list holds.
+   */
+  @SqlQuery(
+      """
+      SELECT d.alias
+      FROM dataset d
+      INNER JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN dac ON dac.dac_id = d.dac_id AND dac.deleted IS NOT TRUE
+      LEFT JOIN LATERAL (
+          SELECT am.value
+          FROM (
+              SELECT LOWER(
+                      REGEXP_REPLACE(
+                          p.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g')) AS value,
+                  LOWER(p.schema_property) = LOWER(:accessManagementProperty) AS is_current,
+                  p.property_id
+              FROM dataset_property p
+              WHERE p.dataset_id = d.dataset_id
+                  AND LOWER(p.schema_property)
+                      IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
+          ) am
+          WHERE am.value IN ('open', 'controlled', 'external')
+          ORDER BY am.is_current DESC, am.property_id
+          LIMIT 1
+      ) access ON TRUE
+      WHERE s.public_visibility = true
+          AND (access.value IN ('open', 'external')
+              OR (d.dac_approval = true AND dac.dac_id IS NOT NULL))
+          AND (:openAccessOnly = false OR access.value = 'open')
+          AND (:scopeByDac = false OR dac.name IN (<dacNames>))
+          AND (:hasExclusions = false OR d.alias NOT IN (<excludedAliases>))
+          AND (CASE WHEN access.value IN ('open', 'external') THEN d.create_date ELSE d.dac_approval_date END) IS NOT NULL
+      ORDER BY CAST((CASE WHEN access.value IN ('open', 'external') THEN d.create_date ELSE d.dac_approval_date END) AS date) DESC, d.alias
+      LIMIT :limit
+      """)
+  List<Integer> findShowcaseNewestAliases(
+      @Bind("openAccessOnly") boolean openAccessOnly,
+      @Bind("scopeByDac") boolean scopeByDac,
+      @BindList(value = "dacNames", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<String> dacNames,
+      @Bind("hasExclusions") boolean hasExclusions,
+      @BindList(value = "excludedAliases", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<Integer> excludedAliases,
+      @Bind("limit") int limit,
+      @Bind("accessManagementProperty") String accessManagementProperty,
+      @Bind("legacyAccessManagementProperty") String legacyAccessManagementProperty);
+
+  /**
+   * One page of eligible aliases in alias order, starting after {@code afterAlias}. This returns
+   * aliases only; the caller reads the summaries with {@link #findShowcaseSummaries(Collection)}.
+   *
+   * @param afterAlias the last alias of the previous page, or -1 for the first page
+   * @param limit the most aliases to return
+   */
+  default List<Integer> findShowcaseAliasPage(int afterAlias, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
+    return findShowcaseAliasPage(
+        afterAlias,
+        limit,
+        Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
+        Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
+  }
+
+  /** The joins and the eligibility rule repeat {@link #findShowcaseNewestAliases}; see there. */
+  @SqlQuery(
+      """
+      SELECT d.alias
+      FROM dataset d
+      INNER JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN dac ON dac.dac_id = d.dac_id AND dac.deleted IS NOT TRUE
+      LEFT JOIN LATERAL (
+          SELECT am.value
+          FROM (
+              SELECT LOWER(
+                      REGEXP_REPLACE(
+                          p.property_value, '^[\\x01-\\x20]+|[\\x01-\\x20]+$', '', 'g')) AS value,
+                  LOWER(p.schema_property) = LOWER(:accessManagementProperty) AS is_current,
+                  p.property_id
+              FROM dataset_property p
+              WHERE p.dataset_id = d.dataset_id
+                  AND LOWER(p.schema_property)
+                      IN (LOWER(:accessManagementProperty), LOWER(:legacyAccessManagementProperty))
+          ) am
+          WHERE am.value IN ('open', 'controlled', 'external')
+          ORDER BY am.is_current DESC, am.property_id
+          LIMIT 1
+      ) access ON TRUE
+      WHERE s.public_visibility = true
+          AND (access.value IN ('open', 'external')
+              OR (d.dac_approval = true AND dac.dac_id IS NOT NULL))
+          AND d.alias > :afterAlias
+      ORDER BY d.alias
+      LIMIT :limit
+      """)
+  List<Integer> findShowcaseAliasPage(
+      @Bind("afterAlias") int afterAlias,
+      @Bind("limit") int limit,
+      @Bind("accessManagementProperty") String accessManagementProperty,
+      @Bind("legacyAccessManagementProperty") String legacyAccessManagementProperty);
 }
