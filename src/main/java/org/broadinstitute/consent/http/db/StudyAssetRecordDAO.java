@@ -1,12 +1,15 @@
 package org.broadinstitute.consent.http.db;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.StudyAssetKey;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
 import org.broadinstitute.consent.http.models.StudyModelRecord;
 import org.broadinstitute.consent.http.models.StudyWorkspaceRecord;
+import org.jdbi.v3.sqlobject.config.KeyColumn;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.config.ValueColumn;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -190,6 +193,15 @@ public interface StudyAssetRecordDAO {
       ORDER BY biospecimen_id
       """)
   List<StudyAssetKey> findLiveBiospecimens(@Bind("studyId") Integer studyId);
+
+  @KeyColumn("biospecimen_id")
+  @ValueColumn("sample_id")
+  @SqlQuery(
+      """
+      SELECT biospecimen_id, sample_id FROM study_biospecimen
+      WHERE study_id = :studyId AND retired_date IS NULL AND sample_id IS NOT NULL
+      """)
+  Map<Integer, String> findLiveBiospecimenSampleIds(@Bind("studyId") Integer studyId);
 
   @SqlQuery(
       """

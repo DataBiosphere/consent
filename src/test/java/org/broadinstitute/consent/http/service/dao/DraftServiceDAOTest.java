@@ -11,9 +11,17 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -24,7 +32,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -36,12 +44,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.jdbi.v3.core.Jdbi;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +80,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testCreateDraft() throws SQLException {
+  void testCreateDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(1));
@@ -134,7 +144,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDraftStripsTheCharacterFromARenamedDraft() throws SQLException {
+  void testUpdateDraftStripsTheCharacterFromARenamedDraft() {
     // The rename endpoint takes its body as text, which can carry the character with no escaping.
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
@@ -145,7 +155,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testThinUserIsReturnedFromDraft() throws SQLException {
+  void testThinUserIsReturnedFromDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     assertThat(user.getRoles(), hasSize(greaterThan(0)));
@@ -154,7 +164,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetAuthorizedDraft() throws SQLException {
+  void testGetAuthorizedDraft() {
     User goodUser = createUser();
     User badUser = createUser();
     User adminUser = createUser();
@@ -176,7 +186,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testChairpersonCannotReadAnotherUsersDraft() throws SQLException {
+  void testChairpersonCannotReadAnotherUsersDraft() {
     // Reaching the draft endpoints does not make a chairperson an owner.
     User owner = createUser();
     User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
@@ -188,7 +198,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testChairpersonCanReadTheirOwnDraft() throws SQLException {
+  void testChairpersonCanReadTheirOwnDraft() {
     User chairperson = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
     DraftInterface draft = createDraft(chairperson, 1);
 
@@ -198,7 +208,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDataSubmitterCannotReadAnotherUsersDraft() throws SQLException {
+  void testDataSubmitterCannotReadAnotherUsersDraft() {
     // The validation endpoint admits data submitters too, so this is asserted, not assumed.
     User owner = createUser();
     User dataSubmitter = createUserWithRole(UserRoles.DATASUBMITTER.getRoleId());
@@ -210,7 +220,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDataSubmitterCanReadTheirOwnDraft() throws SQLException {
+  void testDataSubmitterCanReadTheirOwnDraft() {
     User dataSubmitter = createUserWithRole(UserRoles.DATASUBMITTER.getRoleId());
     DraftInterface draft = createDraft(dataSubmitter, 1);
 
@@ -230,7 +240,74 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testAddAttachmentToDraft() throws SQLException {
+  void testDeleteDraftSurvivesAFailedDocumentDelete() throws Exception {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 2);
+    when(gcsService.deleteDocument(anyString())).thenThrow(new IllegalStateException("gcs down"));
+
+    draftServiceDAO.deleteDraft(draft, user);
+
+    assertThat(draftDAO.findDraftsByUserId(user.getUserId()), hasSize(0));
+    for (FileStorageObject file : draft.getStoredFiles()) {
+      assertTrue(fileStorageObjectDAO.findFileById(file.getFileStorageObjectId()).getDeleted());
+    }
+  }
+
+  @Test
+  void testAFailedDocumentDeleteStillRemovesTheAttachment() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 1);
+    Integer fileId = draft.getStoredFiles().iterator().next().getFileStorageObjectId();
+    when(gcsService.deleteDocument(anyString())).thenThrow(new IllegalStateException("gcs down"));
+
+    assertDoesNotThrow(() -> draftServiceDAO.deleteDraftAttachment(draft, user, fileId));
+
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
+  }
+
+  @Test
+  void testAFailedDraftUpdateKeepsTheAttachmentAndItsDocument() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 1);
+    Integer fileId = draft.getStoredFiles().iterator().next().getFileStorageObjectId();
+    DraftServiceDAO dao = draftServiceDAOWithFailingDraftUpdate();
+
+    assertThrows(IllegalStateException.class, () -> dao.deleteDraftAttachment(draft, user, fileId));
+
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(1));
+    verify(gcsService, never()).deleteDocument(anyString());
+  }
+
+  @Test
+  void testAFailedDraftUpdateAddsNoAttachments() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 0);
+    DraftServiceDAO dao = draftServiceDAOWithFailingDraftUpdate();
+    Map<String, FormDataBodyPart> files = getRandomFiles(2);
+
+    assertThrows(IllegalStateException.class, () -> dao.addAttachments(draft, user, files));
+
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
+    verify(gcsService, times(2)).deleteDocument(anyString());
+  }
+
+  /** The draft update throws after the file rows are written, inside the same transaction. */
+  private DraftServiceDAO draftServiceDAOWithFailingDraftUpdate() {
+    DraftDAO failingDraftDAO = mock(DraftDAO.class);
+    doThrow(new IllegalStateException("draft update failed"))
+        .when(failingDraftDAO)
+        .updateDraftByDraftUUID(any(UUID.class), any(Instant.class), anyInt());
+    Jdbi withFailingDraftDAO = spy(jdbi);
+    doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
+    return new DraftServiceDAO(
+        withFailingDraftDAO, new DraftFileStorageServiceDAO(jdbi, gcsService));
+  }
+
+  @Test
+  void testAddAttachmentToDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Map<String, FormDataBodyPart> files = getRandomFiles(1);
@@ -241,7 +318,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteAttachmentFromDraft() throws SQLException {
+  void testDeleteAttachmentFromDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
     Set<FileStorageObject> storedFiles = draft.getStoredFiles();
@@ -254,7 +331,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteAttachmentFromDraft_NotFound() throws SQLException {
+  void testDeleteAttachmentFromDraft_NotFound() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
     assertThrows(
@@ -263,7 +340,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDraft() throws SQLException {
+  void testUpdateDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
     String updatedJson = "{\"study\": \"My example study\"}";
@@ -284,7 +361,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @NotNull
-  private DraftInterface createDraft(User user, int numberOfFiles) throws SQLException {
+  private DraftInterface createDraft(User user, int numberOfFiles) {
     DraftStudyDataset draft = new DraftStudyDataset("{}", user);
     draftServiceDAO.insertDraft(draft);
     Map<String, FormDataBodyPart> mapOfFiles = getRandomFiles(numberOfFiles);

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import java.io.InputStream;
-import java.sql.SQLException;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.User;
@@ -34,7 +33,7 @@ public class StudyDatasetTemplateService {
   }
 
   public TemplateValidationResponse validateAndCreateDraft(InputStream content, User user)
-      throws SQLException, JsonProcessingException {
+      throws JsonProcessingException {
     StudyTemplateValidationResult result = validationService.validate(content);
     if (!result.valid()) {
       return TemplateValidationResponse.invalid(result.errors(), result.truncated());

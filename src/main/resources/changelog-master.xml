@@ -274,4 +274,5 @@
   <include file="changesets/changelog-consent-2026-10-09-email-entity-send-id.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-10-13-email-entity-dataset-ids.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-10-28-study-asset-records.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-10-29-asset-catalog.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

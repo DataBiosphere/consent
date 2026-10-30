@@ -208,7 +208,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Provides
   @Singleton
   private ObjectMapper providesObjectMapper() {
-    return new ObjectMapper();
+    return RegistrationRequestMapper.requestObjectMapper();
   }
 
   @Provides

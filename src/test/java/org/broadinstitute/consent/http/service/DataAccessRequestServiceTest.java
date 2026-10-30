@@ -1477,7 +1477,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testUpdateByReferenceIdVersion2() throws Exception {
+  void testUpdateByReferenceIdVersion2() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setCollectionId(randomInt(0, 100));
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
@@ -1488,7 +1488,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testUpdateByReferenceIdVersion2_WithCollection() throws Exception {
+  void testUpdateByReferenceIdVersion2_WithCollection() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
