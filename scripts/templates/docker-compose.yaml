@@ -98,7 +98,14 @@ services:
     volumes:
       # The image picks the load command from the file extension: .sql or .sql.gz. It ignores a
       # file with another extension, and the database is then empty.
-      - ./${CONSENT_DB_DUMP:?No database dump. Set CONSENT_DB_DUMP in config/.env to a dump file in config/}:/docker-entrypoint-initdb.d/${CONSENT_DB_DUMP}:ro
+      # create_host_path: false, so a missing dump stops compose. Without it, Docker makes an empty
+      # folder with that name, and the database starts empty with no error.
+      - type: bind
+        source: ./${CONSENT_DB_DUMP:?No database dump. Set CONSENT_DB_DUMP in config/.env to a dump file in config/}
+        target: /docker-entrypoint-initdb.d/${CONSENT_DB_DUMP}
+        read_only: true
+        bind:
+          create_host_path: false
       # The database stays after `docker compose down`. The image loads the dump only into an
       # empty volume. See DEVNOTES.md to load a new dump.
       - pgdata:/var/lib/postgresql/data

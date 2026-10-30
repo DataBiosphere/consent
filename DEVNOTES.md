@@ -54,7 +54,7 @@ files as they were. The first time, run:
 
 ```bash
 ./scripts/render-configs.sh --all true
-# Put a .sql or .sql.gz database dump in config/, and set CONSENT_DB_DUMP in config/.env to its file name.
+# Put a .sql or .sql.gz database dump in config/, and add CONSENT_DB_DUMP='FILE_NAME' to config/.env.
 mvn clean compile
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ```
@@ -64,6 +64,10 @@ docker compose -f config/docker-compose.yaml -f config/docker-compose.override.y
   --helmfile_ref my-branch`. For changes that are not pushed, use `--helmfile_dir
   ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
   [render-chart-configs.sh](scripts/render-chart-configs.sh) on its own.
+* `--fetch_sendgrid true` puts the dev SendGrid key in `config/.env`, so the local app sends real
+  email. A dump of the dev database holds the email addresses of real dev users, so a local action
+  can send them email. Use the key only to test email. To stop, set
+  `SENDGRID_API_KEY='placeholder'` in `config/.env`. The next render keeps the value in `.env`.
 
 The rendered files are the same as the files that dev runs. The only local changes are in
 `local-values.yaml` and in the `-Ddw.*` flags of the compose template. See
@@ -81,7 +85,9 @@ same values that `duos-ui` writes to its `.env.local`. So the `duos-ui` compose 
 local consent stack (`docker-compose.consent.yaml`) connects with no change.
 
 The local database loads the dump that `CONSENT_DB_DUMP` in `config/.env` names. Put a dump file in
-`config/`, and set `CONSENT_DB_DUMP` to its file name. The name must end in `.sql` or `.sql.gz`.
+`config/`, and add its file name to `config/.env` in single quotes, such as
+`CONSENT_DB_DUMP='consentdb-dev.sql.gz'`. The scripts warn about a value with no quotes. The name
+must end in `.sql` or `.sql.gz`.
 The Postgres image ignores other files, and the database is then empty.
 
 The database is in the `consent_pgdata` volume, so it stays after `docker compose down`. The image

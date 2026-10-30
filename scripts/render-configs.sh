@@ -205,7 +205,9 @@ EOF
   # ../target works only when the compose file is in config/ of the repo. In another folder, use
   # the absolute path of target/.
   if [[ "$CONFIG_DIR" != "$REPO_ROOT/config" ]]; then
-    sed "s#- \.\./target:/opt/target#- $REPO_ROOT/target:/opt/target#" "$COMPOSE_TEMPLATE" > "$stage/docker-compose.yaml"
+    # Escape the characters that sed reads in the replacement: \, & and the # delimiter.
+    root=$(printf '%s' "$REPO_ROOT" | sed 's/[\\&#]/\\&/g')
+    sed "s#- \.\./target:/opt/target#- $root/target:/opt/target#" "$COMPOSE_TEMPLATE" > "$stage/docker-compose.yaml"
   fi
 
   # This backs up each old file that changes.
@@ -267,7 +269,7 @@ if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then
   echo
   echo "Next steps:"
   if [[ -z "$(env_get "$ENV_FILE" CONSENT_DB_DUMP)" ]]; then
-    echo "  Put a .sql or .sql.gz database dump in $compose_dir/, and set CONSENT_DB_DUMP in $compose_dir/.env to its file name."
+    echo "  Put a .sql or .sql.gz database dump in $compose_dir/, and add CONSENT_DB_DUMP='FILE_NAME' to $compose_dir/.env."
   fi
   echo "  mvn clean compile"
   echo "  docker compose -f $compose_dir/docker-compose.yaml -f $compose_dir/docker-compose.override.yaml up -d"
