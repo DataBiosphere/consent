@@ -1,4 +1,6 @@
 type: object
+# No other keys, so an `all` page (which adds `nextCursor`) matches only ShowcasePageResponse.
+additionalProperties: false
 required:
   - datasets
 properties:

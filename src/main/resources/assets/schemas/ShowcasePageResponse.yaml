@@ -1,0 +1,12 @@
+type: object
+required:
+  - datasets
+  - nextCursor
+properties:
+  datasets:
+    type: array
+    items:
+      $ref: './ShowcaseDatasetSummary.yaml'
+  nextCursor:
+    type: [string, 'null']
+    description: The cursor for the next page, or null on the last page.

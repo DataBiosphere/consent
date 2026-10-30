@@ -12,8 +12,7 @@ import java.util.Set;
  * ShowcaseJsonBody}). Every field must belong to the request's mode, and every value must have the
  * agreed type and stay within {@link ShowcaseLookupLimits}.
  *
- * <p>The {@code all} and {@code stats} modes follow in later pull requests and are unknown modes
- * until then.
+ * <p>The {@code stats} mode follows in a later pull request and is an unknown mode until then.
  */
 public final class ShowcaseLookupParser {
 
@@ -25,10 +24,14 @@ public final class ShowcaseLookupParser {
   private static final String LIMIT = "limit";
   private static final String PIN = "pin";
   private static final String EXCLUDE = "exclude";
+  private static final String ALL = "all";
+  private static final String PAGE_SIZE = "pageSize";
+  private static final String CURSOR = "cursor";
 
   private static final Set<String> IDENTIFIERS_FIELDS = Set.of(MODE, SECTION, IDENTIFIERS);
   private static final Set<String> RANKING_FIELDS =
       Set.of(MODE, SECTION, RANKING, SCOPE, LIMIT, PIN, EXCLUDE);
+  private static final Set<String> ALL_FIELDS = Set.of(MODE, PAGE_SIZE, CURSOR);
 
   private ShowcaseLookupParser() {}
 
@@ -42,6 +45,7 @@ public final class ShowcaseLookupParser {
     return switch (mode) {
       case IDENTIFIERS -> identifiersLookup(request);
       case RANKING -> rankingLookup(request);
+      case ALL -> allLookup(request);
       default -> throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(echoed(mode)));
     };
   }
@@ -79,6 +83,25 @@ public final class ShowcaseLookupParser {
             ShowcaseLookupLimits.DEFAULT_RANKING_LIMIT),
         request.optionalIdentifiers(PIN, ShowcaseLookupLimits.MAX_PINS),
         request.optionalIdentifiers(EXCLUDE, ShowcaseLookupLimits.MAX_EXCLUSIONS));
+  }
+
+  private static ShowcaseAllLookup allLookup(ShowcaseRequestFields request) {
+    request.rejectUnrecognized(ALL_FIELDS);
+    int pageSize =
+        request.optionalCount(
+            PAGE_SIZE, ShowcaseLookupLimits.MAX_PAGE_SIZE, ShowcaseLookupLimits.DEFAULT_PAGE_SIZE);
+    Integer afterAlias =
+        request.optionalString(CURSOR).map(ShowcaseLookupParser::cursor).orElse(null);
+    return new ShowcaseAllLookup(pageSize, afterAlias);
+  }
+
+  private static int cursor(String cursor) {
+    if (cursor.length() > ShowcaseLookupLimits.MAX_CURSOR_LENGTH) {
+      throw new ShowcaseLookupException(
+          "Field \"%s\" is longer than %d characters"
+              .formatted(CURSOR, ShowcaseLookupLimits.MAX_CURSOR_LENGTH));
+    }
+    return ShowcaseCursor.decode(cursor);
   }
 
   private static ShowcaseSection section(ShowcaseRequestFields request) {

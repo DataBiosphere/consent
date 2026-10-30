@@ -2,19 +2,26 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
+import org.broadinstitute.consent.http.models.ShowcasePageResponse;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.showcase.ShowcaseAllLookup;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseCatalogService;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupLimits;
+import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupParser;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseRanking;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseRankingLookup;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseScope;
@@ -26,9 +33,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * The {@code ranking} mode against the real queries: pins, exclusions, scope and the query count.
- * {@link ShowcaseCatalogQueriesDAOTest} covers the order and eligibility of the ranking query.
- * Dates are fixed, so the order does not depend on the clock. Synthetic records only.
+ * The {@code ranking} and {@code all} modes against the real queries: pins, exclusions, scope,
+ * paging and the query counts. {@link ShowcaseCatalogQueriesDAOTest} covers the order and
+ * eligibility of the ranking query. Dates are fixed, so the order does not depend on the clock.
+ * Synthetic records only.
  */
 class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
 
@@ -167,6 +175,72 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
     assertEquals(3, statements);
   }
 
+  /**
+   * Each kind of hidden dataset sits between eligible ones: a private study, an unapproved
+   * controlled dataset and an approved dataset of a deleted DAC.
+   */
+  @Test
+  void testPagesEndAndSkipHiddenDatasets() {
+    Integer deletedDac = dacDAO.createDac("Example DAC Z", "synthetic", user.getUserId());
+    List<String> eligible = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      eligible.add(dataset("open", "2026-10-01T12:00:00Z", null));
+      dataset(privateStudyId, "open", "2026-10-01T12:00:00Z", null);
+      dataset("controlled", "2026-10-01T12:00:00Z", dacX);
+      approvedDataset("2026-10-01 12:00:00", deletedDac);
+    }
+    dacDAO.deleteDac(deletedDac, user.getUserId());
+
+    List<String> seen = new ArrayList<>();
+    List<Integer> pageSizes = new ArrayList<>();
+    String cursor = null;
+    do {
+      ShowcasePageResponse page = service.lookupPage(allLookup(2, cursor));
+      pageSizes.add(page.datasets().size());
+      seen.addAll(identifiers(page.datasets()));
+      cursor = page.nextCursor();
+    } while (cursor != null);
+
+    assertEquals(eligible, seen);
+    assertEquals(List.of(2, 2, 1), pageSizes);
+  }
+
+  @Test
+  void testExactlyFullLastPageHasNoCursor() {
+    dataset("open", "2026-10-01T12:00:00Z", null);
+    dataset("open", "2026-10-01T12:00:00Z", null);
+
+    ShowcasePageResponse page = service.lookupPage(allLookup(2, null));
+
+    assertEquals(2, page.datasets().size());
+    assertNull(page.nextCursor());
+  }
+
+  @Test
+  void testEmptyCatalog() {
+    ShowcasePageResponse page = service.lookupPage(allLookup(100, null));
+
+    assertEquals(List.of(), page.datasets());
+    assertNull(page.nextCursor());
+  }
+
+  /** One more dataset than a full page, so the look-ahead row and a full summary read both run. */
+  @Test
+  void testMaximumPageIsTwoQueries() {
+    IntStream.range(0, ShowcaseLookupLimits.MAX_PAGE_SIZE + 1)
+        .forEach(i -> dataset("open", "2026-10-01T12:00:00Z", null));
+    AtomicReference<ShowcasePageResponse> page = new AtomicReference<>();
+
+    int statements =
+        countStatements(
+            () ->
+                page.set(service.lookupPage(allLookup(ShowcaseLookupLimits.MAX_PAGE_SIZE, null))));
+
+    assertEquals(2, statements);
+    assertEquals(ShowcaseLookupLimits.MAX_PAGE_SIZE, page.get().datasets().size());
+    assertNotNull(page.get().nextCursor());
+  }
+
   private List<ShowcaseDatasetSummary> rank(
       ShowcaseSection section,
       ShowcaseScope scope,
@@ -175,6 +249,16 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
       List<String> exclusions) {
     return service.lookupRanking(
         new ShowcaseRankingLookup(section, ShowcaseRanking.NEWEST, scope, limit, pins, exclusions));
+  }
+
+  /** Built through the parser, so the cursor is checked as a caller's would be. */
+  private static ShowcaseAllLookup allLookup(int pageSize, String cursor) {
+    String body =
+        cursor == null
+            ? "{ \"mode\": \"all\", \"pageSize\": %d }".formatted(pageSize)
+            : "{ \"mode\": \"all\", \"pageSize\": %d, \"cursor\": \"%s\" }"
+                .formatted(pageSize, cursor);
+    return (ShowcaseAllLookup) ShowcaseLookupParser.parse(body.getBytes(StandardCharsets.UTF_8));
   }
 
   private int countStatements(Runnable lookup) {

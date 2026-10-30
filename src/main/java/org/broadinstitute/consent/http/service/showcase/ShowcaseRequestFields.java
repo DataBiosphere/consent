@@ -51,6 +51,10 @@ final class ShowcaseRequestFields {
     return string(name, required(name));
   }
 
+  Optional<String> optionalString(String name) {
+    return Optional.ofNullable(fields.get(name)).map(value -> string(name, value));
+  }
+
   /** An integer from 1 to {@code max}, or {@code fallback} when the field is absent. */
   int optionalCount(String name, int max, int fallback) {
     JsonElement value = fields.get(name);

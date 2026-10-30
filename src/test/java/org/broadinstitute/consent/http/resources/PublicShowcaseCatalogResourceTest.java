@@ -25,7 +25,9 @@ import org.broadinstitute.consent.http.enumeration.ShowcasePublicField;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.ShowcaseLookupResponse;
+import org.broadinstitute.consent.http.models.ShowcasePageResponse;
 import org.broadinstitute.consent.http.models.ShowcaseUnavailableResult;
+import org.broadinstitute.consent.http.service.showcase.ShowcaseAllLookup;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseCatalogService;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseIdentifiersLookup;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupLimits;
@@ -100,6 +102,21 @@ class PublicShowcaseCatalogResourceTest {
               { "identifier": "DUOS-000999", "status": "unavailable" } ] }
             """),
         body);
+  }
+
+  /** The last page still has the key, as null. */
+  @Test
+  void testLastPageHasNullCursor() {
+    when(service.lookup(new ShowcaseAllLookup(ShowcaseLookupLimits.DEFAULT_PAGE_SIZE, null)))
+        .thenReturn(new ShowcasePageResponse(List.of(), null));
+
+    Response response = post("{ \"mode\": \"all\" }");
+
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    assertNoStore(response);
+    assertEquals(
+        JsonParser.parseString("{ \"datasets\": [], \"nextCursor\": null }"),
+        JsonParser.parseString(response.readEntity(String.class)));
   }
 
   @Test

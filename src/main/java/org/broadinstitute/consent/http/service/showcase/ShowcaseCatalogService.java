@@ -14,11 +14,12 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.ShowcaseLookupResponse;
+import org.broadinstitute.consent.http.models.ShowcasePageResponse;
 import org.broadinstitute.consent.http.models.ShowcaseUnavailableResult;
 
 /**
- * Answers the public Data Showcase lookup from the S2.1 catalog projection. Rankings read aliases
- * only, and every summary comes from the projection, so no mode can return a field that the
+ * Answers the public Data Showcase lookup from the S2.1 catalog projection. Rankings and pages read
+ * aliases only, and every summary comes from the projection, so no mode can return a field that the
  * projection does not.
  */
 public class ShowcaseCatalogService {
@@ -36,6 +37,7 @@ public class ShowcaseCatalogService {
       case ShowcaseIdentifiersLookup identifiers ->
           new ShowcaseLookupResponse(lookupIdentifiers(identifiers));
       case ShowcaseRankingLookup ranking -> new ShowcaseLookupResponse(lookupRanking(ranking));
+      case ShowcaseAllLookup all -> lookupPage(all);
     };
   }
 
@@ -93,6 +95,20 @@ public class ShowcaseCatalogService {
                 .map(ranked::get)
                 .filter(Objects::nonNull))
         .toList();
+  }
+
+  /**
+   * One page of every eligible dataset in identifier order. The cursor comes from the page's last
+   * alias, so a dataset that leaves the catalog between two calls cannot move the page boundary.
+   */
+  public ShowcasePageResponse lookupPage(ShowcaseAllLookup lookup) {
+    int afterAlias = lookup.afterAlias() == null ? -1 : lookup.afterAlias();
+    List<Integer> aliases = datasetDAO.findShowcaseAliasPage(afterAlias, lookup.pageSize() + 1);
+    boolean hasNextPage = aliases.size() > lookup.pageSize();
+    List<Integer> page = hasNextPage ? aliases.subList(0, lookup.pageSize()) : aliases;
+    return new ShowcasePageResponse(
+        datasetDAO.findShowcaseSummaries(page),
+        hasNextPage ? ShowcaseCursor.encode(page.getLast()) : null);
   }
 
   /** The summaries among the identifiers that the section and the scope admit, in one query. */
