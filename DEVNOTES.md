@@ -44,39 +44,63 @@ local stack needs. Do not edit these files by hand. The next render replaces the
 |---|---|---|
 | `server.crt`, `server.key`, `ca-bundle.crt` | The `local-dev-cert` secret in the dev cluster | Always |
 | `consent.yaml`, `site.conf`, `oauth2.conf` | The consent chart in `terra-helmfile`, with the dev values and [local-values.yaml](scripts/templates/local-values.yaml) | `--write_chart_configs true` |
+| `docker-compose.yaml`, `.env` | [docker-compose.yaml](scripts/templates/docker-compose.yaml) in this repo, and values from the dev cluster | `--write_compose true` |
 
 You need `gcloud`, `gke-gcloud-auth-plugin`, `kubectl`, `helm`, `git` and `openssl`, and the
 non-split Broad VPN for the cluster steps. The chart configs need read access to
 `broadinstitute/terra-helmfile`, with git HTTPS credentials or a GitHub SSH key. The script tries
 HTTPS first, then SSH. The script stops at the first step that fails, and that step leaves the old
-files as they were. Run:
+files as they were. The first time, run:
 
 ```bash
-./scripts/render-configs.sh
+./scripts/render-configs.sh --all true
+# Put a .sql or .sql.gz database dump in config/, and add CONSENT_DB_DUMP='FILE_NAME' to config/.env.
+mvn clean compile
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ```
 
-* After a cert rotation, run the script again to get the new certs.
-* To render the chart configs, run `./scripts/render-configs.sh --write_chart_configs true`. To test
-  a `terra-helmfile` branch, add `--helmfile_ref my-branch`. For changes that are not pushed, use
-  `--helmfile_dir ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
+* After a cert rotation, run `./scripts/render-configs.sh` with no options.
+* To test a `terra-helmfile` branch, run `./scripts/render-configs.sh --write_chart_configs true
+  --helmfile_ref my-branch`. For changes that are not pushed, use `--helmfile_dir
+  ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
   [render-chart-configs.sh](scripts/render-chart-configs.sh) on its own.
+* `--fetch_sendgrid true` puts the dev SendGrid key in `config/.env`, so the local app sends real
+  email. A dump of the dev database holds the email addresses of real dev users, so a local action
+  can send them email. Use the key only to test email. To stop, set
+  `SENDGRID_API_KEY='placeholder'` in `config/.env`. The next render keeps the value in `.env`.
 
-The rendered files are the same as the files that dev runs, except for the values in
-`local-values.yaml`. For all the local changes, see
-[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). Both scripts copy each old
+The rendered files are the same as the files that dev runs. The only local changes are in
+`local-values.yaml` and in the `-Ddw.*` flags of the compose template. See
+[the plan](docs/plans/render-local-configs-plan.md#all-local-changes). The scripts copy each old
 file that changes to a backup with the time in its name, such as
-`consent.yaml.20261028-153000.bak`, before they replace it. They keep the old backups.
+`consent.yaml.20261028-153000.bak`, before they replace it. They keep the old backups. Put changes
+for your own machine in `config/docker-compose.override.yaml`. The script never changes that file. Name both
+compose files in each `docker compose` command: Compose does not load the override file on its own
+when a command has `-f`.
 
-The rendered `consent.yaml` keeps the placeholders from the chart for `database.user`,
-`database.password`, `mailConfiguration.sendGridApiKey` and `googleStore.password`. Dev replaces
-them with `-Ddw` flags at startup. The local compose files will do the same, but they are not in
-this repo yet. Until then, run the app with the `consent.yaml` from the next section.
+`config/.env` holds the local secrets, with mode 600. Do not put a secret in a tracked file. The
+script keeps each value in an old `.env`, and it copies the lines that it does not manage with no
+change. The local database uses the dev database user and password from `consent-secrets`, the
+same values that `duos-ui` writes to its `.env.local`. So the `duos-ui` compose mode against a
+local consent stack (`docker-compose.consent.yaml`) connects with no change.
 
-### Configure
+The local database loads the dump that `CONSENT_DB_DUMP` in `config/.env` names. Put a dump file in
+`config/`, and add its file name to `config/.env` in single quotes, such as
+`CONSENT_DB_DUMP='consentdb-dev.sql.gz'`. The scripts warn about a value with no quotes. The name
+must end in `.sql` or `.sql.gz`.
+The Postgres image ignores other files, and the database is then empty.
 
-Copy `src/test/resources/consent-config.yml` to `config/consent.yaml` (the `config/` directory is
-git-ignored) and fill in the values for your environment. The `googleStore` section is the only
-part that needs cloud credentials; see the next section.
+The database is in the `consent_pgdata` volume, so it stays after `docker compose down`. The image
+loads the dump only into an empty volume. To load a new dump, or to try again after a load that
+failed, remove the volume and start the stack again:
+
+```bash
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml rm -sf sqlproxy
+docker volume rm consent_pgdata
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+```
+
+If the load fails, `docker logs localdb` shows the error.
 
 #### Liquibase
 
@@ -115,12 +139,8 @@ gcloud auth application-default login
 
 The access tokens are short-lived, but Application Default Credentials may store a refresh token locally. To remove the local ADC credential, run `gcloud auth application-default revoke`. Do not create or request a JSON key for `consent-dev`: keys on that account are managed by Yale, which disables keys it did not create.
 
-```yaml
-googleStore:
-  # password: intentionally unset locally -> Application Default Credentials
-  endpoint: https://storage.googleapis.com/
-  bucket: broad-dsde-dev-consent   # shared with the deployed dev environment
-```
+The compose template sets `-Ddw.googleStore.password=` (blank), so the app uses these
+credentials. The bucket is `broad-dsde-dev-consent`, which the deployed dev environment also uses.
 
 If GCS calls fail with a quota-project warning when running as yourself, set one:
 
@@ -133,60 +153,47 @@ Deployed environments are unchanged: the Helm chart mounts a Yale-managed key at
 
 #### Running in Docker Compose
 
-The container has no `gcloud` login of its own, so mount your ADC file and point the SDK at it:
-
-```yaml
-  consent:
-    environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=/etc/gcloud/application_default_credentials.json
-    volumes:
-      - ~/.config/gcloud/application_default_credentials.json:/etc/gcloud/application_default_credentials.json:ro
-```
+The app container has no `gcloud` login of its own. The compose template mounts
+`~/.config/gcloud/application_default_credentials.json` read-only, and sets
+`GOOGLE_APPLICATION_CREDENTIALS`. If the file does not exist, compose stops with an error. Run
+`gcloud auth application-default login` first.
 
 ### Spin up application
 
-```bash
-mvn clean package
-java -jar target/consent-*.jar server config/consent.yaml
-```
-
-Or with docker compose, using your own `config/docker-compose.yaml`:
+Make the config first (see "Render Configs"), then:
 
 ```bash
 mvn clean compile
-docker-compose -p consent -f config/docker-compose.yaml up
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ```
 
-The compose command starts the app from the classpath, not with `java -jar`, so it does not read
-the `Enable-Native-Access` jar manifest entry. Add `"--enable-native-access=ALL-UNNAMED"` right
-after `"java"` in the compose `command` array. Without it, Java warns when Conscrypt loads its
-native library, and a future Java release will block that call.
+The compose template starts the app from `target/classes`, so run `mvn clean compile` after each
+code change, and restart the `app` service.
 
 Visit the local swagger page at the URL configured for your setup (the compose setup used at
 Broad serves https://local.dsde-dev.broadinstitute.org:27443).
 
 ### Debugging
 
-Port 7777 is open in the configured docker compose.
+Port 7777 is open in the configured docker compose, on `127.0.0.1` only.
 Set up a remote debug configuration pointing to `local.dsde-dev.broadinstitute.org`
 and the defaults should be correct.
 
 ### Developing with a local Elastic Search instance:
 #### Running with X-Pack Security enabled
 
-`config/` is not version-controlled — it is rendered per developer (see "Render Configs" above) — so
-none of this arrives with a `git pull`; it has to go into your own `config/docker-compose.yaml`. The
-example stanza below turns security **on**, which is what the security work
-(`GET /api/elasticSearch/capabilities` and native DLS/FLS) needs, and keeps a
-`${ES_SECURITY_ENABLED:-true}` gate so you can drop back to an unauthenticated cluster for a single
-run. Two things make it work, and they have to agree:
+The `elastic` service in the [compose template](scripts/templates/docker-compose.yaml) turns
+security **on**, which is what the security work (`GET /api/elasticSearch/capabilities` and native
+DLS/FLS) needs, and keeps a `${ES_SECURITY_ENABLED:-true}` gate so you can drop back to an
+unauthenticated cluster for a single run. Two things make it work, and they have to agree:
 
-* `ELASTIC_PASSWORD` in the compose `elastic` service bootstraps the `elastic` superuser.
-* `authUser` / `authPassword` in `config/consent.yaml` are the credentials Consent sends. They are
-  harmless when security is off — the ES client only sends credentials in response to a 401
-  challenge, which a security-disabled cluster never issues.
+* `ELASTIC_PASSWORD` in `config/.env` bootstraps the `elastic` superuser.
+* The `-Ddw.elasticSearch.authUser` and `-Ddw.elasticSearch.authPassword` flags on the app are the
+  credentials Consent sends. They use the same `ELASTIC_PASSWORD`. They are harmless when security
+  is off — the ES client only sends credentials in response to a 401 challenge, which a
+  security-disabled cluster never issues.
 
-DLS and FLS are Platinum features, so the stanza self-generates a 30-day **trial** license via
+DLS and FLS are Platinum features, so the service self-generates a 30-day **trial** license via
 `xpack.license.self_generated.type`. That setting only applies the first time a cluster forms. If
 your `elastic` data volume predates it, the cluster keeps its `basic` license and DLS/FLS come back
 `LICENSE_BLOCKED`. Activating the trial is a separate, deliberate step — never something a
@@ -214,49 +221,8 @@ correct here — transport SSL is only required for multi-node clusters.
 To get an unauthenticated cluster back for a run, without editing your compose file again:
 
 ```bash
-ES_SECURITY_ENABLED=false docker-compose -p consent -f config/docker-compose.yaml up
+ES_SECURITY_ENABLED=false docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ```
-
-An example docker-compose stanza for elastic:
- ```
- elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
-    ports:
-      - "9200:9200"
-    container_name: elastic
-    volumes:
-      - elastic:/usr/share/elasticsearch/data
-    deploy:
-      resources:
-        limits:
-          memory: 4gb
-    environment:
-      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
-      # X-Pack Security is ON here: the capability endpoint and Epic D (native DLS/FLS) need it.
-      # Epics A-C and E (application-layer fallback) do not, so to run one session unauthenticated:
-      #
-      #   ES_SECURITY_ENABLED=false docker-compose -p consent -f config/docker-compose.yaml up
-      #
-      # See DEVNOTES.md ("Developing with a local Elastic Search instance") for the full workflow.
-      - xpack.security.enabled=${ES_SECURITY_ENABLED:-true}
-      # DLS/FLS is a Platinum feature, so self-generate a trial rather than the default basic
-      # license. Only applies the first time a cluster forms — on an existing `elastic` volume,
-      # activate it by hand instead, once per major version per cluster, either through Consent's
-      # admin endpoint or straight at the cluster:
-      #
-      #   curl -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
-      #   curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
-      - xpack.license.self_generated.type=${ES_LICENSE_TYPE:-trial}
-      # Bootstraps the `elastic` superuser password when security is on; ignored when it is off.
-      # Must match authUser/authPassword in consent.yaml.
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-devpassword}
-      # Correct in both modes: transport SSL is only required for multi-node clusters.
-      - xpack.security.transport.ssl.enabled=false
-      # Keep the HTTP layer on plain http so consent's `protocol: http` client keeps working.
-      - xpack.security.http.ssl.enabled=false
-```
-I also suggest changing the default bucket location so uploaded
-ontology files do not interfere with other dev environments.
 
 #### Which work actually needs security enabled
 
@@ -297,7 +263,7 @@ Caveats:
   as `trial_available`, as does `GET /_license/trial_status` on the cluster).
   After 30 days the license reverts to basic and DLS/FLS stops working. For another trial on
   the same major version, wipe the cluster's data volume; after a major-version upgrade, check
-  trial_available because the cluster may be eligible again: `docker-compose -p consent -f config/docker-compose.yaml down` then
+  trial_available because the cluster may be eligible again: `docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml down` then
   `docker volume rm consent_elastic` (this deletes local indices — they must be re-indexed).
 - Authentication, role-based access control, and API keys all work fine on the basic license. Only
   the DLS/FLS grants require trial/Platinum.
@@ -311,7 +277,7 @@ upgrade does not need to be re-verified by hand:
 ```bash
 # 1. bump ElasticSearchTestCluster.IMAGE (the only version pin in the test tree)
 ./mvnw test -Dgroups=elasticsearch
-# 2. then match it here: config/docker-compose.yaml, pom.xml (elasticsearch-rest-client), this file
+# 2. then match it here: scripts/templates/docker-compose.yaml, pom.xml (elasticsearch-rest-client)
 ```
 
 These four classes carry the JUnit tag `elasticsearch` and are **not** run by CI — see
