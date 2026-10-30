@@ -473,6 +473,33 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
   bucket until Consent reloads; nothing fails. Then turn off `previousEnabled` and remove
   `previous` from GSM.
 
+  The commands follow the `duos-session-secret` steps (BFF Epic 0, 0-B): `openssl rand -base64 32`
+  gives 32 random bytes (the HMAC-SHA256 key size) as 44 base64 characters, which are safe in
+  JSON. Both apps use that text as the key without decoding it. The process substitution keeps
+  each value out of the shell history and off the screen. Replace `<project>` with the
+  environment's project, for example `broad-dsde-dev`.
+
+  ```bash
+  # Create, once per environment.
+  gcloud secrets create duos-consent-proxy-secret --replication-policy="automatic" --project=<project>
+  gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
+    --data-file=<(echo -n '{"current":"'"$(openssl rand -base64 32)"'"}')
+
+  # Rotate, step 1: a GSM version replaces the whole JSON, so copy the old value into `previous`.
+  # Needs jq. Then set signedClientIp.previousEnabled: true for that environment.
+  gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
+    --data-file=<(gcloud secrets versions access latest --secret=duos-consent-proxy-secret \
+      --project=<project> | jq -c --arg new "$(openssl rand -base64 32)" '{current: $new, previous: .current}')
+
+  # Rotate, step 3, after both apps reload: drop `previous`, then set previousEnabled back to false.
+  gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
+    --data-file=<(gcloud secrets versions access latest --secret=duos-consent-proxy-secret \
+      --project=<project> | jq -c '{current: .current}')
+  ```
+
+  Unlike the session secret, a lost value costs little: make a new one, and BFF traffic shares one
+  Consent bucket only until both apps reload.
+
   The secret and the headers are not specific to the showcase. Another anonymous BFF route that
   needs a per-browser limit in Consent can sign with the same helper, and another Consent limiter
   can build a `SignedClientIpVerifier` from the same `rateLimit` values. A verified IP is only a
