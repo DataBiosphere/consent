@@ -1,0 +1,165 @@
+# Local Consent stack. scripts/render-configs.sh copies this file to config/docker-compose.yaml.
+# Do not edit the copy: the next render replaces it. Put changes for your own machine in
+# config/docker-compose.override.yaml, and start the stack with both files:
+#
+#   mvn clean compile
+#   docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+#
+# Values in ${...} come from config/.env, which render-configs.sh writes. Do not put a secret in
+# this file. It is tracked.
+
+name: consent
+
+services:
+
+  app:
+    image: us.gcr.io/broad-dsp-gcr-public/base/jre:25-jre
+    container_name: consent
+    depends_on:
+      sqlproxy:
+        condition: service_healthy
+      elastic:
+        condition: service_healthy
+    command:
+      - java
+      # The classpath start does not read the Enable-Native-Access manifest entry of the jar.
+      - --enable-native-access=ALL-UNNAMED
+      # The chart has placeholders for these values. Dev replaces them with -Ddw flags too.
+      - -Ddw.database.user=${POSTGRES_USER}
+      - -Ddw.database.password=${POSTGRES_PASSWORD}
+      - -Ddw.mailConfiguration.sendGridApiKey=${SENDGRID_API_KEY}
+      # Blank, so GCSService uses Application Default Credentials. Dev mounts a Yale key here.
+      - -Ddw.googleStore.password=
+      - -Ddw.elasticSearch.authUser=elastic
+      - -Ddw.elasticSearch.authPassword=${ELASTIC_PASSWORD}
+      # No -Dsentry.dsn: local errors must not go to the shared Sentry project.
+      - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:7777
+      - -Xms2G
+      - -Xmx6G
+      - -classpath
+      - /opt/target/classes:/opt/target/lib/*
+      - org.broadinstitute.consent.http.ConsentApplication
+      - server
+      - /etc/consent.yaml
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /etc/gcloud/application_default_credentials.json
+    ports:
+      # Only this machine can reach the app ports. The app trusts the OAUTH2_CLAIM_* headers that
+      # the proxy sets, so 8080 and 8081 skip the proxy's authentication, and JDWP has none.
+      - 127.0.0.1:8080:8080
+      - 127.0.0.1:8081:8081 # admin connector
+      - 127.0.0.1:7777:7777 # remote debugging
+      # The proxy shares this network, so the proxy ports are published here. They stay on all
+      # interfaces: the duos-ui compose mode reaches them through host-gateway, which on Linux is
+      # not 127.0.0.1. The proxy checks each token.
+      - 27080:80
+      - 27443:443
+    volumes:
+      - ../target:/opt/target
+      - ./consent.yaml:/etc/consent.yaml:ro
+      # Run `gcloud auth application-default login` if this file does not exist. Set
+      # GCLOUD_ADC_FILE in config/.env to use another file, as in duos-ui.
+      - type: bind
+        source: ${GCLOUD_ADC_FILE:-~/.config/gcloud/application_default_credentials.json}
+        target: /etc/gcloud/application_default_credentials.json
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+
+  proxy:
+    # The proxy image of the dev deployment. The chart step sets it.
+    image: ${PROXY_IMAGE:?No proxy image. Run ./scripts/render-configs.sh --write_chart_configs true}
+    container_name: proxy
+    # The same network as the app, as in the pod. The rendered site.conf sends traffic to
+    # localhost:8080, so it works with no change.
+    network_mode: service:app
+    depends_on:
+      - app
+    environment:
+      # The rendered site.conf reads this value. Dev sets it from consent-proxy-b2c-secrets.
+      B2C_APPLICATION_ID: ${B2C_APPLICATION_ID}
+    volumes:
+      - ./site.conf:/etc/httpd/conf.d/site.conf:ro
+      - ./oauth2.conf:/etc/httpd/conf.d/oauth2.conf:ro
+      - ./server.crt:/etc/ssl/certs/server.crt:ro
+      - ./server.key:/etc/ssl/private/server.key:ro
+      - ./ca-bundle.crt:/etc/ssl/certs/server-ca-bundle.crt:ro
+    restart: unless-stopped
+
+  # The rendered consent.yaml connects to sqlproxy:5432, so this service keeps that name.
+  sqlproxy:
+    image: postgres:16.14-alpine
+    container_name: localdb
+    ports:
+      # On all interfaces, because the duos-ui compose mode reaches it through host-gateway. The
+      # database needs the password from config/.env.
+      - 5432:5432
+    volumes:
+      # The image picks the load command from the file extension: .sql or .sql.gz. It ignores a
+      # file with another extension, and the database is then empty.
+      # create_host_path: false, so a missing dump stops compose. Without it, Docker makes an empty
+      # folder with that name, and the database starts empty with no error.
+      - type: bind
+        source: ./${CONSENT_DB_DUMP:?No database dump. Set CONSENT_DB_DUMP in config/.env to a dump file in config/}
+        target: /docker-entrypoint-initdb.d/${CONSENT_DB_DUMP}
+        read_only: true
+        bind:
+          create_host_path: false
+      # The database stays after `docker compose down`. The image loads the dump only into an
+      # empty volume. See DEVNOTES.md to load a new dump.
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      PGGSSENCMODE: disable
+      POSTGRES_DB: consent
+      # The dev database credentials. The duos-ui compose mode against a local consent stack
+      # (docker-compose.consent.yaml) connects with the same values from its .env.local.
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      # TCP, not the socket: the server that loads the dump at first start has no TCP listener.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "${POSTGRES_USER}", "-d", "consent"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      # A dump load can take several minutes.
+      start_period: 20m
+      start_interval: 5s
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.1
+    container_name: elastic
+    ports:
+      - 127.0.0.1:9200:9200
+    volumes:
+      - elastic:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 4gb
+    environment:
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      # X-Pack security is on by default. For one run without it:
+      #   ES_SECURITY_ENABLED=false docker compose -f ... up
+      # See DEVNOTES.md, "Developing with a local Elastic Search instance".
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-true}
+      # DLS/FLS needs a Platinum feature. This applies only when the cluster forms the first time.
+      - xpack.license.self_generated.type=${ES_LICENSE_TYPE:-trial}
+      # Must match -Ddw.elasticSearch.authPassword on the app.
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      # Transport SSL is needed only for clusters with more than one node.
+      - xpack.security.transport.ssl.enabled=false
+      # Plain http, so the consent client (protocol: http) works.
+      - xpack.security.http.ssl.enabled=false
+      - discovery.type=single-node
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    healthcheck:
+      # curl exits 0 on a 401, so this works with security on or off.
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+volumes:
+  elastic:
+  pgdata:
