@@ -55,7 +55,9 @@ public class ClientIpResolver {
     /**
      * The peer is a trusted proxy, but it sent no usable {@code X-Real-IP}, so the key is the peer.
      */
-    TRUSTED_PEER_WITHOUT_HEADER
+    TRUSTED_PEER_WITHOUT_HEADER,
+    /** The DUOS BFF signed the client IP, and {@link SignedClientIpVerifier} accepted it. */
+    SIGNED_CLIENT_IP_HEADER
   }
 
   /** A rate-limit key and where it came from. */
@@ -101,6 +103,15 @@ public class ClientIpResolver {
     return new ClientIp(key(client), KeySource.REAL_IP_HEADER);
   }
 
+  /**
+   * @param signedClientIp an IP literal that {@link SignedClientIpVerifier} accepted
+   * @return the normalized key for that IP, whatever the peer is
+   */
+  public ClientIp resolveSigned(String signedClientIp) {
+    return new ClientIp(
+        key(InetAddresses.forString(signedClientIp)), KeySource.SIGNED_CLIENT_IP_HEADER);
+  }
+
   private static String key(InetAddress address) {
     if (!(address instanceof Inet6Address)) {
       return InetAddresses.toAddrString(address);
@@ -139,7 +150,7 @@ public class ClientIpResolver {
    * fe80::1%eth0}, but {@code forString} then throws for an unknown interface name. A scoped
    * (link-local) address is never a real client behind a load balancer, so it is rejected.
    */
-  private static boolean isLiteral(String value) {
+  static boolean isLiteral(String value) {
     return value.indexOf('%') < 0 && InetAddresses.isInetAddress(value);
   }
 }

@@ -21,6 +21,13 @@ import org.broadinstitute.consent.http.filters.ClientIpResolver;
  * X-Real-IP} header Consent believes. The default trusts only loopback, which is the Apache sidecar
  * in the same pod. Deployed environments need no other entry: the Google load balancer sets {@code
  * X-Real-IP}, and the sidecar passes it through. See {@link ClientIpResolver}.
+ *
+ * <p>{@code clientIpSecret} and the optional {@code clientIpPreviousSecret} check the client IP
+ * that the DUOS BFF signs; see {@link
+ * org.broadinstitute.consent.http.filters.SignedClientIpVerifier}. Without a secret, BFF-proxied
+ * requests share the bucket of the DUOS pod's egress address. Deployed environments set both values
+ * from Google Secret Manager with {@code -Ddw.rateLimit.showcase.*} overrides. Each must be at
+ * least 32 characters, and must never be the BFF's session secret.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PublicRateLimitConfiguration {
@@ -33,6 +40,12 @@ public class PublicRateLimitConfiguration {
   @NotNull @Positive private Integer requestsPerMinute = DEFAULT_REQUESTS_PER_MINUTE;
 
   @NotNull private List<String> trustedProxies = List.of("127.0.0.1/32", "::1/128");
+
+  private static final int MIN_CLIENT_IP_SECRET_LENGTH = 32;
+
+  private String clientIpSecret;
+
+  private String clientIpPreviousSecret;
 
   public int getRequestsPerMinute() {
     return requestsPerMinute;
@@ -48,6 +61,43 @@ public class PublicRateLimitConfiguration {
 
   public void setTrustedProxies(List<String> trustedProxies) {
     this.trustedProxies = trustedProxies;
+  }
+
+  public String getClientIpSecret() {
+    return clientIpSecret;
+  }
+
+  public void setClientIpSecret(String clientIpSecret) {
+    this.clientIpSecret = clientIpSecret;
+  }
+
+  public String getClientIpPreviousSecret() {
+    return clientIpPreviousSecret;
+  }
+
+  public void setClientIpPreviousSecret(String clientIpPreviousSecret) {
+    this.clientIpPreviousSecret = clientIpPreviousSecret;
+  }
+
+  @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue
+  @AssertTrue(
+      message =
+          "clientIpSecret and clientIpPreviousSecret must each be unset or at least 32 characters, "
+              + "and clientIpPreviousSecret needs a clientIpSecret")
+  public boolean isClientIpSecretValid() {
+    boolean hasCurrent = isConfigured(clientIpSecret);
+    boolean hasPrevious = isConfigured(clientIpPreviousSecret);
+    return isLongEnough(clientIpSecret)
+        && isLongEnough(clientIpPreviousSecret)
+        && (hasCurrent || !hasPrevious);
+  }
+
+  private static boolean isConfigured(String value) {
+    return value != null && !value.isBlank();
+  }
+
+  private static boolean isLongEnough(String value) {
+    return !isConfigured(value) || value.strip().length() >= MIN_CLIENT_IP_SECRET_LENGTH;
   }
 
   @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue

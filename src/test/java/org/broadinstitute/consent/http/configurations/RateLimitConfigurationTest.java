@@ -99,4 +99,39 @@ class RateLimitConfigurationTest {
         "requestsPerMinuteAtLeastPodCount",
         violations.iterator().next().getPropertyPath().toString());
   }
+
+  private static final String LONG_SECRET = "test-consent-proxy-secret-0123456789abcdef";
+
+  private Set<ConstraintViolation<RateLimitConfiguration>> validateSecrets(
+      String current, String previous) {
+    RateLimitConfiguration config = buildConfig(100, 3);
+    config.getShowcase().setClientIpSecret(current);
+    config.getShowcase().setClientIpPreviousSecret(previous);
+    return validator.validate(config);
+  }
+
+  @Test
+  void testClientIpSecretsAreOptional() {
+    assertTrue(validateSecrets(null, null).isEmpty());
+  }
+
+  @Test
+  void testCurrentAndPreviousClientIpSecretsAreValid() {
+    assertTrue(validateSecrets(LONG_SECRET, LONG_SECRET + "-previous").isEmpty());
+  }
+
+  @Test
+  void testShortClientIpSecretIsInvalid() {
+    Set<ConstraintViolation<RateLimitConfiguration>> violations =
+        validateSecrets("too-short-secret", null);
+
+    assertEquals(1, violations.size());
+    assertEquals(
+        "showcase.clientIpSecretValid", violations.iterator().next().getPropertyPath().toString());
+  }
+
+  @Test
+  void testPreviousClientIpSecretWithoutCurrentIsInvalid() {
+    assertEquals(1, validateSecrets(null, LONG_SECRET).size());
+  }
 }
