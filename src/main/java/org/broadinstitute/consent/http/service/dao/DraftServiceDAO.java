@@ -4,11 +4,10 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -32,11 +31,10 @@ public class DraftServiceDAO {
     this.draftFileStorageServiceDAO = draftFileStorageServiceDAO;
   }
 
-  public void insertDraft(DraftInterface draft) throws SQLException, BadRequestException {
+  public void insertDraft(DraftInterface draft) throws BadRequestException {
     strip(draft);
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.insert(
                 draft.getName(),
@@ -46,21 +44,18 @@ public class DraftServiceDAO {
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
-            handle.rollback();
             throw new BadRequestException(
                 "Error submitting draft.  Drafts require valid json to be submitted.", e);
           }
-          handle.commit();
         });
   }
 
-  public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
+  public DraftInterface updateDraft(DraftInterface draft, User user) {
     draft.setUpdateUser(user);
     draft.setUpdateDate(new Date());
     strip(draft);
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
           try {
             draftDAO.updateDraftByDraftUUID(
                 draft.getName(),
@@ -70,11 +65,9 @@ public class DraftServiceDAO {
                 draft.getUUID(),
                 draft.getType().getValue());
           } catch (Exception e) {
-            handle.rollback();
             throw new BadRequestException(
                 "Error updating draft.  Drafts require valid json to be updated.", e);
           }
-          handle.commit();
         });
     return getAuthorizedDraft(draft.getUUID(), user);
   }
@@ -109,46 +102,50 @@ public class DraftServiceDAO {
   }
 
   public List<FileStorageObject> addAttachments(
-      DraftInterface draft, User user, Map<String, FormDataBodyPart> files) throws SQLException {
-    List<FileStorageObject> storedFiles =
-        draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files);
-    draftDAO.updateDraftByDraftUUID(draft.getUUID(), new Date().toInstant(), user.getUserId());
+      DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
+    List<FileStorageObject> storedFiles = new ArrayList<>();
+    try {
+      jdbi.useTransaction(
+          _ -> {
+            storedFiles.addAll(
+                draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files));
+            draftDAO.updateDraftByDraftUUID(
+                draft.getUUID(), new Date().toInstant(), user.getUserId());
+          });
+    } catch (RuntimeException e) {
+      draftFileStorageServiceDAO.deleteDocuments(storedFiles, draft.getUUID());
+      throw e;
+    }
     return storedFiles;
   }
 
-  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)
-      throws SQLException {
-    Optional<FileStorageObject> fileStorageObjectToDelete =
+  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId) {
+    FileStorageObject file =
         draft.getStoredFiles().stream()
             .filter(fileStorageObject -> fileStorageObject.getFileStorageObjectId().equals(fileId))
-            .findFirst();
-    if (fileStorageObjectToDelete.isPresent()) {
-      draftFileStorageServiceDAO.deleteStoredFile(fileStorageObjectToDelete.get(), user);
-      draftDAO.updateDraftByDraftUUID(draft.getUUID(), new Date().toInstant(), user.getUserId());
-    } else {
-      throw new NotFoundException(
-          String.format(
-              "Draft attachment is not found.  Draft: %s, Attachment: %d",
-              draft.getUUID(), fileId));
-    }
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        String.format(
+                            "Draft attachment is not found.  Draft: %s, Attachment: %d",
+                            draft.getUUID(), fileId)));
+    jdbi.useTransaction(
+        _ -> {
+          draftFileStorageServiceDAO.deleteFileRows(List.of(file), user);
+          draftDAO.updateDraftByDraftUUID(
+              draft.getUUID(), new Date().toInstant(), user.getUserId());
+        });
+    draftFileStorageServiceDAO.deleteDocuments(List.of(file), draft.getUUID());
   }
 
-  public void deleteDraft(DraftInterface draft, User user) throws SQLException, NotFoundException {
-    jdbi.useHandle(
-        handle -> {
-          try {
-            handle.useTransaction(
-                _ -> {
-                  draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
-                  for (FileStorageObject fileStorageObject : draft.getStoredFiles()) {
-                    draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);
-                  }
-                });
-          } catch (Exception e) {
-            handle.rollback();
-            throw e;
-          }
-          handle.commit();
+  public void deleteDraft(DraftInterface draft, User user) throws NotFoundException {
+    jdbi.useTransaction(
+        _ -> {
+          draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
+          draftFileStorageServiceDAO.deleteFileRows(draft.getStoredFiles(), user);
         });
+    // After the commit, so a failed document delete cannot leave a row whose file is gone.
+    draftFileStorageServiceDAO.deleteDocuments(draft.getStoredFiles(), draft.getUUID());
   }
 }

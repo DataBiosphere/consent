@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -43,7 +46,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateByReferenceId() throws Exception {
+  void testUpdateByReferenceId() {
 
     Dataset datasetOne = createDataset();
     Dataset datasetTwo = createDataset();
@@ -93,12 +96,13 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DarCollection targetCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     assertEquals(user.getUserId(), targetCollection.getUpdateUserId());
 
-    // collection should have the same update date as the updated dar
-    assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
+    // Within the last minute, not near the epoch.
+    long age = System.currentTimeMillis() - targetCollection.getUpdateDate().getTime();
+    assertTrue(age >= 0 && age < 60_000, "collection update date is " + age + " ms old");
   }
 
   @Test
-  void testUpdateByReferenceId_NullCollectionId() throws Exception {
+  void testUpdateByReferenceId_NullCollectionId() {
     Dataset dataset = createDataset();
     User user = createUser();
     Calendar cal = Calendar.getInstance();
@@ -134,6 +138,39 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     Timestamp oldTimestamp = new Timestamp(old.getTime());
     assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
     assertEquals(List.of(dataset.getDatasetId()), updatedDar.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdRollsBackOnAJavaException() {
+    Dataset dataset = createDataset();
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData original = new DataAccessRequestData();
+    original.setOtherText("original");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        new Date(),
+        new Date(),
+        original,
+        user.getEraCommonsId());
+    dataAccessRequestDAO.insertAllDarDatasets(
+        List.of(new DarDataset(referenceId, dataset.getDatasetId())));
+    DataAccessRequest dar = spy(new DataAccessRequest());
+    dar.setReferenceId(referenceId);
+    DataAccessRequestData changed = new DataAccessRequestData();
+    changed.setOtherText("changed");
+    dar.setData(changed);
+    // Read only after the update and the relation delete have run.
+    doThrow(new IllegalStateException("dataset ids")).when(dar).getDatasetIds();
+
+    assertThrows(IllegalStateException.class, () -> serviceDAO.updateByReferenceId(user, dar));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertEquals("original", stored.getData().getOtherText());
+    assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
   }
 
   @Test

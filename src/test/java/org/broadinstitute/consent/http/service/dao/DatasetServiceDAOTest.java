@@ -95,6 +95,38 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeletingADatasetWithNoNameAuditsItsIdentifier() throws Exception {
+    Dataset dataset = createDataset();
+    dataset.setName(null);
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
+    assertEquals(dataset.getDatasetIdentifier(), audits.getFirst().getName());
+  }
+
+  @Test
+  void testAFailedDatasetDeleteRollsBack() {
+    Dataset dataset = createDataset();
+    Match match = new Match();
+    match.setDatasetId(dataset.getDatasetId());
+    match.setPurpose(UUID.randomUUID().toString());
+    match.setMatch(true);
+    match.setFailed(false);
+    match.setAbstain(false);
+    match.setCreateDate(new Date());
+    match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
+    matchDAO.insertMatch(match);
+
+    Integer userId = dataset.getCreateUserId();
+
+    assertThrows(Exception.class, () -> serviceDAO.deleteDataset(dataset, userId));
+
+    assertNotNull(datasetDAO.findDatasetById(dataset.getDatasetId()));
+    assertTrue(datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).isEmpty());
+  }
+
+  @Test
   void testInsertDatasets() throws Exception {
 
     Dac dac = createDac();
@@ -550,7 +582,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDatasetWithProps() throws Exception {
+  void testUpdateDatasetWithProps() {
     Dataset dataset = createDataset();
 
     // Set up two existing props for updating
@@ -648,6 +680,26 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
     assertEquals(1, audits.size());
     assertEquals(AuditActions.UPDATE.name(), audits.getFirst().getAction());
+  }
+
+  /** A file with no blob fails after the dataset row and its audit are written. */
+  @Test
+  void testAFailedDatasetUpdateRollsBack() {
+    Dataset dataset = createDataset();
+    int audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size();
+    DatasetUpdate update =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            "renamed",
+            dataset.getCreateUserId(),
+            dataset.getDacId(),
+            List.of(),
+            List.of(new FileStorageObject()));
+
+    assertThrows(NullPointerException.class, () -> serviceDAO.updateDataset(update));
+
+    assertEquals(dataset.getName(), datasetDAO.findDatasetById(dataset.getDatasetId()).getName());
+    assertEquals(audits, datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size());
   }
 
   @Test
@@ -1035,13 +1087,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             });
   }
 
-  /**
-   * Pins today's partial-failure behavior. Each dataset is deleted in its own handle, which commits
-   * on its own, so a failure partway through the study keeps the datasets already deleted and
-   * leaves the study and the remaining datasets in place.
-   */
+  /** A study delete is all or nothing: a failure partway keeps every dataset and the study. */
   @Test
-  void testDeleteStudyFailingPartwayKeepsEarlierDatasetDeletes() throws Exception {
+  void testDeleteStudyFailingPartwayDeletesNothing() throws Exception {
     Study study = createStudy(null, null, null);
     List<Dataset> datasets =
         datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds())).stream()
@@ -1066,7 +1114,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertThrows(
         DatasetDeletionException.class, () -> serviceDAO.deleteStudy(study, datasets, user));
 
-    assertNull(datasetDAO.findDatasetById(first.getDatasetId()));
+    assertNotNull(datasetDAO.findDatasetById(first.getDatasetId()));
     assertNotNull(datasetDAO.findDatasetById(second.getDatasetId()));
     assertNotNull(studyDAO.findStudyById(study.getStudyId()));
   }
@@ -1162,7 +1210,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testPatchDataset() throws Exception {
+  void testPatchDataset() {
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     Dictionary one =
         dictionaries.stream().filter(d -> d.getKeyId().equals(1)).findFirst().orElse(null);
@@ -1266,7 +1314,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @ParameterizedTest
   @NullAndEmptySource
   @ValueSource(strings = {"   "})
-  void testPatchDatasetWithNullAndEmptyNames(String input) throws Exception {
+  void testPatchDatasetWithNullAndEmptyNames(String input) {
     Dataset dataset = createDataset();
     User user = userDAO.findUserById(dataset.getCreateUserId());
     DatasetPatch patch = new DatasetPatch(input, List.of());

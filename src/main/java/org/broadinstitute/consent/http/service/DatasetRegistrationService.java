@@ -5,7 +5,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
@@ -89,13 +88,8 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {
-    try {
-      datasetServiceDAO.patchDataset(datasetId, user, patch);
-      return datasetDAO.findDatasetById(datasetId);
-    } catch (SQLException ex) {
-      logException(ex);
-      throw new InternalServerErrorException("An error occurred while patching the dataset.");
-    }
+    datasetServiceDAO.patchDataset(datasetId, user, patch);
+    return datasetDAO.findDatasetById(datasetId);
   }
 
   public Study findStudyById(Integer studyId) {
@@ -312,7 +306,7 @@ public class DatasetRegistrationService implements ConsentLogger {
    */
   public Dataset updateDataset(
       Integer datasetId, User user, DatasetUpdate update, Map<String, FormDataBodyPart> files)
-      throws IOException, SQLException {
+      throws IOException {
 
     if (Objects.isNull(update.getName())) {
       throw new BadRequestException("Dataset name is required");

@@ -94,7 +94,7 @@ class DraftResourceTest {
   }
 
   @Test
-  void testCreateDraftRegistrationReturnsTheDocumentAsStored() throws SQLException {
+  void testCreateDraftRegistrationReturnsTheDocumentAsStored() {
     String stored = "{\"studyName\": \"Greg\"}";
     // In two pieces so the compiler leaves the escape as the text a document carries.
     String posted = "{\"studyName\": \"Greg" + "\\" + "u0000\"}";
@@ -112,7 +112,7 @@ class DraftResourceTest {
   }
 
   @Test
-  void tesCreateDraftRegistrationWithoutJSON() throws SQLException {
+  void tesCreateDraftRegistrationWithoutJSON() {
     doThrow(new BadRequestException("Error submitting draft"))
         .when(draftService)
         .insertDraft(any());
@@ -282,7 +282,7 @@ class DraftResourceTest {
   }
 
   @Test
-  void testUploadAttachmentSuccess() throws SQLException {
+  void testUploadAttachmentSuccess() {
     when(draftService.getAuthorizedDraft(any(), any()))
         .thenReturn(new DraftStudyDataset("{}", user));
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
@@ -364,7 +364,7 @@ class DraftResourceTest {
   }
 
   @Test
-  void testDeleteFileAttachmentSuccess() throws SQLException {
+  void testDeleteFileAttachmentSuccess() {
     when(draftService.getAuthorizedDraft(any(), any()))
         .thenReturn(new DraftStudyDataset("{}", user));
     doNothing().when(draftService).deleteDraftAttachment(any(), any(), any());

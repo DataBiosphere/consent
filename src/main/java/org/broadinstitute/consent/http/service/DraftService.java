@@ -7,7 +7,6 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +41,7 @@ public class DraftService implements ConsentLogger {
   }
 
   public List<FileStorageObject> addAttachments(
-      DraftInterface draft, User user, Map<String, FormDataBodyPart> files)
-      throws SQLException, RuntimeException {
+      DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
     return draftServiceDAO.addAttachments(draft, user, files);
   }
 
@@ -51,8 +49,7 @@ public class DraftService implements ConsentLogger {
     return gcsService.getDocument(targetAttachment.getBlobId());
   }
 
-  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId)
-      throws SQLException {
+  public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId) {
     draftServiceDAO.deleteDraftAttachment(draft, user, fileId);
   }
 
@@ -71,7 +68,7 @@ public class DraftService implements ConsentLogger {
     };
   }
 
-  public void insertDraft(DraftInterface draft) throws SQLException {
+  public void insertDraft(DraftInterface draft) {
     draftServiceDAO.insertDraft(draft);
   }
 
@@ -79,11 +76,11 @@ public class DraftService implements ConsentLogger {
     return draftDAO.findDraftSummariesByUserId(user.getUserId());
   }
 
-  public DraftInterface updateDraft(DraftInterface draft, User user) throws SQLException {
+  public DraftInterface updateDraft(DraftInterface draft, User user) {
     return draftServiceDAO.updateDraft(draft, user);
   }
 
-  public void deleteDraft(DraftInterface draft, User user) throws SQLException, NotFoundException {
+  public void deleteDraft(DraftInterface draft, User user) throws NotFoundException {
     draftServiceDAO.deleteDraft(draft, user);
   }
 }

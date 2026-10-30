@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -30,6 +29,7 @@ import org.broadinstitute.consent.http.service.studytemplate.StudyDatasetTemplat
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -151,7 +151,7 @@ class StudyDatasetTemplateResourceTest {
     when(duosUser.getUser()).thenReturn(user);
     when(multipart.getFields("file")).thenReturn(List.of(part));
     when(templateService.validateAndCreateDraft(any(), any()))
-        .thenThrow(new SQLException("insert failed"));
+        .thenThrow(new UnableToExecuteStatementException("insert failed"));
     initResource();
 
     Response response = resource.validateTemplate(duosUser, multipart);

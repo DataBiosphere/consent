@@ -399,15 +399,22 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetById(datasetId);
   }
 
-  public void deleteDataset(Integer datasetId, Integer userId) throws Exception {
+  public void deleteDataset(Integer datasetId, Integer userId) {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
-      try (var response = elasticSearchService.deleteIndex(datasetId, userId)) {
-        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
-          logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
-        }
-      }
       datasetServiceDAO.deleteDataset(dataset, userId);
+      deleteFromIndex(datasetId, userId);
+    }
+  }
+
+  /** Runs once the rows are gone, so a failure here leaves a stale document but no lost data. */
+  private void deleteFromIndex(Integer datasetId, Integer userId) {
+    try (var response = elasticSearchService.deleteIndex(datasetId, userId)) {
+      if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+        logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
+      }
+    } catch (IOException | RuntimeException e) {
+      logWarn("Unable to delete dataset from index: %s".formatted(datasetId), e);
     }
   }
 
@@ -416,12 +423,12 @@ public class DatasetService implements ConsentLogger {
    *
    * <p>The datasets are read without the caller's visibility filter, so the deletable check covers
    * every dataset in the study. It runs before anything is removed, so a study with an in-use
-   * dataset keeps both its rows and its search documents. Past the check, the order is unchanged:
-   * the search documents go first, then the rows.
+   * dataset keeps both its rows and its search documents. The rows go in one transaction, and the
+   * search documents only once it commits.
    *
    * @throws BadRequestException if any dataset in the study is in use
    */
-  public void deleteStudy(Study study, User user) throws Exception {
+  public void deleteStudy(Study study, User user) {
     List<Dataset> datasets =
         study.getDatasetIds().isEmpty()
             ? List.of()
@@ -429,21 +436,8 @@ public class DatasetService implements ConsentLogger {
     if (!datasets.stream().allMatch(d -> Boolean.TRUE.equals(d.getDeletable()))) {
       throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
     }
-    study
-        .getDatasetIds()
-        .forEach(
-            datasetId -> {
-              try (var response = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
-                if (!HttpStatusCodes.isSuccess(response.getStatus())) {
-                  logWarn(
-                      "Response error, unable to delete dataset from index: %s"
-                          .formatted(datasetId));
-                }
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-            });
     datasetServiceDAO.deleteStudy(study, datasets, user);
+    study.getDatasetIds().forEach(datasetId -> deleteFromIndex(datasetId, user.getUserId()));
   }
 
   public Study findStudy(Integer studyId) {

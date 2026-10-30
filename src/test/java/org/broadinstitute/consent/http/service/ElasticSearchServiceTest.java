@@ -86,6 +86,7 @@ import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1311,6 +1312,16 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetIdById(any())).thenReturn(1);
     assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
     verify(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
+  }
+
+  @Test
+  void testUpdateDatasetIndexDateLogsADatabaseError() {
+    when(datasetDAO.findDatasetIdById(any())).thenReturn(1);
+    doThrow(new TransactionException("db down"))
+        .when(datasetServiceDAO)
+        .updateDatasetIndex(any(), any(), any());
+
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
   }
 
   @Test

@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -76,6 +77,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
+import org.broadinstitute.consent.http.service.dao.DatasetDeletionException;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
@@ -726,6 +728,20 @@ class DatasetServiceTest extends AbstractTestHelper {
     verify(datasetServiceDAO).deleteDataset(dataset, mockUser.getUserId());
   }
 
+  @Test
+  void testDeleteDatasetRemovesTheIndexDocumentAfterTheRows() throws Exception {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException("down"));
+
+    assertDoesNotThrow(() -> datasetService.deleteDataset(1, mockUser.getUserId()));
+
+    InOrder order = inOrder(datasetServiceDAO, elasticSearchService);
+    order.verify(datasetServiceDAO).deleteDataset(dataset, mockUser.getUserId());
+    order.verify(elasticSearchService).deleteIndex(1, mockUser.getUserId());
+  }
+
   private static Dataset deletableDataset(int datasetId, boolean deletable) {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(datasetId);
@@ -750,22 +766,36 @@ class DatasetServiceTest extends AbstractTestHelper {
     verify(datasetServiceDAO).deleteStudy(study, datasets, mockUser);
   }
 
-  /** As before this change, an index connection failure stops the delete before any rows go. */
   @Test
-  void testDeleteStudyIndexConnectionFailureLeavesTheRows() throws Exception {
+  void testDeleteStudyIndexConnectionFailureStillDeletesTheRows() throws Exception {
     Study study = new Study();
     study.setStudyId(1);
     study.addDatasetIds(Set.of(1));
-    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds()))
-        .thenReturn(List.of(deletableDataset(1, true)));
+    List<Dataset> datasets = List.of(deletableDataset(1, true));
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds())).thenReturn(datasets);
     when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException("down"));
 
-    assertThrows(RuntimeException.class, () -> datasetService.deleteStudy(study, mockUser));
-    verify(datasetServiceDAO, never()).deleteStudy(any(), any(), any());
+    assertDoesNotThrow(() -> datasetService.deleteStudy(study, mockUser));
+    verify(datasetServiceDAO).deleteStudy(study, datasets, mockUser);
   }
 
   @Test
-  void testDeleteStudyDeletesEachDatasetFromIndexBeforeTheRows() throws Exception {
+  void testDeleteStudyFailureKeepsTheIndexDocuments() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1));
+    List<Dataset> datasets = List.of(deletableDataset(1, true));
+    when(datasetDAO.findDatasetsByIdList(study.getDatasetIds())).thenReturn(datasets);
+    doThrow(new DatasetDeletionException(new IllegalStateException("db down")))
+        .when(datasetServiceDAO)
+        .deleteStudy(study, datasets, mockUser);
+
+    assertThrows(DatasetDeletionException.class, () -> datasetService.deleteStudy(study, mockUser));
+    verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testDeleteStudyDeletesEachDatasetFromIndexAfterTheRows() throws Exception {
     Study study = new Study();
     study.setStudyId(1);
     study.addDatasetIds(Set.of(1, 2));
@@ -779,13 +809,12 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     datasetService.deleteStudy(study, user);
 
-    // The ids come from a HashSet, so the two index deletes may happen in either order. What the
-    // contract fixes is that both happen, and that both come before the rows are deleted.
+    // The ids come from a HashSet, so the two index deletes may happen in either order.
     verify(elasticSearchService).deleteIndex(1, user.getUserId());
     verify(elasticSearchService).deleteIndex(2, user.getUserId());
-    InOrder order = inOrder(elasticSearchService, datasetServiceDAO);
-    order.verify(elasticSearchService, times(2)).deleteIndex(any(), eq(user.getUserId()));
+    InOrder order = inOrder(datasetServiceDAO, elasticSearchService);
     order.verify(datasetServiceDAO).deleteStudy(study, datasets, user);
+    order.verify(elasticSearchService, times(2)).deleteIndex(any(), eq(user.getUserId()));
   }
 
   /**
@@ -793,7 +822,7 @@ class DatasetServiceTest extends AbstractTestHelper {
    * its search documents are touched.
    */
   @Test
-  void testDeleteStudyWithAnInUseDatasetTouchesNothing() throws Exception {
+  void testDeleteStudyWithAnInUseDatasetTouchesNothing() {
     Study study = new Study();
     study.setStudyId(1);
     study.addDatasetIds(Set.of(1, 2));
@@ -1589,7 +1618,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchStudy() throws Exception {
+  void testPatchStudy() {
     Study study = new Study();
     study.setStudyId(1);
     study.setName("Study Name");
@@ -2104,7 +2133,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   // ==================== patchStudy – exception path ====================
 
   @Test
-  void testPatchStudy_ExceptionThrowsInternalServerError() throws Exception {
+  void testPatchStudy_ExceptionThrowsInternalServerError() {
     Study study = new Study();
     study.setStudyId(1);
     User user = new User();
@@ -2127,7 +2156,7 @@ class DatasetServiceTest extends AbstractTestHelper {
    * exception, so "PI institution 999999 does not exist" reached the caller as an opaque 500.
    */
   @Test
-  void testPatchStudy_BadRequestKeepsItsStatus() throws Exception {
+  void testPatchStudy_BadRequestKeepsItsStatus() {
     Study study = new Study();
     study.setStudyId(1);
     User user = new User();
