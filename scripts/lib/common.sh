@@ -4,6 +4,47 @@
 # Written for bash 3.2, the bash that macOS has in /bin/bash.
 #
 
+# Print the value of KEY from an env file, or nothing. One layer of surrounding quotes is
+# removed, because the scripts write values in single quotes. The file is never sourced:
+# config/.env holds secrets, and a value must not run as shell code.
+env_get() {
+  local file="$1" key="$2" val
+  [[ -f "$file" ]] || return 0
+  val=$(grep -E "^${key}=" "$file" | tail -1 | cut -d= -f2- || true)
+  # The scripts write KEY='value'. Another form, such as a comment after the value, a $ or a
+  # backslash in double quotes, can read back as a different value.
+  if [[ -n "$val" && ! $val =~ ^\'[^\']*\'$ ]]; then
+    echo "WARNING: $key in $file is not in the form $key='value'. The scripts can change how Compose reads it. Put the value in single quotes." >&2
+  fi
+  if [[ $val == \'*\' || $val == \"*\" ]]; then
+    val=${val:1:${#val}-2}
+  fi
+  echo "$val"
+}
+
+# Set KEY to VALUE in an env file, and keep the other lines. The new file replaces the old one
+# with a rename, so a failure leaves the old file as it was. The file gets mode 600.
+env_set() {
+  local file="$1" key="$2" value="$3" tmp
+  if [[ "$value" == *"'"* ]]; then
+    echo "ERROR: the value for $key has a single quote, which config/.env cannot hold." >&2
+    return 1
+  fi
+  tmp=$(mktemp "$(dirname "$file")/.env.XXXXXX")
+  chmod 600 "$tmp"
+  # Replace the first KEY line where it is, so that the order of the lines does not change and a
+  # run with no new values writes the same file. Remove other KEY lines. If no line has KEY, add it
+  # at the end. ENVIRON passes the line with no change: awk -v changes a backslash.
+  local src="$file"
+  [[ -f "$file" ]] || src=/dev/null
+  ENV_LINE="$key='$value'" awk -v k="$key=" '
+    index($0, k) == 1 { if (!done) print ENVIRON["ENV_LINE"]; done = 1; next }
+    { print }
+    END { if (!done) print ENVIRON["ENV_LINE"] }
+  ' "$src" > "$tmp"
+  mv "$tmp" "$file"
+}
+
 # Clone broadinstitute/terra-helmfile at REF into DEST, as duos-ui does: over HTTPS first, then
 # over SSH. Other arguments go to `git clone`. GIT_TERMINAL_PROMPT=0 makes git fail instead of
 # asking for a password, so a missing HTTPS credential falls through to SSH.
@@ -51,6 +92,8 @@ move_into_place() {
   for f in "$@"; do
     if [[ -f "$dest/$f" ]] && ! cmp -s "$stage/$f" "$dest/$f"; then
       cp -p "$dest/$f" "$dest/$f.$stamp.bak"
+      # A backup can hold secrets, for example of .env, so it never keeps a wider mode.
+      chmod 600 "$dest/$f.$stamp.bak"
     fi
   done
   for f in "$@"; do
