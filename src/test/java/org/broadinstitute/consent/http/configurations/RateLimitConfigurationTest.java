@@ -105,8 +105,8 @@ class RateLimitConfigurationTest {
   private Set<ConstraintViolation<RateLimitConfiguration>> validateSecrets(
       String current, String previous) {
     RateLimitConfiguration config = buildConfig(100, 3);
-    config.getShowcase().setClientIpSecret(current);
-    config.getShowcase().setClientIpPreviousSecret(previous);
+    config.setClientIpSecret(current);
+    config.setClientIpPreviousSecret(previous);
     return validator.validate(config);
   }
 
@@ -126,8 +126,7 @@ class RateLimitConfigurationTest {
         validateSecrets("too-short-secret", null);
 
     assertEquals(1, violations.size());
-    assertEquals(
-        "showcase.clientIpSecretValid", violations.iterator().next().getPropertyPath().toString());
+    assertEquals("clientIpSecretValid", violations.iterator().next().getPropertyPath().toString());
   }
 
   @Test
