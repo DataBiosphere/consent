@@ -123,6 +123,19 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
                 List.of())));
   }
 
+  /** A pin needs no "new in DUOS" date, but a ranked dataset does. */
+  @Test
+  void testPinWithNoDate() {
+    String pinned = approvedDataset(null, dacX);
+    approvedDataset(null, dacX);
+    String dated = dataset("open", "2026-10-01T12:00:00Z", null);
+
+    assertEquals(
+        List.of(pinned, dated),
+        identifiers(
+            rank(ShowcaseSection.LATEST_DATA_RELEASES, null, 12, List.of(pinned), List.of())));
+  }
+
   /** A pinned dataset is not ranked a second time. */
   @Test
   void testPinIsNotRepeated() {

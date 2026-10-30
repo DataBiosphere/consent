@@ -109,7 +109,19 @@ final class ShowcaseRequestFields {
     String dacField = name + "." + DAC_SCOPE;
     List<String> dacNames = strings(dacField, dac);
     checkCount(dacField, dacNames.size(), ShowcaseLookupLimits.MAX_SCOPE_VALUES);
+    for (int index = 0; index < dacNames.size(); index++) {
+      checkDacName(dacField, dacNames.get(index), index);
+    }
     return Optional.of(new ShowcaseScope(List.copyOf(new LinkedHashSet<>(dacNames))));
+  }
+
+  /** No DAC has an empty name or one longer than the column, so such a value is a client error. */
+  private static void checkDacName(String name, String dacName, int index) {
+    if (dacName.isEmpty() || dacName.length() > ShowcaseLookupLimits.MAX_DAC_NAME_LENGTH) {
+      throw new ShowcaseLookupException(
+          "Field \"%s\" entry %d must have 1 to %d characters"
+              .formatted(name, index, ShowcaseLookupLimits.MAX_DAC_NAME_LENGTH));
+    }
   }
 
   private JsonElement required(String name) {
