@@ -897,6 +897,16 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSyncStudyAssetsReportsAnUnreadableIndexResponseAsFailed() throws Exception {
+    when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenReturn(List.of(1));
+    when(elasticSearchService.indexDatasets(List.of(1))).thenReturn(Response.ok("[]").build());
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
+  }
+
+  @Test
   void testSyncStudyAssetsKeepsTheSyncWhenTheDatasetLookupFails() {
     when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenThrow(new IllegalStateException("down"));
 
