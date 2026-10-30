@@ -1,0 +1,29 @@
+type: object
+description: An editorial lookup of up to 200 datasets for one showcase section.
+additionalProperties: false
+required:
+  - mode
+  - section
+  - identifiers
+properties:
+  mode:
+    type: string
+    enum: [identifiers]
+  section:
+    type: string
+    enum: [open-access-datasets]
+    description: The showcase section whose eligibility rules apply.
+  identifiers:
+    type: array
+    maxItems: 200
+    description: >
+      Canonical dataset identifiers. The 200-entry limit counts entries before duplicates are
+      removed.
+    items:
+      type: string
+      maxLength: 32
+      pattern: '^DUOS-(\d{6}|[1-9]\d{6,9})$'
+      description: >
+        A canonical identifier: `DUOS-` and the number, zero-padded to six digits. The number
+        is at most 2147483647. The pattern allows up to ten digits, and the server refuses a
+        larger number with a 400.

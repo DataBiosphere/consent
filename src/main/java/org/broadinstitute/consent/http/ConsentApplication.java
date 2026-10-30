@@ -14,6 +14,7 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
+import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import java.sql.Connection;
@@ -80,6 +81,7 @@ import org.broadinstitute.consent.http.resources.OAuth2Resource;
 import org.broadinstitute.consent.http.resources.OntologyResource;
 import org.broadinstitute.consent.http.resources.PassportResource;
 import org.broadinstitute.consent.http.resources.PublicFeatureFlagResource;
+import org.broadinstitute.consent.http.resources.PublicShowcaseCatalogResource;
 import org.broadinstitute.consent.http.resources.ResearcherDashboardResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SigningOfficialDashboardResource;
@@ -192,6 +194,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(EmailNotifierResource.class));
     env.jersey().register(injector.getInstance(FeatureFlagResource.class));
     env.jersey().register(injector.getInstance(PublicFeatureFlagResource.class));
+    registerPublicShowcaseLookup(config, env.jersey(), injector);
     env.jersey().register(injector.getInstance(InstitutionResource.class));
     env.jersey().register(injector.getInstance(LibraryCardResource.class));
     env.jersey().register(injector.getInstance(LivenessResource.class));
@@ -262,6 +265,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
   // liquibase.runOnStartup is an optional config flag that defaults to false. Environments that run
   // the separate Liquibase migration Job omit it. Local configs set it to true.
+  /** The anonymous showcase lookup is off unless the config turns it on. */
+  static void registerPublicShowcaseLookup(
+      ConsentConfiguration config, JerseyEnvironment jersey, Injector injector) {
+    if (config.getShowcaseConfiguration().isPublicLookupEnabled()) {
+      jersey.register(injector.getInstance(PublicShowcaseCatalogResource.class));
+    }
+  }
+
   private void runLiquibaseIfEnabled(ConsentConfiguration config) {
     if (!config.getLiquibaseConfiguration().isRunOnStartup()) {
       LOGGER.info("Skipping liquibase on startup; liquibase.runOnStartup is false");

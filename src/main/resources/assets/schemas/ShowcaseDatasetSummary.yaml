@@ -1,0 +1,43 @@
+type: object
+description: >
+  The approved public fields of one dataset. Every key is present; an unknown value is null.
+additionalProperties: false
+required:
+  - identifier
+  - title
+  - accessManagement
+  - dacName
+  - consentCodes
+  - participantCount
+  - availableDate
+  - accessUrl
+  - species
+properties:
+  identifier:
+    type: string
+    description: Canonical identifier, `DUOS-` plus the alias padded to six digits.
+  title:
+    type: string
+  accessManagement:
+    type: [string, 'null']
+    enum: [open, controlled, external, null]
+  dacName:
+    type: [string, 'null']
+  consentCodes:
+    type: array
+    items:
+      type: string
+    description: Consent codes such as `GRU` or `HMB`, without free-text values.
+  participantCount:
+    type: [integer, 'null']
+  availableDate:
+    type: [string, 'null']
+    format: date
+    description: >
+      The "new in DUOS" date: `create_date` for open and external datasets,
+      `dac_approval_date` for controlled datasets.
+  accessUrl:
+    type: [string, 'null']
+    description: The http(s) provider link of an open or external dataset; null for others.
+  species:
+    type: [string, 'null']
