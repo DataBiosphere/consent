@@ -3,11 +3,13 @@ package org.broadinstitute.consent.http.service.showcase;
 import static org.broadinstitute.consent.http.service.showcase.ShowcaseLookupException.echoed;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.Dataset;
 
@@ -16,6 +18,8 @@ import org.broadinstitute.consent.http.models.Dataset;
  * ShowcaseLookupException} whose message names only the caller's input and the contract's limits.
  */
 final class ShowcaseRequestFields {
+
+  static final String DAC_SCOPE = "dac";
 
   /** Longer number text cannot be an integer within any lookup limit. */
   private static final int MAX_NUMBER_TEXT = 20;
@@ -78,6 +82,46 @@ final class ShowcaseRequestFields {
   List<String> optionalIdentifiers(String name, int max) {
     JsonElement value = fields.get(name);
     return value == null ? List.of() : identifiers(name, value, max);
+  }
+
+  /** The scope, or empty when the request has none. Only the {@code dac} key exists so far. */
+  Optional<ShowcaseScope> optionalScope(String name) {
+    JsonElement value = fields.get(name);
+    if (value == null) {
+      return Optional.empty();
+    }
+    if (!value.isJsonObject()) {
+      throw new ShowcaseLookupException("Field \"%s\" must be an object".formatted(name));
+    }
+    JsonObject scope = value.getAsJsonObject();
+    scope.keySet().stream()
+        .filter(scopeName -> !DAC_SCOPE.equals(scopeName))
+        .findFirst()
+        .ifPresent(
+            scopeName -> {
+              throw new ShowcaseLookupException(
+                  "Unrecognized scope key \"%s\"".formatted(echoed(scopeName)));
+            });
+    JsonElement dac = scope.get(DAC_SCOPE);
+    if (dac == null) {
+      return Optional.of(new ShowcaseScope(null));
+    }
+    String dacField = name + "." + DAC_SCOPE;
+    List<String> dacNames = strings(dacField, dac);
+    checkCount(dacField, dacNames.size(), ShowcaseLookupLimits.MAX_SCOPE_VALUES);
+    for (int index = 0; index < dacNames.size(); index++) {
+      checkDacName(dacField, dacNames.get(index), index);
+    }
+    return Optional.of(new ShowcaseScope(List.copyOf(new LinkedHashSet<>(dacNames))));
+  }
+
+  /** No DAC has an empty name or one longer than the column, so such a value is a client error. */
+  private static void checkDacName(String name, String dacName, int index) {
+    if (dacName.isEmpty() || dacName.length() > ShowcaseLookupLimits.MAX_DAC_NAME_LENGTH) {
+      throw new ShowcaseLookupException(
+          "Field \"%s\" entry %d must have 1 to %d characters"
+              .formatted(name, index, ShowcaseLookupLimits.MAX_DAC_NAME_LENGTH));
+    }
   }
 
   private JsonElement required(String name) {

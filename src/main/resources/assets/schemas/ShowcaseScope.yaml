@@ -1,0 +1,16 @@
+type: object
+description: >
+  Limits a ranking to matching datasets. Values for one key are alternatives; keys must all
+  match. An empty value list matches no dataset.
+additionalProperties: false
+properties:
+  dac:
+    type: array
+    maxItems: 20
+    description: >
+      Exact DAC names. The match is case-sensitive, so "example dac x" does not match
+      "Example DAC X"; a name that matches no DAC gives an empty shelf, not an error.
+    items:
+      type: string
+      minLength: 1
+      maxLength: 255

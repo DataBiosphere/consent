@@ -20,10 +20,4 @@ properties:
       Canonical dataset identifiers. The 200-entry limit counts entries before duplicates are
       removed.
     items:
-      type: string
-      maxLength: 32
-      pattern: '^DUOS-(\d{6}|[1-9]\d{6,9})$'
-      description: >
-        A canonical identifier: `DUOS-` and the number, zero-padded to six digits. The number
-        is at most 2147483647. The pattern allows up to ten digits, and the server refuses a
-        larger number with a 400.
+      $ref: './ShowcaseIdentifier.yaml'
