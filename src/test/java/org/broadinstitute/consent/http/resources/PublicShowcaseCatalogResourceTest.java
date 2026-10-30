@@ -36,7 +36,7 @@ import org.broadinstitute.consent.http.service.showcase.ShowcaseScope;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseSection;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseStatsLookup;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
-import org.eclipse.jetty.http.BadMessageException;
+import org.eclipse.jetty.http.HttpException;
 import org.eclipse.jetty.io.EofException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -226,7 +226,7 @@ class PublicShowcaseCatalogResourceTest {
 
   /** An aborted upload or a broken chunked body is the client's fault: a 400, not a 500. */
   @ParameterizedTest
-  @ValueSource(classes = {EofException.class, BadMessageException.class})
+  @ValueSource(classes = {EofException.class, HttpException.RuntimeException.class})
   void testClientReadErrorIsABadRequest(Class<? extends Throwable> failure) throws Exception {
     InputStream body = mock(InputStream.class);
     when(body.readNBytes(anyInt())).thenThrow(failure);
