@@ -5,7 +5,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
@@ -49,7 +48,6 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.JdbiException;
 
 /**
  * Specialized service class which specifically handles the process of registering a new dataset
@@ -90,13 +88,8 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {
-    try {
-      datasetServiceDAO.patchDataset(datasetId, user, patch);
-      return datasetDAO.findDatasetById(datasetId);
-    } catch (JdbiException ex) {
-      logException(ex);
-      throw new InternalServerErrorException("An error occurred while patching the dataset.");
-    }
+    datasetServiceDAO.patchDataset(datasetId, user, patch);
+    return datasetDAO.findDatasetById(datasetId);
   }
 
   public Study findStudyById(Integer studyId) {

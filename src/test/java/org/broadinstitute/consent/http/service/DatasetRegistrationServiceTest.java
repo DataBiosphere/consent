@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,7 +21,6 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.storage.BlobId;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
@@ -1055,17 +1055,18 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchDatasetThrowsOnDatabaseError() {
+  void testPatchDatasetPropagatesDatabaseError() {
     int datasetId = 1;
     User user = new User();
     DatasetPatch patch = mock();
-    doThrow(new UnableToExecuteStatementException("boom"))
-        .when(datasetServiceDAO)
-        .patchDataset(anyInt(), any(), any());
+    UnableToExecuteStatementException error = new UnableToExecuteStatementException("boom");
+    doThrow(error).when(datasetServiceDAO).patchDataset(anyInt(), any(), any());
 
-    assertThrows(
-        InternalServerErrorException.class,
-        () -> datasetRegistrationService.patchDataset(datasetId, user, patch));
+    assertSame(
+        error,
+        assertThrows(
+            UnableToExecuteStatementException.class,
+            () -> datasetRegistrationService.patchDataset(datasetId, user, patch)));
     verify(datasetDAO, never()).findDatasetById(anyInt());
   }
 
