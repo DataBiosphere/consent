@@ -142,7 +142,7 @@ public class StudyResource extends Resource {
 
   @POST
   @Path("/assets/sync")
-  @Produces(NDJSON)
+  @Produces({NDJSON, MediaType.APPLICATION_JSON})
   @RolesAllowed({ADMIN})
   public Response syncAllStudyAssets(@Auth DuosUser duosUser, @QueryParam("since") String since) {
     try {

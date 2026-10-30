@@ -493,12 +493,11 @@ public class DatasetService implements ConsentLogger {
   private StudyAssetSync syncStudyAssetsReportingFailure(Integer studyId) {
     try {
       return syncStudyAssets(studyId);
-    } catch (WebApplicationException e) {
-      logWarn("Asset record resync of study %d failed".formatted(studyId), e);
-      return StudyAssetSync.failed(studyId, e.getResponse().getStatus(), e.getMessage());
     } catch (RuntimeException e) {
       logWarn("Asset record resync of study %d failed".formatted(studyId), e);
-      return StudyAssetSync.failed(studyId, 500, "Unexpected error; see the server log");
+      return e instanceof WebApplicationException w
+          ? StudyAssetSync.failed(studyId, w.getResponse().getStatus(), w.getMessage())
+          : StudyAssetSync.failed(studyId, 500, "Unexpected error; see the server log");
     }
   }
 

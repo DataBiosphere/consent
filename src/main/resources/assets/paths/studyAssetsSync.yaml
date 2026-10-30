@@ -33,3 +33,5 @@ post:
         application/json:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: The studies to resync could not be listed; nothing was synced
