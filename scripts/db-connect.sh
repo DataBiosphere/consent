@@ -104,6 +104,11 @@ PASSWORD=$(echo "$PG_JSON" | jq -r .password)
 
 INSTANCE="broad-dsde-$1:us-central1:$INSTANCE"
 
+# Cloud SQL Auth Proxy v2 uses only Application Default Credentials. v1 also used the gcloud user
+# login, so check for them first.
+gcloud auth application-default print-access-token > /dev/null 2>&1 \
+    || abort "No Application Default Credentials. Run: gcloud auth application-default login"
+
 # Cloud SQL Auth Proxy v2 listens on 127.0.0.1 only. Port 5433, because the local compose
 # database publishes 5432.
 cloud-sql-proxy --port 5433 "$INSTANCE" &

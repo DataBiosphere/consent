@@ -17,7 +17,8 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$SCRIPT_DIR/lib/common.sh"
 
 DB_ENV="${1:-dev}"
-CONFIG_DIR="${2:-$SCRIPT_DIR/../config}"
+REPO_CONFIG="$(cd "$SCRIPT_DIR/.." && pwd)/config"
+CONFIG_DIR="${2:-$REPO_CONFIG}"
 # The same image as the local database, so pg_dump writes only settings that Postgres 16 knows.
 POSTGRES_IMAGE="postgres:16.14-alpine"
 
@@ -29,8 +30,14 @@ case "$DB_ENV" in
   *) echo "ERROR: The environment must be dev or staging, not '$DB_ENV'. This script never exports prod." >&2; exit 1 ;;
 esac
 
-mkdir -p "$CONFIG_DIR"
-chmod 700 "$CONFIG_DIR"
+# As in render-configs.sh, set mode 700 only on a folder that this script makes, or on config/ of
+# the repo. Do not change the mode of a folder that you give, such as your home folder.
+if [[ ! -d "$CONFIG_DIR" || "$CONFIG_DIR" -ef "$REPO_CONFIG" ]]; then
+  mkdir -p "$CONFIG_DIR"
+  chmod 700 "$CONFIG_DIR"
+elif [[ -n "$(find "$CONFIG_DIR" -maxdepth 0 -perm -001)" ]]; then
+  echo "WARNING: Other users can open files in $CONFIG_DIR. The dump holds real user data." >&2
+fi
 DUMP_NAME="consentdb-$DB_ENV.sql.gz"
 NAME="consent-export-$$"
 TMP_DUMP=$(mktemp "$CONFIG_DIR/.consentdb.XXXXXX")
@@ -55,10 +62,20 @@ docker run -d --name "$NAME" -e CSQL_PROXY_TOKEN -e CSQL_PROXY_INSTANCE_CONNECTI
 pg() {
   docker run --rm --network "container:$NAME" -e PGPASSWORD "$POSTGRES_IMAGE" "$@" -h 127.0.0.1 -U "$db_user" -d consent
 }
+ready="false"
 for _ in $(seq 1 15); do
-  pg pg_isready -q > /dev/null 2>&1 && break
+  if pg pg_isready -q > /dev/null 2>&1; then
+    ready="true"
+    break
+  fi
   sleep 2
 done
+# The EXIT trap removes the proxy container, so show its log now. The log holds the cause.
+if [[ "$ready" == "false" ]]; then
+  docker logs "$NAME" >&2 || true
+  echo "ERROR: The Cloud SQL proxy is not ready. See the proxy log above." >&2
+  exit 1
+fi
 
 echo "Writing $DUMP_NAME. A full dump takes several minutes."
 pg pg_dump --no-owner --no-privileges | gzip > "$TMP_DUMP"
