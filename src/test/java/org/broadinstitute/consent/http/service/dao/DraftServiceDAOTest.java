@@ -298,6 +298,21 @@ class DraftServiceDAOTest extends DAOTestHelper {
     verify(gcsService, times(2)).deleteDocument(anyString());
   }
 
+  @Test
+  void testAFailedDraftLookupIsNotFound() {
+    DraftDAO failingDraftDAO = mock(DraftDAO.class);
+    when(failingDraftDAO.findDraftById(any()))
+        .thenThrow(new IllegalStateException("lookup failed"));
+    Jdbi withFailingDraftDAO = spy(jdbi);
+    doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
+    DraftServiceDAO dao =
+        new DraftServiceDAO(withFailingDraftDAO, new DraftFileStorageServiceDAO(jdbi, gcsService));
+    User user = createUser();
+    UUID draftId = createDraft(user, 1).getUUID();
+
+    assertThrows(NotFoundException.class, () -> dao.getAuthorizedDraft(draftId, user));
+  }
+
   /** The draft update throws after the file rows are written, inside the same transaction. */
   private DraftServiceDAO draftServiceDAOWithFailingDraftUpdate() {
     DraftDAO failingDraftDAO = mock(DraftDAO.class);
