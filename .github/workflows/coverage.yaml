@@ -31,6 +31,27 @@ jobs:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         # The Maven workflow validates the OpenAPI spec on each PR, so skip it here.
         run: ./mvnw clean jacoco:prepare-agent test jacoco:report --batch-mode -Dcodegen.skip=true
+      # MAVEN_OPTS hides the per-class test times in the log, so publish them here instead.
+      - name: Slowest Test Classes
+        if: ${{ !cancelled() }}
+        run: |
+          ls target/surefire-reports/TEST-*.xml > /dev/null 2>&1 || exit 0
+          {
+            echo "### Slowest test classes"
+            echo "| Seconds | Tests | Class |"
+            echo "|---:|---:|---|"
+            grep -h -o '<testsuite [^>]*' target/surefire-reports/TEST-*.xml \
+              | awk -F'"' '{for(i=1;i<NF;i++){if($i~/ name=$/)n=$(i+1); if($i~/ time=$/)s=$(i+1); if($i~/ tests=$/)t=$(i+1)} gsub(",","",s); printf "%s|%s|%s\n",s,t,n}' \
+              | sort -t'|' -k1,1 -rn | head -25 \
+              | awk -F'|' '{printf "| %.1f | %s | `%s` |\n",$1,$2,$3}'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Test Reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 14
       - name: Test Report
         continue-on-error: true
         env:

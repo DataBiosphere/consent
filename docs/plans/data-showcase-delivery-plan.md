@@ -591,6 +591,17 @@ S1.1; the lookup feeds E3.
   beyond `limit`. Reject mode-incompatible fields and over-limit inputs with 400 before DAO calls.
   Publish these initial limits in OpenAPI and align the frontend guard. Revisit the numeric values
   only through a reviewed contract change backed by the lookup/load spike.
+  Implemented in DT-4275 as `PublicShowcaseCatalogResource`, `ShowcaseLookupParser` and
+  `ShowcaseCatalogService`, in a stack of draft PRs: the `identifiers` mode and these limits
+  first, then `ranking` (`newest`) and `all`, then `stats`. The resource reads the raw body, so
+  the 64 KiB check covers a declared length and a chunked body. The `open-access-datasets`
+  section admits `open` datasets only. Rankings and pages read aliases only and then the S2.1
+  projection; each query repeats the summary query's eligibility SQL as one literal, because
+  Semgrep blocks joined `@SqlQuery` strings. The `all` cursor is opaque,
+  versioned and bound to the mode. Decisions pending review: pins must pass section and scope
+  eligibility but need no date; `scope.dac: []` matches nothing; same-date ties are in
+  ascending identifier order; the ranking sections that S6.1 adds answer "Unknown section"
+  until then.
 - **Backend — rate limit:** add an anonymous per-client-IP rate limit for `/showcase/*` in Consent
   (section 3, Failure/limits): either extend `RateLimitFilter` with a public-path branch or add a
   dedicated filter. It answers 429 with `Retry-After` and is enabled independently of the
@@ -611,7 +622,7 @@ S1.1; the lookup feeds E3.
   gates the route on `showcase.publicLookupEnabled` (off by default); an environment turns it
   on only after the S2.1 field approval in the contracts "Open gates" table is recorded.
   Requests through the BFF get the BFF's outbound address as the key, so all BFF users share one
-  bucket until the BFF forwards the browser address in a header that Consent believes (DT-4275).
+  bucket until the BFF forwards the browser address in a header that Consent believes (DT-4281).
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
   configuration, legacy CSP/CORS/preflight, and public-route rate limit. Document preview versus
   functional-test environment configuration. This transport work is required for MVP.

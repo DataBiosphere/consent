@@ -12,8 +12,8 @@ import java.util.Set;
  * ShowcaseJsonBody}). Every field must belong to the request's mode, and every value must have the
  * agreed type and stay within {@link ShowcaseLookupLimits}.
  *
- * <p>The ranking {@code scope} field, and the {@code all} and {@code stats} modes, follow in later
- * pull requests and are unknown until then.
+ * <p>The {@code all} and {@code stats} modes follow in later pull requests and are unknown modes
+ * until then.
  */
 public final class ShowcaseLookupParser {
 
@@ -21,13 +21,14 @@ public final class ShowcaseLookupParser {
   private static final String SECTION = "section";
   private static final String IDENTIFIERS = "identifiers";
   private static final String RANKING = "ranking";
+  private static final String SCOPE = "scope";
   private static final String LIMIT = "limit";
   private static final String PIN = "pin";
   private static final String EXCLUDE = "exclude";
 
   private static final Set<String> IDENTIFIERS_FIELDS = Set.of(MODE, SECTION, IDENTIFIERS);
   private static final Set<String> RANKING_FIELDS =
-      Set.of(MODE, SECTION, RANKING, LIMIT, PIN, EXCLUDE);
+      Set.of(MODE, SECTION, RANKING, SCOPE, LIMIT, PIN, EXCLUDE);
 
   private ShowcaseLookupParser() {}
 
@@ -71,7 +72,7 @@ public final class ShowcaseLookupParser {
     return new ShowcaseRankingLookup(
         section,
         ranking,
-        null,
+        request.optionalScope(SCOPE).orElse(null),
         request.optionalCount(
             LIMIT,
             ShowcaseLookupLimits.MAX_RANKING_LIMIT,
