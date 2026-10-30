@@ -58,16 +58,8 @@ public class DatasetServiceDAO implements ConsentLogger {
     this.studyDAO = jdbi.onDemand(StudyDAO.class);
   }
 
-  public void deleteDataset(Dataset dataset, Integer userId) throws Exception {
-    jdbi.useTransaction(
-        handle -> {
-          try {
-            executeDeleteDataset(dataset, userId);
-          } catch (Exception e) {
-            logException(e);
-            throw e;
-          }
-        });
+  public void deleteDataset(Dataset dataset, Integer userId) {
+    jdbi.useTransaction(_ -> executeDeleteDataset(dataset, userId));
   }
 
   private void executeDeleteDataset(Dataset dataset, Integer userId) {
@@ -92,16 +84,10 @@ public class DatasetServiceDAO implements ConsentLogger {
                 try {
                   executeDeleteDataset(d, user.getUserId());
                 } catch (Exception e) {
-                  logException(e);
                   throw new DatasetDeletionException(e);
                 }
               });
-          try {
-            studyDAO.deleteStudyByStudyId(study.getStudyId());
-          } catch (Exception e) {
-            logException(e);
-            throw e;
-          }
+          studyDAO.deleteStudyByStudyId(study.getStudyId());
         });
   }
 
@@ -185,23 +171,16 @@ public class DatasetServiceDAO implements ConsentLogger {
    * @param datasetId The ID of the dataset to update.
    * @param userId The ID of the user performing the update.
    * @param indexDate The new index date, or null to un-index the dataset.
-   * @throws SQLException if DB transaction fails.
    */
-  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate)
-      throws SQLException {
+  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate) {
     jdbi.useTransaction(
-        handle -> {
+        _ -> {
           Dataset dataset = datasetDAO.findDatasetById(datasetId);
           AuditActions action = indexDate == null ? AuditActions.DEINDEXED : AuditActions.INDEXED;
           String dsAuditName =
               dataset.getName() == null ? dataset.getDatasetIdentifier() : dataset.getName();
-          try {
-            datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexDate);
-            addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, action);
-          } catch (Exception e) {
-            logException(e);
-            throw e;
-          }
+          datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexDate);
+          addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, action);
         });
   }
 
@@ -382,8 +361,7 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   public void updateDataset(DatasetUpdate updates) {
     jdbi.useTransaction(
-        handle -> {
-          try {
+        handle ->
             executeUpdateDatasetWithFiles(
                 handle,
                 updates.datasetId(),
@@ -392,12 +370,7 @@ public class DatasetServiceDAO implements ConsentLogger {
                 updates.dacId(),
                 updates.props(),
                 updates.files(),
-                true);
-          } catch (Exception e) {
-            logException(e);
-            throw e;
-          }
-        });
+                true));
   }
 
   public void executeUpdateDatasetWithFiles(
@@ -427,15 +400,9 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   public void patchDataset(Integer datasetId, User user, DatasetPatch patch) {
     jdbi.useTransaction(
-        handle -> {
-          try {
+        handle ->
             executePatchDataset(
-                handle, datasetId, patch.name(), user.getUserId(), patch.properties());
-          } catch (Exception e) {
-            logException(e);
-            throw e;
-          }
-        });
+                handle, datasetId, patch.name(), user.getUserId(), patch.properties()));
   }
 
   public void executePatchDataset(
@@ -466,15 +433,10 @@ public class DatasetServiceDAO implements ConsentLogger {
         handle -> {
           // Convert the patch to a StudyUpdate for reuse of existing methods
           StudyUpdate studyUpdate = convertToStudyUpdate(study, user, patch);
-          try {
-            executeUpdateStudyKeepProps(handle, studyUpdate);
-            // Blank string signals intent to remove the property
-            deleteBlankPatchedStudyProps(handle, study.getStudyId(), patch);
-            retireLegacyPiInstitutionProp(handle, study.getStudyId(), patch);
-          } catch (Exception e) {
-            logException(e);
-            throw e;
-          }
+          executeUpdateStudyKeepProps(handle, studyUpdate);
+          // Blank string signals intent to remove the property
+          deleteBlankPatchedStudyProps(handle, study.getStudyId(), patch);
+          retireLegacyPiInstitutionProp(handle, study.getStudyId(), patch);
         });
     return studyDAO.findStudyById(study.getStudyId());
   }

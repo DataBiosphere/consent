@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -387,17 +386,7 @@ public class DatasetResource extends Resource {
       }
       // Validate that the admin/chairperson/data submitter has edit/delete access to this dataset
       validateDatasetDacAccess(user, dataset);
-      try {
-        datasetService.deleteDataset(datasetId, user.getUserId());
-      } catch (Exception e) {
-        logException(e);
-        return createExceptionResponse(e);
-      }
-      try (var deleteResponse = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
-        if (!HttpStatusCodes.isSuccess(deleteResponse.getStatus())) {
-          logWarn("Unable to delete index for dataset: " + datasetId);
-        }
-      }
+      datasetService.deleteDataset(datasetId, user.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

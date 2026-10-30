@@ -12,10 +12,9 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.models.DaaBulkRelationResult;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
 
-public class DaaServiceDAO implements ConsentLogger {
+public class DaaServiceDAO {
 
   private final Jdbi jdbi;
   private final DaaDAO daaDAO;
@@ -33,32 +32,27 @@ public class DaaServiceDAO implements ConsentLogger {
     jdbi.useTransaction(
         handle -> {
           Instant now = Instant.now();
-          try {
-            Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
-            createdDaaIds.add(daaId);
-            daaDAO.createDacDaaRelation(dacId, daaId, userId);
-            if (fso != null) {
-              if (fso.getFileName() == null) {
-                throw new IllegalArgumentException("FileStorageObject must have a File Name");
-              }
-              if (fso.getCategory() == null) {
-                throw new IllegalArgumentException("FileStorageObject must have a FileCategory");
-              }
-              if (fso.getBlobId() == null) {
-                throw new IllegalArgumentException("FileStorageObject must have a BlobId");
-              }
-              fsoDAO.insertNewFile(
-                  fso.getFileName(),
-                  fso.getCategory().getValue(),
-                  fso.getBlobId().toGsUtilUri(),
-                  fso.getMediaType(),
-                  daaId.toString(),
-                  userId,
-                  now);
+          Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
+          createdDaaIds.add(daaId);
+          daaDAO.createDacDaaRelation(dacId, daaId, userId);
+          if (fso != null) {
+            if (fso.getFileName() == null) {
+              throw new IllegalArgumentException("FileStorageObject must have a File Name");
             }
-          } catch (Exception e) {
-            logException(e);
-            throw e;
+            if (fso.getCategory() == null) {
+              throw new IllegalArgumentException("FileStorageObject must have a FileCategory");
+            }
+            if (fso.getBlobId() == null) {
+              throw new IllegalArgumentException("FileStorageObject must have a BlobId");
+            }
+            fsoDAO.insertNewFile(
+                fso.getFileName(),
+                fso.getCategory().getValue(),
+                fso.getBlobId().toGsUtilUri(),
+                fso.getMediaType(),
+                daaId.toString(),
+                userId,
+                now);
           }
         });
     return createdDaaIds.isEmpty() ? null : createdDaaIds.getFirst();

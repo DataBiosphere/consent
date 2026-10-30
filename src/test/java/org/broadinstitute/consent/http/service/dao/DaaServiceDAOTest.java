@@ -10,10 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
@@ -29,37 +25,21 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO.BulkAddResult;
-import org.broadinstitute.consent.http.util.TestAppender;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("java:S5778")
 @ExtendWith(MockitoExtension.class)
 class DaaServiceDAOTest extends DAOTestHelper {
 
   private static DaaServiceDAO serviceDAO;
-  private TestAppender testAppender;
 
   @BeforeEach
   void setUp() {
-    Logger testLogger = (Logger) LoggerFactory.getLogger(DaaServiceDAO.class);
-    testLogger.setLevel(Level.TRACE);
-    testAppender = new TestAppender();
-    testAppender.reset();
-    testLogger.addAppender(testAppender);
-    testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
-    testAppender.start();
     serviceDAO = new DaaServiceDAO(jdbi);
-  }
-
-  @AfterEach
-  void tearDown() {
-    testAppender.stop();
   }
 
   @Test
@@ -107,7 +87,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateDaa_userFKError() {
     User user = new User();
-    user.setUserId(1); // Non-existent user ID to trigger daaDAO.createDaa error
+    user.setUserId(Integer.MAX_VALUE); // Non-existent user ID to trigger daaDAO.createDaa error
     Integer dacId =
         dacDAO.createDac(
             randomAlphabetic(10),
@@ -115,12 +95,11 @@ class DaaServiceDAOTest extends DAOTestHelper {
             randomAlphabetic(10),
             createUser().getUserId());
     FileStorageObject fso = createFileStorageObject();
-    assertThrows(
-        UnableToExecuteStatementException.class,
-        () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
-    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(event.getFormattedMessage(), containsString("foreign key constraint"));
-    assertThat(event.getFormattedMessage(), containsString("fk_daa_create_user_id"));
+    UnableToExecuteStatementException e =
+        assertThrows(
+            UnableToExecuteStatementException.class,
+            () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
+    assertThat(e.getMessage(), containsString("fk_daa_create_user_id"));
   }
 
   @Test
