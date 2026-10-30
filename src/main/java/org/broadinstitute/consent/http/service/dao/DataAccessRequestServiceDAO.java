@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -53,8 +52,7 @@ public class DataAccessRequestServiceDAO {
                     handle.attach(ElectionDAO.class))));
   }
 
-  public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar)
-      throws SQLException {
+  public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
     final String updateDataByReferenceId =
@@ -74,38 +72,32 @@ public class DataAccessRequestServiceDAO {
           VALUES (:referenceId, :datasetId)
           ON CONFLICT DO NOTHING
         """;
-    jdbi.useHandle(
-        handle -> {
-          handle.getConnection().setAutoCommit(false);
-          handle.useTransaction(
-              h -> {
-                Update darUpdate = h.createUpdate(updateDataByReferenceId);
-                darUpdate.bind("referenceId", referenceId);
-                darUpdate.bind("userId", user.getUserId());
-                darUpdate.bind("updateDate", now);
-                darUpdate.bind("data", dar.getData().toString());
-                darUpdate.bind("submissionDate", dar.getSubmissionDate());
-                darUpdate.execute();
+    jdbi.useTransaction(
+        h -> {
+          Update darUpdate = h.createUpdate(updateDataByReferenceId);
+          darUpdate.bind("referenceId", referenceId);
+          darUpdate.bind("userId", user.getUserId());
+          darUpdate.bind("updateDate", now);
+          darUpdate.bind("data", dar.getData().toString());
+          darUpdate.bind("submissionDate", dar.getSubmissionDate());
+          darUpdate.execute();
 
-                if (Objects.nonNull(dar.getCollectionId())) {
-                  darCollectionDAO.updateDarCollection(
-                      dar.getCollectionId(), user.getUserId(), new Date(now.getEpochSecond()));
-                }
+          if (Objects.nonNull(dar.getCollectionId())) {
+            darCollectionDAO.updateDarCollection(
+                dar.getCollectionId(), user.getUserId(), Date.from(now));
+          }
 
-                Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
-                darDatasetDelete.bind("referenceId", dar.getReferenceId());
-                darDatasetDelete.execute();
+          Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
+          darDatasetDelete.bind("referenceId", dar.getReferenceId());
+          darDatasetDelete.execute();
 
-                List<Integer> datasetIds = dar.getDatasetIds();
-                datasetIds.forEach(
-                    id -> {
-                      Update darDatasetInsert = h.createUpdate(insertDarDataset);
-                      darDatasetInsert.bind("referenceId", referenceId);
-                      darDatasetInsert.bind("datasetId", id);
-                      darDatasetInsert.execute();
-                    });
-
-                h.commit();
+          List<Integer> datasetIds = dar.getDatasetIds();
+          datasetIds.forEach(
+              id -> {
+                Update darDatasetInsert = h.createUpdate(insertDarDataset);
+                darDatasetInsert.bind("referenceId", referenceId);
+                darDatasetInsert.bind("datasetId", id);
+                darDatasetInsert.execute();
               });
         });
     return dataAccessRequestDAO.findByReferenceId(referenceId);

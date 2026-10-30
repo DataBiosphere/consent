@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models.dto.registration;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +26,11 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
  * commands.
  */
 public class RegistrationRequestMapper {
+
+  /** Reads a request's untyped numbers as BigDecimal, so stored asset lists keep every digit. */
+  public static ObjectMapper requestObjectMapper() {
+    return new ObjectMapper().enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+  }
 
   /**
    * Distinguishes a brand-new consent group (created via registration create, or added to a study

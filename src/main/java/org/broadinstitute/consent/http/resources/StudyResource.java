@@ -39,6 +39,7 @@ import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
 import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequest;
 import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequestValidator;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
@@ -55,7 +56,7 @@ public class StudyResource extends Resource {
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
   private final ElasticSearchService elasticSearchService;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = RegistrationRequestMapper.requestObjectMapper();
   private final StudyUpdateRequestValidator studyUpdateRequestValidator;
 
   @Inject

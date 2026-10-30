@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,6 +61,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 
 public class ElasticSearchService implements ConsentLogger {
 
@@ -602,7 +602,7 @@ public class ElasticSearchService implements ConsentLogger {
     if (datasetDAO.findDatasetIdById(datasetId) != null) {
       try {
         datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
-      } catch (SQLException e) {
+      } catch (JdbiException e) {
         // We don't want to send these to Sentry, but we do want to log them for follow up off cycle
         logWarn("Error updating dataset indexed date for dataset id: %d ".formatted(datasetId), e);
       }

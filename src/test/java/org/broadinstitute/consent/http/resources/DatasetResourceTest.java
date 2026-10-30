@@ -405,12 +405,11 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteSuccessAdmin() throws Exception {
+  void testDeleteSuccessAdmin() {
     Dataset dataSet = new Dataset();
 
     user.addRole(UserRoles.Admin());
     when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
-    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     try (var response = resource.delete(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -418,7 +417,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteSuccessChairperson() throws Exception {
+  void testDeleteSuccessChairperson() {
     Dataset dataSet = new Dataset();
     dataSet.setDatasetId(1);
     dataSet.setDacId(1);
@@ -428,7 +427,6 @@ class DatasetResourceTest extends AbstractTestHelper {
     user.addRole(role);
 
     when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
-    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     try (var response = resource.delete(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -988,7 +986,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
+  void testUpdateDatasetByDatasetIntakeSuccess() throws IOException {
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(any(), anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any()))
