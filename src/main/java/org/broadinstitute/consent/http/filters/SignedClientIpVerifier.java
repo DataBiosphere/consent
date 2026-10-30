@@ -31,6 +31,9 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * <p>A request without any of the three headers is not a rejection: browsers that call Consent
  * directly send none. In every other failure the caller falls back to {@code X-Real-IP}.
+ *
+ * <p>Nothing here is specific to one route, so any anonymous per-IP limiter can use it. A verified
+ * IP is only a rate-limit key: never use it to grant access.
  */
 public class SignedClientIpVerifier {
 
