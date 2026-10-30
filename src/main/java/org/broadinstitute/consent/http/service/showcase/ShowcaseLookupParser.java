@@ -12,16 +12,22 @@ import java.util.Set;
  * ShowcaseJsonBody}). Every field must belong to the request's mode, and every value must have the
  * agreed type and stay within {@link ShowcaseLookupLimits}.
  *
- * <p>The {@code ranking}, {@code all} and {@code stats} modes follow in later pull requests and are
- * unknown modes until then.
+ * <p>The ranking {@code scope} field, and the {@code all} and {@code stats} modes, follow in later
+ * pull requests and are unknown until then.
  */
 public final class ShowcaseLookupParser {
 
   private static final String MODE = "mode";
   private static final String SECTION = "section";
   private static final String IDENTIFIERS = "identifiers";
+  private static final String RANKING = "ranking";
+  private static final String LIMIT = "limit";
+  private static final String PIN = "pin";
+  private static final String EXCLUDE = "exclude";
 
   private static final Set<String> IDENTIFIERS_FIELDS = Set.of(MODE, SECTION, IDENTIFIERS);
+  private static final Set<String> RANKING_FIELDS =
+      Set.of(MODE, SECTION, RANKING, LIMIT, PIN, EXCLUDE);
 
   private ShowcaseLookupParser() {}
 
@@ -32,10 +38,11 @@ public final class ShowcaseLookupParser {
     Map<String, JsonElement> fields = ShowcaseJsonBody.read(body);
     String mode = new ShowcaseRequestFields(fields, null).requiredString(MODE);
     ShowcaseRequestFields request = new ShowcaseRequestFields(fields, mode);
-    if (IDENTIFIERS.equals(mode)) {
-      return identifiersLookup(request);
-    }
-    throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(echoed(mode)));
+    return switch (mode) {
+      case IDENTIFIERS -> identifiersLookup(request);
+      case RANKING -> rankingLookup(request);
+      default -> throw new ShowcaseLookupException("Unknown mode \"%s\"".formatted(echoed(mode)));
+    };
   }
 
   private static ShowcaseIdentifiersLookup identifiersLookup(ShowcaseRequestFields request) {
@@ -49,13 +56,38 @@ public final class ShowcaseLookupParser {
         section, request.requiredIdentifiers(IDENTIFIERS, ShowcaseLookupLimits.MAX_IDENTIFIERS));
   }
 
+  private static ShowcaseRankingLookup rankingLookup(ShowcaseRequestFields request) {
+    request.rejectUnrecognized(RANKING_FIELDS);
+    ShowcaseSection section = section(request);
+    String rankingSlug = request.requiredString(RANKING);
+    ShowcaseRanking ranking =
+        ShowcaseRanking.fromSlug(rankingSlug)
+            .filter(section::accepts)
+            .orElseThrow(
+                () ->
+                    new ShowcaseLookupException(
+                        "Unknown ranking \"%s\" for section \"%s\""
+                            .formatted(echoed(rankingSlug), section.getSlug())));
+    return new ShowcaseRankingLookup(
+        section,
+        ranking,
+        null,
+        request.optionalCount(
+            LIMIT,
+            ShowcaseLookupLimits.MAX_RANKING_LIMIT,
+            ShowcaseLookupLimits.DEFAULT_RANKING_LIMIT),
+        request.optionalIdentifiers(PIN, ShowcaseLookupLimits.MAX_PINS),
+        request.optionalIdentifiers(EXCLUDE, ShowcaseLookupLimits.MAX_EXCLUSIONS));
+  }
+
   private static ShowcaseSection section(ShowcaseRequestFields request) {
     String slug = request.requiredString(SECTION);
-    return ShowcaseSection.fromSlug(slug)
-        .orElseThrow(
-            () ->
-                new ShowcaseLookupException(
-                    "Unknown section \"%s\" for mode \"%s\""
-                        .formatted(echoed(slug), request.mode())));
+    return ShowcaseSection.fromSlug(slug).orElseThrow(() -> unknownSection(slug, request));
+  }
+
+  private static ShowcaseLookupException unknownSection(
+      String slug, ShowcaseRequestFields request) {
+    return new ShowcaseLookupException(
+        "Unknown section \"%s\" for mode \"%s\"".formatted(echoed(slug), request.mode()));
   }
 }
