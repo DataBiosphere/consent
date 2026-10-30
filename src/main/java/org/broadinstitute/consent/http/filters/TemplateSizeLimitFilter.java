@@ -12,6 +12,7 @@ import java.io.InputStream;
 import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
+import org.broadinstitute.consent.http.util.ContentLength;
 
 /**
  * Bounds a template upload at the request, which the validator's limit cannot do: a resource method
@@ -45,7 +46,8 @@ public class TemplateSizeLimitFilter implements ContainerRequestFilter {
 
   @Override
   public void filter(ContainerRequestContext requestContext) {
-    if (declaredLength(requestContext) > MAX_REQUEST_BYTES) {
+    if (ContentLength.declared(requestContext.getHeaderString(HttpHeaders.CONTENT_LENGTH))
+        > MAX_REQUEST_BYTES) {
       requestContext.abortWith(
           TemplateTooLargeExceptionMapper.tooLarge(
               StudyTemplateValidationService.TOO_LARGE_MESSAGE));
@@ -53,22 +55,6 @@ public class TemplateSizeLimitFilter implements ContainerRequestFilter {
     }
     requestContext.setEntityStream(
         new BoundedEntityStream(requestContext.getEntityStream(), MAX_REQUEST_BYTES));
-  }
-
-  /**
-   * Read as a long rather than through {@code getLength()}, whose int parse turns the header of a
-   * multi-gigabyte body — the one this most needs to catch — into an unknown length.
-   */
-  private static long declaredLength(ContainerRequestContext requestContext) {
-    String header = requestContext.getHeaderString(HttpHeaders.CONTENT_LENGTH);
-    if (header == null || header.isBlank()) {
-      return -1;
-    }
-    try {
-      return Long.parseLong(header.trim());
-    } catch (NumberFormatException e) {
-      return -1;
-    }
   }
 
   /** Refuses to hand out more than the cap, so a body with no declared length is bounded too. */
