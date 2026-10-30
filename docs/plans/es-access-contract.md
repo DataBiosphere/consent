@@ -786,6 +786,8 @@ owned by the asset definitions.** Concretely:
 - A new key appearing under `study.assets.*` from a registration-schema change is **not** served until
   it is added to an asset definition and to the enumeration. That is the fail-closed behavior §B.5
   wanted, and it is achievable without a wildcard.
+- Biospecimens are queried by `study.assets.biospecimens.sampleId`, not `biospecimenId`, which holds a
+  server row id once the asset sync ships (`study-asset-records-plan.md` Decision 12). Both are served.
 - `study.data.*` and `data.*` stay INTERNAL. Neither has a consumer among the seven search callers,
   and the §B.5 rule applies to them unchanged.
 

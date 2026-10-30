@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.db;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import org.broadinstitute.consent.http.models.StoredStudyProperty;
 import org.broadinstitute.consent.http.models.StudyAssetKey;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
 import org.broadinstitute.consent.http.models.StudyModelRecord;
@@ -23,6 +25,26 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
  */
 @RegisterConstructorMapper(StudyAssetKey.class)
 public interface StudyAssetRecordDAO {
+
+  /** Locks the study row, as a registration update's study write does. Empty for no such study. */
+  @SqlQuery("SELECT study_id FROM study WHERE study_id = :studyId FOR UPDATE")
+  Optional<Integer> lockStudy(@Bind("studyId") Integer studyId);
+
+  /** A study's properties as stored, including values that do not parse. */
+  @RegisterConstructorMapper(StoredStudyProperty.class)
+  @SqlQuery(
+      """
+      SELECT study_property_id, key, type, value FROM study_property
+      WHERE study_id = :studyId
+      ORDER BY study_property_id
+      """)
+  List<StoredStudyProperty> findStudyProperties(@Bind("studyId") Integer studyId);
+
+  @SqlUpdate("UPDATE study_property SET value = :value WHERE study_property_id = :id")
+  void updateStudyPropertyValue(@Bind("id") Integer studyPropertyId, @Bind("value") String value);
+
+  @SqlUpdate("DELETE FROM study_property WHERE study_property_id = :id")
+  void deleteStudyProperty(@Bind("id") Integer studyPropertyId);
 
   @SqlBatch(
       """

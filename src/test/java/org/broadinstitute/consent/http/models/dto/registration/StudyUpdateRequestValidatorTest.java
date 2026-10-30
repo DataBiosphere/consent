@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,37 @@ class StudyUpdateRequestValidatorTest {
     Study study = createMockStudy();
     StudyUpdateRequest registration = createValidRegistration(study);
     assertTrue(validator.validate(study, datasets, registration));
+  }
+
+  @Test
+  void testValidate_assetListOverTheCap_rejected() {
+    Study study = createMockStudy();
+    StudyUpdateRequest legacy = createValidRegistration(study);
+    legacy.setAssets(
+        Map.of("workspaces", entries(StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE + 1)));
+    StudyUpdateRequest topLevel = createValidRegistration(study);
+    topLevel.setModels(entries(StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE + 1));
+
+    BadRequestException legacyError =
+        assertThrows(BadRequestException.class, () -> validator.validate(study, datasets, legacy));
+    BadRequestException topLevelError =
+        assertThrows(
+            BadRequestException.class, () -> validator.validate(study, datasets, topLevel));
+    assertTrue(legacyError.getMessage().contains("workspaces can list at most 1000 entries"));
+    assertTrue(topLevelError.getMessage().contains("models can list at most 1000 entries"));
+  }
+
+  @Test
+  void testValidate_assetListAtTheCap_accepted() {
+    Study study = createMockStudy();
+    StudyUpdateRequest registration = createValidRegistration(study);
+    registration.setModels(entries(StudyRegistrationRequestValidator.MAX_ASSET_LIST_SIZE));
+
+    assertTrue(validator.validate(study, datasets, registration));
+  }
+
+  private static List<Object> entries(int size) {
+    return Collections.nCopies(size, Map.of("name", "x"));
   }
 
   // ── Study name uniqueness ────────────────────────────────────────────────

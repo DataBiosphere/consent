@@ -3,9 +3,11 @@ package org.broadinstitute.consent.http.service.dao;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.models.StoredStudyProperty;
 import org.broadinstitute.consent.http.models.StudyAssetKey;
 import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
@@ -167,6 +170,101 @@ public class StudyAssetRecordSync implements ConsentLogger {
         studyDAO.updateStudyProperty(
             studyId, type.key(), PropertyType.Json.toString(), entries.toString());
       }
+    }
+  }
+
+  /**
+   * Syncs a study from the lists it stores, for one whose lists changed while the sync was off.
+   * Locks the study row first, so a registration write cannot commit between the read and the
+   * write-back. A list found only in the legacy {@code assets} object moves to its own property, as
+   * a registration write would move it, so the ids land where later reads find them.
+   */
+  public void syncStudy(Handle handle, Integer studyId) {
+    if (!handle.isInTransaction()) {
+      throw new IllegalStateException("syncStudy must run in a transaction to hold the lock");
+    }
+    StudyAssetRecordDAO dao = handle.attach(StudyAssetRecordDAO.class);
+    StudyDAO studyDAO = handle.attach(StudyDAO.class);
+    if (dao.lockStudy(studyId).isEmpty()) {
+      throw new NotFoundException("Study with ID %d does not exist.".formatted(studyId));
+    }
+    List<StoredStudyProperty> props = dao.findStudyProperties(studyId);
+    // As StudyAssets reads it: the first assets row in any case that holds a non-empty object.
+    Optional<StoredStudyProperty> assetsProp =
+        props.stream()
+            .filter(p -> StudyAssets.ASSETS.equalsIgnoreCase(p.key()))
+            .filter(p -> parse(p) instanceof JsonObject object && !object.isEmpty())
+            .findFirst();
+    JsonObject legacy = assetsProp.map(p -> parse(p).getAsJsonObject()).orElseGet(JsonObject::new);
+    boolean movedAny = false;
+    for (AssetType<?> type : TYPES) {
+      List<StoredStudyProperty> promoted =
+          props.stream().filter(p -> type.key().equalsIgnoreCase(p.key())).toList();
+      // As StudyAssets reads it: the first row in any case that holds a list.
+      Optional<StoredStudyProperty> list =
+          promoted.stream().filter(p -> parse(p) instanceof JsonArray).findFirst();
+      if (list.isPresent()) {
+        syncStored(dao, studyId, type, list.get());
+      } else if (!promoted.isEmpty()) {
+        logWarn(
+            "Study %d: %s is not a list, so its rows were left as they are"
+                .formatted(studyId, type.key()));
+      } else {
+        movedAny |= moveLegacyList(dao, studyDAO, studyId, type, legacy);
+      }
+    }
+    if (movedAny) {
+      Integer assetsId = assetsProp.orElseThrow().studyPropertyId();
+      if (legacy.isEmpty()) {
+        dao.deleteStudyProperty(assetsId);
+      } else {
+        dao.updateStudyPropertyValue(assetsId, legacy.toString());
+      }
+    }
+  }
+
+  private void syncStored(
+      StudyAssetRecordDAO dao, Integer studyId, AssetType<?> type, StoredStudyProperty stored) {
+    JsonArray list = parse(stored).getAsJsonArray();
+    String before = list.toString();
+    sync(dao, studyId, type, list);
+    if (!list.toString().equals(before)) {
+      dao.updateStudyPropertyValue(stored.studyPropertyId(), list.toString());
+    }
+  }
+
+  /**
+   * Syncs a type with no property of its own from the legacy object, moving its list to its own
+   * property. As StudyAssets reads it, only the first key in any case counts, and only as a list.
+   *
+   * @return whether a list was moved out of {@code legacy}
+   */
+  private boolean moveLegacyList(
+      StudyAssetRecordDAO dao,
+      StudyDAO studyDAO,
+      Integer studyId,
+      AssetType<?> type,
+      JsonObject legacy) {
+    Optional<String> legacyKey =
+        legacy.keySet().stream()
+            .filter(type.key()::equalsIgnoreCase)
+            .findFirst()
+            .filter(key -> legacy.get(key).isJsonArray());
+    JsonArray entries =
+        legacyKey.map(key -> legacy.remove(key).getAsJsonArray()).orElseGet(JsonArray::new);
+    sync(dao, studyId, type, entries);
+    legacyKey.ifPresent(
+        key ->
+            studyDAO.insertStudyProperty(
+                studyId, type.key(), PropertyType.Json.toString(), entries.toString()));
+    return legacyKey.isPresent();
+  }
+
+  private static JsonElement parse(StoredStudyProperty prop) {
+    try {
+      return JsonParser.parseString(prop.value());
+    } catch (JsonParseException e) {
+      return null;
     }
   }
 

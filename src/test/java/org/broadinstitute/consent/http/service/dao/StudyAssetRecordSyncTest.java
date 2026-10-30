@@ -13,11 +13,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -32,6 +38,7 @@ import org.broadinstitute.consent.http.models.dto.registration.StudyRegistration
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.jdbi.v3.core.HandleConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -687,6 +694,207 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertEquals(expected, StudyAssetRecordSync.rowId(JsonParser.parseString(json)));
   }
 
+  @Test
+  void testSyncStudyMovesALegacyOnlyListOnce() throws Exception {
+    Integer studyId =
+        create(
+            prop(
+                "assets",
+                """
+                {"Biospecimens": [{"biospecimenId": "S-1", "n": 12345678901234567890}],
+                 "other": 1}"""));
+
+    syncStudy(studyId);
+
+    JsonObject entry = stored(studyId, "biospecimens").get(0).getAsJsonObject();
+    StudyBiospecimenRecord row = assetDAO.findBiospecimensByStudyId(studyId).getFirst();
+    assertEquals(row.biospecimenId(), entry.get("biospecimenId").getAsInt());
+    assertEquals("S-1", entry.get("sampleId").getAsString());
+    assertEquals("12345678901234567890", entry.get("n").toString());
+    assertEquals("{\"other\":1}", storedValue(studyId, "assets"));
+
+    String list = storedValue(studyId, "biospecimens");
+    syncStudy(studyId);
+
+    assertEquals(list, storedValue(studyId, "biospecimens"));
+    assertEquals(1, assetDAO.findBiospecimensByStudyId(studyId).size());
+  }
+
+  @Test
+  void testSyncStudyLeavesANonListPropertyAndItsLegacyCopy() throws Exception {
+    String legacy = "{\"biospecimens\":[{\"biospecimenId\":\"S-1\"}]}";
+    Integer studyId =
+        create(prop("biospecimens", "{\"biospecimenId\": \"S-1\"}"), prop("assets", legacy));
+
+    syncStudy(studyId);
+
+    assertEquals("{\"biospecimenId\":\"S-1\"}", storedValue(studyId, "biospecimens"));
+    assertEquals(legacy, storedValue(studyId, "assets"));
+    assertTrue(assetDAO.findBiospecimensByStudyId(studyId).isEmpty());
+  }
+
+  @Test
+  void testSyncStudyUsesTheListReadsUseAndWritesOnlyItsRow() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(studyId, "Models", json, "\"not a list\"");
+    studyDAO.insertStudyProperty(studyId, "models", json, "[{\"name\": \"A\"}]");
+    studyDAO.insertStudyProperty(studyId, "models", json, "[{\"name\": \"B\"}]");
+
+    syncStudy(studyId);
+
+    List<StudyModelRecord> rows = assetDAO.findModelsByStudyId(studyId);
+    assertEquals(List.of("A"), rows.stream().map(StudyModelRecord::name).toList());
+    List<String> values = storedValues(studyId, "models");
+    assertEquals("\"not a list\"", values.get(0));
+    assertEquals(
+        rows.getFirst().modelId(),
+        idOf(JsonParser.parseString(values.get(1)).getAsJsonArray(), 0, "modelId"));
+    assertEquals("[{\"name\": \"B\"}]", values.get(2));
+  }
+
+  @Test
+  void testSyncStudyChangesOnlyTheAssetsRowItMovedFrom() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{\"models\": [{\"name\": \"A\"}]}");
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{\"models\": [{\"name\": \"B\"}]}");
+
+    syncStudy(studyId);
+
+    assertEquals("A", assetDAO.findModelsByStudyId(studyId).getFirst().name());
+    assertEquals(List.of("{\"models\": [{\"name\": \"B\"}]}"), storedValues(studyId, "assets"));
+  }
+
+  @Test
+  void testSyncStudyNeedsATransaction() throws Exception {
+    Integer studyId = create();
+    StudyAssetRecordSync sync = new StudyAssetRecordSync();
+
+    HandleConsumer<RuntimeException> outsideATransaction =
+        handle -> sync.syncStudy(handle, studyId);
+
+    assertThrows(IllegalStateException.class, () -> jdbi.useHandle(outsideATransaction));
+  }
+
+  @Test
+  void testSyncStudyReadsTheFirstNonEmptyAssetsObject() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{}");
+    studyDAO.insertStudyProperty(studyId, "assets", json, "[1]");
+    studyDAO.insertStudyProperty(studyId, "assets", json, "{\"models\": [{\"name\": \"A\"}]}");
+
+    syncStudy(studyId);
+
+    assertEquals("A", assetDAO.findModelsByStudyId(studyId).getFirst().name());
+    assertEquals(List.of("{}", "[1]"), storedValues(studyId, "assets"));
+  }
+
+  @Test
+  void testSyncStudyLeavesTheRowsOfAMalformedList() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"A\"}]"));
+    studyDAO.updateStudyProperty(studyId, "models", PropertyType.Json.toString(), "[{");
+
+    syncStudy(studyId);
+
+    assertEquals(1, assetDAO.findLiveModels(studyId).size());
+    assertEquals("[{", storedValue(studyId, "models"));
+  }
+
+  @Test
+  void testSyncStudyCatchesUpWithEditsMadeOutsideTheSync() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"A\"}, {\"name\": \"B\"}]"));
+    int a = idOf(stored(studyId, "models"), 0, "modelId");
+    studyDAO.updateStudyProperty(
+        studyId,
+        "models",
+        PropertyType.Json.toString(),
+        "[{\"modelId\": %d, \"name\": \"A2\"}, {\"name\": \"C\"}]".formatted(a));
+
+    syncStudy(studyId);
+
+    List<StudyModelRecord> rows = assetDAO.findModelsByStudyId(studyId);
+    assertEquals(List.of("A2", "B", "C"), rows.stream().map(StudyModelRecord::name).toList());
+    assertNull(rows.get(0).retiredDate());
+    assertNotNull(rows.get(1).retiredDate());
+    assertEquals(List.of(a, rows.get(2).modelId()), ids(stored(studyId, "models"), "modelId"));
+  }
+
+  @Test
+  void testConcurrentUpdatesLeaveOnlyTheLastWritesRows() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"A\"}]"));
+    int a = idOf(stored(studyId, "models"), 0, "modelId");
+    AtomicReference<Future<?>> edit = new AtomicReference<>();
+
+    // Another edit holds the study row with an uncommitted row insert. The second edit only
+    // updates, which takes no foreign key lock on the study, so only the study write orders it.
+    try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
+      jdbi.useTransaction(
+          handle -> {
+            StudyAssetRecordDAO dao = handle.attach(StudyAssetRecordDAO.class);
+            dao.lockStudy(studyId);
+            dao.insertModels(List.of(model(studyId, "other edit")));
+            edit.set(
+                pool.submit(
+                    () -> {
+                      update(
+                          studyId,
+                          prop("models", "[{\"modelId\": %d, \"name\": \"A2\"}]".formatted(a)));
+                      return null;
+                    }));
+            awaitABlockedLock();
+          });
+      edit.get().get(30, TimeUnit.SECONDS);
+    }
+
+    List<StudyModelRecord> live =
+        assetDAO.findModelsByStudyId(studyId).stream()
+            .filter(row -> row.retiredDate() == null)
+            .toList();
+    assertEquals(List.of("A2"), live.stream().map(StudyModelRecord::name).toList());
+  }
+
+  @Test
+  void testSyncStudyWaitsForAnUpdateInProgress() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"A\"}]"));
+    AtomicReference<Future<?>> recovery = new AtomicReference<>();
+
+    try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
+      // The update joins this transaction, so it stays uncommitted until the recovery is queued.
+      jdbi.useTransaction(
+          handle -> {
+            update(studyId, prop("models", "[{\"name\": \"B\"}]"));
+            recovery.set(pool.submit(() -> syncStudy(studyId)));
+            awaitABlockedLock();
+          });
+      recovery.get().get(30, TimeUnit.SECONDS);
+    }
+
+    assertEquals("B", stored(studyId, "models").get(0).getAsJsonObject().get("name").getAsString());
+    List<StudyModelRecord> live =
+        assetDAO.findModelsByStudyId(studyId).stream()
+            .filter(row -> row.retiredDate() == null)
+            .toList();
+    assertEquals(List.of("B"), live.stream().map(StudyModelRecord::name).toList());
+  }
+
+  @Test
+  void testSyncStudyKeepsAStoredKeyAndDropsAnEmptiedAssetsObject() throws Exception {
+    Integer studyId =
+        create(
+            prop("Models", "[{\"name\": \"M\"}]"),
+            prop("assets", "{\"workspaces\": [{\"name\": \"W\"}]}"));
+
+    syncStudy(studyId);
+
+    int model = assetDAO.findModelsByStudyId(studyId).getFirst().modelId();
+    assertEquals(model, idOf(stored(studyId, "Models"), 0, "modelId"));
+    assertEquals(1, assetDAO.findLiveWorkspaces(studyId).size());
+    assertEquals(0, countProperties(studyId, "assets"));
+    assertThrows(NotFoundException.class, () -> syncStudy(-1));
+  }
+
   private Integer create(StudyProperty... props) throws Exception {
     return create(UUID.randomUUID().toString(), List.of(), props);
   }
@@ -743,18 +951,77 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     return new StudyProperty(key, PropertyType.Json.coerce(json), PropertyType.Json);
   }
 
+  private void syncStudy(Integer studyId) {
+    jdbi.useTransaction(handle -> new StudyAssetRecordSync().syncStudy(handle, studyId));
+  }
+
+  /** Waits until another connection is queued on a row lock. */
+  private void awaitABlockedLock() throws InterruptedException {
+    for (int i = 0; i < 500; i++) {
+      int waiting =
+          jdbi.withHandle(
+              handle ->
+                  handle
+                      .createQuery("SELECT count(*) FROM pg_locks WHERE NOT granted")
+                      .mapTo(Integer.class)
+                      .one());
+      if (waiting > 0) {
+        return;
+      }
+      Thread.sleep(20);
+    }
+    throw new IllegalStateException("No connection blocked on a lock");
+  }
+
+  private static StudyModelRecord model(Integer studyId, String name) {
+    return new StudyModelRecord(
+        null, studyId, null, name, null, null, null, null, null, null, null, null, null, null, null,
+        null, null);
+  }
+
+  private int countProperties(Integer studyId, String key) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT count(*) FROM study_property WHERE study_id = :studyId AND key = :key")
+                .bind("studyId", studyId)
+                .bind("key", key)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  /** Every row of a key in any case, in insertion order. */
+  private List<String> storedValues(Integer studyId, String key) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    SELECT value FROM study_property
+                    WHERE study_id = :studyId AND lower(key) = lower(:key)
+                    ORDER BY study_property_id
+                    """)
+                .bind("studyId", studyId)
+                .bind("key", key)
+                .mapTo(String.class)
+                .list());
+  }
+
+  private String storedValue(Integer studyId, String key) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    "SELECT value FROM study_property WHERE study_id = :studyId AND key = :key")
+                .bind("studyId", studyId)
+                .bind("key", key)
+                .mapTo(String.class)
+                .one());
+  }
+
   private JsonArray stored(Integer studyId, String key) {
-    String value =
-        jdbi.withHandle(
-            handle ->
-                handle
-                    .createQuery(
-                        "SELECT value FROM study_property WHERE study_id = :studyId AND key = :key")
-                    .bind("studyId", studyId)
-                    .bind("key", key)
-                    .mapTo(String.class)
-                    .one());
-    return JsonParser.parseString(value).getAsJsonArray();
+    return JsonParser.parseString(storedValue(studyId, key)).getAsJsonArray();
   }
 
   private int countModelRows() {

@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.models.AssetDataUse;
@@ -20,6 +21,9 @@ import org.broadinstitute.consent.http.models.datause.DataUsePrimaryClassifier;
 import org.broadinstitute.consent.http.models.datause.DataUsePrimaryValidator;
 
 public class StudyRegistrationRequestValidator {
+
+  /** The most entries a models, workspaces or biospecimens list can hold. */
+  public static final int MAX_ASSET_LIST_SIZE = 1000;
 
   /**
    * Collects every violation instead of throwing on the first one. Used by the create endpoint,
@@ -51,21 +55,47 @@ public class StudyRegistrationRequestValidator {
   }
 
   /**
-   * The violations of the model and workspace entries, read from the same lists that persistence
-   * stores, so an entry sent only inside the legacy {@code assets} object is still checked.
+   * The violations of the model and workspace entries and of every capped list's size, read from
+   * the same lists that persistence stores, so an entry sent only inside the legacy {@code assets}
+   * object is still checked.
    *
    * @param storedProperties The study's properties as stored, or null for a new study
    */
   public List<String> collectAssetViolations(
       StudyRegistrationRequest registration, Collection<StudyProperty> storedProperties) {
+    Optional<String> models =
+        sizeViolation(registration, StudyAssets.MODELS, registration.getModels());
+    Optional<String> workspaces =
+        sizeViolation(registration, StudyAssets.WORKSPACES, registration.getWorkspaces());
     List<String> errors = new ArrayList<>();
-    errors.addAll(
-        assetViolations(
-            registration, StudyAssets.MODELS, registration.getModels(), storedProperties));
-    errors.addAll(
-        assetViolations(
-            registration, StudyAssets.WORKSPACES, registration.getWorkspaces(), storedProperties));
+    // A list over the cap gets one error, not one per entry.
+    if (models.isEmpty()) {
+      errors.addAll(
+          assetViolations(
+              registration, StudyAssets.MODELS, registration.getModels(), storedProperties));
+    }
+    if (workspaces.isEmpty()) {
+      errors.addAll(
+          assetViolations(
+              registration,
+              StudyAssets.WORKSPACES,
+              registration.getWorkspaces(),
+              storedProperties));
+    }
+    models.ifPresent(errors::add);
+    workspaces.ifPresent(errors::add);
+    sizeViolation(registration, StudyAssets.BIOSPECIMENS, registration.getBiospecimens())
+        .ifPresent(errors::add);
     return errors;
+  }
+
+  /** Bounds each list the asset record sync processes under the study row lock. */
+  private static Optional<String> sizeViolation(
+      StudyRegistrationRequest registration, String key, List<Object> topLevel) {
+    List<Object> values = StudyAssets.promotedValue(topLevel, registration.getAssets(), key);
+    return values != null && values.size() > MAX_ASSET_LIST_SIZE
+        ? Optional.of("%s can list at most %d entries".formatted(key, MAX_ASSET_LIST_SIZE))
+        : Optional.empty();
   }
 
   private static List<String> assetViolations(
