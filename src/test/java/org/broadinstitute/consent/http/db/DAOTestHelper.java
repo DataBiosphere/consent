@@ -97,10 +97,13 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   }
 
   public void startUp() throws Exception {
-    // Start the database
+    // Start the database. The test database is thrown away, so durability is turned off for speed.
     postgresContainer =
         new PostgreSQLContainer<>(POSTGRES_IMAGE)
-            .withCommand("postgres -c max_connections=" + maxConnections)
+            .withCommand(
+                "postgres -c max_connections="
+                    + maxConnections
+                    + " -c fsync=off -c synchronous_commit=off -c full_page_writes=off")
             .waitingFor(Wait.forListeningPorts());
     postgresContainer.start();
     ConfigOverride driverOverride =
