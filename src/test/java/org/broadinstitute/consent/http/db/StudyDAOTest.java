@@ -634,7 +634,7 @@ class StudyDAOTest extends DAOTestHelper {
 
   private Integer insertStudyCreatedAt(Instant createDate) {
     return studyDAO.insertStudy(
-        RandomStringUtils.randomAlphabetic(20),
+        RandomStringUtils.secure().nextAlphabetic(20),
         "description",
         "PI",
         null,
