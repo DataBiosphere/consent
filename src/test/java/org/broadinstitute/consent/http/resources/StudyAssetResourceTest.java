@@ -5,16 +5,22 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonSyntaxException;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.StudyAssetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -81,5 +87,33 @@ class StudyAssetResourceTest extends AbstractTestHelper {
     assertEquals(
         HttpStatusCodes.STATUS_CODE_BAD_REQUEST,
         resource.fundingResources(duosUser, 1).getStatus());
+  }
+
+  @Test
+  void testSyncAssetRecordsIsAdminOnly() throws NoSuchMethodException {
+    RolesAllowed roles =
+        StudyAssetResource.class
+            .getMethod("syncAssetRecords", DuosUser.class, Integer.class)
+            .getAnnotation(RolesAllowed.class);
+    assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+    when(service.syncAssetRecords(user, 7))
+        .thenReturn(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.UPDATED));
+    try (var response = resource.syncAssetRecords(duosUser, 7)) {
+      assertEquals(200, response.getStatus());
+      assertEquals("{\"studyId\":7,\"synced\":true,\"index\":\"UPDATED\"}", response.getEntity());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {400, 404})
+  void testSyncAssetRecordsPassesTheSyncErrorThrough(int status) {
+    WebApplicationException error =
+        status == 400
+            ? new BadRequestException("send sampleId")
+            : new NotFoundException("no study");
+    when(service.syncAssetRecords(user, 7)).thenThrow(error);
+    try (var response = resource.syncAssetRecords(duosUser, 7)) {
+      assertEquals(status, response.getStatus());
+    }
   }
 }

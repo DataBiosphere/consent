@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -588,6 +590,69 @@ class StudyDAOTest extends DAOTestHelper {
             createUser.getUserId(),
             createDate);
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
+  }
+
+  @Test
+  void testFindIndexedDatasetIdsByStudyId() {
+    Study study = insertStudyWithProperties();
+    Dataset indexed = insertDatasetForStudy(study.getStudyId());
+    insertDatasetForStudy(study.getStudyId());
+    Dataset otherStudyIndexed = insertDatasetForStudy(insertStudyWithProperties().getStudyId());
+    datasetDAO.updateDatasetIndexedDate(indexed.getDatasetId(), Instant.now());
+    datasetDAO.updateDatasetIndexedDate(otherStudyIndexed.getDatasetId(), Instant.now());
+
+    assertEquals(
+        List.of(indexed.getDatasetId()),
+        studyDAO.findIndexedDatasetIdsByStudyId(study.getStudyId()));
+  }
+
+  @Test
+  void testFindAllStudyIds() {
+    Integer first = insertStudyCreatedAt(Instant.now());
+    Integer second = insertStudyCreatedAt(Instant.now());
+
+    assertEquals(List.of(first, second), studyDAO.findAllStudyIds());
+  }
+
+  @Test
+  void testFindStudyIdsChangedSinceIncludesNewAndEditedStudies() {
+    Instant since = Instant.parse("2026-10-30T18:00:00Z");
+    Integer untouched = insertStudyCreatedAt(since.minus(1, ChronoUnit.DAYS));
+    Integer editedAtSince = insertStudyCreatedAt(since.minus(1, ChronoUnit.DAYS));
+    setUpdateDate(editedAtSince, since);
+    Integer editedBefore = insertStudyCreatedAt(since.minus(2, ChronoUnit.DAYS));
+    setUpdateDate(editedBefore, since.minus(1, ChronoUnit.HOURS));
+    Integer createdAtSince = insertStudyCreatedAt(since);
+    Integer createdAfter = insertStudyCreatedAt(since.plus(1, ChronoUnit.HOURS));
+
+    List<Integer> changed = studyDAO.findStudyIdsChangedSince(since);
+
+    assertEquals(List.of(editedAtSince, createdAtSince, createdAfter), changed);
+    assertFalse(changed.contains(untouched));
+    assertFalse(changed.contains(editedBefore));
+  }
+
+  private Integer insertStudyCreatedAt(Instant createDate) {
+    return studyDAO.insertStudy(
+        RandomStringUtils.randomAlphabetic(20),
+        "description",
+        "PI",
+        null,
+        List.of("type"),
+        true,
+        createUser().getUserId(),
+        createDate,
+        UUID.randomUUID());
+  }
+
+  private void setUpdateDate(Integer studyId, Instant updateDate) {
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate("UPDATE study SET update_date = :updateDate WHERE study_id = :id")
+                .bind("updateDate", updateDate)
+                .bind("id", studyId)
+                .execute());
   }
 
   private Study insertStudyWithProperties() {

@@ -1,0 +1,10 @@
+type: object
+description: The last line of a bulk asset record resync.
+properties:
+  synced:
+    type: integer
+  failed:
+    type: integer
+  indexFailed:
+    type: integer
+    description: Studies that synced but whose datasets could not be reindexed.

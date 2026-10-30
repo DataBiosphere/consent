@@ -17,14 +17,19 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.lang.reflect.Type;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +57,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("api/dataset/study")
 public class StudyResource extends Resource {
+
+  private static final String NDJSON = "application/x-ndjson";
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
@@ -130,6 +137,32 @@ public class StudyResource extends Resource {
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("/assets/sync")
+  @Produces(NDJSON)
+  @RolesAllowed({ADMIN})
+  public Response syncAllStudyAssets(@Auth DuosUser duosUser, @QueryParam("since") String since) {
+    try {
+      StreamingOutput results =
+          datasetService.syncAllStudyAssets(duosUser.getUser(), parseSince(since));
+      return Response.ok(results, NDJSON).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  private static Instant parseSince(String since) {
+    if (since == null) {
+      return null;
+    }
+    try {
+      return Instant.parse(since);
+    } catch (DateTimeParseException e) {
+      throw new BadRequestException(
+          "since must be an ISO-8601 instant, such as 2026-10-30T18:00:00Z", e);
     }
   }
 

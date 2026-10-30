@@ -59,6 +59,13 @@ public class DatasetServiceDAO implements ConsentLogger {
     this.studyDAO = jdbi.onDemand(StudyDAO.class);
   }
 
+  /**
+   * Rebuilds a study's asset records from its stored registration, for the plan's Rollback steps.
+   */
+  public void syncStudyAssets(Integer studyId) {
+    jdbi.useTransaction(handle -> assetRecordSync.syncStudy(handle, studyId));
+  }
+
   public void deleteDataset(Dataset dataset, Integer userId) {
     jdbi.useTransaction(_ -> executeDeleteDataset(dataset, userId));
   }

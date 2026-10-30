@@ -7,6 +7,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
@@ -16,7 +17,11 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +55,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -438,6 +444,97 @@ public class DatasetService implements ConsentLogger {
     }
     datasetServiceDAO.deleteStudy(study, datasets, user);
     study.getDatasetIds().forEach(datasetId -> deleteFromIndex(datasetId, user.getUserId()));
+  }
+
+  public StudyAssetSync syncStudyAssets(User admin, Integer studyId) {
+    logInfo("User %d resyncs the asset records of study %d".formatted(admin.getUserId(), studyId));
+    return syncStudyAssets(studyId);
+  }
+
+  /** Every study, or those created or updated at or after {@code since}; one transaction each. */
+  public StreamingOutput syncAllStudyAssets(User admin, Instant since) {
+    List<Integer> studyIds =
+        since == null ? studyDAO.findAllStudyIds() : studyDAO.findStudyIdsChangedSince(since);
+    logInfo(
+        "User %d resyncs the asset records of %d studies, since %s"
+            .formatted(admin.getUserId(), studyIds.size(), since));
+    Gson gson = GsonUtil.getInstance();
+    return output -> {
+      int synced = 0;
+      int failed = 0;
+      int indexFailed = 0;
+      // A dropped connection must not leave the rest of a recovery run undone.
+      boolean clientConnected = true;
+      for (Integer studyId : studyIds) {
+        StudyAssetSync result = syncStudyAssetsReportingFailure(studyId);
+        if (!result.synced()) {
+          failed++;
+        } else {
+          synced++;
+          if (result.index() == StudyAssetSync.IndexOutcome.FAILED) {
+            indexFailed++;
+          }
+        }
+        clientConnected = clientConnected && writeLine(output, gson.toJson(result));
+      }
+      StudyAssetSync.Summary summary = new StudyAssetSync.Summary(synced, failed, indexFailed);
+      logInfo("Asset record resync finished: %s".formatted(summary));
+      if (clientConnected) {
+        writeLine(output, gson.toJson(summary));
+      }
+    };
+  }
+
+  private StudyAssetSync syncStudyAssets(Integer studyId) {
+    datasetServiceDAO.syncStudyAssets(studyId);
+    return StudyAssetSync.synced(studyId, reindexIndexedDatasets(studyId));
+  }
+
+  private StudyAssetSync syncStudyAssetsReportingFailure(Integer studyId) {
+    try {
+      return syncStudyAssets(studyId);
+    } catch (WebApplicationException e) {
+      logWarn("Asset record resync of study %d failed".formatted(studyId), e);
+      return StudyAssetSync.failed(studyId, e.getResponse().getStatus(), e.getMessage());
+    } catch (RuntimeException e) {
+      logWarn("Asset record resync of study %d failed".formatted(studyId), e);
+      return StudyAssetSync.failed(studyId, 500, "Unexpected error; see the server log");
+    }
+  }
+
+  /** Only datasets already in the index, so a resync never re-adds one an admin removed. */
+  private StudyAssetSync.IndexOutcome reindexIndexedDatasets(Integer studyId) {
+    try {
+      List<Integer> datasetIds = studyDAO.findIndexedDatasetIdsByStudyId(studyId);
+      if (datasetIds.isEmpty()) {
+        return StudyAssetSync.IndexOutcome.NOT_INDEXED;
+      }
+      try (Response response = elasticSearchService.indexDatasets(datasetIds)) {
+        // A bulk request answers 200 even when some documents failed.
+        if (HttpStatusCodes.isSuccess(response.getStatus())
+            && !JsonParser.parseString(String.valueOf(response.getEntity()))
+                .getAsJsonObject()
+                .get("errors")
+                .getAsBoolean()) {
+          return StudyAssetSync.IndexOutcome.UPDATED;
+        }
+      }
+      logWarn("Unable to reindex the datasets of study %d".formatted(studyId));
+    } catch (IOException | RuntimeException e) {
+      logWarn("Unable to reindex the datasets of study %d".formatted(studyId), e);
+    }
+    return StudyAssetSync.IndexOutcome.FAILED;
+  }
+
+  private boolean writeLine(OutputStream output, String json) {
+    try {
+      output.write((json + "\n").getBytes(StandardCharsets.UTF_8));
+      output.flush();
+      return true;
+    } catch (IOException e) {
+      logWarn("The asset record resync client disconnected; the run continues", e);
+      return false;
+    }
   }
 
   public Study findStudy(Integer studyId) {

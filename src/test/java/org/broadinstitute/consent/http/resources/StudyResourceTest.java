@@ -13,8 +13,11 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -941,5 +944,45 @@ class StudyResourceTest extends AbstractTestHelper {
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsIsAdminOnly() throws NoSuchMethodException {
+    RolesAllowed roles =
+        StudyResource.class
+            .getMethod("syncAllStudyAssets", DuosUser.class, String.class)
+            .getAnnotation(RolesAllowed.class);
+    assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+  }
+
+  @Test
+  void testSyncAllStudyAssetsPassesSince() {
+    when(duosUser.getUser()).thenReturn(user);
+    Instant since = Instant.parse("2026-10-30T18:00:00Z");
+    StreamingOutput results = output -> {};
+    when(datasetService.syncAllStudyAssets(user, since)).thenReturn(results);
+    try (var response = resource.syncAllStudyAssets(duosUser, "2026-10-30T18:00:00Z")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(results, response.getEntity());
+      assertEquals("application/x-ndjson", response.getMediaType().toString());
+    }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.syncAllStudyAssets(user, null)).thenReturn(output -> {});
+    try (var response = resource.syncAllStudyAssets(duosUser, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsRejectsAMalformedSince() {
+    when(duosUser.getUser()).thenReturn(user);
+    try (var response = resource.syncAllStudyAssets(duosUser, "yesterday")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(datasetService, never()).syncAllStudyAssets(any(), any());
   }
 }

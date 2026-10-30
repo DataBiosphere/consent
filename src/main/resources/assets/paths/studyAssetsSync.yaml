@@ -1,0 +1,35 @@
+post:
+  summary: Resync the Asset Records of Many Studies
+  operationId: apiDatasetStudyAssetsSyncPost
+  description: Resyncs each study as the single-study call does, one transaction per study in study id order. A failed study is reported and the run continues. Streams one StudyAssetSync per line, then a summary line with the counts synced, failed and indexFailed.
+  tags:
+    - Admin
+  parameters:
+    - name: since
+      in: query
+      description: ISO-8601 instant, such as 2026-10-30T18:00:00Z. Resyncs only studies created or updated at or after it; omit to resync every study.
+      required: false
+      schema:
+        type: string
+        format: date-time
+  responses:
+    200:
+      description: Newline-delimited JSON, streamed as each study finishes
+      content:
+        application/x-ndjson:
+          schema:
+            oneOf:
+              - $ref: '../schemas/StudyAssetSync.yaml'
+              - $ref: '../schemas/StudyAssetSyncSummary.yaml'
+    400:
+      description: since is not an ISO-8601 instant
+    401:
+      description: Unauthorized.
+    403:
+      description: User is not an Admin
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

@@ -1,0 +1,17 @@
+type: object
+description: One study's result from an asset record resync.
+properties:
+  studyId:
+    type: integer
+  synced:
+    type: boolean
+  index:
+    type: string
+    enum: [UPDATED, NOT_INDEXED, FAILED]
+    description: Present when synced. NOT_INDEXED means none of the study's datasets is in the search index.
+  status:
+    type: integer
+    description: Present when the sync failed; the HTTP status the single-study call would return.
+  error:
+    type: string
+    description: Present when the sync failed.

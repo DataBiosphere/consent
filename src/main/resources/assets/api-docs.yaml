@@ -601,6 +601,10 @@ paths:
     $ref: './paths/studyConvertByIdentifier.yaml'
   /api/dataset/study/{studyId}/custodians:
     $ref: './paths/studyByIdCustodians.yaml'
+  /api/dataset/study/{studyId}/assets/sync:
+    $ref: './paths/studyAssetsSyncByStudyId.yaml'
+  /api/dataset/study/assets/sync:
+    $ref: './paths/studyAssetsSync.yaml'
   /api/dataset/study/{studyId}/assets/publications:
     $ref: './paths/studyPublications.yaml'
   /api/dataset/study/{studyId}/assets/models:

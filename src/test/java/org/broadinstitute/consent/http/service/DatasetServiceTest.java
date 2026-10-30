@@ -33,7 +33,10 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -67,6 +70,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -845,6 +849,130 @@ class DatasetServiceTest extends AbstractTestHelper {
     verify(datasetDAO, never()).findDatasetsByIdList(any());
     verify(datasetServiceDAO).deleteStudy(study, List.of(), mockUser);
     verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testSyncStudyAssetsReindexesOnlyTheIndexedDatasets() throws Exception {
+    when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenReturn(List.of(1, 2));
+    when(elasticSearchService.indexDatasets(List.of(1, 2)))
+        .thenReturn(Response.ok("{\"errors\":false,\"items\":[]}").build());
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.UPDATED), result);
+    InOrder order = inOrder(datasetServiceDAO, elasticSearchService);
+    order.verify(datasetServiceDAO).syncStudyAssets(7);
+    order.verify(elasticSearchService).indexDatasets(List.of(1, 2));
+  }
+
+  @Test
+  void testSyncStudyAssetsWithNoIndexedDatasetsTouchesNoIndex() {
+    when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenReturn(List.of());
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.NOT_INDEXED), result);
+    verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testSyncStudyAssetsKeepsTheSyncWhenTheReindexFails() throws Exception {
+    when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenReturn(List.of(1));
+    when(elasticSearchService.indexDatasets(List.of(1))).thenReturn(Response.status(500).build());
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
+  }
+
+  @Test
+  void testSyncStudyAssetsReportsADocumentTheBulkIndexRejected() throws Exception {
+    when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenReturn(List.of(1));
+    when(elasticSearchService.indexDatasets(List.of(1)))
+        .thenReturn(Response.ok("{\"errors\":true,\"items\":[]}").build());
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
+  }
+
+  @Test
+  void testSyncStudyAssetsKeepsTheSyncWhenTheDatasetLookupFails() {
+    when(studyDAO.findIndexedDatasetIdsByStudyId(7)).thenThrow(new IllegalStateException("down"));
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
+  }
+
+  @Test
+  void testSyncStudyAssetsFailureSkipsTheReindex() {
+    doThrow(new NotFoundException("Study with ID 7 does not exist."))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(7);
+
+    assertThrows(NotFoundException.class, () -> datasetService.syncStudyAssets(mockUser, 7));
+    verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testSyncAllStudyAssetsContinuesPastAFailingStudy() throws Exception {
+    Instant since = Instant.parse("2026-10-30T18:00:00Z");
+    when(studyDAO.findStudyIdsChangedSince(since)).thenReturn(List.of(1, 2, 3));
+    doNothing().when(datasetServiceDAO).syncStudyAssets(1);
+    doThrow(new BadRequestException("Biospecimen at index 0: send the sample id in sampleId"))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(2);
+    doThrow(new IllegalStateException("lost connection"))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(3);
+    when(studyDAO.findIndexedDatasetIdsByStudyId(1)).thenReturn(List.of());
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    datasetService.syncAllStudyAssets(mockUser, since).write(output);
+
+    assertEquals(
+        List.of(
+            "{\"studyId\":1,\"synced\":true,\"index\":\"NOT_INDEXED\"}",
+            "{\"studyId\":2,\"synced\":false,\"status\":400,"
+                + "\"error\":\"Biospecimen at index 0: send the sample id in sampleId\"}",
+            "{\"studyId\":3,\"synced\":false,\"status\":500,"
+                + "\"error\":\"Unexpected error; see the server log\"}",
+            "{\"synced\":1,\"failed\":2,\"indexFailed\":0}"),
+        output.toString(StandardCharsets.UTF_8).lines().toList());
+    verify(studyDAO, never()).findIndexedDatasetIdsByStudyId(2);
+    verify(studyDAO, never()).findIndexedDatasetIdsByStudyId(3);
+  }
+
+  @Test
+  void testSyncAllStudyAssetsKeepsSyncingAfterTheClientDisconnects() throws Exception {
+    when(studyDAO.findAllStudyIds()).thenReturn(List.of(1, 2));
+    when(studyDAO.findIndexedDatasetIdsByStudyId(any())).thenReturn(List.of());
+    OutputStream disconnected = mock(OutputStream.class);
+    doThrow(new IOException("broken pipe")).when(disconnected).write(any(byte[].class));
+
+    datasetService.syncAllStudyAssets(mockUser, null).write(disconnected);
+
+    verify(datasetServiceDAO).syncStudyAssets(1);
+    verify(datasetServiceDAO).syncStudyAssets(2);
+    verify(disconnected, times(1)).write(any(byte[].class));
+  }
+
+  @Test
+  void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() throws Exception {
+    when(studyDAO.findAllStudyIds()).thenReturn(List.of(4));
+    when(studyDAO.findIndexedDatasetIdsByStudyId(4)).thenReturn(List.of(9));
+    when(elasticSearchService.indexDatasets(List.of(9))).thenThrow(new IOException("down"));
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    datasetService.syncAllStudyAssets(mockUser, null).write(output);
+
+    assertEquals(
+        List.of(
+            "{\"studyId\":4,\"synced\":true,\"index\":\"FAILED\"}",
+            "{\"synced\":1,\"failed\":0,\"indexFailed\":1}"),
+        output.toString(StandardCharsets.UTF_8).lines().toList());
+    verify(studyDAO, never()).findStudyIdsChangedSince(any());
   }
 
   @Test
