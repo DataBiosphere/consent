@@ -43,7 +43,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
 
   private static final Pattern ROW_ID = Pattern.compile("[1-9]\\d{0,9}");
   private static final BigDecimal MAX_ROW_ID = BigDecimal.valueOf(Integer.MAX_VALUE);
-  // Stays under the btree row limit of the legacy_key unique index at 4 bytes a char.
+  // Code points, as SQL counts them; at 4 bytes each this fits the legacy_key index's row limit.
   private static final int MAX_LEGACY_KEY_LENGTH = 255;
 
   private static final List<AssetType<?>> TYPES =
@@ -172,7 +172,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
 
   /**
    * A new row keeps its client id as a legacy key only when no other row or entry shares it. An id
-   * holding a NUL character, which Postgres text cannot store, keeps none.
+   * holding a NUL character or an unpaired surrogate, which Postgres text cannot store, keeps none.
    */
   private static String legacyKey(
       JsonElement id, Map<String, Long> idCounts, Set<String> usedLegacyKeys) {
@@ -181,8 +181,9 @@ public class StudyAssetRecordSync implements ConsentLogger {
             && text != null
             && idCounts.get(text) == 1
             && !usedLegacyKeys.contains(text)
-            && text.indexOf('\u0000') < 0
-            && text.length() <= MAX_LEGACY_KEY_LENGTH
+            && text.codePoints()
+                .noneMatch(c -> c == 0 || Character.getType(c) == Character.SURROGATE)
+            && text.codePointCount(0, text.length()) <= MAX_LEGACY_KEY_LENGTH
         ? text
         : null;
   }

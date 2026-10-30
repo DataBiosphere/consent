@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -21,6 +22,8 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyModelRecord;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.StudyWorkspaceRecord;
+import org.broadinstitute.consent.http.models.dto.registration.RegistrationRequestMapper;
+import org.broadinstitute.consent.http.models.dto.registration.StudyRegistrationRequest;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
@@ -188,8 +191,9 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
   @Test
   void testAnIdTooLongForTheIndexKeepsNoLegacyKey() throws Exception {
-    String longest = "k".repeat(255);
-    String tooLong = "k".repeat(256);
+    // Two UTF-16 units each, so the cap is counted in code points as SQL counts them.
+    String longest = "\uD83D\uDE00".repeat(255);
+    String tooLong = "\uD83D\uDE00".repeat(256);
 
     Integer studyId =
         create(
@@ -216,6 +220,41 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertEquals("not an object", models.get(1).getAsString());
     assertEquals("42", models.get(2).toString());
     assertEquals(1, assetDAO.findModelsByStudyId(studyId).size());
+  }
+
+  @Test
+  void testIdsWithUnpairedSurrogatesKeepNoLegacyKey() throws Exception {
+    Integer studyId =
+        create(prop("models", "[{\"modelId\": \"a\\uD800\"}, {\"modelId\": \"a\\uDC00\"}]"));
+
+    List<StudyModelRecord> rows = assetDAO.findModelsByStudyId(studyId);
+    assertEquals(2, rows.size());
+    assertTrue(rows.stream().allMatch(row -> row.legacyKey() == null));
+  }
+
+  @Test
+  void testWriteBackKeepsNumbersAsTheRequestMapperStoredThem() throws Exception {
+    StudyRegistrationRequest request =
+        new ObjectMapper()
+            .readValue(
+                """
+                {"models": [{"modelId": "", "extra": {"n": 12345678901234567890, "f": 1.50}}]}""",
+                StudyRegistrationRequest.class);
+    StudyProperty models =
+        new RegistrationRequestMapper()
+            .toStudyProperties(request).stream()
+                .filter(p -> p.getKey().equals("models"))
+                .findFirst()
+                .orElseThrow();
+
+    Integer studyId = create(models);
+
+    // Jackson reads 1.50 as a double before the sync sees it; the sync changes nothing further.
+    JsonObject model = stored(studyId, "models").get(0).getAsJsonObject();
+    assertEquals("{\"n\":12345678901234567890,\"f\":1.5}", model.get("extra").toString());
+    assertEquals(
+        assetDAO.findModelsByStudyId(studyId).getFirst().modelId(),
+        model.get("modelId").getAsInt());
   }
 
   @Test
@@ -424,7 +463,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     return new DatasetInsert("dataset", null, null, createUser().getUserId(), List.of(), List.of());
   }
 
-  /** A JSON study property, coerced as the registration mapper coerces it. */
+  /** A JSON study property, coerced as the registration mapper coerces its own output. */
   private static StudyProperty prop(String key, String json) {
     return new StudyProperty(key, PropertyType.Json.coerce(json), PropertyType.Json);
   }

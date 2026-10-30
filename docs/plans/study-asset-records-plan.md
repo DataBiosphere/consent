@@ -172,7 +172,7 @@ This is the core of the ticket.
   | --- | --- |
   | Id is in row-id form and matches an unclaimed live row of this study | Update and claim that row |
   | Id is any other non-blank value and matches the `legacy_key` of an unclaimed live row | Update and claim that row. Covers a form opened before the conversion |
-  | Anything else: no id, a blank id, a claimed or retired row's id, another study's id, or a number out of range | Insert a row (a biospecimen in row-id form with no `sampleId` is rejected instead; Decision 12). `legacy_key` is the id when it is non-blank, not in row-id form, not repeated in the incoming list, and unused by the study's rows, and null otherwise; Task 6 applies the same rule |
+  | Anything else: no id, a blank id, a claimed or retired row's id, another study's id, or a number out of range | Insert a row (a biospecimen in row-id form with no `sampleId` is rejected instead; Decision 12). `legacy_key` is the id when it is non-blank, not in row-id form, not repeated in the incoming list, unused by the study's rows, at most 255 code points (`char_length`), and free of NUL and unpaired surrogates, and null otherwise; Task 6 applies the same rule |
   | Live row not claimed by any entry | Retire the row |
 
   An id is in **row-id form** when it is a JSON number with a whole value from 1 to 2147483647, or a string matching `^[1-9][0-9]{0,9}$` whose value is at most 2147483647. Task 1's changeset creates it as the SQL function `asset_id_in_row_form(jsonb)`, which the deploy check and Task 6 call; Task 3's Java helper is tested against the same cases.
