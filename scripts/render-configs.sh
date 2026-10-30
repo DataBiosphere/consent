@@ -4,7 +4,8 @@
 # ("Render Configs") and docs/plans/render-local-configs-plan.md.
 #
 # A run with no options writes only the certs, which rotate every 3 months. Other options turn
-# on the other files. --all turns on all of them.
+# on the other files. --all turns on all of them. In the Dev Container,
+# scripts/setup-devcontainer.sh runs this script.
 #
 # You MUST be on the non-split Broad VPN for the steps that read the dev cluster: the certs, and
 # the .env values that an old .env does not have. You MUST be logged in with gcloud. The chart
