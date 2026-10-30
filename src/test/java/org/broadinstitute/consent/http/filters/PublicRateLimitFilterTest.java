@@ -71,13 +71,13 @@ class PublicRateLimitFilterTest {
     PublicRateLimitConfiguration showcase = new PublicRateLimitConfiguration();
     showcase.setRequestsPerMinute(1);
     showcase.setTrustedProxies(List.of("127.0.0.1/32"));
-    showcase.setClientIpSecret(current);
-    showcase.setClientIpPreviousSecret(previous);
     RateLimitConfiguration config = new RateLimitConfiguration();
     config.setEnabled(true);
     config.setRequestsPerMinute(100);
     config.setPodCount(1);
     config.setShowcase(showcase);
+    config.setClientIpSecret(current);
+    config.setClientIpPreviousSecret(previous);
     return spy(new PublicRateLimitFilter(config, servletRequest, CLOCK));
   }
 

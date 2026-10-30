@@ -75,11 +75,7 @@ class ShowcaseRateLimitTests extends ContainerTests {
 
   private HttpResponse<Void> getSigned(String realIp, String clientIp) throws Exception {
     String hmacSecret =
-        APPLICATION
-            .getConfiguration()
-            .getRateLimitConfiguration()
-            .getShowcase()
-            .getClientIpSecret();
+        APPLICATION.getConfiguration().getRateLimitConfiguration().getClientIpSecret();
     long now = Instant.now().getEpochSecond();
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(serviceUrl(PATH)))

@@ -457,22 +457,30 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
   from Consent must not let anyone forge DUOS sessions. It is created by hand, at least 32
   characters, in Google Secret Manager for each environment, until DT-3625 adds automatic
   rotation. The BFF reads it as `DUOS_CONSENT_PROXY_SECRET`; Consent reads
-  `rateLimit.showcase.clientIpSecret` and the optional `rateLimit.showcase.clientIpPreviousSecret`.
+  `rateLimit.clientIpSecret` and the optional `rateLimit.clientIpPreviousSecret`.
   Without a secret on either side, the route still works and BFF traffic shares one bucket. Manual
   rotation without an outage: (1) give Consent the new value as current and the old value as
   previous; (2) change the BFF to the new value; (3) remove the previous value from Consent.
 
   Deploy config (terra-helmfile): one GSM secret per live environment, `duos-consent-proxy-secret`,
   with the property `current` and, during a rotation only, `previous`. DUOS reads `current`
-  (`envSecrets.consent_proxy_secret`). The Consent chart's `showcaseClientIp.enabled` adds
-  `current` to `consent-secrets` and passes it as `-Ddw.rateLimit.showcase.clientIpSecret`;
-  `showcaseClientIp.previousEnabled` adds `previous` the same way. Create the GSM secret before
+  (`envSecrets.consent_proxy_secret`). The Consent chart's `signedClientIp.enabled` adds
+  `current` to `consent-secrets` and passes it as `-Ddw.rateLimit.clientIpSecret`;
+  `signedClientIp.previousEnabled` adds `previous` the same way. Create the GSM secret before
   either value is turned on, or the ExternalSecret cannot sync. To rotate: add a GSM version with
   `current` = new and `previous` = old, and turn on `previousEnabled`. Both apps read `current`,
   so step (2) happens when each pod reloads. If DUOS reloads before Consent, its lookups share one
   bucket until Consent reloads; nothing fails. Then turn off `previousEnabled` and remove
-  `previous` from GSM. The
-  rejected alternative was one shared Consent bucket for all BFF traffic with a higher budget: it
+  `previous` from GSM.
+
+  The secret and the headers are not specific to the showcase. Another anonymous BFF route that
+  needs a per-browser limit in Consent can sign with the same helper, and another Consent limiter
+  can build a `SignedClientIpVerifier` from the same `rateLimit` values. A verified IP is only a
+  rate-limit key: never use it to grant access. Local development needs no secret. A local BFF
+  that calls dev Consent reaches it through the load balancer, which keys on the developer's own
+  address; a local BFF with a local Consent can set the same value in both, but does not need to.
+
+  The rejected alternative was one shared Consent bucket for all BFF traffic with a higher budget: it
   needs a load test to size, and one busy user can still use the full budget for all users.
 
 ### Subscription registry synchronization (E7, not MVP)

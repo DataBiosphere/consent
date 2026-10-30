@@ -75,7 +75,7 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
     this.clientIpResolver = new ClientIpResolver(showcase.getTrustedProxies());
     this.signedClientIpVerifier =
         new SignedClientIpVerifier(
-            showcase.getClientIpSecret(), showcase.getClientIpPreviousSecret(), clock);
+            config.getClientIpSecret(), config.getClientIpPreviousSecret(), clock);
     int capacityPerPod =
         Math.max(
             1, (int) Math.ceil(showcase.getRequestsPerMinute() / (double) config.getPodCount()));
