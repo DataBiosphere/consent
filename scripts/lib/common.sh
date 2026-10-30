@@ -23,7 +23,10 @@ env_get() {
 }
 
 # Set KEY to VALUE in an env file, and keep the other lines. The new file replaces the old one
-# with a rename, so a failure leaves the old file as it was. The file gets mode 600.
+# with a rename, so a failure leaves the old file as it was. The file gets mode 600. A new file
+# starts with ENV_HEADER, because any of the scripts can be the first to write .env.
+ENV_HEADER="# Written by the scripts in scripts/. Values in an old .env carry forward. This file holds
+# secrets: do not share it. docker-compose.yaml reads it."
 env_set() {
   local file="$1" key="$2" value="$3" tmp
   if [[ "$value" == *"'"* ]]; then
@@ -36,12 +39,15 @@ env_set() {
   # run with no new values writes the same file. Remove other KEY lines. If no line has KEY, add it
   # at the end. ENVIRON passes the line with no change: awk -v changes a backslash.
   local src="$file"
-  [[ -f "$file" ]] || src=/dev/null
+  if [[ ! -f "$file" ]]; then
+    src=/dev/null
+    echo "$ENV_HEADER" > "$tmp"
+  fi
   ENV_LINE="$key='$value'" awk -v k="$key=" '
     index($0, k) == 1 { if (!done) print ENVIRON["ENV_LINE"]; done = 1; next }
     { print }
     END { if (!done) print ENVIRON["ENV_LINE"] }
-  ' "$src" > "$tmp"
+  ' "$src" >> "$tmp"
   mv "$tmp" "$file"
 }
 
