@@ -68,8 +68,8 @@ check_gcloud_installed() {
     if ! gcloud --version 1>/dev/null 2>&1; then
         abort "gcloud is required; install google-cloud-sdk to continue"
     fi
-    if ! cloud_sql_proxy --version 1>/dev/null 2>&1; then
-        gcloud components install -q cloud_sql_proxy
+    if ! cloud-sql-proxy --version 1>/dev/null 2>&1; then
+        gcloud components install -q cloud-sql-proxy
     fi
 }
 
@@ -104,8 +104,15 @@ PASSWORD=$(echo "$PG_JSON" | jq -r .password)
 
 INSTANCE="broad-dsde-$1:us-central1:$INSTANCE"
 
-cloud_sql_proxy -instances="$INSTANCE"=tcp:5432 -dir=/tmp &
+# Cloud SQL Auth Proxy v2 uses only Application Default Credentials. v1 also used the gcloud user
+# login, so check for them first.
+gcloud auth application-default print-access-token > /dev/null 2>&1 \
+    || abort "No Application Default Credentials. Run: gcloud auth application-default login"
+
+# Cloud SQL Auth Proxy v2 listens on 127.0.0.1 only. Port 5433, because the local compose
+# database publishes 5432.
+cloud-sql-proxy --port 5433 "$INSTANCE" &
 sleep 3
-psql "postgresql://$USERNAME:$PASSWORD@localhost:5432/consent"
+psql "postgresql://$USERNAME:$PASSWORD@localhost:5433/consent"
 
 kill -- -"$$"

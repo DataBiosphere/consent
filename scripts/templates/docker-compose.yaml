@@ -101,7 +101,7 @@ services:
       # create_host_path: false, so a missing dump stops compose. Without it, Docker makes an empty
       # folder with that name, and the database starts empty with no error.
       - type: bind
-        source: ./${CONSENT_DB_DUMP:?No database dump. Set CONSENT_DB_DUMP in config/.env to a dump file in config/}
+        source: ./${CONSENT_DB_DUMP:?No database dump. Run ./scripts/render-configs.sh --export_db true}
         target: /docker-entrypoint-initdb.d/${CONSENT_DB_DUMP}
         read_only: true
         bind:
