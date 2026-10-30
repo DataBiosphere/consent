@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,6 +82,33 @@ class ShowcaseCatalogQueriesDAOTest extends DAOTestHelper {
     assertEquals(List.of(), newest(false, List.of()));
   }
 
+  /** The eligibility SQL copies findShowcaseSummaries, so a deleted DAC hides its datasets here. */
+  @Test
+  void testDeletedDacHidesItsDatasets() {
+    Integer kept = approvedDataset("2026-10-01 12:00:00", dacX);
+    approvedDataset("2026-10-02 12:00:00", dacY);
+    jdbi.useHandle(
+        handle -> handle.execute("UPDATE dac SET deleted = true WHERE dac_id = ?", dacY));
+
+    assertEquals(List.of(kept), newest(false, null));
+    assertEquals(List.of(kept), datasetDAO.findShowcaseAliasPage(-1, 12));
+  }
+
+  /** The legacy key counts, and an access value matches whatever its case and outer whitespace. */
+  @Test
+  void testLegacyKeyAndLooseAccessValues() {
+    Integer legacy =
+        dataset(
+            publicStudyId,
+            Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
+            "open",
+            "2026-10-01T12:00:00Z",
+            null);
+    Integer loose = dataset("  OPEN\t", "2026-10-02T12:00:00Z", null);
+
+    assertEquals(List.of(loose, legacy), newest(true, null));
+  }
+
   @Test
   void testExclusionsAndLimit() {
     Integer oldest = dataset("open", "2026-09-01T12:00:00Z", null);
@@ -90,8 +118,23 @@ class ShowcaseCatalogQueriesDAOTest extends DAOTestHelper {
     assertEquals(
         List.of(newest, oldest),
         datasetDAO.findShowcaseNewestAliases(false, null, List.of(middle), 12));
+    assertEquals(
+        List.of(newest, middle, oldest),
+        datasetDAO.findShowcaseNewestAliases(false, null, null, 12));
     assertEquals(List.of(newest), datasetDAO.findShowcaseNewestAliases(false, null, List.of(), 1));
     assertEquals(List.of(), datasetDAO.findShowcaseNewestAliases(false, null, List.of(), 0));
+  }
+
+  @Test
+  void testExclusionInsideDacScope() {
+    Integer kept = approvedDataset("2026-10-01 12:00:00", dacX);
+    Integer excluded = approvedDataset("2026-10-02 12:00:00", dacX);
+    approvedDataset("2026-10-03 12:00:00", dacY);
+
+    assertEquals(
+        List.of(kept),
+        datasetDAO.findShowcaseNewestAliases(
+            false, List.of("Example DAC X"), List.of(excluded), 12));
   }
 
   /** Pages are in alias order, start after the given alias, and skip ineligible datasets. */
@@ -105,6 +148,18 @@ class ShowcaseCatalogQueriesDAOTest extends DAOTestHelper {
     assertEquals(List.of(first, second), datasetDAO.findShowcaseAliasPage(-1, 2));
     assertEquals(List.of(third), datasetDAO.findShowcaseAliasPage(second, 2));
     assertEquals(List.of(), datasetDAO.findShowcaseAliasPage(third, 2));
+    assertEquals(List.of(), datasetDAO.findShowcaseAliasPage(-1, 0));
+  }
+
+  /** Alias 0 is a valid legacy identifier, so the first page, after -1, starts with it. */
+  @Test
+  void testFirstPageStartsAtAliasZero() {
+    Integer legacy = dataset("open", "2026-10-01T12:00:00Z", null);
+    jdbi.useHandle(
+        handle -> handle.execute("UPDATE dataset SET alias = 0 WHERE alias = ?", legacy));
+    Integer next = dataset("open", "2026-10-01T12:00:00Z", null);
+
+    assertEquals(List.of(0, next), datasetDAO.findShowcaseAliasPage(-1, 2));
   }
 
   private List<Integer> newest(boolean openAccessOnly, List<String> dacNames) {
@@ -116,6 +171,11 @@ class ShowcaseCatalogQueriesDAOTest extends DAOTestHelper {
   }
 
   private Integer dataset(Integer studyId, String access, String created, Integer dacId) {
+    return dataset(studyId, ACCESS, access, created, dacId);
+  }
+
+  private Integer dataset(
+      Integer studyId, String accessKey, String access, String created, Integer dacId) {
     Integer id =
         datasetDAO.insertDataset(
             "Example Cohort " + UUID.randomUUID(),
@@ -125,7 +185,7 @@ class ShowcaseCatalogQueriesDAOTest extends DAOTestHelper {
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
     datasetDAO.updateStudyId(id, studyId);
-    insertProperty(id, ACCESS, access);
+    insertProperty(id, accessKey, access);
     Integer alias = datasetDAO.findDatasetById(id).getAlias();
     assertNotNull(alias);
     return alias;

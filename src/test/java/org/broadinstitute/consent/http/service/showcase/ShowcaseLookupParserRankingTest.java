@@ -172,6 +172,22 @@ class ShowcaseLookupParserRankingTest {
   }
 
   @Test
+  void testLongestDacName() {
+    String dacName = "D".repeat(255);
+    assertEquals(
+        List.of(dacName),
+        ranking("\"scope\": { \"dac\": [\"%s\"] }".formatted(dacName)).scope().dacNames());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 256})
+  void testDacNameLength(int length) {
+    assertRejected(
+        "{ %s, \"scope\": { \"dac\": [\"A\", \"%s\"] } }".formatted(LATEST, "D".repeat(length)),
+        "Field \"scope.dac\" entry 1 must have 1 to 255 characters");
+  }
+
+  @Test
   void testDuplicateScopeKey() {
     assertRejected(
         "{ %s, \"scope\": { \"dac\": [\"A\"], \"dac\": [\"B\"] } }".formatted(LATEST),
