@@ -77,6 +77,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1119,6 +1120,99 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testFailedRegistrationWriteDeletesUploadedFiles() throws Exception {
+    User user = mock();
+    StudyRegistrationRequest schema = createRandomCompleteDatasetRegistration(user);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "plan"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetServiceDAO.insertDatasetRegistration(any(), any()))
+        .thenThrow(new BadRequestException("rejected"));
+
+    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", textFile());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.createDatasetsFromRegistration(schema, user, files));
+
+    verify(gcsService).deleteDocument("plan");
+  }
+
+  @Test
+  void testFailedStudyUpdateDeletesUploadedFiles() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "plan"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    when(gcsService.deleteDocument("plan")).thenThrow(new RuntimeException("delete failed"));
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenThrow(new BadRequestException("rejected"));
+
+    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", textFile());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateStudyFromRegistration(1, schema, user, files));
+
+    verify(gcsService).deleteDocument("plan");
+  }
+
+  @Test
+  void testFailureAfterTheRegistrationWriteKeepsUploadedFiles() throws Exception {
+    User user = mock();
+    StudyRegistrationRequest schema = createRandomCompleteDatasetRegistration(user);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "plan"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    when(datasetDAO.findDatasetsByIdList(any())).thenThrow(new RuntimeException("read failed"));
+
+    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan", textFile());
+
+    assertThrows(
+        RuntimeException.class,
+        () -> datasetRegistrationService.createDatasetsFromRegistration(schema, user, files));
+
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
+  @Test
+  void testFailedDatasetUpdateDeletesUploadedFiles() throws Exception {
+    User user = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(2);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "cert"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
+    doThrow(new UnableToExecuteStatementException("rejected"))
+        .when(datasetServiceDAO)
+        .updateDataset(any());
+
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate("name", 2, List.of());
+    Map<String, FormDataBodyPart> files =
+        Map.of("consentGroups[0].nihInstitutionalCertificationFile", textFile());
+
+    assertThrows(
+        UnableToExecuteStatementException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, files));
+
+    verify(gcsService).deleteDocument("cert");
+  }
+
+  private static FormDataBodyPart textFile() {
+    FormDataBodyPart bodyPart = mock();
+    when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
+    when(bodyPart.getContentDisposition())
+        .thenReturn(FormDataContentDisposition.name("file").fileName("plan.txt").build());
+    when(bodyPart.getValueAs(any()))
+        .thenReturn(new ByteArrayInputStream("plan".getBytes(StandardCharsets.UTF_8)));
+    return bodyPart;
   }
 
   @Test

@@ -267,7 +267,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetUpdate> datasetUpdates,
       List<DatasetServiceDAO.DatasetInsert> datasetInserts) {
     List<Integer> insertedDatasetIds = new ArrayList<>();
-    jdbi.useTransaction(
+    return jdbi.inTransaction(
         handle -> {
           executeUpdateStudyReplaceProps(handle, studyUpdate);
           // After the study row update, whose lock serializes concurrent edits of one study.
@@ -296,9 +296,11 @@ public class DatasetServiceDAO implements ConsentLogger {
                     insert.files);
             insertedDatasetIds.add(insertedId);
           }
+          // Read before commit, so a failed read cannot look like a failed write to the caller.
+          return new StudyUpdateResult(
+              handle.attach(StudyDAO.class).findStudyById(studyUpdate.studyId),
+              List.copyOf(insertedDatasetIds));
         });
-    return new StudyUpdateResult(
-        studyDAO.findStudyById(studyUpdate.studyId), List.copyOf(insertedDatasetIds));
   }
 
   private void executeUpdateStudyReplaceProps(Handle handle, StudyUpdate update) {

@@ -122,6 +122,24 @@ public class DatasetRegistrationService implements ConsentLogger {
       Map<String, FormDataBodyPart> files)
       throws Exception {
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
+    DatasetServiceDAO.StudyUpdateResult result;
+    try {
+      result = writeStudyUpdate(studyId, registration, user, files, uploadedFileCache);
+    } catch (Exception e) {
+      deleteUploadedFiles(uploadedFileCache);
+      throw e;
+    }
+    sendDatasetSubmittedEmails(createdDatasetsFromUpdate(result));
+    return result.study();
+  }
+
+  private DatasetServiceDAO.StudyUpdateResult writeStudyUpdate(
+      Integer studyId,
+      StudyUpdateRequest registration,
+      User user,
+      Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache)
+      throws Exception {
     List<FileStorageObject> uploadFiles = uploadFilesForStudy(files, uploadedFileCache, user);
     List<DatasetServiceDAO.DatasetUpdate> datasetUpdates = new ArrayList<>();
     List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
@@ -189,10 +207,7 @@ public class DatasetRegistrationService implements ConsentLogger {
             studyProps,
             uploadFiles);
 
-    DatasetServiceDAO.StudyUpdateResult result =
-        datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
-    sendDatasetSubmittedEmails(createdDatasetsFromUpdate(result));
-    return result.study();
+    return datasetServiceDAO.updateStudy(studyUpdate, datasetUpdates, datasetInserts);
   }
 
   /**
@@ -212,6 +227,7 @@ public class DatasetRegistrationService implements ConsentLogger {
 
     List<DatasetServiceDAO.DatasetInsert> datasetInserts = new ArrayList<>();
     DatasetServiceDAO.StudyInsert studyInsert;
+    List<Integer> createdDatasetIds;
 
     try {
       studyInsert = createStudyInsert(registration, user, files, uploadedFileCache);
@@ -222,14 +238,11 @@ public class DatasetRegistrationService implements ConsentLogger {
         datasetInserts.add(
             createDatasetInsert(registration, user, files, uploadedFileCache, consentGroupIdx));
       }
-    } catch (IOException e) {
-      // uploading files to GCS failed. rollback files...
-      uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
+      createdDatasetIds = datasetServiceDAO.insertDatasetRegistration(studyInsert, datasetInserts);
+    } catch (Exception e) {
+      deleteUploadedFiles(uploadedFileCache);
       throw e;
     }
-
-    List<Integer> createdDatasetIds =
-        datasetServiceDAO.insertDatasetRegistration(studyInsert, datasetInserts);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
     // Send notification emails to DAC chairs about new datasets
@@ -247,6 +260,20 @@ public class DatasetRegistrationService implements ConsentLogger {
       logException(e);
     }
     return datasets;
+  }
+
+  /** After a failed write nothing references these files; a failed delete must not hide why. */
+  private void deleteUploadedFiles(Map<String, BlobId> uploadedFileCache) {
+    uploadedFileCache
+        .values()
+        .forEach(
+            id -> {
+              try {
+                gcsService.deleteDocument(id.getName());
+              } catch (Exception e) {
+                logException(e);
+              }
+            });
   }
 
   private BlobId uploadFile(FormDataBodyPart file) throws IOException {
@@ -310,9 +337,8 @@ public class DatasetRegistrationService implements ConsentLogger {
       // Update or create the objects in the database
       datasetServiceDAO.updateDataset(datasetUpdates);
 
-    } catch (IOException e) {
-      // uploading files to GCS failed. rollback files...
-      uploadedFileCache.values().forEach((id) -> gcsService.deleteDocument(id.getName()));
+    } catch (Exception e) {
+      deleteUploadedFiles(uploadedFileCache);
       throw e;
     }
 
