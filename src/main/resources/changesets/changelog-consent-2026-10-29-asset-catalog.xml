@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!-- Columns follow Task 1 of docs/plans/asset-identifiers-plan.md. References are SET NULL so a removed asset keeps its identifier. -->
+  <changeSet id="changelog-consent-2026-10-29-asset-catalog" author="kmarete">
+    <createTable tableName="asset_catalog">
+      <column name="catalog_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="asset_type" type="TEXT"><constraints nullable="false"/></column>
+      <column name="asset_number" type="INTEGER"><constraints nullable="false"/></column>
+      <column name="create_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+      <column name="asset_removed_date" type="TIMESTAMP WITH TIME ZONE"/>
+      <!-- No foreign key, so a restore cannot null it. -->
+      <column name="source_dataset_id" type="INTEGER"/>
+      <column name="backfill_run" type="TEXT"/>
+      <column name="dataset_id" type="INTEGER"/>
+      <column name="model_id" type="INTEGER"/>
+      <column name="workspace_id" type="INTEGER"/>
+      <column name="biospecimen_id" type="INTEGER"/>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="asset_catalog" baseColumnNames="dataset_id" referencedTableName="dataset" referencedColumnNames="dataset_id" constraintName="fk_asset_catalog_dataset" onDelete="SET NULL"/>
+    <addForeignKeyConstraint baseTableName="asset_catalog" baseColumnNames="model_id" referencedTableName="study_model" referencedColumnNames="model_id" constraintName="fk_asset_catalog_model" onDelete="SET NULL"/>
+    <addForeignKeyConstraint baseTableName="asset_catalog" baseColumnNames="workspace_id" referencedTableName="study_workspace" referencedColumnNames="workspace_id" constraintName="fk_asset_catalog_workspace" onDelete="SET NULL"/>
+    <addForeignKeyConstraint baseTableName="asset_catalog" baseColumnNames="biospecimen_id" referencedTableName="study_biospecimen" referencedColumnNames="biospecimen_id" constraintName="fk_asset_catalog_biospecimen" onDelete="SET NULL"/>
+    <addUniqueConstraint tableName="asset_catalog" columnNames="asset_type, asset_number" constraintName="uq_asset_catalog_type_number"/>
+    <sql>CREATE UNIQUE INDEX uq_asset_catalog_dataset_id ON asset_catalog (dataset_id) WHERE dataset_id IS NOT NULL</sql>
+    <sql>CREATE UNIQUE INDEX uq_asset_catalog_model_id ON asset_catalog (model_id) WHERE model_id IS NOT NULL</sql>
+    <sql>CREATE UNIQUE INDEX uq_asset_catalog_workspace_id ON asset_catalog (workspace_id) WHERE workspace_id IS NOT NULL</sql>
+    <sql>CREATE UNIQUE INDEX uq_asset_catalog_biospecimen_id ON asset_catalog (biospecimen_id) WHERE biospecimen_id IS NOT NULL</sql>
+    <sql>
+      ALTER TABLE asset_catalog
+        ADD CONSTRAINT asset_catalog_type_valid
+        CHECK (asset_type IN ('DATASET', 'MODEL', 'WORKSPACE', 'BIOSPECIMEN'))
+    </sql>
+    <sql>ALTER TABLE asset_catalog ADD CONSTRAINT asset_catalog_number_valid CHECK (asset_number &gt;= 0)</sql>
+    <sql>
+      ALTER TABLE asset_catalog
+        ADD CONSTRAINT asset_catalog_one_reference
+        CHECK (num_nonnulls(dataset_id, model_id, workspace_id, biospecimen_id) &lt;= 1)
+    </sql>
+    <sql>
+      ALTER TABLE asset_catalog
+        ADD CONSTRAINT asset_catalog_reference_type
+        CHECK ((dataset_id IS NULL OR asset_type = 'DATASET')
+           AND (model_id IS NULL OR asset_type = 'MODEL')
+           AND (workspace_id IS NULL OR asset_type = 'WORKSPACE')
+           AND (biospecimen_id IS NULL OR asset_type = 'BIOSPECIMEN'))
+    </sql>
+    <sql>
+      ALTER TABLE asset_catalog
+        ADD CONSTRAINT asset_catalog_reference_number
+        CHECK ((model_id IS NULL OR model_id = asset_number)
+           AND (workspace_id IS NULL OR workspace_id = asset_number)
+           AND (biospecimen_id IS NULL OR biospecimen_id = asset_number))
+    </sql>
+  </changeSet>
+</databaseChangeLog>

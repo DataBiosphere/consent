@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.enumeration.AssetType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -268,7 +268,7 @@ public class Dataset implements ConsentLogger {
   }
 
   public static String parseAliasToIdentifier(Integer alias) {
-    return PREFIX + StringUtils.leftPad(alias.toString(), 6, "0");
+    return AssetIdentifier.format(AssetType.DATASET, alias);
   }
 
   public static Integer parseIdentifierToAlias(String identifier) throws IllegalArgumentException {
