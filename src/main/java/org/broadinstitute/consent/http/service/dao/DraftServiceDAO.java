@@ -4,10 +4,10 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -103,26 +103,40 @@ public class DraftServiceDAO {
 
   public List<FileStorageObject> addAttachments(
       DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
-    List<FileStorageObject> storedFiles =
-        draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files);
-    draftDAO.updateDraftByDraftUUID(draft.getUUID(), new Date().toInstant(), user.getUserId());
+    List<FileStorageObject> storedFiles = new ArrayList<>();
+    try {
+      jdbi.useTransaction(
+          _ -> {
+            storedFiles.addAll(
+                draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files));
+            draftDAO.updateDraftByDraftUUID(
+                draft.getUUID(), new Date().toInstant(), user.getUserId());
+          });
+    } catch (RuntimeException e) {
+      draftFileStorageServiceDAO.deleteDocuments(storedFiles, draft.getUUID());
+      throw e;
+    }
     return storedFiles;
   }
 
   public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId) {
-    Optional<FileStorageObject> fileStorageObjectToDelete =
+    FileStorageObject file =
         draft.getStoredFiles().stream()
             .filter(fileStorageObject -> fileStorageObject.getFileStorageObjectId().equals(fileId))
-            .findFirst();
-    if (fileStorageObjectToDelete.isPresent()) {
-      draftFileStorageServiceDAO.deleteStoredFile(fileStorageObjectToDelete.get(), user);
-      draftDAO.updateDraftByDraftUUID(draft.getUUID(), new Date().toInstant(), user.getUserId());
-    } else {
-      throw new NotFoundException(
-          String.format(
-              "Draft attachment is not found.  Draft: %s, Attachment: %d",
-              draft.getUUID(), fileId));
-    }
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        String.format(
+                            "Draft attachment is not found.  Draft: %s, Attachment: %d",
+                            draft.getUUID(), fileId)));
+    jdbi.useTransaction(
+        _ -> {
+          draftFileStorageServiceDAO.deleteFileRows(List.of(file), user);
+          draftDAO.updateDraftByDraftUUID(
+              draft.getUUID(), new Date().toInstant(), user.getUserId());
+        });
+    draftFileStorageServiceDAO.deleteDocuments(List.of(file), draft.getUUID());
   }
 
   public void deleteDraft(DraftInterface draft, User user) throws NotFoundException {

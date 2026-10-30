@@ -13,8 +13,15 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -25,6 +32,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -36,12 +44,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.jdbi.v3.core.Jdbi;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -244,17 +254,56 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testAFailedDocumentDeleteKeepsTheAttachment() throws Exception {
+  void testAFailedDocumentDeleteStillRemovesTheAttachment() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 1);
     Integer fileId = draft.getStoredFiles().iterator().next().getFileStorageObjectId();
     when(gcsService.deleteDocument(anyString())).thenThrow(new IllegalStateException("gcs down"));
 
-    assertThrows(
-        NotFoundException.class, () -> draftServiceDAO.deleteDraftAttachment(draft, user, fileId));
+    assertDoesNotThrow(() -> draftServiceDAO.deleteDraftAttachment(draft, user, fileId));
+
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
+  }
+
+  @Test
+  void testAFailedDraftUpdateKeepsTheAttachmentAndItsDocument() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 1);
+    Integer fileId = draft.getStoredFiles().iterator().next().getFileStorageObjectId();
+    DraftServiceDAO dao = draftServiceDAOWithFailingDraftUpdate();
+
+    assertThrows(IllegalStateException.class, () -> dao.deleteDraftAttachment(draft, user, fileId));
 
     assertThat(
         draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(1));
+    verify(gcsService, never()).deleteDocument(anyString());
+  }
+
+  @Test
+  void testAFailedDraftUpdateAddsNoAttachments() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 0);
+    DraftServiceDAO dao = draftServiceDAOWithFailingDraftUpdate();
+    Map<String, FormDataBodyPart> files = getRandomFiles(2);
+
+    assertThrows(IllegalStateException.class, () -> dao.addAttachments(draft, user, files));
+
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
+    verify(gcsService, times(2)).deleteDocument(anyString());
+  }
+
+  /** The draft update throws after the file rows are written, inside the same transaction. */
+  private DraftServiceDAO draftServiceDAOWithFailingDraftUpdate() {
+    DraftDAO failingDraftDAO = mock(DraftDAO.class);
+    doThrow(new IllegalStateException("draft update failed"))
+        .when(failingDraftDAO)
+        .updateDraftByDraftUUID(any(UUID.class), any(Instant.class), anyInt());
+    Jdbi withFailingDraftDAO = spy(jdbi);
+    doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
+    return new DraftServiceDAO(
+        withFailingDraftDAO, new DraftFileStorageServiceDAO(jdbi, gcsService));
   }
 
   @Test

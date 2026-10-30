@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service.dao;
 
 import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
@@ -37,37 +36,17 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   public List<FileStorageObject> storeDraftFiles(
       UUID associatedId, User user, Map<String, FormDataBodyPart> files) {
     List<FileStorageObject> fileStorageObjects = new ArrayList<>();
-    jdbi.useTransaction(
-        _ -> {
-          try {
-            files.forEach((key, file) -> fileStorageObjects.add(store(file, user, associatedId)));
-          } catch (Exception e) {
-            // The transaction drops the file rows; the uploaded documents need deleting here.
-            deleteDocuments(fileStorageObjects, associatedId);
-            throw e;
-          }
-        });
+    try {
+      jdbi.useTransaction(
+          _ ->
+              files.forEach(
+                  (key, file) -> fileStorageObjects.add(store(file, user, associatedId))));
+    } catch (RuntimeException e) {
+      // The rows roll back, commit failures included; the uploaded documents need deleting here.
+      deleteDocuments(fileStorageObjects, associatedId);
+      throw e;
+    }
     return fileStorageObjects;
-  }
-
-  /** Deletes a file's row, then its document, so a failed document delete keeps the row. */
-  public void deleteStoredFile(FileStorageObject fileStorageObject, User user)
-      throws NotFoundException {
-    jdbi.useTransaction(
-        _ -> {
-          try {
-            fileStorageObjectDAO.deleteFileById(
-                fileStorageObject.getFileStorageObjectId(), user.getUserId());
-            gcsService.deleteDocument(fileStorageObject.getBlobId().getName());
-          } catch (Exception e) {
-            logWarn(
-                String.format(
-                    "Error deleting stored file for user: %s, file obj id: %d, error: %s",
-                    user.getEmail(), fileStorageObject.getFileStorageObjectId(), e));
-            throw new NotFoundException(
-                "Error deleting stored file for user: " + user.getEmail(), e);
-          }
-        });
   }
 
   /** Deletes the files' rows, in the caller's transaction when there is one. */

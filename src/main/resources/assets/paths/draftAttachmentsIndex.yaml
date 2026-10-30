@@ -73,7 +73,7 @@ post:
     404:
       description: The draft cannot be found.
     500:
-      description: A file could not be stored, so none of the attachments were added.
+      description: The attachments could not be saved, so none of them were added.
     429:
       description: Too Many Requests - rate limit exceeded
       content:
