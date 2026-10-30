@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -33,6 +34,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -51,7 +53,9 @@ import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.transaction.TransactionException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -304,6 +308,60 @@ class DraftServiceDAOTest extends DAOTestHelper {
     doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
     return new DraftServiceDAO(
         withFailingDraftDAO, new DraftFileStorageServiceDAO(jdbi, gcsService));
+  }
+
+  @Test
+  void testAttachmentUploadsHoldNoTransaction() throws Exception {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 0);
+    List<Boolean> inTransaction = new ArrayList<>();
+    when(gcsService.storeDocument(any(), anyString(), any()))
+        .thenAnswer(
+            invocation -> {
+              // Jdbi hands a nested call the thread's open handle, if there is one.
+              inTransaction.add(jdbi.withHandle(Handle::isInTransaction));
+              return BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+            });
+
+    draftServiceDAO.addAttachments(draft, user, getRandomFiles(2));
+
+    assertEquals(List.of(false, false), inTransaction);
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(2));
+  }
+
+  @Test
+  void testAFailureLeavingTheTransactionDeletesTheUploadedDocuments() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 0);
+    Jdbi failingCommit = spy(jdbi);
+    doAnswer(
+            invocation -> {
+              invocation.callRealMethod();
+              throw new TransactionException("commit failed");
+            })
+        .when(failingCommit)
+        .inTransaction(any());
+    DraftServiceDAO dao =
+        new DraftServiceDAO(failingCommit, new DraftFileStorageServiceDAO(jdbi, gcsService));
+    Map<String, FormDataBodyPart> files = getRandomFiles(2);
+
+    assertThrows(TransactionException.class, () -> dao.addAttachments(draft, user, files));
+
+    verify(gcsService, times(2)).deleteDocument(anyString());
+  }
+
+  @Test
+  void testAttachmentsForADraftDeletedDuringTheUploadAreDiscarded() {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 0);
+    draftServiceDAO.deleteDraft(draft, user);
+    Map<String, FormDataBodyPart> files = getRandomFiles(2);
+
+    assertThrows(NotFoundException.class, () -> draftServiceDAO.addAttachments(draft, user, files));
+
+    assertTrue(fileStorageObjectDAO.findFilesByEntityId(draft.getUUID().toString()).isEmpty());
+    verify(gcsService, times(2)).deleteDocument(anyString());
   }
 
   @Test

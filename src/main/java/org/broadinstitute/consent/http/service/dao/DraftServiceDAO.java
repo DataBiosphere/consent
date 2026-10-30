@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DraftFileStorageServiceDAO.UploadedDocument;
 import org.broadinstitute.consent.http.util.NulCharacters;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
@@ -103,20 +103,24 @@ public class DraftServiceDAO {
 
   public List<FileStorageObject> addAttachments(
       DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
-    List<FileStorageObject> storedFiles = new ArrayList<>();
+    List<UploadedDocument> uploaded =
+        draftFileStorageServiceDAO.uploadDocuments(draft.getUUID(), user, files);
     try {
-      jdbi.useTransaction(
+      return jdbi.inTransaction(
           _ -> {
-            storedFiles.addAll(
-                draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files));
-            draftDAO.updateDraftByDraftUUID(
-                draft.getUUID(), new Date().toInstant(), user.getUserId());
+            // First, so a draft deleted during the uploads gets no rows, and a delete now waits.
+            if (draftDAO.updateDraftByDraftUUID(
+                    draft.getUUID(), new Date().toInstant(), user.getUserId())
+                == 0) {
+              throw new NotFoundException(
+                  "Draft with UUID %s not found.".formatted(draft.getUUID()));
+            }
+            return draftFileStorageServiceDAO.insertFileRows(uploaded, draft.getUUID(), user);
           });
     } catch (RuntimeException e) {
-      draftFileStorageServiceDAO.deleteDocuments(storedFiles, draft.getUUID());
+      draftFileStorageServiceDAO.deleteUploads(uploaded, draft.getUUID());
       throw e;
     }
-    return storedFiles;
   }
 
   public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId) {

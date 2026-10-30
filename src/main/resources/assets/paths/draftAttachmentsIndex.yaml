@@ -68,6 +68,8 @@ post:
             type: array
             items:
               $ref: '../schemas/FileStorageObject.yaml'
+    400:
+      description: An attachment's name or details cannot be stored, so none of the attachments were added.
     401:
       description: User not authorized to upload file attachments
     404:
