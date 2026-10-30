@@ -20,7 +20,7 @@ import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupLimits;
 import org.broadinstitute.consent.http.service.showcase.ShowcaseLookupParser;
 import org.broadinstitute.consent.http.util.ContentLength;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.eclipse.jetty.http.BadMessageException;
+import org.eclipse.jetty.http.HttpException;
 
 /**
  * The anonymous, read-only Data Showcase catalog lookup (S2.2). It is outside {@code /api} and has
@@ -85,12 +85,13 @@ public class PublicShowcaseCatalogResource extends Resource {
   /**
    * Reads one byte past the cap, so the caller can tell a body at the cap from a larger one. An
    * aborted upload, an idle timeout or a malformed chunked body fails here as an {@link
-   * IOException} or a Jetty {@link BadMessageException}: the client caused it, so it is a 400.
+   * IOException} or a Jetty {@link HttpException.RuntimeException}: the client caused it, so it is
+   * a 400.
    */
   private static byte[] readBody(InputStream body) {
     try {
       return body.readNBytes(ShowcaseLookupLimits.MAX_BODY_BYTES + 1);
-    } catch (IOException | BadMessageException e) {
+    } catch (IOException | HttpException.RuntimeException e) {
       throw new ShowcaseLookupException(UNREADABLE_BODY_MESSAGE);
     }
   }
