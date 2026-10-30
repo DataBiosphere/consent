@@ -333,46 +333,33 @@ override file that exists. A test with `docker compose config` confirmed both po
 
 ### Database Export
 
-`scripts/export-db.sh` writes `config/consentdb-ENV-YYYY-MM-DD.sql.gz` and sets `CONSENT_DB_DUMP`
-in `.env`. `ENV` comes from `--db_env`:
-
-| `--db_env` | Project | Result |
-|---|---|---|
-| `dev` (default) | `broad-dsde-dev` | Export. |
-| `staging` | `broad-dsde-staging` | Export. |
-| `prod` | None | The script stops with an error before it reads a secret. There is no flag that overrides this. |
-| Any other value | None | The script stops with an error. |
-
-The project comes only from this table. `export-db.sh` has no `--project` option, and
-`render-configs.sh` does not send its `--project` value to the export. Each `gcloud` and
-`cloud-sql-proxy` call gives the project from the table explicitly (`--project`, and the full
-instance connection name). So the gcloud default project and `CLOUDSDK_CORE_PROJECT` have no
-effect. The script checks `--db_env` against the table before it reads a secret.
+`scripts/export-db.sh [dev|staging] [CONFIG_DIR]` writes `config/consentdb-ENV.sql.gz` and sets
+`CONSENT_DB_DUMP` in `.env`. `ENV` defaults to `dev`. The project comes only from a table in the
+script: `dev` is `broad-dsde-dev`, and `staging` is `broad-dsde-staging`. Any other value, `prod`
+too, stops the script before it reads a secret. There is no flag that overrides this.
+`render-configs.sh` does not send its `--project` value to the export, and each `gcloud` and proxy
+call gives the project explicitly. So the gcloud default project and `CLOUDSDK_CORE_PROJECT` have
+no effect.
 
 The steps:
 
 1. Read the instance name, user and password from the `consent-postgres-creds` secret in Secret
    Manager in the project, as `scripts/db-connect.sh` does.
-2. Create a temporary Docker network, for example `consent-export-$$`.
-3. Start the proxy in a container on that network, from a pinned image
-   (`gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.18.0`). Give it the options as `CSQL_PROXY_*`
-   environment variables:
-   - `CSQL_PROXY_TOKEN`: from `gcloud auth print-access-token`. The script passes `-e
-     CSQL_PROXY_TOKEN` with no value, so Docker copies the value from the script environment.
-     The token is not in the command line or the process list.
-   - `CSQL_PROXY_ADDRESS=0.0.0.0` and `CSQL_PROXY_PORT=5432`. The default address is `127.0.0.1`,
-     which other containers cannot reach. `0.0.0.0` is the address inside the proxy container
-     only. The container publishes no ports, so the host and the local network cannot reach it.
-   - `CSQL_PROXY_INSTANCE_CONNECTION_NAME`: the full name, with the project from the table.
-4. Wait until `pg_isready` from the `postgres:16.14-alpine` image connects to the proxy container
-   by its name. Stop after 60 seconds.
-5. Run `pg_dump --no-owner --no-privileges` from the `postgres:16.14-alpine` image, the same image
-   as the local database, on the same network. Connect to the proxy container by its name, on
-   port 5432. Pass the password with `-e PGPASSWORD`, in the same way as the token.
-6. Compress the output with `gzip`. The Postgres image loads `.sql.gz` files on its own.
-7. Write to a temp file, and move it into place only when `pg_dump` succeeds.
-8. Delete the older dumps. See [Data Handling](#data-handling).
-9. On exit, also when a step fails, remove the proxy container and the network.
+2. Start the proxy in a container, from a pinned image
+   (`gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.18.0`), with `CSQL_PROXY_TOKEN` (from
+   `gcloud auth print-access-token`) and `CSQL_PROXY_INSTANCE_CONNECTION_NAME`. The script passes
+   each `-e` with no value, so Docker copies the value from the script environment. The secrets
+   are not in the command line or the process list. The proxy listens on its default
+   `127.0.0.1`, and the container publishes no ports.
+3. Run `pg_isready`, then `pg_dump --no-owner --no-privileges`, from the `postgres:16.14-alpine`
+   image (the same image as the local database), with `--network container:<proxy>`. So they
+   connect to the proxy on `127.0.0.1`. `PGPASSWORD` goes in the same way as the token.
+4. Compress the output with `gzip` into a temp file in `config/`. The Postgres image loads
+   `.sql.gz` files on its own.
+5. Check for the last line of `pg_dump` (`PostgreSQL database dump complete`). Without it, the
+   dump stopped early, and compose would load it with no error. Move the file into place only
+   after this check. A new dump replaces the old dump of the same environment.
+6. On exit, also when a step fails, remove the proxy container and the temp file.
 
 Why run the proxy in a container: a proxy on the host listens on the host's `127.0.0.1`. How a
 container reaches that address depends on the runtime:
@@ -384,8 +371,9 @@ container reaches that address depends on the runtime:
 | Linux Docker Engine | Fails. `host-gateway` is the bridge address, and the proxy does not listen there. |
 | Podman | Depends on the version and the network mode. |
 
-To bind a host proxy to `0.0.0.0` would open the database to the local network. On a private
-Docker network, the two containers find each other by name on each runtime. The developer also
+To bind a host proxy to `0.0.0.0` would open the database to the local network. With
+`--network container:<proxy>`, `pg_dump` shares the network of the proxy container, and
+`127.0.0.1` works the same on each runtime. The developer also
 does not need to install `cloud-sql-proxy`.
 
 The access token expires after about one hour. The proxy uses the token only to connect, so a
@@ -414,8 +402,8 @@ The controls:
 |---|---|
 | Location | Dumps go only in `config/`, which is not tracked (`/config/` is in `.gitignore`). |
 | File mode | `config/` gets mode `700`, so other users on the machine cannot open any file in it. The dump gets mode `644`. Mode `600` does not work: the Postgres image reads the dump as the `postgres` user, not as the owner of the file. On Linux Docker Engine and in the Dev Container, the load then fails. |
-| Retention | After a new dump moves into place, the script deletes all older dumps that it made (`consentdb-dev-*.sql.gz` and `consentdb-staging-*.sql.gz`). Only the new dump stays. A failed export deletes nothing. |
-| Other dumps | The script never deletes a dump that it did not make, such as an old hand-made `.sql` file. It lists each one, and asks the developer to delete it. |
+| Retention | The dump name has no date (`consentdb-dev.sql.gz`, `consentdb-staging.sql.gz`), so a new dump replaces the old dump of the same environment. A failed export changes nothing. |
+| Other dumps | The script never deletes a dump that it did not make, such as an old hand-made `.sql` file. The developer deletes it. |
 | Sharing | `DEVNOTES.md` says: do not copy, share or upload a dump. Make a new one with the script. |
 
 A staging dump changes only the data. The rendered config stays dev, so the app still uses dev
@@ -435,37 +423,22 @@ example `study.studyName.keyword`.
 The index must match the database. An old index can return dataset IDs that are not in a new dump.
 So fill the index again after each new dump.
 
-```
-Usage: scripts/index-es.sh [OPTION]...
-  --reset true|false   Delete the local dataset index before the reindex. Defaults to true.
-  --help               Show this help.
-```
+`scripts/index-es.sh [CONFIG_DIR]` does these steps:
 
-The script does these steps:
-
-1. Get a token with `gcloud auth print-access-token`. The script sends the header to `curl` as a
-   config file on stdin (`-K -`), so the token is not in the process list and the script never
-   prints it. The Elasticsearch password goes to `curl` in the same way.
-2. Wait for `/status` on `https://local.dsde-dev.broadinstitute.org:27443`, for up to 5 minutes.
-   Only the host has an `/etc/hosts` entry for this name, and the name has no public DNS record.
-   So each call uses `curl --resolve` to send the name to `127.0.0.1`. `curl` still checks the
-   certificate against the name, and the script works in the Dev Container.
-3. If `--reset true`, send `DELETE /dataset` to `localhost:9200`. Use `ELASTIC_PASSWORD` from
-   `config/.env`. A 404 is not an error, because a new volume has no index.
-4. Send `POST /api/dataset/index` through the proxy with the token. Write the streamed response to
-   a temp file.
-5. Check the response. The endpoint streams its result, so the HTTP status is 200 even when
-   indexing fails. The script fails in each of these conditions:
-   - The HTTP status is not 2xx.
-   - The body is empty, or it is not valid JSON.
-   - The body has `Error indexing datasets`. `indexDatasetIds()` writes this text when it catches
-     an `IOException`, for example when Elasticsearch returns a status that is not 200.
-   - The `_bulk` response has `"errors": true`. Elasticsearch returns 200 when some documents
-     fail, for example because of a mapping conflict. `performRequest()` checks only the status,
-     and returns the body unchanged. So a failure of one document passes the other checks.
-6. If `errors` is true, show each failed item with `jq`: the dataset ID (`_id`), `status`,
-   `error.type` and `error.reason`. Then fail.
-7. Show the document count from `GET /dataset/_count`.
+1. Send `DELETE /dataset` to `localhost:9200`, with `ELASTIC_PASSWORD` from `config/.env`. A 404
+   is not an error, because a new volume has no index.
+2. Send `POST /api/dataset/index` to `https://local.dsde-dev.broadinstitute.org:27443`, with a
+   `gcloud auth print-access-token` token. Only the host has an `/etc/hosts` entry for this name,
+   so the call uses `curl --resolve` to send the name to `127.0.0.1`. `curl` still checks the
+   certificate against the name, and the script works in the Dev Container. The token and the
+   Elasticsearch password go to `curl` as a config file on stdin (`-K -`), so they are not in the
+   process list.
+3. Check the response body. The endpoint streams its result, so the HTTP status is 200 even when
+   indexing fails. The script fails if the body has `Error indexing datasets`, which
+   `indexDatasetIds()` writes when it catches an `IOException`. It also fails if the `_bulk`
+   response does not have `"errors": false`. Elasticsearch returns 200 when some documents fail,
+   for example because of a mapping conflict, and Consent returns that body unchanged. On a
+   failure, the script shows the start of the body.
 
 See the [Elasticsearch bulk API](https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-bulk)
 for the response format.
@@ -640,7 +613,7 @@ The team answered the open questions from the first review:
 | Which environments can the export script use? | Dev by default. Staging with an option. Never prod. | `--db_env dev\|staging`. The script refuses `prod`, and no flag overrides this. |
 | Does anyone use `sqlproxy.env` or `tcell_agent.config`? | No. | The script does not write them. PRs 2 and 3 remove the old hand-made steps from the docs. |
 | Does anyone run the app outside compose? | No. The team runs the app with compose from a terminal. | The `-Ddw.*` flags are only in the compose template. No IntelliJ steps. |
-| How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. The script can delete older dumps. | [Data Handling](#data-handling): `config/` has mode `700`, only the newest dump stays, no sharing. |
+| How do we protect user data in a dump? | Handling controls only. No scrubbing, because local development needs the real user emails. A new dump replaces the old dump of the same environment. | [Data Handling](#data-handling): `config/` has mode `700`, one dump for each environment, no sharing. |
 | Where does the team run the local stack? | Both. Some developers run it fully in the Dev Container. Others run compose from a terminal on the host. | PR 5 supports both modes. `forwardPorts` is for the container mode. The host mode does not change. |
 | Where does the config get rendered? | Inside the Dev Container, as in `duos-ui` (DT-4206, DT-4236). | `setup-devcontainer.sh` installs `gcloud` and runs `render-configs.sh`. The features install `kubectl` and `helm`. The host `~/.config/gcloud` mount is not needed. |
 | How much testing? | A minimum. | Six checks in [Verification](#verification). |
