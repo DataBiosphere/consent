@@ -65,6 +65,10 @@ docker compose -f config/docker-compose.yaml -f config/docker-compose.override.y
   --helmfile_ref my-branch`. For changes that are not pushed, use `--helmfile_dir
   ~/develop/terra-helmfile`. To render the chart configs without the VPN, run
   [render-chart-configs.sh](scripts/render-chart-configs.sh) on its own.
+* `--fetch_sendgrid true` puts the dev SendGrid key in `config/.env`, so the local app sends real
+  email. A dump of the dev database holds the email addresses of real dev users, so a local action
+  can send them email. Use the key only to test email. To stop, set
+  `SENDGRID_API_KEY='placeholder'` in `config/.env`. The next render keeps the value in `.env`.
 
 The rendered files are the same as the files that dev runs. The only local changes are in
 `local-values.yaml` and in the `-Ddw.*` flags of the compose template. See
@@ -90,8 +94,10 @@ and the script sets `CONSENT_DB_DUMP` in `config/.env`.
 
 A dump holds real user data. Do not copy, share or upload it. Make a new one with the script.
 
-You can use a dump from another source. Its name must end in `.sql` or `.sql.gz`. The Postgres
-image ignores other files, and the database is then empty.
+You can use a dump from another source. Put it in `config/`, and set its file name in
+`config/.env` in single quotes, such as `CONSENT_DB_DUMP='my-dump.sql.gz'`. The scripts warn about
+a value with no quotes. The name must end in `.sql` or `.sql.gz`. The Postgres image ignores other
+files, and the database is then empty.
 
 The database is in the `consent_pgdata` volume, so it stays after `docker compose down`. The image
 loads the dump only into an empty volume. To load a new dump, or to try again after a load that
