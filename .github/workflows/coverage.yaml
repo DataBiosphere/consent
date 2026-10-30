@@ -29,7 +29,8 @@ jobs:
       - name: Test Only
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
-        run: ./mvnw clean jacoco:prepare-agent test jacoco:report --batch-mode
+        # The Maven workflow validates the OpenAPI spec on each PR, so skip it here.
+        run: ./mvnw clean jacoco:prepare-agent test jacoco:report --batch-mode -Dcodegen.skip=true
       - name: Test Report
         continue-on-error: true
         env:
