@@ -20,6 +20,9 @@ post:
         `exclude`. Hidden datasets never appear in or affect a ranking.
       * `all`: one page of every public-eligible dataset in identifier order, with a
         `nextCursor` for the next page (null on the last page).
+      * `stats`: `studyCount` and `datasetCount` for the catalog-eligible datasets in the
+        optional `scope`, or in the whole catalog without one. Section rules do not apply, and
+        hidden datasets leave the counts unchanged.
 
     The `open-access-datasets` section admits open-access datasets only.
 
@@ -35,7 +38,6 @@ post:
         mode get a 400 before any data is read. JSON nested deeper than a scope value list gets
         a 400.
 
-    The `stats` mode is not available yet.
   security: []
   tags:
     - Data Showcase
@@ -48,6 +50,7 @@ post:
             - $ref: '../schemas/ShowcaseIdentifiersLookupRequest.yaml'
             - $ref: '../schemas/ShowcaseRankingLookupRequest.yaml'
             - $ref: '../schemas/ShowcaseAllLookupRequest.yaml'
+            - $ref: '../schemas/ShowcaseStatsLookupRequest.yaml'
         examples:
           identifiers:
             summary: An editorial list
@@ -75,7 +78,7 @@ post:
     200:
       description: >
         `identifiers` and `ranking`: a `datasets` list. `all`: a `datasets` page and
-        `nextCursor`.
+        `nextCursor`. `stats`: `studyCount` and `datasetCount`.
       headers:
         Cache-Control:
           schema:
@@ -87,6 +90,7 @@ post:
             oneOf:
               - $ref: '../schemas/ShowcaseLookupResponse.yaml'
               - $ref: '../schemas/ShowcasePageResponse.yaml'
+              - $ref: '../schemas/ShowcaseStatsResponse.yaml'
     400:
       description: The request breaks the lookup contract
       content:

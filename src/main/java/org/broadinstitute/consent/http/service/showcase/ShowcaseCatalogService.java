@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.ShowcaseLookupResponse;
 import org.broadinstitute.consent.http.models.ShowcasePageResponse;
+import org.broadinstitute.consent.http.models.ShowcaseStatsResponse;
 import org.broadinstitute.consent.http.models.ShowcaseUnavailableResult;
 
 /**
@@ -38,6 +39,7 @@ public class ShowcaseCatalogService {
           new ShowcaseLookupResponse(lookupIdentifiers(identifiers));
       case ShowcaseRankingLookup ranking -> new ShowcaseLookupResponse(lookupRanking(ranking));
       case ShowcaseAllLookup all -> lookupPage(all);
+      case ShowcaseStatsLookup stats -> lookupStats(stats);
     };
   }
 
@@ -109,6 +111,15 @@ public class ShowcaseCatalogService {
     return new ShowcasePageResponse(
         datasetDAO.findShowcaseSummaries(page),
         hasNextPage ? ShowcaseCursor.encode(page.getLast()) : null);
+  }
+
+  /**
+   * The catalog-eligible datasets in the scope and their distinct studies, in one query. Section
+   * rules do not apply, so the counts cover every dataset that some shelf can show.
+   */
+  public ShowcaseStatsResponse lookupStats(ShowcaseStatsLookup lookup) {
+    return datasetDAO.countShowcaseDatasets(
+        lookup.scope() == null ? null : lookup.scope().dacNames());
   }
 
   /** The summaries among the identifiers that the section and the scope admit, in one query. */

@@ -1,0 +1,11 @@
+type: object
+required:
+  - studyCount
+  - datasetCount
+properties:
+  studyCount:
+    type: integer
+    description: Distinct studies that hold a counted dataset.
+  datasetCount:
+    type: integer
+    description: Catalog-eligible datasets in the scope.
