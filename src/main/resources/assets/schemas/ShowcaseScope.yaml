@@ -7,6 +7,10 @@ properties:
   dac:
     type: array
     maxItems: 20
-    description: Exact DAC names.
+    description: >
+      Exact DAC names. The match is case-sensitive, so "example dac x" does not match
+      "Example DAC X"; a name that matches no DAC gives an empty shelf, not an error.
     items:
       type: string
+      minLength: 1
+      maxLength: 255

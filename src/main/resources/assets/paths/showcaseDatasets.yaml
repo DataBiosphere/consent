@@ -30,8 +30,8 @@ post:
       * Request body: at most 65536 bytes (64 KiB), else 413 before the body is parsed.
       * `identifiers` and `exclude`: at most 200 entries; `pin`: at most 50. Entries are
         counted before duplicates are removed.
-      * `scope.dac`: at most 20 values. `limit`: 1 to 50 (default 12). `pageSize`: 1 to 200
-        (default 100). `cursor`: at most 512 characters.
+      * `scope.dac`: at most 20 values, each 1 to 255 characters. `limit`: 1 to 50 (default 12).
+        `pageSize`: 1 to 200 (default 100). `cursor`: at most 512 characters.
       * Each identifier: at most 32 characters, in canonical form (`DUOS-000123`, not `DUOS-123`),
         with a number no larger than 2147483647.
       * Unknown modes, unknown sections, duplicate fields and fields that do not belong to the
@@ -51,12 +51,29 @@ post:
             - $ref: '../schemas/ShowcaseRankingLookupRequest.yaml'
             - $ref: '../schemas/ShowcaseAllLookupRequest.yaml'
             - $ref: '../schemas/ShowcaseStatsLookupRequest.yaml'
-        example:
-          mode: identifiers
-          section: open-access-datasets
+        examples:
           identifiers:
-            - DUOS-000123
-            - DUOS-000999
+            summary: An editorial list
+            value:
+              mode: identifiers
+              section: open-access-datasets
+              identifiers:
+                - DUOS-000123
+                - DUOS-000999
+          ranking:
+            summary: A computed shelf with a scope, a pin and an exclusion
+            value:
+              mode: ranking
+              section: latest-data-releases
+              ranking: newest
+              scope:
+                dac:
+                  - Example DAC
+              limit: 12
+              pin:
+                - DUOS-000789
+              exclude:
+                - DUOS-000111
   responses:
     200:
       description: >

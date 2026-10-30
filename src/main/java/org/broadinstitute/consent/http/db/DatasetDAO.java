@@ -870,7 +870,7 @@ WHERE dar.submission_date > now() - interval '8760 hours'
    *
    * @param openAccessOnly true to keep open-access datasets only
    * @param dacNames exact DAC names to keep, or null for no DAC scope; an empty list keeps none
-   * @param excludedAliases aliases never to return
+   * @param excludedAliases aliases never to return, or null for none
    * @param limit the most aliases to return
    */
   default List<Integer> findShowcaseNewestAliases(
@@ -885,8 +885,8 @@ WHERE dar.submission_date > now() - interval '8760 hours'
         openAccessOnly,
         dacNames != null,
         dacNames == null ? List.of() : dacNames,
-        !excludedAliases.isEmpty(),
-        excludedAliases,
+        excludedAliases != null && !excludedAliases.isEmpty(),
+        excludedAliases == null ? List.of() : excludedAliases,
         limit,
         Dataset.ACCESS_MANAGEMENT_SCHEMA_PROPERTY,
         Dataset.LEGACY_ACCESS_MANAGEMENT_SCHEMA_PROPERTY);
@@ -953,6 +953,9 @@ WHERE dar.submission_date > now() - interval '8760 hours'
    * @param limit the most aliases to return
    */
   default List<Integer> findShowcaseAliasPage(int afterAlias, int limit) {
+    if (limit <= 0) {
+      return List.of();
+    }
     return findShowcaseAliasPage(
         afterAlias,
         limit,
