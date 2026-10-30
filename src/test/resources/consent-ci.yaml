@@ -78,6 +78,9 @@ rateLimit:
   enabled: true
   requestsPerMinute: 100
   podCount: 1
+  # Optional. Deployed environments set the secret from Secret Manager. See
+  # RateLimitConfiguration.
+  clientIpSecret: test-consent-proxy-secret-0123456789abcdef
 
 # Optional block; runOnStartup defaults to false. Integration tests start on an empty database, so
 # the application must build the schema.

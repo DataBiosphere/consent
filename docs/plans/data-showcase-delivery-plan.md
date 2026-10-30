@@ -18,6 +18,7 @@ been made. Jira epics and stories exist for E1 and E2 only (table below); the ot
 | S2.2 — Public batch lookup endpoint (backend) | [DT-4275](https://broadworkbench.atlassian.net/browse/DT-4275) |
 | S2.2 — Anonymous `/showcase/*` rate limit in consent (backend) | [DT-4280](https://broadworkbench.atlassian.net/browse/DT-4280) |
 | S2.2 — BFF public proxy, transport configuration and catalog client (frontend/proxy) | [DT-4281](https://broadworkbench.atlassian.net/browse/DT-4281) |
+| S2.2 — Signed browser IP from the BFF for the showcase rate limit (backend/proxy/ops) | [DT-4379](https://broadworkbench.atlassian.net/browse/DT-4379) |
 
 Section 4 details the MVP epics (E1–E5) and outlines the post-MVP epics (E6–E10). Their detailed
 stories are in the [post-MVP plan](data-showcase-post-mvp-plan.md), and each is re-planned before it
@@ -431,6 +432,83 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
   the browser calls Consent directly, so this limit is the only throttle. Configure the proxy limit
   with the existing public-proxy pattern and a pilot-load budget. Failed lookups show a retryable
   unavailable state, never mock data.
+- **Failure/limits — the BFF hop (DT-4379):** the BFF calls Consent at its public URL, so
+  Consent's load balancer writes the DUOS pod's egress address into `X-Real-IP`, and all BFF
+  traffic would share one Consent bucket. Adding the DUOS pod range to `trustedProxies` cannot
+  fix this, because in-cluster traffic goes back out through the public load balancer. Instead,
+  for each showcase request the BFF sends three headers:
+
+  | Header | Value |
+  |---|---|
+  | `X-DUOS-Client-IP` | The BFF's own rate-limit key for the browser (DT-4374): an IPv4 address, or the start address of an IPv6 /64 |
+  | `X-DUOS-Client-IP-Timestamp` | Unix time in seconds, decimal |
+  | `X-DUOS-Client-IP-Signature` | Lowercase hex HMAC-SHA256 of `<ip>\n<timestamp>` (UTF-8) |
+
+  `PublicRateLimitFilter` uses the IP as the key (`source=SIGNED_CLIENT_IP_HEADER` in the 429
+  log) only when the signature matches the current or the previous secret, in constant time,
+  and the timestamp is at most 60 seconds old and at most 5 seconds ahead. Otherwise it logs one
+  warning with the reason only (`Showcase signed client IP rejected: reason=...`, never a header
+  value) and keys on `X-Real-IP` as before. A request without any of the three headers, such as a
+  legacy-mode browser call, logs nothing. The BFF never sends the secret, and it strips
+  caller-supplied copies of the three headers on every public route. A recorded header is of no
+  use after its window ends, and a caller outside the cluster cannot choose its own key.
+
+  The secret is new and separate from `DUOS_SESSION_SECRET`: Consent holds this one, and a leak
+  from Consent must not let anyone forge DUOS sessions. It is created by hand, at least 32
+  characters, in Google Secret Manager for each environment, until DT-3625 adds automatic
+  rotation. The BFF reads it as `DUOS_CONSENT_PROXY_SECRET`; Consent reads
+  `rateLimit.clientIpSecret` and the optional `rateLimit.clientIpPreviousSecret`.
+  Without a secret on either side, the route still works and BFF traffic shares one bucket. Manual
+  rotation without an outage: (1) give Consent the new value as current and the old value as
+  previous; (2) change the BFF to the new value; (3) remove the previous value from Consent.
+
+  Deploy config (terra-helmfile): one GSM secret per live environment, `duos-consent-proxy-secret`,
+  with the property `current` and, during a rotation only, `previous`. DUOS reads `current`
+  (`envSecrets.consent_proxy_secret`). The Consent chart's `signedClientIp.enabled` adds
+  `current` to `consent-secrets` and passes it as `-Ddw.rateLimit.clientIpSecret`;
+  `signedClientIp.previousEnabled` adds `previous` the same way. Create the GSM secret before
+  either value is turned on, or the ExternalSecret cannot sync. To rotate: add a GSM version with
+  `current` = new and `previous` = old, and turn on `previousEnabled`. Both apps read `current`,
+  so step (2) happens when each pod reloads. If DUOS reloads before Consent, its lookups share one
+  bucket until Consent reloads; nothing fails. Then turn off `previousEnabled` and remove
+  `previous` from GSM.
+
+  The commands follow the `duos-session-secret` steps (BFF Epic 0, 0-B): `openssl rand -base64 32`
+  gives 32 random bytes (the HMAC-SHA256 key size) as 44 base64 characters, which are safe in
+  JSON. Both apps use that text as the key without decoding it. The process substitution keeps
+  each value out of the shell history and off the screen. Replace `<project>` with the
+  environment's project, for example `broad-dsde-dev`.
+
+  ```bash
+  # Create, once per environment.
+  gcloud secrets create duos-consent-proxy-secret --replication-policy="automatic" --project=<project>
+  gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
+    --data-file=<(echo -n '{"current":"'"$(openssl rand -base64 32)"'"}')
+
+  # Rotate, step 1: a GSM version replaces the whole JSON, so copy the old value into `previous`.
+  # Needs jq. Then set signedClientIp.previousEnabled: true for that environment.
+  gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
+    --data-file=<(gcloud secrets versions access latest --secret=duos-consent-proxy-secret \
+      --project=<project> | jq -c --arg new "$(openssl rand -base64 32)" '{current: $new, previous: .current}')
+
+  # Rotate, step 3, after both apps reload: drop `previous`, then set previousEnabled back to false.
+  gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
+    --data-file=<(gcloud secrets versions access latest --secret=duos-consent-proxy-secret \
+      --project=<project> | jq -c '{current: .current}')
+  ```
+
+  Unlike the session secret, a lost value costs little: make a new one, and BFF traffic shares one
+  Consent bucket only until both apps reload.
+
+  The secret and the headers are not specific to the showcase. Another anonymous BFF route that
+  needs a per-browser limit in Consent can sign with the same helper, and another Consent limiter
+  can build a `SignedClientIpVerifier` from the same `rateLimit` values. A verified IP is only a
+  rate-limit key: never use it to grant access. Local development needs no secret. A local BFF
+  that calls dev Consent reaches it through the load balancer, which keys on the developer's own
+  address; a local BFF with a local Consent can set the same value in both, but does not need to.
+
+  The rejected alternative was one shared Consent bucket for all BFF traffic with a higher budget: it
+  needs a load test to size, and one busy user can still use the full budget for all users.
 
 ### Subscription registry synchronization (E7, not MVP)
 
@@ -625,7 +703,8 @@ S1.1; the lookup feeds E3.
   gates the route on `showcase.publicLookupEnabled` (off by default); an environment turns it
   on only after the S2.1 field approval in the contracts "Open gates" table is recorded.
   Requests through the BFF get the BFF's outbound address as the key, so all BFF users share one
-  bucket until the BFF forwards the browser address in a header that Consent believes (DT-4281).
+  bucket unless the BFF signs the browser address (DT-4379, section 3, Failure/limits — the BFF
+  hop).
 - **Frontend/server/ops:** implement the section 3 BFF public proxy and its dedicated upstream
   configuration, legacy CSP/CORS/preflight, and public-route rate limit. Document preview versus
   functional-test environment configuration. This transport work is required for MVP.
