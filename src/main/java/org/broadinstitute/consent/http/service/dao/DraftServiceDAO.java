@@ -20,6 +20,8 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DraftServiceDAO {
 
+  private static final String DRAFT_NOT_FOUND = "Draft with UUID %s not found.";
+
   private final Jdbi jdbi;
   private final DraftDAO draftDAO;
   private final DraftFileStorageServiceDAO draftFileStorageServiceDAO;
@@ -84,11 +86,10 @@ public class DraftServiceDAO {
     try {
       draft = findDraftByDraftUUID(draftUUID);
     } catch (Exception e) {
-      throw new NotFoundException(String.format("Draft with UUID %s not found.", draftUUID), e);
+      throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draftUUID), e);
     }
     if (draft == null) {
-      throw new NotFoundException(
-          String.format("Draft with UUID %s not found.", draftUUID.toString()));
+      throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draftUUID));
     }
     if (!user.getUserId().equals(draft.getCreateUser().getUserId())
         && !user.hasUserRole(UserRoles.ADMIN)) {
@@ -112,8 +113,7 @@ public class DraftServiceDAO {
             if (draftDAO.updateDraftByDraftUUID(
                     draft.getUUID(), new Date().toInstant(), user.getUserId())
                 == 0) {
-              throw new NotFoundException(
-                  "Draft with UUID %s not found.".formatted(draft.getUUID()));
+              throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draft.getUUID()));
             }
             return draftFileStorageServiceDAO.insertFileRows(uploaded, draft.getUUID(), user);
           });
