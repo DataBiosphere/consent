@@ -7,6 +7,9 @@ package org.broadinstitute.consent.http.service.showcase;
  */
 public final class ShowcaseLookupLimits {
 
+  /** The largest request body, in bytes. A larger body gets a 413 before it is parsed. */
+  public static final int MAX_BODY_BYTES = 64 * 1024;
+
   /** Submitted {@code identifiers}, counted before duplicates are removed. */
   public static final int MAX_IDENTIFIERS = 200;
 
