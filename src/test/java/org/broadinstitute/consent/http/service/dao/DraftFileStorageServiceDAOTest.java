@@ -104,6 +104,27 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     verify(gcsService).deleteDocument(anyString());
   }
 
+  @Test
+  void testSeveralFailedUploadsReportTheFirstFile() {
+    User user = createUser();
+    Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
+    for (String name : List.of("first", "second")) {
+      FormDataBodyPart failing = mock(FormDataBodyPart.class);
+      when(failing.getName()).thenReturn(name);
+      when(failing.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+      when(failing.getValueAs(InputStream.class)).thenThrow(new IllegalStateException(name));
+      testFiles.put(name, failing);
+    }
+
+    ServerErrorException error =
+        assertThrows(
+            ServerErrorException.class,
+            () -> draftFileStorageServiceDAO.uploadDocuments(UUID.randomUUID(), user, testFiles));
+
+    assertEquals("Unable to store the file first", error.getMessage());
+    verify(gcsService).deleteDocument(anyString());
+  }
+
   private List<FileStorageObject> store(
       UUID draftId, User user, Map<String, FormDataBodyPart> files) {
     return draftFileStorageServiceDAO.insertFileRows(
