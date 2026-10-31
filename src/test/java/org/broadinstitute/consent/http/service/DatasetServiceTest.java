@@ -928,7 +928,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testSyncAllStudyAssetsContinuesPastAFailingStudy() throws Exception {
     Instant since = Instant.parse("2026-10-30T18:00:00Z");
-    when(studyDAO.findStudyIdsChangedSince(since)).thenReturn(List.of(1, 2, 3));
+    when(studyDAO.findStudyIdsToSync(since, 0, 51)).thenReturn(List.of(1, 2, 3));
     doNothing().when(datasetServiceDAO).syncStudyAssets(1);
     doThrow(new BadRequestException("Biospecimen at index 0: send the sample id in sampleId"))
         .when(datasetServiceDAO)
@@ -939,7 +939,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(studyDAO.findIndexedDatasetIdsByStudyId(1)).thenReturn(List.of());
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    datasetService.syncAllStudyAssets(mockUser, since).write(output);
+    datasetService.syncAllStudyAssets(mockUser, since, 0, 50).write(output);
 
     assertEquals(
         List.of(
@@ -948,7 +948,7 @@ class DatasetServiceTest extends AbstractTestHelper {
                 + "\"error\":\"Biospecimen at index 0: send the sample id in sampleId\"}",
             "{\"studyId\":3,\"synced\":false,\"status\":500,"
                 + "\"error\":\"Unexpected error; see the server log\"}",
-            "{\"synced\":1,\"failed\":2,\"indexFailed\":0}"),
+            "{\"synced\":1,\"failed\":2,\"deleted\":0,\"indexFailed\":0}"),
         output.toString(StandardCharsets.UTF_8).lines().toList());
     verify(studyDAO, never()).findIndexedDatasetIdsByStudyId(2);
     verify(studyDAO, never()).findIndexedDatasetIdsByStudyId(3);
@@ -956,12 +956,12 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testSyncAllStudyAssetsKeepsSyncingAfterTheClientDisconnects() throws Exception {
-    when(studyDAO.findAllStudyIds()).thenReturn(List.of(1, 2));
+    when(studyDAO.findStudyIdsToSync(null, 0, 51)).thenReturn(List.of(1, 2));
     when(studyDAO.findIndexedDatasetIdsByStudyId(any())).thenReturn(List.of());
     OutputStream disconnected = mock(OutputStream.class);
     doThrow(new IOException("broken pipe")).when(disconnected).write(any(byte[].class));
 
-    datasetService.syncAllStudyAssets(mockUser, null).write(disconnected);
+    datasetService.syncAllStudyAssets(mockUser, null, 0, 50).write(disconnected);
 
     verify(datasetServiceDAO).syncStudyAssets(1);
     verify(datasetServiceDAO).syncStudyAssets(2);
@@ -970,19 +970,47 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() throws Exception {
-    when(studyDAO.findAllStudyIds()).thenReturn(List.of(4));
+    when(studyDAO.findStudyIdsToSync(null, 0, 51)).thenReturn(List.of(4));
     when(studyDAO.findIndexedDatasetIdsByStudyId(4)).thenReturn(List.of(9));
     when(elasticSearchService.indexDatasets(List.of(9))).thenThrow(new IOException("down"));
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
-    datasetService.syncAllStudyAssets(mockUser, null).write(output);
+    datasetService.syncAllStudyAssets(mockUser, null, 0, 50).write(output);
 
     assertEquals(
         List.of(
             "{\"studyId\":4,\"synced\":true,\"index\":\"FAILED\"}",
-            "{\"synced\":1,\"failed\":0,\"indexFailed\":1}"),
+            "{\"synced\":1,\"failed\":0,\"deleted\":0,\"indexFailed\":1}"),
         output.toString(StandardCharsets.UTF_8).lines().toList());
-    verify(studyDAO, never()).findStudyIdsChangedSince(any());
+  }
+
+  @Test
+  void testSyncAllStudyAssetsCountsAStudyDeletedDuringTheRunAsDeleted() throws Exception {
+    when(studyDAO.findStudyIdsToSync(null, 0, 51)).thenReturn(List.of(5));
+    doThrow(new NotFoundException("Study with ID 5 does not exist."))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(5);
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    datasetService.syncAllStudyAssets(mockUser, null, 0, 50).write(output);
+
+    assertEquals(
+        "{\"synced\":0,\"failed\":0,\"deleted\":1,\"indexFailed\":0}",
+        output.toString(StandardCharsets.UTF_8).lines().toList().getLast());
+  }
+
+  @Test
+  void testSyncAllStudyAssetsStopsAtTheLimitAndNamesWhereToContinue() throws Exception {
+    when(studyDAO.findStudyIdsToSync(null, 10, 3)).thenReturn(List.of(11, 12, 13));
+    when(studyDAO.findIndexedDatasetIdsByStudyId(any())).thenReturn(List.of());
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    datasetService.syncAllStudyAssets(mockUser, null, 10, 2).write(output);
+
+    assertEquals(
+        "{\"synced\":2,\"failed\":0,\"deleted\":0,\"indexFailed\":0,\"nextAfterStudyId\":12}",
+        output.toString(StandardCharsets.UTF_8).lines().toList().getLast());
+    verify(datasetServiceDAO, never()).syncStudyAssets(13);
   }
 
   @Test

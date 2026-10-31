@@ -607,15 +607,17 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllStudyIds() {
+  void testFindStudyIdsToSyncPagesByStudyId() {
     Integer first = insertStudyCreatedAt(Instant.now());
     Integer second = insertStudyCreatedAt(Instant.now());
+    Integer third = insertStudyCreatedAt(Instant.now());
 
-    assertEquals(List.of(first, second), studyDAO.findAllStudyIds());
+    assertEquals(List.of(first, second), studyDAO.findStudyIdsToSync(null, 0, 2));
+    assertEquals(List.of(third), studyDAO.findStudyIdsToSync(null, second, 2));
   }
 
   @Test
-  void testFindStudyIdsChangedSinceIncludesNewAndEditedStudies() {
+  void testFindStudyIdsToSyncSinceIncludesNewAndEditedStudies() {
     Instant since = Instant.parse("2026-10-30T18:00:00Z");
     Integer untouched = insertStudyCreatedAt(since.minus(1, ChronoUnit.DAYS));
     Integer editedAtSince = insertStudyCreatedAt(since.minus(1, ChronoUnit.DAYS));
@@ -625,7 +627,7 @@ class StudyDAOTest extends DAOTestHelper {
     Integer createdAtSince = insertStudyCreatedAt(since);
     Integer createdAfter = insertStudyCreatedAt(since.plus(1, ChronoUnit.HOURS));
 
-    List<Integer> changed = studyDAO.findStudyIdsChangedSince(since);
+    List<Integer> changed = studyDAO.findStudyIdsToSync(since, 0, 10);
 
     assertEquals(List.of(editedAtSince, createdAtSince, createdAfter), changed);
     assertFalse(changed.contains(untouched));

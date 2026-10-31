@@ -451,23 +451,31 @@ public class DatasetService implements ConsentLogger {
     return syncStudyAssets(studyId);
   }
 
-  /** Every study, or those created or updated at or after {@code since}; one transaction each. */
-  public StreamingOutput syncAllStudyAssets(User admin, Instant since) {
-    List<Integer> studyIds =
-        since == null ? studyDAO.findAllStudyIds() : studyDAO.findStudyIdsChangedSince(since);
+  /**
+   * Up to {@code limit} studies after {@code afterStudyId}, all of them or those created or updated
+   * at or after {@code since}; one transaction each.
+   */
+  public StreamingOutput syncAllStudyAssets(
+      User admin, Instant since, int afterStudyId, int limit) {
+    List<Integer> found = studyDAO.findStudyIdsToSync(since, afterStudyId, limit + 1);
+    List<Integer> studyIds = found.subList(0, Math.min(limit, found.size()));
+    Integer nextAfterStudyId = found.size() > limit ? studyIds.getLast() : null;
     logInfo(
-        "User %d resyncs the asset records of %d studies, since %s"
-            .formatted(admin.getUserId(), studyIds.size(), since));
+        "User %d resyncs the asset records of %d studies after study %d, since %s"
+            .formatted(admin.getUserId(), studyIds.size(), afterStudyId, since));
     Gson gson = GsonUtil.getInstance();
     return output -> {
       int synced = 0;
       int failed = 0;
+      int deleted = 0;
       int indexFailed = 0;
       // A dropped connection must not leave the rest of a recovery run undone.
       boolean clientConnected = true;
       for (Integer studyId : studyIds) {
         StudyAssetSync result = syncStudyAssetsReportingFailure(studyId);
-        if (!result.synced()) {
+        if (Integer.valueOf(Response.Status.NOT_FOUND.getStatusCode()).equals(result.status())) {
+          deleted++;
+        } else if (!result.synced()) {
           failed++;
         } else {
           synced++;
@@ -477,7 +485,8 @@ public class DatasetService implements ConsentLogger {
         }
         clientConnected = clientConnected && writeLine(output, gson.toJson(result));
       }
-      StudyAssetSync.Summary summary = new StudyAssetSync.Summary(synced, failed, indexFailed);
+      StudyAssetSync.Summary summary =
+          new StudyAssetSync.Summary(synced, failed, deleted, indexFailed, nextAfterStudyId);
       logInfo("Asset record resync finished: %s".formatted(summary));
       if (clientConnected) {
         writeLine(output, gson.toJson(summary));
