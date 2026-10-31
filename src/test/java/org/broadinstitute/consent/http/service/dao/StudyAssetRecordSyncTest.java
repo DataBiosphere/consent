@@ -753,7 +753,13 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
     JsonArray biospecimens = stored(studyId, "Biospecimens");
     assertEquals(List.of("S-1", "1700000000000"), sampleIds(biospecimens));
-    assertEquals(2, assetDAO.findBiospecimensByStudyId(studyId).size());
+    List<StudyBiospecimenRecord> specimens = assetDAO.findBiospecimensByStudyId(studyId);
+    assertEquals(
+        specimens.stream().map(StudyBiospecimenRecord::biospecimenId).toList(),
+        IntStream.range(0, 2).mapToObj(i -> idOf(biospecimens, i, "biospecimenId")).toList());
+    assertEquals(
+        List.of("S-1", "1700000000000"),
+        specimens.stream().map(StudyBiospecimenRecord::legacyKey).toList());
 
     List<String> convertedModels = storedValues(studyId, "models");
     List<String> convertedWorkspaces = storedValues(studyId, "workspaces");

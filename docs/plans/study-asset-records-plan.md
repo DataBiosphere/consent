@@ -66,7 +66,7 @@ The server assigns the key. Alternatives considered and rejected:
 | 3 | consent | Sync asset records on registration create and update | ~450 lines | 1; 2 deployed; DT-4323 deployed; DT-4298 merged; Decisions 5 and 11; short-id count is zero |
 | 4 | consent | Document the asset id fields as `integer` or `string` in OpenAPI | ~100 lines | Ships in the same release as 3; DT-4299 merged |
 | 5 | duos-ui | Send server-assigned asset ids | ~250 lines | 3 deployed; DT-4302 merged |
-| 6 | consent | Convert existing registrations | ~100 lines, plus the run | 3 and DT-4378 deployed; Decision 5 |
+| 6 | consent | Convert existing registrations | ~200 lines, plus the run | 3 and DT-4378 deployed; Decision 5 |
 | 7 | duos-ui | Drop the position-based id fallback | ~100 lines | 6 run in production |
 
 Sizes include tests. Tasks are numbered in deploy order. **Task 2 deploys before Task 3**, because Task 3 starts replacing the `biospecimenId` the Data Library shows with a row id, and moves the original into `sampleId`. **The id and `sampleId` fields are mapped explicitly before Task 2 deploys** (see Task 3), because until Task 6 runs the index holds numeric and string ids side by side. **Task 3 deploys before Task 6 runs**, so no registration write can land after the conversion and leave an asset without a row. **[DT-4323](https://broadworkbench.atlassian.net/browse/DT-4323) deploys before Task 3**: the duos-ui edit form loads only the legacy `assets` property, so every UI edit submits no asset lists, and Task 3 would retire every row of the study.
@@ -281,7 +281,27 @@ The conversion runs `syncStudy` (Task 3) over every study with the bulk call fro
   HAVING count(*) > 1;
   ```
 
-- Run the report query before and after the bulk call. Per type it counts the object entries, the entries whose id names a live row of their study, the non-object elements, and the live rows no entry names. After the run, `converted` equals `entries` and `live_rows_without_entry` is zero:
+  Likewise fix a legacy `assets` object that holds one type under two spellings (`models` and `Models`): `syncStudy` moves the first it reads and leaves the other, which the report then counts as unconverted. This query returns each such study:
+
+  ```sql
+  WITH asset_rows AS MATERIALIZED (
+    SELECT study_id, value::jsonb AS value
+    FROM study_property
+    WHERE lower(key) = 'assets'
+      AND pg_input_is_valid(value, 'jsonb')
+  ),
+  legacy_objects AS MATERIALIZED (
+    SELECT study_id, value FROM asset_rows
+    WHERE jsonb_typeof(value) = 'object'
+  )
+  SELECT legacy_objects.study_id, lower(o.k) AS key, count(*)
+  FROM legacy_objects, jsonb_each(legacy_objects.value) AS o(k, v)
+  WHERE lower(o.k) IN ('models', 'workspaces', 'biospecimens')
+  GROUP BY legacy_objects.study_id, lower(o.k)
+  HAVING count(*) > 1;
+  ```
+
+- Run the report query before and after the bulk call. Per type it counts the object entries, the live rows of their study that entries name (each row once, so two entries naming one row fall short), the non-object elements, and the live rows no entry names. After the run, `converted` equals `entries`, `live_rows_without_entry` is zero, and the inventory query still shows zero `blocked_legacy_lists` and `non_array_promoted`, since the report does not count the lists those leave unconverted:
 
   ```sql
   WITH asset_rows AS MATERIALIZED (
@@ -330,7 +350,7 @@ The conversion runs `syncStudy` (Task 3) over every study with the bulk call fro
   )
   SELECT t.key,
          (SELECT count(*) FROM entries e WHERE e.key = t.key AND e.is_object) AS entries,
-         (SELECT count(*) FROM entries e
+         (SELECT count(DISTINCT (e.study_id, e.row_id)) FROM entries e
           WHERE e.key = t.key AND e.is_object
             AND EXISTS (SELECT 1 FROM live l WHERE l.key = e.key AND l.study_id = e.study_id AND l.row_id = e.row_id)) AS converted,
          (SELECT count(*) FROM entries e WHERE e.key = t.key AND NOT e.is_object) AS non_objects,
