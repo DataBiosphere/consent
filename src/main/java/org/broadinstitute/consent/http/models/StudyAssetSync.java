@@ -18,6 +18,7 @@ public record StudyAssetSync(
     return new StudyAssetSync(studyId, false, null, status, error);
   }
 
-  /** The last line of a bulk resync. */
-  public record Summary(int synced, int failed, int indexFailed) {}
+  /** The last line of a bulk resync; nextAfterStudyId is null once no studies remain. */
+  public record Summary(
+      int synced, int failed, int deleted, int indexFailed, Integer nextAfterStudyId) {}
 }

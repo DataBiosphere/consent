@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -950,7 +951,8 @@ class StudyResourceTest extends AbstractTestHelper {
   void testSyncAllStudyAssetsIsAdminOnly() throws NoSuchMethodException {
     RolesAllowed roles =
         StudyResource.class
-            .getMethod("syncAllStudyAssets", DuosUser.class, String.class)
+            .getMethod(
+                "syncAllStudyAssets", DuosUser.class, String.class, Integer.class, Integer.class)
             .getAnnotation(RolesAllowed.class);
     assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
   }
@@ -960,8 +962,8 @@ class StudyResourceTest extends AbstractTestHelper {
     when(duosUser.getUser()).thenReturn(user);
     Instant since = Instant.parse("2026-10-30T18:00:00Z");
     StreamingOutput results = output -> {};
-    when(datasetService.syncAllStudyAssets(user, since)).thenReturn(results);
-    try (var response = resource.syncAllStudyAssets(duosUser, "2026-10-30T18:00:00Z")) {
+    when(datasetService.syncAllStudyAssets(user, since, 7, 20)).thenReturn(results);
+    try (var response = resource.syncAllStudyAssets(duosUser, "2026-10-30T18:00:00Z", 7, 20)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(results, response.getEntity());
       assertEquals("application/x-ndjson", response.getMediaType().toString());
@@ -971,8 +973,8 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() {
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.syncAllStudyAssets(user, null)).thenReturn(output -> {});
-    try (var response = resource.syncAllStudyAssets(duosUser, null)) {
+    when(datasetService.syncAllStudyAssets(user, null, 0, 50)).thenReturn(output -> {});
+    try (var response = resource.syncAllStudyAssets(duosUser, null, 0, 50)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -980,9 +982,19 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testSyncAllStudyAssetsRejectsAMalformedSince() {
     when(duosUser.getUser()).thenReturn(user);
-    try (var response = resource.syncAllStudyAssets(duosUser, "yesterday")) {
+    try (var response = resource.syncAllStudyAssets(duosUser, "yesterday", 0, 50)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-    verify(datasetService, never()).syncAllStudyAssets(any(), any());
+    verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
+  }
+
+  @Test
+  void testSyncAllStudyAssetsRejectsALimitOutOfRange() {
+    try (var tooSmall = resource.syncAllStudyAssets(duosUser, null, 0, 0);
+        var tooLarge = resource.syncAllStudyAssets(duosUser, null, 0, 501)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooSmall.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooLarge.getStatus());
+    }
+    verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
   }
 }

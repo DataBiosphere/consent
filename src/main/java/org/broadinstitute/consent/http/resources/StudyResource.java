@@ -13,6 +13,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -59,6 +60,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 public class StudyResource extends Resource {
 
   private static final String NDJSON = "application/x-ndjson";
+  private static final int MAX_SYNC_LIMIT = 500;
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
@@ -144,10 +146,18 @@ public class StudyResource extends Resource {
   @Path("/assets/sync")
   @Produces({NDJSON, MediaType.APPLICATION_JSON})
   @RolesAllowed({ADMIN})
-  public Response syncAllStudyAssets(@Auth DuosUser duosUser, @QueryParam("since") String since) {
+  public Response syncAllStudyAssets(
+      @Auth DuosUser duosUser,
+      @QueryParam("since") String since,
+      @DefaultValue("0") @QueryParam("afterStudyId") Integer afterStudyId,
+      @DefaultValue("50") @QueryParam("limit") Integer limit) {
     try {
+      if (limit < 1 || limit > MAX_SYNC_LIMIT) {
+        throw new BadRequestException("limit must be from 1 to %d".formatted(MAX_SYNC_LIMIT));
+      }
       StreamingOutput results =
-          datasetService.syncAllStudyAssets(duosUser.getUser(), parseSince(since));
+          datasetService.syncAllStudyAssets(
+              duosUser.getUser(), parseSince(since), afterStudyId, limit);
       return Response.ok(results, NDJSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
