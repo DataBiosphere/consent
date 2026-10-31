@@ -1,13 +1,13 @@
-post:
+put:
   summary: Resync the Asset Records of Many Studies
-  operationId: apiDatasetStudyAssetsSyncPost
-  description: Resyncs each study as the single-study call does, one transaction per study in study id order. A failed study is reported and the run continues. Streams one StudyAssetSync per line, then a summary line; while studies remain, call again with afterStudyId set to its nextAfterStudyId.
+  operationId: apiDatasetStudyAssetsRecordsPut
+  description: Resyncs each study as the single-study call does, one transaction per study in study id order, then reindexes the page's indexed datasets in one request. A failed study is reported and the run continues. Returns one StudyAssetSync per line, then a summary line; while studies remain, call again with afterStudyId set to its nextAfterStudyId. A resync is idempotent, so if the response is cut off, call again with afterStudyId set to the last studyId received, or repeat the page.
   tags:
     - Admin
   parameters:
     - name: since
       in: query
-      description: ISO-8601 instant, such as 2026-10-30T18:00:00Z. Resyncs only studies created or updated at or after it; omit to resync every study. Every write that changes a study's assets sets its update date.
+      description: ISO-8601 instant, such as 2026-10-30T18:00:00Z. Resyncs only studies created or updated at or after it; omit to resync every study. Every registration edit sets the study's update date; a resync does not.
       required: false
       schema:
         type: string
@@ -30,7 +30,7 @@ post:
         maximum: 500
   responses:
     200:
-      description: Newline-delimited JSON, streamed as each study finishes
+      description: Newline-delimited JSON, written once the page is synced and reindexed
       content:
         application/x-ndjson:
           schema:
@@ -38,7 +38,7 @@ post:
               - $ref: '../schemas/StudyAssetSync.yaml'
               - $ref: '../schemas/StudyAssetSyncSummary.yaml'
     400:
-      description: since is not an ISO-8601 instant, or limit is out of range
+      description: since is not an ISO-8601 instant, afterStudyId or limit is not an integer, or limit is out of range
     401:
       description: Unauthorized.
     403:

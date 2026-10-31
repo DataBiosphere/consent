@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Study;
-import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -51,15 +50,6 @@ class StudyAssetServiceTest {
   }
 
   /** Assets are read from the promoted first-class property. */
-  @Test
-  void syncAssetRecordsDelegatesToTheDatasetService() {
-    User admin = new User();
-    StudyAssetSync result = StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.NOT_INDEXED);
-    when(datasetService.syncStudyAssets(admin, 7)).thenReturn(result);
-
-    assertEquals(result, service.syncAssetRecords(admin, 7));
-  }
-
   @Test
   void returnsAssetsOfEachTypeFromPromotedProperties() {
     Study study = new Study();

@@ -80,14 +80,6 @@ public interface StudyDAO extends Transactional<StudyDAO> {
   @SqlQuery("SELECT dataset_id FROM dataset WHERE study_id = :studyId")
   List<Integer> findDatasetIdsByStudyId(@Bind("studyId") Integer studyId);
 
-  @SqlQuery(
-      """
-      SELECT dataset_id FROM dataset
-      WHERE study_id = :studyId AND indexed_date IS NOT NULL
-      ORDER BY dataset_id
-      """)
-  List<Integer> findIndexedDatasetIdsByStudyId(@Bind("studyId") Integer studyId);
-
   /** A new study has a null update_date, so its create_date is checked too. */
   @SqlQuery(
       """

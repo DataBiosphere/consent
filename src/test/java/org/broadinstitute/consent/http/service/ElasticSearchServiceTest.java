@@ -19,6 +19,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
@@ -993,6 +994,102 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
           new String(
               capturedRequest.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8));
     }
+  }
+
+  @Test
+  void testIndexDatasetTermsReportsDocumentsTheBulkRequestRejected() throws IOException {
+    DatasetTerm term = new DatasetTerm();
+    term.setDatasetId(1);
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    String body =
+        "{\"errors\":true,\"items\":[{\"index\":{\"_id\":\"1\",\"status\":400,\"error\":{}}}]}";
+    mockElasticSearchResponse(body);
+
+    try (var response = service.indexDatasetTerms(List.of(term))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+      assertEquals(body, response.getEntity());
+    }
+  }
+
+  @Test
+  void testReindexIndexedDatasetsWithNoDatasetsSendsNothing() throws IOException {
+    assertEquals(
+        new ElasticSearchService.Reindex(Set.of(), Set.of()),
+        service.reindexIndexedDatasets(Set.of()));
+    verifyNoInteractions(datasetDAO);
+    verify(esClient, never()).performRequest(any());
+  }
+
+  @Test
+  void testReindexIndexedDatasetsLeavesOutDatasetsNotInTheIndex() throws IOException {
+    Dataset notIndexed = createDatasetRecord().dataset;
+    when(datasetDAO.findDatasetsByIdList(List.of(notIndexed.getDatasetId())))
+        .thenReturn(List.of(notIndexed));
+
+    assertEquals(
+        new ElasticSearchService.Reindex(Set.of(), Set.of()),
+        service.reindexIndexedDatasets(Set.of(notIndexed.getDatasetId())));
+    verify(esClient, never()).performRequest(any());
+  }
+
+  @Test
+  void testReindexIndexedDatasetsReportsTheDatasetsTheIndexRejected() throws IOException {
+    DatasetRecord record = createDatasetRecord();
+    Dataset accepted = record.dataset;
+    Dataset rejected =
+        createDataset(
+            record.createUser,
+            record.updateUser,
+            new DataUseBuilder().setGeneralUse(true).build(),
+            record.dac);
+    rejected.setStudyId(accepted.getStudyId());
+    accepted.setDatasetId(1);
+    rejected.setDatasetId(2);
+    accepted.setIndexedDate(new Date());
+    rejected.setIndexedDate(new Date());
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(accepted, rejected));
+    when(studyDAO.findStudyById(accepted.getStudyId())).thenReturn(record.study);
+    when(userDao.findUserById(any())).thenReturn(record.createUser);
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(
+        """
+        {"errors":true,"items":[{"index":{"_id":"%d","status":201}},
+         {"index":{"_id":"%d","status":400,"error":{}}}]}"""
+            .formatted(accepted.getDatasetId(), rejected.getDatasetId()));
+
+    assertEquals(
+        new ElasticSearchService.Reindex(
+            Set.of(accepted.getDatasetId(), rejected.getDatasetId()),
+            Set.of(rejected.getDatasetId())),
+        service.reindexIndexedDatasets(Set.of(accepted.getDatasetId(), rejected.getDatasetId())));
+  }
+
+  @Test
+  void testReindexIndexedDatasetsReportsEveryDatasetWhenTheLookupFails() throws IOException {
+    when(datasetDAO.findDatasetsByIdList(any())).thenThrow(new IllegalStateException("down"));
+
+    assertEquals(
+        new ElasticSearchService.Reindex(Set.of(1, 2), Set.of(1, 2)),
+        service.reindexIndexedDatasets(Set.of(1, 2)));
+    verify(esClient, never()).performRequest(any());
+  }
+
+  @Test
+  void testReindexIndexedDatasetsReportsEveryDatasetWhenTheRequestFails() throws IOException {
+    DatasetRecord record = createDatasetRecord();
+    Dataset dataset = record.dataset;
+    dataset.setIndexedDate(new Date());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId())))
+        .thenReturn(List.of(dataset));
+    when(studyDAO.findStudyById(dataset.getStudyId())).thenReturn(record.study);
+    when(userDao.findUserById(any())).thenReturn(record.createUser);
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    when(esClient.performRequest(any())).thenThrow(new IOException("down"));
+
+    assertEquals(
+        new ElasticSearchService.Reindex(
+            Set.of(dataset.getDatasetId()), Set.of(dataset.getDatasetId())),
+        service.reindexIndexedDatasets(Set.of(dataset.getDatasetId())));
   }
 
   @Test
