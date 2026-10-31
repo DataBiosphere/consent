@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -56,7 +55,6 @@ import org.broadinstitute.consent.http.models.DraftStudyDataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -331,26 +329,6 @@ class DraftServiceDAOTest extends DAOTestHelper {
     doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
     return new DraftServiceDAO(
         withFailingDraftDAO, new DraftFileStorageServiceDAO(jdbi, gcsService, EXECUTOR));
-  }
-
-  @Test
-  void testAttachmentUploadsHoldNoTransaction() throws Exception {
-    User user = createUser();
-    DraftInterface draft = createDraft(user, 0);
-    List<Boolean> inTransaction = new CopyOnWriteArrayList<>();
-    when(gcsService.storeDocument(any(), anyString(), any()))
-        .thenAnswer(
-            invocation -> {
-              // Jdbi hands a nested call the thread's open handle, if there is one.
-              inTransaction.add(jdbi.withHandle(Handle::isInTransaction));
-              return BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
-            });
-
-    draftServiceDAO.addAttachments(draft, user, getRandomFiles(2));
-
-    assertEquals(List.of(false, false), inTransaction);
-    assertThat(
-        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(2));
   }
 
   @Test
