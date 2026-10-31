@@ -755,10 +755,21 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertEquals(List.of("S-1", "1700000000000"), sampleIds(biospecimens));
     assertEquals(2, assetDAO.findBiospecimensByStudyId(studyId).size());
 
-    List<String> converted = storedValues(studyId, "models");
+    List<String> convertedModels = storedValues(studyId, "models");
+    List<String> convertedWorkspaces = storedValues(studyId, "workspaces");
+    List<String> convertedBiospecimens = storedValues(studyId, "Biospecimens");
+    List<List<Object>> biospecimenRows = biospecimenIdentities(studyId);
     serviceDAO.syncStudyAssets(studyId);
-    assertEquals(converted, storedValues(studyId, "models"));
+    assertEquals(convertedModels, storedValues(studyId, "models"));
+    assertEquals(convertedWorkspaces, storedValues(studyId, "workspaces"));
+    assertEquals(convertedBiospecimens, storedValues(studyId, "Biospecimens"));
     assertEquals(5, assetDAO.findModelsByStudyId(studyId).size());
+    StudyWorkspaceRecord resynced = assetDAO.findWorkspacesByStudyId(studyId).getFirst();
+    assertEquals(
+        Arrays.asList(workspace.workspaceId(), workspace.legacyKey(), null),
+        Arrays.asList(resynced.workspaceId(), resynced.legacyKey(), resynced.retiredDate()));
+    assertEquals(1, assetDAO.findWorkspacesByStudyId(studyId).size());
+    assertEquals(biospecimenRows, biospecimenIdentities(studyId));
   }
 
   @Test
@@ -1082,6 +1093,16 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
                 .bind("key", key)
                 .mapTo(Integer.class)
                 .one());
+  }
+
+  /** What a resync must keep for each biospecimen row; a sync always stamps update_date. */
+  private List<List<Object>> biospecimenIdentities(Integer studyId) {
+    return assetDAO.findBiospecimensByStudyId(studyId).stream()
+        .map(
+            row ->
+                Arrays.<Object>asList(
+                    row.biospecimenId(), row.legacyKey(), row.sampleId(), row.retiredDate()))
+        .toList();
   }
 
   /** Every row of a key in any case, in insertion order. */
