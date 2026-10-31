@@ -446,21 +446,29 @@ public class ElasticSearchService implements ConsentLogger {
         return new Reindex(sent, Set.of());
       }
       attachStudies(datasets);
-      try (Response response = indexDatasetList(datasets)) {
-        if (HttpStatusCodes.isSuccess(response.getStatus())) {
-          return new Reindex(sent, Set.of());
-        }
-        Set<Integer> rejected =
-            bulkItems(response)
-                .filter(item -> item.has("error"))
-                .map(item -> Integer.valueOf(item.get("_id").getAsString()))
-                .collect(Collectors.toUnmodifiableSet());
-        return new Reindex(sent, rejected.isEmpty() ? sent : rejected);
-      }
+      return sendToIndex(datasets, sent);
     } catch (IOException | RuntimeException e) {
       logWarn("Unable to reindex datasets %s".formatted(sent), e);
       return new Reindex(sent, sent);
     }
+  }
+
+  private Reindex sendToIndex(List<Dataset> datasets, Set<Integer> sent) throws IOException {
+    try (Response response = indexDatasetList(datasets)) {
+      return new Reindex(
+          sent,
+          HttpStatusCodes.isSuccess(response.getStatus()) ? Set.of() : failed(response, sent));
+    }
+  }
+
+  /** The datasets the bulk response names as rejected, or all of them when it names none. */
+  private static Set<Integer> failed(Response response, Set<Integer> sent) {
+    Set<Integer> rejected =
+        bulkItems(response)
+            .filter(item -> item.has("error"))
+            .map(item -> Integer.valueOf(item.get("_id").getAsString()))
+            .collect(Collectors.toUnmodifiableSet());
+    return rejected.isEmpty() ? sent : rejected;
   }
 
   public Response indexDatasets(List<Integer> datasetIds) throws IOException {
