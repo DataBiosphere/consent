@@ -25,6 +25,8 @@ post:
         application/json:
           schema:
             $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Elasticsearch rejected the dataset, or the request failed; the body is Elasticsearch's response when there is one
 delete:
   summary: Delete dataset index by id
   operationId: apiDatasetIndexDatasetIdDelete

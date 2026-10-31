@@ -6,6 +6,9 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
@@ -18,6 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -168,9 +172,62 @@ public class ElasticSearchService implements ConsentLogger {
 
     bulkRequest.setEntity(
         new NStringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
+    Response response = performRequest(bulkRequest);
+    // A bulk request answers 200 even when Elasticsearch rejected some of its documents.
+    Optional<Set<Integer>> rejected = rejectedIds(response);
+    Set<Integer> sent =
+        datasets.stream().map(DatasetTerm::getDatasetId).collect(Collectors.toSet());
     updateDatasetIndexDateForDatasets(
-        datasets.stream().map(DatasetTerm::getDatasetId).collect(Collectors.toSet()));
-    return performRequest(bulkRequest);
+        rejected
+            .map(ids -> sent.stream().filter(id -> !ids.contains(id)).collect(Collectors.toSet()))
+            .orElse(Set.of()));
+    if (rejected.map(ids -> !ids.isEmpty()).orElse(true)) {
+      logWarn("Elasticsearch rejected datasets %s".formatted(rejected.orElse(sent)));
+      return Response.status(Status.INTERNAL_SERVER_ERROR).entity(response.getEntity()).build();
+    }
+    return response;
+  }
+
+  /**
+   * The datasets a bulk response says Elasticsearch rejected, or empty when a rejected document
+   * names no dataset id. A body that is not a bulk response rejects nothing.
+   */
+  static Optional<Set<Integer>> rejectedIds(Response response) {
+    Set<Integer> ids = new HashSet<>();
+    for (JsonObject item : bulkItems(response)) {
+      if (item.has("error")) {
+        JsonElement id = item.get("_id");
+        if (id == null || !id.isJsonPrimitive()) {
+          return Optional.empty();
+        }
+        try {
+          ids.add(Integer.valueOf(id.getAsString()));
+        } catch (NumberFormatException e) {
+          return Optional.empty();
+        }
+      }
+    }
+    return Optional.of(ids);
+  }
+
+  private static List<JsonObject> bulkItems(Response response) {
+    try {
+      JsonElement items =
+          JsonParser.parseString(String.valueOf(response.getEntity()))
+              .getAsJsonObject()
+              .get("items");
+      if (items == null || !items.isJsonArray()) {
+        return List.of();
+      }
+      return items.getAsJsonArray().asList().stream()
+          .filter(JsonElement::isJsonObject)
+          .map(item -> item.getAsJsonObject().get("index"))
+          .filter(index -> index != null && index.isJsonObject())
+          .map(JsonElement::getAsJsonObject)
+          .toList();
+    } catch (RuntimeException e) {
+      return List.of();
+    }
   }
 
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
@@ -367,7 +424,7 @@ public class ElasticSearchService implements ConsentLogger {
    * @param force Boolean to force the index update regardless of dataset's indexed date status.
    */
   public void synchronizeDatasetInESIndex(Dataset dataset, boolean force) {
-    if (force || dataset.getIndexedDate() != null) {
+    if (force || isIndexed(dataset)) {
       try (var response = indexDataset(dataset.getDatasetId())) {
         if (!HttpStatusCodes.isSuccess(response.getStatus())) {
           logWarn("Response error, unable to index dataset: %s".formatted(dataset.getDatasetId()));
@@ -390,6 +447,11 @@ public class ElasticSearchService implements ConsentLogger {
 
   public Response indexDataset(Integer datasetId) throws IOException {
     return indexDatasets(List.of(datasetId));
+  }
+
+  /** A dataset in the index stays there; one never indexed, or removed by an admin, stays out. */
+  public static boolean isIndexed(Dataset dataset) {
+    return dataset.getIndexedDate() != null;
   }
 
   public Response indexDatasets(List<Integer> datasetIds) throws IOException {
