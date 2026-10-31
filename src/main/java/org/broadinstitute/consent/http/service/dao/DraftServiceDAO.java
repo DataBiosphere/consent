@@ -144,12 +144,17 @@ public class DraftServiceDAO {
   }
 
   public void deleteDraft(DraftInterface draft, User user) throws NotFoundException {
-    jdbi.useTransaction(
-        _ -> {
-          draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
-          draftFileStorageServiceDAO.deleteFileRows(draft.getStoredFiles(), user);
-        });
+    List<FileStorageObject> files =
+        jdbi.inTransaction(
+            _ -> {
+              draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
+              // After the delete waits on the row lock, so files a concurrent add commits are seen.
+              List<FileStorageObject> current =
+                  draftFileStorageServiceDAO.findActiveFiles(draft.getUUID());
+              draftFileStorageServiceDAO.deleteFileRows(current, user);
+              return current;
+            });
     // After the commit, so a failed document delete cannot leave a row whose file is gone.
-    draftFileStorageServiceDAO.deleteDocuments(draft.getStoredFiles(), draft.getUUID());
+    draftFileStorageServiceDAO.deleteDocuments(files, draft.getUUID());
   }
 }

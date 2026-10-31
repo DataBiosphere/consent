@@ -84,6 +84,13 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
                 .toList());
   }
 
+  /** The draft's files that are not deleted, read in the caller's transaction when there is one. */
+  public List<FileStorageObject> findActiveFiles(UUID draftId) {
+    return fileStorageObjectDAO.findFilesByEntityId(draftId.toString()).stream()
+        .filter(file -> !Boolean.TRUE.equals(file.getDeleted()))
+        .toList();
+  }
+
   public void deleteUploads(Collection<UploadedDocument> documents, UUID draftId) {
     documents.forEach(document -> deleteDocument(document.blobId(), draftId));
   }

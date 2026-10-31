@@ -380,6 +380,21 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteDraftRemovesAttachmentsAddedAfterTheDraftWasLoaded() {
+    User user = createUser();
+    DraftInterface staleDraft = createDraft(user, 1);
+    draftServiceDAO.addAttachments(staleDraft, user, getRandomFiles(2));
+
+    draftServiceDAO.deleteDraft(staleDraft, user);
+
+    List<FileStorageObject> rows =
+        fileStorageObjectDAO.findFilesByEntityId(staleDraft.getUUID().toString());
+    assertThat(rows, hasSize(3));
+    assertTrue(rows.stream().allMatch(FileStorageObject::getDeleted));
+    verify(gcsService, times(3)).deleteDocument(anyString());
+  }
+
+  @Test
   void testAddAttachmentToDraft() {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
