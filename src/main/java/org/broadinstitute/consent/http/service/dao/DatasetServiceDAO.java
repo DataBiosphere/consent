@@ -59,6 +59,10 @@ public class DatasetServiceDAO implements ConsentLogger {
     this.studyDAO = jdbi.onDemand(StudyDAO.class);
   }
 
+  public void syncStudyAssets(Integer studyId) {
+    jdbi.useTransaction(handle -> assetRecordSync.syncStudy(handle, studyId));
+  }
+
   public void deleteDataset(Dataset dataset, Integer userId) {
     jdbi.useTransaction(_ -> executeDeleteDataset(dataset, userId));
   }
