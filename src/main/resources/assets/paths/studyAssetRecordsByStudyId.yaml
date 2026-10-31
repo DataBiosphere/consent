@@ -1,6 +1,6 @@
-post:
+put:
   summary: Resync a Study's Asset Records
-  operationId: apiDatasetStudyStudyIdAssetsSyncPost
+  operationId: apiDatasetStudyStudyIdAssetsRecordsPut
   description: Rebuilds the study's model, workspace and biospecimen records from its stored registration, in one transaction, then reindexes the study's datasets that are already in the search index. A failed reindex keeps the sync and reports index FAILED.
   tags:
     - Admin

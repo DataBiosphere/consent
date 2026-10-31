@@ -13,12 +13,10 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -60,6 +58,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 public class StudyResource extends Resource {
 
   private static final String NDJSON = "application/x-ndjson";
+  private static final int DEFAULT_SYNC_LIMIT = 50;
   private static final int MAX_SYNC_LIMIT = 500;
 
   private final DatasetService datasetService;
@@ -142,25 +141,40 @@ public class StudyResource extends Resource {
     }
   }
 
-  @POST
-  @Path("/assets/sync")
+  @PUT
+  @Path("/assets/records")
   @Produces({NDJSON, MediaType.APPLICATION_JSON})
   @RolesAllowed({ADMIN})
   public Response syncAllStudyAssets(
       @Auth DuosUser duosUser,
       @QueryParam("since") String since,
-      @DefaultValue("0") @QueryParam("afterStudyId") Integer afterStudyId,
-      @DefaultValue("50") @QueryParam("limit") Integer limit) {
+      @QueryParam("afterStudyId") String afterStudyId,
+      @QueryParam("limit") String limit) {
     try {
-      if (limit < 1 || limit > MAX_SYNC_LIMIT) {
+      int pageSize = parseInt("limit", limit, DEFAULT_SYNC_LIMIT);
+      if (pageSize < 1 || pageSize > MAX_SYNC_LIMIT) {
         throw new BadRequestException("limit must be from 1 to %d".formatted(MAX_SYNC_LIMIT));
       }
       StreamingOutput results =
           datasetService.syncAllStudyAssets(
-              duosUser.getUser(), parseSince(since), afterStudyId, limit);
+              duosUser.getUser(),
+              parseSince(since),
+              parseInt("afterStudyId", afterStudyId, 0),
+              pageSize);
       return Response.ok(results, NDJSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private static int parseInt(String name, String value, int absent) {
+    if (value == null) {
+      return absent;
+    }
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException e) {
+      throw new BadRequestException(name + " must be an integer", e);
     }
   }
 

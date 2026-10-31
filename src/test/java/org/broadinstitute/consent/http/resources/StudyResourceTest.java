@@ -952,7 +952,7 @@ class StudyResourceTest extends AbstractTestHelper {
     RolesAllowed roles =
         StudyResource.class
             .getMethod(
-                "syncAllStudyAssets", DuosUser.class, String.class, Integer.class, Integer.class)
+                "syncAllStudyAssets", DuosUser.class, String.class, String.class, String.class)
             .getAnnotation(RolesAllowed.class);
     assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
   }
@@ -963,7 +963,7 @@ class StudyResourceTest extends AbstractTestHelper {
     Instant since = Instant.parse("2026-10-30T18:00:00Z");
     StreamingOutput results = output -> {};
     when(datasetService.syncAllStudyAssets(user, since, 7, 20)).thenReturn(results);
-    try (var response = resource.syncAllStudyAssets(duosUser, "2026-10-30T18:00:00Z", 7, 20)) {
+    try (var response = resource.syncAllStudyAssets(duosUser, "2026-10-30T18:00:00Z", "7", "20")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(results, response.getEntity());
       assertEquals("application/x-ndjson", response.getMediaType().toString());
@@ -974,7 +974,7 @@ class StudyResourceTest extends AbstractTestHelper {
   void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() {
     when(duosUser.getUser()).thenReturn(user);
     when(datasetService.syncAllStudyAssets(user, null, 0, 50)).thenReturn(output -> {});
-    try (var response = resource.syncAllStudyAssets(duosUser, null, 0, 50)) {
+    try (var response = resource.syncAllStudyAssets(duosUser, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -982,7 +982,7 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testSyncAllStudyAssetsRejectsAMalformedSince() {
     when(duosUser.getUser()).thenReturn(user);
-    try (var response = resource.syncAllStudyAssets(duosUser, "yesterday", 0, 50)) {
+    try (var response = resource.syncAllStudyAssets(duosUser, "yesterday", null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
     verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
@@ -990,10 +990,20 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testSyncAllStudyAssetsRejectsALimitOutOfRange() {
-    try (var tooSmall = resource.syncAllStudyAssets(duosUser, null, 0, 0);
-        var tooLarge = resource.syncAllStudyAssets(duosUser, null, 0, 501)) {
+    try (var tooSmall = resource.syncAllStudyAssets(duosUser, null, null, "0");
+        var tooLarge = resource.syncAllStudyAssets(duosUser, null, null, "501")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooSmall.getStatus());
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooLarge.getStatus());
+    }
+    verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
+  }
+
+  @Test
+  void testSyncAllStudyAssetsRejectsANonIntegerPageParameter() {
+    try (var badLimit = resource.syncAllStudyAssets(duosUser, null, null, "all");
+        var badCursor = resource.syncAllStudyAssets(duosUser, null, "first", null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, badLimit.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, badCursor.getStatus());
     }
     verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
   }

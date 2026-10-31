@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.StudyAssetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class StudyAssetResourceTest extends AbstractTestHelper {
 
   @Mock private StudyAssetService service;
+  @Mock private DatasetService datasetService;
   @Mock private DuosUser duosUser;
 
   private final User user = new User();
@@ -37,7 +39,7 @@ class StudyAssetResourceTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     when(duosUser.getUser()).thenReturn(user);
-    resource = new StudyAssetResource(service);
+    resource = new StudyAssetResource(service, datasetService);
   }
 
   @Test
@@ -96,7 +98,7 @@ class StudyAssetResourceTest extends AbstractTestHelper {
             .getMethod("syncAssetRecords", DuosUser.class, Integer.class)
             .getAnnotation(RolesAllowed.class);
     assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
-    when(service.syncAssetRecords(user, 7))
+    when(datasetService.syncStudyAssets(user, 7))
         .thenReturn(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.UPDATED));
     try (var response = resource.syncAssetRecords(duosUser, 7)) {
       assertEquals(200, response.getStatus());
@@ -111,7 +113,7 @@ class StudyAssetResourceTest extends AbstractTestHelper {
         status == 400
             ? new BadRequestException("send sampleId")
             : new NotFoundException("no study");
-    when(service.syncAssetRecords(user, 7)).thenThrow(error);
+    when(datasetService.syncStudyAssets(user, 7)).thenThrow(error);
     try (var response = resource.syncAssetRecords(duosUser, 7)) {
       assertEquals(status, response.getStatus());
     }

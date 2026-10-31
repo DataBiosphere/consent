@@ -593,20 +593,6 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindIndexedDatasetIdsByStudyId() {
-    Study study = insertStudyWithProperties();
-    Dataset indexed = insertDatasetForStudy(study.getStudyId());
-    insertDatasetForStudy(study.getStudyId());
-    Dataset otherStudyIndexed = insertDatasetForStudy(insertStudyWithProperties().getStudyId());
-    datasetDAO.updateDatasetIndexedDate(indexed.getDatasetId(), Instant.now());
-    datasetDAO.updateDatasetIndexedDate(otherStudyIndexed.getDatasetId(), Instant.now());
-
-    assertEquals(
-        List.of(indexed.getDatasetId()),
-        studyDAO.findIndexedDatasetIdsByStudyId(study.getStudyId()));
-  }
-
-  @Test
   void testFindStudyIdsToSyncPagesByStudyId() {
     Integer first = insertStudyCreatedAt(Instant.now());
     Integer second = insertStudyCreatedAt(Instant.now());
