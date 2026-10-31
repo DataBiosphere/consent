@@ -11,6 +11,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -25,11 +28,14 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   private final Jdbi jdbi;
   private final GCSService gcsService;
   private final FileStorageObjectDAO fileStorageObjectDAO;
+  private final ExecutorService executorService;
 
   @Inject
-  public DraftFileStorageServiceDAO(Jdbi jdbi, GCSService gcsService) {
+  public DraftFileStorageServiceDAO(
+      Jdbi jdbi, GCSService gcsService, ExecutorService executorService) {
     this.jdbi = jdbi;
     this.gcsService = gcsService;
+    this.executorService = executorService;
     this.fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
   }
 
@@ -37,29 +43,47 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   public record UploadedDocument(String fileName, String mediaType, BlobId blobId) {}
 
   /**
-   * Stores each file in GCS. Call it outside any transaction, so no pooled connection waits on the
-   * uploads. A failure deletes the documents already stored.
+   * Stores the files in GCS in parallel. Call it outside any transaction, so no pooled connection
+   * waits on the uploads. A failure deletes the documents that were stored.
    */
   public List<UploadedDocument> uploadDocuments(
       UUID draftId, User user, Map<String, FormDataBodyPart> files) {
+    List<CompletableFuture<UploadedDocument>> uploads =
+        files.values().stream()
+            .map(
+                file ->
+                    CompletableFuture.supplyAsync(
+                        () -> uploadDocument(file, draftId, user), executorService))
+            .toList();
     List<UploadedDocument> uploaded = new ArrayList<>();
-    for (FormDataBodyPart file : files.values()) {
+    RuntimeException failure = null;
+    for (CompletableFuture<UploadedDocument> upload : uploads) {
       try {
-        String mediaType = file.getMediaType().toString();
-        BlobId blobId =
-            gcsService.storeDocument(
-                file.getValueAs(InputStream.class), mediaType, UUID.randomUUID());
-        uploaded.add(new UploadedDocument(file.getName(), mediaType, blobId));
-      } catch (Exception e) {
-        logWarn(
-            "Error storing file for user: %d, draft id: %s".formatted(user.getUserId(), draftId),
-            e);
-        deleteUploads(uploaded, draftId);
-        throw new ServerErrorException(
-            "Unable to store the file " + file.getName(), Response.Status.INTERNAL_SERVER_ERROR, e);
+        uploaded.add(upload.join());
+      } catch (CompletionException e) {
+        failure = failure == null ? (RuntimeException) e.getCause() : failure;
       }
     }
+    if (failure != null) {
+      deleteUploads(uploaded, draftId);
+      throw failure;
+    }
     return uploaded;
+  }
+
+  private UploadedDocument uploadDocument(FormDataBodyPart file, UUID draftId, User user) {
+    try {
+      String mediaType = file.getMediaType().toString();
+      BlobId blobId =
+          gcsService.storeDocument(
+              file.getValueAs(InputStream.class), mediaType, UUID.randomUUID());
+      return new UploadedDocument(file.getName(), mediaType, blobId);
+    } catch (Exception e) {
+      logWarn(
+          "Error storing file for user: %d, draft id: %s".formatted(user.getUserId(), draftId), e);
+      throw new ServerErrorException(
+          "Unable to store the file " + file.getName(), Response.Status.INTERNAL_SERVER_ERROR, e);
+    }
   }
 
   /**
@@ -69,26 +93,19 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
       List<UploadedDocument> documents, UUID draftId, User user) {
     return jdbi.inTransaction(
         _ ->
-            documents.stream()
-                .map(
-                    document ->
-                        fileStorageObjectDAO.findFileById(
-                            fileStorageObjectDAO.insertNewFile(
-                                document.fileName(),
-                                FileCategory.DRAFT_UPLOADED_FILE.getValue(),
-                                document.blobId().toGsUtilUri(),
-                                document.mediaType(),
-                                draftId.toString(),
-                                user.getUserId(),
-                                Instant.now())))
-                .toList());
+            fileStorageObjectDAO.insertNewFiles(
+                documents.stream().map(UploadedDocument::fileName).toList(),
+                FileCategory.DRAFT_UPLOADED_FILE.getValue(),
+                documents.stream().map(document -> document.blobId().toGsUtilUri()).toList(),
+                documents.stream().map(UploadedDocument::mediaType).toList(),
+                draftId.toString(),
+                user.getUserId(),
+                Instant.now()));
   }
 
   /** The draft's files that are not deleted, read in the caller's transaction when there is one. */
   public List<FileStorageObject> findActiveFiles(UUID draftId) {
-    return fileStorageObjectDAO.findFilesByEntityId(draftId.toString()).stream()
-        .filter(file -> !Boolean.TRUE.equals(file.getDeleted()))
-        .toList();
+    return fileStorageObjectDAO.findActiveFilesByEntityId(draftId.toString());
   }
 
   public void deleteUploads(Collection<UploadedDocument> documents, UUID draftId) {

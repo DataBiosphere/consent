@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -47,7 +48,9 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   void setUp() throws IOException {
     when(gcsService.storeDocument(any(), anyString(), any()))
         .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi, gcsService);
+    draftFileStorageServiceDAO =
+        new DraftFileStorageServiceDAO(
+            jdbi, gcsService, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   @Test

@@ -109,7 +109,7 @@ public class DraftServiceDAO {
     try {
       return jdbi.inTransaction(
           _ -> {
-            // First, so a draft deleted during the uploads gets no rows, and a delete now waits.
+            // First, so a draft deleted during the uploads gets no rows, and a delete waits on it.
             if (draftDAO.updateDraftByDraftUUID(
                     draft.getUUID(), new Date().toInstant(), user.getUserId())
                 == 0) {
@@ -136,9 +136,13 @@ public class DraftServiceDAO {
                             draft.getUUID(), fileId)));
     jdbi.useTransaction(
         _ -> {
+          // The draft row first, in the lock order addAttachments and deleteDraft use.
+          if (draftDAO.updateDraftByDraftUUID(
+                  draft.getUUID(), new Date().toInstant(), user.getUserId())
+              == 0) {
+            throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draft.getUUID()));
+          }
           draftFileStorageServiceDAO.deleteFileRows(List.of(file), user);
-          draftDAO.updateDraftByDraftUUID(
-              draft.getUUID(), new Date().toInstant(), user.getUserId());
         });
     draftFileStorageServiceDAO.deleteDocuments(List.of(file), draft.getUUID());
   }
