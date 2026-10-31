@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -14,11 +13,14 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DraftInterface;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DraftFileStorageServiceDAO.UploadedDocument;
 import org.broadinstitute.consent.http.util.NulCharacters;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
 public class DraftServiceDAO {
+
+  private static final String DRAFT_NOT_FOUND = "Draft with UUID %s not found.";
 
   private final Jdbi jdbi;
   private final DraftDAO draftDAO;
@@ -84,11 +86,10 @@ public class DraftServiceDAO {
     try {
       draft = findDraftByDraftUUID(draftUUID);
     } catch (Exception e) {
-      throw new NotFoundException(String.format("Draft with UUID %s not found.", draftUUID), e);
+      throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draftUUID), e);
     }
     if (draft == null) {
-      throw new NotFoundException(
-          String.format("Draft with UUID %s not found.", draftUUID.toString()));
+      throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draftUUID));
     }
     if (!user.getUserId().equals(draft.getCreateUser().getUserId())
         && !user.hasUserRole(UserRoles.ADMIN)) {
@@ -103,20 +104,23 @@ public class DraftServiceDAO {
 
   public List<FileStorageObject> addAttachments(
       DraftInterface draft, User user, Map<String, FormDataBodyPart> files) {
-    List<FileStorageObject> storedFiles = new ArrayList<>();
+    List<UploadedDocument> uploaded =
+        draftFileStorageServiceDAO.uploadDocuments(draft.getUUID(), user, files);
     try {
-      jdbi.useTransaction(
+      return jdbi.inTransaction(
           _ -> {
-            storedFiles.addAll(
-                draftFileStorageServiceDAO.storeDraftFiles(draft.getUUID(), user, files));
-            draftDAO.updateDraftByDraftUUID(
-                draft.getUUID(), new Date().toInstant(), user.getUserId());
+            // First, so a draft deleted during the uploads gets no rows, and a delete waits on it.
+            if (draftDAO.updateDraftByDraftUUID(
+                    draft.getUUID(), new Date().toInstant(), user.getUserId())
+                == 0) {
+              throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draft.getUUID()));
+            }
+            return draftFileStorageServiceDAO.insertFileRows(uploaded, draft.getUUID(), user);
           });
     } catch (RuntimeException e) {
-      draftFileStorageServiceDAO.deleteDocuments(storedFiles, draft.getUUID());
+      draftFileStorageServiceDAO.deleteUploads(uploaded, draft.getUUID());
       throw e;
     }
-    return storedFiles;
   }
 
   public void deleteDraftAttachment(DraftInterface draft, User user, Integer fileId) {
@@ -132,20 +136,29 @@ public class DraftServiceDAO {
                             draft.getUUID(), fileId)));
     jdbi.useTransaction(
         _ -> {
+          // The draft row first, in the lock order addAttachments and deleteDraft use.
+          if (draftDAO.updateDraftByDraftUUID(
+                  draft.getUUID(), new Date().toInstant(), user.getUserId())
+              == 0) {
+            throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draft.getUUID()));
+          }
           draftFileStorageServiceDAO.deleteFileRows(List.of(file), user);
-          draftDAO.updateDraftByDraftUUID(
-              draft.getUUID(), new Date().toInstant(), user.getUserId());
         });
     draftFileStorageServiceDAO.deleteDocuments(List.of(file), draft.getUUID());
   }
 
   public void deleteDraft(DraftInterface draft, User user) throws NotFoundException {
-    jdbi.useTransaction(
-        _ -> {
-          draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
-          draftFileStorageServiceDAO.deleteFileRows(draft.getStoredFiles(), user);
-        });
+    List<FileStorageObject> files =
+        jdbi.inTransaction(
+            _ -> {
+              draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
+              // After the delete waits on the row lock, so files a concurrent add commits are seen.
+              List<FileStorageObject> current =
+                  draftFileStorageServiceDAO.findActiveFiles(draft.getUUID());
+              draftFileStorageServiceDAO.deleteFileRows(current, user);
+              return current;
+            });
     // After the commit, so a failed document delete cannot leave a row whose file is gone.
-    draftFileStorageServiceDAO.deleteDocuments(draft.getStoredFiles(), draft.getUUID());
+    draftFileStorageServiceDAO.deleteDocuments(files, draft.getUUID());
   }
 }

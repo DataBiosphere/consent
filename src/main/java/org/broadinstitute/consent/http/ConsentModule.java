@@ -622,8 +622,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Provides
   @Singleton
   private DraftFileStorageServiceDAO providesDraftFileStorageService(
-      Jdbi jdbi, GCSService gcsService) {
-    return new DraftFileStorageServiceDAO(jdbi, gcsService);
+      Jdbi jdbi, GCSService gcsService, ExecutorService executorService) {
+    return new DraftFileStorageServiceDAO(jdbi, gcsService, executorService);
   }
 
   @Provides

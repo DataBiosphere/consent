@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
@@ -35,6 +36,27 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
       @Bind("category") String category,
       @Bind("gcsFileUri") String gcsFileUri,
       @Bind("mediaType") String mediaType,
+      @Bind("entityId") String entityId,
+      @Bind("createUserId") Integer createUserId,
+      @Bind("createDate") Instant createDate);
+
+  @SqlBatch(
+      """
+          INSERT INTO file_storage_object
+          (file_name, category, gcs_file_uri,
+          media_type, entity_id, create_user_id,
+          create_date, deleted)
+          VALUES
+          (:fileName, :category, :gcsFileUri,
+          :mediaType, :entityId, :createUserId,
+          :createDate, false)
+          """)
+  @GetGeneratedKeys
+  List<FileStorageObject> insertNewFiles(
+      @Bind("fileName") List<String> fileNames,
+      @Bind("category") String category,
+      @Bind("gcsFileUri") List<String> gcsFileUris,
+      @Bind("mediaType") List<String> mediaTypes,
       @Bind("entityId") String entityId,
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Instant createDate);
@@ -187,6 +209,15 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           WHERE entity_id = :entityId
           """)
   List<FileStorageObject> findFilesByEntityId(@Bind("entityId") String entityId);
+
+  @SqlQuery(
+      """
+          SELECT *
+          FROM file_storage_object
+          WHERE entity_id = :entityId
+                AND deleted = false
+          """)
+  List<FileStorageObject> findActiveFilesByEntityId(@Bind("entityId") String entityId);
 
   /**
    * Returns ALL file records for the entity and category, including soft-deleted ones. Callers are
