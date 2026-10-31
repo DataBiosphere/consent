@@ -1,0 +1,16 @@
+type: object
+description: The last line of a bulk asset record resync.
+properties:
+  synced:
+    type: integer
+  failed:
+    type: integer
+  deleted:
+    type: integer
+    description: Studies deleted after the run listed them; their lines carry status 404.
+  indexFailed:
+    type: integer
+    description: Studies that synced but whose datasets could not be reindexed.
+  nextAfterStudyId:
+    type: integer
+    description: Present when more studies remain; pass it as afterStudyId to continue the run.

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -13,8 +14,11 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -941,5 +945,66 @@ class StudyResourceTest extends AbstractTestHelper {
     try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsIsAdminOnly() throws NoSuchMethodException {
+    RolesAllowed roles =
+        StudyResource.class
+            .getMethod(
+                "syncAllStudyAssets", DuosUser.class, String.class, String.class, String.class)
+            .getAnnotation(RolesAllowed.class);
+    assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
+  }
+
+  @Test
+  void testSyncAllStudyAssetsPassesSince() {
+    when(duosUser.getUser()).thenReturn(user);
+    Instant since = Instant.parse("2026-10-30T18:00:00Z");
+    StreamingOutput results = output -> {};
+    when(datasetService.syncAllStudyAssets(user, since, 7, 20)).thenReturn(results);
+    try (var response = resource.syncAllStudyAssets(duosUser, "2026-10-30T18:00:00Z", "7", "20")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(results, response.getEntity());
+      assertEquals("application/x-ndjson", response.getMediaType().toString());
+    }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.syncAllStudyAssets(user, null, 0, 50)).thenReturn(output -> {});
+    try (var response = resource.syncAllStudyAssets(duosUser, null, null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsRejectsAMalformedSince() {
+    when(duosUser.getUser()).thenReturn(user);
+    try (var response = resource.syncAllStudyAssets(duosUser, "yesterday", null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
+  }
+
+  @Test
+  void testSyncAllStudyAssetsRejectsALimitOutOfRange() {
+    try (var tooSmall = resource.syncAllStudyAssets(duosUser, null, null, "0");
+        var tooLarge = resource.syncAllStudyAssets(duosUser, null, null, "501")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooSmall.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooLarge.getStatus());
+    }
+    verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
+  }
+
+  @Test
+  void testSyncAllStudyAssetsRejectsANonIntegerPageParameter() {
+    try (var badLimit = resource.syncAllStudyAssets(duosUser, null, null, "all");
+        var badCursor = resource.syncAllStudyAssets(duosUser, null, "first", null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, badLimit.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, badCursor.getStatus());
+    }
+    verify(datasetService, never()).syncAllStudyAssets(any(), any(), anyInt(), anyInt());
   }
 }

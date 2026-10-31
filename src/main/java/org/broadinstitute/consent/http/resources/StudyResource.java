@@ -21,10 +21,14 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.lang.reflect.Type;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +56,10 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("api/dataset/study")
 public class StudyResource extends Resource {
+
+  private static final String NDJSON = "application/x-ndjson";
+  private static final int DEFAULT_SYNC_LIMIT = 50;
+  private static final int MAX_SYNC_LIMIT = 500;
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
@@ -130,6 +138,55 @@ public class StudyResource extends Resource {
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("/assets/records")
+  @Produces({NDJSON, MediaType.APPLICATION_JSON})
+  @RolesAllowed({ADMIN})
+  public Response syncAllStudyAssets(
+      @Auth DuosUser duosUser,
+      @QueryParam("since") String since,
+      @QueryParam("afterStudyId") String afterStudyId,
+      @QueryParam("limit") String limit) {
+    try {
+      int pageSize = parseInt("limit", limit, DEFAULT_SYNC_LIMIT);
+      if (pageSize < 1 || pageSize > MAX_SYNC_LIMIT) {
+        throw new BadRequestException("limit must be from 1 to %d".formatted(MAX_SYNC_LIMIT));
+      }
+      StreamingOutput results =
+          datasetService.syncAllStudyAssets(
+              duosUser.getUser(),
+              parseSince(since),
+              parseInt("afterStudyId", afterStudyId, 0),
+              pageSize);
+      return Response.ok(results, NDJSON).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  private static int parseInt(String name, String value, int absent) {
+    if (value == null) {
+      return absent;
+    }
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException e) {
+      throw new BadRequestException(name + " must be an integer", e);
+    }
+  }
+
+  private static Instant parseSince(String since) {
+    if (since == null) {
+      return null;
+    }
+    try {
+      return Instant.parse(since);
+    } catch (DateTimeParseException e) {
+      throw new BadRequestException(
+          "since must be an ISO-8601 instant, such as 2026-10-30T18:00:00Z", e);
     }
   }
 
