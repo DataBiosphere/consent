@@ -33,7 +33,10 @@ import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -903,6 +906,77 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     assertThrows(NotFoundException.class, () -> datasetService.syncStudyAssets(mockUser, 7));
     verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testSyncAllStudyAssetsReindexesThePageOnceAndReportsEachStudy() throws Exception {
+    Instant since = Instant.parse("2026-10-30T18:00:00Z");
+    when(studyDAO.findStudyIdsToSync(since, 0, 51)).thenReturn(List.of(1, 2, 3, 4, 5));
+    doNothing().when(datasetServiceDAO).syncStudyAssets(1);
+    doNothing().when(datasetServiceDAO).syncStudyAssets(4);
+    doThrow(new BadRequestException("Biospecimen at index 0: send the sample id in sampleId"))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(2);
+    doThrow(new IllegalStateException("lost connection"))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(3);
+    doThrow(new NotFoundException("Study with ID 5 does not exist."))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(5);
+    when(studyDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(10));
+    when(studyDAO.findDatasetIdsByStudyId(4)).thenReturn(List.of(40, 41));
+    when(elasticSearchService.reindexIndexedDatasets(Set.of(10, 40, 41)))
+        .thenReturn(new Reindex(Set.of(40, 41), Set.of(41)));
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    datasetService.syncAllStudyAssets(mockUser, since, 0, 50).write(output);
+
+    assertEquals(
+        List.of(
+            "{\"studyId\":1,\"synced\":true,\"index\":\"NOT_INDEXED\"}",
+            "{\"studyId\":2,\"synced\":false,\"status\":400,"
+                + "\"error\":\"Biospecimen at index 0: send the sample id in sampleId\"}",
+            "{\"studyId\":3,\"synced\":false,\"status\":500,"
+                + "\"error\":\"Unexpected error; see the server log\"}",
+            "{\"studyId\":4,\"synced\":true,\"index\":\"FAILED\"}",
+            "{\"studyId\":5,\"synced\":false,\"status\":404,"
+                + "\"error\":\"Study with ID 5 does not exist.\"}",
+            "{\"synced\":2,\"failed\":2,\"deleted\":1,\"indexFailed\":1}"),
+        output.toString(StandardCharsets.UTF_8).lines().toList());
+    verify(elasticSearchService, times(1)).reindexIndexedDatasets(any());
+    verify(studyDAO, never()).findDatasetIdsByStudyId(2);
+  }
+
+  @Test
+  void testSyncAllStudyAssetsKeepsSyncingAfterTheClientDisconnects() throws Exception {
+    when(studyDAO.findStudyIdsToSync(null, 0, 51)).thenReturn(List.of(1, 2));
+    when(studyDAO.findDatasetIdsByStudyId(any())).thenReturn(List.of());
+    when(elasticSearchService.reindexIndexedDatasets(Set.of()))
+        .thenReturn(new Reindex(Set.of(), Set.of()));
+    OutputStream disconnected = mock(OutputStream.class);
+    doThrow(new IOException("broken pipe")).when(disconnected).write(any(byte[].class));
+
+    datasetService.syncAllStudyAssets(mockUser, null, 0, 50).write(disconnected);
+
+    verify(datasetServiceDAO).syncStudyAssets(1);
+    verify(datasetServiceDAO).syncStudyAssets(2);
+    verify(disconnected, times(1)).write(any(byte[].class));
+  }
+
+  @Test
+  void testSyncAllStudyAssetsStopsAtTheLimitAndNamesWhereToContinue() throws Exception {
+    when(studyDAO.findStudyIdsToSync(null, 10, 3)).thenReturn(List.of(11, 12, 13));
+    when(studyDAO.findDatasetIdsByStudyId(any())).thenReturn(List.of());
+    when(elasticSearchService.reindexIndexedDatasets(Set.of()))
+        .thenReturn(new Reindex(Set.of(), Set.of()));
+
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    datasetService.syncAllStudyAssets(mockUser, null, 10, 2).write(output);
+
+    assertEquals(
+        "{\"synced\":2,\"failed\":0,\"deleted\":0,\"indexFailed\":0,\"nextAfterStudyId\":12}",
+        output.toString(StandardCharsets.UTF_8).lines().toList().getLast());
+    verify(datasetServiceDAO, never()).syncStudyAssets(13);
   }
 
   @Test
