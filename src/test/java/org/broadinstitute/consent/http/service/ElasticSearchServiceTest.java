@@ -19,6 +19,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
@@ -136,6 +137,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     service =
         new ElasticSearchService(jdbi, datasetServiceDAO, esClient, esConfig, ontologyService);
     service.setIndexKey("_index");
+  }
+
+  private static DatasetTerm term(int datasetId) {
+    DatasetTerm term = new DatasetTerm();
+    term.setDatasetId(datasetId);
+    return term;
   }
 
   private void mockElasticSearchResponse(String body) throws IOException {
@@ -993,6 +1000,107 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
           new String(
               capturedRequest.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8));
     }
+  }
+
+  @Test
+  void testIndexDatasetTermsReportsARejectedDatasetAndStampsEveryDataset() throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    String body =
+        """
+        {"errors":true,"items":[{"index":{"_id":"1","status":201}},
+         {"index":{"_id":"2000000000","status":400,"error":{}}}]}""";
+    mockElasticSearchResponse(body);
+
+    try (var response = service.indexDatasetTerms(List.of(term(1), term(2000000000)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+      assertEquals(body, response.getEntity());
+    }
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1, 2000000000));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{\"errors\":true}", "{\"errors\":true,\"items\":[]}"})
+  void testIndexDatasetTermsReportsFlaggedErrorsWithNoRejectedDocument(String body)
+      throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(body);
+
+    try (var response = service.indexDatasetTerms(List.of(term(1)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "\"_id\":{},", "\"_id\":\"one\","})
+  void testIndexDatasetTermsReportsARejectionThatNamesNoDataset(String id) throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(
+        "{\"items\":[{\"index\":{%s\"status\":400,\"error\":{}}}]}".formatted(id));
+
+    try (var response = service.indexDatasetTerms(List.of(term(1)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
+  }
+
+  @Test
+  void testIndexDatasetTermsStampsTheDatasetsWhenTheRequestFails() throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    when(esClient.performRequest(any())).thenThrow(new IOException("down"));
+
+    assertThrows(IOException.class, () -> service.indexDatasetTerms(List.of(term(1))));
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{}",
+        "[]",
+        "not json",
+        "{\"errors\":false,\"items\":{}}",
+        "{\"errors\":\"true\",\"items\":[1,{},{\"index\":\"x\"}]}",
+        "{\"items\":[{\"index\":{\"_id\":\"1\"}}]}"
+      })
+  void testIndexDatasetTermsTreatsABodyWithNoRejectedDocumentAsSuccess(String body)
+      throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(body);
+
+    try (var response = service.indexDatasetTerms(List.of(term(1)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
+  }
+
+  @Test
+  void testSynchronizeDatasetInESIndexSkipsADatasetNotInTheIndex() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+
+    service.synchronizeDatasetInESIndex(dataset, false);
+
+    verifyNoInteractions(datasetDAO);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testSynchronizeDatasetInESIndexReindexesAForcedOrIndexedDataset(boolean force)
+      throws IOException {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Dataset dataset = datasetRecord.dataset;
+    dataset.setDatasetId(1);
+    dataset.setIndexedDate(force ? null : new Date());
+    when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(List.of(dataset));
+    when(studyDAO.findStudyById(dataset.getStudyId())).thenReturn(datasetRecord.study);
+    when(userDao.findUserById(any())).thenReturn(datasetRecord.createUser);
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse("{\"errors\":false,\"items\":[]}");
+
+    service.synchronizeDatasetInESIndex(dataset, force);
+
+    verify(esClient).performRequest(any());
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
   }
 
   @Test
