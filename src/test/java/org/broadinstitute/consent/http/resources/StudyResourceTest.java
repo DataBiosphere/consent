@@ -497,7 +497,7 @@ class StudyResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteStudyById() throws Exception {
+  void testDeleteStudyById() {
     Study study = createMockStudy();
     User admin = new User();
     admin.setAdminRole();
