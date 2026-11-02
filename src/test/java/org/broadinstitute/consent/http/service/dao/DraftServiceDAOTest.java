@@ -63,6 +63,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -82,7 +83,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
   void beforeEachTestSetup() throws IOException {
     gcsService = Mockito.mock(GCSService.class);
     when(gcsService.storeDocument(any(), anyString(), any()))
-        .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        .thenAnswer(_ -> BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     DraftFileStorageServiceDAO draftFileStorageServiceDAO =
         new DraftFileStorageServiceDAO(jdbi, gcsService, EXECUTOR);
     draftServiceDAO = new DraftServiceDAO(jdbi, draftFileStorageServiceDAO);
@@ -300,7 +301,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
 
     assertThat(
         draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
-    verify(gcsService, times(2)).deleteDocument(anyString());
+    verifyDistinctDocumentsDeleted(2);
   }
 
   @Test
@@ -355,7 +356,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertThrows(TransactionException.class, () -> dao.addAttachments(draft, user, files));
 
     assertTrue(fileStorageObjectDAO.findFilesByEntityId(draft.getUUID().toString()).isEmpty());
-    verify(gcsService, times(2)).deleteDocument(anyString());
+    verifyDistinctDocumentsDeleted(2);
   }
 
   @Test
@@ -370,7 +371,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
         () -> draftServiceDAO.addAttachments(draft, user, files));
 
     assertTrue(fileStorageObjectDAO.findFilesByEntityId(draft.getUUID().toString()).isEmpty());
-    verify(gcsService, times(2)).deleteDocument(anyString());
+    verifyDistinctDocumentsDeleted(2);
   }
 
   @Test
@@ -384,7 +385,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
         NotFoundException.class,
         () -> draftServiceDAO.deleteDraftAttachment(staleDraft, user, fileId));
 
-    verify(gcsService, times(1)).deleteDocument(anyString());
+    verifyDistinctDocumentsDeleted(1);
   }
 
   @Test
@@ -397,7 +398,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertThrows(NotFoundException.class, () -> draftServiceDAO.addAttachments(draft, user, files));
 
     assertTrue(fileStorageObjectDAO.findFilesByEntityId(draft.getUUID().toString()).isEmpty());
-    verify(gcsService, times(2)).deleteDocument(anyString());
+    verifyDistinctDocumentsDeleted(2);
   }
 
   @Test
@@ -412,7 +413,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
         fileStorageObjectDAO.findFilesByEntityId(staleDraft.getUUID().toString());
     assertThat(rows, hasSize(3));
     assertTrue(rows.stream().allMatch(FileStorageObject::getDeleted));
-    verify(gcsService, times(3)).deleteDocument(anyString());
+    verifyDistinctDocumentsDeleted(3);
   }
 
   @Test
@@ -498,5 +499,12 @@ class DraftServiceDAOTest extends DAOTestHelper {
     when(part.getValueAs(InputStream.class))
         .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
     return part;
+  }
+
+  /** Each upload has its own blob, so every delete must name a different one. */
+  private void verifyDistinctDocumentsDeleted(int count) {
+    ArgumentCaptor<String> names = ArgumentCaptor.forClass(String.class);
+    verify(gcsService, times(count)).deleteDocument(names.capture());
+    assertEquals(count, Set.copyOf(names.getAllValues()).size());
   }
 }

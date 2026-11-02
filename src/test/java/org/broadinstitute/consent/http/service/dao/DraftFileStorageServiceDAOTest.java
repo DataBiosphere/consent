@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,7 +25,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -47,7 +51,7 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   @BeforeEach
   void setUp() throws IOException {
     when(gcsService.storeDocument(any(), anyString(), any()))
-        .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        .thenAnswer(_ -> BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     draftFileStorageServiceDAO =
         new DraftFileStorageServiceDAO(
             jdbi, gcsService, Executors.newVirtualThreadPerTaskExecutor());
@@ -138,6 +142,54 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
             () -> draftFileStorageServiceDAO.uploadDocuments(UUID.randomUUID(), user, testFiles));
 
     assertEquals("Unable to store the file first", error.getMessage());
+    verify(gcsService).deleteDocument(anyString());
+  }
+
+  @Test
+  void testUploadsRunAtMostAFewAtATime() throws IOException {
+    AtomicInteger active = new AtomicInteger();
+    AtomicInteger peak = new AtomicInteger();
+    when(gcsService.storeDocument(any(), anyString(), any()))
+        .thenAnswer(
+            _ -> {
+              peak.accumulateAndGet(active.incrementAndGet(), Math::max);
+              Thread.sleep(20);
+              active.decrementAndGet();
+              return BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+            });
+
+    List<DraftFileStorageServiceDAO.UploadedDocument> uploaded =
+        draftFileStorageServiceDAO.uploadDocuments(
+            UUID.randomUUID(), createUser(), getRandomFiles(12));
+
+    assertThat(uploaded, hasSize(12));
+    assertTrue(peak.get() <= DraftFileStorageServiceDAO.MAX_PARALLEL_UPLOADS);
+  }
+
+  @Test
+  void testARejectedUploadDeletesTheDocumentsAlreadySubmitted() {
+    ExecutorService delegate = Executors.newVirtualThreadPerTaskExecutor();
+    AtomicInteger submitted = new AtomicInteger();
+    ExecutorService rejectsTheSecond = mock(ExecutorService.class);
+    doAnswer(
+            invocation -> {
+              if (submitted.getAndIncrement() > 0) {
+                throw new RejectedExecutionException("shut down");
+              }
+              delegate.execute(invocation.getArgument(0));
+              return null;
+            })
+        .when(rejectsTheSecond)
+        .execute(any());
+    DraftFileStorageServiceDAO dao =
+        new DraftFileStorageServiceDAO(jdbi, gcsService, rejectsTheSecond);
+    Map<String, FormDataBodyPart> files = new LinkedHashMap<>(getRandomFiles(1));
+    files.put("never submitted", mock(FormDataBodyPart.class));
+
+    assertThrows(
+        RejectedExecutionException.class,
+        () -> dao.uploadDocuments(UUID.randomUUID(), createUser(), files));
+
     verify(gcsService).deleteDocument(anyString());
   }
 
