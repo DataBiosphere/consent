@@ -6,4 +6,10 @@ properties:
   index:
     type: string
     enum: [UPDATED, NOT_INDEXED, FAILED]
-    description: NOT_INDEXED means none of the study's datasets is in the search index.
+    description: Present when synced. NOT_INDEXED means none of the study's datasets is in the search index.
+  status:
+    type: integer
+    description: Present when the sync failed; the HTTP status the single-study call would return.
+  error:
+    type: string
+    description: Present when the sync failed.

@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -41,9 +42,13 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.Update;
 
 public class DatasetServiceDAO implements ConsentLogger {
+
+  static final String SYNC_LOCK_TIMEOUT = "5s";
+  private static final String LOCK_NOT_AVAILABLE = "55P03";
 
   private final Jdbi jdbi;
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
@@ -59,8 +64,30 @@ public class DatasetServiceDAO implements ConsentLogger {
     this.studyDAO = jdbi.onDemand(StudyDAO.class);
   }
 
+  /** A study locked by another write fails with a 409 instead of stalling the caller. */
   public void syncStudyAssets(Integer studyId) {
-    jdbi.useTransaction(handle -> assetRecordSync.syncStudy(handle, studyId));
+    try {
+      jdbi.useTransaction(
+          handle -> {
+            handle.execute("SET LOCAL lock_timeout = '%s'".formatted(SYNC_LOCK_TIMEOUT));
+            assetRecordSync.syncStudy(handle, studyId);
+          });
+    } catch (JdbiException e) {
+      if (isLockTimeout(e)) {
+        throw new ConsentConflictException(
+            "Study %d is locked by another write; retry it".formatted(studyId));
+      }
+      throw e;
+    }
+  }
+
+  private static boolean isLockTimeout(Throwable e) {
+    for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+      if (cause instanceof SQLException sql && LOCK_NOT_AVAILABLE.equals(sql.getSQLState())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void deleteDataset(Dataset dataset, Integer userId) {

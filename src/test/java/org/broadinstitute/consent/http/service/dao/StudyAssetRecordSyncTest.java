@@ -17,6 +17,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
@@ -38,6 +40,7 @@ import org.broadinstitute.consent.http.models.dto.registration.StudyRegistration
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -709,6 +712,31 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
     assertEquals("m-1", row.legacyKey());
     assertEquals(row.modelId(), idOf(stored(studyId, "models"), 0, "modelId"));
+  }
+
+  @Test
+  void testSyncStudyAssetsLeavesTheStudyUpdateDate() throws Exception {
+    Integer studyId = create();
+    studyDAO.insertStudyProperty(
+        studyId, "models", PropertyType.Json.toString(), "[{\"modelId\": \"m-1\"}]");
+    Date before = studyDAO.findStudyById(studyId).getUpdateDate();
+
+    serviceDAO.syncStudyAssets(studyId);
+
+    assertEquals(before, studyDAO.findStudyById(studyId).getUpdateDate());
+  }
+
+  @Test
+  void testSyncStudyAssetsReportsALockedStudyAsAConflict() throws Exception {
+    Integer studyId = create();
+    try (Handle holder = jdbi.open()) {
+      holder.begin();
+      holder.execute("SELECT study_id FROM study WHERE study_id = ? FOR UPDATE", studyId);
+
+      assertThrows(ConsentConflictException.class, () -> serviceDAO.syncStudyAssets(studyId));
+
+      holder.rollback();
+    }
   }
 
   @Test

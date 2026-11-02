@@ -26,6 +26,8 @@ post:
       description: User is not an Admin
     404:
       description: Study not found
+    409:
+      description: Another write held the study locked for more than 5 seconds; retry.
     429:
       description: Too Many Requests - rate limit exceeded
       content:
