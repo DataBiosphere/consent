@@ -67,6 +67,7 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -77,6 +78,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetRead;
 import org.broadinstitute.consent.http.service.DatasetService.DatasetReadBasis;
+import org.broadinstitute.consent.http.service.ElasticSearchService.Reindex;
 import org.broadinstitute.consent.http.service.dao.DatasetDeletionException;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -844,6 +846,62 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     verify(datasetDAO, never()).findDatasetsByIdList(any());
     verify(datasetServiceDAO).deleteStudy(study, List.of(), mockUser);
+    verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testSyncStudyAssetsReindexesTheStudysDatasets() {
+    when(studyDAO.findDatasetIdsByStudyId(7)).thenReturn(List.of(1, 2));
+    when(elasticSearchService.reindexIndexedDatasets(Set.of(1, 2)))
+        .thenReturn(new Reindex(Set.of(1, 2), Set.of()));
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.UPDATED), result);
+    InOrder order = inOrder(datasetServiceDAO, elasticSearchService);
+    order.verify(datasetServiceDAO).syncStudyAssets(7);
+    order.verify(elasticSearchService).reindexIndexedDatasets(Set.of(1, 2));
+  }
+
+  @Test
+  void testSyncStudyAssetsWithNoIndexedDatasetsIsNotIndexed() {
+    when(studyDAO.findDatasetIdsByStudyId(7)).thenReturn(List.of(1));
+    when(elasticSearchService.reindexIndexedDatasets(Set.of(1)))
+        .thenReturn(new Reindex(Set.of(), Set.of()));
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.NOT_INDEXED), result);
+  }
+
+  @Test
+  void testSyncStudyAssetsReportsADatasetTheIndexRejected() {
+    when(studyDAO.findDatasetIdsByStudyId(7)).thenReturn(List.of(1, 2));
+    when(elasticSearchService.reindexIndexedDatasets(Set.of(1, 2)))
+        .thenReturn(new Reindex(Set.of(1, 2), Set.of(2)));
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.FAILED), result);
+  }
+
+  @Test
+  void testSyncStudyAssetsKeepsTheSyncWhenTheDatasetLookupFails() {
+    when(studyDAO.findDatasetIdsByStudyId(7)).thenThrow(new IllegalStateException("down"));
+
+    StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
+
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.FAILED), result);
+    verifyNoInteractions(elasticSearchService);
+  }
+
+  @Test
+  void testSyncStudyAssetsFailureSkipsTheReindex() {
+    doThrow(new NotFoundException("Study with ID 7 does not exist."))
+        .when(datasetServiceDAO)
+        .syncStudyAssets(7);
+
+    assertThrows(NotFoundException.class, () -> datasetService.syncStudyAssets(mockUser, 7));
     verifyNoInteractions(elasticSearchService);
   }
 

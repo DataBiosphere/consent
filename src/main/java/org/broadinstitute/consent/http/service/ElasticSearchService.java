@@ -406,22 +406,13 @@ public class ElasticSearchService implements ConsentLogger {
     return new InstitutionTerm(institution.getId(), institution.getName());
   }
 
-  public Response indexStudy(Integer studyId) {
-    Study study = studyDAO.findStudyById(studyId);
-    logInfo("Loading datasets for study: %d".formatted(studyId));
-    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    logInfo("Loaded %d datasets for study: %d".formatted(datasets.size(), studyId));
-    datasets.forEach(d -> d.setStudy(study));
-    if (datasets.isEmpty()) {
-      return Response.status(Status.NOT_FOUND).build();
-    }
-    try {
-      synchronizeDatasetListInESIndex(datasets);
-      return Response.ok().build();
-    } catch (Exception e) {
-      logWarn("Exception, unable to index study: %d".formatted(studyId), e);
-      return Response.status(500, "Indexing failed.").build();
-    }
+  public Reindex indexStudy(Integer studyId) {
+    return indexStudy(studyId, Set.of());
+  }
+
+  /** Reindexes the study's datasets in the index, and adds {@code newDatasetIds} to it. */
+  public Reindex indexStudy(Integer studyId, Collection<Integer> newDatasetIds) {
+    return reindex(studyDAO.findDatasetIdsByStudyId(studyId), Set.copyOf(newDatasetIds));
   }
 
   /**
@@ -463,12 +454,60 @@ public class ElasticSearchService implements ConsentLogger {
     return dataset.getIndexedDate() != null;
   }
 
+  /** Which datasets a reindex sent, and which of those Elasticsearch did not index. */
+  public record Reindex(Set<Integer> sent, Set<Integer> failed) {}
+
+  /** Reindexes, in one bulk request, only those of the datasets already in the index. */
+  public Reindex reindexIndexedDatasets(Collection<Integer> datasetIds) {
+    return reindex(datasetIds, Set.of());
+  }
+
+  private Reindex reindex(Collection<Integer> datasetIds, Set<Integer> newDatasetIds) {
+    if (datasetIds.isEmpty()) {
+      return new Reindex(Set.of(), Set.of());
+    }
+    // Until the lookup says which are indexed, a failure counts against every dataset.
+    Set<Integer> sent = Set.copyOf(datasetIds);
+    try {
+      List<Dataset> datasets =
+          datasetDAO.findDatasetsByIdList(List.copyOf(datasetIds)).stream()
+              .filter(d -> isIndexed(d) || newDatasetIds.contains(d.getDatasetId()))
+              .toList();
+      sent = datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toUnmodifiableSet());
+      if (sent.isEmpty()) {
+        return new Reindex(sent, Set.of());
+      }
+      attachStudies(datasets);
+      return sendToIndex(datasets, sent);
+    } catch (IOException | RuntimeException e) {
+      logWarn("Unable to reindex datasets %s".formatted(sent), e);
+      return new Reindex(sent, sent);
+    }
+  }
+
+  private Reindex sendToIndex(List<Dataset> datasets, Set<Integer> sent) throws IOException {
+    try (Response response = indexDatasetList(datasets)) {
+      return new Reindex(
+          sent,
+          HttpStatusCodes.isSuccess(response.getStatus()) ? Set.of() : failed(response, sent));
+    }
+  }
+
+  /** The datasets the bulk response names as rejected, or all of them when it names none. */
+  private static Set<Integer> failed(Response response, Set<Integer> sent) {
+    return rejectedIds(response).filter(ids -> !ids.isEmpty()).orElse(sent);
+  }
+
   public Response indexDatasets(List<Integer> datasetIds) throws IOException {
-    // Datasets in list context may not have their study populated, so we need to ensure that is
-    // true before trying to index them in ES.
     logInfo("Fetching %d datasets from database".formatted(datasetIds.size()));
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(datasetIds);
     logInfo("Fetched %d datasets from database".formatted(datasets.size()));
+    attachStudies(datasets);
+    return indexDatasetList(datasets);
+  }
+
+  /** Datasets in list context may not have their study populated, which indexing needs. */
+  private void attachStudies(List<Dataset> datasets) {
     Map<Integer, Study> studyCache = new HashMap<>();
     datasets.forEach(
         dataset -> {
@@ -484,7 +523,6 @@ public class ElasticSearchService implements ConsentLogger {
                     }));
           }
         });
-    return indexDatasetList(datasets);
   }
 
   public Response indexDatasetList(List<Dataset> datasets) throws IOException {

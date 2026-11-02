@@ -23,12 +23,14 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -50,6 +52,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetSync;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -438,6 +441,41 @@ public class DatasetService implements ConsentLogger {
     }
     datasetServiceDAO.deleteStudy(study, datasets, user);
     study.getDatasetIds().forEach(datasetId -> deleteFromIndex(datasetId, user.getUserId()));
+  }
+
+  public StudyAssetSync syncStudyAssets(User admin, Integer studyId) {
+    logInfo("User %d resyncs the asset records of study %d".formatted(admin.getUserId(), studyId));
+    datasetServiceDAO.syncStudyAssets(studyId);
+    return reindexSyncedStudies(List.of(studyId)).getFirst();
+  }
+
+  /** Reindexes the synced studies' datasets in one request; a failed reindex keeps the sync. */
+  private List<StudyAssetSync> reindexSyncedStudies(List<Integer> studyIds) {
+    Map<Integer, List<Integer>> datasetIds = new LinkedHashMap<>();
+    try {
+      studyIds.forEach(id -> datasetIds.put(id, studyDAO.findDatasetIdsByStudyId(id)));
+    } catch (RuntimeException e) {
+      logWarn("Unable to load the datasets of studies %s to reindex".formatted(studyIds), e);
+      return studyIds.stream()
+          .map(id -> new StudyAssetSync(id, StudyAssetSync.IndexOutcome.FAILED))
+          .toList();
+    }
+    ElasticSearchService.Reindex reindex =
+        elasticSearchService.reindexIndexedDatasets(
+            datasetIds.values().stream().flatMap(List::stream).collect(Collectors.toSet()));
+    return studyIds.stream()
+        .map(id -> new StudyAssetSync(id, indexOutcome(datasetIds.get(id), reindex)))
+        .toList();
+  }
+
+  private static StudyAssetSync.IndexOutcome indexOutcome(
+      List<Integer> datasetIds, ElasticSearchService.Reindex reindex) {
+    if (datasetIds.stream().noneMatch(reindex.sent()::contains)) {
+      return StudyAssetSync.IndexOutcome.NOT_INDEXED;
+    }
+    return datasetIds.stream().anyMatch(reindex.failed()::contains)
+        ? StudyAssetSync.IndexOutcome.FAILED
+        : StudyAssetSync.IndexOutcome.UPDATED;
   }
 
   public Study findStudy(Integer studyId) {

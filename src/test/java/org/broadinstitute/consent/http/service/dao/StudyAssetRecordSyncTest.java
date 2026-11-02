@@ -695,6 +695,38 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testSyncStudyAssetsGivesAnUnsyncedListRows() throws Exception {
+    Integer studyId = create();
+    // Stored directly, as before the registration sync existed
+    studyDAO.insertStudyProperty(
+        studyId,
+        "models",
+        PropertyType.Json.toString(),
+        "[{\"modelId\": \"m-1\", \"name\": \"A\"}]");
+
+    serviceDAO.syncStudyAssets(studyId);
+
+    StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
+    assertEquals("m-1", row.legacyKey());
+    assertEquals(row.modelId(), idOf(stored(studyId, "models"), 0, "modelId"));
+  }
+
+  @Test
+  void testSyncStudyAssetsRollsBackWhenALaterTypeFails() throws Exception {
+    Integer studyId = create();
+    String models = "[{\"modelId\": \"m-1\"}]";
+    studyDAO.insertStudyProperty(studyId, "models", PropertyType.Json.toString(), models);
+    // A row-id-form biospecimen id with no sampleId and no matching row is a 400
+    studyDAO.insertStudyProperty(
+        studyId, "biospecimens", PropertyType.Json.toString(), "[{\"biospecimenId\": 12345}]");
+
+    assertThrows(BadRequestException.class, () -> serviceDAO.syncStudyAssets(studyId));
+
+    assertTrue(assetDAO.findModelsByStudyId(studyId).isEmpty());
+    assertEquals(models, storedValue(studyId, "models"));
+  }
+
+  @Test
   void testSyncStudyMovesALegacyOnlyListOnce() throws Exception {
     Integer studyId =
         create(

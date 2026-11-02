@@ -39,7 +39,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,8 +54,6 @@ class StudyResourceTest extends AbstractTestHelper {
   @Mock private DatasetService datasetService;
 
   @Mock private DatasetRegistrationService datasetRegistrationService;
-
-  @Mock private ElasticSearchService elasticSearchService;
 
   @Mock private AuthUser authUser;
 
@@ -74,7 +71,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    resource = new StudyResource(datasetService, datasetRegistrationService, elasticSearchService);
+    resource = new StudyResource(datasetService, datasetRegistrationService);
   }
 
   @Test
@@ -500,7 +497,7 @@ class StudyResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteStudyById() throws Exception {
+  void testDeleteStudyById() {
     Study study = createMockStudy();
     User admin = new User();
     admin.setAdminRole();
@@ -511,7 +508,6 @@ class StudyResourceTest extends AbstractTestHelper {
     try (var response = resource.deleteStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       verify(datasetService).deleteStudy(study, admin);
-      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
