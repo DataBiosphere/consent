@@ -56,17 +56,21 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
                         () -> uploadDocument(file, draftId, user), executorService))
             .toList();
     List<UploadedDocument> uploaded = new ArrayList<>();
-    RuntimeException failure = null;
+    Throwable failure = null;
     for (CompletableFuture<UploadedDocument> upload : uploads) {
       try {
         uploaded.add(upload.join());
       } catch (CompletionException e) {
-        failure = failure == null ? (RuntimeException) e.getCause() : failure;
+        failure = failure == null ? e.getCause() : failure;
       }
     }
     if (failure != null) {
       deleteUploads(uploaded, draftId);
-      throw failure;
+      if (failure instanceof Error error) {
+        throw error;
+      }
+      // uploadDocument throws no checked exception.
+      throw (RuntimeException) failure;
     }
     return uploaded;
   }

@@ -105,6 +105,22 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testAnUploadErrorStillDeletesTheDocumentsAlreadyStored() {
+    Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
+    FormDataBodyPart failing = mock(FormDataBodyPart.class);
+    when(failing.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+    when(failing.getValueAs(InputStream.class)).thenThrow(new LinkageError("missing class"));
+    testFiles.put("failing", failing);
+
+    assertThrows(
+        LinkageError.class,
+        () ->
+            draftFileStorageServiceDAO.uploadDocuments(UUID.randomUUID(), createUser(), testFiles));
+
+    verify(gcsService).deleteDocument(anyString());
+  }
+
+  @Test
   void testSeveralFailedUploadsReportTheFirstFile() {
     User user = createUser();
     Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
