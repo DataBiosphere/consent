@@ -25,9 +25,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -116,10 +118,11 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     when(failing.getValueAs(InputStream.class)).thenThrow(new LinkageError("missing class"));
     testFiles.put("failing", failing);
 
+    UUID draftId = UUID.randomUUID();
+    User user = createUser();
     assertThrows(
         LinkageError.class,
-        () ->
-            draftFileStorageServiceDAO.uploadDocuments(UUID.randomUUID(), createUser(), testFiles));
+        () -> draftFileStorageServiceDAO.uploadDocuments(draftId, user, testFiles));
 
     verify(gcsService).deleteDocument(anyString());
   }
@@ -136,10 +139,11 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
       testFiles.put(name, failing);
     }
 
+    UUID draftId = UUID.randomUUID();
     ServerErrorException error =
         assertThrows(
             ServerErrorException.class,
-            () -> draftFileStorageServiceDAO.uploadDocuments(UUID.randomUUID(), user, testFiles));
+            () -> draftFileStorageServiceDAO.uploadDocuments(draftId, user, testFiles));
 
     assertEquals("Unable to store the file first", error.getMessage());
     verify(gcsService).deleteDocument(anyString());
@@ -149,11 +153,15 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   void testUploadsRunAtMostAFewAtATime() throws IOException {
     AtomicInteger active = new AtomicInteger();
     AtomicInteger peak = new AtomicInteger();
+    // The first uploads wait for each other, so an uncapped run would overlap all twelve.
+    CountDownLatch overlapping =
+        new CountDownLatch(DraftFileStorageServiceDAO.MAX_PARALLEL_UPLOADS);
     when(gcsService.storeDocument(any(), anyString(), any()))
         .thenAnswer(
             _ -> {
               peak.accumulateAndGet(active.incrementAndGet(), Math::max);
-              Thread.sleep(20);
+              overlapping.countDown();
+              assertTrue(overlapping.await(5, TimeUnit.SECONDS));
               active.decrementAndGet();
               return BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
             });
@@ -163,7 +171,7 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
             UUID.randomUUID(), createUser(), getRandomFiles(12));
 
     assertThat(uploaded, hasSize(12));
-    assertTrue(peak.get() <= DraftFileStorageServiceDAO.MAX_PARALLEL_UPLOADS);
+    assertEquals(DraftFileStorageServiceDAO.MAX_PARALLEL_UPLOADS, peak.get());
   }
 
   @Test
@@ -186,9 +194,9 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     Map<String, FormDataBodyPart> files = new LinkedHashMap<>(getRandomFiles(1));
     files.put("never submitted", mock(FormDataBodyPart.class));
 
-    assertThrows(
-        RejectedExecutionException.class,
-        () -> dao.uploadDocuments(UUID.randomUUID(), createUser(), files));
+    UUID draftId = UUID.randomUUID();
+    User user = createUser();
+    assertThrows(RejectedExecutionException.class, () -> dao.uploadDocuments(draftId, user, files));
 
     verify(gcsService).deleteDocument(anyString());
   }
