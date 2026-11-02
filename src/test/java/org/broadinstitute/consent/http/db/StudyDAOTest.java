@@ -620,6 +620,18 @@ class StudyDAOTest extends DAOTestHelper {
     assertFalse(changed.contains(editedBefore));
   }
 
+  @Test
+  void testFindStudyIdsToSyncSinceContinuesAfterACursor() {
+    Instant since = Instant.parse("2026-10-30T18:00:00Z");
+    Integer first = insertStudyCreatedAt(since);
+    insertStudyCreatedAt(since.minus(1, ChronoUnit.DAYS));
+    Integer third = insertStudyCreatedAt(since.plus(1, ChronoUnit.HOURS));
+    Integer fourth = insertStudyCreatedAt(since.plus(2, ChronoUnit.HOURS));
+
+    assertEquals(List.of(third), studyDAO.findStudyIdsToSync(since, first, 1));
+    assertEquals(List.of(fourth), studyDAO.findStudyIdsToSync(since, third, 1));
+  }
+
   private Integer insertStudyCreatedAt(Instant createDate) {
     return studyDAO.insertStudy(
         RandomStringUtils.secure().nextAlphabetic(20),
