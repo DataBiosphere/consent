@@ -100,7 +100,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           update_user_id = :updateUserId
       WHERE uuid = :uuid
       """)
-  void updateDraftByDraftUUID(
+  int updateDraftByDraftUUID(
       @Bind("uuid") UUID uuid,
       @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId);

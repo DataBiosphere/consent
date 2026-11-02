@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.DraftType;
@@ -48,7 +49,10 @@ class StudyDatasetTemplateServiceDAOTest extends DAOTestHelper {
   void beforeEachTestSetup() {
     GCSService gcsService = Mockito.mock(GCSService.class);
     DraftServiceDAO draftServiceDAO =
-        new DraftServiceDAO(jdbi, new DraftFileStorageServiceDAO(jdbi, gcsService));
+        new DraftServiceDAO(
+            jdbi,
+            new DraftFileStorageServiceDAO(
+                jdbi, gcsService, Executors.newVirtualThreadPerTaskExecutor()));
     draftService = new DraftService(jdbi, draftServiceDAO, gcsService);
     templateService =
         new StudyDatasetTemplateService(

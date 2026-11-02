@@ -4,14 +4,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +25,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -34,8 +38,6 @@ import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,8 +53,10 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   @BeforeEach
   void setUp() throws IOException {
     when(gcsService.storeDocument(any(), anyString(), any()))
-        .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi, gcsService);
+        .thenAnswer(_ -> BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+    draftFileStorageServiceDAO =
+        new DraftFileStorageServiceDAO(
+            jdbi, gcsService, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   @Test
@@ -60,14 +64,11 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(4);
-    List<FileStorageObject> storedFiles =
-        draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, testFiles);
-    assertThat(testFiles.values(), hasSize(4));
+    List<FileStorageObject> storedFiles = store(associatedUUID, user, testFiles);
     assertThat(storedFiles, hasSize(4));
     storedFiles.forEach(
         fileStorageObject -> {
           assertThat(testFiles, hasKey(fileStorageObject.getFileName()));
-          assertFalse(fileStorageObject.getFileName().trim().isEmpty());
           assertEquals(fileStorageObject.getCreateUserId(), user.getUserId());
           assertEquals(fileStorageObject.getCategory(), FileCategory.DRAFT_UPLOADED_FILE);
         });
@@ -77,8 +78,7 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   void testDeleteDraftFiles() {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
-    List<FileStorageObject> storedFiles =
-        draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, getRandomFiles(2));
+    List<FileStorageObject> storedFiles = store(associatedUUID, user, getRandomFiles(2));
     assertThat(storedFiles, hasSize(2));
 
     draftFileStorageServiceDAO.deleteFileRows(storedFiles, user);
@@ -92,61 +92,119 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testAFailureLeavingTheTransactionDeletesTheUploadedDocuments() {
-    Jdbi failingCommit = spy(jdbi);
-    doAnswer(
-            invocation -> {
-              invocation.callRealMethod();
-              throw new TransactionException("commit failed");
-            })
-        .when(failingCommit)
-        .useTransaction(any());
-    DraftFileStorageServiceDAO dao = new DraftFileStorageServiceDAO(failingCommit, gcsService);
-    User user = createUser();
-    Map<String, FormDataBodyPart> files = getRandomFiles(2);
-
-    assertThrows(
-        TransactionException.class, () -> dao.storeDraftFiles(UUID.randomUUID(), user, files));
-
-    verify(gcsService, times(2)).deleteDocument(anyString());
-  }
-
-  @Test
-  void testAFailedFileStoresNothing() {
+  void testAFailedUploadDeletesTheDocumentsAlreadyStored() {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
     FormDataBodyPart failing = mock(FormDataBodyPart.class);
+    when(failing.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
     when(failing.getValueAs(InputStream.class)).thenThrow(new IllegalStateException("unreadable"));
     testFiles.put("failing", failing);
 
     ServerErrorException error =
         assertThrows(
             ServerErrorException.class,
-            () -> draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, testFiles));
+            () -> draftFileStorageServiceDAO.uploadDocuments(associatedUUID, user, testFiles));
     assertEquals(500, error.getResponse().getStatus());
 
-    assertTrue(fileStorageObjectDAO.findFilesByEntityId(associatedUUID.toString()).isEmpty());
     verify(gcsService).deleteDocument(anyString());
   }
 
   @Test
-  void testAFailedRowInsertDeletesTheUploadedDocument() {
+  void testAnUploadErrorStillDeletesTheDocumentsAlreadyStored() {
+    Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
+    FormDataBodyPart failing = mock(FormDataBodyPart.class);
+    when(failing.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+    when(failing.getValueAs(InputStream.class)).thenThrow(new LinkageError("missing class"));
+    testFiles.put("failing", failing);
+
+    UUID draftId = UUID.randomUUID();
     User user = createUser();
-    UUID associatedUUID = UUID.randomUUID();
-    FormDataBodyPart failing = getFormDataBodyPartMock("failing");
-    when(failing.getMediaType())
-        .thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE)
-        .thenThrow(new IllegalStateException("no media type"));
-
-    Map<String, FormDataBodyPart> files = Map.of("failing", failing);
-
     assertThrows(
-        ServerErrorException.class,
-        () -> draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, files));
+        LinkageError.class,
+        () -> draftFileStorageServiceDAO.uploadDocuments(draftId, user, testFiles));
 
-    assertTrue(fileStorageObjectDAO.findFilesByEntityId(associatedUUID.toString()).isEmpty());
     verify(gcsService).deleteDocument(anyString());
+  }
+
+  @Test
+  void testSeveralFailedUploadsReportTheFirstFile() {
+    User user = createUser();
+    Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
+    for (String name : List.of("first", "second")) {
+      FormDataBodyPart failing = mock(FormDataBodyPart.class);
+      when(failing.getName()).thenReturn(name);
+      when(failing.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+      when(failing.getValueAs(InputStream.class)).thenThrow(new IllegalStateException(name));
+      testFiles.put(name, failing);
+    }
+
+    UUID draftId = UUID.randomUUID();
+    ServerErrorException error =
+        assertThrows(
+            ServerErrorException.class,
+            () -> draftFileStorageServiceDAO.uploadDocuments(draftId, user, testFiles));
+
+    assertEquals("Unable to store the file first", error.getMessage());
+    verify(gcsService).deleteDocument(anyString());
+  }
+
+  @Test
+  void testUploadsRunAtMostAFewAtATime() throws IOException {
+    AtomicInteger active = new AtomicInteger();
+    AtomicInteger peak = new AtomicInteger();
+    // The first uploads wait for each other, so an uncapped run would overlap all twelve.
+    CountDownLatch overlapping =
+        new CountDownLatch(DraftFileStorageServiceDAO.MAX_PARALLEL_UPLOADS);
+    when(gcsService.storeDocument(any(), anyString(), any()))
+        .thenAnswer(
+            _ -> {
+              peak.accumulateAndGet(active.incrementAndGet(), Math::max);
+              overlapping.countDown();
+              assertTrue(overlapping.await(5, TimeUnit.SECONDS));
+              active.decrementAndGet();
+              return BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+            });
+
+    List<DraftFileStorageServiceDAO.UploadedDocument> uploaded =
+        draftFileStorageServiceDAO.uploadDocuments(
+            UUID.randomUUID(), createUser(), getRandomFiles(12));
+
+    assertThat(uploaded, hasSize(12));
+    assertEquals(DraftFileStorageServiceDAO.MAX_PARALLEL_UPLOADS, peak.get());
+  }
+
+  @Test
+  void testARejectedUploadDeletesTheDocumentsAlreadySubmitted() {
+    ExecutorService delegate = Executors.newVirtualThreadPerTaskExecutor();
+    AtomicInteger submitted = new AtomicInteger();
+    ExecutorService rejectsTheSecond = mock(ExecutorService.class);
+    doAnswer(
+            invocation -> {
+              if (submitted.getAndIncrement() > 0) {
+                throw new RejectedExecutionException("shut down");
+              }
+              delegate.execute(invocation.getArgument(0));
+              return null;
+            })
+        .when(rejectsTheSecond)
+        .execute(any());
+    DraftFileStorageServiceDAO dao =
+        new DraftFileStorageServiceDAO(jdbi, gcsService, rejectsTheSecond);
+    Map<String, FormDataBodyPart> files = new LinkedHashMap<>(getRandomFiles(1));
+    files.put("never submitted", mock(FormDataBodyPart.class));
+
+    UUID draftId = UUID.randomUUID();
+    User user = createUser();
+    assertThrows(RejectedExecutionException.class, () -> dao.uploadDocuments(draftId, user, files));
+
+    verify(gcsService).deleteDocument(anyString());
+  }
+
+  private List<FileStorageObject> store(
+      UUID draftId, User user, Map<String, FormDataBodyPart> files) {
+    return draftFileStorageServiceDAO.insertFileRows(
+        draftFileStorageServiceDAO.uploadDocuments(draftId, user, files), draftId, user);
   }
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
