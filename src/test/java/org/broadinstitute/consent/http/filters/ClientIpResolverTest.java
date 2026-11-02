@@ -194,4 +194,21 @@ class ClientIpResolverTest {
         KeySource.UNTRUSTED_PEER,
         literalResolver.resolve("10.1.2.4", List.of("192.0.2.1")).source());
   }
+
+  @Test
+  void testSignedIpv4IsTheKey() {
+    assertEquals(
+        new ClientIp("203.0.113.7", KeySource.SIGNED_CLIENT_IP_HEADER),
+        resolver.resolveSigned("203.0.113.7"));
+  }
+
+  @Test
+  void testSignedIpv6AddressesInOneSlash64ShareAKey() {
+    ClientIp first = resolver.resolveSigned("2001:db8:1:2::");
+    ClientIp second = resolver.resolveSigned("2001:db8:1:2:aaaa:bbbb:cccc:dddd");
+
+    assertEquals(new ClientIp("2001:db8:1:2::/64", KeySource.SIGNED_CLIENT_IP_HEADER), first);
+    assertEquals(first, second);
+    assertNotEquals(first.key(), resolver.resolveSigned("2001:db8:1:3::").key());
+  }
 }
