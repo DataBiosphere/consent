@@ -58,8 +58,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 public class StudyResource extends Resource {
 
   private static final String NDJSON = "application/x-ndjson";
-  private static final int DEFAULT_SYNC_LIMIT = 50;
-  private static final int MAX_SYNC_LIMIT = 500;
+  private static final int DEFAULT_SYNC_LIMIT = 20;
+  private static final int MAX_SYNC_LIMIT = 100;
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;

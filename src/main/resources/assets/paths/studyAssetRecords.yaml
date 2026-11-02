@@ -1,7 +1,7 @@
 post:
   summary: Resync the Asset Records of Many Studies
   operationId: apiDatasetStudyAssetsRecordsPost
-  description: Resyncs each study as the single-study call does, one transaction per study in study id order, then reindexes the page's indexed datasets in one request. A failed study is reported and the run continues. Returns one StudyAssetSync per line, then a summary line; while studies remain, call again with afterStudyId set to its nextAfterStudyId. A resync is idempotent, so if the response is cut off, call again with afterStudyId set to the last studyId received, or repeat the page.
+  description: Resyncs each study as the single-study call does, one transaction per study in study id order, then reindexes the page's indexed datasets in one request. A failed study is reported and the run continues. Returns one StudyAssetSync per line, then a summary line; while studies remain, call again with afterStudyId set to its nextAfterStudyId. A resync is idempotent, so if the response is cut off, call again with afterStudyId set to the last studyId received; if no line arrived, as after a timeout, wait for the run to finish in the server log, then repeat the page. A study another write holds locked for more than 5 seconds is reported with status 409.
   tags:
     - Admin
   parameters:
@@ -25,9 +25,9 @@ post:
       required: false
       schema:
         type: integer
-        default: 50
+        default: 20
         minimum: 1
-        maximum: 500
+        maximum: 100
   responses:
     200:
       description: Newline-delimited JSON, written once the page is synced and reindexed

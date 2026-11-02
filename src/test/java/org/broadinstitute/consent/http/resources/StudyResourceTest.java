@@ -969,9 +969,19 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testSyncAllStudyAssetsWithoutSinceSyncsEveryStudy() {
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.syncAllStudyAssets(user, null, 0, 50)).thenReturn(output -> {});
+    when(datasetService.syncAllStudyAssets(user, null, 0, 20)).thenReturn(output -> {});
     try (var response = resource.syncAllStudyAssets(duosUser, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSyncAllStudyAssetsAnswers500WhenTheStudiesCannotBeListed() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.syncAllStudyAssets(user, null, 0, 20))
+        .thenThrow(new IllegalStateException("db down"));
+    try (var response = resource.syncAllStudyAssets(duosUser, null, null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
 
@@ -987,7 +997,7 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testSyncAllStudyAssetsRejectsALimitOutOfRange() {
     try (var tooSmall = resource.syncAllStudyAssets(duosUser, null, null, "0");
-        var tooLarge = resource.syncAllStudyAssets(duosUser, null, null, "501")) {
+        var tooLarge = resource.syncAllStudyAssets(duosUser, null, null, "101")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooSmall.getStatus());
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, tooLarge.getStatus());
     }
