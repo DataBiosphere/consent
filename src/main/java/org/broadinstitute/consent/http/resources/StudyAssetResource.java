@@ -5,7 +5,7 @@ import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -79,7 +79,7 @@ public class StudyAssetResource extends Resource {
     return assets(user, studyId, StudyAssets.FUNDING);
   }
 
-  @PUT
+  @POST
   @Path("/records")
   @RolesAllowed({ADMIN})
   public Response syncAssetRecords(@Auth DuosUser user, @PathParam("studyId") Integer studyId) {

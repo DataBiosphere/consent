@@ -857,7 +857,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.UPDATED), result);
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.UPDATED), result);
     InOrder order = inOrder(datasetServiceDAO, elasticSearchService);
     order.verify(datasetServiceDAO).syncStudyAssets(7);
     order.verify(elasticSearchService).reindexIndexedDatasets(Set.of(1, 2));
@@ -871,7 +871,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.NOT_INDEXED), result);
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.NOT_INDEXED), result);
   }
 
   @Test
@@ -882,7 +882,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.FAILED), result);
   }
 
   @Test
@@ -891,7 +891,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
+    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.FAILED), result);
     verifyNoInteractions(elasticSearchService);
   }
 

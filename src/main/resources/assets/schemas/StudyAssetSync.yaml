@@ -3,9 +3,7 @@ description: One study's result from an asset record resync.
 properties:
   studyId:
     type: integer
-  synced:
-    type: boolean
   index:
     type: string
     enum: [UPDATED, NOT_INDEXED, FAILED]
-    description: Present when synced. NOT_INDEXED means none of the study's datasets is in the search index.
+    description: NOT_INDEXED means none of the study's datasets is in the search index.
