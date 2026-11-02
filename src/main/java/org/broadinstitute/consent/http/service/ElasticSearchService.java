@@ -172,15 +172,13 @@ public class ElasticSearchService implements ConsentLogger {
 
     bulkRequest.setEntity(
         new NStringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
+    Set<Integer> sent =
+        datasets.stream().map(DatasetTerm::getDatasetId).collect(Collectors.toSet());
+    // Stamped even if the request fails, so later syncs keep retrying the dataset.
+    updateDatasetIndexDateForDatasets(sent);
     Response response = performRequest(bulkRequest);
     // A bulk request answers 200 even when Elasticsearch rejected some of its documents.
     Optional<Set<Integer>> rejected = rejectedIds(response);
-    Set<Integer> sent =
-        datasets.stream().map(DatasetTerm::getDatasetId).collect(Collectors.toSet());
-    updateDatasetIndexDateForDatasets(
-        rejected
-            .map(ids -> sent.stream().filter(id -> !ids.contains(id)).collect(Collectors.toSet()))
-            .orElse(Set.of()));
     if (rejected.map(ids -> !ids.isEmpty()).orElse(true)) {
       logWarn("Elasticsearch rejected datasets %s".formatted(rejected.orElse(sent)));
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(response.getEntity()).build();
@@ -449,7 +447,7 @@ public class ElasticSearchService implements ConsentLogger {
     return indexDatasets(List.of(datasetId));
   }
 
-  /** A dataset in the index stays there; one never indexed, or removed by an admin, stays out. */
+  /** Sent to the index at least once and not removed by an admin, even if that request failed. */
   public static boolean isIndexed(Dataset dataset) {
     return dataset.getIndexedDate() != null;
   }

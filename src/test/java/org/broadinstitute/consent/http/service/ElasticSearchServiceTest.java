@@ -1003,7 +1003,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testIndexDatasetTermsStampsOnlyTheDatasetsTheIndexAccepted() throws IOException {
+  void testIndexDatasetTermsReportsARejectedDatasetAndStampsEveryDataset() throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
     String body =
         """
@@ -1015,13 +1015,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
       assertEquals(body, response.getEntity());
     }
-    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1, 2000000000));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"", "\"_id\":{},", "\"_id\":\"one\","})
-  void testIndexDatasetTermsStampsNothingWhenARejectionNamesNoDataset(String id)
-      throws IOException {
+  void testIndexDatasetTermsReportsARejectionThatNamesNoDataset(String id) throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
     mockElasticSearchResponse(
         "{\"items\":[{\"index\":{%s\"status\":400,\"error\":{}}}]}".formatted(id));
@@ -1029,16 +1028,16 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     try (var response = service.indexDatasetTerms(List.of(term(1)))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
-    verify(datasetDAO, never()).updateDatasetsIndexedDate(any());
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
   }
 
   @Test
-  void testIndexDatasetTermsStampsNothingWhenTheRequestFails() throws IOException {
+  void testIndexDatasetTermsStampsTheDatasetsWhenTheRequestFails() throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
     when(esClient.performRequest(any())).thenThrow(new IOException("down"));
 
     assertThrows(IOException.class, () -> service.indexDatasetTerms(List.of(term(1))));
-    verify(datasetDAO, never()).updateDatasetsIndexedDate(any());
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
   }
 
   @ParameterizedTest
