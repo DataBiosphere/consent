@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -24,6 +25,8 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.jdbi.v3.core.Jdbi;
 
 public class DraftFileStorageServiceDAO implements ConsentLogger {
+
+  static final int MAX_PARALLEL_UPLOADS = 4;
 
   private final Jdbi jdbi;
   private final GCSService gcsService;
@@ -43,20 +46,25 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   public record UploadedDocument(String fileName, String mediaType, BlobId blobId) {}
 
   /**
-   * Stores the files in GCS in parallel. Call it outside any transaction, so no pooled connection
-   * waits on the uploads. A failure deletes the documents that were stored.
+   * Stores the files in GCS, a few at a time, since each upload holds its whole file in memory.
+   * Call it outside any transaction, so no pooled connection waits on the uploads. A failure
+   * deletes the documents that were stored.
    */
   public List<UploadedDocument> uploadDocuments(
       UUID draftId, User user, Map<String, FormDataBodyPart> files) {
-    List<CompletableFuture<UploadedDocument>> uploads =
-        files.values().stream()
-            .map(
-                file ->
-                    CompletableFuture.supplyAsync(
-                        () -> uploadDocument(file, draftId, user), executorService))
-            .toList();
-    List<UploadedDocument> uploaded = new ArrayList<>();
+    Semaphore permits = new Semaphore(MAX_PARALLEL_UPLOADS);
+    List<CompletableFuture<UploadedDocument>> uploads = new ArrayList<>();
     Throwable failure = null;
+    try {
+      for (FormDataBodyPart file : files.values()) {
+        uploads.add(
+            CompletableFuture.supplyAsync(
+                () -> uploadWithPermit(permits, file, draftId, user), executorService));
+      }
+    } catch (RuntimeException e) {
+      failure = e;
+    }
+    List<UploadedDocument> uploaded = new ArrayList<>();
     for (CompletableFuture<UploadedDocument> upload : uploads) {
       try {
         uploaded.add(upload.join());
@@ -73,6 +81,16 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
       throw (RuntimeException) failure;
     }
     return uploaded;
+  }
+
+  private UploadedDocument uploadWithPermit(
+      Semaphore permits, FormDataBodyPart file, UUID draftId, User user) {
+    permits.acquireUninterruptibly();
+    try {
+      return uploadDocument(file, draftId, user);
+    } finally {
+      permits.release();
+    }
   }
 
   private UploadedDocument uploadDocument(FormDataBodyPart file, UUID draftId, User user) {
