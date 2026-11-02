@@ -406,22 +406,13 @@ public class ElasticSearchService implements ConsentLogger {
     return new InstitutionTerm(institution.getId(), institution.getName());
   }
 
-  public Response indexStudy(Integer studyId) {
-    Study study = studyDAO.findStudyById(studyId);
-    logInfo("Loading datasets for study: %d".formatted(studyId));
-    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    logInfo("Loaded %d datasets for study: %d".formatted(datasets.size(), studyId));
-    datasets.forEach(d -> d.setStudy(study));
-    if (datasets.isEmpty()) {
-      return Response.status(Status.NOT_FOUND).build();
-    }
-    try {
-      synchronizeDatasetListInESIndex(datasets);
-      return Response.ok().build();
-    } catch (Exception e) {
-      logWarn("Exception, unable to index study: %d".formatted(studyId), e);
-      return Response.status(500, "Indexing failed.").build();
-    }
+  public Reindex indexStudy(Integer studyId) {
+    return indexStudy(studyId, Set.of());
+  }
+
+  /** Reindexes the study's datasets in the index, and adds {@code newDatasetIds} to it. */
+  public Reindex indexStudy(Integer studyId, Collection<Integer> newDatasetIds) {
+    return reindex(studyDAO.findDatasetIdsByStudyId(studyId), Set.copyOf(newDatasetIds));
   }
 
   /**
@@ -468,6 +459,10 @@ public class ElasticSearchService implements ConsentLogger {
 
   /** Reindexes, in one bulk request, only those of the datasets already in the index. */
   public Reindex reindexIndexedDatasets(Collection<Integer> datasetIds) {
+    return reindex(datasetIds, Set.of());
+  }
+
+  private Reindex reindex(Collection<Integer> datasetIds, Set<Integer> newDatasetIds) {
     if (datasetIds.isEmpty()) {
       return new Reindex(Set.of(), Set.of());
     }
@@ -476,7 +471,7 @@ public class ElasticSearchService implements ConsentLogger {
     try {
       List<Dataset> datasets =
           datasetDAO.findDatasetsByIdList(List.copyOf(datasetIds)).stream()
-              .filter(ElasticSearchService::isIndexed)
+              .filter(d -> isIndexed(d) || newDatasetIds.contains(d.getDatasetId()))
               .toList();
       sent = datasets.stream().map(Dataset::getDatasetId).collect(Collectors.toUnmodifiableSet());
       if (sent.isEmpty()) {

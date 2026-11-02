@@ -512,6 +512,33 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testStudyUpdateIndexesTheStudyWithItsNewDatasets() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(new Study(), List.of(5)));
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    verify(elasticSearchService).indexStudy(1, List.of(5));
+  }
+
+  @Test
+  void testStudyUpdateIndexFailureStillReturnsTheStudy() throws Exception {
+    User user = mock();
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    Study study = new Study();
+    when(datasetServiceDAO.updateStudy(any(), any(), any()))
+        .thenReturn(new StudyUpdateResult(study, List.of()));
+    when(elasticSearchService.indexStudy(1, List.of())).thenThrow(new RuntimeException("down"));
+
+    assertEquals(
+        study, datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of()));
+  }
+
+  @Test
   void testSendDatasetSubmittedEmailsExistingChairs() throws Exception {
     User user = new User();
     user.setChairpersonRole();

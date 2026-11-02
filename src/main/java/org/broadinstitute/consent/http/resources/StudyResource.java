@@ -44,7 +44,6 @@ import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateReques
 import org.broadinstitute.consent.http.models.dto.registration.StudyUpdateRequestValidator;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -55,18 +54,14 @@ public class StudyResource extends Resource {
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
-  private final ElasticSearchService elasticSearchService;
   private final ObjectMapper objectMapper = RegistrationRequestMapper.requestObjectMapper();
   private final StudyUpdateRequestValidator studyUpdateRequestValidator;
 
   @Inject
   public StudyResource(
-      DatasetService datasetService,
-      DatasetRegistrationService datasetRegistrationService,
-      ElasticSearchService elasticSearchService) {
+      DatasetService datasetService, DatasetRegistrationService datasetRegistrationService) {
     this.datasetService = datasetService;
     this.datasetRegistrationService = datasetRegistrationService;
-    this.elasticSearchService = elasticSearchService;
     this.studyUpdateRequestValidator = new StudyUpdateRequestValidator(datasetService);
   }
 
@@ -293,11 +288,6 @@ public class StudyResource extends Resource {
         Study updatedStudy =
             datasetRegistrationService.updateStudyFromRegistration(
                 studyId, registration, user, files);
-        try {
-          elasticSearchService.indexStudy(studyId);
-        } catch (Exception e) {
-          logException("Exception re-indexing datasets from study id: " + studyId, e);
-        }
         return Response.ok(updatedStudy).build();
       } else {
         return Response.status(Status.BAD_REQUEST).build();
