@@ -451,7 +451,12 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
   value) and keys on `X-Real-IP` as before. A request without any of the three headers, such as a
   legacy-mode browser call, logs nothing. The BFF never sends the secret, and it strips
   caller-supplied copies of the three headers on every public route. A recorded header is of no
-  use after its window ends, and a caller outside the cluster cannot choose its own key.
+  use after its window ends, and a caller outside the cluster cannot choose its own key. Inside
+  the window, a person who copies a set of headers can send it again and use up that IP's bucket;
+  the design accepts this, because the worst result is 429s for one address for a minute. The
+  signed IP has the same trust as the BFF's own key (DT-4374): a caller inside the cluster that
+  sets `X-Real-IP` on the sidecar port can choose it, as `docs/plans/BFF_Overview.md` in duos-ui
+  records.
 
   The secret is new and separate from `DUOS_SESSION_SECRET`: Consent holds this one, and a leak
   from Consent must not let anyone forge DUOS sessions. It is created by hand, at least 32
@@ -491,7 +496,9 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
     --data-file=<(gcloud secrets versions access latest --secret=duos-consent-proxy-secret \
       --project=<project> | jq -c --arg new "$(openssl rand -base64 32)" '{current: $new, previous: .current}')
 
-  # Rotate, step 3, after both apps reload: drop `previous`, then set previousEnabled back to false.
+  # Rotate, step 3, after both apps reload: first set previousEnabled back to false and deploy, so
+  # that consent-secrets stops reading `previous`. Only then drop `previous` from GSM: an
+  # ExternalSecret that points to a missing property cannot sync.
   gcloud secrets versions add duos-consent-proxy-secret --project=<project> \
     --data-file=<(gcloud secrets versions access latest --secret=duos-consent-proxy-secret \
       --project=<project> | jq -c '{current: .current}')
