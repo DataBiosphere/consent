@@ -1,6 +1,6 @@
-put:
+post:
   summary: Resync the Asset Records of Many Studies
-  operationId: apiDatasetStudyAssetsRecordsPut
+  operationId: apiDatasetStudyAssetsRecordsPost
   description: Resyncs each study as the single-study call does, one transaction per study in study id order, then reindexes the page's indexed datasets in one request. A failed study is reported and the run continues. Returns one StudyAssetSync per line, then a summary line; while studies remain, call again with afterStudyId set to its nextAfterStudyId. A resync is idempotent, so if the response is cut off, call again with afterStudyId set to the last studyId received, or repeat the page.
   tags:
     - Admin

@@ -860,7 +860,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.UPDATED), result);
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.UPDATED), result);
     InOrder order = inOrder(datasetServiceDAO, elasticSearchService);
     order.verify(datasetServiceDAO).syncStudyAssets(7);
     order.verify(elasticSearchService).reindexIndexedDatasets(Set.of(1, 2));
@@ -874,7 +874,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.NOT_INDEXED), result);
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.NOT_INDEXED), result);
   }
 
   @Test
@@ -885,7 +885,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.FAILED), result);
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
   }
 
   @Test
@@ -894,7 +894,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     StudyAssetSync result = datasetService.syncStudyAssets(mockUser, 7);
 
-    assertEquals(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.FAILED), result);
+    assertEquals(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.FAILED), result);
     verifyNoInteractions(elasticSearchService);
   }
 
@@ -933,14 +933,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     assertEquals(
         List.of(
-            "{\"studyId\":1,\"synced\":true,\"index\":\"NOT_INDEXED\"}",
-            "{\"studyId\":2,\"synced\":false,\"status\":400,"
+            "{\"studyId\":1,\"index\":\"NOT_INDEXED\"}",
+            "{\"studyId\":2,\"status\":400,"
                 + "\"error\":\"Biospecimen at index 0: send the sample id in sampleId\"}",
-            "{\"studyId\":3,\"synced\":false,\"status\":500,"
+            "{\"studyId\":3,\"status\":500,"
                 + "\"error\":\"Unexpected error; see the server log\"}",
-            "{\"studyId\":4,\"synced\":true,\"index\":\"FAILED\"}",
-            "{\"studyId\":5,\"synced\":false,\"status\":404,"
-                + "\"error\":\"Study with ID 5 does not exist.\"}",
+            "{\"studyId\":4,\"index\":\"FAILED\"}",
+            "{\"studyId\":5,\"status\":404," + "\"error\":\"Study with ID 5 does not exist.\"}",
             "{\"synced\":2,\"failed\":2,\"deleted\":1,\"indexFailed\":1}"),
         output.toString(StandardCharsets.UTF_8).lines().toList());
     verify(elasticSearchService, times(1)).reindexIndexedDatasets(any());

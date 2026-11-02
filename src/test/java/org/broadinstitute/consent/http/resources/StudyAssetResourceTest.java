@@ -99,7 +99,7 @@ class StudyAssetResourceTest extends AbstractTestHelper {
             .getAnnotation(RolesAllowed.class);
     assertEquals(List.of(Resource.ADMIN), List.of(roles.value()));
     when(datasetService.syncStudyAssets(user, 7))
-        .thenReturn(new StudyAssetSync(7, StudyAssetSync.IndexOutcome.UPDATED));
+        .thenReturn(StudyAssetSync.synced(7, StudyAssetSync.IndexOutcome.UPDATED));
     try (var response = resource.syncAssetRecords(duosUser, 7)) {
       assertEquals(200, response.getStatus());
       assertEquals("{\"studyId\":7,\"index\":\"UPDATED\"}", response.getEntity());

@@ -529,14 +529,14 @@ public class DatasetService implements ConsentLogger {
     } catch (RuntimeException e) {
       logWarn("Unable to load the datasets of studies %s to reindex".formatted(studyIds), e);
       return studyIds.stream()
-          .map(id -> new StudyAssetSync(id, StudyAssetSync.IndexOutcome.FAILED))
+          .map(id -> StudyAssetSync.synced(id, StudyAssetSync.IndexOutcome.FAILED))
           .toList();
     }
     ElasticSearchService.Reindex reindex =
         elasticSearchService.reindexIndexedDatasets(
             datasetIds.values().stream().flatMap(List::stream).collect(Collectors.toSet()));
     return studyIds.stream()
-        .map(id -> new StudyAssetSync(id, indexOutcome(datasetIds.get(id), reindex)))
+        .map(id -> StudyAssetSync.synced(id, indexOutcome(datasetIds.get(id), reindex)))
         .toList();
   }
 

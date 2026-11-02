@@ -17,6 +17,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -136,7 +137,7 @@ public class StudyResource extends Resource {
     }
   }
 
-  @PUT
+  @POST
   @Path("/assets/records")
   @Produces({NDJSON, MediaType.APPLICATION_JSON})
   @RolesAllowed({ADMIN})
