@@ -1019,6 +1019,18 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = {"{\"errors\":true}", "{\"errors\":true,\"items\":[]}"})
+  void testIndexDatasetTermsReportsFlaggedErrorsWithNoRejectedDocument(String body)
+      throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(body);
+
+    try (var response = service.indexDatasetTerms(List.of(term(1)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
   @ValueSource(strings = {"", "\"_id\":{},", "\"_id\":\"one\","})
   void testIndexDatasetTermsReportsARejectionThatNamesNoDataset(String id) throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
@@ -1044,8 +1056,10 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @ValueSource(
       strings = {
         "{}",
-        "{\"items\":{}}",
-        "{\"items\":[1,{},{\"index\":\"x\"}]}",
+        "[]",
+        "not json",
+        "{\"errors\":false,\"items\":{}}",
+        "{\"errors\":\"true\",\"items\":[1,{},{\"index\":\"x\"}]}",
         "{\"items\":[{\"index\":{\"_id\":\"1\"}}]}"
       })
   void testIndexDatasetTermsTreatsABodyWithNoRejectedDocumentAsSuccess(String body)
@@ -1071,15 +1085,22 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void testSynchronizeDatasetInESIndexReindexesAForcedOrIndexedDataset(boolean force) {
-    Dataset dataset = new Dataset();
+  void testSynchronizeDatasetInESIndexReindexesAForcedOrIndexedDataset(boolean force)
+      throws IOException {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Dataset dataset = datasetRecord.dataset;
     dataset.setDatasetId(1);
     dataset.setIndexedDate(force ? null : new Date());
-    when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(List.of());
+    when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(List.of(dataset));
+    when(studyDAO.findStudyById(dataset.getStudyId())).thenReturn(datasetRecord.study);
+    when(userDao.findUserById(any())).thenReturn(datasetRecord.createUser);
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse("{\"errors\":false,\"items\":[]}");
 
     service.synchronizeDatasetInESIndex(dataset, force);
 
-    verify(datasetDAO).findDatasetsByIdList(List.of(1));
+    verify(esClient).performRequest(any());
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
   }
 
   @Test

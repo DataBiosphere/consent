@@ -188,11 +188,12 @@ public class ElasticSearchService implements ConsentLogger {
 
   /**
    * The datasets a bulk response says Elasticsearch rejected, or empty when a rejected document
-   * names no dataset id. A body that is not a bulk response rejects nothing.
+   * names no dataset id, or the body flags errors without naming a rejected document.
    */
   static Optional<Set<Integer>> rejectedIds(Response response) {
+    JsonObject body = bulkBody(response);
     Set<Integer> ids = new HashSet<>();
-    for (JsonObject item : bulkItems(response)) {
+    for (JsonObject item : bulkItems(body)) {
       if (item.has("error")) {
         JsonElement id = item.get("_id");
         if (id == null || !id.isJsonPrimitive()) {
@@ -205,27 +206,37 @@ public class ElasticSearchService implements ConsentLogger {
         }
       }
     }
-    return Optional.of(ids);
+    return ids.isEmpty() && flagsErrors(body) ? Optional.empty() : Optional.of(ids);
   }
 
-  private static List<JsonObject> bulkItems(Response response) {
+  private static JsonObject bulkBody(Response response) {
     try {
-      JsonElement items =
-          JsonParser.parseString(String.valueOf(response.getEntity()))
-              .getAsJsonObject()
-              .get("items");
-      if (items == null || !items.isJsonArray()) {
-        return List.of();
-      }
-      return items.getAsJsonArray().asList().stream()
-          .filter(JsonElement::isJsonObject)
-          .map(item -> item.getAsJsonObject().get("index"))
-          .filter(index -> index != null && index.isJsonObject())
-          .map(JsonElement::getAsJsonObject)
-          .toList();
+      JsonElement body = JsonParser.parseString(String.valueOf(response.getEntity()));
+      return body.isJsonObject() ? body.getAsJsonObject() : new JsonObject();
     } catch (RuntimeException e) {
+      return new JsonObject();
+    }
+  }
+
+  private static boolean flagsErrors(JsonObject body) {
+    JsonElement errors = body.get("errors");
+    return errors != null
+        && errors.isJsonPrimitive()
+        && errors.getAsJsonPrimitive().isBoolean()
+        && errors.getAsBoolean();
+  }
+
+  private static List<JsonObject> bulkItems(JsonObject body) {
+    JsonElement items = body.get("items");
+    if (items == null || !items.isJsonArray()) {
       return List.of();
     }
+    return items.getAsJsonArray().asList().stream()
+        .filter(JsonElement::isJsonObject)
+        .map(item -> item.getAsJsonObject().get("index"))
+        .filter(index -> index != null && index.isJsonObject())
+        .map(JsonElement::getAsJsonObject)
+        .toList();
   }
 
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
