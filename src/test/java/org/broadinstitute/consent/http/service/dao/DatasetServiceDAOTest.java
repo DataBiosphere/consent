@@ -39,6 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
@@ -1283,7 +1284,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       try {
         assertTrue(started.await(5, TimeUnit.SECONDS));
         // It waits on the study row lock, before it deletes anything.
-        awaitLockWait("FOR UPDATE");
+        awaitLockWait(delete, "FOR UPDATE");
       } finally {
         // Always release the database lock before joining the worker, including on failure.
         handle.commit();
@@ -1384,7 +1385,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
               null);
       Future<?> delete = executor.submit(() -> serviceDAO.deleteDataset(ahead, userId));
       try {
-        awaitLockWait("LOCK TABLE dataset");
+        awaitLockWait(delete, "LOCK TABLE dataset");
       } finally {
         handle.commit();
       }
@@ -3005,8 +3006,11 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     }
   }
 
-  /** Waits until another session waits on a lock in a statement that contains the given text. */
-  private void awaitLockWait(String statementText) throws InterruptedException {
+  /**
+   * Waits until another session waits on a lock in a statement that contains the given text. Each
+   * pause waits on the worker, so a worker that ends without waiting fails the test at once.
+   */
+  private void awaitLockWait(Future<?> worker, String statementText) throws Exception {
     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
     while (System.nanoTime() < deadline) {
       int waiting =
@@ -3023,7 +3027,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
       if (waiting > 0) {
         return;
       }
-      Thread.sleep(20);
+      assertThrows(
+          TimeoutException.class,
+          () -> worker.get(20, TimeUnit.MILLISECONDS),
+          "The worker ended without waiting on a lock in: " + statementText);
     }
     fail("No session waited on a lock in a statement containing: " + statementText);
   }
