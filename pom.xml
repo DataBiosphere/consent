@@ -890,6 +890,12 @@
       <version>2.75.0</version>
     </dependency>
 
+    <!-- Code uses com.google.api.client.http directly. google-http-client-bom manages the version. -->
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
