@@ -332,7 +332,9 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
         create(
             prop("models", "[{\"cloud\": \"AWS\", \"tags\": \"t\", \"trainedOnDatasets\": \"d\"}]"),
             prop("workspaces", "[{\"cloud\": \"Azure\", \"tools\": \"R\", \"tags\": \"w\"}]"),
-            prop("biospecimens", "[{\"biospecimenId\": \"S-1\", \"extractedDiagnoses\": \"x\"}]"));
+            prop(
+                "biospecimens",
+                "[{\"biospecimenId\": \"S-1\", \"extractedDiagnoses\": \"x\\u0000y\"}]"));
 
     StudyModelRecord model = assetDAO.findModelsByStudyId(studyId).getFirst();
     assertEquals(List.of("AWS"), model.cloud());
@@ -343,7 +345,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertEquals(List.of("R"), workspace.tools());
     assertEquals(List.of("w"), workspace.tags());
     assertEquals(
-        List.of("x"), assetDAO.findBiospecimensByStudyId(studyId).getFirst().extractedDiagnoses());
+        List.of("xy"), assetDAO.findBiospecimensByStudyId(studyId).getFirst().extractedDiagnoses());
     assertEquals(
         "AWS", stored(studyId, "models").get(0).getAsJsonObject().get("cloud").getAsString());
   }

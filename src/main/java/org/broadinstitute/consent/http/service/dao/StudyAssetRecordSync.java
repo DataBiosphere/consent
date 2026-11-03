@@ -533,7 +533,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
       if (value == null) {
         return null;
       }
-      // Older entries hold one; the Data Library reads a model or workspace one as a list.
+      // Older entries hold a lone string; keep it as a one-item list rather than drop it.
       if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
         return List.of(NulCharacters.stripFrom(value.getAsString()));
       }
