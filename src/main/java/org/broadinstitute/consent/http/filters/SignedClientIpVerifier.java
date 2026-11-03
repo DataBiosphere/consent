@@ -50,7 +50,7 @@ public class SignedClientIpVerifier {
   // Only ASCII whitespace, the same set on both sides. Java strip() and JavaScript trim() disagree
   // on other characters (U+FEFF, U+00A0, ...), so those are not removed but rejected.
   private static final Pattern EDGE_ASCII_WHITESPACE =
-      Pattern.compile("^[ \\t\\n\\r\\f\\u000B]+|[ \\t\\n\\r\\f\\u000B]+$");
+      Pattern.compile("(?:^[ \\t\\n\\r\\f\\u000B]+)|(?:[ \\t\\n\\r\\f\\u000B]+$)");
   private static final Pattern PRINTABLE_ASCII = Pattern.compile("[\\x21-\\x7E]+");
 
   /** Why a signed client IP was not used. The names are logged; header values never are. */
