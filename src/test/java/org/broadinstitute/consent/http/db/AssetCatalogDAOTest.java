@@ -26,7 +26,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testInsertDatasetEntryNumbersItByAlias() {
     Integer datasetId = insertDataset();
-    int alias = aliasOf(datasetId);
+    int alias = datasetAlias(datasetId);
 
     assertEquals(1, catalogDAO.insertDatasetEntry(datasetId));
 
@@ -41,7 +41,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testInsertDatasetEntrySkipsAnAliasAnotherEntryHolds() {
     Integer datasetId = insertDataset();
-    insertBareEntry(AssetType.DATASET, aliasOf(datasetId));
+    insertBareEntry(AssetType.DATASET, datasetAlias(datasetId));
 
     assertEquals(0, catalogDAO.insertDatasetEntry(datasetId));
   }
@@ -49,9 +49,9 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testInsertAssetEntryNumbersEachTypeByRowId() {
     Integer studyId = insertStudy();
-    Integer modelId = insertRow("study_model", studyId, false);
-    Integer workspaceId = insertRow("study_workspace", studyId, false);
-    Integer biospecimenId = insertRow("study_biospecimen", studyId, false);
+    Integer modelId = insertStudyAssetRow("study_model", studyId, false);
+    Integer workspaceId = insertStudyAssetRow("study_workspace", studyId, false);
+    Integer biospecimenId = insertStudyAssetRow("study_biospecimen", studyId, false);
 
     catalogDAO.insertAssetEntry(AssetType.MODEL, modelId);
     catalogDAO.insertAssetEntry(AssetType.WORKSPACE, workspaceId);
@@ -80,7 +80,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testFindByTypeAndNumberSeparatesTypes() {
     Integer studyId = insertStudy();
-    Integer modelId = insertRow("study_model", studyId, false);
+    Integer modelId = insertStudyAssetRow("study_model", studyId, false);
     catalogDAO.insertAssetEntry(AssetType.MODEL, modelId);
 
     assertNull(catalogDAO.findByTypeAndNumber(AssetType.WORKSPACE, modelId));
@@ -94,7 +94,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
 
     assertEquals(
         datasetId,
-        catalogDAO.findByTypeAndNumber(AssetType.DATASET, aliasOf(datasetId)).datasetId());
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(datasetId)).datasetId());
   }
 
   @Test
@@ -104,7 +104,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
 
     assertNull(catalogDAO.ensureDatasetEntry(datasetId));
 
-    assertEquals(1, countEntries());
+    assertEquals(1, countAssetCatalogEntries());
   }
 
   @Test
@@ -116,8 +116,9 @@ class AssetCatalogDAOTest extends DAOTestHelper {
 
     assertNull(catalogDAO.ensureDatasetEntry(datasetId));
 
-    assertEquals(1, countEntries());
-    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, aliasOf(datasetId));
+    assertEquals(1, countAssetCatalogEntries());
+    AssetCatalogEntry entry =
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(datasetId));
     assertEquals(datasetId, entry.datasetId());
     assertNull(entry.assetRemovedDate());
   }
@@ -126,14 +127,14 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   void testEnsureDatasetEntryLeavesAnEntryWhoseAliasChanged() {
     Integer datasetId = insertDataset();
     catalogDAO.insertDatasetEntry(datasetId);
-    int oldAlias = aliasOf(datasetId);
-    execute(
+    int oldAlias = datasetAlias(datasetId);
+    executeSql(
         "UPDATE dataset SET alias = %d WHERE dataset_id = %d"
             .formatted(oldAlias + 100000, datasetId));
 
     assertNull(catalogDAO.ensureDatasetEntry(datasetId));
 
-    assertEquals(1, countEntries());
+    assertEquals(1, countAssetCatalogEntries());
     assertEquals(
         datasetId, catalogDAO.findByTypeAndNumber(AssetType.DATASET, oldAlias).datasetId());
   }
@@ -142,13 +143,13 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   void testEnsureDatasetEntryReturnsNullForAMissingDataset() {
     assertNull(catalogDAO.ensureDatasetEntry(Integer.MAX_VALUE));
 
-    assertEquals(0, countEntries());
+    assertEquals(0, countAssetCatalogEntries());
   }
 
   @Test
   void testEnsureDatasetEntryReportsAnAliasAnUnownedEntryHolds() {
     Integer datasetId = insertDataset();
-    int alias = aliasOf(datasetId);
+    int alias = datasetAlias(datasetId);
     insertBareEntry(AssetType.DATASET, alias);
 
     AssetCatalogEntry collision = catalogDAO.ensureDatasetEntry(datasetId);
@@ -156,14 +157,14 @@ class AssetCatalogDAOTest extends DAOTestHelper {
     assertNotNull(collision);
     assertEquals(alias, collision.assetNumber());
     assertNull(collision.datasetId());
-    assertEquals(1, countEntries());
+    assertEquals(1, countAssetCatalogEntries());
   }
 
   @Test
   void testEnsureDatasetEntryDoesNotRelinkAnotherDatasetsEntry() {
     Integer datasetId = insertDataset();
     Integer otherId = insertDataset();
-    int alias = aliasOf(datasetId);
+    int alias = datasetAlias(datasetId);
     jdbi.useHandle(
         h ->
             h.createUpdate(
@@ -185,17 +186,17 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testEnsureStudyEntriesCoversLiveAndRetiredRows() {
     Integer studyId = insertStudy();
-    Integer liveModel = insertRow("study_model", studyId, false);
-    Integer retiredModel = insertRow("study_model", studyId, true);
-    Integer workspace = insertRow("study_workspace", studyId, true);
-    Integer biospecimen = insertRow("study_biospecimen", studyId, false);
-    Integer otherStudyModel = insertRow("study_model", insertStudy(), false);
+    Integer liveModel = insertStudyAssetRow("study_model", studyId, false);
+    Integer retiredModel = insertStudyAssetRow("study_model", studyId, true);
+    Integer workspace = insertStudyAssetRow("study_workspace", studyId, true);
+    Integer biospecimen = insertStudyAssetRow("study_biospecimen", studyId, false);
+    Integer otherStudyModel = insertStudyAssetRow("study_model", insertStudy(), false);
     catalogDAO.insertAssetEntry(AssetType.MODEL, liveModel);
 
     catalogDAO.ensureStudyEntries(studyId);
     catalogDAO.ensureStudyEntries(studyId);
 
-    assertEquals(4, countEntries());
+    assertEquals(4, countAssetCatalogEntries());
     assertEquals(
         retiredModel, catalogDAO.findByTypeAndNumber(AssetType.MODEL, retiredModel).modelId());
     assertEquals(
@@ -209,9 +210,9 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testRestoredRowsAreRelinkedWithTheirStampsClearedAndThenStamped() {
     Integer studyId = insertStudy();
-    Integer model = insertRow("study_model", studyId, false);
-    Integer workspace = insertRow("study_workspace", studyId, true);
-    Integer biospecimen = insertRow("study_biospecimen", studyId, false);
+    Integer model = insertStudyAssetRow("study_model", studyId, false);
+    Integer workspace = insertStudyAssetRow("study_workspace", studyId, true);
+    Integer biospecimen = insertStudyAssetRow("study_biospecimen", studyId, false);
     catalogDAO.ensureStudyEntries(studyId);
     catalogDAO.markRemovedByStudy(studyId);
     unlink("model_id", model);
@@ -231,14 +232,14 @@ class AssetCatalogDAOTest extends DAOTestHelper {
     assertNull(modelEntry.assetRemovedDate());
     assertNull(workspaceEntry.assetRemovedDate());
     assertNull(biospecimenEntry.assetRemovedDate());
-    assertEquals(3, countEntries());
+    assertEquals(3, countAssetCatalogEntries());
     assertEquals(3, catalogDAO.markRemovedByStudy(studyId));
   }
 
   @Test
   void testMarkRemovedByStudyLeavesAnUnlinkedEntry() {
     Integer studyId = insertStudy();
-    Integer model = insertRow("study_model", studyId, false);
+    Integer model = insertStudyAssetRow("study_model", studyId, false);
     catalogDAO.insertAssetEntry(AssetType.MODEL, model);
     unlink("model_id", model);
 
@@ -248,7 +249,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testMarkRemovedByDatasetStampsOnceAndTheDeleteNullsTheReference() {
     Integer datasetId = insertDataset();
-    int alias = aliasOf(datasetId);
+    int alias = datasetAlias(datasetId);
     catalogDAO.insertDatasetEntry(datasetId);
 
     assertEquals(1, catalogDAO.markRemovedByDataset(datasetId));
@@ -266,10 +267,10 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   @Test
   void testMarkRemovedByStudyStampsOnlyThatStudysRows() {
     Integer studyId = insertStudy();
-    Integer model = insertRow("study_model", studyId, true);
-    Integer workspace = insertRow("study_workspace", studyId, false);
-    Integer biospecimen = insertRow("study_biospecimen", studyId, false);
-    Integer otherModel = insertRow("study_model", insertStudy(), false);
+    Integer model = insertStudyAssetRow("study_model", studyId, true);
+    Integer workspace = insertStudyAssetRow("study_workspace", studyId, false);
+    Integer biospecimen = insertStudyAssetRow("study_biospecimen", studyId, false);
+    Integer otherModel = insertStudyAssetRow("study_model", insertStudy(), false);
     catalogDAO.insertAssetEntry(AssetType.MODEL, model);
     catalogDAO.insertAssetEntry(AssetType.WORKSPACE, workspace);
     catalogDAO.insertAssetEntry(AssetType.BIOSPECIMEN, biospecimen);
@@ -292,10 +293,6 @@ class AssetCatalogDAOTest extends DAOTestHelper {
         null);
   }
 
-  private int aliasOf(Integer datasetId) {
-    return datasetDAO.findDatasetById(datasetId).getAlias();
-  }
-
   private Integer insertStudy() {
     return studyDAO.insertStudy(
         randomAlphabetic(20),
@@ -307,18 +304,6 @@ class AssetCatalogDAOTest extends DAOTestHelper {
         createUser().getUserId(),
         Instant.now(),
         UUID.randomUUID());
-  }
-
-  private Integer insertRow(String table, Integer studyId, boolean retired) {
-    String idColumn = table.replace("study_", "") + "_id";
-    return jdbi.withHandle(
-        h ->
-            h.createQuery(
-                    "INSERT INTO %s (study_id, retired_date) VALUES (:studyId, %s) RETURNING %s"
-                        .formatted(table, retired ? "now()" : "NULL", idColumn))
-                .bind("studyId", studyId)
-                .mapTo(Integer.class)
-                .one());
   }
 
   private void insertBareEntry(AssetType type, int number) {
@@ -333,15 +318,6 @@ class AssetCatalogDAOTest extends DAOTestHelper {
 
   /** What a restore of the asset tables without the catalog leaves: the reference, nulled. */
   private void unlink(String column, Integer id) {
-    execute("UPDATE asset_catalog SET %s = NULL WHERE %s = %d".formatted(column, column, id));
-  }
-
-  private int countEntries() {
-    return jdbi.withHandle(
-        h -> h.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
-  }
-
-  private void execute(String sql) {
-    jdbi.useHandle(h -> h.execute(sql));
+    executeSql("UPDATE asset_catalog SET %s = NULL WHERE %s = %d".formatted(column, column, id));
   }
 }

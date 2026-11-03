@@ -311,4 +311,43 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
               .execute();
         });
   }
+
+  /** The alias that dataset_alias_seq gives the next dataset. */
+  protected int nextDatasetAlias() {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    """
+                    SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END
+                    FROM dataset_alias_seq
+                    """)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  protected int datasetAlias(Integer datasetId) {
+    return datasetDAO.findDatasetById(datasetId).getAlias();
+  }
+
+  /** A study_model, study_workspace or study_biospecimen row, optionally retired. */
+  protected Integer insertStudyAssetRow(String table, Integer studyId, boolean retired) {
+    String idColumn = table.replace("study_", "") + "_id";
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "INSERT INTO %s (study_id, retired_date) VALUES (:studyId, %s) RETURNING %s"
+                        .formatted(table, retired ? "now()" : "NULL", idColumn))
+                .bind("studyId", studyId)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  protected int countAssetCatalogEntries() {
+    return jdbi.withHandle(
+        h -> h.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
+  }
+
+  protected void executeSql(String sql) {
+    jdbi.useHandle(h -> h.execute(sql));
+  }
 }

@@ -39,16 +39,17 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
   void testEveryDatasetGetsOneEntryNumberedByItsAlias() throws Exception {
     Integer datasetId = insertDataset();
     Integer zeroAliasId = insertDataset();
-    execute("UPDATE dataset SET alias = 0 WHERE dataset_id = %d".formatted(zeroAliasId));
+    executeSql("UPDATE dataset SET alias = 0 WHERE dataset_id = %d".formatted(zeroAliasId));
 
     runMigration();
 
-    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, aliasOf(datasetId));
+    AssetCatalogEntry entry =
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(datasetId));
     assertEquals(datasetId, entry.datasetId());
     assertEquals(datasetId, entry.sourceDatasetId());
     assertEquals(CHANGESET_ID, entry.backfillRun());
     assertEquals(zeroAliasId, catalogDAO.findByTypeAndNumber(AssetType.DATASET, 0).datasetId());
-    assertEquals(2, countEntries());
+    assertEquals(2, countAssetCatalogEntries());
   }
 
   @Test
@@ -58,20 +59,21 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
 
     runMigration();
 
-    assertNull(catalogDAO.findByTypeAndNumber(AssetType.DATASET, aliasOf(datasetId)).backfillRun());
-    assertEquals(1, countEntries());
+    assertNull(
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(datasetId)).backfillRun());
+    assertEquals(1, countAssetCatalogEntries());
   }
 
   @Test
   void testADatasetWhoseAliasAnotherEntryHoldsIsSkippedAndReported() throws Exception {
     Integer datasetId = insertDataset();
-    execute(
+    executeSql(
         "INSERT INTO asset_catalog (asset_type, asset_number, asset_removed_date) VALUES ('DATASET', %d, now())"
-            .formatted(aliasOf(datasetId)));
+            .formatted(datasetAlias(datasetId)));
 
     runMigration();
 
-    assertEquals(1, countEntries());
+    assertEquals(1, countAssetCatalogEntries());
     List<Integer> reported =
         jdbi.withHandle(h -> h.createQuery(reportQuery()).mapTo(Integer.class).list());
     assertEquals(List.of(datasetId), reported);
@@ -82,45 +84,46 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
     insertDataset();
     insertDataset();
     runMigration();
-    int next = nextAlias();
+    int next = nextDatasetAlias();
 
     runMigration();
 
-    assertEquals(2, countEntries());
-    assertEquals(next, nextAlias());
+    assertEquals(2, countAssetCatalogEntries());
+    assertEquals(next, nextDatasetAlias());
   }
 
   @Test
   void testTheSequenceMovesPastAnAliasAheadOfIt() throws Exception {
     Integer datasetId = insertDataset();
-    int aheadAlias = nextAlias() + 10;
-    execute("UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(aheadAlias, datasetId));
+    int aheadAlias = nextDatasetAlias() + 10;
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(aheadAlias, datasetId));
 
     runMigration();
 
-    assertEquals(aheadAlias + 1, nextAlias());
+    assertEquals(aheadAlias + 1, nextDatasetAlias());
   }
 
   @Test
   void testTheSequenceMovesPastARemovedEntryNumberAheadOfIt() throws Exception {
-    int aheadNumber = nextAlias() + 10;
-    execute(
+    int aheadNumber = nextDatasetAlias() + 10;
+    executeSql(
         "INSERT INTO asset_catalog (asset_type, asset_number, asset_removed_date) VALUES ('DATASET', %d, now())"
             .formatted(aheadNumber));
 
     runMigration();
 
-    assertEquals(aheadNumber + 1, nextAlias());
+    assertEquals(aheadNumber + 1, nextDatasetAlias());
   }
 
   @Test
   void testTheSequenceStaysWhenItIsAhead() throws Exception {
     insertDataset();
-    int next = nextAlias();
+    int next = nextDatasetAlias();
 
     runMigration();
 
-    assertEquals(next, nextAlias());
+    assertEquals(next, nextDatasetAlias());
   }
 
   /**
@@ -155,30 +158,5 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
         UUID.randomUUID().toString(),
         "{}",
         null);
-  }
-
-  private int aliasOf(Integer datasetId) {
-    return datasetDAO.findDatasetById(datasetId).getAlias();
-  }
-
-  private int nextAlias() {
-    return jdbi.withHandle(
-        h ->
-            h.createQuery(
-                    """
-                    SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END
-                    FROM dataset_alias_seq
-                    """)
-                .mapTo(Integer.class)
-                .one());
-  }
-
-  private int countEntries() {
-    return jdbi.withHandle(
-        h -> h.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
-  }
-
-  private void execute(String sql) {
-    jdbi.useHandle(h -> h.execute(sql));
   }
 }

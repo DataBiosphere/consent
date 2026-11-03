@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.List;
 import org.broadinstitute.consent.http.enumeration.AssetType;
 import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -17,16 +19,21 @@ public interface AssetCatalogDAO {
   /**
    * Returns 0 when the dataset is missing, already has an entry, or another entry has its alias.
    */
+  default int insertDatasetEntry(Integer datasetId) {
+    return insertDatasetEntries(List.of(datasetId));
+  }
+
+  /** Returns how many of the datasets got an entry. */
   @SqlUpdate(
       """
       INSERT INTO asset_catalog (asset_type, asset_number, dataset_id, source_dataset_id)
       SELECT 'DATASET', d.alias::integer, d.dataset_id, d.dataset_id
       FROM dataset d
-      WHERE d.dataset_id = :datasetId
+      WHERE d.dataset_id IN (<datasetIds>)
         AND NOT EXISTS (SELECT 1 FROM asset_catalog c WHERE c.dataset_id = d.dataset_id)
       ON CONFLICT (asset_type, asset_number) DO NOTHING
       """)
-  int insertDatasetEntry(@Bind("datasetId") Integer datasetId);
+  int insertDatasetEntries(@BindList("datasetIds") List<Integer> datasetIds);
 
   /** Numbers a model, workspace or biospecimen entry by its row id. */
   default void insertAssetEntry(AssetType type, Integer rowId) {
@@ -64,35 +71,44 @@ public interface AssetCatalogDAO {
    *     no such dataset
    */
   default AssetCatalogEntry ensureDatasetEntry(Integer datasetId) {
-    if (relinkDatasetEntry(datasetId) == 1 || insertDatasetEntry(datasetId) == 1) {
-      return null;
-    }
-    return findDatasetCollision(datasetId);
+    return ensureDatasetEntries(List.of(datasetId)).stream().findFirst().orElse(null);
+  }
+
+  /**
+   * Gives each dataset an entry if it has none, as {@link #ensureDatasetEntry} does.
+   *
+   * @return the entries that hold the alias of a dataset left without one
+   */
+  default List<AssetCatalogEntry> ensureDatasetEntries(List<Integer> datasetIds) {
+    relinkDatasetEntries(datasetIds);
+    insertDatasetEntries(datasetIds);
+    return findDatasetCollisions(datasetIds);
   }
 
   @SqlUpdate(
       """
       UPDATE asset_catalog c SET dataset_id = d.dataset_id, asset_removed_date = NULL
       FROM dataset d
-      WHERE d.dataset_id = :datasetId
+      WHERE d.dataset_id IN (<datasetIds>)
         AND c.asset_type = 'DATASET'
         AND c.asset_number = d.alias
         AND c.dataset_id IS NULL
         AND c.source_dataset_id = d.dataset_id
         AND NOT EXISTS (SELECT 1 FROM asset_catalog e WHERE e.dataset_id = d.dataset_id)
       """)
-  int relinkDatasetEntry(@Bind("datasetId") Integer datasetId);
+  int relinkDatasetEntries(@BindList("datasetIds") List<Integer> datasetIds);
 
   @SqlQuery(
       """
       SELECT c.*
       FROM asset_catalog c
       JOIN dataset d ON c.asset_type = 'DATASET' AND c.asset_number = d.alias
-      WHERE d.dataset_id = :datasetId
+      WHERE d.dataset_id IN (<datasetIds>)
         AND c.dataset_id IS DISTINCT FROM d.dataset_id
         AND NOT EXISTS (SELECT 1 FROM asset_catalog e WHERE e.dataset_id = d.dataset_id)
+      ORDER BY c.catalog_id
       """)
-  AssetCatalogEntry findDatasetCollision(@Bind("datasetId") Integer datasetId);
+  List<AssetCatalogEntry> findDatasetCollisions(@BindList("datasetIds") List<Integer> datasetIds);
 
   /** Gives every model, workspace and biospecimen row of the study an entry, retired rows too. */
   default void ensureStudyEntries(Integer studyId) {
@@ -145,12 +161,16 @@ public interface AssetCatalogDAO {
       """)
   int insertStudyEntries(@Bind("studyId") Integer studyId);
 
+  default int markRemovedByDataset(Integer datasetId) {
+    return markRemovedByDatasets(List.of(datasetId));
+  }
+
   @SqlUpdate(
       """
       UPDATE asset_catalog SET asset_removed_date = now()
-      WHERE dataset_id = :datasetId AND asset_removed_date IS NULL
+      WHERE dataset_id IN (<datasetIds>) AND asset_removed_date IS NULL
       """)
-  int markRemovedByDataset(@Bind("datasetId") Integer datasetId);
+  int markRemovedByDatasets(@BindList("datasetIds") List<Integer> datasetIds);
 
   @SqlUpdate(
       """
@@ -172,20 +192,43 @@ public interface AssetCatalogDAO {
   int markRemovedByStudy(@Bind("studyId") Integer studyId);
 
   /**
-   * Moves dataset_alias_seq past the dataset's alias when the alias is ahead of it, as an alias
-   * inserted by hand can be, so the sequence never reissues it. A sequence already past the alias
-   * is left alone.
+   * Moves dataset_alias_seq past the highest alias of the datasets when it is ahead of the
+   * sequence, as an alias inserted by hand can be, so the sequence never reissues it. A sequence
+   * already past every alias is left alone, without a lock. Call it inside a transaction.
    *
-   * @return the new sequence value, or null when it did not move
+   * <p>An insert takes its alias from the sequence while it holds ROW EXCLUSIVE on dataset. The
+   * table lock waits for every insert in flight and blocks new ones until commit, so no alias is
+   * issued between the second check and setval. An insert that took the alias itself waits on the
+   * unique index for this transaction, which deadlocks with the lock, and Postgres aborts one.
    */
+  default void advanceAliasSequencePast(List<Integer> datasetIds) {
+    if (hasAliasAheadOfSequence(datasetIds)) {
+      lockDatasetTable();
+      setAliasSequenceToHighestAlias(datasetIds);
+    }
+  }
+
   @SqlQuery(
       """
-      SELECT setval('dataset_alias_seq', d.alias)
-      FROM dataset d, dataset_alias_seq s
-      WHERE d.dataset_id = :datasetId
-        AND d.alias >= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END)
+      SELECT EXISTS (
+          SELECT 1 FROM dataset d, dataset_alias_seq s
+          WHERE d.dataset_id IN (<datasetIds>)
+            AND d.alias >= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END))
       """)
-  Long advanceAliasSequencePast(@Bind("datasetId") Integer datasetId);
+  boolean hasAliasAheadOfSequence(@BindList("datasetIds") List<Integer> datasetIds);
+
+  @SqlUpdate("LOCK TABLE dataset IN SHARE ROW EXCLUSIVE MODE")
+  void lockDatasetTable();
+
+  /** Returns the new sequence value, or null when the sequence is already past every alias. */
+  @SqlQuery(
+      """
+      SELECT setval('dataset_alias_seq', top.alias)
+      FROM (SELECT MAX(alias) AS alias FROM dataset WHERE dataset_id IN (<datasetIds>)) top,
+          dataset_alias_seq s
+      WHERE top.alias >= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END)
+      """)
+  Long setAliasSequenceToHighestAlias(@BindList("datasetIds") List<Integer> datasetIds);
 
   @SqlQuery(
       """

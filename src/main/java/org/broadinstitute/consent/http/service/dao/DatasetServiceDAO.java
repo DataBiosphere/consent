@@ -94,43 +94,52 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   public void deleteDataset(Dataset dataset, Integer userId) {
-    jdbi.useTransaction(handle -> executeDeleteDataset(handle, dataset, userId));
+    jdbi.useTransaction(
+        handle -> {
+          removeCatalogEntries(handle, List.of(dataset.getDatasetId()));
+          executeDeleteDataset(dataset, userId);
+        });
   }
 
-  private void executeDeleteDataset(Handle handle, Dataset dataset, Integer userId) {
+  private void executeDeleteDataset(Dataset dataset, Integer userId) {
     // Some legacy dataset names can be null
     String dsAuditName =
         Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
     addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, AuditActions.DELETE);
     datasetAuthorizationReaderDAO.deleteByDatasetId(dataset.getDatasetId());
     datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
-    removeCatalogEntry(handle, dataset.getDatasetId());
     datasetDAO.deleteDatasetById(dataset.getDatasetId());
   }
 
   /**
-   * Stamps the dataset's catalog entry before the delete nulls its reference, creating the entry
-   * first if an old pod inserted the dataset without one.
+   * Stamps the datasets' catalog entries before their deletes null the references, creating any
+   * entry that an old pod left out. The caller deletes the datasets in the same transaction.
    */
-  private void removeCatalogEntry(Handle handle, Integer datasetId) {
+  private void removeCatalogEntries(Handle handle, List<Integer> datasetIds) {
     AssetCatalogDAO catalogDAO = handle.attach(AssetCatalogDAO.class);
-    AssetCatalogEntry collision = catalogDAO.ensureDatasetEntry(datasetId);
-    if (collision != null) {
-      logCatalogCollision(datasetId, collision);
-    }
-    catalogDAO.markRemovedByDataset(datasetId);
-    catalogDAO.advanceAliasSequencePast(datasetId);
+    logCatalogCollisions(handle, catalogDAO.ensureDatasetEntries(datasetIds));
+    catalogDAO.markRemovedByDatasets(datasetIds);
+    catalogDAO.advanceAliasSequencePast(datasetIds);
   }
 
-  private void logCatalogCollision(Integer datasetId, AssetCatalogEntry collision) {
-    String holder =
-        collision == null
-            ? "another catalog entry"
-            : "alias %d belongs to catalog entry %d"
-                .formatted(collision.assetNumber(), collision.catalogId());
-    logException(
-        new IllegalStateException(
-            "Dataset %d has no catalog entry: %s".formatted(datasetId, holder)));
+  /** Logs once the transaction commits, so a write that rolls back raises no alert. */
+  private void logCatalogCollisions(Handle handle, List<AssetCatalogEntry> collisions) {
+    if (collisions.isEmpty()) {
+      return;
+    }
+    Runnable log =
+        () ->
+            collisions.forEach(
+                c ->
+                    logException(
+                        new IllegalStateException(
+                            "The dataset with alias %d has no catalog entry: catalog entry %d holds the alias"
+                                .formatted(c.assetNumber(), c.catalogId()))));
+    if (handle.isInTransaction()) {
+      handle.afterCommit(log);
+    } else {
+      log.run();
+    }
   }
 
   /**
@@ -143,10 +152,13 @@ public class DatasetServiceDAO implements ConsentLogger {
           // A registration update locks the study row first, so it commits before this reads the
           // study's asset rows, and the models it adds are stamped too.
           handle.attach(StudyAssetRecordDAO.class).lockStudy(study.getStudyId());
+          if (!datasets.isEmpty()) {
+            removeCatalogEntries(handle, datasets.stream().map(Dataset::getDatasetId).toList());
+          }
           datasets.forEach(
               d -> {
                 try {
-                  executeDeleteDataset(handle, d, user.getUserId());
+                  executeDeleteDataset(d, user.getUserId());
                 } catch (Exception e) {
                   throw new DatasetDeletionException(e);
                 }
@@ -217,12 +229,9 @@ public class DatasetServiceDAO implements ConsentLogger {
       datasetDAO.updateStudyId(datasetId, studyId);
     }
 
-    // No entry can reference a dataset inserted in this transaction, so a skip is a collision.
-    // It is logged rather than failing the registration.
-    AssetCatalogDAO catalogDAO = handle.attach(AssetCatalogDAO.class);
-    if (catalogDAO.insertDatasetEntry(datasetId) == 0) {
-      logCatalogCollision(datasetId, catalogDAO.findDatasetCollision(datasetId));
-    }
+    // An alias that another entry holds is logged as a collision, never failing the registration.
+    logCatalogCollisions(
+        handle, handle.attach(AssetCatalogDAO.class).ensureDatasetEntries(List.of(datasetId)));
 
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
