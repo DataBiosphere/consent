@@ -5,9 +5,10 @@ post:
     Anonymous, read-only lookup of public Data Showcase dataset summaries. The route is outside
     `/api` and needs no authentication. Each client IP is rate limited (429 with `Retry-After`).
     The route exists only in a deployment that sets `showcase.publicLookupEnabled: true`; it is
-    off by default, and the path is then a 404.
+    off by default. When it is off, a POST to the path is a 405, because the GET-only Swagger UI
+    route (`SwaggerResource`, path `{path:.*}`) still matches it.
     Every response from the lookup itself (200, 400, 413 and 500) has `Cache-Control: no-store`.
-    A 404, 415 or 429 that the server builds before the lookup runs does not, and none of them
+    A 405, 415 or 429 that the server builds before the lookup runs does not, and none of them
     carries dataset data.
 
     Modes:
