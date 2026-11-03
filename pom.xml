@@ -511,8 +511,8 @@
         <scope>import</scope>
       </dependency>
       <!--
-       google-api-client pins google-http-client to an older version than google-cloud-storage
-       needs. Without this BOM, google-http-client resolves to 2.0.0 and gax-httpjson's Conscrypt
+       google-api-client, a transitive dependency of google-cloud-storage, pins google-http-client
+       to an older version than google-cloud-storage needs. Without this BOM, google-http-client resolves to 2.0.0 and gax-httpjson's Conscrypt
        setup fails at startup with NoSuchMethodError on NetHttpTransport.Builder.setSecurityProvider.
       -->
       <dependency>
@@ -574,7 +574,7 @@
     <!-- Swagger Parser for OpenAPI bundling -->
     <dependency>
       <groupId>io.swagger.parser.v3</groupId>
-      <artifactId>swagger-parser</artifactId>
+      <artifactId>swagger-parser-v3</artifactId>
       <version>2.1.48</version>
     </dependency>
 
@@ -626,13 +626,6 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
       <version>2.22</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
-    <dependency>
-      <groupId>org.parboiled</groupId>
-      <artifactId>parboiled-java</artifactId>
-      <version>1.4.1</version>
     </dependency>
 
     <!--
@@ -695,14 +688,6 @@
 
     <dependency>
       <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-dependencies</artifactId>
-      <version>${dropwizard.version}</version>
-      <type>pom</type>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-auth</artifactId>
       <version>${dropwizard.version}</version>
     </dependency>
@@ -717,12 +702,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-http2</artifactId>
       <version>${dropwizard.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty.http3</groupId>
-      <artifactId>http3-common</artifactId>
-      <version>11.0.26</version>
     </dependency>
 
     <dependency>
@@ -846,12 +825,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.sun.mail</groupId>
-      <artifactId>javax.mail</artifactId>
-      <version>1.6.2</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.freemarker</groupId>
       <artifactId>freemarker</artifactId>
       <version>2.3.35</version>
@@ -909,12 +882,6 @@
       <artifactId>wiremock-jetty12</artifactId>
       <version>${wiremock.version}</version>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client</artifactId>
-      <version>2.9.2</version>
     </dependency>
 
     <dependency>
