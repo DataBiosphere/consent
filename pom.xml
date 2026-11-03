@@ -566,6 +566,27 @@
         <artifactId>async-http-client</artifactId>
         <version>3.0.14</version>
       </dependency>
+      <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
+      <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
+      <dependency>
+        <groupId>ch.qos.logback.access</groupId>
+        <artifactId>logback-access-common</artifactId>
+        <version>2.0.15</version>
+      </dependency>
+      <!-- Security update for the netty jars that zendesk-java-client and other clients use. -->
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.override.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Security update for the commons-beanutils that commons-validator uses. -->
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.11.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -628,32 +649,10 @@
       <version>2.22</version>
     </dependency>
 
-    <!--
-     See
-     https://broadworkbench.atlassian.net/browse/DCJ-274
-     org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
-    -->
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
       <version>4.10.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.bouncycastle</groupId>
-          <artifactId>bcprov-jdk18on</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!--
-     See
-     https://broadworkbench.atlassian.net/browse/DCJ-274
-     org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
-    -->
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.86</version>
     </dependency>
 
     <dependency>
@@ -729,13 +728,6 @@
     </dependency>
 
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
-    <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
-    <dependency>
-      <groupId>ch.qos.logback.access</groupId>
-      <artifactId>logback-access-common</artifactId>
-      <version>2.0.15</version>
-    </dependency>
-    <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -746,42 +738,6 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback.version}</version>
-    </dependency>
-    <!-- Security update. -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-dns</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-http</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-http2</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-transport</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-socks</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-resolver-dns</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-handler-proxy</artifactId>
-      <version>${netty.override.version}</version>
     </dependency>
 
     <dependency>
@@ -951,24 +907,11 @@
       </exclusions>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
-    <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>1.11.0</version>
-    </dependency>
-
     <!-- https://mvnrepository.com/artifact/com.cloudbees.thirdparty/zendesk-java-client -->
     <dependency>
       <groupId>com.cloudbees.thirdparty</groupId>
       <artifactId>zendesk-java-client</artifactId>
       <version>1.6.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.netty</groupId>
-          <artifactId>netty-codec-http2</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
