@@ -47,6 +47,11 @@ public class SignedClientIpVerifier {
   private static final String ALGORITHM = "HmacSHA256";
   private static final Pattern TIMESTAMP = Pattern.compile("\\d{1,12}");
   private static final Pattern HEX_SHA256 = Pattern.compile("[0-9a-f]{64}");
+  // Only ASCII whitespace, the same set on both sides. Java strip() and JavaScript trim() disagree
+  // on other characters (U+FEFF, U+00A0, ...), so those are not removed but rejected.
+  private static final Pattern EDGE_ASCII_WHITESPACE =
+      Pattern.compile("^[ \\t\\n\\r\\f\\u000B]+|[ \\t\\n\\r\\f\\u000B]+$");
+  private static final Pattern PRINTABLE_ASCII = Pattern.compile("[\\x21-\\x7E]+");
 
   /** Why a signed client IP was not used. The names are logged; header values never are. */
   public enum Rejection {
@@ -84,14 +89,34 @@ public class SignedClientIpVerifier {
   public SignedClientIpVerifier(String current, String previous, Clock clock) {
     this.hmacSecrets =
         Stream.of(current, previous)
-            .filter(value -> value != null && !value.isBlank())
-            // The BFF strips its copy too, so a trailing newline in Secret Manager is harmless.
-            .map(String::strip)
+            .filter(Objects::nonNull)
+            // The BFF trims the same ASCII whitespace, so a trailing newline in Secret Manager is
+            // harmless.
+            .map(SignedClientIpVerifier::trimAsciiWhitespace)
+            .filter(value -> !value.isEmpty())
             .toList();
     this.clock = clock;
   }
 
-  /** Checks the signed headers. */
+  /**
+   * Removes leading and trailing ASCII whitespace only: space, tab, LF, CR, FF and VT. duos-ui's
+   * {@code consentProxySecretFromEnv} removes the same set.
+   */
+  public static String trimAsciiWhitespace(String value) {
+    return EDGE_ASCII_WHITESPACE.matcher(value).replaceAll("");
+  }
+
+  /** True when every character is printable ASCII (0x21 to 0x7E), as base64 output is. */
+  public static boolean isPrintableAscii(String value) {
+    return PRINTABLE_ASCII.matcher(value).matches();
+  }
+
+  /**
+   * Checks the signed headers.
+   *
+   * @param headers the request headers. The lookup uses the canonical names, so the map must ignore
+   *     case, as {@code ContainerRequestContext.getHeaders()} does: Node sends lowercase names.
+   */
   public Result verify(Map<String, List<String>> headers) {
     List<String> ips = valuesOf(headers, CLIENT_IP_HEADER);
     List<String> timestamps = valuesOf(headers, TIMESTAMP_HEADER);

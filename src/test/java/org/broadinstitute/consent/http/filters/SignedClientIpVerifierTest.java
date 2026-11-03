@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.broadinstitute.consent.http.filters.SignedClientIpVerifier.Rejection;
 import org.broadinstitute.consent.http.filters.SignedClientIpVerifier.Result;
+import org.glassfish.jersey.internal.util.collection.StringKeyIgnoreCaseMultivaluedMap;
 import org.junit.jupiter.api.Test;
 
 class SignedClientIpVerifierTest {
@@ -21,6 +22,9 @@ class SignedClientIpVerifierTest {
   private static final long TIMESTAMP = 1793376000L;
   private static final String VECTOR =
       "c22a76358b1464270b18f819cc3192670ea01d728241c9754b8973e0333ac6ad";
+  private static final String IPV6_KEY = "2001:db8:1:2::";
+  private static final String IPV6_VECTOR =
+      "b7dc71a8948b2ed1b4a95d40d5787ec2af3c01747465e5027678cbc077c20e33";
 
   private static final String PREVIOUS = "previous-consent-proxy-secret-0123456789ab";
   private static final String OTHER = "unrelated-consent-proxy-secret-0123456789";
@@ -173,5 +177,30 @@ class SignedClientIpVerifierTest {
     Result result = verifier(null, null).verify(headers(IP, "1793376000", VECTOR));
 
     assertRejected(Rejection.NO_SECRET_CONFIGURED, result);
+  }
+
+  @Test
+  void testSharedIpv6VectorMatchesTheBff() {
+    assertEquals(IPV6_VECTOR, SignedClientIpVerifier.hmacHex(CURRENT, IPV6_KEY, TIMESTAMP));
+  }
+
+  @Test
+  void testLowercaseHeaderNamesFromNodeAreFoundInJerseysHeaderMap() {
+    // ContainerRequestContext.getHeaders() is this case-insensitive map; Node sends lowercase
+    // names.
+    MultivaluedMap<String, String> headers = new StringKeyIgnoreCaseMultivaluedMap<>();
+    headers.add("x-duos-client-ip", IP);
+    headers.add("x-duos-client-ip-timestamp", "1793376000");
+    headers.add("x-duos-client-ip-signature", VECTOR);
+
+    assertEquals(IP, verifier(CURRENT, null).verify(headers).clientIp());
+  }
+
+  @Test
+  void testAsciiWhitespaceAroundTheSecretIsIgnoredAsTheBffDoes() {
+    Result result =
+        verifier(" \t" + CURRENT + "\r\n", null).verify(headers(IP, "1793376000", VECTOR));
+
+    assertEquals(IP, result.clientIp());
   }
 }

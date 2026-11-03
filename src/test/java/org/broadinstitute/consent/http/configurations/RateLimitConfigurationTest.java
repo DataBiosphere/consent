@@ -133,4 +133,21 @@ class RateLimitConfigurationTest {
   void testPreviousClientIpSecretWithoutCurrentIsInvalid() {
     assertEquals(1, validateSecrets(null, LONG_SECRET).size());
   }
+
+  @Test
+  void testClientIpSecretWithAByteOrderMarkIsInvalid() {
+    // JavaScript trim() removes U+FEFF and Java strip() does not, so the two sides would disagree.
+    assertEquals(1, validateSecrets("\uFEFF" + LONG_SECRET, null).size());
+  }
+
+  @Test
+  void testClientIpSecretWithANoBreakSpaceIsInvalid() {
+    assertEquals(1, validateSecrets(LONG_SECRET + "\u00A0", null).size());
+    assertEquals(1, validateSecrets(LONG_SECRET, "\u00A0" + LONG_SECRET).size());
+  }
+
+  @Test
+  void testClientIpSecretWithATrailingNewlineIsValid() {
+    assertTrue(validateSecrets(LONG_SECRET + "\n", null).isEmpty());
+  }
 }
