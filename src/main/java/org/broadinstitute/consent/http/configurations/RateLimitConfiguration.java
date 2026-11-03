@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.broadinstitute.consent.http.filters.SignedClientIpVerifier;
 
 /**
  * Rate limit buckets are in-memory per pod, not shared across the deployment. {@code
@@ -95,8 +96,8 @@ public class RateLimitConfiguration {
   @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue
   @AssertTrue(
       message =
-          "clientIpSecret and clientIpPreviousSecret must each be unset or at least 32 characters, "
-              + "and clientIpPreviousSecret needs a clientIpSecret")
+          "clientIpSecret and clientIpPreviousSecret must each be unset or at least 32 printable "
+              + "ASCII characters, and clientIpPreviousSecret needs a clientIpSecret")
   public boolean isClientIpSecretValid() {
     boolean hasCurrent = isConfigured(clientIpSecret);
     boolean hasPrevious = isConfigured(clientIpPreviousSecret);
@@ -106,11 +107,17 @@ public class RateLimitConfiguration {
   }
 
   private static boolean isConfigured(String value) {
-    return value != null && !value.isBlank();
+    return value != null && !SignedClientIpVerifier.trimAsciiWhitespace(value).isEmpty();
   }
 
+  /** Unset, or 32+ printable ASCII characters after the ASCII whitespace that both apps trim. */
   private static boolean isLongEnough(String value) {
-    return !isConfigured(value) || value.strip().length() >= MIN_CLIENT_IP_SECRET_LENGTH;
+    if (!isConfigured(value)) {
+      return true;
+    }
+    String trimmed = SignedClientIpVerifier.trimAsciiWhitespace(value);
+    return trimmed.length() >= MIN_CLIENT_IP_SECRET_LENGTH
+        && SignedClientIpVerifier.isPrintableAscii(trimmed);
   }
 
   @SuppressWarnings("unused") // invoked reflectively by Bean Validation via @AssertTrue
