@@ -220,10 +220,13 @@ public interface AssetCatalogDAO {
   @SqlUpdate("LOCK TABLE dataset IN SHARE ROW EXCLUSIVE MODE")
   void lockDatasetTable();
 
-  /** Returns the new sequence value, or null when the sequence is already past every alias. */
+  /**
+   * Returns the new sequence value, or null when the sequence is already past every alias. Some
+   * databases type dataset.alias as numeric, and setval takes only bigint.
+   */
   @SqlQuery(
       """
-      SELECT setval('dataset_alias_seq', top.alias)
+      SELECT setval('dataset_alias_seq', top.alias::bigint)
       FROM (SELECT MAX(alias) AS alias FROM dataset WHERE dataset_id IN (<datasetIds>)) top,
           dataset_alias_seq s
       WHERE top.alias >= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END)

@@ -28,9 +28,10 @@
       WHERE NOT EXISTS (SELECT 1 FROM asset_catalog c WHERE c.dataset_id = d.dataset_id)
       ON CONFLICT (asset_type, asset_number) DO NOTHING
     </sql>
-    <!-- Keeps the sequence past every alias and dataset entry number, so none is reissued. -->
+    <!-- Keeps the sequence past every alias and dataset entry number, so none is reissued.
+         Some databases type dataset.alias as numeric, and setval takes only bigint. -->
     <sql>
-      SELECT setval('dataset_alias_seq', top.n)
+      SELECT setval('dataset_alias_seq', top.n::bigint)
       FROM (
           SELECT GREATEST(
               (SELECT MAX(alias) FROM dataset),

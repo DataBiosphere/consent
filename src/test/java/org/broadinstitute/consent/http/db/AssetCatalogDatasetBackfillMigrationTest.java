@@ -117,6 +117,20 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
   }
 
   @Test
+  void testTheMigrationRunsWhenAliasIsNumeric() throws Throwable {
+    Integer datasetId = insertDataset();
+    int aheadAlias = nextDatasetAlias() + 10;
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(aheadAlias, datasetId));
+
+    withNumericDatasetAlias(this::runMigration);
+
+    assertEquals(
+        datasetId, catalogDAO.findByTypeAndNumber(AssetType.DATASET, aheadAlias).datasetId());
+    assertEquals(aheadAlias + 1, nextDatasetAlias());
+  }
+
+  @Test
   void testTheSequenceStaysWhenItIsAhead() throws Exception {
     insertDataset();
     int next = nextDatasetAlias();

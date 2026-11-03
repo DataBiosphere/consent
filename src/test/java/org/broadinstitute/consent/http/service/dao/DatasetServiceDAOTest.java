@@ -1410,6 +1410,20 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeletingADatasetAheadOfTheSequenceWorksWhenAliasIsNumeric() throws Throwable {
+    Dataset dataset = createDataset();
+    int aheadAlias = nextDatasetAlias() + 10;
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d"
+            .formatted(aheadAlias, dataset.getDatasetId()));
+    Dataset ahead = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    withNumericDatasetAlias(() -> serviceDAO.deleteDataset(ahead, ahead.getCreateUserId()));
+
+    assertTrue(nextDatasetAlias() > aheadAlias);
+  }
+
+  @Test
   void testDeletingADatasetBehindTheSequenceLeavesItAlone() {
     Dataset dataset = createDataset();
     int next = nextDatasetAlias();
