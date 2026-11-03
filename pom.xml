@@ -932,7 +932,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-oauth2</artifactId>
-      <version>v2-rev20200213-2.0.0</version>
+      <version>v2-rev20200213-2.9.2</version>
     </dependency>
 
     <dependency>
