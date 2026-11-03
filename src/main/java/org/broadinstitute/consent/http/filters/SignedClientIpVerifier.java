@@ -49,8 +49,7 @@ public class SignedClientIpVerifier {
   private static final Pattern HEX_SHA256 = Pattern.compile("[0-9a-f]{64}");
   // Only ASCII whitespace, the same set on both sides. Java strip() and JavaScript trim() disagree
   // on other characters (U+FEFF, U+00A0, ...), so those are not removed but rejected.
-  private static final Pattern EDGE_ASCII_WHITESPACE =
-      Pattern.compile("(?:^[ \\t\\n\\r\\f\\u000B]+)|(?:[ \\t\\n\\r\\f\\u000B]+$)");
+  private static final String ASCII_WHITESPACE = " \t\n\r\f\u000B";
   private static final Pattern PRINTABLE_ASCII = Pattern.compile("[\\x21-\\x7E]+");
 
   /** Why a signed client IP was not used. The names are logged; header values never are. */
@@ -103,7 +102,15 @@ public class SignedClientIpVerifier {
    * {@code consentProxySecretFromEnv} removes the same set.
    */
   public static String trimAsciiWhitespace(String value) {
-    return EDGE_ASCII_WHITESPACE.matcher(value).replaceAll("");
+    int start = 0;
+    int end = value.length();
+    while (start < end && ASCII_WHITESPACE.indexOf(value.charAt(start)) >= 0) {
+      start++;
+    }
+    while (end > start && ASCII_WHITESPACE.indexOf(value.charAt(end - 1)) >= 0) {
+      end--;
+    }
+    return value.substring(start, end);
   }
 
   /** True when every character is printable ASCII (0x21 to 0x7E), as base64 output is. */
