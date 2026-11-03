@@ -313,7 +313,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
                 "models",
                 """
                 [{"name": 5, "cloud": [1], "maintainer": "Lab", "description": {"a": 1},
-                  "tags": "t", "trainedOnDatasets": [{}], "url": null}]"""));
+                  "tags": 7, "trainedOnDatasets": [{}], "url": null}]"""));
 
     StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
     assertNull(row.name());
@@ -324,6 +324,30 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertNull(row.trainedOnDatasets());
     assertNull(row.url());
     assertEquals(5, stored(studyId, "models").get(0).getAsJsonObject().get("name").getAsInt());
+  }
+
+  @Test
+  void testALoneStringInAListFieldIsStoredAsAOneItemList() throws Exception {
+    Integer studyId =
+        create(
+            prop("models", "[{\"cloud\": \"AWS\", \"tags\": \"t\", \"trainedOnDatasets\": \"d\"}]"),
+            prop("workspaces", "[{\"cloud\": \"Azure\", \"tools\": \"R\", \"tags\": \"w\"}]"),
+            prop(
+                "biospecimens",
+                "[{\"biospecimenId\": \"S-1\", \"extractedDiagnoses\": \"x\\u0000y\"}]"));
+
+    StudyModelRecord model = assetDAO.findModelsByStudyId(studyId).getFirst();
+    assertEquals(List.of("AWS"), model.cloud());
+    assertEquals(List.of("t"), model.tags());
+    assertEquals(List.of("d"), model.trainedOnDatasets());
+    StudyWorkspaceRecord workspace = assetDAO.findWorkspacesByStudyId(studyId).getFirst();
+    assertEquals(List.of("Azure"), workspace.cloud());
+    assertEquals(List.of("R"), workspace.tools());
+    assertEquals(List.of("w"), workspace.tags());
+    assertEquals(
+        List.of("xy"), assetDAO.findBiospecimensByStudyId(studyId).getFirst().extractedDiagnoses());
+    assertEquals(
+        "AWS", stored(studyId, "models").get(0).getAsJsonObject().get("cloud").getAsString());
   }
 
   @Test
