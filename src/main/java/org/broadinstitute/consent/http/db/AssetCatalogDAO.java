@@ -171,6 +171,22 @@ public interface AssetCatalogDAO {
       """)
   int markRemovedByStudy(@Bind("studyId") Integer studyId);
 
+  /**
+   * Moves dataset_alias_seq past the dataset's alias when the alias is ahead of it, as an alias
+   * inserted by hand can be, so the sequence never reissues it. A sequence already past the alias
+   * is left alone.
+   *
+   * @return the new sequence value, or null when it did not move
+   */
+  @SqlQuery(
+      """
+      SELECT setval('dataset_alias_seq', d.alias)
+      FROM dataset d, dataset_alias_seq s
+      WHERE d.dataset_id = :datasetId
+        AND d.alias >= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END)
+      """)
+  Long advanceAliasSequencePast(@Bind("datasetId") Integer datasetId);
+
   @SqlQuery(
       """
       SELECT * FROM asset_catalog

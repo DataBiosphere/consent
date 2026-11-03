@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import java.sql.Timestamp;
@@ -31,13 +34,22 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
+import org.broadinstitute.consent.http.enumeration.AssetType;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
+import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -60,6 +72,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpda
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdateResult;
+import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,15 +81,19 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetServiceDAOTest extends DAOTestHelper {
 
   private DatasetServiceDAO serviceDAO;
 
+  private AssetCatalogDAO catalogDAO;
+
   @BeforeEach
   void setUp() {
     serviceDAO = new DatasetServiceDAO(jdbi);
+    catalogDAO = jdbi.onDemand(AssetCatalogDAO.class);
   }
 
   @Test
@@ -1135,6 +1152,213 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     serviceDAO.deleteStudy(study, List.of(), createUser());
     Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
     assertNull(deletedStudy);
+  }
+
+  @Test
+  void testRegisteringADatasetAddsItsCatalogEntry() throws Exception {
+    Study study = createStudy(null, null, null);
+
+    for (Integer datasetId : study.getDatasetIds()) {
+      AssetCatalogEntry entry =
+          catalogDAO.findByTypeAndNumber(
+              AssetType.DATASET, datasetDAO.findDatasetById(datasetId).getAlias());
+      assertEquals(datasetId, entry.datasetId());
+      assertEquals(datasetId, entry.sourceDatasetId());
+      assertNull(entry.assetRemovedDate());
+      assertNull(entry.backfillRun());
+    }
+    assertEquals(study.getDatasetIds().size(), countCatalogEntries());
+  }
+
+  @Test
+  void testDeleteDatasetStampsItsEntry() throws Exception {
+    Study study = createStudy(null, null, null);
+    Dataset dataset = datasetDAO.findDatasetById(study.getDatasetIds().iterator().next());
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+
+    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, dataset.getAlias());
+    assertRemoved(entry);
+    assertEquals(dataset.getDatasetId(), entry.sourceDatasetId());
+  }
+
+  @Test
+  void testDeleteDatasetWithNoEntryCreatesAndStampsOne() {
+    // DatasetDAO inserts the row directly, as an old pod during the rollout does: no entry.
+    Dataset dataset = createDataset();
+    assertNull(catalogDAO.findByTypeAndNumber(AssetType.DATASET, dataset.getAlias()));
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+
+    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, dataset.getAlias());
+    assertRemoved(entry);
+    assertEquals(dataset.getDatasetId(), entry.sourceDatasetId());
+  }
+
+  @Test
+  void testDeleteStudyStampsTheEntriesOfItsDatasetsAndAssetRows() throws Exception {
+    Study study = createStudy(null, null, null);
+    Integer studyId = study.getStudyId();
+    Integer modelId = insertAssetRow("study_model", studyId, false);
+    Integer retiredWorkspaceId = insertAssetRow("study_workspace", studyId, true);
+    Integer biospecimenId = insertAssetRow("study_biospecimen", studyId, false);
+    // Only the model has an entry; the delete creates the others.
+    catalogDAO.insertAssetEntry(AssetType.MODEL, modelId);
+    Integer otherStudyModelId =
+        insertAssetRow("study_model", createStudy(null, null, null).getStudyId(), false);
+    catalogDAO.insertAssetEntry(AssetType.MODEL, otherStudyModelId);
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+
+    serviceDAO.deleteStudy(study, datasets, createUser());
+
+    datasets.forEach(
+        d -> assertRemoved(catalogDAO.findByTypeAndNumber(AssetType.DATASET, d.getAlias())));
+    assertRemoved(catalogDAO.findByTypeAndNumber(AssetType.MODEL, modelId));
+    assertRemoved(catalogDAO.findByTypeAndNumber(AssetType.WORKSPACE, retiredWorkspaceId));
+    assertRemoved(catalogDAO.findByTypeAndNumber(AssetType.BIOSPECIMEN, biospecimenId));
+    AssetCatalogEntry otherStudyModel =
+        catalogDAO.findByTypeAndNumber(AssetType.MODEL, otherStudyModelId);
+    assertEquals(otherStudyModelId, otherStudyModel.modelId());
+    assertNull(otherStudyModel.assetRemovedDate());
+  }
+
+  @Test
+  void testDeleteStudyFailingInTheDatasetLoopLeavesItsEntriesUnstamped() throws Exception {
+    Study study = createStudy(null, null, null);
+    Integer modelId = insertAssetRow("study_model", study.getStudyId(), false);
+    catalogDAO.insertAssetEntry(AssetType.MODEL, modelId);
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(study.getDatasetIds()).stream()
+            .sorted(Comparator.comparing(Dataset::getDatasetId))
+            .toList();
+    // A match row blocks the delete of the second dataset, after the first one's entry is stamped.
+    insertMatch(datasets.getLast().getDatasetId());
+    User user = createUser();
+
+    assertThrows(
+        DatasetDeletionException.class, () -> serviceDAO.deleteStudy(study, datasets, user));
+
+    AssetCatalogEntry model = catalogDAO.findByTypeAndNumber(AssetType.MODEL, modelId);
+    assertEquals(modelId, model.modelId());
+    assertNull(model.assetRemovedDate());
+    for (Dataset dataset : datasets) {
+      AssetCatalogEntry entry =
+          catalogDAO.findByTypeAndNumber(AssetType.DATASET, dataset.getAlias());
+      assertEquals(dataset.getDatasetId(), entry.datasetId());
+      assertNull(entry.assetRemovedDate());
+    }
+  }
+
+  /**
+   * A registration update locks the study row and then adds a model. A study delete that starts
+   * meanwhile waits for it, then stamps the new model's entry instead of leaving an orphan.
+   */
+  @Test
+  void testDeleteStudyWaitsForAConcurrentUpdateAndStampsItsNewModel() throws Exception {
+    Study study = createStudy(null, null, null);
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
+    User user = createUser();
+    try (var executor = Executors.newSingleThreadExecutor();
+        var handle = jdbi.open()) {
+      handle.begin();
+      handle.attach(StudyAssetRecordDAO.class).lockStudy(study.getStudyId());
+      Integer modelId =
+          handle
+              .createQuery(
+                  "INSERT INTO study_model (study_id) VALUES (:studyId) RETURNING model_id")
+              .bind("studyId", study.getStudyId())
+              .mapTo(Integer.class)
+              .one();
+      CountDownLatch started = new CountDownLatch(1);
+      Future<?> delete =
+          executor.submit(
+              () -> {
+                started.countDown();
+                serviceDAO.deleteStudy(study, datasets, user);
+              });
+      try {
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        assertThrows(TimeoutException.class, () -> delete.get(200, TimeUnit.MILLISECONDS));
+      } finally {
+        // Always release the database lock before joining the worker, including on failure.
+        handle.commit();
+      }
+      delete.get(5, TimeUnit.SECONDS);
+
+      assertRemoved(catalogDAO.findByTypeAndNumber(AssetType.MODEL, modelId));
+    }
+  }
+
+  @Test
+  void testARegistrationWhoseAliasAnEntryHoldsSucceedsAndLogsTheCollision() throws Exception {
+    int alias = nextAlias();
+    // An entry with no dataset holds the next alias, as an ad hoc alias reuse can leave.
+    execute(
+        "INSERT INTO asset_catalog (asset_type, asset_number) VALUES ('DATASET', %d)"
+            .formatted(alias));
+    DatasetInsert insert = datasetInsert(randomAlphabetic(20));
+    Logger logger = (Logger) LoggerFactory.getLogger(DatasetServiceDAO.class);
+    TestAppender appender = new TestAppender();
+    appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+    logger.addAppender(appender);
+    appender.start();
+    try {
+      Integer datasetId = serviceDAO.insertDatasetRegistration(null, List.of(insert)).getFirst();
+
+      assertEquals(alias, datasetDAO.findDatasetById(datasetId).getAlias());
+      assertNull(catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias).datasetId());
+      assertEquals(1, countCatalogEntries());
+      List<String> messages =
+          appender.getLoggedEvents().stream().map(ILoggingEvent::getFormattedMessage).toList();
+      assertTrue(
+          messages.stream()
+              .anyMatch(m -> m.contains("Dataset " + datasetId) && m.contains("alias " + alias)),
+          messages.toString());
+    } finally {
+      appender.stop();
+      logger.detachAppender(appender);
+    }
+  }
+
+  @Test
+  void testAFailedCatalogInsertRollsBackTheRegistration() {
+    String name = randomAlphabetic(20);
+    DatasetInsert insert = datasetInsert(name);
+    // NOT VALID skips the existing rows and rejects every new one.
+    execute("ALTER TABLE asset_catalog ADD CONSTRAINT test_reject_inserts CHECK (false) NOT VALID");
+    try {
+      assertThrows(
+          Exception.class, () -> serviceDAO.insertDatasetRegistration(null, List.of(insert)));
+    } finally {
+      execute("ALTER TABLE asset_catalog DROP CONSTRAINT test_reject_inserts");
+    }
+
+    assertNull(datasetDAO.getDatasetByName(name));
+  }
+
+  @Test
+  void testDeletingADatasetWhoseAliasIsAheadOfTheSequenceAdvancesIt() {
+    Dataset dataset = createDataset();
+    int aheadAlias = nextAlias() + 10;
+    // An alias inserted by hand ahead of the sequence.
+    execute(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d"
+            .formatted(aheadAlias, dataset.getDatasetId()));
+
+    serviceDAO.deleteDataset(
+        datasetDAO.findDatasetById(dataset.getDatasetId()), dataset.getCreateUserId());
+
+    assertTrue(createDataset().getAlias() > aheadAlias);
+  }
+
+  @Test
+  void testDeletingADatasetBehindTheSequenceLeavesItAlone() {
+    Dataset dataset = createDataset();
+    int next = nextAlias();
+
+    serviceDAO.deleteDataset(dataset, dataset.getCreateUserId());
+
+    assertEquals(next, nextAlias());
   }
 
   @Test
@@ -2681,6 +2905,73 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
+  }
+
+  private DatasetInsert datasetInsert(String name) {
+    return new DatasetInsert(
+        name,
+        createDac().getDacId(),
+        new DataUseBuilder().setGeneralUse(true).build(),
+        createUser().getUserId(),
+        List.of(),
+        List.of());
+  }
+
+  private Integer insertAssetRow(String table, Integer studyId, boolean retired) {
+    String idColumn = table.replace("study_", "") + "_id";
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "INSERT INTO %s (study_id, retired_date) VALUES (:studyId, %s) RETURNING %s"
+                        .formatted(table, retired ? "now()" : "NULL", idColumn))
+                .bind("studyId", studyId)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  /** A match row, whose foreign key blocks the dataset's delete. */
+  private void insertMatch(Integer datasetId) {
+    Match match = new Match();
+    match.setDatasetId(datasetId);
+    match.setPurpose(UUID.randomUUID().toString());
+    match.setMatch(true);
+    match.setFailed(false);
+    match.setAbstain(false);
+    match.setCreateDate(new Date());
+    match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
+    matchDAO.insertMatch(match);
+  }
+
+  /** A removed asset's entry: stamped, and its reference nulled by the delete. */
+  private static void assertRemoved(AssetCatalogEntry entry) {
+    assertNotNull(entry);
+    assertNotNull(entry.assetRemovedDate());
+    assertNull(entry.datasetId());
+    assertNull(entry.modelId());
+    assertNull(entry.workspaceId());
+    assertNull(entry.biospecimenId());
+  }
+
+  /** The alias the sequence gives the next dataset. */
+  private int nextAlias() {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    """
+                    SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END
+                    FROM dataset_alias_seq
+                    """)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  private int countCatalogEntries() {
+    return jdbi.withHandle(
+        h -> h.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
+  }
+
+  private void execute(String sql) {
+    jdbi.useHandle(h -> h.execute(sql));
   }
 
   private Dac createDac() {

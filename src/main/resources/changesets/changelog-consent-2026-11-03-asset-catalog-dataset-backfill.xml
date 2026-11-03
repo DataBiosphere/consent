@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!--
+    Task 2 of docs/plans/asset-identifiers-plan.md: one catalog entry for every existing dataset,
+    numbered by its alias. Task 3 repeats these statements with only the backfill_run value changed.
+
+    A dataset whose alias already belongs to another entry is skipped. Only an ad hoc insert can
+    cause that. This report query lists every skipped dataset; record its output in the PR:
+
+      SELECT d.dataset_id, d.alias, c.catalog_id, c.dataset_id AS entry_dataset_id
+      FROM dataset d
+      JOIN asset_catalog c ON c.asset_type = 'DATASET' AND c.asset_number = d.alias
+      WHERE NOT EXISTS (SELECT 1 FROM asset_catalog e WHERE e.dataset_id = d.dataset_id)
+      ORDER BY d.dataset_id;
+  -->
+  <changeSet id="changelog-consent-2026-11-03-asset-catalog-dataset-backfill" author="grushton">
+    <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
+    <sql>SET LOCAL lock_timeout = '10s'</sql>
+    <!-- Blocks dataset inserts and deletes until the backfill commits, and allows reads. -->
+    <sql>LOCK TABLE dataset IN SHARE ROW EXCLUSIVE MODE</sql>
+    <sql>
+      INSERT INTO asset_catalog (asset_type, asset_number, dataset_id, source_dataset_id, backfill_run)
+      SELECT 'DATASET', d.alias::integer, d.dataset_id, d.dataset_id,
+          'changelog-consent-2026-11-03-asset-catalog-dataset-backfill'
+      FROM dataset d
+      WHERE NOT EXISTS (SELECT 1 FROM asset_catalog c WHERE c.dataset_id = d.dataset_id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
+    </sql>
+    <!-- Keeps the sequence past every alias and dataset entry number, so none is reissued. -->
+    <sql>
+      SELECT setval('dataset_alias_seq', top.n)
+      FROM (
+          SELECT GREATEST(
+              (SELECT MAX(alias) FROM dataset),
+              (SELECT MAX(asset_number) FROM asset_catalog WHERE asset_type = 'DATASET')) AS n
+      ) top, dataset_alias_seq s
+      WHERE top.n &gt;= (CASE WHEN s.is_called THEN s.last_value + 1 ELSE s.last_value END)
+    </sql>
+
+    <!-- Removes only this backfill's entries that still describe a live dataset. A stamped entry
+         can be the only record of a deleted dataset's identifier. The sequence never goes back. -->
+    <rollback>
+      <sql>
+        DELETE FROM asset_catalog
+        WHERE backfill_run = 'changelog-consent-2026-11-03-asset-catalog-dataset-backfill'
+          AND dataset_id IS NOT NULL
+          AND asset_removed_date IS NULL
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
