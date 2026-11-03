@@ -8,11 +8,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.parboiled.common.FileUtils;
 
 @Path("/")
 public class SwaggerResource implements ConsentLogger {
@@ -71,7 +72,7 @@ public class SwaggerResource implements ConsentLogger {
       return Response.ok().entity(getInitializer()).type(mediaType).build();
     }
     // Serve all other files as bytes
-    byte[] content = FileUtils.readAllBytesFromResource(swaggerUiPath + path);
+    byte[] content = readResource(swaggerUiPath + path);
     if (content != null) {
       return Response.ok().entity(content).type(mediaType).build();
     }
@@ -89,7 +90,17 @@ public class SwaggerResource implements ConsentLogger {
   }
 
   private String getIndex() {
-    return FileUtils.readAllTextFromResource(swaggerUiPath + "index.html");
+    byte[] index = readResource(swaggerUiPath + "index.html");
+    return index == null ? null : new String(index, StandardCharsets.UTF_8);
+  }
+
+  /** Returns the bytes of a classpath resource, or null if the resource does not exist. */
+  private byte[] readResource(String resource) {
+    try (InputStream is = getClass().getClassLoader().getResourceAsStream(resource)) {
+      return is == null ? null : is.readAllBytes();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private String getInitializer() {
