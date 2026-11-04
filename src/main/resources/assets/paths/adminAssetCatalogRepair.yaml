@@ -6,7 +6,7 @@ post:
     unlinked entry to a dataset or asset whose number it holds (a dataset only when the entry was made
     for that dataset), inserts the missing entries, stamps `asset_removed_date` on the remaining
     orphans and advances the dataset alias sequence past every alias and dataset entry number. It
-    never changes an entry that still references an asset. Dataset inserts and deletes wait while it runs. Run it when few datasets are being registered or deleted: one already in progress can deadlock with it, and the request Postgres aborts must be retried. Collisions and mismatches are left for
+    never changes an entry that still references an asset. Dataset inserts and deletes wait while it runs. Run it when few datasets are being registered or deleted: one already in progress can deadlock with it. PostgreSQL then aborts either the repair or that request, and whichever it aborts must be retried. Collisions and mismatches are left for
     a person to fix. Running it again changes nothing.
   tags:
     - Admin
