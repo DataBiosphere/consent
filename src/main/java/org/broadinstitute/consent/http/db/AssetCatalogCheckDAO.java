@@ -15,7 +15,10 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterConstructorMapper(AssetCatalogCheckDAO.FindingRow.class)
 public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO> {
 
-  /** The tables are read from one snapshot; the alias sequence, which has none, is read live. */
+  /**
+   * Outside a caller's transaction the tables are read from one snapshot; inside one, each query
+   * takes the caller's isolation level. The alias sequence, which has no snapshot, is read live.
+   */
   default AssetCatalogCheck check() {
     // A handle already in a transaction cannot open one at another isolation level.
     if (isInTransaction()) {

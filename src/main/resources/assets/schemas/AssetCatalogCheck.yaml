@@ -3,7 +3,7 @@ required: [orphans, missing, collisions, mismatches, relinkable, sequenceBehind]
 properties:
   orphans:
     $ref: './AssetCatalogFindings.yaml'
-    description: Entries that reference nothing and have no removal date, so their asset was deleted outside the app. An entry a row could be relinked to is reported as relinkable instead.
+    description: Entries that reference nothing and have no removal date, so their asset was deleted outside the app. An entry whose number a dataset or asset without an entry holds is reported as relinkable or as a collision instead.
   missing:
     $ref: './AssetCatalogFindings.yaml'
     description: Datasets and assets with no entry whose number is free.
