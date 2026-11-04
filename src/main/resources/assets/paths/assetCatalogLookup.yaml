@@ -2,12 +2,10 @@ get:
   summary: Resolve a DUOS identifier
   operationId: lookupAssetIdentifier
   description: >-
-    Resolves a dataset (`DUOS-000123`), model (`DUOS-M-000045`), workspace (`DUOS-W-…`) or
-    biospecimen (`DUOS-B-…`) identifier, which must be in its canonical form. A live or retired
-    asset is returned only when the caller can read it, by the dataset GET's rule for a dataset and
-    the study's rule for an asset; otherwise the response is 404, as for an unknown identifier. A
-    removed asset returns only its type and status, to any signed-in user. After an ad hoc alias
-    change a dataset's old identifier still resolves, with its current one as `identifier`.
+    Resolves a model (`DUOS-M-000045`), workspace (`DUOS-W-…`) or biospecimen (`DUOS-B-…`)
+    identifier, which must be in its canonical form. A live or retired asset is returned only when
+    the caller can read its study; otherwise the response is 404, as for an unknown identifier. A
+    removed asset returns only its type and status, to any signed-in user.
   tags:
     - Asset Catalog
   parameters:
