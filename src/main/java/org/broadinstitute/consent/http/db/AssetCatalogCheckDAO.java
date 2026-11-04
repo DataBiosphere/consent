@@ -11,25 +11,28 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
-/**
- * Finds drift between asset_catalog and the rows it numbers. Each query returns at most {@code
- * :limit} findings, each carrying the total count of its kind.
- */
+/** Drift between asset_catalog and the rows it numbers; each finding carries its kind's total. */
 @RegisterConstructorMapper(AssetCatalogCheckDAO.FindingRow.class)
 public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO> {
 
-  /** Every kind read from one snapshot, so a row cannot be counted under two kinds. */
+  /** The tables are read from one snapshot; the alias sequence, which has none, is read live. */
   default AssetCatalogCheck check() {
+    // A handle already in a transaction cannot open one at another isolation level.
+    if (isInTransaction()) {
+      return checkInThisTransaction();
+    }
     return inTransaction(
-        TransactionIsolationLevel.REPEATABLE_READ,
-        dao ->
-            new AssetCatalogCheck(
-                findings(dao.findOrphans(AssetCatalogCheck.FINDING_LIMIT)),
-                findings(dao.findMissing(AssetCatalogCheck.FINDING_LIMIT)),
-                findings(dao.findCollisions(AssetCatalogCheck.FINDING_LIMIT)),
-                findings(dao.findMismatches(AssetCatalogCheck.FINDING_LIMIT)),
-                findings(dao.findRelinkable(AssetCatalogCheck.FINDING_LIMIT)),
-                findings(dao.findSequenceBehind(AssetCatalogCheck.FINDING_LIMIT))));
+        TransactionIsolationLevel.REPEATABLE_READ, AssetCatalogCheckDAO::checkInThisTransaction);
+  }
+
+  private AssetCatalogCheck checkInThisTransaction() {
+    return new AssetCatalogCheck(
+        findings(findOrphans(AssetCatalogCheck.FINDING_LIMIT)),
+        findings(findMissing(AssetCatalogCheck.FINDING_LIMIT)),
+        findings(findCollisions(AssetCatalogCheck.FINDING_LIMIT)),
+        findings(findMismatches(AssetCatalogCheck.FINDING_LIMIT)),
+        findings(findRelinkable(AssetCatalogCheck.FINDING_LIMIT)),
+        findings(findSequenceBehind(AssetCatalogCheck.FINDING_LIMIT)));
   }
 
   private static Findings findings(List<FindingRow> rows) {
@@ -41,11 +44,7 @@ public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO
             .toList());
   }
 
-  /**
-   * Entries that reference nothing and carry no removal stamp, which means their asset was deleted
-   * outside the app's delete paths. An entry a row of its own number could be relinked to is
-   * relinkable instead.
-   */
+  /** Unstamped entries that reference nothing and whose number no row without an entry holds. */
   @SqlQuery(
       """
       WITH asset_rows AS (
@@ -67,7 +66,6 @@ public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO
             SELECT 1 FROM asset_rows r
             WHERE r.asset_type = c.asset_type
               AND r.asset_number = c.asset_number
-              AND (r.asset_type <> 'DATASET' OR c.source_dataset_id = r.row_id)
               AND NOT EXISTS (
                   SELECT 1 FROM asset_catalog e
                   WHERE e.asset_type = r.asset_type
@@ -106,10 +104,7 @@ public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO
       """)
   List<FindingRow> findMissing(@Bind("limit") int limit);
 
-  /**
-   * Datasets with no entry whose alias another entry holds: one that references another dataset, or
-   * an unlinked one created for a different dataset. Only an ad hoc insert causes one.
-   */
+  /** Datasets with no entry whose alias an entry for another dataset holds. */
   @SqlQuery(
       """
       SELECT 'DATASET' AS asset_type, d.alias::integer AS asset_number, c.catalog_id,
@@ -136,10 +131,7 @@ public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO
       """)
   List<FindingRow> findMismatches(@Bind("limit") int limit);
 
-  /**
-   * Rows with no entry whose number belongs to an unlinked entry of their type, which a restore
-   * done without the catalog leaves behind. A dataset's entry must also have been created for it.
-   */
+  /** Rows with no entry whose number an unlinked entry of their type, made for that row, holds. */
   @SqlQuery(
       """
       WITH asset_rows AS (
@@ -166,10 +158,7 @@ public interface AssetCatalogCheckDAO extends Transactional<AssetCatalogCheckDAO
       """)
   List<FindingRow> findRelinkable(@Bind("limit") int limit);
 
-  /**
-   * Dataset aliases and dataset entry numbers the alias sequence would issue again, which an ad hoc
-   * insert leaves behind.
-   */
+  /** Dataset aliases and dataset entry numbers the alias sequence would issue again. */
   @SqlQuery(
       """
       WITH next_alias AS (

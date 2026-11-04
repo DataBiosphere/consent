@@ -83,6 +83,48 @@ class AssetCatalogCheckTest extends DAOTestHelper {
   }
 
   @Test
+  void testAnUnstampedEntryHoldingAnotherDatasetsAliasIsACollisionNotAnOrphan() {
+    Integer datasetId = insertDataset();
+    Integer otherDatasetId = insertDataset();
+    int alias = datasetAlias(datasetId);
+    int entry = insertBareEntry(AssetType.DATASET, alias, otherDatasetId, false);
+
+    AssetCatalogCheck check = checkDAO.check();
+
+    assertEquals(
+        List.of(new Finding(AssetType.DATASET, alias, entry, datasetId)),
+        check.collisions().items());
+    assertEquals(0, check.orphans().count());
+  }
+
+  @Test
+  void testADatasetWhoseAliasAnotherDatasetsEntryStillHoldsIsACollision() {
+    Integer datasetId = insertDataset();
+    Integer holderId = insertDataset();
+    int holderAlias = datasetAlias(holderId);
+    catalogDAO.insertDatasetEntry(holderId);
+    int holderEntry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, holderAlias).catalogId();
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d"
+            .formatted(nextDatasetAlias() + 100, holderId));
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(holderAlias, datasetId));
+
+    assertEquals(
+        List.of(new Finding(AssetType.DATASET, holderAlias, holderEntry, datasetId)),
+        checkDAO.check().collisions().items());
+  }
+
+  @Test
+  void testTheCheckRunsInsideATransactionTheCallerOpened() {
+    insertStudyAssetRow("study_model", insertStudy(), false);
+
+    AssetCatalogCheck check = jdbi.inTransaction(h -> h.attach(AssetCatalogCheckDAO.class).check());
+
+    assertEquals(1, check.missing().count());
+  }
+
+  @Test
   void testAnUnlinkedEntryWhoseRowIsBackIsRelinkableNotAnOrphan() {
     Integer modelId = insertStudyAssetRow("study_model", insertStudy(), false);
     int modelEntry = insertBareEntry(AssetType.MODEL, modelId, null, false);

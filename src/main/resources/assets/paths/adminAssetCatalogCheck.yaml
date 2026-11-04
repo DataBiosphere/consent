@@ -3,7 +3,7 @@ get:
   operationId: checkAssetCatalog
   description: >-
     Compares `asset_catalog` with the dataset, model, workspace and biospecimen tables and reports
-    each kind of drift, from one snapshot, without changing anything. Run it after ad hoc SQL or a
+    each kind of drift without changing anything. Run it after ad hoc SQL or a
     restore; nothing runs it on a schedule. Each kind has a count and its first 500 findings.
   tags:
     - Admin
