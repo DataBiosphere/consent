@@ -1,0 +1,9 @@
+type: object
+description: A model as a study's asset endpoint returns it.
+allOf:
+  - $ref: './AiModel.yaml'
+properties:
+  duosIdentifier:
+    type: string
+    readOnly: true
+    description: The model's DUOS identifier, such as `DUOS-M-000045`, derived from its id. Absent when the id is not a whole number. Never stored; a value sent in a registration is ignored.

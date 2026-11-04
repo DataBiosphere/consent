@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetIdentifiers;
 import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -368,7 +369,8 @@ public class ElasticSearchService implements ConsentLogger {
 
     // The indexed assets object keeps its original shape — every promoted list plus whatever
     // unpromoted keys remain — so search consumers are unaffected by the promotion.
-    Map<String, Object> studyAssetsMap = studyAssets.assemble(study.getProperties());
+    Map<String, Object> studyAssetsMap =
+        StudyAssetIdentifiers.decorate(studyAssets.assemble(study.getProperties()));
     if (!studyAssetsMap.isEmpty()) {
       term.setAssets(studyAssetsMap);
     }

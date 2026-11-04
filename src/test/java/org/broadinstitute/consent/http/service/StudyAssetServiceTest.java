@@ -152,6 +152,23 @@ class StudyAssetServiceTest {
     assertEquals(List.of(), service.getAssetsByType(1, user, "models"));
   }
 
+  @Test
+  void testModelsAreServedWithTheirIdentifierAndNotAStoredOne() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addProperty(
+        new StudyProperty(
+            "models",
+            GsonUtil.getInstance()
+                .toJsonTree(List.of(Map.of("modelId", 45, "duosIdentifier", "DUOS-M-999999"))),
+            PropertyType.Json));
+    allowVisibility(study);
+
+    List<Object> models = service.getAssetsByType(1, user, "models");
+
+    assertEquals("DUOS-M-000045", ((Map<?, ?>) models.getFirst()).get("duosIdentifier"));
+  }
+
   /** The assets property is client-managed and unvalidated, so a bad value must not 500. */
   @Test
   void testMalformedAssetsPropertyReadsAsNoAssets() {
