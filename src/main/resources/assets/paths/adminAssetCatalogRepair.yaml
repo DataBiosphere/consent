@@ -23,5 +23,7 @@ post:
       description: The user does not have the Admin role
     409:
       description: Another repair is running, or a dataset or asset write held a lock the repair needed for over 10 seconds; retry it
+    429:
+      description: Too Many Requests - rate limit exceeded; the repair did not start, so it is safe to retry after the Retry-After header
     500:
       description: Unable to run the repair
