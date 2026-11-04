@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!--
+    Task 5 of docs/plans/asset-identifiers-plan.md: one catalog entry for every existing model,
+    workspace and biospecimen row, retired rows included, numbered by its row id.
+
+    A row whose number belongs to an entry with no reference is skipped: a restore done without
+    the catalog leaves that behind, and repair relinks it (Task 6). This report query lists every
+    skipped row; record its output in the PR:
+
+      SELECT r.asset_type, r.row_id, c.catalog_id
+      FROM (
+          SELECT 'MODEL' AS asset_type, model_id AS row_id FROM study_model
+          UNION ALL
+          SELECT 'WORKSPACE', workspace_id FROM study_workspace
+          UNION ALL
+          SELECT 'BIOSPECIMEN', biospecimen_id FROM study_biospecimen
+      ) r
+      JOIN asset_catalog c ON c.asset_type = r.asset_type AND c.asset_number = r.row_id
+      WHERE c.model_id IS NULL AND c.workspace_id IS NULL AND c.biospecimen_id IS NULL
+      ORDER BY r.asset_type, r.row_id;
+  -->
+  <changeSet id="changelog-consent-2026-11-04-asset-catalog-assets" author="kevinmarete">
+    <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
+    <sql>SET LOCAL lock_timeout = '10s'</sql>
+    <!-- Blocks asset inserts and deletes until the backfill commits, and allows reads. The order
+         is the one the sync writes in. -->
+    <sql>LOCK TABLE study_model, study_workspace, study_biospecimen IN SHARE ROW EXCLUSIVE MODE</sql>
+    <sql>
+      INSERT INTO asset_catalog (asset_type, asset_number, model_id, backfill_run)
+      SELECT 'MODEL', m.model_id, m.model_id, 'changelog-consent-2026-11-04-asset-catalog-assets'
+      FROM study_model m
+      WHERE NOT EXISTS (SELECT 1 FROM asset_catalog c WHERE c.model_id = m.model_id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
+    </sql>
+    <sql>
+      INSERT INTO asset_catalog (asset_type, asset_number, workspace_id, backfill_run)
+      SELECT 'WORKSPACE', w.workspace_id, w.workspace_id,
+          'changelog-consent-2026-11-04-asset-catalog-assets'
+      FROM study_workspace w
+      WHERE NOT EXISTS (SELECT 1 FROM asset_catalog c WHERE c.workspace_id = w.workspace_id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
+    </sql>
+    <sql>
+      INSERT INTO asset_catalog (asset_type, asset_number, biospecimen_id, backfill_run)
+      SELECT 'BIOSPECIMEN', b.biospecimen_id, b.biospecimen_id,
+          'changelog-consent-2026-11-04-asset-catalog-assets'
+      FROM study_biospecimen b
+      WHERE NOT EXISTS (SELECT 1 FROM asset_catalog c WHERE c.biospecimen_id = b.biospecimen_id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
+    </sql>
+
+    <!-- Removes only this backfill's entries that still describe a live row. A stamped entry can
+         be the only record of a deleted asset's identifier. -->
+    <rollback>
+      <sql>
+        DELETE FROM asset_catalog
+        WHERE backfill_run = 'changelog-consent-2026-11-04-asset-catalog-assets'
+          AND num_nonnulls(model_id, workspace_id, biospecimen_id) = 1
+          AND asset_removed_date IS NULL
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
