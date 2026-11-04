@@ -232,11 +232,13 @@ properties:
       "$ref": "./ConsentGroup.yaml"
   models:
     type: array
+    maxItems: 1000
     description: Models produced by or associated with this study.
     items:
       $ref: './AiModel.yaml'
   workspaces:
     type: array
+    maxItems: 1000
     description: Analysis workspaces associated with this study.
     items:
       $ref: './Workspace.yaml'
@@ -262,6 +264,7 @@ properties:
       $ref: './IntellectualProperty.yaml'
   biospecimens:
     type: array
+    maxItems: 1000
     description: Biospecimens associated with this study.
     items:
       $ref: './Biospecimen.yaml'
@@ -282,7 +285,8 @@ properties:
       client-managed presentation/submission-context metadata (e.g. UI labels
       or form choices), preserved and returned as-is; not backend-validated.
       Reads and writes still round-trip the promoted keys here for
-      compatibility; send the top-level fields instead.
+      compatibility; send the top-level fields instead. The 1000-entry limit on
+      models, workspaces and biospecimens applies to lists sent here too.
   data:
     type: object
     title: DatasetRegistrationSchemaV1Data

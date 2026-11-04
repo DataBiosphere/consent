@@ -124,6 +124,11 @@ public class DatasetRegistrationService implements ConsentLogger {
       throw e;
     }
     sendDatasetSubmittedEmails(createdDatasetsFromUpdate(result));
+    try {
+      elasticSearchService.indexStudy(studyId, result.insertedDatasetIds());
+    } catch (Exception e) {
+      logException("Exception re-indexing datasets from study id: " + studyId, e);
+    }
     return result.study();
   }
 

@@ -19,7 +19,7 @@
     <logback.version>1.6.5</logback.version>
     <postgres.version>42.7.14</postgres.version>
     <surefire.version>3.6.1</surefire.version>
-    <swagger.ui.version>5.34.0</swagger.ui.version>
+    <swagger.ui.version>5.34.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <wiremock.version>3.13.2</wiremock.version>
     <commons.csv.version>1.14.1</commons.csv.version>
@@ -155,7 +155,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.6.3</version>
+        <version>3.7.0</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -249,7 +249,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.15</version>
+        <version>0.8.16</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -506,13 +506,13 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.61.1</version>
+        <version>8.62.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <!--
-       google-api-client pins google-http-client to an older version than google-cloud-storage
-       needs. Without this BOM, google-http-client resolves to 2.0.0 and gax-httpjson's Conscrypt
+       google-api-client, a transitive dependency of google-cloud-storage, pins google-http-client
+       to an older version than google-cloud-storage needs. Without this BOM, google-http-client resolves to 2.0.0 and gax-httpjson's Conscrypt
        setup fails at startup with NoSuchMethodError on NetHttpTransport.Builder.setSecurityProvider.
       -->
       <dependency>
@@ -566,6 +566,27 @@
         <artifactId>async-http-client</artifactId>
         <version>3.0.14</version>
       </dependency>
+      <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
+      <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
+      <dependency>
+        <groupId>ch.qos.logback.access</groupId>
+        <artifactId>logback-access-common</artifactId>
+        <version>2.0.15</version>
+      </dependency>
+      <!-- Security update for the netty jars that zendesk-java-client and other clients use. -->
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.override.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Security update for the commons-beanutils that commons-validator uses. -->
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.11.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -574,7 +595,7 @@
     <!-- Swagger Parser for OpenAPI bundling -->
     <dependency>
       <groupId>io.swagger.parser.v3</groupId>
-      <artifactId>swagger-parser</artifactId>
+      <artifactId>swagger-parser-v3</artifactId>
       <version>2.1.48</version>
     </dependency>
 
@@ -628,39 +649,10 @@
       <version>2.22</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.parboiled/parboiled-java -->
-    <dependency>
-      <groupId>org.parboiled</groupId>
-      <artifactId>parboiled-java</artifactId>
-      <version>1.4.1</version>
-    </dependency>
-
-    <!--
-     See
-     https://broadworkbench.atlassian.net/browse/DCJ-274
-     org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
-    -->
     <dependency>
       <groupId>com.sendgrid</groupId>
       <artifactId>sendgrid-java</artifactId>
       <version>4.10.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.bouncycastle</groupId>
-          <artifactId>bcprov-jdk18on</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!--
-     See
-     https://broadworkbench.atlassian.net/browse/DCJ-274
-     org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
-    -->
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.86</version>
     </dependency>
 
     <dependency>
@@ -673,6 +665,39 @@
       <groupId>com.sendgrid</groupId>
       <artifactId>java-http-client</artifactId>
       <version>4.5.1</version>
+    </dependency>
+
+    <!--
+     Code uses the Apache HttpComponents 4.x classes directly. These versions match what
+     java-http-client and elasticsearch-rest-client resolve.
+    -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.13</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>4.4.15</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore-nio</artifactId>
+      <version>4.4.16</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations</artifactId>
+      <version>26.1.0</version>
     </dependency>
 
     <dependency>
@@ -695,14 +720,6 @@
 
     <dependency>
       <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-dependencies</artifactId>
-      <version>${dropwizard.version}</version>
-      <type>pom</type>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-auth</artifactId>
       <version>${dropwizard.version}</version>
     </dependency>
@@ -717,12 +734,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-http2</artifactId>
       <version>${dropwizard.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty.http3</groupId>
-      <artifactId>http3-common</artifactId>
-      <version>11.0.26</version>
     </dependency>
 
     <dependency>
@@ -750,13 +761,6 @@
     </dependency>
 
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
-    <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
-    <dependency>
-      <groupId>ch.qos.logback.access</groupId>
-      <artifactId>logback-access-common</artifactId>
-      <version>2.0.15</version>
-    </dependency>
-    <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -767,42 +771,6 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback.version}</version>
-    </dependency>
-    <!-- Security update. -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-dns</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-http</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-http2</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-transport</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-codec-socks</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-resolver-dns</artifactId>
-      <version>${netty.override.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-handler-proxy</artifactId>
-      <version>${netty.override.version}</version>
     </dependency>
 
     <dependency>
@@ -838,17 +806,21 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
       <version>${liquibase.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.sun.mail</groupId>
-      <artifactId>javax.mail</artifactId>
-      <version>1.6.2</version>
     </dependency>
 
     <dependency>
@@ -886,6 +858,12 @@
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-distribution</artifactId>
       <version>5.5.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpcore-osgi</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -901,6 +879,12 @@
       <version>1.21.4</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.21.4</version>
+      <scope>test</scope>
+    </dependency>
 
     <!-- Required for mocking client calls against ontology, elastic search, and other services.
          Uses the jetty12 module to match the project's Jetty 12 dependency. -->
@@ -912,27 +896,21 @@
     </dependency>
 
     <dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client</artifactId>
-      <version>2.9.2</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.75.0</version>
+      <version>2.76.0</version>
+    </dependency>
+
+    <!-- Code uses com.google.api.client.http directly. google-http-client-bom manages the version. -->
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
     </dependency>
 
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.22.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-oauth2</artifactId>
-      <version>v2-rev20200213-2.0.0</version>
     </dependency>
 
     <dependency>
@@ -984,24 +962,11 @@
       </exclusions>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
-    <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>1.11.0</version>
-    </dependency>
-
     <!-- https://mvnrepository.com/artifact/com.cloudbees.thirdparty/zendesk-java-client -->
     <dependency>
       <groupId>com.cloudbees.thirdparty</groupId>
       <artifactId>zendesk-java-client</artifactId>
       <version>1.6.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.netty</groupId>
-          <artifactId>netty-codec-http2</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>

@@ -32,6 +32,7 @@ import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -310,5 +311,57 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
               .bind("hasConcerns", hasConcerns)
               .execute();
         });
+  }
+
+  /** The alias that dataset_alias_seq gives the next dataset. */
+  protected int nextDatasetAlias() {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    """
+                    SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END
+                    FROM dataset_alias_seq
+                    """)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  protected int datasetAlias(Integer datasetId) {
+    return datasetDAO.findDatasetById(datasetId).getAlias();
+  }
+
+  /** A study_model, study_workspace or study_biospecimen row, optionally retired. */
+  protected Integer insertStudyAssetRow(String table, Integer studyId, boolean retired) {
+    String idColumn = table.replace("study_", "") + "_id";
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "INSERT INTO %s (study_id, retired_date) VALUES (:studyId, %s) RETURNING %s"
+                        .formatted(table, retired ? "now()" : "NULL", idColumn))
+                .bind("studyId", studyId)
+                .mapTo(Integer.class)
+                .one());
+  }
+
+  protected int countAssetCatalogEntries() {
+    return jdbi.withHandle(
+        h -> h.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
+  }
+
+  protected void executeSql(String sql) {
+    jdbi.useHandle(h -> h.execute(sql));
+  }
+
+  /**
+   * Runs the action with dataset.alias typed numeric, as some deployed databases have it, although
+   * the changesets declare bigint.
+   */
+  protected void withNumericDatasetAlias(Executable action) throws Throwable {
+    executeSql("ALTER TABLE dataset ALTER COLUMN alias TYPE numeric");
+    try {
+      action.execute();
+    } finally {
+      executeSql("ALTER TABLE dataset ALTER COLUMN alias TYPE bigint");
+    }
   }
 }

@@ -17,6 +17,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -24,9 +25,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
@@ -38,6 +41,7 @@ import org.broadinstitute.consent.http.models.dto.registration.StudyRegistration
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -310,7 +314,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
                 "models",
                 """
                 [{"name": 5, "cloud": [1], "maintainer": "Lab", "description": {"a": 1},
-                  "tags": "t", "trainedOnDatasets": [{}], "url": null}]"""));
+                  "tags": 7, "trainedOnDatasets": [{}], "url": null}]"""));
 
     StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
     assertNull(row.name());
@@ -321,6 +325,30 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
     assertNull(row.trainedOnDatasets());
     assertNull(row.url());
     assertEquals(5, stored(studyId, "models").get(0).getAsJsonObject().get("name").getAsInt());
+  }
+
+  @Test
+  void testALoneStringInAListFieldIsStoredAsAOneItemList() throws Exception {
+    Integer studyId =
+        create(
+            prop("models", "[{\"cloud\": \"AWS\", \"tags\": \"t\", \"trainedOnDatasets\": \"d\"}]"),
+            prop("workspaces", "[{\"cloud\": \"Azure\", \"tools\": \"R\", \"tags\": \"w\"}]"),
+            prop(
+                "biospecimens",
+                "[{\"biospecimenId\": \"S-1\", \"extractedDiagnoses\": \"x\\u0000y\"}]"));
+
+    StudyModelRecord model = assetDAO.findModelsByStudyId(studyId).getFirst();
+    assertEquals(List.of("AWS"), model.cloud());
+    assertEquals(List.of("t"), model.tags());
+    assertEquals(List.of("d"), model.trainedOnDatasets());
+    StudyWorkspaceRecord workspace = assetDAO.findWorkspacesByStudyId(studyId).getFirst();
+    assertEquals(List.of("Azure"), workspace.cloud());
+    assertEquals(List.of("R"), workspace.tools());
+    assertEquals(List.of("w"), workspace.tags());
+    assertEquals(
+        List.of("xy"), assetDAO.findBiospecimensByStudyId(studyId).getFirst().extractedDiagnoses());
+    assertEquals(
+        "AWS", stored(studyId, "models").get(0).getAsJsonObject().get("cloud").getAsString());
   }
 
   @Test
@@ -695,6 +723,140 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   }
 
   @Test
+  void testSyncStudyAssetsGivesAnUnsyncedListRows() throws Exception {
+    Integer studyId = create();
+    // Stored directly, as before the registration sync existed
+    studyDAO.insertStudyProperty(
+        studyId,
+        "models",
+        PropertyType.Json.toString(),
+        "[{\"modelId\": \"m-1\", \"name\": \"A\"}]");
+
+    serviceDAO.syncStudyAssets(studyId);
+
+    StudyModelRecord row = assetDAO.findModelsByStudyId(studyId).getFirst();
+    assertEquals("m-1", row.legacyKey());
+    assertEquals(row.modelId(), idOf(stored(studyId, "models"), 0, "modelId"));
+  }
+
+  @Test
+  void testSyncStudyAssetsLeavesTheStudyUpdateDate() throws Exception {
+    Integer studyId = create();
+    studyDAO.insertStudyProperty(
+        studyId, "models", PropertyType.Json.toString(), "[{\"modelId\": \"m-1\"}]");
+    Date before = studyDAO.findStudyById(studyId).getUpdateDate();
+
+    serviceDAO.syncStudyAssets(studyId);
+
+    assertEquals(before, studyDAO.findStudyById(studyId).getUpdateDate());
+  }
+
+  @Test
+  void testSyncStudyAssetsReportsALockedStudyAsAConflict() throws Exception {
+    Integer studyId = create();
+    try (Handle holder = jdbi.open()) {
+      holder.begin();
+      holder.execute("SELECT study_id FROM study WHERE study_id = ? FOR UPDATE", studyId);
+
+      assertThrows(ConsentConflictException.class, () -> serviceDAO.syncStudyAssets(studyId));
+
+      holder.rollback();
+    }
+  }
+
+  @Test
+  void testSyncStudyAssetsRollsBackWhenALaterTypeFails() throws Exception {
+    Integer studyId = create();
+    String models = "[{\"modelId\": \"m-1\"}]";
+    studyDAO.insertStudyProperty(studyId, "models", PropertyType.Json.toString(), models);
+    // A row-id-form biospecimen id with no sampleId and no matching row is a 400
+    studyDAO.insertStudyProperty(
+        studyId, "biospecimens", PropertyType.Json.toString(), "[{\"biospecimenId\": 12345}]");
+
+    assertThrows(BadRequestException.class, () -> serviceDAO.syncStudyAssets(studyId));
+
+    assertTrue(assetDAO.findModelsByStudyId(studyId).isEmpty());
+    assertEquals(models, storedValue(studyId, "models"));
+  }
+
+  @Test
+  void testSyncStudyAssetsLeavesAStudyWithNoAssets() throws Exception {
+    Integer studyId = create();
+
+    syncStudy(studyId);
+
+    assertTrue(assetDAO.findModelsByStudyId(studyId).isEmpty());
+    assertTrue(assetDAO.findWorkspacesByStudyId(studyId).isEmpty());
+    assertTrue(assetDAO.findBiospecimensByStudyId(studyId).isEmpty());
+  }
+
+  /** Task 6: a study stored before the registration sync, converted by the bulk resync. */
+  @Test
+  void testSyncStudyAssetsConvertsAStudyStoredBeforeTheSync() throws Exception {
+    Integer studyId = create();
+    String json = PropertyType.Json.toString();
+    studyDAO.insertStudyProperty(
+        studyId,
+        "models",
+        json,
+        """
+        [{"modelId": "uuid-a", "extra": {"k": 1}}, {"modelId": ""}, {"modelId": "dup"},
+         {"modelId": "dup"}, {"modelId": 1700000000000}, 5]""");
+    studyDAO.insertStudyProperty(
+        studyId, "assets", json, "{\"Workspaces\": [{\"workspaceId\": \"w-1\"}]}");
+    studyDAO.insertStudyProperty(
+        studyId,
+        "Biospecimens",
+        json,
+        "[{\"biospecimenId\": \"S-1\"}, {\"biospecimenId\": 1700000000000}]");
+
+    syncStudy(studyId);
+
+    JsonArray models = stored(studyId, "models");
+    assertEquals(6, models.size());
+    assertEquals(
+        assetDAO.findModelsByStudyId(studyId).stream().map(StudyModelRecord::modelId).toList(),
+        IntStream.range(0, 5).mapToObj(i -> idOf(models, i, "modelId")).toList());
+    assertEquals(
+        Arrays.asList("uuid-a", null, null, null, "1700000000000"),
+        assetDAO.findModelsByStudyId(studyId).stream().map(StudyModelRecord::legacyKey).toList());
+    assertEquals("{\"k\":1}", models.get(0).getAsJsonObject().get("extra").toString());
+    assertEquals("5", models.get(5).toString());
+
+    JsonArray workspaces = stored(studyId, "workspaces");
+    StudyWorkspaceRecord workspace = assetDAO.findWorkspacesByStudyId(studyId).getFirst();
+    assertEquals(workspace.workspaceId(), idOf(workspaces, 0, "workspaceId"));
+    assertEquals("w-1", workspace.legacyKey());
+    assertEquals(0, countProperties(studyId, "assets"));
+
+    JsonArray biospecimens = stored(studyId, "Biospecimens");
+    assertEquals(List.of("S-1", "1700000000000"), sampleIds(biospecimens));
+    List<StudyBiospecimenRecord> specimens = assetDAO.findBiospecimensByStudyId(studyId);
+    assertEquals(
+        specimens.stream().map(StudyBiospecimenRecord::biospecimenId).toList(),
+        IntStream.range(0, 2).mapToObj(i -> idOf(biospecimens, i, "biospecimenId")).toList());
+    assertEquals(
+        List.of("S-1", "1700000000000"),
+        specimens.stream().map(StudyBiospecimenRecord::legacyKey).toList());
+
+    List<String> convertedModels = storedValues(studyId, "models");
+    List<String> convertedWorkspaces = storedValues(studyId, "workspaces");
+    List<String> convertedBiospecimens = storedValues(studyId, "Biospecimens");
+    List<List<Object>> biospecimenRows = biospecimenIdentities(studyId);
+    syncStudy(studyId);
+    assertEquals(convertedModels, storedValues(studyId, "models"));
+    assertEquals(convertedWorkspaces, storedValues(studyId, "workspaces"));
+    assertEquals(convertedBiospecimens, storedValues(studyId, "Biospecimens"));
+    assertEquals(5, assetDAO.findModelsByStudyId(studyId).size());
+    StudyWorkspaceRecord resynced = assetDAO.findWorkspacesByStudyId(studyId).getFirst();
+    assertEquals(
+        Arrays.asList(workspace.workspaceId(), workspace.legacyKey(), null),
+        Arrays.asList(resynced.workspaceId(), resynced.legacyKey(), resynced.retiredDate()));
+    assertEquals(1, assetDAO.findWorkspacesByStudyId(studyId).size());
+    assertEquals(biospecimenRows, biospecimenIdentities(studyId));
+  }
+
+  @Test
   void testSyncStudyMovesALegacyOnlyListOnce() throws Exception {
     Integer studyId =
         create(
@@ -989,6 +1151,16 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
                 .bind("key", key)
                 .mapTo(Integer.class)
                 .one());
+  }
+
+  /** What a resync must keep for each biospecimen row; a sync always stamps update_date. */
+  private List<List<Object>> biospecimenIdentities(Integer studyId) {
+    return assetDAO.findBiospecimensByStudyId(studyId).stream()
+        .map(
+            row ->
+                Arrays.<Object>asList(
+                    row.biospecimenId(), row.legacyKey(), row.sampleId(), row.retiredDate()))
+        .toList();
   }
 
   /** Every row of a key in any case, in insertion order. */
