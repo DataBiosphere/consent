@@ -87,6 +87,7 @@ import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.service.dao.AssetCatalogServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
@@ -501,8 +502,15 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  private AssetCatalogService providesAssetCatalogService(Jdbi jdbi) {
-    return new AssetCatalogService(jdbi);
+  private AssetCatalogService providesAssetCatalogService(
+      Jdbi jdbi, AssetCatalogServiceDAO assetCatalogServiceDAO) {
+    return new AssetCatalogService(jdbi, assetCatalogServiceDAO);
+  }
+
+  @Provides
+  @Singleton
+  private AssetCatalogServiceDAO providesAssetCatalogServiceDAO(Jdbi jdbi) {
+    return new AssetCatalogServiceDAO(jdbi);
   }
 
   @Provides

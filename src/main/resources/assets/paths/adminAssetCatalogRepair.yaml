@@ -1,0 +1,27 @@
+post:
+  summary: Repair the asset catalog
+  operationId: repairAssetCatalog
+  description: >-
+    Fixes what `GET /api/admin/asset-catalog/check` reports, in one transaction. It relinks an
+    unlinked entry to a dataset or asset whose number it holds (a dataset only when the entry was made
+    for that dataset), inserts the missing entries, stamps `asset_removed_date` on the remaining
+    orphans and advances the dataset alias sequence past every alias and dataset entry number. It
+    never changes an entry that still references an asset. Collisions and mismatches are left for
+    a person to fix. Running it again changes nothing.
+  tags:
+    - Admin
+  responses:
+    200:
+      description: What the repair changed
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/AssetCatalogRepair.yaml'
+    401:
+      description: Unauthorized
+    403:
+      description: The user does not have the Admin role
+    409:
+      description: Another repair is running
+    500:
+      description: Unable to run the repair

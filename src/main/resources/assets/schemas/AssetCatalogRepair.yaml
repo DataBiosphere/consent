@@ -1,0 +1,20 @@
+type: object
+required: [inserted, relinked, stamped, skipped]
+properties:
+  inserted:
+    type: integer
+    description: Entries inserted for datasets and assets that had none.
+  relinked:
+    type: integer
+    description: Unlinked entries relinked to their dataset or asset, with any removal stamp cleared.
+  stamped:
+    type: integer
+    description: Orphaned entries given a removal date.
+  skipped:
+    type: integer
+    format: int64
+    description: Datasets and assets still without an entry afterwards, such as collisions.
+  aliasSequenceAdvancedTo:
+    type: integer
+    format: int64
+    description: The alias sequence's new value. Absent when the sequence needed no change.
