@@ -15,8 +15,8 @@ Conflicts are resolved in this order:
    [original criteria](data-showcase-original-criteria.md).
 3. The current DT-3904 description's "[NEW]" and "Updated" text, where it doesn't conflict with
    1 or 2.
-4. The design artifact, for structure, layout and visuals only. It is being rebuilt with the same
-   structure and features under names DUOS is licensed to use, so the
+4. The design artifact, for structure, layout and visuals only. It was rebuilt with the same
+   structure and features under fictional names (duos-ui #4030), so the
    [artifact review](data-showcase-artifact-review.md) still applies. Fixtures use no artifact names.
 
 The delivery plan's proposals apply where none of these sources decides.
@@ -51,7 +51,10 @@ The delivery plan's proposals apply where none of these sources decides.
 | Conference: dates with time zone, location, description; live registration link or alert signup | Original Story 22; Story 29 |
 | Workshops: public signup and a private-training request path; the artifact's multi-session enrollment is not required | Original Story 23 |
 | Shelf, grid, featured-card and panel layouts | Artifact |
-| Breakpoints, theme presets, typography | Artifact as evidence; design sets values in S1.3 |
+| Breakpoints, theme presets, typography | Artifact as evidence; provisional values approved by the product owner (design review, 2026-11-03) |
+| The DUOS header stays above every showcase; the showcase masthead has no DUOS logo and no Sign in of its own | Decision 2026-11-03 (D10) |
+| Partner color themes: a preset plus contrast-checked primary/accent overrides | Decision 2026-11-03 (D16) |
+| Typography: Montserrat and system Helvetica Neue if the product owner approves, otherwise the artifact's fonts, bundled | Decision 2026-11-03 (D17) |
 
 ## Registry key renames
 
@@ -174,11 +177,74 @@ lives in that DAO query, not in an enum.
 
 The values for one key are alternatives (any one can match). Multiple keys must all match.
 
+## Design review decisions (2026-11-03)
+
+The design review was held on 2026-11-03 with the product owner and engineering, for the template
+sections in S3.1–S3.4. It used the review packet and its D1–D18 numbering. Every proposal in the
+packet was accepted, except where a row below says otherwise.
+
+The product owner approves the design. Some decisions had no proposal, only a value to set.
+Those values are marked **Provisional**. The implementing PR builds them from the artifact's
+values, or from the current `themes.ts` placeholders where the artifact has none. They are shown
+to the product owner together with the typography demo (D17). Once approved, each one is recorded
+here in place of "Provisional".
+
+| ID | Topic | Decision |
+| --- | --- | --- |
+| D1 | Card width and cards per view | A card is never wider than its shelf, so at least one card is always fully visible. **Provisional:** the widths at each breakpoint, and whether phones show one full-width card or part of the next one. |
+| D2 | Shelf arrows | The arrows sit in the shelf header and are named for their shelf ("Scroll Latest data releases forward" and "… back"). "Back" is disabled at the start of the shelf and "forward" at the end. Both are hidden when every card fits. On phones they wrap below the heading. Touch and keyboard scrolling still work. **Provisional:** the disabled style. |
+| D3 | What one press scrolls | One view of fully visible cards, snapping to a card edge. Smooth by default, and instant when reduced motion is on. |
+| D4 | "See all" link and eyebrow text | The link shows only when a config sets `seeAllUrl`. A link to a signed-in page is labeled as needing sign-in (S3.2). There are no eyebrow labels in the MVP, and no schema change. **Provisional:** where the link sits beside the arrows, and how it wraps on phones. |
+| D5 | Announcement autoplay | None in the MVP. Visitors move between announcements with the controls. |
+| D6 | Announcement controls | "Previous announcement" and "Next announcement" buttons, with a visible "2 of 4" position. There is no pause button. Inactive announcements leave the tab order and the accessibility tree. One announcement has no controls, and with none the panel isn't shown. |
+| D7 | Skip link and tab order | The skip link is part of the showcase template, not the app shell. "Skip to main content" sits after the DUOS header and before the showcase masthead. It is hidden until focused and lands at the hero heading. Tab order: DUOS header → skip link → showcase logos → search → sub-nav → hero (intro links, calls to action, onboarding, announcement controls) → each section's heading link, controls, then cards → footer. **Provisional:** how the skip link looks when focused. |
+| D8 | Sticky masthead | The showcase masthead sticks on desktop and tablet. Nothing sticks on phones. The anchor offset equals the height of whatever sticks, so it is zero on phones. The DUOS header is not sticky. |
+| D9 | Focus indicator | One focus style for links, buttons, cards and shelf controls, with at least 3:1 contrast on every surface it can appear on. **Provisional:** its color, width and offset. |
+| D10 | Logos | Changed (see the next section). |
+| D11 | Shelf loading | A skeleton at the final card height, announced once as "Loading datasets". The section's sub-nav link and the same-page links to it appear only once it has content. |
+| D12 | Shelf lookup failed | "These datasets can't be loaded right now." with a "Try again" button, in place of the cards. The heading stays. The sub-nav link and the same-page links stay, so people can reach the retry. Mock or cached data is never shown. |
+| D13 | Too many requests (429) | "Try again" is disabled, with a countdown from `Retry-After`. It turns back on when the countdown ends. |
+| D14 | Hero stats unavailable | The whole stat strip is removed, including the tools count from config. There are no zeros, dashes or placeholders, and the calls to action move up. The stat strip stays nested inside the hero block. |
+| D15 | Breakpoints | **Provisional:** the artifact's values. Hero columns stack at 980px, the app grid goes from 3 columns to 1 at 900px, search moves below the branding at 560px, hero stats stack at 480px, and content is at most 1400px wide. QA checks 320px, 390px, tablet, desktop, long copy and 200% zoom. |
+| D16 | Theme colors | Showcase color themes stay as built (DT-4276). A config names a preset (`default`, `blue` or `teal`) and may override its primary and accent colors. CI checks that both reach 4.5:1 against the background. **Provisional:** the preset colors, which are the current `themes.ts` placeholders, and the neutrals (muted text, borders, card surfaces), each with its own contrast check. |
+| D17 | Typography | Changed (see "Typography"). |
+| D18 | Dataset card | The fields, in this order: title (as the heading), DUOS ID, "New in DUOS" badge, access, DAC (hidden for open and external datasets), data use, participants, available date and provider site. A field with no value is left out. The primary action is "Request access" for controlled datasets and the provider link for open and external ones. **Provisional:** the layout. |
+
+### Logos (D10)
+
+- The DUOS header (`DuosHeader`), which every DUOS page already renders, stays above the showcase.
+  The showcase masthead has no DUOS logo and no Sign in button of its own: sign-in is in the DUOS
+  header. The masthead holds the showcase logos, search and the sub-nav.
+- `masthead.logos[0]` is the showcase's own logo, and any further entries are partner logos. The
+  CI guard allows at most 4 logos: the showcase's own and up to 3 partners. There is no schema
+  change.
+- A showcase with no logo shows its registry `title` as text in its place. If `logos[0].alt` is
+  empty, the template uses the registry `title` as its alt text. The CI guard allows empty alt on
+  `logos[0]` only. Partner logos still need non-empty alt.
+- On phones, only the showcase's own logo (`logos[0]`) is shown.
+- An image that fails to load shows its alt text in its place, at the same height.
+- **Provisional:** the logo heights on desktop and on phones, and the spacing between logos.
+
+### Typography (D17)
+
+- The template is first built with Montserrat, bundled as it is today, and Helvetica Neue from the
+  visitor's own device (Helvetica Neue, Helvetica, Arial, sans-serif), as the rest of DUOS does.
+  Helvetica Neue is licensed and can't be bundled. The rule becomes: fonts are either bundled or
+  the visitor's own, never loaded from a third-party host.
+- The finished implementation is shown to the product owner. If they approve it, it is adopted.
+  If not, the template uses the artifact's font families: Fraunces for headings, IBM Plex Sans for
+  body text and IBM Plex Mono for labels and figures. They are bundled from their open-license
+  sources, not extracted from the artifact's embedded files.
+- Montserrat is bundled in 400, 400 italic, 500 and 600 (`public/css/montserrat-fonts.css`). Any
+  other weight the template needs is added to the bundle.
+- **Provisional:** the type scale and weights, approved together with the fonts.
+
 ## Open gates
 
 | Gate | Owner | Blocks |
 | --- | --- | --- |
-| Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. Not yet held. | Designer | S3.1–S3.4 |
-| Rebranded artifact supplied; artifact review updated with its hash | Product owner | — |
+| Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. **Held 2026-11-03** with the product owner and engineering; see [Design review decisions](#design-review-decisions-2026-11-03). | Product owner | — |
+| Provisional design values (D1, D2, D4, D7, D9, D10, D15, D16, D17, D18) and the typography demo approved | Product owner | Final layout values in S3.1–S3.4; template typography in S3.1 |
+| Rebranded artifact supplied; artifact review updated with its hash. **Closed 2026-11-04**; see the [artifact review](data-showcase-artifact-review.md#source-and-method). | Product owner | — |
 | S2.1 field definitions (including the `species` free-text decision) and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
-| Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, designer, consent lead, duos-ui lead | Closing DT-4272 |
+| Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, consent lead, duos-ui lead | Closing DT-4272 |

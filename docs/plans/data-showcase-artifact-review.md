@@ -15,6 +15,11 @@ the recorded artifact observations are unchanged.
   paste-instruction comment.
 - SHA-256 of the attached file:
   `1356b52733e99b48ac51b963db4ed3b49531a8fef803bda7369395acdf293ce0`.
+- Rebranded artifact (closes the contracts gate, 2026-11-04): the same structure and features under
+  fictional names, committed in duos-ui as `test/fixtures/showcase/quillmere-showcase.html`
+  (425,808 bytes; duos-ui #4030). SHA-256:
+  `6c0e6078d4c218af70abe9880be3be1c72201a44c4709e08ad8dd07446f27fa9`. The observations below were
+  made on the original file and still apply to the rebranded one.
 - HTML title: `DUOS — Data Use Oversight System`. No authoritative artifact version or modification
   timestamp was supplied; dates within sample content are not version metadata.
 - Inspected HTML/CSS/JavaScript, extracted a DOM inventory with scripts disabled, then rendered the

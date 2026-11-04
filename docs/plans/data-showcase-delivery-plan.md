@@ -48,7 +48,7 @@ window, so it is deferred with revisit triggers (section 3).
 | --- | --- |
 | Showcase | A public page for one program or partner, defined as a typed config entry in duos-ui. The flagship showcase is served at `/data`. |
 | Section | One of the 23 fixed content blocks a showcase can enable, such as `hero` or `featured-tools`. |
-| Masthead | The sticky top bar: DUOS and partner logos, search, sign-in and section navigation. |
+| Masthead | The showcase's top bar, below the DUOS header: the showcase and partner logos, search and section navigation. Sticky on desktop and tablet only. |
 | Hero | The first block under the masthead: introduction, headline statistics, calls to action and announcements. |
 | Shelf | A horizontally scrolling row of cards. |
 | Editorial shelf | A shelf whose datasets are listed by hand in config. |
@@ -556,6 +556,7 @@ foundational portions of 26/31.
   source. Produce TypeScript config fixtures for all 23 keys and lookup request/response examples.
 - **Frontend:** design review covers desktop/mobile shelves, carousel controls, keyboard order,
   logo slots, error states and the difference between enabled and actually visible sections.
+  Held 2026-11-03; the decisions are in the contracts record.
 - **Acceptance/tests:** product/design and both implementation owners can identify which behavior
   comes from the artifact versus this proposal; fixtures enumerate all 23 keys in fixed order.
   No claim that the still-missing earlier Jira criteria have been recovered from the HTML.
@@ -773,8 +774,10 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 
 #### S3.2 — Masthead, navigation and existing search/request handoff
 
-- **Frontend:** render primary/ordered partner logos, sign-in action, search and only valid anchors.
-  Use skip links, meaningful headings, visible keyboard focus and responsive overflow behavior.
+- **Frontend:** render the showcase logo (`logos[0]`) and up to three partner logos, search and
+  only valid anchors, below the DUOS header. The DUOS header provides sign-in; the masthead has
+  no DUOS logo and no Sign in of its own (contracts record, D10). Use skip links, meaningful
+  headings, visible keyboard focus and responsive overflow behavior.
   Submit search to the existing `/datalibrary` query mechanism; inspect/reuse its encoding.
 - **Frontend:** generate the sub-nav from visible navigable entries, preserving short labels and
   excluding masthead/hero. Account for the sticky header when scrolling to headings. Turn the
@@ -1119,7 +1122,7 @@ of the listed implementation story, not as a prerequisite to saving this plannin
 | Workshop enrollment | Prefer provider links; native multi-session signup requires a separate provider enrollment contract | Program/frontend/backend | S7.4 |
 | Impact presentation | Prefer a through.bio data snapshot flagged as not live, plus provider link (original Story 21); live embed conditional on agreement | Product/partner | S10.3 |
 | MVP size | **Decided in S1.1:** six sections and the complete authoring/public workflow | Product | Recorded |
-| Branding | Theme presets or contrast-checked primary/accent overrides; fixed typography | Design | S1.1/S1.3 |
+| Branding | **Decided 2026-11-03:** theme presets with contrast-checked primary/accent overrides; template-owned typography (contracts record, D16 and D17) | Product | Recorded |
 | Public data exposure | Table-specific allowlist driving a dedicated projection query (no full `Dataset`/`Study` objects), explicit visibility policy, free-text field decisions; private/nonexistent IDs share `unavailable` | Catalog/AppSec | S2.1/S2.2 before anonymous lookup |
 | Computed versus curated shelves | Rankings are computed by consent with config pins/exclusions; editorial shelves are curated; `open-access-datasets` kind chosen per showcase (S1.1) | Product | Recorded |
 | Ranking scope vocabulary | Small fixed set of database-backed attributes (e.g. institution, DAC, study); never raw query fragments | Product/catalog/AppSec | S2.1 |
