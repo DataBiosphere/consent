@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -79,8 +80,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
     when(datasetService.requireReadableStudy(eq(studyId), any()))
         .thenThrow(new NotFoundException("Study not found"));
 
-    String identifier = format(AssetType.MODEL, modelId);
-    assertThrows(NotFoundException.class, () -> service.lookup(identifier, user));
+    assertAnswersAsUnknown(format(AssetType.MODEL, modelId));
   }
 
   @Test
@@ -174,9 +174,10 @@ class AssetLookupServiceTest extends DAOTestHelper {
   @Test
   void testADatasetTheCallerCannotReadIsNotFound() {
     Integer datasetId = insertDataset(null);
-    String identifier = format(AssetType.DATASET, datasetAlias(datasetId));
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+        .thenThrow(new ForbiddenException("User does not have permission"));
 
-    assertThrows(NotFoundException.class, () -> service.lookup(identifier, user));
+    assertAnswersAsUnknown(format(AssetType.DATASET, datasetAlias(datasetId)));
   }
 
   @ParameterizedTest
@@ -191,7 +192,26 @@ class AssetLookupServiceTest extends DAOTestHelper {
         ""
       })
   void testAnUnknownOrMalformedIdentifierIsNotFound(String identifier) {
-    assertThrows(NotFoundException.class, () -> service.lookup(identifier, user));
+    assertAnswersAsUnknown(identifier);
+  }
+
+  @Test
+  void testALiveAssetWithNoEntryIsReturnedFromItsRow() {
+    Integer studyId = insertStudy();
+    Integer biospecimenId = insertStudyAssetRow("study_biospecimen", studyId, false);
+    allowStudy(studyId);
+
+    AssetLookup lookup = service.lookup(format(AssetType.BIOSPECIMEN, biospecimenId), user);
+
+    assertEquals(Status.LIVE, lookup.status());
+    assertEquals(biospecimenId, lookup.assetId());
+  }
+
+  /** The same exception and message as an unused identifier, so a lookup cannot probe. */
+  private void assertAnswersAsUnknown(String identifier) {
+    NotFoundException thrown =
+        assertThrows(NotFoundException.class, () -> service.lookup(identifier, user));
+    assertEquals(AssetLookupService.UNKNOWN_IDENTIFIER, thrown.getMessage());
   }
 
   private void allowStudy(Integer studyId) {
@@ -199,7 +219,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
   }
 
   private void allowDataset(Integer datasetId) {
-    when(datasetService.findDatasetById(any(), eq(datasetId))).thenReturn(new Dataset());
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId))).thenReturn(new Dataset());
   }
 
   private static String format(AssetType type, int number) {

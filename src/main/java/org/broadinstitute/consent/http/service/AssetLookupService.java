@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO;
@@ -23,6 +23,8 @@ import org.jdbi.v3.core.Jdbi;
  */
 public class AssetLookupService {
 
+  static final String UNKNOWN_IDENTIFIER = "Unknown DUOS identifier.";
+
   private final AssetLookupDAO lookupDAO;
   private final AssetCatalogDAO catalogDAO;
   private final DatasetService datasetService;
@@ -40,18 +42,16 @@ public class AssetLookupService {
    */
   public AssetLookup lookup(String text, User user) {
     AssetIdentifier identifier = parse(text);
-    AssetCatalogEntry entry =
-        catalogDAO.findByTypeAndNumber(identifier.type(), identifier.number());
     if (identifier.type() == AssetType.DATASET) {
-      return dataset(identifier.number(), entry)
+      return dataset(identifier.number())
           .map(row -> readableDataset(row, user))
-          .orElseGet(() -> removedOrNotFound(identifier.type(), entry));
+          .orElseGet(() -> removedOrNotFound(identifier));
     }
     AssetRow row = lookupDAO.findAssetRow(identifier.type(), identifier.number());
     if (row == null) {
-      return removedOrNotFound(identifier.type(), entry);
+      return removedOrNotFound(identifier);
     }
-    datasetService.requireReadableStudy(row.studyId(), user);
+    readable(() -> datasetService.requireReadableStudy(row.studyId(), user));
     return new AssetLookup(
         identifier.format(),
         identifier.type(),
@@ -65,25 +65,26 @@ public class AssetLookupService {
     try {
       return AssetIdentifier.parse(text);
     } catch (IllegalArgumentException e) {
-      throw new NotFoundException("Unknown DUOS identifier.");
+      throw unknown();
     }
   }
 
   /**
    * The dataset holding the alias, or else the one an entry still links, under its current alias.
    */
-  private Optional<DatasetRow> dataset(int alias, AssetCatalogEntry entry) {
+  private Optional<DatasetRow> dataset(int alias) {
     DatasetRow byAlias = lookupDAO.findDatasetByAlias(alias);
-    if (byAlias != null || entry == null || entry.datasetId() == null) {
-      return Optional.ofNullable(byAlias);
+    if (byAlias != null) {
+      return Optional.of(byAlias);
     }
-    return Optional.ofNullable(lookupDAO.findDatasetById(entry.datasetId()));
+    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias);
+    return entry == null || entry.datasetId() == null
+        ? Optional.empty()
+        : Optional.ofNullable(lookupDAO.findDatasetById(entry.datasetId()));
   }
 
   private AssetLookup readableDataset(DatasetRow row, User user) {
-    if (datasetService.findDatasetById(user, row.datasetId()) == null) {
-      throw new NotFoundException("Unknown DUOS identifier.");
-    }
+    readable(() -> datasetService.findDatasetByIdForRead(user, row.datasetId()));
     return new AssetLookup(
         AssetIdentifier.format(AssetType.DATASET, row.alias()),
         AssetType.DATASET,
@@ -95,10 +96,23 @@ public class AssetLookupService {
         row.studyId());
   }
 
-  private static AssetLookup removedOrNotFound(AssetType type, AssetCatalogEntry entry) {
-    if (Objects.isNull(entry)) {
-      throw new NotFoundException("Unknown DUOS identifier.");
+  /** A denial answers exactly as an unknown identifier does, so the lookup cannot probe. */
+  private static void readable(Runnable gate) {
+    try {
+      gate.run();
+    } catch (NotFoundException | ForbiddenException e) {
+      throw unknown();
     }
-    return AssetLookup.removed(type);
+  }
+
+  private AssetLookup removedOrNotFound(AssetIdentifier identifier) {
+    if (catalogDAO.findByTypeAndNumber(identifier.type(), identifier.number()) == null) {
+      throw unknown();
+    }
+    return AssetLookup.removed(identifier.type());
+  }
+
+  private static NotFoundException unknown() {
+    return new NotFoundException(UNKNOWN_IDENTIFIER);
   }
 }
