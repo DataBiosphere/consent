@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -82,12 +84,49 @@ class AssetCatalogServiceDAOTest extends DAOTestHelper {
     int alias = datasetAlias(datasetId);
     catalogDAO.insertDatasetEntry(datasetId);
     executeSql(
-        "UPDATE asset_catalog SET dataset_id = NULL WHERE dataset_id = %d".formatted(datasetId));
+        "UPDATE asset_catalog SET dataset_id = NULL, asset_removed_date = now() WHERE dataset_id = %d"
+            .formatted(datasetId));
 
     AssetCatalogRepair repair = serviceDAO.repair();
 
     assertEquals(1, repair.relinked());
-    assertEquals(datasetId, catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias).datasetId());
+    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias);
+    assertEquals(datasetId, entry.datasetId());
+    assertNull(entry.assetRemovedDate());
+    assertEquals(new AssetCatalogRepair(0, 0, 0, 0, null), serviceDAO.repair());
+  }
+
+  @Test
+  void testRepairDoesNotRelinkAnEntryMadeForAnotherDataset() {
+    Integer datasetId = insertDataset();
+    Integer otherId = insertDataset();
+    catalogDAO.insertDatasetEntry(otherId);
+    int alias = datasetAlias(datasetId);
+    executeSql(
+        "INSERT INTO asset_catalog (asset_type, asset_number, source_dataset_id) VALUES ('DATASET', %d, %d)"
+            .formatted(alias, otherId));
+    AssetCatalogEntry before = catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias);
+
+    AssetCatalogRepair repair = serviceDAO.repair();
+
+    assertEquals(before, catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias));
+    assertEquals(new AssetCatalogRepair(0, 0, 0, 1, null), repair);
+  }
+
+  @Test
+  void testRepairLeavesAnEntryThatStillReferencesAnAsset() {
+    Integer datasetId = insertDataset();
+    int alias = datasetAlias(datasetId);
+    catalogDAO.insertDatasetEntry(datasetId);
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(alias + 1000, datasetId));
+    AssetCatalogEntry before = catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias);
+
+    serviceDAO.repair();
+
+    assertEquals(before, catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias));
+    assertEquals(1, countAssetCatalogEntries());
+    assertEquals(1, checkDAO.check().mismatches().count());
   }
 
   @Test
@@ -146,6 +185,28 @@ class AssetCatalogServiceDAOTest extends DAOTestHelper {
     assertEquals(ahead + 1, nextDatasetAlias());
     AssetCatalogCheck check = checkDAO.check();
     assertEquals(0, check.sequenceBehind().count());
+  }
+
+  @Test
+  void testRepairAdvancesASequenceADatasetAliasGotAheadOf() {
+    Integer datasetId = insertDataset();
+    int ahead = nextDatasetAlias() + 10;
+    executeSql("UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(ahead, datasetId));
+
+    AssetCatalogRepair repair = serviceDAO.repair();
+
+    assertEquals(Long.valueOf(ahead), repair.aliasSequenceAdvancedTo());
+    assertEquals(ahead + 1, nextDatasetAlias());
+    assertEquals(datasetId, catalogDAO.findByTypeAndNumber(AssetType.DATASET, ahead).datasetId());
+  }
+
+  @Test
+  void testALockTimeoutOrDeadlockIsALockFailure() {
+    assertTrue(
+        AssetCatalogServiceDAO.isLockFailure(new RuntimeException(new SQLException("t", "55P03"))));
+    assertTrue(AssetCatalogServiceDAO.isLockFailure(new SQLException("d", "40P01")));
+    assertFalse(AssetCatalogServiceDAO.isLockFailure(new SQLException("u", "23505")));
+    assertFalse(AssetCatalogServiceDAO.isLockFailure(new SQLException("none")));
   }
 
   @Test

@@ -6,7 +6,7 @@ post:
     unlinked entry to a dataset or asset whose number it holds (a dataset only when the entry was made
     for that dataset), inserts the missing entries, stamps `asset_removed_date` on the remaining
     orphans and advances the dataset alias sequence past every alias and dataset entry number. It
-    never changes an entry that still references an asset. Collisions and mismatches are left for
+    never changes an entry that still references an asset. Dataset inserts and deletes wait while it runs. Collisions and mismatches are left for
     a person to fix. Running it again changes nothing.
   tags:
     - Admin
@@ -22,6 +22,6 @@ post:
     403:
       description: The user does not have the Admin role
     409:
-      description: Another repair is running
+      description: Another repair is running, or a dataset or asset write held a lock the repair needed for over 10 seconds; retry it
     500:
       description: Unable to run the repair
