@@ -13,7 +13,7 @@ properties:
     description: RETIRED is an asset taken out of its study's registration; REMOVED is a deleted dataset, study or asset.
   listed:
     type: boolean
-    description: Whether the asset's study has a dataset in the search index, without which it is not in the Data Library. Absent for a removed asset.
+    description: Whether the asset is in the Data Library. A dataset is when it is in the search index; another asset is when its study has a dataset there. Absent for a removed asset.
   assetId:
     type: integer
     description: The dataset id, or the model, workspace or biospecimen row id. Absent for a removed asset.

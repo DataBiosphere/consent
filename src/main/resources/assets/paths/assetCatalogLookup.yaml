@@ -8,7 +8,7 @@ get:
     the study's rule for an asset; otherwise the response is 404, as for an unknown identifier. A
     removed asset returns only its type and status, and only to an Admin; anyone else gets 404.
     After an ad hoc alias change a dataset's old identifier still resolves, with its current one as
-    `identifier`.
+    `identifier`; once the dataset is deleted, only the identifier the catalog recorded resolves.
   tags:
     - Asset Catalog
   parameters:

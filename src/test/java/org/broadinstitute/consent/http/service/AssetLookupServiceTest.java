@@ -181,6 +181,32 @@ class AssetLookupServiceTest extends DAOTestHelper {
   }
 
   @Test
+  void testADatasetIsListedOnlyWhenItIsIndexed() {
+    Integer studyId = insertStudy();
+    Integer datasetId = insertDataset(studyId);
+    Integer siblingId = insertDataset(studyId);
+    executeSql(
+        "UPDATE dataset SET indexed_date = now() WHERE dataset_id = %d".formatted(siblingId));
+    allowDataset(datasetId);
+
+    assertEquals(
+        false, service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user).listed());
+  }
+
+  @Test
+  void testADatasetAnswersWithTheStudyItWasAuthorizedAgainst() {
+    Integer datasetId = insertDataset(insertStudy());
+    Integer movedTo = insertStudy();
+    Dataset authorized = datasetDAO.findDatasetById(datasetId);
+    authorized.setStudyId(movedTo);
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId))).thenReturn(authorized);
+
+    AssetLookup lookup = service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user);
+
+    assertEquals(movedTo, lookup.studyId());
+  }
+
+  @Test
   void testADatasetTheCallerCannotReadIsNotFound() {
     Integer datasetId = insertDataset(null);
     when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
@@ -229,7 +255,8 @@ class AssetLookupServiceTest extends DAOTestHelper {
   }
 
   private void allowDataset(Integer datasetId) {
-    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId))).thenReturn(new Dataset());
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+        .thenAnswer(invocation -> datasetDAO.findDatasetById(datasetId));
   }
 
   private static String format(AssetType type, int number) {
