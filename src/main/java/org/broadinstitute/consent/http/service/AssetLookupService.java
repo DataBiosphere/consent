@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO.AssetRow;
 import org.broadinstitute.consent.http.enumeration.AssetType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.AssetIdentifier;
 import org.broadinstitute.consent.http.models.AssetLookup;
@@ -35,7 +36,7 @@ public class AssetLookupService {
 
   /**
    * @throws NotFoundException for an unknown or malformed identifier, or one naming a live or
-   *     retired asset the user cannot read
+   *     retired asset the user cannot read, or a removed asset for a non-admin
    */
   public AssetLookup lookup(String text, User user) {
     AssetIdentifier identifier = parse(text);
@@ -44,7 +45,7 @@ public class AssetLookupService {
     }
     AssetRow row = lookupDAO.findAssetRow(identifier.type(), identifier.number());
     if (row == null) {
-      return removedOrNotFound(identifier);
+      return removedOrNotFound(identifier, user);
     }
     readable(() -> datasetService.requireReadableStudy(row.studyId(), user));
     return new AssetLookup(
@@ -73,7 +74,11 @@ public class AssetLookupService {
     }
   }
 
-  private AssetLookup removedOrNotFound(AssetIdentifier identifier) {
+  /** Removed identifiers are admin-only until product confirms showing them to every user. */
+  private AssetLookup removedOrNotFound(AssetIdentifier identifier, User user) {
+    if (!user.hasUserRole(UserRoles.ADMIN)) {
+      throw unknown();
+    }
     AssetCatalogEntry entry =
         catalogDAO.findByTypeAndNumber(identifier.type(), identifier.number());
     // A linked entry here was registered after the row read, so it must not skip the study gate.

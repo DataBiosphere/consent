@@ -15,11 +15,13 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AssetType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AssetIdentifier;
 import org.broadinstitute.consent.http.models.AssetLookup;
 import org.broadinstitute.consent.http.models.AssetLookup.Status;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,12 +30,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 class AssetLookupServiceTest extends DAOTestHelper {
 
   private final User user = new User();
+  private final User admin = new User();
   private DatasetService datasetService;
   private AssetCatalogDAO catalogDAO;
   private AssetLookupService service;
 
   @BeforeEach
   void setUpService() {
+    admin.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
     datasetService = mock(DatasetService.class);
     catalogDAO = jdbi.onDemand(AssetCatalogDAO.class);
     service = new AssetLookupService(jdbi, datasetService);
@@ -96,7 +100,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
   }
 
   @Test
-  void testARemovedAssetReturnsOnlyItsTypeAndStatus() {
+  void testARemovedAssetReturnsOnlyItsTypeAndStatusAndOnlyToAnAdmin() {
     Integer studyId = insertStudy();
     Integer modelId = insertStudyAssetRow("study_model", studyId, false);
     catalogDAO.insertAssetEntry(AssetType.MODEL, modelId);
@@ -105,7 +109,8 @@ class AssetLookupServiceTest extends DAOTestHelper {
 
     assertEquals(
         AssetLookup.removed(AssetType.MODEL),
-        service.lookup(format(AssetType.MODEL, modelId), user));
+        service.lookup(format(AssetType.MODEL, modelId), admin));
+    assertAnswersAsUnknown(format(AssetType.MODEL, modelId));
   }
 
   @Test
@@ -117,7 +122,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
 
     assertEquals(
         AssetLookup.removed(AssetType.BIOSPECIMEN),
-        service.lookup(format(AssetType.BIOSPECIMEN, number), user));
+        service.lookup(format(AssetType.BIOSPECIMEN, number), admin));
   }
 
   @ParameterizedTest
