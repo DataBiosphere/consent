@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -19,6 +20,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AssetIdentifier;
 import org.broadinstitute.consent.http.models.AssetLookup;
 import org.broadinstitute.consent.http.models.AssetLookup.Status;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -125,6 +127,64 @@ class AssetLookupServiceTest extends DAOTestHelper {
         service.lookup(format(AssetType.BIOSPECIMEN, number), admin));
   }
 
+  @Test
+  void testADatasetResolvesUnderItsCurrentAliasAfterAnAdHocChange() {
+    Integer studyId = insertStudy();
+    Integer datasetId = insertDataset(studyId);
+    int oldAlias = datasetAlias(datasetId);
+    catalogDAO.insertDatasetEntry(datasetId);
+    int newAlias = nextDatasetAlias() + 100;
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(newAlias, datasetId));
+    allowDataset(datasetId);
+
+    AssetLookup byOld = service.lookup(format(AssetType.DATASET, oldAlias), user);
+    AssetLookup byNew = service.lookup(format(AssetType.DATASET, newAlias), user);
+
+    assertEquals(format(AssetType.DATASET, newAlias), byOld.identifier());
+    assertEquals(datasetId, byOld.assetId());
+    assertEquals(byOld, byNew);
+  }
+
+  @Test
+  void testADatasetWithNoStudyResolves() {
+    Integer datasetId = insertDataset(null);
+    allowDataset(datasetId);
+
+    AssetLookup lookup = service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user);
+
+    assertEquals(Status.LIVE, lookup.status());
+    assertEquals(datasetId, lookup.assetId());
+    assertEquals(null, lookup.studyId());
+    assertEquals(false, lookup.listed());
+  }
+
+  @Test
+  void testADatasetThatReusedARemovedEntrysAliasIsLive() {
+    Integer removedId = insertDataset(null);
+    int alias = datasetAlias(removedId);
+    catalogDAO.insertDatasetEntry(removedId);
+    catalogDAO.markRemovedByDataset(removedId);
+    datasetDAO.deleteDatasetById(removedId);
+    Integer reuserId = insertDataset(null);
+    executeSql("UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(alias, reuserId));
+    allowDataset(reuserId);
+
+    AssetLookup lookup = service.lookup(format(AssetType.DATASET, alias), user);
+
+    assertEquals(Status.LIVE, lookup.status());
+    assertEquals(reuserId, lookup.assetId());
+  }
+
+  @Test
+  void testADatasetTheCallerCannotReadIsNotFound() {
+    Integer datasetId = insertDataset(null);
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+        .thenThrow(new ForbiddenException("User does not have permission"));
+
+    assertAnswersAsUnknown(format(AssetType.DATASET, datasetAlias(datasetId)));
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {
@@ -162,6 +222,10 @@ class AssetLookupServiceTest extends DAOTestHelper {
 
   private void allowStudy(Integer studyId) {
     when(datasetService.requireReadableStudy(eq(studyId), any())).thenReturn(new Study());
+  }
+
+  private void allowDataset(Integer datasetId) {
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId))).thenReturn(new Dataset());
   }
 
   private static String format(AssetType type, int number) {

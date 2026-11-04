@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.Optional;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO.AssetRow;
+import org.broadinstitute.consent.http.db.AssetLookupDAO.DatasetRow;
 import org.broadinstitute.consent.http.enumeration.AssetType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AssetCatalogEntry;
@@ -41,7 +44,9 @@ public class AssetLookupService {
   public AssetLookup lookup(String text, User user) {
     AssetIdentifier identifier = parse(text);
     if (identifier.type() == AssetType.DATASET) {
-      throw unknown();
+      return dataset(identifier.number())
+          .map(row -> readableDataset(row, user))
+          .orElseGet(() -> removedOrNotFound(identifier, user));
     }
     AssetRow row = lookupDAO.findAssetRow(identifier.type(), identifier.number());
     if (row == null) {
@@ -65,11 +70,38 @@ public class AssetLookupService {
     }
   }
 
+  /**
+   * The dataset holding the alias, or else the one an entry still links, under its current alias.
+   */
+  private Optional<DatasetRow> dataset(int alias) {
+    DatasetRow byAlias = lookupDAO.findDatasetByAlias(alias);
+    if (byAlias != null) {
+      return Optional.of(byAlias);
+    }
+    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias);
+    return entry == null || entry.datasetId() == null
+        ? Optional.empty()
+        : Optional.ofNullable(lookupDAO.findDatasetById(entry.datasetId()));
+  }
+
+  private AssetLookup readableDataset(DatasetRow row, User user) {
+    readable(() -> datasetService.findDatasetByIdForRead(user, row.datasetId()));
+    return new AssetLookup(
+        AssetIdentifier.format(AssetType.DATASET, row.alias()),
+        AssetType.DATASET,
+        Status.LIVE,
+        row.studyId() == null
+            ? row.indexedDate() != null
+            : lookupDAO.hasIndexedDataset(row.studyId()),
+        row.datasetId(),
+        row.studyId());
+  }
+
   /** A denial answers exactly as an unknown identifier does, so the lookup cannot probe. */
   private static void readable(Runnable gate) {
     try {
       gate.run();
-    } catch (NotFoundException e) {
+    } catch (NotFoundException | ForbiddenException e) {
       throw unknown();
     }
   }
