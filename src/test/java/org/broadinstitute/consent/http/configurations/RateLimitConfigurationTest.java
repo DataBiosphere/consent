@@ -99,4 +99,55 @@ class RateLimitConfigurationTest {
         "requestsPerMinuteAtLeastPodCount",
         violations.iterator().next().getPropertyPath().toString());
   }
+
+  private static final String LONG_SECRET = "test-consent-proxy-secret-0123456789abcdef";
+
+  private Set<ConstraintViolation<RateLimitConfiguration>> validateSecrets(
+      String current, String previous) {
+    RateLimitConfiguration config = buildConfig(100, 3);
+    config.setClientIpSecret(current);
+    config.setClientIpPreviousSecret(previous);
+    return validator.validate(config);
+  }
+
+  @Test
+  void testClientIpSecretsAreOptional() {
+    assertTrue(validateSecrets(null, null).isEmpty());
+  }
+
+  @Test
+  void testCurrentAndPreviousClientIpSecretsAreValid() {
+    assertTrue(validateSecrets(LONG_SECRET, LONG_SECRET + "-previous").isEmpty());
+  }
+
+  @Test
+  void testShortClientIpSecretIsInvalid() {
+    Set<ConstraintViolation<RateLimitConfiguration>> violations =
+        validateSecrets("too-short-secret", null);
+
+    assertEquals(1, violations.size());
+    assertEquals("clientIpSecretValid", violations.iterator().next().getPropertyPath().toString());
+  }
+
+  @Test
+  void testPreviousClientIpSecretWithoutCurrentIsInvalid() {
+    assertEquals(1, validateSecrets(null, LONG_SECRET).size());
+  }
+
+  @Test
+  void testClientIpSecretWithAByteOrderMarkIsInvalid() {
+    // JavaScript trim() removes U+FEFF and Java strip() does not, so the two sides would disagree.
+    assertEquals(1, validateSecrets("\uFEFF" + LONG_SECRET, null).size());
+  }
+
+  @Test
+  void testClientIpSecretWithANoBreakSpaceIsInvalid() {
+    assertEquals(1, validateSecrets(LONG_SECRET + "\u00A0", null).size());
+    assertEquals(1, validateSecrets(LONG_SECRET, "\u00A0" + LONG_SECRET).size());
+  }
+
+  @Test
+  void testClientIpSecretWithATrailingNewlineIsValid() {
+    assertTrue(validateSecrets(LONG_SECRET + "\n", null).isEmpty());
+  }
 }
