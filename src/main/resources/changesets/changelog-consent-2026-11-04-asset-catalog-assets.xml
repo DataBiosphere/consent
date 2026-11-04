@@ -25,8 +25,9 @@
   <changeSet id="changelog-consent-2026-11-04-asset-catalog-assets" author="kmarete">
     <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
     <sql>SET LOCAL lock_timeout = '10s'</sql>
-    <!-- Blocks asset inserts and deletes until the backfill commits, and allows reads. The order
-         is the one the sync writes in. -->
+    <!-- Blocks asset row inserts and deletes until the backfill commits, in the order the sync
+         writes them, and allows reads. A study delete can still write catalog entries, so it may
+         deadlock with the backfill; Postgres aborts one side and no identifier is wrong. -->
     <sql>LOCK TABLE study_model, study_workspace, study_biospecimen IN SHARE ROW EXCLUSIVE MODE</sql>
     <sql>
       INSERT INTO asset_catalog (asset_type, asset_number, model_id, backfill_run)

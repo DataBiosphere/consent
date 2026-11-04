@@ -105,21 +105,29 @@ class AssetCatalogAssetsMigrationTest extends DAOTestHelper {
     catalogDAO.insertAssetEntry(AssetType.MODEL, appModel);
     Integer backfilledModel = insertStudyAssetRow("study_model", studyId, false);
     Integer deletedModel = insertStudyAssetRow("study_model", studyId, false);
+    Integer unlinkedModel = insertStudyAssetRow("study_model", studyId, false);
+    Integer workspace = insertStudyAssetRow("study_workspace", studyId, false);
+    Integer biospecimen = insertStudyAssetRow("study_biospecimen", studyId, true);
     runMigration();
     executeSql(
         """
         UPDATE asset_catalog SET asset_removed_date = now() WHERE model_id = %d;
-        DELETE FROM study_model WHERE model_id = %d
+        DELETE FROM study_model WHERE model_id IN (%d, %d)
         """
-            .formatted(deletedModel, deletedModel));
+            .formatted(deletedModel, deletedModel, unlinkedModel));
 
     jdbi.useHandle(h -> h.execute(rollbackSql()));
 
     assertEquals(appModel, catalogDAO.findByTypeAndNumber(AssetType.MODEL, appModel).modelId());
     assertNull(catalogDAO.findByTypeAndNumber(AssetType.MODEL, backfilledModel));
+    assertNull(catalogDAO.findByTypeAndNumber(AssetType.WORKSPACE, workspace));
+    assertNull(catalogDAO.findByTypeAndNumber(AssetType.BIOSPECIMEN, biospecimen));
     assertEquals(
         CHANGESET_ID, catalogDAO.findByTypeAndNumber(AssetType.MODEL, deletedModel).backfillRun());
-    assertEquals(2, countAssetCatalogEntries());
+    AssetCatalogEntry unlinked = catalogDAO.findByTypeAndNumber(AssetType.MODEL, unlinkedModel);
+    assertNull(unlinked.modelId());
+    assertNull(unlinked.assetRemovedDate());
+    assertEquals(3, countAssetCatalogEntries());
   }
 
   /**
