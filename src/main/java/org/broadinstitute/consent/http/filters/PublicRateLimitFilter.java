@@ -17,6 +17,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.PathSegment;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +37,11 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
  * checked in a deployed environment. The log is console only: a 429 is expected behavior, not an
  * alert.
  *
+ * <p>For a request that the DUOS BFF proxies, the load balancer's {@code X-Real-IP} is the DUOS
+ * pod's egress address. The BFF signs the browser IP instead, and {@link SignedClientIpVerifier}
+ * checks it. A verified IP is the key. A rejected one falls back to {@code X-Real-IP}, and its
+ * reason (never a header value) is added to the 429 log line.
+ *
  * <p>Buckets live in-process, as in {@link RateLimitFilter}: each pod enforces {@code
  * requestsPerMinute / podCount}. The filter is {@code @PreMatching}, so it also counts requests to
  * unknown {@code showcase/} paths and rejects before any body is read. It returns early for every
@@ -54,14 +60,22 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
   private static final int IDLE_EVICTION_MINUTES = 10;
 
   private final ClientIpResolver clientIpResolver;
+  private final SignedClientIpVerifier signedClientIpVerifier;
   private final LoadingCache<String, Bucket> buckets;
 
   @Context private HttpServletRequest servletRequest;
 
   @Inject
   public PublicRateLimitFilter(RateLimitConfiguration config) {
+    this(config, Clock.systemUTC());
+  }
+
+  private PublicRateLimitFilter(RateLimitConfiguration config, Clock clock) {
     PublicRateLimitConfiguration showcase = config.getShowcase();
     this.clientIpResolver = new ClientIpResolver(showcase.getTrustedProxies());
+    this.signedClientIpVerifier =
+        new SignedClientIpVerifier(
+            config.getClientIpSecret(), config.getClientIpPreviousSecret(), clock);
     int capacityPerPod =
         Math.max(
             1, (int) Math.ceil(showcase.getRequestsPerMinute() / (double) config.getPodCount()));
@@ -78,7 +92,12 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
   }
 
   PublicRateLimitFilter(RateLimitConfiguration config, HttpServletRequest servletRequest) {
-    this(config);
+    this(config, servletRequest, Clock.systemUTC());
+  }
+
+  PublicRateLimitFilter(
+      RateLimitConfiguration config, HttpServletRequest servletRequest, Clock clock) {
+    this(config, clock);
     this.servletRequest = servletRequest;
   }
 
@@ -91,16 +110,34 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
     if (!isLimitedPath(uriInfo)) {
       return;
     }
-    List<String> realIp =
-        Objects.requireNonNullElse(requestContext.getHeaders().get(REAL_IP_HEADER), List.of());
-    ClientIp clientIp = clientIpResolver.resolve(servletRequest.getRemoteAddr(), realIp);
+    SignedClientIpVerifier.Result signed =
+        signedClientIpVerifier.verify(requestContext.getHeaders());
+    ClientIp clientIp =
+        signed.clientIp() != null
+            ? clientIpResolver.resolveSigned(signed.clientIp())
+            : resolveFromRealIp(requestContext);
     ConsumptionProbe probe = buckets.getUnchecked(clientIp.key()).tryConsumeAndReturnRemaining(1);
     if (!probe.isConsumed()) {
-      logWarn(
-          "Showcase rate limit exceeded: key=%s, source=%s, path=%s"
-              .formatted(clientIp.key(), clientIp.source(), path));
+      logWarn(limitExceededMessage(clientIp, signed.rejection(), path));
       requestContext.abortWith(RateLimitFilter.tooManyRequests(probe));
     }
+  }
+
+  /**
+   * The one log line per 429. A rejected signed header adds its reason here and writes no line of
+   * its own, so a caller cannot add a WARN line to every request by sending a bad header.
+   */
+  private static String limitExceededMessage(
+      ClientIp clientIp, SignedClientIpVerifier.Rejection rejection, String path) {
+    String signedRejection = rejection == null ? "" : ", signedRejection=" + rejection;
+    return "Showcase rate limit exceeded: key=%s, source=%s%s, path=%s"
+        .formatted(clientIp.key(), clientIp.source(), signedRejection, path);
+  }
+
+  private ClientIp resolveFromRealIp(ContainerRequestContext requestContext) {
+    List<String> realIp =
+        Objects.requireNonNullElse(requestContext.getHeaders().get(REAL_IP_HEADER), List.of());
+    return clientIpResolver.resolve(servletRequest.getRemoteAddr(), realIp);
   }
 
   /**
