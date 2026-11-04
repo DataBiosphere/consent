@@ -15,4 +15,11 @@ public record AssetCatalogEntry(
     Integer datasetId,
     Integer modelId,
     Integer workspaceId,
-    Integer biospecimenId) {}
+    Integer biospecimenId) {
+
+  /** Stamped as removed, or unlinked from its asset and not yet stamped by the repair. */
+  public boolean isRemoved() {
+    return assetRemovedDate != null
+        || (datasetId == null && modelId == null && workspaceId == null && biospecimenId == null);
+  }
+}

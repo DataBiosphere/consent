@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO.AssetRow;
 import org.broadinstitute.consent.http.enumeration.AssetType;
+import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.AssetIdentifier;
 import org.broadinstitute.consent.http.models.AssetLookup;
 import org.broadinstitute.consent.http.models.AssetLookup.Status;
@@ -73,7 +74,10 @@ public class AssetLookupService {
   }
 
   private AssetLookup removedOrNotFound(AssetIdentifier identifier) {
-    if (catalogDAO.findByTypeAndNumber(identifier.type(), identifier.number()) == null) {
+    AssetCatalogEntry entry =
+        catalogDAO.findByTypeAndNumber(identifier.type(), identifier.number());
+    // A linked entry here was registered after the row read, so it must not skip the study gate.
+    if (entry == null || !entry.isRemoved()) {
       throw unknown();
     }
     return AssetLookup.removed(identifier.type());
