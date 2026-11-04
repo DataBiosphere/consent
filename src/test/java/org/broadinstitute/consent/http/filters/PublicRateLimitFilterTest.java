@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -83,8 +82,6 @@ class PublicRateLimitFilterTest {
 
   private void mockSignedRequest(String ip, String timestamp, String signature) {
     mockPath("showcase/datasets");
-    // A verified signature never reads the peer, so this stub is lenient.
-    lenient().when(servletRequest.getRemoteAddr()).thenReturn(TRUSTED_PROXY);
     putHeader(PublicRateLimitFilter.REAL_IP_HEADER, BFF_EGRESS);
     when(requestContext.getHeaders()).thenReturn(headers);
     putHeader(SignedClientIpVerifier.CLIENT_IP_HEADER, ip);
@@ -381,6 +378,8 @@ class PublicRateLimitFilterTest {
       String label, String ip, String timestamp, String signature, String reason) {
     PublicRateLimitFilter filter = buildSigningFilter(PROXY_SECRET, null);
     mockSignedRequest(ip, timestamp, signature);
+    // A rejection falls back to the peer and its X-Real-IP.
+    when(servletRequest.getRemoteAddr()).thenReturn(TRUSTED_PROXY);
 
     send(filter, 2);
 
@@ -399,6 +398,7 @@ class PublicRateLimitFilterTest {
   void testRejectedSignatureWithinTheLimitLogsNothing() {
     PublicRateLimitFilter filter = buildSigningFilter(PROXY_SECRET, null);
     mockSignedRequest("203.0.113.7", Long.toString(NOW), "forged");
+    when(servletRequest.getRemoteAddr()).thenReturn(TRUSTED_PROXY);
 
     send(filter, 1);
 
