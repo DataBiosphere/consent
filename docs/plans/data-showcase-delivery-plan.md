@@ -399,8 +399,10 @@ showcase, using the `DATA-LIBRARY.md` asset standards: SVG
 preferred, transparent PNG fallback, 256×256 canvas for logos, optimized, within its size limits.
 Hero and card images are not forced into that square. SVGs are reviewed in the PR and referenced
 through `<img>`, never inlined. Each image placement in config carries its alt text; logos require
-it, and decorative empty alt is allowed only for non-logo images. Set a per-showcase asset budget
-(S1.3) and lazy-load below-the-fold images, since `libraryVersions.ts` already bundles 30+ logos.
+it, except that the showcase's own logo (`logos[0]`) may leave it empty and then uses the registry
+title (contracts record, D10). Decorative empty alt is otherwise allowed only for non-logo images.
+Set a per-showcase asset budget (S1.3) and lazy-load below-the-fold images, since
+`libraryVersions.ts` already bundles 30+ logos.
 
 Routes are `/data` (flagship) and `/showcase/:key`, rendered outside `Authenticated` and generated
 from the index. Unknown or hidden keys render the standard not-found page. Transport is explicit:
@@ -572,8 +574,9 @@ foundational portions of 26/31.
   key comparison and required CI base-revision setup from section 3. Mirror S2.2's collection and
   ranking limits in config validation; cap the page's deduplicated editorial lookup at 200 IDs.
 - **Acceptance/tests:** guard tests prove each rule fails on a deliberately broken fixture: missing
-  or reordered keys, enabled unimplemented type, `#` or unsafe URL, missing logo alt, inverted date
-  range, malformed identifier, duplicate or retired key, duplicate item ID, over-budget assets, a
+  or reordered keys, enabled unimplemented type, `#` or unsafe URL, missing partner logo alt,
+  inverted date range, malformed identifier, duplicate or retired key, duplicate item ID,
+  over-budget assets, a
   enabled dataset shelf with both or neither of `items`/`ranking` (a disabled section may omit both), an unknown ranking or scope key, and a
   ranking not allowed for its section, and exceeded lookup input/output limits. Before/after
   snapshots cover removal without a tombstone, a key rename without retiring the old key,
@@ -776,8 +779,10 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
 
 - **Frontend:** render the showcase logo (`logos[0]`) and up to three partner logos, search and
   only valid anchors, below the DUOS header. The DUOS header provides sign-in; the masthead has
-  no DUOS logo and no Sign in of its own (contracts record, D10). Use skip links, meaningful
-  headings, visible keyboard focus and responsive overflow behavior.
+  no DUOS logo and no Sign in of its own (contracts record, D10). Change the CI guard
+  (`checkLogoAlt` in duos-ui `test/showcases/guard/checkShowcase.ts`) to accept an empty alt on
+  `logos[0]` only, and to allow at most 4 logos. Use skip links, meaningful headings, visible
+  keyboard focus and responsive overflow behavior.
   Submit search to the existing `/datalibrary` query mechanism; inspect/reuse its encoding.
 - **Frontend:** generate the sub-nav from visible navigable entries, preserving short labels and
   excluding masthead/hero. Account for the sticky header when scrolling to headings. Turn the
@@ -804,9 +809,10 @@ workflows. **Owner:** duos-ui lead with consent reviewer. **Source:** 3–5, 8, 
   hero's configured `scope` from the S2.2 `stats` mode; tools from the items in the config's
   enabled tool sections; a 0 stat is hidden), date-bounded announcements, CTA/onboarding
   links and optional imagery. Preserve the observed desktop intro/onboarding/announcement hierarchy
-  and stacked mobile layout. Prefer a static decorative background for MVP. Carousel supports an
-  explicit pause control, focus/hover pause, manual controls and reduced motion; inactive slides
-  must leave both the tab order and accessibility tree. Use accessible consent tooltips rather than
+  and stacked mobile layout. Prefer a static decorative background for MVP. The carousel has manual
+  previous/next controls and a visible position only, with no autoplay and no pause control
+  (contracts record, D5 and D6); inactive slides must leave both the tab order and accessibility
+  tree. Use accessible consent tooltips rather than
   CSS pseudo-elements. New badges use the section 2 “new in DUOS” date and a 30-day window.
 - **Frontend/backend:** `latest-data-releases` is a computed shelf (`ranking: 'newest'`, optional
   scope, pins and exclusions). `open-access-datasets` supports either kind, chosen per showcase

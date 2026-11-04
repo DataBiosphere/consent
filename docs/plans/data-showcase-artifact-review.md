@@ -19,7 +19,8 @@ the recorded artifact observations are unchanged.
   fictional names, committed in duos-ui as `test/fixtures/showcase/quillmere-showcase.html`
   (425,808 bytes; duos-ui #4030). SHA-256:
   `6c0e6078d4c218af70abe9880be3be1c72201a44c4709e08ad8dd07446f27fa9`. The observations below were
-  made on the original file and still apply to the rebranded one.
+  made on the original file. They apply to the rebranded one too, except those about the
+  original's HTML title and its AnVIL program names, which the rebrand replaces.
 - HTML title: `DUOS — Data Use Oversight System`. No authoritative artifact version or modification
   timestamp was supplied; dates within sample content are not version metadata.
 - Inspected HTML/CSS/JavaScript, extracted a DOM inventory with scripts disabled, then rendered the
