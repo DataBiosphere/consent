@@ -39,8 +39,8 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
  *
  * <p>For a request that the DUOS BFF proxies, the load balancer's {@code X-Real-IP} is the DUOS
  * pod's egress address. The BFF signs the browser IP instead, and {@link SignedClientIpVerifier}
- * checks it. A verified IP is the key. A rejected one logs one warning with the reason only, and
- * the key falls back to {@code X-Real-IP}.
+ * checks it. A verified IP is the key. A rejected one falls back to {@code X-Real-IP}, and its
+ * reason (never a header value) is added to the 429 log line.
  *
  * <p>Buckets live in-process, as in {@link RateLimitFilter}: each pod enforces {@code
  * requestsPerMinute / podCount}. The filter is {@code @PreMatching}, so it also counts requests to
@@ -110,25 +110,31 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
     if (!isLimitedPath(uriInfo)) {
       return;
     }
-    ClientIp clientIp = resolveClientIp(requestContext);
+    SignedClientIpVerifier.Result signed =
+        signedClientIpVerifier.verify(requestContext.getHeaders());
+    ClientIp clientIp =
+        signed.clientIp() != null
+            ? clientIpResolver.resolveSigned(signed.clientIp())
+            : resolveFromRealIp(requestContext);
     ConsumptionProbe probe = buckets.getUnchecked(clientIp.key()).tryConsumeAndReturnRemaining(1);
     if (!probe.isConsumed()) {
-      logWarn(
-          "Showcase rate limit exceeded: key=%s, source=%s, path=%s"
-              .formatted(clientIp.key(), clientIp.source(), path));
+      logWarn(limitExceededMessage(clientIp, signed.rejection(), path));
       requestContext.abortWith(RateLimitFilter.tooManyRequests(probe));
     }
   }
 
-  private ClientIp resolveClientIp(ContainerRequestContext requestContext) {
-    SignedClientIpVerifier.Result signed =
-        signedClientIpVerifier.verify(requestContext.getHeaders());
-    if (signed.clientIp() != null) {
-      return clientIpResolver.resolveSigned(signed.clientIp());
-    }
-    if (signed.rejection() != null) {
-      logWarn("Showcase signed client IP rejected: reason=" + signed.rejection());
-    }
+  /**
+   * The one log line per 429. A rejected signed header adds its reason here and writes no line of
+   * its own, so a caller cannot add a WARN line to every request by sending a bad header.
+   */
+  private static String limitExceededMessage(
+      ClientIp clientIp, SignedClientIpVerifier.Rejection rejection, String path) {
+    String signedRejection = rejection == null ? "" : ", signedRejection=" + rejection;
+    return "Showcase rate limit exceeded: key=%s, source=%s%s, path=%s"
+        .formatted(clientIp.key(), clientIp.source(), signedRejection, path);
+  }
+
+  private ClientIp resolveFromRealIp(ContainerRequestContext requestContext) {
     List<String> realIp =
         Objects.requireNonNullElse(requestContext.getHeaders().get(REAL_IP_HEADER), List.of());
     return clientIpResolver.resolve(servletRequest.getRemoteAddr(), realIp);

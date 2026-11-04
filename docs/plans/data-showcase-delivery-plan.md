@@ -446,10 +446,11 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
 
   `PublicRateLimitFilter` uses the IP as the key (`source=SIGNED_CLIENT_IP_HEADER` in the 429
   log) only when the signature matches the current or the previous secret, in constant time,
-  and the timestamp is at most 60 seconds old and at most 5 seconds ahead. Otherwise it logs one
-  warning with the reason only (`Showcase signed client IP rejected: reason=...`, never a header
-  value) and keys on `X-Real-IP` as before. A request without any of the three headers, such as a
-  legacy-mode browser call, logs nothing. The BFF never sends the secret, and it strips
+  and the timestamp is at most 60 seconds old and at most 5 seconds ahead. Otherwise it keys on
+  `X-Real-IP` as before, and writes no line of its own: the reason goes on the 429 line, if the
+  request is limited (`..., source=REAL_IP_HEADER, signedRejection=BAD_SIGNATURE, ...`, never a
+  header value). So a caller cannot add a WARN line to every request by sending a bad header. A
+  request without any of the three headers, such as a legacy-mode browser call, has no reason. The BFF never sends the secret, and it strips
   caller-supplied copies of the three headers on every public route. A recorded header is of no
   use after its window ends, and a caller outside the cluster cannot choose its own key. Inside
   the window, a person who copies a set of headers can send it again and use up that IP's bucket;
@@ -463,7 +464,9 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
   characters, in Google Secret Manager for each environment, until DT-3625 adds automatic
   rotation. The BFF reads it as `DUOS_CONSENT_PROXY_SECRET`; Consent reads
   `rateLimit.clientIpSecret` and the optional `rateLimit.clientIpPreviousSecret`.
-  Without a secret on either side, the route still works and BFF traffic shares one bucket. Manual
+  Without a secret on either side, the route still answers, but all BFF users share the bucket of
+  the DUOS egress address, so they can get 429s once it is used up. The same is true when the BFF
+  clock is more than 5 seconds ahead. Manual
   rotation without an outage: (1) give Consent the new value as current and the old value as
   previous; (2) change the BFF to the new value; (3) remove the previous value from Consent.
 
@@ -475,7 +478,7 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
   either value is turned on, or the ExternalSecret cannot sync. To rotate: add a GSM version with
   `current` = new and `previous` = old, and turn on `previousEnabled`. Both apps read `current`,
   so step (2) happens when each pod reloads. If DUOS reloads before Consent, its lookups share one
-  bucket until Consent reloads; nothing fails. Then turn off `previousEnabled` and remove
+  bucket, and can get 429s, until Consent reloads. Then turn off `previousEnabled` and remove
   `previous` from GSM.
 
   The commands follow the `duos-session-secret` steps (BFF Epic 0, 0-B): `openssl rand -base64 32`
@@ -504,8 +507,8 @@ from the index. Unknown or hidden keys render the standard not-found page. Trans
       --project=<project> | jq -c '{current: .current}')
   ```
 
-  Unlike the session secret, a lost value costs little: make a new one, and BFF traffic shares one
-  Consent bucket only until both apps reload.
+  Unlike the session secret, a lost value costs little: make a new one, and BFF users share one
+  Consent bucket, and can get 429s, only until both apps reload.
 
   The secret and the headers are not specific to the showcase. Another anonymous BFF route that
   needs a per-browser limit in Consent can sign with the same helper, and another Consent limiter

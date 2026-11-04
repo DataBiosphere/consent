@@ -384,11 +384,25 @@ class PublicRateLimitFilterTest {
 
     send(filter, 2);
 
-    verify(filter, times(2)).logWarn("Showcase signed client IP rejected: reason=" + reason);
+    // One line, on the 429 only: the reason rides on it, so a caller cannot add a WARN line to
+    // every
+    // request by sending a bad header.
     verify(filter)
         .logWarn(
-            "Showcase rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
-                + "path=showcase/datasets");
+            "Showcase rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, signedRejection="
+                + reason
+                + ", path=showcase/datasets");
+    verify(filter, times(1)).logWarn(anyString());
+  }
+
+  @Test
+  void testRejectedSignatureWithinTheLimitLogsNothing() {
+    PublicRateLimitFilter filter = buildSigningFilter(PROXY_SECRET, null);
+    mockSignedRequest("203.0.113.7", Long.toString(NOW), "forged");
+
+    send(filter, 1);
+
+    verify(filter, never()).logWarn(anyString());
   }
 
   @Test
