@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -38,31 +39,36 @@ public interface AssetCatalogDAO {
   /** Numbers a model, workspace or biospecimen entry by its row id. */
   default void insertAssetEntry(AssetType type, Integer rowId) {
     switch (type) {
-      case MODEL -> insertModelEntry(rowId);
-      case WORKSPACE -> insertWorkspaceEntry(rowId);
-      case BIOSPECIMEN -> insertBiospecimenEntry(rowId);
+      case MODEL -> insertModelEntries(List.of(rowId));
+      case WORKSPACE -> insertWorkspaceEntries(List.of(rowId));
+      case BIOSPECIMEN -> insertBiospecimenEntries(List.of(rowId));
       case DATASET ->
           throw new IllegalArgumentException("A dataset entry is numbered by its alias.");
     }
   }
 
-  @SqlUpdate(
-      "INSERT INTO asset_catalog (asset_type, asset_number, model_id) VALUES ('MODEL', :id, :id)")
-  void insertModelEntry(@Bind("id") Integer modelId);
+  @SqlBatch(
+      """
+      INSERT INTO asset_catalog (asset_type, asset_number, model_id) VALUES ('MODEL', :id, :id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
+      """)
+  void insertModelEntries(@Bind("id") List<Integer> modelIds);
 
-  @SqlUpdate(
+  @SqlBatch(
       """
       INSERT INTO asset_catalog (asset_type, asset_number, workspace_id)
       VALUES ('WORKSPACE', :id, :id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
       """)
-  void insertWorkspaceEntry(@Bind("id") Integer workspaceId);
+  void insertWorkspaceEntries(@Bind("id") List<Integer> workspaceIds);
 
-  @SqlUpdate(
+  @SqlBatch(
       """
       INSERT INTO asset_catalog (asset_type, asset_number, biospecimen_id)
       VALUES ('BIOSPECIMEN', :id, :id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
       """)
-  void insertBiospecimenEntry(@Bind("id") Integer biospecimenId);
+  void insertBiospecimenEntries(@Bind("id") List<Integer> biospecimenIds);
 
   /**
    * Gives the dataset an entry if it has none, relinking the one a restore unlinked from it.

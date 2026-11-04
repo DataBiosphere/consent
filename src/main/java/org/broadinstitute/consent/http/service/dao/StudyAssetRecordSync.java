@@ -18,11 +18,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -48,6 +50,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
 
   private static final String BIOSPECIMEN_ID = "biospecimenId";
   private static final String SAMPLE_ID = "sampleId";
+  private static final String DUOS_IDENTIFIER = "duosIdentifier";
   private static final Pattern ROW_ID = Pattern.compile("[1-9]\\d{0,9}");
   private static final BigDecimal MAX_ROW_ID = BigDecimal.valueOf(Integer.MAX_VALUE);
   // Code points, as SQL counts them; at 4 bytes each this fits the legacy_key index's row limit.
@@ -81,7 +84,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
               StudyAssetRecordDAO::findUsedModelLegacyKeys,
               StudyAssetRecordDAO::insertModels,
               StudyAssetRecordDAO::updateModels,
-              StudyAssetRecordDAO::retireModelsExcept),
+              StudyAssetRecordDAO::retireModelsExcept,
+              AssetCatalogDAO::insertModelEntries),
           new AssetType<>(
               StudyAssets.WORKSPACES,
               "workspaceId",
@@ -107,7 +111,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
               StudyAssetRecordDAO::findUsedWorkspaceLegacyKeys,
               StudyAssetRecordDAO::insertWorkspaces,
               StudyAssetRecordDAO::updateWorkspaces,
-              StudyAssetRecordDAO::retireWorkspacesExcept),
+              StudyAssetRecordDAO::retireWorkspacesExcept,
+              AssetCatalogDAO::insertWorkspaceEntries),
           new AssetType<>(
               StudyAssets.BIOSPECIMENS,
               BIOSPECIMEN_ID,
@@ -142,7 +147,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
               StudyAssetRecordDAO::findUsedBiospecimenLegacyKeys,
               StudyAssetRecordDAO::insertBiospecimens,
               StudyAssetRecordDAO::updateBiospecimens,
-              StudyAssetRecordDAO::retireBiospecimensExcept));
+              StudyAssetRecordDAO::retireBiospecimensExcept,
+              AssetCatalogDAO::insertBiospecimenEntries));
 
   /**
    * Syncs every asset type against the properties a registration write just stored, then stores
@@ -150,7 +156,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
    * registration write replaces every property.
    */
   public void syncRegistration(Handle handle, Integer studyId, List<StudyProperty> props) {
-    StudyAssetRecordDAO dao = handle.attach(StudyAssetRecordDAO.class);
+    Daos daos = new Daos(handle);
     StudyDAO studyDAO = handle.attach(StudyDAO.class);
     for (AssetType<?> type : TYPES) {
       Optional<JsonElement> stored =
@@ -165,7 +171,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
         continue;
       }
       JsonArray entries = stored.map(JsonElement::getAsJsonArray).orElseGet(JsonArray::new);
-      sync(dao, studyId, type, entries);
+      sync(daos, studyId, type, entries);
       if (stored.isPresent()) {
         studyDAO.updateStudyProperty(
             studyId, type.key(), PropertyType.Json.toString(), entries.toString());
@@ -183,7 +189,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
     if (!handle.isInTransaction()) {
       throw new IllegalStateException("syncStudy must run in a transaction to hold the lock");
     }
-    StudyAssetRecordDAO dao = handle.attach(StudyAssetRecordDAO.class);
+    Daos daos = new Daos(handle);
+    StudyAssetRecordDAO dao = daos.records();
     StudyDAO studyDAO = handle.attach(StudyDAO.class);
     if (dao.lockStudy(studyId).isEmpty()) {
       throw new NotFoundException("Study with ID %d does not exist.".formatted(studyId));
@@ -204,13 +211,13 @@ public class StudyAssetRecordSync implements ConsentLogger {
       Optional<StoredStudyProperty> list =
           promoted.stream().filter(p -> parse(p) instanceof JsonArray).findFirst();
       if (list.isPresent()) {
-        syncStored(dao, studyId, type, list.get());
+        syncStored(daos, studyId, type, list.get());
       } else if (!promoted.isEmpty()) {
         logWarn(
             "Study %d: %s is not a list, so its rows were left as they are"
                 .formatted(studyId, type.key()));
       } else {
-        movedAny |= moveLegacyList(dao, studyDAO, studyId, type, legacy);
+        movedAny |= moveLegacyList(daos, studyDAO, studyId, type, legacy);
       }
     }
     if (movedAny) {
@@ -224,12 +231,12 @@ public class StudyAssetRecordSync implements ConsentLogger {
   }
 
   private void syncStored(
-      StudyAssetRecordDAO dao, Integer studyId, AssetType<?> type, StoredStudyProperty stored) {
+      Daos daos, Integer studyId, AssetType<?> type, StoredStudyProperty stored) {
     JsonArray list = parse(stored).getAsJsonArray();
     String before = list.toString();
-    sync(dao, studyId, type, list);
+    sync(daos, studyId, type, list);
     if (!list.toString().equals(before)) {
-      dao.updateStudyPropertyValue(stored.studyPropertyId(), list.toString());
+      daos.records().updateStudyPropertyValue(stored.studyPropertyId(), list.toString());
     }
   }
 
@@ -240,11 +247,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
    * @return whether a list was moved out of {@code legacy}
    */
   private boolean moveLegacyList(
-      StudyAssetRecordDAO dao,
-      StudyDAO studyDAO,
-      Integer studyId,
-      AssetType<?> type,
-      JsonObject legacy) {
+      Daos daos, StudyDAO studyDAO, Integer studyId, AssetType<?> type, JsonObject legacy) {
     Optional<String> legacyKey =
         legacy.keySet().stream()
             .filter(type.key()::equalsIgnoreCase)
@@ -252,7 +255,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
             .filter(key -> legacy.get(key).isJsonArray());
     JsonArray entries =
         legacyKey.map(key -> legacy.remove(key).getAsJsonArray()).orElseGet(JsonArray::new);
-    sync(dao, studyId, type, entries);
+    sync(daos, studyId, type, entries);
     legacyKey.ifPresent(
         key ->
             studyDAO.insertStudyProperty(
@@ -268,8 +271,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
     }
   }
 
-  private <R> void sync(
-      StudyAssetRecordDAO dao, Integer studyId, AssetType<R> type, JsonArray entries) {
+  private <R> void sync(Daos daos, Integer studyId, AssetType<R> type, JsonArray entries) {
+    StudyAssetRecordDAO dao = daos.records();
     LiveRows live = new LiveRows(type.findLive().apply(dao, studyId));
     if (live.ids.isEmpty() && entries.isEmpty()) {
       return;
@@ -292,6 +295,8 @@ public class StudyAssetRecordSync implements ConsentLogger {
         continue;
       }
       JsonObject entry = entries.get(i).getAsJsonObject();
+      // An identifier comes from the catalog, never from a client.
+      entry.remove(DUOS_IDENTIFIER);
       JsonElement id = entry.get(type.idKey());
       Integer match = live.claim(id);
       if (biospecimens) {
@@ -310,7 +315,7 @@ public class StudyAssetRecordSync implements ConsentLogger {
                 .formatted(studyId, type.key(), i, fields.wrongType));
       }
     }
-    writes.apply(dao, studyId, type);
+    writes.apply(daos, studyId, type);
   }
 
   /**
@@ -483,11 +488,15 @@ public class StudyAssetRecordSync implements ConsentLogger {
       inserts.add(row);
     }
 
-    void apply(StudyAssetRecordDAO dao, Integer studyId, AssetType<R> type) {
+    void apply(Daos daos, Integer studyId, AssetType<R> type) {
+      StudyAssetRecordDAO dao = daos.records();
       if (!updates.isEmpty()) {
         requireAllLive(type.update().apply(dao, updates), studyId, type.key());
       }
       List<Integer> newIds = inserts.isEmpty() ? List.of() : type.insert().apply(dao, inserts);
+      if (!newIds.isEmpty()) {
+        type.insertEntries().accept(daos.catalog(), newIds);
+      }
       List<Integer> keepIds = new ArrayList<>(matchedIds);
       keepIds.addAll(newIds);
       type.retire().apply(dao, studyId, keepIds);
@@ -604,5 +613,13 @@ public class StudyAssetRecordSync implements ConsentLogger {
       BiFunction<StudyAssetRecordDAO, Integer, List<String>> findUsedLegacyKeys,
       BiFunction<StudyAssetRecordDAO, List<R>, List<Integer>> insert,
       BiFunction<StudyAssetRecordDAO, List<R>, int[]> update,
-      Retire retire) {}
+      Retire retire,
+      BiConsumer<AssetCatalogDAO, List<Integer>> insertEntries) {}
+
+  /** The DAOs one sync writes through, attached to the caller's handle. */
+  private record Daos(StudyAssetRecordDAO records, AssetCatalogDAO catalog) {
+    Daos(Handle handle) {
+      this(handle.attach(StudyAssetRecordDAO.class), handle.attach(AssetCatalogDAO.class));
+    }
+  }
 }
