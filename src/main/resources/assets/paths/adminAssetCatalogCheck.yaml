@@ -1,0 +1,22 @@
+get:
+  summary: Check the asset catalog for drift
+  operationId: checkAssetCatalog
+  description: >-
+    Compares `asset_catalog` with the dataset, model, workspace and biospecimen tables and reports
+    each kind of drift, from one snapshot, without changing anything. Run it after ad hoc SQL or a
+    restore; nothing runs it on a schedule. Each kind has a count and its first 500 findings.
+  tags:
+    - Admin
+  responses:
+    200:
+      description: The findings of each kind; empty lists mean the catalog is consistent
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/AssetCatalogCheck.yaml'
+    401:
+      description: Unauthorized
+    403:
+      description: The user does not have the Admin role
+    500:
+      description: Unable to run the check

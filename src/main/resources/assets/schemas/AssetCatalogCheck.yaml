@@ -1,0 +1,21 @@
+type: object
+required: [orphans, missing, collisions, mismatches, relinkable, sequenceBehind]
+properties:
+  orphans:
+    $ref: './AssetCatalogFindings.yaml'
+    description: Entries that reference nothing and have no removal date, so their asset was deleted outside the app. An entry a row could be relinked to is reported as relinkable instead.
+  missing:
+    $ref: './AssetCatalogFindings.yaml'
+    description: Datasets and assets with no entry whose number is free.
+  collisions:
+    $ref: './AssetCatalogFindings.yaml'
+    description: Datasets with no entry whose alias another entry holds. Only an ad hoc insert causes one, and it is fixed by hand.
+  mismatches:
+    $ref: './AssetCatalogFindings.yaml'
+    description: Dataset entries whose number is no longer their dataset's alias, left by an ad hoc update.
+  relinkable:
+    $ref: './AssetCatalogFindings.yaml'
+    description: Datasets and assets with no entry whose number belongs to an unlinked entry of their type, as a restore without the catalog leaves. A dataset's entry must have been created for that dataset.
+  sequenceBehind:
+    $ref: './AssetCatalogFindings.yaml'
+    description: Dataset aliases and dataset entry numbers at or above the next value of the alias sequence, which it would issue again.

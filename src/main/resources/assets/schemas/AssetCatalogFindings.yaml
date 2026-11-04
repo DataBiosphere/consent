@@ -1,0 +1,27 @@
+type: object
+required: [count, items]
+properties:
+  count:
+    type: integer
+    format: int64
+    description: Every finding of this kind.
+  items:
+    type: array
+    maxItems: 500
+    description: The first findings, at most 500.
+    items:
+      type: object
+      required: [assetType, assetNumber]
+      properties:
+        assetType:
+          type: string
+          enum: [DATASET, MODEL, WORKSPACE, BIOSPECIMEN]
+        assetNumber:
+          type: integer
+          description: The identifier number in question.
+        catalogId:
+          type: integer
+          description: The asset_catalog entry, when the finding involves one.
+        rowId:
+          type: integer
+          description: The dataset id or asset row id, when the finding involves a row.

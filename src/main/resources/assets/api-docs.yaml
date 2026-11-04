@@ -34,6 +34,8 @@ paths:
     $ref: './paths/signingOfficialDashboardSummary.yaml'
   /api/admin/dashboard-summary:
     $ref: './paths/adminDashboardSummary.yaml'
+  /api/admin/asset-catalog/check:
+    $ref: './paths/adminAssetCatalogCheck.yaml'
   /api/asset-catalog/{identifier}:
     $ref: './paths/assetCatalogLookup.yaml'
   /api/collections/{collectionId}:
