@@ -367,8 +367,8 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDataSubmitterEmail(study.getCreateUserEmail());
     }
 
-    // The indexed assets object keeps its original shape — every promoted list plus whatever
-    // unpromoted keys remain — so search consumers are unaffected by the promotion.
+    // Every promoted list plus the unpromoted legacy keys, as before the promotion, with each
+    // model, workspace and biospecimen's identifier added.
     Map<String, Object> studyAssetsMap =
         StudyAssetIdentifiers.decorate(studyAssets.assemble(study.getProperties()));
     if (!studyAssetsMap.isEmpty()) {

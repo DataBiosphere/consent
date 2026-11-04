@@ -4,13 +4,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import org.broadinstitute.consent.http.enumeration.AssetType;
 
-/**
- * The DUOS identifier of each model, workspace and biospecimen entry, added when it is served or
- * indexed. It is derived from the entry's row id and never stored: a {@code duosIdentifier} a
- * client stored is always removed first.
- */
+/** Each model, workspace and biospecimen's DUOS identifier, added when served and never stored. */
 public final class StudyAssetIdentifiers {
 
   public static final String DUOS_IDENTIFIER = "duosIdentifier";
@@ -28,36 +25,42 @@ public final class StudyAssetIdentifiers {
   /** The entries of one asset list, each with its identifier; other lists come back unchanged. */
   public static List<Object> decorate(String key, List<Object> entries) {
     Kind kind = KINDS.get(key);
-    return kind == null ? entries : entries.stream().map(e -> withIdentifier(kind, e)).toList();
+    return kind == null ? entries : decorated(kind, entries);
   }
 
   /** An assets object, as {@link StudyAssets#assemble} builds it, with its entries decorated. */
   public static Map<String, Object> decorate(Map<String, Object> assets) {
-    return mapLists(assets, true);
+    return mapLists(assets, StudyAssetIdentifiers::decorated);
   }
 
   /** The entries of one asset list without any {@code duosIdentifier}. */
   public static List<Object> strip(String key, List<Object> entries) {
-    Kind kind = KINDS.get(key);
-    return kind == null ? entries : entries.stream().map(StudyAssetIdentifiers::without).toList();
+    return KINDS.containsKey(key) ? stripped(entries) : entries;
   }
 
   /** An assets object with no {@code duosIdentifier} on any entry. */
   public static Map<String, Object> strip(Map<String, Object> assets) {
-    return mapLists(assets, false);
+    return mapLists(assets, (kind, entries) -> stripped(entries));
   }
 
-  private static Map<String, Object> mapLists(Map<String, Object> assets, boolean decorate) {
+  private static Map<String, Object> mapLists(
+      Map<String, Object> assets, BiFunction<Kind, List<?>, List<Object>> mapList) {
     Map<String, Object> mapped = new LinkedHashMap<>(assets);
-    KINDS.keySet().stream()
-        .filter(key -> mapped.get(key) instanceof List<?>)
-        .forEach(
-            key -> {
-              List<Object> entries =
-                  ((List<?>) mapped.get(key)).stream().map(Object.class::cast).toList();
-              mapped.put(key, decorate ? decorate(key, entries) : strip(key, entries));
-            });
+    KINDS.forEach(
+        (key, kind) -> {
+          if (mapped.get(key) instanceof List<?> entries) {
+            mapped.put(key, mapList.apply(kind, entries));
+          }
+        });
     return mapped;
+  }
+
+  private static List<Object> decorated(Kind kind, List<?> entries) {
+    return entries.stream().map(e -> withIdentifier(kind, e)).toList();
+  }
+
+  private static List<Object> stripped(List<?> entries) {
+    return entries.stream().map(StudyAssetIdentifiers::without).toList();
   }
 
   private static Object withIdentifier(Kind kind, Object entry) {
