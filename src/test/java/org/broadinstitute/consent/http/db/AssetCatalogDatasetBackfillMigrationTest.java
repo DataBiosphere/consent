@@ -145,10 +145,9 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
    */
   private void runMigration() throws Exception {
     String forward = Files.readString(CHANGESET).split("<rollback>")[0];
-    Matcher matcher = Pattern.compile("<sql>(.*?)</sql>", Pattern.DOTALL).matcher(forward);
-    List<String> blocks = matcher.results().map(result -> unescape(result.group(1))).toList();
+    List<String> blocks = sqlBlocks(forward);
     assertEquals(4, blocks.size(), "changeset should ship four <sql> blocks");
-    jdbi.useTransaction(handle -> blocks.forEach(block -> handle.execute(block.trim())));
+    jdbi.useTransaction(handle -> blocks.forEach(handle::execute));
   }
 
   /** The collision report query from the changeset's comment. */
@@ -158,10 +157,6 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
             .matcher(Files.readString(CHANGESET));
     assertTrue(matcher.find(), "changeset should carry the collision report query");
     return matcher.group(1);
-  }
-
-  private static String unescape(String xml) {
-    return xml.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
   }
 
   private Integer insertDataset() {

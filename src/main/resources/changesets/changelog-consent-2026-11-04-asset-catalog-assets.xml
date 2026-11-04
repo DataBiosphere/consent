@@ -22,7 +22,7 @@
       WHERE c.model_id IS NULL AND c.workspace_id IS NULL AND c.biospecimen_id IS NULL
       ORDER BY r.asset_type, r.row_id;
   -->
-  <changeSet id="changelog-consent-2026-11-04-asset-catalog-assets" author="kevinmarete">
+  <changeSet id="changelog-consent-2026-11-04-asset-catalog-assets" author="kmarete">
     <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
     <sql>SET LOCAL lock_timeout = '10s'</sql>
     <!-- Blocks asset inserts and deletes until the backfill commits, and allows reads. The order

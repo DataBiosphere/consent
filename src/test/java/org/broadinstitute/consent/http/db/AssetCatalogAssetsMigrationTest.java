@@ -147,15 +147,6 @@ class AssetCatalogAssetsMigrationTest extends DAOTestHelper {
     return matcher.group(1);
   }
 
-  private static List<String> sqlBlocks(String xml) {
-    Matcher matcher = Pattern.compile("<sql>(.*?)</sql>", Pattern.DOTALL).matcher(xml);
-    return matcher.results().map(result -> unescape(result.group(1)).trim()).toList();
-  }
-
-  private static String unescape(String xml) {
-    return xml.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
-  }
-
   private Integer insertStudy() {
     return studyDAO.insertStudy(
         randomAlphabetic(20),
