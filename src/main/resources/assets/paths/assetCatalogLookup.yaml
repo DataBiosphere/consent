@@ -27,5 +27,7 @@ get:
       description: Unauthorized
     404:
       description: Unknown or malformed identifier, or a live or retired asset the caller cannot read
+    429:
+      description: Too Many Requests - rate limit exceeded; retry after the Retry-After header
     500:
       description: Server error
