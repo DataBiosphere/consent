@@ -51,7 +51,7 @@ The delivery plan's proposals apply where none of these sources decides.
 | Conference: dates with time zone, location, description; live registration link or alert signup | Original Story 22; Story 29 |
 | Workshops: public signup and a private-training request path; the artifact's multi-session enrollment is not required | Original Story 23 |
 | Shelf, grid, featured-card and panel layouts | Artifact |
-| Breakpoints, theme presets, typography | Artifact as evidence; provisional values approved by the product owner (design review, 2026-11-03) |
+| Breakpoints, theme presets, typography | Artifact as evidence; provisional values awaiting product owner approval (design review, 2026-11-03; see "Open gates") |
 | The DUOS header stays above every showcase; the showcase masthead has no DUOS logo and no Sign in of its own | Decision 2026-11-03 (D10) |
 | Partner color themes: a preset plus contrast-checked primary/accent overrides | Decision 2026-11-03 (D16) |
 | Typography: Montserrat and system Helvetica Neue if the product owner approves, otherwise the artifact's fonts, bundled | Decision 2026-11-03 (D17) |
@@ -197,7 +197,7 @@ here in place of "Provisional".
 | D4 | "See all" link and eyebrow text | The link shows only when a config sets `seeAllUrl`. A link to a signed-in page is labeled as needing sign-in (S3.2). There are no eyebrow labels in the MVP, and no schema change. **Provisional:** where the link sits beside the arrows, and how it wraps on phones. |
 | D5 | Announcement autoplay | None in the MVP. Visitors move between announcements with the controls. |
 | D6 | Announcement controls | "Previous announcement" and "Next announcement" buttons, with a visible "2 of 4" position. There is no pause button. Inactive announcements leave the tab order and the accessibility tree. One announcement has no controls, and with none the panel isn't shown. |
-| D7 | Skip link and tab order | The skip link is part of the showcase template, not the app shell. "Skip to main content" sits after the DUOS header and before the showcase masthead. It is hidden until focused and lands at the hero heading. Tab order: DUOS header → skip link → showcase logos → search → sub-nav → hero (intro links, calls to action, onboarding, announcement controls) → each section's heading link, controls, then cards → footer. **Provisional:** how the skip link looks when focused. |
+| D7 | Skip link and tab order | The skip link is part of the showcase template, not the app shell. "Skip to main content" sits after the DUOS header and before the showcase masthead. It is hidden until focused and lands at the page's `h1`: the hero heading, or, when the hero is disabled or has no content, the showcase title the template renders at the top of `<main>`. Tab order: DUOS header → skip link → showcase logos → search → sub-nav → hero (intro links, calls to action, onboarding, announcement controls) → each section's heading link, controls, then cards → footer. **Provisional:** how the skip link looks when focused. |
 | D8 | Sticky masthead | The showcase masthead sticks on desktop and tablet. Nothing sticks on phones. The anchor offset equals the height of whatever sticks, so it is zero on phones. The DUOS header is not sticky. |
 | D9 | Focus indicator | One focus style for links, buttons, cards and shelf controls, with at least 3:1 contrast on every surface it can appear on. **Provisional:** its color, width and offset. |
 | D10 | Logos | Changed (see the next section). |
