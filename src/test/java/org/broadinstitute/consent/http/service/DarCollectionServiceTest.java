@@ -104,6 +104,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private DarCollectionService service;
 
+  /**
+   * Ids for the users the helpers below create. User equality is by id, so random ids could collide
+   * and break Set.of(...) mid-stubbing. JUnit makes a new instance for each test, so ids restart at
+   * 1000 per test, above the literal ids (99, 999) the tests use.
+   */
+  private int nextUserId = 1000;
+
   @Mock private DarCollectionDAO darCollectionDAO;
   @Mock private DarCollectionSummaryDAO darCollectionSummaryDAO;
   @Mock private DarCollectionServiceDAO darCollectionServiceDAO;
@@ -5034,7 +5041,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private User createUserWithRole(UserRoles userRoles) {
     User user = new User();
-    user.setUserId(randomInt(1, 100000));
+    user.setUserId(nextUserId++);
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
@@ -5045,7 +5052,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private User createUserWithRoleAndDacId(UserRoles userRoles, Integer dacId) {
     User user = new User();
-    user.setUserId(randomInt(1, 100000));
+    user.setUserId(nextUserId++);
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
