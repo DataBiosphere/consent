@@ -18,7 +18,9 @@
   <changeSet id="changelog-consent-2026-11-04-asset-catalog-datasets" author="kmarete">
     <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
     <sql>SET LOCAL lock_timeout = '10s'</sql>
-    <!-- Blocks dataset inserts and deletes until the backfill commits, and allows reads. -->
+    <!-- Blocks dataset writes until the backfill commits, and allows reads. A dataset delete
+         writes its catalog entry before it touches dataset, so it may deadlock with the backfill;
+         Postgres aborts one side and no identifier is wrong. -->
     <sql>LOCK TABLE dataset IN SHARE ROW EXCLUSIVE MODE</sql>
     <sql>
       INSERT INTO asset_catalog (asset_type, asset_number, dataset_id, source_dataset_id, backfill_run)

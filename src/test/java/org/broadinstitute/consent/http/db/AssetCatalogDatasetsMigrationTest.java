@@ -37,6 +37,17 @@ class AssetCatalogDatasetsMigrationTest extends DAOTestHelper {
   }
 
   @Test
+  void testTheStatementsAreTask2sWithOnlyTheBackfillRunChanged() throws Exception {
+    String task2 =
+        Files.readString(
+            Path.of("src/main/resources/changesets/%s.xml".formatted(TASK_2_CHANGESET_ID)));
+
+    assertEquals(
+        sqlBlocks(task2.replace(TASK_2_CHANGESET_ID, CHANGESET_ID)),
+        sqlBlocks(Files.readString(CHANGESET)));
+  }
+
+  @Test
   void testEveryDatasetGetsOneEntryNumberedByItsAlias() throws Exception {
     Integer datasetId = insertDataset();
     Integer zeroAliasId = insertDataset();
@@ -117,6 +128,83 @@ class AssetCatalogDatasetsMigrationTest extends DAOTestHelper {
     runMigration();
 
     assertEquals(aheadAlias + 1, nextDatasetAlias());
+  }
+
+  @Test
+  void testTheSequenceMovesPastARemovedEntryNumberAheadOfIt() throws Exception {
+    int aheadNumber = nextDatasetAlias() + 10;
+    executeSql(
+        "INSERT INTO asset_catalog (asset_type, asset_number, asset_removed_date) VALUES ('DATASET', %d, now())"
+            .formatted(aheadNumber));
+
+    runMigration();
+
+    assertEquals(aheadNumber + 1, nextDatasetAlias());
+  }
+
+  @Test
+  void testTheSequenceStaysWhenItIsAhead() throws Exception {
+    insertDataset();
+    int next = nextDatasetAlias();
+
+    runMigration();
+
+    assertEquals(next, nextDatasetAlias());
+  }
+
+  @Test
+  void testTheMigrationRunsWhenAliasIsNumeric() throws Throwable {
+    Integer datasetId = insertDataset();
+    int aheadAlias = nextDatasetAlias() + 10;
+    executeSql(
+        "UPDATE dataset SET alias = %d WHERE dataset_id = %d".formatted(aheadAlias, datasetId));
+
+    withNumericDatasetAlias(this::runMigration);
+
+    assertEquals(
+        datasetId, catalogDAO.findByTypeAndNumber(AssetType.DATASET, aheadAlias).datasetId());
+    assertEquals(aheadAlias + 1, nextDatasetAlias());
+  }
+
+  @Test
+  void testRollbackRemovesOnlyThisBackfillsEntriesForLiveDatasets() throws Exception {
+    Integer appDataset = insertDataset();
+    catalogDAO.insertDatasetEntry(appDataset);
+    Integer task2Dataset = insertDataset();
+    executeSql(
+        """
+        INSERT INTO asset_catalog
+            (asset_type, asset_number, dataset_id, source_dataset_id, backfill_run)
+        VALUES ('DATASET', %d, %d, %d, '%s')
+        """
+            .formatted(
+                datasetAlias(task2Dataset), task2Dataset, task2Dataset, TASK_2_CHANGESET_ID));
+    Integer backfilled = insertDataset();
+    Integer removed = insertDataset();
+    int removedAlias = datasetAlias(removed);
+    runMigration();
+    catalogDAO.markRemovedByDataset(removed);
+    datasetDAO.deleteDatasetById(removed);
+
+    jdbi.useHandle(h -> h.execute(rollbackSql()));
+
+    assertNull(catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(backfilled)));
+    assertEquals(
+        CHANGESET_ID,
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, removedAlias).backfillRun());
+    assertEquals(
+        appDataset,
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(appDataset)).datasetId());
+    assertEquals(
+        task2Dataset,
+        catalogDAO.findByTypeAndNumber(AssetType.DATASET, datasetAlias(task2Dataset)).datasetId());
+    assertEquals(3, countAssetCatalogEntries());
+  }
+
+  private String rollbackSql() throws Exception {
+    List<String> blocks = sqlBlocks(Files.readString(CHANGESET).split("<rollback>")[1]);
+    assertEquals(1, blocks.size(), "rollback should ship one <sql> block");
+    return blocks.get(0);
   }
 
   /**
