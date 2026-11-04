@@ -54,7 +54,7 @@ The delivery plan's proposals apply where none of these sources decides.
 | Breakpoints, theme presets, typography | Artifact as evidence; provisional values awaiting product owner approval (design review, 2026-11-03; see "Open gates") |
 | The DUOS header stays above every showcase; the showcase masthead has no DUOS logo and no Sign in of its own | Decision 2026-11-03 (D10) |
 | Partner color themes: a preset plus contrast-checked primary/accent overrides | Decision 2026-11-03 (D16) |
-| Typography: Montserrat and system Helvetica Neue if the product owner approves, otherwise the artifact's fonts, bundled | Decision 2026-11-03 (D17) |
+| Typography: Montserrat headings, and Helvetica Neue from the visitor's device for body text, labels and figures | Decision 2026-11-03 (D17); fonts approved by the product owner 2026-11-04 |
 
 ## Registry key renames
 
@@ -186,8 +186,8 @@ packet was accepted, except where a row below says otherwise.
 The product owner approves the design. Some decisions had no proposal, only a value to set.
 Those values are marked **Provisional**. The implementing PR builds them from the artifact's
 values, or from the current `themes.ts` placeholders where the artifact has none. They are shown
-to the product owner together with the typography demo (D17). Once approved, each one is recorded
-here in place of "Provisional".
+to the product owner for approval; the D17 fonts were approved first, on 2026-11-04. Once approved,
+each value is recorded here in place of "Provisional".
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -231,20 +231,21 @@ here in place of "Provisional".
   visitor's own device (Helvetica Neue, Helvetica, Arial, sans-serif), as the rest of DUOS does.
   Helvetica Neue is licensed and can't be bundled. The rule becomes: fonts are either bundled or
   the visitor's own, never loaded from a third-party host.
-- The finished implementation is shown to the product owner. If they approve it, it is adopted.
-  If not, the template uses the artifact's font families: Fraunces for headings, IBM Plex Sans for
-  body text and IBM Plex Mono for labels and figures. They are bundled from their open-license
-  sources, not extracted from the artifact's embedded files.
+- **Approved 2026-11-04.** The product owner approved the fonts from a side-by-side comparison of
+  the Quillmere page: Montserrat at weight 600 for headings, and Helvetica Neue for body text and
+  for the labels and figures the artifact set in IBM Plex Mono. The fallback to the artifact's font
+  families (Fraunces, IBM Plex Sans and IBM Plex Mono) is no longer needed.
 - Montserrat is bundled in 400, 400 italic, 500 and 600 (`public/css/montserrat-fonts.css`). Any
   other weight the template needs is added to the bundle.
-- **Provisional:** the type scale and weights, approved together with the fonts.
+- **Provisional:** the type scale and the body weights. The comparison kept the artifact's sizes,
+  so the template's scale still needs approval with the other provisional values.
 
 ## Open gates
 
 | Gate | Owner | Blocks |
 | --- | --- | --- |
 | Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. **Held 2026-11-03** with the product owner and engineering; see [Design review decisions](#design-review-decisions-2026-11-03). | Product owner | — |
-| Provisional design values (D1, D2, D4, D7, D9, D10, D15, D16, D17, D18) and the typography demo approved | Product owner | Final layout values in S3.1–S3.4; template typography in S3.1 |
+| Provisional design values (D1, D2, D4, D7, D9, D10, D15, D16, the D17 type scale, D18) approved. The D17 fonts were approved 2026-11-04. | Product owner | Final layout values in S3.1–S3.4 |
 | Rebranded artifact supplied; artifact review updated with its hash. **Closed 2026-11-04**; see the [artifact review](data-showcase-artifact-review.md#source-and-method). | Product owner | — |
 | S2.1 field definitions (including the `species` free-text decision) and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
 | Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, consent lead, duos-ui lead | Closing DT-4272 |
