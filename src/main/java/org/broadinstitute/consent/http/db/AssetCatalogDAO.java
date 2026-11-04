@@ -39,40 +39,26 @@ public interface AssetCatalogDAO {
   /** Numbers a model, workspace or biospecimen entry by its row id. */
   default void insertAssetEntry(AssetType type, Integer rowId) {
     switch (type) {
-      case MODEL -> insertModelEntry(rowId);
-      case WORKSPACE -> insertWorkspaceEntry(rowId);
-      case BIOSPECIMEN -> insertBiospecimenEntry(rowId);
+      case MODEL -> insertModelEntries(List.of(rowId));
+      case WORKSPACE -> insertWorkspaceEntries(List.of(rowId));
+      case BIOSPECIMEN -> insertBiospecimenEntries(List.of(rowId));
       case DATASET ->
           throw new IllegalArgumentException("A dataset entry is numbered by its alias.");
     }
   }
 
-  @SqlUpdate(
-      "INSERT INTO asset_catalog (asset_type, asset_number, model_id) VALUES ('MODEL', :id, :id)")
-  void insertModelEntry(@Bind("id") Integer modelId);
-
-  @SqlUpdate(
-      """
-      INSERT INTO asset_catalog (asset_type, asset_number, workspace_id)
-      VALUES ('WORKSPACE', :id, :id)
-      """)
-  void insertWorkspaceEntry(@Bind("id") Integer workspaceId);
-
-  @SqlUpdate(
-      """
-      INSERT INTO asset_catalog (asset_type, asset_number, biospecimen_id)
-      VALUES ('BIOSPECIMEN', :id, :id)
-      """)
-  void insertBiospecimenEntry(@Bind("id") Integer biospecimenId);
-
   @SqlBatch(
-      "INSERT INTO asset_catalog (asset_type, asset_number, model_id) VALUES ('MODEL', :id, :id)")
+      """
+      INSERT INTO asset_catalog (asset_type, asset_number, model_id) VALUES ('MODEL', :id, :id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
+      """)
   void insertModelEntries(@Bind("id") List<Integer> modelIds);
 
   @SqlBatch(
       """
       INSERT INTO asset_catalog (asset_type, asset_number, workspace_id)
       VALUES ('WORKSPACE', :id, :id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
       """)
   void insertWorkspaceEntries(@Bind("id") List<Integer> workspaceIds);
 
@@ -80,6 +66,7 @@ public interface AssetCatalogDAO {
       """
       INSERT INTO asset_catalog (asset_type, asset_number, biospecimen_id)
       VALUES ('BIOSPECIMEN', :id, :id)
+      ON CONFLICT (asset_type, asset_number) DO NOTHING
       """)
   void insertBiospecimenEntries(@Bind("id") List<Integer> biospecimenIds);
 

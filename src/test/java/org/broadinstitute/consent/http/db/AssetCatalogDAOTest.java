@@ -69,6 +69,16 @@ class AssetCatalogDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testInsertAssetEntrySkipsANumberAnUnlinkedEntryHolds() {
+    Integer modelId = insertStudyAssetRow("study_model", insertStudy(), false);
+    insertBareEntry(AssetType.MODEL, modelId);
+
+    catalogDAO.insertAssetEntry(AssetType.MODEL, modelId);
+
+    assertNull(catalogDAO.findByTypeAndNumber(AssetType.MODEL, modelId).modelId());
+  }
+
+  @Test
   void testInsertAssetEntryRejectsADataset() {
     Integer datasetId = insertDataset();
 
