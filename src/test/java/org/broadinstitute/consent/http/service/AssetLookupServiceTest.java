@@ -157,6 +157,10 @@ class AssetLookupServiceTest extends DAOTestHelper {
     assertEquals(datasetId, lookup.assetId());
     assertEquals(null, lookup.studyId());
     assertEquals(false, lookup.listed());
+    executeSql(
+        "UPDATE dataset SET indexed_date = now() WHERE dataset_id = %d".formatted(datasetId));
+    assertEquals(
+        true, service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user).listed());
   }
 
   @Test
