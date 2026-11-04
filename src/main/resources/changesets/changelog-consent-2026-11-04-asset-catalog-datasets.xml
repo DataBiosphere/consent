@@ -6,8 +6,9 @@
     Task 3 of docs/plans/asset-identifiers-plan.md: Task 2's statements, with only backfill_run
     changed, for the datasets old pods created while Task 2 was rolling out.
 
-    A dataset whose alias already belongs to another entry is skipped. Only an ad hoc insert can
-    cause that. This report query lists every skipped dataset; record its output in the PR:
+    A dataset whose alias already belongs to another entry is skipped. An ad hoc insert, or an
+    unlinked entry for the same dataset, can cause that. This report query lists every skipped
+    dataset; record its output in the PR:
 
       SELECT d.dataset_id, d.alias, c.catalog_id, c.dataset_id AS entry_dataset_id
       FROM dataset d
