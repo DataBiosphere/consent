@@ -26,10 +26,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
+import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.StudyAssetRecordDAO;
+import org.broadinstitute.consent.http.enumeration.AssetType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyBiospecimenRecord;
@@ -52,11 +55,13 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
   private DatasetServiceDAO serviceDAO;
   private StudyAssetRecordDAO assetDAO;
+  private AssetCatalogDAO catalogDAO;
 
   @BeforeEach
   void setUp() {
     serviceDAO = new DatasetServiceDAO(jdbi);
     assetDAO = jdbi.onDemand(StudyAssetRecordDAO.class);
+    catalogDAO = jdbi.onDemand(AssetCatalogDAO.class);
   }
 
   @Test
@@ -392,6 +397,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
   void testAFailedCreateRollsBackTheStudyItsRowsAndDatasets() {
     String name = UUID.randomUUID().toString();
     int modelRows = countModelRows();
+    int catalogEntries = countCatalogEntries();
     Integer dacId = dacDAO.createDac("dac", "dac", createUser().getUserId());
     DatasetInsert dataset =
         new DatasetInsert(
@@ -409,6 +415,7 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
     assertNull(studyDAO.findStudyByName(name));
     assertEquals(modelRows, countModelRows());
+    assertEquals(catalogEntries, countCatalogEntries());
     assertTrue(datasetDAO.findDatasetsAssociatedWithDac(dacId).isEmpty());
   }
 
@@ -424,6 +431,98 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
     assertEquals(1, assetDAO.findLiveModels(studyId).size());
     assertEquals(before, stored(studyId, "models").toString());
+  }
+
+  @Test
+  void testAFailedUpdateRollsBackTheEntriesOfItsNewRows() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"M\"}]"));
+    int catalogEntries = countCatalogEntries();
+
+    List<DatasetInsert> datasets = List.of(failingDataset());
+    StudyProperty models = prop("models", "[{\"name\": \"N\"}, {\"name\": \"O\"}]");
+
+    assertThrows(NullPointerException.class, () -> update(studyId, datasets, models));
+
+    assertEquals(catalogEntries, countCatalogEntries());
+  }
+
+  @Test
+  void testACreateGivesEveryNewRowOneEntryNumberedByItsRowId() throws Exception {
+    Integer studyId =
+        create(
+            prop("models", "[{\"name\": \"A\"}, {\"name\": \"B\"}]"),
+            prop("workspaces", "[{\"name\": \"W\"}]"),
+            prop("biospecimens", "[{\"sampleId\": \"S-1\"}]"));
+
+    for (int modelId : ids(stored(studyId, "models"), "modelId")) {
+      AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.MODEL, modelId);
+      assertEquals(modelId, entry.modelId());
+      assertNull(entry.assetRemovedDate());
+    }
+    int workspaceId = idOf(stored(studyId, "workspaces"), 0, "workspaceId");
+    assertEquals(
+        workspaceId,
+        catalogDAO.findByTypeAndNumber(AssetType.WORKSPACE, workspaceId).workspaceId());
+    int biospecimenId = idOf(stored(studyId, "biospecimens"), 0, "biospecimenId");
+    assertEquals(
+        biospecimenId,
+        catalogDAO.findByTypeAndNumber(AssetType.BIOSPECIMEN, biospecimenId).biospecimenId());
+    assertEquals(4, countCatalogEntries(studyId));
+  }
+
+  @Test
+  void testAnUpdateAddsEntriesOnlyForNewRowsAndARetiredRowKeepsItsEntry() throws Exception {
+    Integer studyId = create(prop("models", "[{\"name\": \"A\"}, {\"name\": \"B\"}]"));
+    JsonArray models = stored(studyId, "models");
+    int a = idOf(models, 0, "modelId");
+    int b = idOf(models, 1, "modelId");
+    AssetCatalogEntry keptBefore = catalogDAO.findByTypeAndNumber(AssetType.MODEL, b);
+
+    update(studyId, prop("models", "[{\"modelId\": %d}, {\"name\": \"C\"}]".formatted(b)));
+
+    int c = idOf(stored(studyId, "models"), 1, "modelId");
+    assertEquals(keptBefore, catalogDAO.findByTypeAndNumber(AssetType.MODEL, b));
+    assertEquals(c, catalogDAO.findByTypeAndNumber(AssetType.MODEL, c).modelId());
+    AssetCatalogEntry retired = catalogDAO.findByTypeAndNumber(AssetType.MODEL, a);
+    assertEquals(a, retired.modelId());
+    assertNull(retired.assetRemovedDate());
+    assertEquals(3, countCatalogEntries(studyId));
+  }
+
+  @Test
+  void testAnIncomingDuosIdentifierIsNotStored() throws Exception {
+    Integer studyId =
+        create(prop("models", "[{\"name\": \"A\", \"duosIdentifier\": \"DUOS-M-000999\"}]"));
+    int modelId = idOf(stored(studyId, "models"), 0, "modelId");
+
+    update(
+        studyId,
+        prop(
+            "models",
+            "[{\"modelId\": %d, \"duosIdentifier\": \"DUOS-M-000001\"}]".formatted(modelId)));
+
+    assertNull(stored(studyId, "models").get(0).getAsJsonObject().get("duosIdentifier"));
+    assertEquals(1, countCatalogEntries(studyId));
+  }
+
+  @Test
+  void testSyncStudyGivesNewRowsEntriesAndDropsADuosIdentifier() throws Exception {
+    Integer studyId = create();
+    // Stored directly, as before the registration sync existed
+    studyDAO.insertStudyProperty(
+        studyId,
+        "workspaces",
+        PropertyType.Json.toString(),
+        "[{\"workspaceId\": \"w-1\", \"duosIdentifier\": \"DUOS-W-000001\"}]");
+
+    syncStudy(studyId);
+
+    JsonObject workspace = stored(studyId, "workspaces").get(0).getAsJsonObject();
+    int workspaceId = workspace.get("workspaceId").getAsInt();
+    assertNull(workspace.get("duosIdentifier"));
+    assertEquals(
+        workspaceId,
+        catalogDAO.findByTypeAndNumber(AssetType.WORKSPACE, workspaceId).workspaceId());
   }
 
   @Test
@@ -1194,6 +1293,31 @@ class StudyAssetRecordSyncTest extends DAOTestHelper {
 
   private JsonArray stored(Integer studyId, String key) {
     return JsonParser.parseString(storedValue(studyId, key)).getAsJsonArray();
+  }
+
+  private int countCatalogEntries() {
+    return jdbi.withHandle(
+        handle ->
+            handle.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
+  }
+
+  /** Entries that reference one of the study's model, workspace or biospecimen rows. */
+  private int countCatalogEntries(Integer studyId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery(
+                    """
+                    SELECT count(*) FROM asset_catalog c
+                    WHERE c.model_id IN (SELECT model_id FROM study_model WHERE study_id = :id)
+                       OR c.workspace_id IN
+                          (SELECT workspace_id FROM study_workspace WHERE study_id = :id)
+                       OR c.biospecimen_id IN
+                          (SELECT biospecimen_id FROM study_biospecimen WHERE study_id = :id)
+                    """)
+                .bind("id", studyId)
+                .mapTo(Integer.class)
+                .one());
   }
 
   private int countModelRows() {

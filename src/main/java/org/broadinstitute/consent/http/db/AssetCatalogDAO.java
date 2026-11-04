@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -63,6 +64,24 @@ public interface AssetCatalogDAO {
       VALUES ('BIOSPECIMEN', :id, :id)
       """)
   void insertBiospecimenEntry(@Bind("id") Integer biospecimenId);
+
+  @SqlBatch(
+      "INSERT INTO asset_catalog (asset_type, asset_number, model_id) VALUES ('MODEL', :id, :id)")
+  void insertModelEntries(@Bind("id") List<Integer> modelIds);
+
+  @SqlBatch(
+      """
+      INSERT INTO asset_catalog (asset_type, asset_number, workspace_id)
+      VALUES ('WORKSPACE', :id, :id)
+      """)
+  void insertWorkspaceEntries(@Bind("id") List<Integer> workspaceIds);
+
+  @SqlBatch(
+      """
+      INSERT INTO asset_catalog (asset_type, asset_number, biospecimen_id)
+      VALUES ('BIOSPECIMEN', :id, :id)
+      """)
+  void insertBiospecimenEntries(@Bind("id") List<Integer> biospecimenIds);
 
   /**
    * Gives the dataset an entry if it has none, relinking the one a restore unlinked from it.
