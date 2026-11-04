@@ -43,7 +43,7 @@ public class AssetCatalogResource extends Resource {
   @Timed
   public Response repair(@Auth DuosUser duosUser) {
     try {
-      return Response.ok(assetCatalogService.repair()).build();
+      return Response.ok(assetCatalogService.repair(duosUser.getUser())).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

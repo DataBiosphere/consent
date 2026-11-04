@@ -56,7 +56,7 @@ class AssetCatalogResourceTest {
   @Test
   void testRepairReturnsWhatItChanged() {
     AssetCatalogRepair repair = new AssetCatalogRepair(2, 1, 1, 0, null);
-    when(assetCatalogService.repair()).thenReturn(repair);
+    when(assetCatalogService.repair(duosUser.getUser())).thenReturn(repair);
 
     Response response = resource.repair(duosUser);
 
@@ -66,7 +66,8 @@ class AssetCatalogResourceTest {
 
   @Test
   void testRepairWhileAnotherRunsIsAConflict() {
-    when(assetCatalogService.repair()).thenThrow(new ConsentConflictException("running"));
+    when(assetCatalogService.repair(duosUser.getUser()))
+        .thenThrow(new ConsentConflictException("running"));
 
     assertEquals(409, resource.repair(duosUser).getStatus());
   }

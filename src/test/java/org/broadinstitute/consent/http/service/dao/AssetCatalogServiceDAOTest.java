@@ -203,10 +203,12 @@ class AssetCatalogServiceDAOTest extends DAOTestHelper {
   @Test
   void testALockTimeoutOrDeadlockIsALockFailure() {
     assertTrue(
-        AssetCatalogServiceDAO.isLockFailure(new RuntimeException(new SQLException("t", "55P03"))));
-    assertTrue(AssetCatalogServiceDAO.isLockFailure(new SQLException("d", "40P01")));
-    assertFalse(AssetCatalogServiceDAO.isLockFailure(new SQLException("u", "23505")));
-    assertFalse(AssetCatalogServiceDAO.isLockFailure(new SQLException("none")));
+        AssetCatalogServiceDAO.isWriteConflict(
+            new RuntimeException(new SQLException("t", "55P03"))));
+    assertTrue(AssetCatalogServiceDAO.isWriteConflict(new SQLException("d", "40P01")));
+    assertTrue(AssetCatalogServiceDAO.isWriteConflict(new SQLException("f", "23503")));
+    assertFalse(AssetCatalogServiceDAO.isWriteConflict(new SQLException("u", "23505")));
+    assertFalse(AssetCatalogServiceDAO.isWriteConflict(new SQLException("none")));
   }
 
   @Test

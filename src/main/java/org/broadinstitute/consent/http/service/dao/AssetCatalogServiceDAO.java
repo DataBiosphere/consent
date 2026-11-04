@@ -19,8 +19,8 @@ import org.jdbi.v3.core.JdbiException;
 public class AssetCatalogServiceDAO implements ConsentLogger {
 
   static final String REPAIR_LOCK_TIMEOUT = "10s";
-  // Lock timeout and deadlock: another write held a table or row the repair needed.
-  private static final Set<String> LOCK_FAILURE_STATES = Set.of("55P03", "40P01");
+  // Lock timeout, deadlock, or a row a concurrent delete removed before the repair linked it.
+  private static final Set<String> WRITE_CONFLICT_STATES = Set.of("55P03", "40P01", "23503");
 
   private final Jdbi jdbi;
 
@@ -33,8 +33,8 @@ public class AssetCatalogServiceDAO implements ConsentLogger {
    * Fixes what the check reports, in one transaction: relinks entries a restore unlinked, inserts
    * the missing ones, stamps the remaining orphans and advances a lagging alias sequence.
    *
-   * @throws ConsentConflictException while another repair runs, or when a write holds a lock the
-   *     repair needs
+   * @throws ConsentConflictException while another repair runs, or when a concurrent dataset or
+   *     asset write conflicts with it
    */
   public AssetCatalogRepair repair() {
     try {
@@ -48,8 +48,7 @@ public class AssetCatalogServiceDAO implements ConsentLogger {
             handle.execute("SET LOCAL lock_timeout = '%s'".formatted(REPAIR_LOCK_TIMEOUT));
             // Before any catalog write, in the order the dataset delete paths take them.
             handle.attach(AssetCatalogDAO.class).lockDatasetTable();
-            Long sequence =
-                checkDAO.findSequenceBehind(1).isEmpty() ? null : repairDAO.advanceAliasSequence();
+            Long sequence = repairDAO.advanceAliasSequence();
             List<ChangedEntry> relinked =
                 concat(repairDAO.relinkAssetEntries(), repairDAO.relinkDatasetEntries());
             List<ChangedEntry> inserted =
@@ -67,20 +66,20 @@ public class AssetCatalogServiceDAO implements ConsentLogger {
             return repair;
           });
     } catch (JdbiException e) {
-      if (isLockFailure(e)) {
+      if (isWriteConflict(e)) {
         throw new ConsentConflictException(
-            "A dataset or asset write holds a lock the repair needs; retry the repair.");
+            "A concurrent dataset or asset write conflicted with the repair; retry the repair.");
       }
       throw e;
     }
   }
 
-  static boolean isLockFailure(Throwable e) {
+  static boolean isWriteConflict(Throwable e) {
     for (Throwable cause = e; cause != null; cause = cause.getCause()) {
       // Set.of rejects a null lookup, and a driver may leave the SQLState unset.
       if (cause instanceof SQLException sql
           && sql.getSQLState() != null
-          && LOCK_FAILURE_STATES.contains(sql.getSQLState())) {
+          && WRITE_CONFLICT_STATES.contains(sql.getSQLState())) {
         return true;
       }
     }

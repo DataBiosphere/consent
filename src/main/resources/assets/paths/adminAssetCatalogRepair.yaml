@@ -6,7 +6,7 @@ post:
     unlinked entry to a dataset or asset whose number it holds (a dataset only when the entry was made
     for that dataset), inserts the missing entries, stamps `asset_removed_date` on the remaining
     orphans and advances the dataset alias sequence past every alias and dataset entry number. It
-    never changes an entry that still references an asset. Dataset inserts and deletes wait while it runs. Run it when few datasets are being registered or deleted: one already in progress can deadlock with it. PostgreSQL then aborts either the repair or that request, and whichever it aborts must be retried. Collisions and mismatches are left for
+    never changes an entry that still references an asset. Every dataset insert, update and delete waits while it runs. Run it when few datasets are being registered or deleted: one already in progress can deadlock with it. PostgreSQL then aborts either the repair or that request, and whichever it aborts must be retried. Collisions and mismatches are left for
     a person to fix. Running it again changes nothing.
   tags:
     - Admin
@@ -22,7 +22,7 @@ post:
     403:
       description: The user does not have the Admin role
     409:
-      description: Another repair is running, or a dataset or asset write held a lock the repair needed for over 10 seconds; retry it
+      description: Another repair is running, or a concurrent dataset or asset write conflicted with it (a lock held over 10 seconds, a deadlock, or a row deleted mid-repair); retry it
     429:
       description: Too Many Requests - rate limit exceeded; the repair did not start, so it is safe to retry after the Retry-After header
     500:
