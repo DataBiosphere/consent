@@ -104,13 +104,13 @@ class OAuthCustomAuthFilterTest {
   }
 
   /**
-   * Consent accepts a bearer only from the Authorization header (DT-4428). A request that sends the
-   * token only in the {@code access_token} query parameter has no Authorization header, so it gets
-   * 401. The filter never reads the query, so a token there cannot reach the authenticator.
+   * Consent accepts a bearer only from the Authorization header (DT-4428). A request with no
+   * Authorization header gets 401, and the filter never reads the query. So a token in the {@code
+   * access_token} query parameter cannot reach the authenticator.
    */
   @ParameterizedTest
   @ValueSource(strings = {"api/user/me", "swagger/index.html"})
-  void testFilterRejectsAccessTokenQueryParameter(String path) {
+  void testFilterWithoutAuthorizationHeaderNeverReadsQuery(String path) {
     stubRequest(path, new MultivaluedHashMap<>());
 
     WebApplicationException ex =
@@ -124,7 +124,7 @@ class OAuthCustomAuthFilterTest {
 
   /** The DuosUser filter also reads the bearer only from the Authorization header. */
   @Test
-  void testDuosUserFilterRejectsAccessTokenQueryParameter() {
+  void testDuosUserFilterWithoutAuthorizationHeaderNeverReadsQuery() {
     OAuthCustomAuthFilter<Principal> duosFilter =
         new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
     stubRequest("api/user/me", new MultivaluedHashMap<>());
@@ -134,6 +134,7 @@ class OAuthCustomAuthFilterTest {
 
     assertEquals(401, ex.getResponse().getStatus());
     verify(uriInfo, never()).getQueryParameters();
+    verify(uriInfo, never()).getQueryParameters(anyBoolean());
     verify(duosUserAuthenticator, never()).authenticate(any());
   }
 
