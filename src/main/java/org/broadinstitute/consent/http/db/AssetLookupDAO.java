@@ -10,6 +10,9 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 @RegisterConstructorMapper(AssetLookupDAO.AssetRow.class)
 public interface AssetLookupDAO {
 
+  @SqlQuery("SELECT dataset_id FROM dataset WHERE alias = :alias")
+  Integer findDatasetIdByAlias(@Bind("alias") int alias);
+
   @SqlQuery(
       """
       SELECT model_id AS row_id, study_id, retired_date

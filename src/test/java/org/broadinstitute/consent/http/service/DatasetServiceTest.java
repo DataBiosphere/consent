@@ -225,6 +225,46 @@ class DatasetServiceTest extends AbstractTestHelper {
         ForbiddenException.class, () -> datasetService.findDatasetByIdForRead(user, datasetId));
   }
 
+  @Test
+  void testFindDatasetWithoutFilesForReadAppliesTheReadRuleWithoutLoadingFiles() {
+    Dataset dataset = getDatasets().getFirst();
+    dataset.setStudyId(null);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(dataset);
+
+    assertEquals(
+        dataset, datasetService.findDatasetWithoutFilesForRead(mockUser, dataset.getDatasetId()));
+    verify(datasetDAO, never()).findDatasetById(any());
+  }
+
+  @Test
+  void testFindDatasetWithoutFilesForReadNotFound() {
+    assertThrows(
+        NotFoundException.class, () -> datasetService.findDatasetWithoutFilesForRead(mockUser, 99));
+  }
+
+  @Test
+  void testFindDatasetWithoutFilesForReadForbidden() {
+    User user = new User();
+    user.setUserId(1);
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(3);
+    Study study = new Study();
+    study.setStudyId(7);
+    study.setCreateUserId(4);
+    study.setPublicVisibility(false);
+    StudyProperty property = new StudyProperty();
+    property.setKey("other");
+    property.setValue("[]");
+    study.addProperties(property);
+    dataset.setStudyId(study.getStudyId());
+    dataset.setStudy(study);
+    when(datasetDAO.findDatasetWithoutFSOInformation(5)).thenReturn(dataset);
+
+    assertThrows(
+        ForbiddenException.class, () -> datasetService.findDatasetWithoutFilesForRead(user, 5));
+  }
+
   /**
    * A study's data custodian reads its datasets on the study's terms, so the basis reported is
    * STUDY_READABLE and the requester's institution survives. Custodianship is a property of the

@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import java.util.function.Supplier;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO;
 import org.broadinstitute.consent.http.db.AssetLookupDAO.AssetRow;
@@ -11,6 +13,7 @@ import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.AssetIdentifier;
 import org.broadinstitute.consent.http.models.AssetLookup;
 import org.broadinstitute.consent.http.models.AssetLookup.Status;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Jdbi;
 
@@ -41,7 +44,10 @@ public class AssetLookupService {
   public AssetLookup lookup(String text, User user) {
     AssetIdentifier identifier = parse(text);
     if (identifier.type() == AssetType.DATASET) {
-      throw unknown();
+      Integer datasetId = datasetId(identifier.number());
+      return datasetId == null
+          ? removedOrNotFound(identifier, user)
+          : readableDataset(identifier, datasetId, user);
     }
     AssetRow row = lookupDAO.findAssetRow(identifier.type(), identifier.number());
     if (row == null) {
@@ -65,11 +71,41 @@ public class AssetLookupService {
     }
   }
 
-  /** A denial answers exactly as an unknown identifier does, so the lookup cannot probe. */
-  private static void readable(Runnable gate) {
+  /** The dataset holding the alias, or else the one an entry still links. */
+  private Integer datasetId(int alias) {
+    Integer byAlias = lookupDAO.findDatasetIdByAlias(alias);
+    if (byAlias != null) {
+      return byAlias;
+    }
+    AssetCatalogEntry entry = catalogDAO.findByTypeAndNumber(AssetType.DATASET, alias);
+    return entry == null ? null : entry.datasetId();
+  }
+
+  /** Answers from the dataset the read rule checked, under its current alias. */
+  private AssetLookup readableDataset(AssetIdentifier identifier, int datasetId, User user) {
+    Dataset dataset;
     try {
-      gate.run();
+      dataset = datasetService.findDatasetWithoutFilesForRead(user, datasetId);
     } catch (NotFoundException e) {
+      // Deleted after its id was read.
+      return removedOrNotFound(identifier, user);
+    } catch (ForbiddenException e) {
+      throw unknown();
+    }
+    return new AssetLookup(
+        AssetIdentifier.format(AssetType.DATASET, dataset.getAlias()),
+        AssetType.DATASET,
+        Status.LIVE,
+        dataset.getIndexedDate() != null,
+        dataset.getDatasetId(),
+        dataset.getStudyId());
+  }
+
+  /** A denial answers exactly as an unknown identifier does, so the lookup cannot probe. */
+  private static <T> T readable(Supplier<T> gate) {
+    try {
+      return gate.get();
+    } catch (NotFoundException | ForbiddenException e) {
       throw unknown();
     }
   }
