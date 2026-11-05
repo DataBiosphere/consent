@@ -1000,6 +1000,18 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testIndexDatasetTermsConfirmsNothingWhenEveryDatasetIsRejected() throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(
+        "{\"errors\":true,\"items\":[{\"index\":{\"_id\":\"1\",\"status\":400,\"error\":{}}}]}");
+
+    try (var response = service.indexDatasetTerms(List.of(term(1)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+    verify(datasetDAO, never()).confirmDatasetsIndexed(any(), any());
+  }
+
+  @Test
   void testIndexDatasetTermsStillAnswersWhenRecordingTheConfirmationFails() throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
     mockElasticSearchResponse("{\"errors\":false,\"items\":[{\"index\":{\"_id\":\"1\"}}]}");
@@ -1203,10 +1215,16 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         service.reindexIndexedDatasets(Set.of(dataset.getDatasetId())));
   }
 
-  @Test
-  void testDeleteIndexClearsTheConfirmationOnceElasticsearchDeletes() throws IOException {
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{\"deleted\":1,\"failures\":[]}",
+        "{\"deleted\":1,\"version_conflicts\":0,\"timed_out\":false,\"failures\":[]}"
+      })
+  void testDeleteIndexClearsTheConfirmationOnceElasticsearchDeletes(String body)
+      throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
-    mockElasticSearchResponse("{\"deleted\":1,\"failures\":[]}");
+    mockElasticSearchResponse(body);
 
     try (var _ = service.deleteIndex(7, 1)) {
       verify(datasetDAO).clearDatasetIndexConfirmed(eq(7), any());
@@ -1221,6 +1239,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         "{\"deleted\":1,\"version_conflicts\":1,\"failures\":[]}",
         "{\"deleted\":1,\"timed_out\":true,\"failures\":[]}",
         "{\"deleted\":0,\"failures\":[]}",
+        "{\"deleted\":\"1\",\"failures\":[]}",
         "not json",
         "[]"
       })
@@ -1242,8 +1261,13 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     AtomicReference<Instant> indexedDateCleared = new AtomicReference<>();
     doAnswer(
             invocation -> {
-              Thread.sleep(5);
-              indexedDateCleared.set(Instant.now());
+              // Waits for the clock to tick, so a boundary taken before this call reads earlier.
+              Instant before = Instant.now();
+              Instant after = Instant.now();
+              while (!after.isAfter(before)) {
+                after = Instant.now();
+              }
+              indexedDateCleared.set(after);
               return null;
             })
         .when(datasetServiceDAO)
