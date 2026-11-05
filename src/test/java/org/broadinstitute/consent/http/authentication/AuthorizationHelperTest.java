@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -265,6 +267,21 @@ class AuthorizationHelperTest extends AbstractTestHelper {
 
     assertFalse(oAuthAuthenticator.authenticate(bearerToken).isPresent());
     assertFalse(duosUserAuthenticator.authenticate(bearerToken).isPresent());
+  }
+
+  /**
+   * When the bearer token has no cache entry, the OAuth authenticator returns empty. It logs a
+   * console warning and no Sentry alert, so a direct caller cannot raise one alert for each request
+   * (DT-4419).
+   */
+  @Test
+  void testOAuthAuthenticateTokenNotInCacheWarnsWithoutAlert() {
+    OAuthAuthenticator spied = spy(oAuthAuthenticator);
+
+    assertFalse(spied.authenticate(bearerToken).isPresent());
+    verify(spied).logWarn(OAuthAuthenticator.NO_CACHED_CLAIMS);
+    verify(spied, never()).logException(any(Exception.class));
+    verify(spied, never()).logException(anyString(), any(Exception.class));
   }
 
   /**

@@ -1,14 +1,17 @@
 package org.broadinstitute.consent.http.filters;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.broadinstitute.consent.http.filters.ClientIpResolver.ClientIp;
 import org.broadinstitute.consent.http.filters.ClientIpResolver.KeySource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class ClientIpResolverTest {
@@ -210,5 +213,20 @@ class ClientIpResolverTest {
     assertEquals(new ClientIp("2001:db8:1:2::/64", KeySource.SIGNED_CLIENT_IP_HEADER), first);
     assertEquals(first, second);
     assertNotEquals(first.key(), resolver.resolveSigned("2001:db8:1:3::").key());
+  }
+
+  /** Jetty puts brackets around an IPv6 peer, so both forms must count as loopback. */
+  @ParameterizedTest
+  @ValueSource(strings = {"127.0.0.1", "127.0.0.2", "::1", "[::1]", "[0:0:0:0:0:0:0:1]"})
+  void testIsLoopbackAcceptsLoopbackPeer(String peer) {
+    assertTrue(ClientIpResolver.isLoopback(peer));
+  }
+
+  /** A pod IP, a public IP, a hostname, and junk are not loopback. */
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {"10.0.0.5", "192.0.2.50", "2001:db8::1", "localhost", "[]", "unknown"})
+  void testIsLoopbackRejectsOtherPeer(String peer) {
+    assertFalse(ClientIpResolver.isLoopback(peer));
   }
 }

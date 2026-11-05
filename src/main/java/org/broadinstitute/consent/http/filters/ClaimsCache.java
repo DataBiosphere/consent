@@ -30,10 +30,10 @@ public class ClaimsCache {
    * Cache the claims of the first request that carries a token with an email claim.
    *
    * <p>{@link RequestHeaderCacheFilter} calls this only for requests on an authenticated route
-   * (/api), so claims from an open route can never enter the cache (DT-4316). This method keeps a
-   * second guard: a request whose claims have no email stores nothing. Otherwise its empty entry
-   * would stay for the whole expiry window and fail every later authenticated request with the same
-   * token.
+   * (/api) from a loopback peer, so claims from an open route (DT-4316) or from a caller that
+   * skipped the sidecar (DT-4419) can never enter the cache. This method keeps a second guard: a
+   * request whose claims have no email stores nothing. Otherwise its empty entry would stay for the
+   * whole expiry window and fail every later authenticated request with the same token.
    */
   public void loadCache(String token, MultivaluedMap<String, String> headers) {
     try {
