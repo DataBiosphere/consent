@@ -192,6 +192,25 @@ class UserSessionTest extends DAOTestHelper {
   }
 
   @Test
+  void auditUpdate_firstSaveAfterTheUpgradeIsNotARotation() {
+    // A session live at deploy has no generation. 11.1.6's first save of it
+    // writes generation = sid, which the COALESCE fallback treats as unchanged.
+    String sid = UUID.randomUUID().toString();
+    insertSession(sid, "{\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    updateSessionSess(
+        sid,
+        "{\"__fastifySessionMetadata\":{\"generation\":\""
+            + sid
+            + "\"},\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(1, audits.size());
+    assertNull(audits.get(0).get("ended_at"));
+    assertEquals("researcher@example.com", audits.get(0).get("user_email"));
+  }
+
+  @Test
   void auditEnd_afterRotationClosesOnlyTheOpenRow() {
     String sid = UUID.randomUUID().toString();
     insertSession(sid, "{}");
