@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-11-05-bff-session-audit-rotation" author="otchet">
+    <!--
+      DT-4420: keep one audit row per signed-in session after duos-ui moves to
+      @fastify/session 11.1.6.
+
+      Until 11.1.6, sign-in rotation deleted the pre-auth user_sessions row and
+      inserted a new one, so each session had its own sid and audit row, and the
+      BFF stamped the old row 'rotated'. From 11.1.6, regenerate() keeps the row
+      (and its sid) and records a new generation in
+      sess.__fastifySessionMetadata.generation instead. Without this change, the
+      pre-auth audit row would become the signed-in session's row, and a second
+      sign-in on the same row would keep the first user's email.
+
+      audit_session_update now treats a generation change as a rotation: it
+      closes the open audit row with end_reason 'rotated' and opens a new one
+      for the same sid_hash. Rows written before 11.1.6 have no generation; for
+      them the generation is the sid, as in @fastify/session, so an update that
+      doesn't rotate keeps the existing backfill behavior.
+
+      One sid_hash can now have several audit rows, at most one of them open.
+      audit_session_end matches only the open row, and so does the BFF's logout
+      stamp once it hashes sessionStoreId, the row's sid (the duos-ui upgrade PR).
+
+      Deploy this changeset to an environment before duos-ui runs 11.1.6 there,
+      and roll duos-ui back first. Under 11.1.6, the old function would keep the
+      first user's email when a second user signs in on the same row.
+    -->
+    <sql splitStatements="false">
+      CREATE OR REPLACE FUNCTION audit_session_update() RETURNS trigger AS $$
+      DECLARE
+        audit_sid_hash TEXT := encode(sha256(NEW.sid::bytea), 'hex');
+      BEGIN
+        IF COALESCE(NEW.sess->'__fastifySessionMetadata'->>'generation', NEW.sid)
+           IS DISTINCT FROM COALESCE(OLD.sess->'__fastifySessionMetadata'->>'generation', OLD.sid) THEN
+          UPDATE user_session_audit
+             SET ended_at   = NOW(),
+                 end_reason = COALESCE(end_reason, 'rotated')
+           WHERE sid_hash = audit_sid_hash
+             AND ended_at IS NULL;
+          INSERT INTO user_session_audit (sid_hash, user_email, idp)
+          VALUES (audit_sid_hash, NEW.sess->>'userId', NEW.sess->>'idp');
+        ELSE
+          UPDATE user_session_audit
+             SET user_email = COALESCE(user_email, NEW.sess->>'userId'),
+                 idp        = COALESCE(idp, NEW.sess->>'idp')
+           WHERE sid_hash = audit_sid_hash
+             AND ended_at IS NULL
+             AND (user_email IS NULL OR idp IS NULL);
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    </sql>
+
+    <rollback>
+      <!-- The function from changelog-consent-2026-06-16-bff-user-session-audit. -->
+      <sql splitStatements="false">
+        CREATE OR REPLACE FUNCTION audit_session_update() RETURNS trigger AS $$
+        BEGIN
+          UPDATE user_session_audit
+             SET user_email = COALESCE(user_email, NEW.sess->>'userId'),
+                 idp        = COALESCE(idp, NEW.sess->>'idp')
+           WHERE sid_hash = encode(sha256(NEW.sid::bytea), 'hex')
+             AND ended_at IS NULL
+             AND (user_email IS NULL OR idp IS NULL);
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
