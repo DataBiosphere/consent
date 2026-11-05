@@ -36,6 +36,8 @@ paths:
     $ref: './paths/adminDashboardSummary.yaml'
   /api/admin/asset-catalog/check:
     $ref: './paths/adminAssetCatalogCheck.yaml'
+  /api/admin/asset-catalog/repair:
+    $ref: './paths/adminAssetCatalogRepair.yaml'
   /api/asset-catalog/{identifier}:
     $ref: './paths/assetCatalogLookup.yaml'
   /api/collections/{collectionId}:
