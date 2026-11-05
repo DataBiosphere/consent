@@ -110,7 +110,7 @@ public class AssetLookupService {
     }
   }
 
-  /** Removed identifiers are admin-only until product confirms showing them to every user. */
+  /** Only an Admin learns that a removed identifier once named an asset. */
   private AssetLookup removedOrNotFound(AssetIdentifier identifier, User user) {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw unknown();
