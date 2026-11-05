@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.models.dto.registration.RegistrationReque
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.AdminDashboardService;
+import org.broadinstitute.consent.http.service.AssetCatalogService;
 import org.broadinstitute.consent.http.service.AssetLookupService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -496,6 +497,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private AdminDashboardService providesAdminDashboardService(Jdbi jdbi) {
     return new AdminDashboardService(jdbi, Clock.systemDefaultZone());
+  }
+
+  @Provides
+  @Singleton
+  private AssetCatalogService providesAssetCatalogService(Jdbi jdbi) {
+    return new AssetCatalogService(jdbi);
   }
 
   @Provides

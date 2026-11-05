@@ -58,6 +58,7 @@ import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.AdminDashboardResource;
+import org.broadinstitute.consent.http.resources.AssetCatalogResource;
 import org.broadinstitute.consent.http.resources.AssetLookupResource;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
@@ -182,6 +183,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     // Register standard application resources.
     env.jersey().register(injector.getInstance(AdminDashboardResource.class));
+    env.jersey().register(injector.getInstance(AssetCatalogResource.class));
     env.jersey().register(injector.getInstance(AssetLookupResource.class));
     env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
