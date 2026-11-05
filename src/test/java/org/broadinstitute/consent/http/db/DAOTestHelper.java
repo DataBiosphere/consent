@@ -9,10 +9,12 @@ import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.ConsentApplication;
@@ -346,6 +348,22 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected int countAssetCatalogEntries() {
     return jdbi.withHandle(
         h -> h.createQuery("SELECT count(*) FROM asset_catalog").mapTo(Integer.class).one());
+  }
+
+  /** The statements in a changeset's {@code <sql>} blocks, XML entities decoded. */
+  protected static List<String> sqlBlocks(String changesetXml) {
+    return Pattern.compile("<sql>(.*?)</sql>", Pattern.DOTALL)
+        .matcher(changesetXml)
+        .results()
+        .map(
+            result ->
+                result
+                    .group(1)
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&amp;", "&")
+                    .trim())
+        .toList();
   }
 
   protected void executeSql(String sql) {
