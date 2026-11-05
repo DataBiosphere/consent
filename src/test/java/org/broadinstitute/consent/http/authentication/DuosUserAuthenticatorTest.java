@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,12 +51,20 @@ class DuosUserAuthenticatorTest extends AbstractTestHelper {
     claimsCache.cache.invalidateAll();
   }
 
-  /** When the bearer token has no cache entry, authenticate returns empty and logs an error. */
+  /**
+   * When the bearer token has no cache entry, authenticate returns empty. It logs a console warning
+   * and no Sentry alert, so a direct caller cannot raise one alert for each request (DT-4419).
+   */
   @Test
   void testAuthenticateTokenNotInCache() {
-    Optional<DuosUser> result = authenticator.authenticate(bearerToken);
+    DuosUserAuthenticator spied = spy(authenticator);
+
+    Optional<DuosUser> result = spied.authenticate(bearerToken);
 
     assertFalse(result.isPresent());
+    verify(spied).logWarn(DuosUserAuthenticator.NO_CACHED_CLAIMS);
+    verify(spied, never()).logException(any(Exception.class));
+    verify(spied, never()).logException(anyString(), any(Exception.class));
   }
 
   /** When headers are cached and the user is found, authenticate returns a populated DuosUser. */
