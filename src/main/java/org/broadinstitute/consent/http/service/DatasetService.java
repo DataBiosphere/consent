@@ -370,6 +370,21 @@ public class DatasetService implements ConsentLogger {
    */
   public DatasetRead findDatasetByIdForReadWithBasis(User user, Integer id) {
     Dataset dataset = datasetDAO.findDatasetById(id);
+    DatasetReadBasis basis = requireReadBasis(dataset, user);
+    return new DatasetRead(redactRestrictedFiles(dataset, user), basis);
+  }
+
+  /**
+   * {@link #findDatasetByIdForRead(User, Integer)} without the dataset's files, for callers that
+   * use none of them.
+   */
+  public Dataset findDatasetWithoutFilesForRead(User user, Integer id) {
+    Dataset dataset = datasetDAO.findDatasetWithoutFSOInformation(id);
+    requireReadBasis(dataset, user);
+    return dataset;
+  }
+
+  private DatasetReadBasis requireReadBasis(Dataset dataset, User user) {
     if (dataset == null) {
       throw new NotFoundException("Entity not found");
     }
@@ -377,7 +392,7 @@ public class DatasetService implements ConsentLogger {
     if (basis == null) {
       throw new ForbiddenException("User does not have permission");
     }
-    return new DatasetRead(redactRestrictedFiles(dataset, user), basis);
+    return basis;
   }
 
   /**

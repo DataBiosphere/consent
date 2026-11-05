@@ -85,7 +85,7 @@ public class AssetLookupService {
   private AssetLookup readableDataset(AssetIdentifier identifier, int datasetId, User user) {
     Dataset dataset;
     try {
-      dataset = datasetService.findDatasetByIdForRead(user, datasetId);
+      dataset = datasetService.findDatasetWithoutFilesForRead(user, datasetId);
     } catch (NotFoundException e) {
       // Deleted after its id was read.
       return removedOrNotFound(identifier, user);

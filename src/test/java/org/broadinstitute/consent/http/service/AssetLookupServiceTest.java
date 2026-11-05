@@ -199,7 +199,8 @@ class AssetLookupServiceTest extends DAOTestHelper {
     Integer movedTo = insertStudy();
     Dataset authorized = datasetDAO.findDatasetById(datasetId);
     authorized.setStudyId(movedTo);
-    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId))).thenReturn(authorized);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(datasetId)))
+        .thenReturn(authorized);
 
     AssetLookup lookup = service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user);
 
@@ -209,7 +210,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
   @Test
   void testADatasetTheCallerCannotReadIsNotFound() {
     Integer datasetId = insertDataset(null);
-    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(datasetId)))
         .thenThrow(new ForbiddenException("User does not have permission"));
 
     assertAnswersAsUnknown(format(AssetType.DATASET, datasetAlias(datasetId)));
@@ -221,7 +222,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
     String identifier = format(AssetType.DATASET, datasetAlias(datasetId));
     catalogDAO.insertDatasetEntry(datasetId);
     catalogDAO.markRemovedByDataset(datasetId);
-    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(datasetId)))
         .thenThrow(new NotFoundException("Entity not found"));
 
     assertEquals(AssetLookup.removed(AssetType.DATASET), service.lookup(identifier, admin));
@@ -268,7 +269,7 @@ class AssetLookupServiceTest extends DAOTestHelper {
   }
 
   private void allowDataset(Integer datasetId) {
-    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(datasetId)))
         .thenAnswer(invocation -> datasetDAO.findDatasetById(datasetId));
   }
 
