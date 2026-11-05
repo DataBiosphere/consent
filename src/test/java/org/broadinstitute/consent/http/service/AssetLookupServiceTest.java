@@ -215,6 +215,19 @@ class AssetLookupServiceTest extends DAOTestHelper {
     assertAnswersAsUnknown(format(AssetType.DATASET, datasetAlias(datasetId)));
   }
 
+  @Test
+  void testADatasetDeletedAfterItsIdWasReadIsRemoved() {
+    Integer datasetId = insertDataset(null);
+    String identifier = format(AssetType.DATASET, datasetAlias(datasetId));
+    catalogDAO.insertDatasetEntry(datasetId);
+    catalogDAO.markRemovedByDataset(datasetId);
+    when(datasetService.findDatasetByIdForRead(any(), eq(datasetId)))
+        .thenThrow(new NotFoundException("Entity not found"));
+
+    assertEquals(AssetLookup.removed(AssetType.DATASET), service.lookup(identifier, admin));
+    assertAnswersAsUnknown(identifier);
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {

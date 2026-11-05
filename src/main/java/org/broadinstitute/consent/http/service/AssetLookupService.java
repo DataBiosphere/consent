@@ -47,7 +47,7 @@ public class AssetLookupService {
       Integer datasetId = datasetId(identifier.number());
       return datasetId == null
           ? removedOrNotFound(identifier, user)
-          : readableDataset(datasetId, user);
+          : readableDataset(identifier, datasetId, user);
     }
     AssetRow row = lookupDAO.findAssetRow(identifier.type(), identifier.number());
     if (row == null) {
@@ -82,8 +82,16 @@ public class AssetLookupService {
   }
 
   /** Answers from the dataset the read rule checked, under its current alias. */
-  private AssetLookup readableDataset(int datasetId, User user) {
-    Dataset dataset = readable(() -> datasetService.findDatasetByIdForRead(user, datasetId));
+  private AssetLookup readableDataset(AssetIdentifier identifier, int datasetId, User user) {
+    Dataset dataset;
+    try {
+      dataset = datasetService.findDatasetByIdForRead(user, datasetId);
+    } catch (NotFoundException e) {
+      // Deleted after its id was read.
+      return removedOrNotFound(identifier, user);
+    } catch (ForbiddenException e) {
+      throw unknown();
+    }
     return new AssetLookup(
         AssetIdentifier.format(AssetType.DATASET, dataset.getAlias()),
         AssetType.DATASET,
