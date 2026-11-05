@@ -104,6 +104,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private DarCollectionService service;
 
+  /**
+   * Ids for every user a test puts in a set with another user, including those the helpers below
+   * create. User equality is by id, so random ids could collide and break Set.of(...) mid-stubbing.
+   * JUnit makes a new instance for each test, so ids restart at 1000 per test, above the literal
+   * ids (99, 999) and the randomInt(1, 10) ids of single-user tests.
+   */
+  private int nextUserId = 1000;
+
   @Mock private DarCollectionDAO darCollectionDAO;
   @Mock private DarCollectionSummaryDAO darCollectionSummaryDAO;
   @Mock private DarCollectionServiceDAO darCollectionServiceDAO;
@@ -3958,7 +3966,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   void testFullFlow_UserChairsBothAutoOpenDacs_GetsFullVotesInBothElections() {
     // sharedChair has CHAIRPERSON role for both DAC 10 and DAC 20
     User sharedChair = new User();
-    sharedChair.setUserId(randomInt(1, 100000));
+    sharedChair.setUserId(nextUserId++);
     sharedChair.setEmailPreference(true);
     UserRole roleForDac10 =
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -4128,7 +4136,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     // sharedChair has CHAIRPERSON role for both DAC 10 and DAC 20
     User sharedChair = new User();
-    sharedChair.setUserId(randomInt(1, 100000));
+    sharedChair.setUserId(nextUserId++);
     sharedChair.setEmailPreference(Boolean.TRUE);
     UserRole roleForDac10 =
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -4198,7 +4206,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     // sharedUser: CHAIRPERSON of DAC 10, MEMBER of DAC 20
     User sharedUser = new User();
-    sharedUser.setUserId(randomInt(1, 100000));
+    sharedUser.setUserId(nextUserId++);
     sharedUser.setEmailPreference(Boolean.TRUE);
     UserRole chairRoleDac10 =
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
@@ -4289,14 +4297,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dac20.setName("DAC-20");
 
     User chairDac10 = new User();
-    chairDac10.setUserId(randomInt(1, 100000));
+    chairDac10.setUserId(nextUserId++);
     UserRole chair10Role =
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     chair10Role.setDacId(10);
     chairDac10.setRoles(List.of(chair10Role));
 
     User chairDac20 = new User();
-    chairDac20.setUserId(randomInt(1, 100000));
+    chairDac20.setUserId(nextUserId++);
     UserRole chair20Role =
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     chair20Role.setDacId(20);
@@ -5034,7 +5042,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private User createUserWithRole(UserRoles userRoles) {
     User user = new User();
-    user.setUserId(randomInt(1, 100000));
+    user.setUserId(nextUserId++);
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
@@ -5045,7 +5053,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private User createUserWithRoleAndDacId(UserRoles userRoles, Integer dacId) {
     User user = new User();
-    user.setUserId(randomInt(1, 100000));
+    user.setUserId(nextUserId++);
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
