@@ -89,4 +89,4 @@ properties:
   indexedDate:
     type: string
     format: date-time
-    description: When the dataset was last sent to the search index. It stays set while the dataset should be indexed, including after the index rejected it.
+    description: When the dataset was last queued for the search index. It marks that the dataset should be indexed, not that the index holds it, and stays set after a failed or rejected attempt.
