@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
@@ -1230,6 +1232,28 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     try (var _ = service.deleteIndex(7, 1)) {
       verify(datasetDAO, never()).clearDatasetIndexConfirmed(any(), any());
     }
+  }
+
+  @Test
+  void testDeleteIndexKeepsConfirmationsRecordedAfterItClearsTheIndexedDate() throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse("{\"deleted\":1,\"failures\":[]}");
+    when(datasetDAO.findDatasetIdById(7)).thenReturn(7);
+    AtomicReference<Instant> indexedDateCleared = new AtomicReference<>();
+    doAnswer(
+            invocation -> {
+              Thread.sleep(5);
+              indexedDateCleared.set(Instant.now());
+              return null;
+            })
+        .when(datasetServiceDAO)
+        .updateDatasetIndex(eq(7), any(), any());
+    ArgumentCaptor<Instant> boundary = ArgumentCaptor.forClass(Instant.class);
+
+    try (var _ = service.deleteIndex(7, 1)) {
+      verify(datasetDAO).clearDatasetIndexConfirmed(eq(7), boundary.capture());
+    }
+    assertFalse(boundary.getValue().isBefore(indexedDateCleared.get()));
   }
 
   @Test

@@ -729,15 +729,18 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   void confirmDatasetsIndexed(
       @BindList("datasetIds") Set<Integer> datasetIds, @Bind("confirmedAt") Instant confirmedAt);
 
-  /** Leaves a confirmation recorded after the delete began, which is for a newer document. */
+  /**
+   * Leaves a confirmation recorded after the delete cleared indexed_date, which belongs to a newer
+   * index that set indexed_date again, so the next sync corrects it if this delete removed it.
+   */
   @SqlUpdate(
       """
       UPDATE dataset
       SET index_confirmed_date = NULL
-      WHERE dataset_id = :datasetId AND index_confirmed_date < :deleteStartedAt
+      WHERE dataset_id = :datasetId AND index_confirmed_date < :intentClearedAt
       """)
   void clearDatasetIndexConfirmed(
-      @Bind("datasetId") Integer datasetId, @Bind("deleteStartedAt") Instant deleteStartedAt);
+      @Bind("datasetId") Integer datasetId, @Bind("intentClearedAt") Instant intentClearedAt);
 
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)

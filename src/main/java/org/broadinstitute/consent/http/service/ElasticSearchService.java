@@ -245,16 +245,18 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
-    Instant startedAt = Instant.now();
     Request deleteRequest =
         new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
     deleteRequest.addParameter("conflicts", "proceed");
     deleteRequest.setEntity(
         new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
+    // Taken after indexed_date is cleared: a later confirmation needed a newer index to set it
+    // again.
+    Instant intentClearedAt = Instant.now();
     Response response = performRequest(deleteRequest);
     if (deletedCleanly(bulkBody(response))) {
-      clearIndexConfirmed(datasetId, startedAt);
+      clearIndexConfirmed(datasetId, intentClearedAt);
     } else {
       logWarn("Elasticsearch did not confirm deleting dataset %d".formatted(datasetId));
     }
@@ -295,9 +297,9 @@ public class ElasticSearchService implements ConsentLogger {
     }
   }
 
-  private void clearIndexConfirmed(Integer datasetId, Instant deleteStartedAt) {
+  private void clearIndexConfirmed(Integer datasetId, Instant intentClearedAt) {
     try {
-      datasetDAO.clearDatasetIndexConfirmed(datasetId, deleteStartedAt);
+      datasetDAO.clearDatasetIndexConfirmed(datasetId, intentClearedAt);
     } catch (JdbiException e) {
       logWarn("Error recording dataset %d as removed from the index".formatted(datasetId), e);
     }
