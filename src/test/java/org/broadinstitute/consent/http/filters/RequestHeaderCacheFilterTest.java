@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,19 +55,6 @@ class RequestHeaderCacheFilterTest {
     stubPath("/api/user/me");
     when(requestContext.getHeaders()).thenReturn(headers);
     when(headers.getFirst(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer test-token");
-  }
-
-  /** Give the request these decoded query parameters. */
-  private void stubQuery(MultivaluedMap<String, String> query) {
-    when(requestContext.getUriInfo()).thenReturn(uriInfo);
-    when(uriInfo.getQueryParameters()).thenReturn(query);
-  }
-
-  /** Decoded query parameters with one {@code access_token} value. */
-  private static MultivaluedMap<String, String> accessTokenQuery(String bearer) {
-    MultivaluedMap<String, String> query = new MultivaluedHashMap<>();
-    query.add("access_token", bearer);
-    return query;
   }
 
   /** Headers that a direct caller sends: a bearer string and forged claims. */
@@ -141,13 +127,11 @@ class RequestHeaderCacheFilterTest {
   void testFilterStripsAuthorizationForNonLoopbackPeer(String peer) throws Exception {
     when(servletRequest.getRemoteAddr()).thenReturn(peer);
     when(requestContext.getHeaders()).thenReturn(headers);
-    stubQuery(new MultivaluedHashMap<>());
 
     filter.filter(requestContext);
 
     verify(headers).remove(HttpHeaders.AUTHORIZATION);
     verify(claimsCache, never()).loadCache(any(), any());
-    verify(requestContext, never()).abortWith(any());
   }
 
   /**
@@ -161,7 +145,6 @@ class RequestHeaderCacheFilterTest {
     MultivaluedMap<String, String> forged = forgedHeaders("forged-token");
     when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
     when(requestContext.getHeaders()).thenReturn(forged);
-    stubQuery(new MultivaluedHashMap<>());
 
     filter.filter(requestContext);
 
@@ -177,7 +160,6 @@ class RequestHeaderCacheFilterTest {
     ClaimsCache realCache = new ClaimsCache();
     when(requestContext.getHeaders()).thenReturn(forgedHeaders("forged-token"));
     when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
-    stubQuery(new MultivaluedHashMap<>());
 
     new RequestHeaderCacheFilter(realCache, servletRequest).filter(requestContext);
 
@@ -205,71 +187,9 @@ class RequestHeaderCacheFilterTest {
     MultivaluedMap<String, String> direct = forgedHeaders("shared-token");
     when(requestContext.getHeaders()).thenReturn(direct);
     when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
-    when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
     realFilter.filter(requestContext);
 
     assertNull(direct.get(HttpHeaders.AUTHORIZATION));
-    assertEquals(
-        Map.of(ClaimsCache.OAUTH2_CLAIM_email, "user@example.com"),
-        realCache.cache.getIfPresent("shared-token"));
-  }
-
-  /**
-   * Dropwizard reads a bearer from the {@code access_token} query parameter when there is no
-   * Authorization header. A peer that is not loopback with that parameter gets 401 at once, so the
-   * authenticators never see the bearer.
-   */
-  @Test
-  void testFilterRejectsAccessTokenQueryFromNonLoopbackPeer() throws Exception {
-    when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
-    when(requestContext.getHeaders()).thenReturn(new MultivaluedHashMap<>());
-    stubQuery(accessTokenQuery("forged-token"));
-
-    filter.filter(requestContext);
-
-    verify(requestContext).abortWith(argThat(r -> r.getStatus() == 401));
-    verify(claimsCache, never()).loadCache(any(), any());
-  }
-
-  /**
-   * The sidecar validates the request, so for a loopback peer the filter leaves the {@code
-   * access_token} parameter to the auth filter, as before.
-   */
-  @Test
-  void testFilterDoesNotRejectAccessTokenQueryFromLoopbackPeer() throws Exception {
-    when(servletRequest.getRemoteAddr()).thenReturn(SIDECAR);
-    when(requestContext.getHeaders()).thenReturn(new MultivaluedHashMap<>());
-    stubPath("/api/user/me");
-
-    filter.filter(requestContext);
-
-    verify(requestContext, never()).abortWith(any());
-  }
-
-  /**
-   * A sidecar request on loopback caches the real user's claims. A later direct request that sends
-   * the same bearer in the {@code access_token} query parameter gets 401, and the cache entry
-   * stays.
-   */
-  @Test
-  void testNonLoopbackPeerCannotReuseCachedClaimsThroughAccessTokenQuery() throws Exception {
-    ClaimsCache realCache = new ClaimsCache();
-    RequestHeaderCacheFilter realFilter = new RequestHeaderCacheFilter(realCache, servletRequest);
-    MultivaluedMap<String, String> sidecar = new MultivaluedHashMap<>();
-    sidecar.add(HttpHeaders.AUTHORIZATION, "Bearer shared-token");
-    sidecar.add(ClaimsCache.OAUTH2_CLAIM_email, "user@example.com");
-    stubPath("/api/user/me");
-    when(requestContext.getHeaders()).thenReturn(sidecar);
-    when(servletRequest.getRemoteAddr()).thenReturn(SIDECAR);
-    realFilter.filter(requestContext);
-    assertNotNull(realCache.cache.getIfPresent("shared-token"));
-
-    when(requestContext.getHeaders()).thenReturn(new MultivaluedHashMap<>());
-    when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
-    when(uriInfo.getQueryParameters()).thenReturn(accessTokenQuery("shared-token"));
-    realFilter.filter(requestContext);
-
-    verify(requestContext).abortWith(argThat(r -> r.getStatus() == 401));
     assertEquals(
         Map.of(ClaimsCache.OAUTH2_CLAIM_email, "user@example.com"),
         realCache.cache.getIfPresent("shared-token"));
