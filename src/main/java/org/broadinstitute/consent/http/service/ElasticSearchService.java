@@ -179,6 +179,10 @@ public class ElasticSearchService implements ConsentLogger {
     Response response = performRequest(bulkRequest);
     // A bulk request answers 200 even when Elasticsearch rejected some of its documents.
     Optional<Set<Integer>> rejected = rejectedIds(response);
+    rejected.ifPresent(
+        ids ->
+            confirmIndexed(
+                sent.stream().filter(id -> !ids.contains(id)).collect(Collectors.toSet())));
     if (rejected.map(ids -> !ids.isEmpty()).orElse(true)) {
       logWarn("Elasticsearch rejected datasets %s".formatted(rejected.orElse(sent)));
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(response.getEntity()).build();
@@ -246,7 +250,40 @@ public class ElasticSearchService implements ConsentLogger {
     deleteRequest.setEntity(
         new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
-    return performRequest(deleteRequest);
+    Response response = performRequest(deleteRequest);
+    if (hasFailures(bulkBody(response))) {
+      logWarn("Elasticsearch did not delete dataset %d".formatted(datasetId));
+    } else {
+      clearIndexConfirmed(datasetId);
+    }
+    return response;
+  }
+
+  private static boolean hasFailures(JsonObject body) {
+    JsonElement failures = body.get("failures");
+    return failures != null && failures.isJsonArray() && !failures.getAsJsonArray().isEmpty();
+  }
+
+  /**
+   * A database error here only under-reports the datasets as listed until they are indexed again.
+   */
+  private void confirmIndexed(Set<Integer> ids) {
+    if (ids.isEmpty()) {
+      return;
+    }
+    try {
+      datasetDAO.confirmDatasetsIndexed(ids);
+    } catch (JdbiException e) {
+      logWarn("Error recording datasets %s as indexed".formatted(ids), e);
+    }
+  }
+
+  private void clearIndexConfirmed(Integer datasetId) {
+    try {
+      datasetDAO.clearDatasetIndexConfirmed(datasetId);
+    } catch (JdbiException e) {
+      logWarn("Error recording dataset %d as removed from the index".formatted(datasetId), e);
+    }
   }
 
   public boolean invalidResultWindow(String query) {

@@ -716,6 +716,23 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
   void updateDatasetsIndexedDate(@BindList("datasetIds") Set<Integer> datasetIds);
 
+  /** Records that Elasticsearch accepted these datasets' documents. */
+  @SqlUpdate(
+      """
+      UPDATE dataset
+      SET index_confirmed_date = NOW()
+      WHERE dataset_id IN (<datasetIds>)
+      """)
+  void confirmDatasetsIndexed(@BindList("datasetIds") Set<Integer> datasetIds);
+
+  @SqlUpdate(
+      """
+      UPDATE dataset
+      SET index_confirmed_date = NULL
+      WHERE dataset_id = :datasetId
+      """)
+  void clearDatasetIndexConfirmed(@Bind("datasetId") Integer datasetId);
+
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)
   @SqlQuery(

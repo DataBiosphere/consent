@@ -96,7 +96,7 @@ public class AssetLookupService {
         AssetIdentifier.format(AssetType.DATASET, dataset.getAlias()),
         AssetType.DATASET,
         Status.LIVE,
-        dataset.getIndexedDate() != null,
+        lookupDAO.isDatasetIndexed(dataset.getDatasetId()),
         dataset.getDatasetId(),
         dataset.getStudyId());
   }

@@ -1658,6 +1658,29 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testConfirmAndClearDatasetIndexed() {
+    Dataset confirmed = insertDataset();
+    Dataset other = insertDataset();
+
+    datasetDAO.confirmDatasetsIndexed(Set.of(confirmed.getDatasetId(), other.getDatasetId()));
+    datasetDAO.clearDatasetIndexConfirmed(other.getDatasetId());
+
+    assertTrue(isIndexConfirmed(confirmed.getDatasetId()));
+    assertFalse(isIndexConfirmed(other.getDatasetId()));
+    assertNull(datasetDAO.findDatasetById(confirmed.getDatasetId()).getIndexedDate());
+  }
+
+  private boolean isIndexConfirmed(int datasetId) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "SELECT index_confirmed_date IS NOT NULL FROM dataset WHERE dataset_id = :id")
+                .bind("id", datasetId)
+                .mapTo(Boolean.class)
+                .one());
+  }
+
+  @Test
   void testGetRecentDacApprovedDatasetStudyIds() {
     User user = createUser();
     Dataset dataset = insertDataset();

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!--
+    indexed_date keeps meaning "keep this dataset in the search index", which drives retries.
+    index_confirmed_date records when Elasticsearch last accepted the dataset's document, and is
+    cleared once a delete succeeds. It starts from indexed_date, the closest record there is; the
+    next index or delete of each dataset corrects it.
+  -->
+  <changeSet id="changelog-consent-2026-11-05-dataset-index-confirmed" author="kmarete">
+    <addColumn tableName="dataset">
+      <column name="index_confirmed_date" type="timestamp with time zone"/>
+    </addColumn>
+    <sql>UPDATE dataset SET index_confirmed_date = indexed_date WHERE indexed_date IS NOT NULL</sql>
+    <rollback>
+      <dropColumn tableName="dataset" columnName="index_confirmed_date"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
