@@ -1,0 +1,22 @@
+type: object
+required: [type, status]
+properties:
+  identifier:
+    type: string
+    description: The canonical identifier. Absent for a removed asset.
+  type:
+    type: string
+    enum: [DATASET, MODEL, WORKSPACE, BIOSPECIMEN]
+  status:
+    type: string
+    enum: [LIVE, RETIRED, REMOVED]
+    description: RETIRED is an asset taken out of its study's registration; REMOVED is a deleted dataset, study or asset.
+  listed:
+    type: boolean
+    description: Whether the asset's study has a dataset in the search index, without which it is not in the Data Library. Absent for a removed asset.
+  assetId:
+    type: integer
+    description: The dataset id, or the model, workspace or biospecimen row id. Absent for a removed asset.
+  studyId:
+    type: integer
+    description: The asset's study. Absent for a removed asset and for a dataset with no study.

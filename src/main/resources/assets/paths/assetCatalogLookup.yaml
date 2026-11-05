@@ -1,0 +1,31 @@
+get:
+  summary: Resolve a DUOS identifier
+  operationId: lookupAssetIdentifier
+  description: >-
+    Resolves a model (`DUOS-M-000045`), workspace (`DUOS-W-…`) or biospecimen (`DUOS-B-…`)
+    identifier, which must be in its canonical form. A live or retired asset is returned only when
+    the caller can read its study; otherwise the response is 404, as for an unknown identifier. A
+    removed asset returns only its type and status, and only to an Admin; anyone else gets 404.
+  tags:
+    - Asset Catalog
+  parameters:
+    - name: identifier
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: What the identifier names
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/AssetLookup.yaml'
+    401:
+      description: Unauthorized
+    404:
+      description: Unknown or malformed identifier, a live or retired asset the caller cannot read, or a removed asset for a non-Admin
+    429:
+      description: Too Many Requests - rate limit exceeded; retry after the Retry-After header
+    500:
+      description: Server error
