@@ -126,6 +126,18 @@ public class ClientIpResolver {
     }
   }
 
+  /**
+   * True when the socket peer is a loopback address. In a deployed pod only the Apache sidecar
+   * reaches Consent on loopback; any other caller on the app port skipped it (DT-4419).
+   *
+   * @param peerAddress the socket peer address, as {@code getRemoteAddr()} reports it
+   * @return false for a null peer, a hostname, or anything that is not an IP literal
+   */
+  static boolean isLoopback(String peerAddress) {
+    InetAddress peer = parse(peerAddress);
+    return peer != null && peer.isLoopbackAddress();
+  }
+
   private boolean isTrusted(InetAddress address) {
     return trustedProxies.test(address);
   }

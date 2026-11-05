@@ -2,13 +2,33 @@ package org.broadinstitute.consent.http.filters;
 
 import com.google.inject.Inject;
 import jakarta.annotation.Priority;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
+/**
+ * Caches the {@code OAUTH2_CLAIM_*} headers that the Apache sidecar sets after it validates a
+ * token. The authenticators build the user from this cache, so only claims that the sidecar set may
+ * enter it.
+ *
+ * <p>The cache is filled only when both conditions are true:
+ *
+ * <ul>
+ *   <li>The route is one the sidecar authenticates (/api). See the route pattern below.
+ *   <li>The socket peer is loopback. The sidecar runs in the same pod and reaches Consent on
+ *       loopback. A peer that is not loopback, for example another pod that calls the pod IP on the
+ *       app port, skipped the sidecar, and its claim headers are not trusted (DT-4419).
+ * </ul>
+ *
+ * <p>When the filter skips the cache, the authenticators find no user for the bearer, so the
+ * request is anonymous: protected routes return 401, and open routes still work. The filter does
+ * not log a skipped request, so a direct caller cannot add a log line to each request.
+ */
 @Provider
 @Priority(Integer.MIN_VALUE)
 public class RequestHeaderCacheFilter implements ContainerRequestFilter {
@@ -24,9 +44,16 @@ public class RequestHeaderCacheFilter implements ContainerRequestFilter {
 
   private final ClaimsCache claimsCache;
 
+  @Context private HttpServletRequest servletRequest;
+
   @Inject
   public RequestHeaderCacheFilter(ClaimsCache claimsCache) {
     this.claimsCache = claimsCache;
+  }
+
+  RequestHeaderCacheFilter(ClaimsCache claimsCache, HttpServletRequest servletRequest) {
+    this(claimsCache);
+    this.servletRequest = servletRequest;
   }
 
   @Override
@@ -36,7 +63,7 @@ public class RequestHeaderCacheFilter implements ContainerRequestFilter {
     }
     var headers = containerRequestContext.getHeaders();
     var token = headers.getFirst(HttpHeaders.AUTHORIZATION);
-    if (token != null) {
+    if (token != null && ClientIpResolver.isLoopback(servletRequest.getRemoteAddr())) {
       var bearer = token.replaceFirst("(?i)^Bearer ", "");
       claimsCache.loadCache(bearer, headers);
     }
