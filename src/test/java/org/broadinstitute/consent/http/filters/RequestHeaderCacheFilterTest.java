@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.filters;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -13,6 +15,7 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,12 +49,21 @@ class RequestHeaderCacheFilterTest {
     when(uriInfo.getRequestUri()).thenReturn(URI.create("https://consent.local" + rawPath));
   }
 
-  /** An /api request with a bearer token, from the given socket peer. */
-  private void stubApiRequestFrom(String peer) {
+  /** An /api request with a bearer token, from the given loopback peer. */
+  private void stubApiRequestFromLoopback(String peer) {
+    when(servletRequest.getRemoteAddr()).thenReturn(peer);
     stubPath("/api/user/me");
     when(requestContext.getHeaders()).thenReturn(headers);
     when(headers.getFirst(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer test-token");
-    when(servletRequest.getRemoteAddr()).thenReturn(peer);
+  }
+
+  /** Headers that a direct caller sends: a bearer string and forged claims. */
+  private static MultivaluedMap<String, String> forgedHeaders(String bearer) {
+    MultivaluedMap<String, String> forged = new MultivaluedHashMap<>();
+    forged.add(HttpHeaders.AUTHORIZATION, "Bearer " + bearer);
+    forged.add(ClaimsCache.OAUTH2_CLAIM_email, "admin@example.com");
+    forged.add(ClaimsCache.OAUTH2_CLAIM_name, "Forged Admin");
+    return forged;
   }
 
   @ParameterizedTest
@@ -83,6 +95,7 @@ class RequestHeaderCacheFilterTest {
   void testFilterDoesNotCallLoadCacheWhenNoAuthorizationHeaderOnApiRoute() throws Exception {
     stubPath("/api/user/me");
     when(requestContext.getHeaders()).thenReturn(headers);
+    when(servletRequest.getRemoteAddr()).thenReturn(SIDECAR);
 
     filter.filter(requestContext);
 
@@ -96,7 +109,7 @@ class RequestHeaderCacheFilterTest {
   @ParameterizedTest
   @ValueSource(strings = {"127.0.0.1", "::1", "[0:0:0:0:0:0:0:1]"})
   void testFilterCachesForLoopbackPeer(String peer) throws Exception {
-    stubApiRequestFrom(peer);
+    stubApiRequestFromLoopback(peer);
 
     filter.filter(requestContext);
 
@@ -105,17 +118,37 @@ class RequestHeaderCacheFilterTest {
 
   /**
    * A peer that is not loopback did not come through the sidecar, so its claim headers are not
-   * trusted. The filter must not fill the cache, whatever headers the caller sends (DT-4419).
+   * trusted. On every route, the filter removes the Authorization header and does not fill the
+   * cache, whatever headers the caller sends (DT-4419).
    */
   @ParameterizedTest
   @NullSource
   @ValueSource(strings = {"10.0.0.5", "192.0.2.50", "2001:db8::1", "[2001:db8::1]", "unknown"})
-  void testFilterDoesNotCacheForNonLoopbackPeer(String peer) throws Exception {
-    stubApiRequestFrom(peer);
+  void testFilterStripsAuthorizationForNonLoopbackPeer(String peer) throws Exception {
+    when(servletRequest.getRemoteAddr()).thenReturn(peer);
+    when(requestContext.getHeaders()).thenReturn(headers);
 
     filter.filter(requestContext);
 
+    verify(headers).remove(HttpHeaders.AUTHORIZATION);
     verify(claimsCache, never()).loadCache(any(), any());
+  }
+
+  /**
+   * The auth filter also runs on routes where the cache is not filled (for example /swagger, or
+   * /api with a matrix parameter), so the header must go on those routes too.
+   */
+  @ParameterizedTest
+  @ValueSource(strings = {"/api/user/me", "/api;x=1/user/me", "/swagger/index.html", "/status"})
+  void testFilterStripsAuthorizationForNonLoopbackPeerOnEveryRoute(String rawPath)
+      throws Exception {
+    MultivaluedMap<String, String> forged = forgedHeaders("forged-token");
+    when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
+    when(requestContext.getHeaders()).thenReturn(forged);
+
+    filter.filter(requestContext);
+
+    assertNull(forged.get(HttpHeaders.AUTHORIZATION), rawPath);
   }
 
   /**
@@ -125,17 +158,41 @@ class RequestHeaderCacheFilterTest {
   @Test
   void testForgedClaimsFromNonLoopbackPeerDoNotEnterRealCache() throws Exception {
     ClaimsCache realCache = new ClaimsCache();
-    MultivaluedMap<String, String> forged = new MultivaluedHashMap<>();
-    forged.add(HttpHeaders.AUTHORIZATION, "Bearer forged-token");
-    forged.add(ClaimsCache.OAUTH2_CLAIM_email, "admin@example.com");
-    forged.add(ClaimsCache.OAUTH2_CLAIM_name, "Forged Admin");
-    stubPath("/api/user/me");
-    when(requestContext.getHeaders()).thenReturn(forged);
+    when(requestContext.getHeaders()).thenReturn(forgedHeaders("forged-token"));
     when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
 
     new RequestHeaderCacheFilter(realCache, servletRequest).filter(requestContext);
 
     assertNull(realCache.cache.getIfPresent("forged-token"));
+  }
+
+  /**
+   * A sidecar request on loopback caches the real user's claims. A later direct request with the
+   * same bearer must not reach those claims: the filter removes its Authorization header, so the
+   * authenticators get no bearer. The cache entry stays, so the real user is not affected.
+   */
+  @Test
+  void testNonLoopbackPeerCannotReuseClaimsCachedThroughSidecar() throws Exception {
+    ClaimsCache realCache = new ClaimsCache();
+    RequestHeaderCacheFilter realFilter = new RequestHeaderCacheFilter(realCache, servletRequest);
+    MultivaluedMap<String, String> sidecar = new MultivaluedHashMap<>();
+    sidecar.add(HttpHeaders.AUTHORIZATION, "Bearer shared-token");
+    sidecar.add(ClaimsCache.OAUTH2_CLAIM_email, "user@example.com");
+    stubPath("/api/user/me");
+    when(requestContext.getHeaders()).thenReturn(sidecar);
+    when(servletRequest.getRemoteAddr()).thenReturn(SIDECAR);
+    realFilter.filter(requestContext);
+    assertNotNull(realCache.cache.getIfPresent("shared-token"));
+
+    MultivaluedMap<String, String> direct = forgedHeaders("shared-token");
+    when(requestContext.getHeaders()).thenReturn(direct);
+    when(servletRequest.getRemoteAddr()).thenReturn("10.0.0.5");
+    realFilter.filter(requestContext);
+
+    assertNull(direct.get(HttpHeaders.AUTHORIZATION));
+    assertEquals(
+        Map.of(ClaimsCache.OAUTH2_CLAIM_email, "user@example.com"),
+        realCache.cache.getIfPresent("shared-token"));
   }
 
   /**
@@ -147,6 +204,8 @@ class RequestHeaderCacheFilterTest {
   @ValueSource(
       strings = {"/status", "/", "/swagger/index.html", "/api;x=1/user/me", "/apidocs/index.html"})
   void testFilterDoesNotCacheOnUnauthenticatedRoute(String rawPath) throws Exception {
+    when(servletRequest.getRemoteAddr()).thenReturn(SIDECAR);
+    when(requestContext.getHeaders()).thenReturn(headers);
     stubPath(rawPath);
 
     filter.filter(requestContext);
