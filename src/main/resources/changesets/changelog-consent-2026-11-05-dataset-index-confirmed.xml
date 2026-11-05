@@ -9,6 +9,8 @@
     next index or delete of each dataset corrects it.
   -->
   <changeSet id="changelog-consent-2026-11-05-dataset-index-confirmed" author="kmarete">
+    <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
+    <sql>SET LOCAL lock_timeout = '10s'</sql>
     <addColumn tableName="dataset">
       <column name="index_confirmed_date" type="timestamp with time zone"/>
     </addColumn>

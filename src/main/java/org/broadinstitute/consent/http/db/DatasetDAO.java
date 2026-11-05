@@ -716,22 +716,28 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
     """)
   void updateDatasetsIndexedDate(@BindList("datasetIds") Set<Integer> datasetIds);
 
-  /** Records that Elasticsearch accepted these datasets' documents. */
+  /**
+   * Records that Elasticsearch accepted these datasets' documents. A dataset whose indexed_date a
+   * delete has since cleared is skipped, so a late confirmation cannot outlive that delete.
+   */
   @SqlUpdate(
       """
       UPDATE dataset
-      SET index_confirmed_date = NOW()
-      WHERE dataset_id IN (<datasetIds>)
+      SET index_confirmed_date = :confirmedAt
+      WHERE dataset_id IN (<datasetIds>) AND indexed_date IS NOT NULL
       """)
-  void confirmDatasetsIndexed(@BindList("datasetIds") Set<Integer> datasetIds);
+  void confirmDatasetsIndexed(
+      @BindList("datasetIds") Set<Integer> datasetIds, @Bind("confirmedAt") Instant confirmedAt);
 
+  /** Leaves a confirmation recorded after the delete began, which is for a newer document. */
   @SqlUpdate(
       """
       UPDATE dataset
       SET index_confirmed_date = NULL
-      WHERE dataset_id = :datasetId
+      WHERE dataset_id = :datasetId AND index_confirmed_date < :deleteStartedAt
       """)
-  void clearDatasetIndexConfirmed(@Bind("datasetId") Integer datasetId);
+  void clearDatasetIndexConfirmed(
+      @Bind("datasetId") Integer datasetId, @Bind("deleteStartedAt") Instant deleteStartedAt);
 
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)

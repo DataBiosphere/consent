@@ -1658,16 +1658,33 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testConfirmAndClearDatasetIndexed() {
-    Dataset confirmed = insertDataset();
-    Dataset other = insertDataset();
+  void testConfirmDatasetsIndexedSkipsADatasetADeleteHasTakenOut() {
+    Dataset indexed = insertDataset();
+    Dataset deleted = insertDataset();
+    datasetDAO.updateDatasetsIndexedDate(Set.of(indexed.getDatasetId()));
 
-    datasetDAO.confirmDatasetsIndexed(Set.of(confirmed.getDatasetId(), other.getDatasetId()));
-    datasetDAO.clearDatasetIndexConfirmed(other.getDatasetId());
+    datasetDAO.confirmDatasetsIndexed(
+        Set.of(indexed.getDatasetId(), deleted.getDatasetId()), Instant.now());
 
-    assertTrue(isIndexConfirmed(confirmed.getDatasetId()));
-    assertFalse(isIndexConfirmed(other.getDatasetId()));
-    assertNull(datasetDAO.findDatasetById(confirmed.getDatasetId()).getIndexedDate());
+    assertTrue(isIndexConfirmed(indexed.getDatasetId()));
+    assertFalse(isIndexConfirmed(deleted.getDatasetId()));
+  }
+
+  @Test
+  void testClearDatasetIndexConfirmedKeepsAConfirmationNewerThanTheDelete() {
+    Dataset older = insertDataset();
+    Dataset newer = insertDataset();
+    datasetDAO.updateDatasetsIndexedDate(Set.of(older.getDatasetId(), newer.getDatasetId()));
+    Instant deleteStartedAt = Instant.parse("2026-11-05T12:00:00Z");
+    datasetDAO.confirmDatasetsIndexed(
+        Set.of(older.getDatasetId()), deleteStartedAt.minusSeconds(1));
+    datasetDAO.confirmDatasetsIndexed(Set.of(newer.getDatasetId()), deleteStartedAt.plusSeconds(1));
+
+    datasetDAO.clearDatasetIndexConfirmed(older.getDatasetId(), deleteStartedAt);
+    datasetDAO.clearDatasetIndexConfirmed(newer.getDatasetId(), deleteStartedAt);
+
+    assertFalse(isIndexConfirmed(older.getDatasetId()));
+    assertTrue(isIndexConfirmed(newer.getDatasetId()));
   }
 
   private boolean isIndexConfirmed(int datasetId) {

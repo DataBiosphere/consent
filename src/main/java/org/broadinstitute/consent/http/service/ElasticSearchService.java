@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
@@ -244,6 +245,7 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
+    Instant startedAt = Instant.now();
     Request deleteRequest =
         new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
     deleteRequest.addParameter("conflicts", "proceed");
@@ -251,17 +253,32 @@ public class ElasticSearchService implements ConsentLogger {
         new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
     Response response = performRequest(deleteRequest);
-    if (hasFailures(bulkBody(response))) {
-      logWarn("Elasticsearch did not delete dataset %d".formatted(datasetId));
+    if (deletedCleanly(bulkBody(response))) {
+      clearIndexConfirmed(datasetId, startedAt);
     } else {
-      clearIndexConfirmed(datasetId);
+      logWarn("Elasticsearch did not confirm deleting dataset %d".formatted(datasetId));
     }
     return response;
   }
 
-  private static boolean hasFailures(JsonObject body) {
-    JsonElement failures = body.get("failures");
-    return failures != null && failures.isJsonArray() && !failures.getAsJsonArray().isEmpty();
+  /**
+   * Only a delete that removed a document, with no conflict, failure or timeout, shows the document
+   * is gone: with conflicts=proceed a conflict is only counted, and a document indexed within the
+   * refresh interval is not yet visible to the query, so it answers deleted 0.
+   */
+  private static boolean deletedCleanly(JsonObject body) {
+    return count(body, "deleted") > 0
+        && count(body, "version_conflicts") == 0
+        && !(body.get("timed_out") instanceof JsonPrimitive timedOut
+            && timedOut.isBoolean()
+            && timedOut.getAsBoolean())
+        && !(body.get("failures") instanceof JsonArray failures && !failures.isEmpty());
+  }
+
+  private static long count(JsonObject body, String field) {
+    return body.get(field) instanceof JsonPrimitive value && value.isNumber()
+        ? value.getAsLong()
+        : 0;
   }
 
   /**
@@ -272,15 +289,15 @@ public class ElasticSearchService implements ConsentLogger {
       return;
     }
     try {
-      datasetDAO.confirmDatasetsIndexed(ids);
+      datasetDAO.confirmDatasetsIndexed(ids, Instant.now());
     } catch (JdbiException e) {
       logWarn("Error recording datasets %s as indexed".formatted(ids), e);
     }
   }
 
-  private void clearIndexConfirmed(Integer datasetId) {
+  private void clearIndexConfirmed(Integer datasetId, Instant deleteStartedAt) {
     try {
-      datasetDAO.clearDatasetIndexConfirmed(datasetId);
+      datasetDAO.clearDatasetIndexConfirmed(datasetId, deleteStartedAt);
     } catch (JdbiException e) {
       logWarn("Error recording dataset %d as removed from the index".formatted(datasetId), e);
     }
