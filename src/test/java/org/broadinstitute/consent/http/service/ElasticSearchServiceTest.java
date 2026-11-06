@@ -73,6 +73,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
+import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
@@ -405,6 +406,27 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(
         externalIdentifierTypeProp.get().getValue().toString(),
         term.getStudy().getExternalIdentifierType());
+  }
+
+  @Test
+  void testToStudyTermIndexesEachAssetsIdentifierAndNotAStoredOne() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addProperty(
+        new StudyProperty(
+            "workspaces",
+            GsonUtil.getInstance()
+                .toJsonTree(
+                    List.of(
+                        Map.of("workspaceId", 12, "duosIdentifier", "DUOS-W-999999"),
+                        Map.of("workspaceId", "client-id", "duosIdentifier", "DUOS-W-000001"))),
+            PropertyType.Json));
+
+    StudyTerm term = service.toStudyTerm(study);
+
+    List<?> workspaces = (List<?>) term.getAssets().get("workspaces");
+    assertEquals("DUOS-W-000012", ((Map<?, ?>) workspaces.get(0)).get("duosIdentifier"));
+    assertFalse(((Map<?, ?>) workspaces.get(1)).containsKey("duosIdentifier"));
   }
 
   @ParameterizedTest

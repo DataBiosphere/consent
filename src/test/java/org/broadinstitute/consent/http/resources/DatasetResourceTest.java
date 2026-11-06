@@ -954,6 +954,28 @@ class DatasetResourceTest extends AbstractTestHelper {
     }
   }
 
+  @Test
+  void testGetRegistrationFromDatasetIdentifierCarriesNoStoredAssetIdentifier() {
+    Dataset dataset = createMockDatasetInStudy();
+    dataset
+        .getStudy()
+        .addProperty(
+            new StudyProperty(
+                "models",
+                GsonUtil.getInstance()
+                    .toJsonTree(List.of(Map.of("modelId", 45, "duosIdentifier", "DUOS-M-000045"))),
+                PropertyType.Json));
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+
+    try (var response =
+        resource.getRegistrationFromDatasetIdentifier(duosUser, dataset.getDatasetIdentifier())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      String entity = response.getEntity().toString();
+      assertTrue(entity.contains("\"modelId\":45"));
+      assertFalse(entity.contains("duosIdentifier"));
+    }
+  }
+
   // The update endpoint parses registrations with Jackson, so a returned one must parse there.
   private void assertRegistrationEnumsWrittenAsValues(String entity) throws IOException {
     assertTrue(entity.contains("\"accessManagement\":\"" + AccessManagement.OPEN.value() + "\""));

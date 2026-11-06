@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -113,6 +114,120 @@ class UserSessionTest extends DAOTestHelper {
     assertEquals("google", audit.get("idp"));
   }
 
+  @Test
+  void auditUpdate_rotationClosesTheAuditRowAndOpensANewOne() {
+    // @fastify/session 11.1.6 keeps the row on regenerate() and records a new
+    // generation. A row written before 11.1.6 has none, so its generation is the sid.
+    String sid = UUID.randomUUID().toString();
+    insertSession(sid, "{\"idp\":\"google\"}");
+
+    updateSessionSess(
+        sid,
+        "{\"__fastifySessionMetadata\":{\"generation\":\"gen-2\"},\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(2, audits.size());
+    assertNotNull(audits.get(0).get("ended_at"));
+    assertEquals("rotated", audits.get(0).get("end_reason"));
+    assertNull(audits.get(0).get("user_email"));
+    assertNull(audits.get(1).get("ended_at"));
+    assertEquals("researcher@example.com", audits.get(1).get("user_email"));
+    assertEquals("google", audits.get(1).get("idp"));
+  }
+
+  @Test
+  void auditUpdate_signInRotatesToAnEmptySessionThenBackfillsTheUser() {
+    // The BFF's sign-in saves the regenerated, empty session first, then writes
+    // the user's fields with the same generation (duos-ui session/rotation.ts).
+    String sid = UUID.randomUUID().toString();
+    insertSession(sid, "{}");
+    String metadata = "\"__fastifySessionMetadata\":{\"generation\":\"gen-2\"}";
+
+    updateSessionSess(sid, "{" + metadata + "}");
+    updateSessionSess(
+        sid, "{" + metadata + ",\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(2, audits.size());
+    assertEquals("rotated", audits.get(0).get("end_reason"));
+    assertEquals("researcher@example.com", audits.get(1).get("user_email"));
+    assertEquals("google", audits.get(1).get("idp"));
+    assertNull(audits.get(1).get("ended_at"));
+  }
+
+  @Test
+  void auditUpdate_secondSignInOnTheSameRowRecordsTheNewUser() {
+    String sid = UUID.randomUUID().toString();
+    insertSession(
+        sid,
+        "{\"__fastifySessionMetadata\":{\"generation\":\"gen-1\"},\"userId\":\"first@example.com\",\"idp\":\"google\"}");
+
+    updateSessionSess(
+        sid,
+        "{\"__fastifySessionMetadata\":{\"generation\":\"gen-2\"},\"userId\":\"second@example.com\",\"idp\":\"azure\"}");
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(2, audits.size());
+    assertEquals("first@example.com", audits.get(0).get("user_email"));
+    assertEquals("rotated", audits.get(0).get("end_reason"));
+    assertEquals("second@example.com", audits.get(1).get("user_email"));
+    assertEquals("azure", audits.get(1).get("idp"));
+    assertNull(audits.get(1).get("ended_at"));
+  }
+
+  @Test
+  void auditUpdate_sameGenerationOnlyBackfills() {
+    // A token refresh saves the session without regenerating it.
+    String sid = UUID.randomUUID().toString();
+    String metadata = "\"__fastifySessionMetadata\":{\"generation\":\"gen-1\"}";
+    insertSession(sid, "{" + metadata + "}");
+
+    updateSessionSess(
+        sid, "{" + metadata + ",\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(1, audits.size());
+    assertEquals("researcher@example.com", audits.get(0).get("user_email"));
+    assertNull(audits.get(0).get("ended_at"));
+  }
+
+  @Test
+  void auditUpdate_firstSaveAfterTheUpgradeIsNotARotation() {
+    // A session live at deploy has no generation. 11.1.6's first save of it
+    // writes generation = sid, which the COALESCE fallback treats as unchanged.
+    String sid = UUID.randomUUID().toString();
+    insertSession(sid, "{\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    updateSessionSess(
+        sid,
+        "{\"__fastifySessionMetadata\":{\"generation\":\""
+            + sid
+            + "\"},\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(1, audits.size());
+    assertNull(audits.get(0).get("ended_at"));
+    assertEquals("researcher@example.com", audits.get(0).get("user_email"));
+  }
+
+  @Test
+  void auditEnd_afterRotationClosesOnlyTheOpenRow() {
+    String sid = UUID.randomUUID().toString();
+    insertSession(sid, "{}");
+    updateSessionSess(
+        sid,
+        "{\"__fastifySessionMetadata\":{\"generation\":\"gen-2\"},\"userId\":\"researcher@example.com\"}");
+    stampAuditEndReason(sid);
+
+    deleteSession(sid);
+
+    List<Map<String, Object>> audits = queryAuditsBySid(sid);
+    assertEquals(2, audits.size());
+    assertEquals("rotated", audits.get(0).get("end_reason"));
+    assertEquals("logout", audits.get(1).get("end_reason"));
+    assertNotNull(audits.get(1).get("ended_at"));
+  }
+
   // ---------------------------------------------------------------------------
   // audit_session_end — AFTER DELETE
   // ---------------------------------------------------------------------------
@@ -206,6 +321,15 @@ class UserSessionTest extends DAOTestHelper {
                 .bind("hash", sha256Hex(sid))
                 .mapToMap()
                 .findOne());
+  }
+
+  private List<Map<String, Object>> queryAuditsBySid(String sid) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery("SELECT * FROM user_session_audit WHERE sid_hash = :hash ORDER BY id")
+                .bind("hash", sha256Hex(sid))
+                .mapToMap()
+                .list());
   }
 
   /** Simulates the Phase 2 logout handler stamping end_reason before session.destroy(). */

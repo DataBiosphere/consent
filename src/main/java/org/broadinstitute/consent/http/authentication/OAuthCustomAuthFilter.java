@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
-import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -24,7 +23,7 @@ public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
   public OAuthCustomAuthFilter(
       OAuthAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
     filter =
-        new OAuthCredentialAuthFilter.Builder<AuthUser>()
+        new BearerHeaderAuthFilter.Builder<AuthUser>()
             .setAuthenticator(authenticator)
             .setAuthorizer(new UserAuthorizer(authorizationHelper))
             .setPrefix("Bearer")
@@ -41,7 +40,7 @@ public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
   public OAuthCustomAuthFilter(
       DuosUserAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
     filter =
-        new OAuthCredentialAuthFilter.Builder<DuosUser>()
+        new BearerHeaderAuthFilter.Builder<DuosUser>()
             .setAuthenticator(authenticator)
             .setAuthorizer(new DuosUserAuthorizer(authorizationHelper))
             .setPrefix("Bearer")

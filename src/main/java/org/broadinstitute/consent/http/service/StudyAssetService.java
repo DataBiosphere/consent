@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import java.util.List;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetIdentifiers;
 import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.User;
 
@@ -27,6 +28,7 @@ public class StudyAssetService {
 
   /** Returns the registration assets of one type recorded for the study. */
   public List<Object> getAssetsByType(Integer studyId, User user, String key) {
-    return studyAssets.findAssetList(requireStudy(studyId, user).getProperties(), key);
+    return StudyAssetIdentifiers.decorate(
+        key, studyAssets.findAssetList(requireStudy(studyId, user).getProperties(), key));
   }
 }
