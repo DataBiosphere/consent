@@ -209,6 +209,7 @@ each value is recorded here in place of "Provisional".
 | D16 | Theme colors | Showcase color themes stay as built (DT-4276). A config names a preset (`default`, `blue` or `teal`) and may override its primary and accent colors. CI checks that both reach 4.5:1 against the background. **Provisional:** the preset colors, which are the current `themes.ts` placeholders, and the neutrals (muted text, borders, card surfaces), each with its own contrast check. |
 | D17 | Typography | Changed (see "Typography"). |
 | D18 | Dataset card | The fields, in this order: title (as the heading), DUOS ID, "New in DUOS" badge, access, DAC (hidden for open and external datasets), data use, participants, available date and provider site. A field with no value is left out. The primary action is "Request access" for controlled datasets and the provider link for open and external ones. **Provisional:** the layout. |
+| D19 | Masthead, sub-nav and handoffs | Added after the review, with DT-4354 (S3.2). The `showcaseHandoffsEnabled` flag in `config.json` turns on the links into DUOS. It is fail-closed: when it is absent or not `true`, the handoffs are off. An environment turns it on only when its showcase lookup reads the same DUOS environment that the handoffs open. In a production-data preview, the handoffs to signed-in pages show as text, not links, and a page notice tells why. A link to a signed-in page shows "(Sign-in required)" to a visitor who is not signed in. The request handoff opens the dataset page, `/dataset/DUOS-xxxxxx`, where "Apply for Access" starts the current data access request (DAR) path. The masthead search submits to `/datalibrary?query=`. The sub-nav does not yet hide a section whose shelf is loading (D11); that comes with the first shelf, in S3.3. **Provisional:** the preview notice, "Sign-in required", "Search is not available in this preview." and "Sections on this page". |
 
 ### Logos (D10)
 
@@ -245,7 +246,7 @@ each value is recorded here in place of "Provisional".
 | Gate | Owner | Blocks |
 | --- | --- | --- |
 | Design review: desktop and mobile shelves, carousel controls, keyboard order, logo slots, error states, enabled versus visible sections. **Held 2026-11-03** with the product owner and engineering; see [Design review decisions](#design-review-decisions-2026-11-03). | Product owner | — |
-| Provisional design values (D1, D2, D4, D7, D9, D10, D15, D16, the D17 type scale, D18) approved. The D17 fonts were approved 2026-11-04. | Product owner | Final layout values in S3.1–S3.4 |
+| Provisional design values (D1, D2, D4, D7, D9, D10, D15, D16, the D17 type scale, D18, the D19 copy) approved. The D17 fonts were approved 2026-11-04. | Product owner | Final layout values in S3.1–S3.4 |
 | Rebranded artifact supplied; artifact review updated with its hash. **Closed 2026-11-04**; see the [artifact review](data-showcase-artifact-review.md#source-and-method). | Product owner | — |
 | S2.1 field definitions (including the `species` free-text decision) and `scope` vocabulary approved | Consent catalog lead, data stewards, AppSec | S2.2 |
 | Each owner confirms they can trace every behavior above to its source (acceptance criterion 1) | Product owner, consent lead, duos-ui lead | Closing DT-4272 |
