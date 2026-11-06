@@ -153,8 +153,9 @@ If the load fails, `docker logs localdb` shows the error.
 [index-es.sh](scripts/index-es.sh) fills the local `dataset` index from the local database, with
 the admin endpoint `POST /api/dataset/index`. It uses a `gcloud auth print-identity-token` token, so
 your gcloud account must have the Admin role in the loaded database. Run it after the stack starts,
-and after each new dump. The script deletes the old index first, and it fails if a dataset does
-not index.
+and after each new dump. The script waits up to 5 minutes for Consent to answer on `/liveness`
+(set `INDEX_ES_WAIT_SECONDS` to change this). It then deletes the old index, and it fails if a
+dataset does not index.
 
 For each local call through the proxy (port 27443), use `gcloud auth print-identity-token`. The
 proxy fails on opaque access tokens when it runs under Rosetta.

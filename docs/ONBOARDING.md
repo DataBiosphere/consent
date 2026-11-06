@@ -10,9 +10,11 @@ From repository configuration:
 - Maven: not needed. Use the wrapper, `./mvnw`, which downloads the correct version.
 - Docker or another OCI runtime for integration tests and local compose workflows
 - PostgreSQL (only if not using the provided compose stack)
-- `gcloud` CLI, logged in with `gcloud auth application-default login`. The service reads and
-  writes Google Cloud Storage with your own credentials locally; no service account key file is
-  needed or wanted. See "Google Cloud Storage credentials" in `DEVNOTES.md`.
+- `gcloud` CLI, with two logins:
+  - `gcloud auth login` logs in the CLI. `render-configs.sh` and `index-es.sh` need it.
+  - `gcloud auth application-default login` gives the app its credentials. The service reads and
+    writes Google Cloud Storage with your own credentials locally; no service account key file is
+    needed or wanted. See "Google Cloud Storage credentials" in `DEVNOTES.md`.
 
 ## Quick Start (Docker Compose)
 
