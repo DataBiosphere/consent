@@ -1658,6 +1658,44 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testConfirmDatasetsIndexedSkipsADatasetADeleteHasTakenOut() {
+    Dataset indexed = insertDataset();
+    Dataset deleted = insertDataset();
+    datasetDAO.updateDatasetsIndexedDate(Set.of(indexed.getDatasetId()));
+
+    datasetDAO.confirmDatasetsIndexed(Set.of(indexed.getDatasetId(), deleted.getDatasetId()));
+
+    assertTrue(isIndexConfirmed(indexed.getDatasetId()));
+    assertFalse(isIndexConfirmed(deleted.getDatasetId()));
+  }
+
+  @Test
+  void testClearDatasetIndexConfirmedKeepsAConfirmationNewerThanTheDelete() {
+    Dataset older = insertDataset();
+    Dataset newer = insertDataset();
+    datasetDAO.updateDatasetsIndexedDate(Set.of(older.getDatasetId(), newer.getDatasetId()));
+    datasetDAO.confirmDatasetsIndexed(Set.of(older.getDatasetId()));
+    Instant deleteStartedAt = datasetDAO.currentDatabaseTime();
+    datasetDAO.confirmDatasetsIndexed(Set.of(newer.getDatasetId()));
+
+    datasetDAO.clearDatasetIndexConfirmed(older.getDatasetId(), deleteStartedAt);
+    datasetDAO.clearDatasetIndexConfirmed(newer.getDatasetId(), deleteStartedAt);
+
+    assertFalse(isIndexConfirmed(older.getDatasetId()));
+    assertTrue(isIndexConfirmed(newer.getDatasetId()));
+  }
+
+  private boolean isIndexConfirmed(int datasetId) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "SELECT index_confirmed_date IS NOT NULL FROM dataset WHERE dataset_id = :id")
+                .bind("id", datasetId)
+                .mapTo(Boolean.class)
+                .one());
+  }
+
+  @Test
   void testGetRecentDacApprovedDatasetStudyIds() {
     User user = createUser();
     Dataset dataset = insertDataset();

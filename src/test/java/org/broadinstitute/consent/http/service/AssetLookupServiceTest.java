@@ -97,7 +97,8 @@ class AssetLookupServiceTest extends DAOTestHelper {
 
     assertEquals(false, service.lookup(identifier, user).listed());
     executeSql(
-        "UPDATE dataset SET indexed_date = now() WHERE dataset_id = %d".formatted(datasetId));
+        "UPDATE dataset SET index_confirmed_date = now() WHERE dataset_id = %d"
+            .formatted(datasetId));
     assertEquals(true, service.lookup(identifier, user).listed());
   }
 
@@ -158,7 +159,8 @@ class AssetLookupServiceTest extends DAOTestHelper {
     assertEquals(null, lookup.studyId());
     assertEquals(false, lookup.listed());
     executeSql(
-        "UPDATE dataset SET indexed_date = now() WHERE dataset_id = %d".formatted(datasetId));
+        "UPDATE dataset SET index_confirmed_date = now() WHERE dataset_id = %d"
+            .formatted(datasetId));
     assertEquals(
         true, service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user).listed());
   }
@@ -186,11 +188,27 @@ class AssetLookupServiceTest extends DAOTestHelper {
     Integer datasetId = insertDataset(studyId);
     Integer siblingId = insertDataset(studyId);
     executeSql(
-        "UPDATE dataset SET indexed_date = now() WHERE dataset_id = %d".formatted(siblingId));
+        "UPDATE dataset SET index_confirmed_date = now() WHERE dataset_id = %d"
+            .formatted(siblingId));
     allowDataset(datasetId);
 
     assertEquals(
         false, service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user).listed());
+  }
+
+  @Test
+  void testADatasetAwaitingIndexIsNotListedUntilTheIndexAcceptsIt() {
+    Integer studyId = insertStudy();
+    Integer datasetId = insertDataset(studyId);
+    Integer modelId = insertStudyAssetRow("study_model", studyId, false);
+    executeSql(
+        "UPDATE dataset SET indexed_date = now() WHERE dataset_id = %d".formatted(datasetId));
+    allowDataset(datasetId);
+    allowStudy(studyId);
+
+    assertEquals(
+        false, service.lookup(format(AssetType.DATASET, datasetAlias(datasetId)), user).listed());
+    assertEquals(false, service.lookup(format(AssetType.MODEL, modelId), user).listed());
   }
 
   @Test

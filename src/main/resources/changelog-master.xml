@@ -279,4 +279,5 @@
   <include file="changesets/changelog-consent-2026-11-04-asset-catalog-datasets.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-04-asset-catalog-assets.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-05-bff-session-audit-rotation.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-05-dataset-index-confirmed.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

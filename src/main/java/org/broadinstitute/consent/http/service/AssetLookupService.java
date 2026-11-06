@@ -81,7 +81,10 @@ public class AssetLookupService {
     return entry == null ? null : entry.datasetId();
   }
 
-  /** Answers from the dataset the read rule checked, under its current alias. */
+  /**
+   * Answers from the dataset the read rule checked, under its current alias; listed is read
+   * separately, as it is for a study's assets.
+   */
   private AssetLookup readableDataset(AssetIdentifier identifier, int datasetId, User user) {
     Dataset dataset;
     try {
@@ -96,7 +99,7 @@ public class AssetLookupService {
         AssetIdentifier.format(AssetType.DATASET, dataset.getAlias()),
         AssetType.DATASET,
         Status.LIVE,
-        dataset.getIndexedDate() != null,
+        lookupDAO.isDatasetIndexed(dataset.getDatasetId()),
         dataset.getDatasetId(),
         dataset.getStudyId());
   }

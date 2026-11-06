@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!--
+    indexed_date keeps meaning "keep this dataset in the search index", which drives retries.
+    index_confirmed_date records when Elasticsearch last accepted the dataset's document, and is
+    cleared once a delete succeeds. It starts empty: indexed_date also stays set after a rejected
+    attempt, so copying it would list datasets the index never accepted.
+  -->
+  <changeSet id="changelog-consent-2026-11-05-dataset-index-confirmed" author="kmarete">
+    <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
+    <sql>SET LOCAL lock_timeout = '10s'</sql>
+    <addColumn tableName="dataset">
+      <column name="index_confirmed_date" type="timestamp with time zone"/>
+    </addColumn>
+    <rollback>
+      <dropColumn tableName="dataset" columnName="index_confirmed_date"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

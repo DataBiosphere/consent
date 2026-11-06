@@ -30,9 +30,16 @@ public interface AssetLookupDAO {
   @SqlQuery(
       """
       SELECT EXISTS (
-          SELECT 1 FROM dataset WHERE study_id = :studyId AND indexed_date IS NOT NULL)
+          SELECT 1 FROM dataset WHERE study_id = :studyId AND index_confirmed_date IS NOT NULL)
       """)
   boolean hasIndexedDataset(@Bind("studyId") int studyId);
+
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM dataset WHERE dataset_id = :datasetId AND index_confirmed_date IS NOT NULL)
+      """)
+  boolean isDatasetIndexed(@Bind("datasetId") int datasetId);
 
   record AssetRow(Integer rowId, Integer studyId, Timestamp retiredDate) {}
 }
