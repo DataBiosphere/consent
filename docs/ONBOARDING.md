@@ -7,27 +7,33 @@ This guide helps new contributors run the Consent service locally and make a saf
 From repository configuration:
 
 - Java 25 (`pom.xml`)
-- Maven 3.9+
+- Maven: not needed. Use the wrapper, `./mvnw`, which downloads the correct version.
 - Docker or another OCI runtime for integration tests and local compose workflows
 - PostgreSQL (only if not using the provided compose stack)
-- `gcloud` CLI, logged in with `gcloud auth application-default login`. The service reads and
-  writes Google Cloud Storage with your own credentials locally; no service account key file is
-  needed or wanted. See "Google Cloud Storage credentials" in `DEVNOTES.md`.
+- `gcloud` CLI, with two logins:
+  - `gcloud auth login` logs in the CLI. `render-configs.sh` and `index-es.sh` need it.
+  - `gcloud auth application-default login` gives the app its credentials. The service reads and
+    writes Google Cloud Storage with your own credentials locally; no service account key file is
+    needed or wanted. See "Google Cloud Storage credentials" in `DEVNOTES.md`.
 
 ## Quick Start (Docker Compose)
 
 Use this path for the most production-like local setup.
 
 ```bash
-mvn clean compile
-docker-compose -p consent -f config/docker-compose.yaml up
+./scripts/render-configs.sh --all true
+./mvnw clean compile
+docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
+./scripts/index-es.sh
 ```
 
-The stack includes a single-node Elasticsearch container with security disabled, which is the
-correct setup for nearly all work. If you are working on native Elasticsearch document- or
-field-level security, see "Running local Elastic Search with security enabled" in `DEVNOTES.md` —
-security is enabled per-developer with `ES_SECURITY_ENABLED=true` and also requires a trial
-license.
+`render-configs.sh` makes the files in `config/`. It needs the non-split Broad VPN and some
+command-line tools. See "Render Configs" in `DEVNOTES.md` before the first run.
+
+The stack includes a single-node Elasticsearch container with security on. Most work does not
+need security. To turn it off for one run, set `ES_SECURITY_ENABLED=false`. For native
+Elasticsearch document- or field-level security, see "Running with X-Pack Security enabled" in
+`DEVNOTES.md`. That work also needs a trial license.
 
 ### Verify the service
 
@@ -45,8 +51,8 @@ If needed, map the local host in your `/etc/hosts` file:
 Use this when debugging outside containers.
 
 ```bash
-mvn clean package
-java -jar target/consent-*.jar server config/consent.yaml
+./mvnw clean package
+java -jar target/consent.jar server config/consent.yaml
 ```
 
 - Swagger UI (direct path): `http://localhost:8080/`
@@ -55,7 +61,7 @@ java -jar target/consent-*.jar server config/consent.yaml
 ## Run Tests
 
 ```bash
-mvn clean test
+./mvnw clean test
 ```
 
 Note: tests use containerized dependencies (per `DEVNOTES.md`), so make sure your OCI runtime is available.
@@ -65,7 +71,7 @@ Note: tests use containerized dependencies (per `DEVNOTES.md`), so make sure you
 - [ ] Read `docs/ARCHITECTURE.md`
 - [ ] Read `docs/API_GUIDELINES.md`
 - [ ] Run the service locally (compose or direct)
-- [ ] Run `mvn clean test`
+- [ ] Run `./mvnw clean test`
 - [ ] Make a small change and include test updates
 - [ ] Update docs if behavior or API contracts changed
 

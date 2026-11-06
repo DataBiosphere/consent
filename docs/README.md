@@ -16,10 +16,12 @@ If you are new to the repository, read in this order:
 | Document | Audience | Purpose |
 | --- | --- | --- |
 | `ONBOARDING.md` | New contributors | Local setup, run commands, and first tasks |
+| `../DEVNOTES.md` | Contributors | Full local setup: config render, compose stack, Elasticsearch, integration tests |
 | `ARCHITECTURE.md` | Contributors and reviewers | High-level system design and request flow |
 | `API_GUIDELINES.md` | API authors and reviewers | API conventions, validation, and compatibility rules |
 | `plans/README.md` | Contributors and reviewers | Index of active implementation plans and design notes |
 | `ai/README.md` | Developers using AI tooling | Prompt usage model and best practices |
+| `ai/dar-lifecycle.md` | Contributors and reviewers | Rules for DARs, progress reports, closeouts, elections and grant queries |
 | `ai/prompts/*.md` | Developers using AI tooling | Task-specific prompt templates and examples |
 
 ## Documentation Standards

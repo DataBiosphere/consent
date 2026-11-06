@@ -295,7 +295,7 @@ if [[ -s "$CONFIG_DIR/docker-compose.yaml" ]]; then
   if [[ -z "$(env_get "$ENV_FILE" CONSENT_DB_DUMP)" ]]; then
     echo "  Make a database dump: ./scripts/render-configs.sh --export_db true"
   fi
-  echo "  mvn clean compile"
+  echo "  ./mvnw clean compile"
   echo "  docker compose -f $compose_dir/docker-compose.yaml -f $compose_dir/docker-compose.override.yaml up -d"
   if [[ "$compose_dir" == "config" ]]; then
     echo "  ./scripts/index-es.sh"

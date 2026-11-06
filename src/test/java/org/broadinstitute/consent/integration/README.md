@@ -121,7 +121,7 @@ runtime. Classes that only need a secured cluster with a trial license should ex
 
 ## Which of these run in CI
 
-The Postgres-backed `ContainerTests` subclasses run in CI as part of the ordinary `mvn test`.
+The Postgres-backed `ContainerTests` subclasses run in CI as part of the ordinary `./mvnw test`.
 
 The four Elasticsearch classes do not. They carry the JUnit tag `elasticsearch`, and the `ci`
 profile in `pom.xml` — activated by the `CI=true` GitHub Actions sets in every job — passes that tag
@@ -135,18 +135,18 @@ them locally as CI does, or to include them in CI, override the property on the 
 takes precedence over the profile:
 
 ```shell
-mvn clean test -DexcludedTestGroups=elasticsearch   # skip them, as CI does
-mvn clean test -DexcludedTestGroups=                # run everything, even with CI set
+./mvnw clean test -DexcludedTestGroups=elasticsearch   # skip them, as CI does
+./mvnw clean test -DexcludedTestGroups=                # run everything, even with CI set
 ```
 
 ## Running via Maven
 
 ```shell
 # every integration test, Postgres- and Elasticsearch-backed alike
-mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
+./mvnw clean test -Dtest="org.broadinstitute.consent.integration.**"
 
 # only the Elasticsearch classes
-mvn clean test -Dgroups=elasticsearch
+./mvnw clean test -Dgroups=elasticsearch
 ```
 
 Prefer `-Dgroups=elasticsearch` over a name pattern such as `-Dtest='ElasticSearch*Test'`: the

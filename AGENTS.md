@@ -11,6 +11,7 @@ This repository uses multiple instruction entry points.
 - `docs/API_GUIDELINES.md`
 - `docs/ARCHITECTURE.md`
 - `docs/ONBOARDING.md`
+- `DEVNOTES.md` (local setup and integration tests)
 - `docs/plans/README.md`
 - `docs/ai/README.md` (component guides; `docs/ai/dar-lifecycle.md` for DARs, progress
   reports, closeouts, elections and grant queries)

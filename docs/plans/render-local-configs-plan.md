@@ -428,7 +428,7 @@ So fill the index again after each new dump.
 1. Send `DELETE /dataset` to `localhost:9200`, with `ELASTIC_PASSWORD` from `config/.env`. A 404
    is not an error, because a new volume has no index.
 2. Send `POST /api/dataset/index` to `https://local.dsde-dev.broadinstitute.org:27443`, with a
-   `gcloud auth print-access-token` token. Only the host has an `/etc/hosts` entry for this name,
+   `gcloud auth print-identity-token` token. Only the host has an `/etc/hosts` entry for this name,
    so the call uses `curl --resolve` to send the name to `127.0.0.1`. `curl` still checks the
    certificate against the name, and the script works in the Dev Container. The token and the
    Elasticsearch password go to `curl` as a config file on stdin (`-K -`), so they are not in the
@@ -618,5 +618,5 @@ The team answered the open questions from the first review:
 | How much testing? | A minimum. | Six checks in [Verification](#verification). |
 | Where do the checks go? | First: in `render-configs.sh`. Changed on 2026-10-23: no preflight, as in `duos-ui` after DT-4236. | The script stops at the first failure. Staged writes and the fast VPN check stay (PR 1). |
 | Which credentials does the local Postgres use? | The dev values from `consent-secrets` (2026-10-23). The first plan used a random password. | The `duos-ui` compose mode against a local consent stack connects with no change. |
-| How does the local `dataset` index get filled? | A script calls the reindex API with a `gcloud auth print-access-token` token. | `scripts/index-es.sh` (PR 4). |
+| How does the local `dataset` index get filled? | A script calls the reindex API with a `gcloud auth print-identity-token` token. | `scripts/index-es.sh` (PR 4). |
 | Which `terra-helmfile` commit does the script render? | `master` by default. The team often tests `terra-helmfile` changes with a local consent instance. | `--helmfile_ref` selects a branch. `--helmfile_dir` renders a local checkout with changes that are not committed. |
