@@ -179,11 +179,13 @@ public class ElasticSearchService implements ConsentLogger {
     updateDatasetIndexDateForDatasets(sent);
     Response response = performRequest(bulkRequest);
     // A bulk request answers 200 even when Elasticsearch rejected some of its documents.
-    Optional<Set<Integer>> rejected = rejectedIds(response);
-    rejected.ifPresent(
-        ids ->
-            confirmIndexed(
-                sent.stream().filter(id -> !ids.contains(id)).collect(Collectors.toSet())));
+    JsonObject body = bulkBody(response);
+    Optional<Set<Integer>> rejected = rejectedIds(body);
+    // Without an items list the body does not show which documents Elasticsearch accepted.
+    if (rejected.isPresent() && body.get("items") instanceof JsonArray) {
+      confirmIndexed(
+          sent.stream().filter(id -> !rejected.get().contains(id)).collect(Collectors.toSet()));
+    }
     if (rejected.map(ids -> !ids.isEmpty()).orElse(true)) {
       logWarn("Elasticsearch rejected datasets %s".formatted(rejected.orElse(sent)));
       return Response.status(Status.INTERNAL_SERVER_ERROR).entity(response.getEntity()).build();
@@ -196,7 +198,10 @@ public class ElasticSearchService implements ConsentLogger {
    * names no dataset id, or the body flags errors without naming a rejected document.
    */
   static Optional<Set<Integer>> rejectedIds(Response response) {
-    JsonObject body = bulkBody(response);
+    return rejectedIds(bulkBody(response));
+  }
+
+  private static Optional<Set<Integer>> rejectedIds(JsonObject body) {
     Set<Integer> ids = new HashSet<>();
     for (JsonObject item : bulkItems(body)) {
       if (item.has("error")) {
@@ -253,10 +258,10 @@ public class ElasticSearchService implements ConsentLogger {
     updateDatasetIndexDate(datasetId, userId, null);
     // Taken after indexed_date is cleared: a later confirmation needed a newer index to set it
     // again.
-    Instant intentClearedAt = Instant.now();
+    Optional<Instant> intentClearedAt = databaseTime();
     Response response = performRequest(deleteRequest);
     if (deletedCleanly(bulkBody(response))) {
-      clearIndexConfirmed(datasetId, intentClearedAt);
+      intentClearedAt.ifPresent(at -> clearIndexConfirmed(datasetId, at));
     } else {
       logWarn("Elasticsearch did not confirm deleting dataset %d".formatted(datasetId));
     }
@@ -274,7 +279,8 @@ public class ElasticSearchService implements ConsentLogger {
         && !(body.get("timed_out") instanceof JsonPrimitive timedOut
             && timedOut.isBoolean()
             && timedOut.getAsBoolean())
-        && !(body.get("failures") instanceof JsonArray failures && !failures.isEmpty());
+        && (!body.has("failures")
+            || body.get("failures") instanceof JsonArray failures && failures.isEmpty());
   }
 
   private static long count(JsonObject body, String field) {
@@ -291,9 +297,18 @@ public class ElasticSearchService implements ConsentLogger {
       return;
     }
     try {
-      datasetDAO.confirmDatasetsIndexed(ids, Instant.now());
+      datasetDAO.confirmDatasetsIndexed(ids);
     } catch (JdbiException e) {
       logWarn("Error recording datasets %s as indexed".formatted(ids), e);
+    }
+  }
+
+  private Optional<Instant> databaseTime() {
+    try {
+      return Optional.ofNullable(datasetDAO.currentDatabaseTime());
+    } catch (JdbiException e) {
+      logWarn("Error reading the database time", e);
+      return Optional.empty();
     }
   }
 

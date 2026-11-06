@@ -723,11 +723,14 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate(
       """
       UPDATE dataset
-      SET index_confirmed_date = :confirmedAt
+      SET index_confirmed_date = now()
       WHERE dataset_id IN (<datasetIds>) AND indexed_date IS NOT NULL
       """)
-  void confirmDatasetsIndexed(
-      @BindList("datasetIds") Set<Integer> datasetIds, @Bind("confirmedAt") Instant confirmedAt);
+  void confirmDatasetsIndexed(@BindList("datasetIds") Set<Integer> datasetIds);
+
+  /** The database clock, so confirmations from different pods compare on one clock. */
+  @SqlQuery("SELECT clock_timestamp()")
+  Instant currentDatabaseTime();
 
   /**
    * Leaves a confirmation recorded after the delete cleared indexed_date, which belongs to a newer

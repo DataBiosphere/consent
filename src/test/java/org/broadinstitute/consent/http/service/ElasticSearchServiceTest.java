@@ -13,9 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
@@ -93,6 +92,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -937,7 +937,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
       assertEquals(body, response.getEntity());
     }
     verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1, 2000000000));
-    verify(datasetDAO).confirmDatasetsIndexed(eq(Set.of(1)), any());
+    verify(datasetDAO).confirmDatasetsIndexed(Set.of(1));
   }
 
   @ParameterizedTest
@@ -950,7 +950,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     try (var response = service.indexDatasetTerms(List.of(term(1)))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
-    verify(datasetDAO, never()).confirmDatasetsIndexed(any(), any());
+    verify(datasetDAO, never()).confirmDatasetsIndexed(any());
   }
 
   @ParameterizedTest
@@ -964,7 +964,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
     verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
-    verify(datasetDAO, never()).confirmDatasetsIndexed(any(), any());
+    verify(datasetDAO, never()).confirmDatasetsIndexed(any());
   }
 
   @Test
@@ -974,16 +974,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     assertThrows(IOException.class, () -> service.indexDatasetTerms(List.of(term(1))));
     verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
-    verify(datasetDAO, never()).confirmDatasetsIndexed(any(), any());
+    verify(datasetDAO, never()).confirmDatasetsIndexed(any());
   }
 
   @ParameterizedTest
   @ValueSource(
       strings = {
-        "{}",
-        "[]",
-        "not json",
-        "{\"errors\":false,\"items\":{}}",
         "{\"errors\":\"true\",\"items\":[1,{},{\"index\":\"x\"}]}",
         "{\"items\":[{\"index\":{\"_id\":\"1\"}}]}"
       })
@@ -996,7 +992,20 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
     verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
-    verify(datasetDAO).confirmDatasetsIndexed(eq(Set.of(1)), any());
+    verify(datasetDAO).confirmDatasetsIndexed(Set.of(1));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{}", "[]", "not json", "{\"errors\":false,\"items\":{}}"})
+  void testIndexDatasetTermsConfirmsNothingFromABodyWithNoItems(String body) throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse(body);
+
+    try (var response = service.indexDatasetTerms(List.of(term(1)))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(datasetDAO).updateDatasetsIndexedDate(Set.of(1));
+    verify(datasetDAO, never()).confirmDatasetsIndexed(any());
   }
 
   @Test
@@ -1008,16 +1017,14 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     try (var response = service.indexDatasetTerms(List.of(term(1)))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
-    verify(datasetDAO, never()).confirmDatasetsIndexed(any(), any());
+    verify(datasetDAO, never()).confirmDatasetsIndexed(any());
   }
 
   @Test
   void testIndexDatasetTermsStillAnswersWhenRecordingTheConfirmationFails() throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
     mockElasticSearchResponse("{\"errors\":false,\"items\":[{\"index\":{\"_id\":\"1\"}}]}");
-    doThrow(new TransactionException("db down"))
-        .when(datasetDAO)
-        .confirmDatasetsIndexed(any(), any());
+    doThrow(new TransactionException("db down")).when(datasetDAO).confirmDatasetsIndexed(any());
 
     try (var response = service.indexDatasetTerms(List.of(term(1)))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -1224,6 +1231,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testDeleteIndexClearsTheConfirmationOnceElasticsearchDeletes(String body)
       throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    when(datasetDAO.currentDatabaseTime()).thenReturn(Instant.now());
     mockElasticSearchResponse(body);
 
     try (var _ = service.deleteIndex(7, 1)) {
@@ -1235,6 +1243,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @ValueSource(
       strings = {
         "{\"deleted\":1,\"failures\":[{\"id\":\"7\"}]}",
+        "{\"deleted\":1,\"failures\":{}}",
         "{\"deleted\":0,\"version_conflicts\":1,\"failures\":[]}",
         "{\"deleted\":1,\"version_conflicts\":1,\"failures\":[]}",
         "{\"deleted\":1,\"timed_out\":true,\"failures\":[]}",
@@ -1254,30 +1263,32 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteIndexKeepsConfirmationsRecordedAfterItClearsTheIndexedDate() throws IOException {
+  void testDeleteIndexTakesItsBoundaryFromTheDatabaseAfterClearingTheIndexedDate()
+      throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
     mockElasticSearchResponse("{\"deleted\":1,\"failures\":[]}");
     when(datasetDAO.findDatasetIdById(7)).thenReturn(7);
-    AtomicReference<Instant> indexedDateCleared = new AtomicReference<>();
-    doAnswer(
-            invocation -> {
-              // Waits for the clock to tick, so a boundary taken before this call reads earlier.
-              Instant before = Instant.now();
-              Instant after = Instant.now();
-              while (!after.isAfter(before)) {
-                after = Instant.now();
-              }
-              indexedDateCleared.set(after);
-              return null;
-            })
-        .when(datasetServiceDAO)
-        .updateDatasetIndex(eq(7), any(), any());
-    ArgumentCaptor<Instant> boundary = ArgumentCaptor.forClass(Instant.class);
+    Instant boundary = Instant.parse("2026-11-06T12:00:00Z");
+    when(datasetDAO.currentDatabaseTime()).thenReturn(boundary);
 
     try (var _ = service.deleteIndex(7, 1)) {
-      verify(datasetDAO).clearDatasetIndexConfirmed(eq(7), boundary.capture());
+      InOrder order = inOrder(datasetServiceDAO, datasetDAO);
+      order.verify(datasetServiceDAO).updateDatasetIndex(eq(7), any(), any());
+      order.verify(datasetDAO).currentDatabaseTime();
+      order.verify(datasetDAO).clearDatasetIndexConfirmed(7, boundary);
     }
-    assertFalse(boundary.getValue().isBefore(indexedDateCleared.get()));
+  }
+
+  @Test
+  void testDeleteIndexKeepsTheConfirmationWhenTheDatabaseTimeIsUnavailable() throws IOException {
+    when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    mockElasticSearchResponse("{\"deleted\":1,\"failures\":[]}");
+    when(datasetDAO.currentDatabaseTime()).thenThrow(new TransactionException("db down"));
+
+    try (var response = service.deleteIndex(7, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(datasetDAO, never()).clearDatasetIndexConfirmed(any(), any());
   }
 
   @Test
@@ -1292,6 +1303,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Test
   void testDeleteIndexStillAnswersWhenClearingTheConfirmationFails() throws IOException {
     when(esConfig.getDatasetIndexName()).thenReturn("dataset");
+    when(datasetDAO.currentDatabaseTime()).thenReturn(Instant.now());
     mockElasticSearchResponse("{\"deleted\":1}");
     doThrow(new TransactionException("db down"))
         .when(datasetDAO)

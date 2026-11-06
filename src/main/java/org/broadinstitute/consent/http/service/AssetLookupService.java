@@ -81,7 +81,10 @@ public class AssetLookupService {
     return entry == null ? null : entry.datasetId();
   }
 
-  /** Answers from the dataset the read rule checked, under its current alias. */
+  /**
+   * Answers from the dataset the read rule checked, under its current alias; listed is read
+   * separately, as it is for a study's assets.
+   */
   private AssetLookup readableDataset(AssetIdentifier identifier, int datasetId, User user) {
     Dataset dataset;
     try {
