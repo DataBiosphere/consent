@@ -4,7 +4,7 @@
 * [IntelliJ for Power Users](https://github.com/DataBiosphere/terra/blob/main/docs/dev-guides/intellij.md)
 * [Java Style Guide](https://github.com/DataBiosphere/terra/blob/main/docs/dev-guides/java-style.md)
   * We strive to adhere to the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html) where possible
-  * We use Codacy for static analysis
+  * We use SonarCloud for static analysis and Spotless for formatting
 
 ## Opening a Pull Request
 
@@ -13,7 +13,7 @@ There is no explicit naming convention; we usually use some combination of
 the JIRA issue number and something alluding to the work we're doing.
 
 When you open a pull request, add the JIRA issue number and a risk assessment 
-(e.g. `[DUOS-1234][risk=low]`) to the PR title. This will make a reference 
+(e.g. `[DT-1234][risk=low]`) to the PR title. This will make a reference 
 from JIRA to the GitHub issue. Add a brief description of your changes above 
 the PR checkbox template.
 

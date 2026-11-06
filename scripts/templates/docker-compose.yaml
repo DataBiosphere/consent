@@ -2,7 +2,7 @@
 # Do not edit the copy: the next render replaces it. Put changes for your own machine in
 # config/docker-compose.override.yaml, and start the stack with both files:
 #
-#   mvn clean compile
+#   ./mvnw clean compile
 #   docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 #
 # Values in ${...} come from config/.env, which render-configs.sh writes. Do not put a secret in

@@ -2,21 +2,21 @@
 
 Implementation plans and migration design notes live in [docs/plans](docs/plans). Check that directory before starting larger feature, migration, or refactor work.
 
-* Maven 3.9
+* Maven: use the wrapper, `./mvnw`. It downloads the correct version.
 * Java 25
 * Dropwizard Docs: http://www.dropwizard.io/
 
-### Check out repository:
+## Check out the repository
 
 ```bash
-git clone git@github.com:broadinstitute/consent.git
+git clone git@github.com:DataBiosphere/consent.git
 ```
 
-### Build, test
+## Build and test
 
 ```bash
 cd consent
-mvn clean test package 
+./mvnw clean test package 
 ```
 
 Tests require docker or another OCI runtime to spin up postgres and http servers that run against
@@ -24,9 +24,10 @@ localhost. Ensure that your test environment supports that.  Command line docker
 Docker Desktop have all worked to run these tests.  Podman was observed to perform better when running tests,
 however docker is the tool of choice for other developers and the CI/CD environment.
 
-#### Docker
+### Docker
 
-Consent docker images are stored in GCR: `gcr.io/broad-dsp-gcr-public/consent`
+CI pushes Consent docker images to Artifact Registry:
+`us-central1-docker.pkg.dev/dsp-artifact-registry/consent/consent`
 
 ```
 # build the docker image
@@ -35,7 +36,7 @@ docker build . -t consent
 
 This image can then be run with the proper configuration files provided.
 
-### Dev Container
+## Dev Container
 
 If you use Visual Studio Code (VSCode) and Docker, you can use the Dev Container configuration. The
 container makes the local config files for you, the same way as the `duos-ui` Dev Container. When
@@ -70,7 +71,7 @@ the stack runs.
 
 If you do not use the Dev Container, run `render-configs.sh` yourself. See the next section.
 
-### Render Configs
+## Render Configs
 
 [render-configs.sh](scripts/render-configs.sh) makes the files in `config/` (git-ignored) that the
 local stack needs. Do not edit these files by hand. The next render replaces them.
@@ -90,7 +91,7 @@ files as they were. The first time, run:
 
 ```bash
 ./scripts/render-configs.sh --all true
-mvn clean compile
+./mvnw clean compile
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ./scripts/index-es.sh
 ```
@@ -120,7 +121,7 @@ change. The local database uses the dev database user and password from `consent
 same values that `duos-ui` writes to its `.env.local`. So the `duos-ui` compose mode against a
 local consent stack (`docker-compose.consent.yaml`) connects with no change.
 
-#### Database dump
+### Database dump
 
 `./scripts/render-configs.sh --export_db true` (or [export-db.sh](scripts/export-db.sh)) writes a
 new dump of the dev database. Use `--db_env staging` (or `./scripts/export-db.sh staging`) for
@@ -147,15 +148,18 @@ docker compose -f config/docker-compose.yaml -f config/docker-compose.override.y
 
 If the load fails, `docker logs localdb` shows the error.
 
-#### Elasticsearch index
+### Elasticsearch index
 
 [index-es.sh](scripts/index-es.sh) fills the local `dataset` index from the local database, with
-the admin endpoint `POST /api/dataset/index`. It uses a `gcloud auth print-access-token` token, so
+the admin endpoint `POST /api/dataset/index`. It uses a `gcloud auth print-identity-token` token, so
 your gcloud account must have the Admin role in the loaded database. Run it after the stack starts,
 and after each new dump. The script deletes the old index first, and it fails if a dataset does
 not index.
 
-#### Liquibase
+For each local call through the proxy (port 27443), use `gcloud auth print-identity-token`. The
+proxy fails on opaque access tokens when it runs under Rosetta.
+
+### Liquibase
 
 `liquibase.runOnStartup` is an optional flag. The application runs the Liquibase changesets at
 startup only when the flag is `true`. If a config omits the flag or the whole `liquibase` block,
@@ -174,7 +178,7 @@ A `terra-helmfile` ref from before 2026-10-27 does not have this chart value. Wi
 script shows a warning, and the rendered `consent.yaml` has no `liquibase` block. Then pass
 `-Ddw.liquibase.runOnStartup=true` when you start the app.
 
-### Google Cloud Storage credentials
+## Google Cloud Storage credentials
 
 Local development does **not** use a service account key file. Leave `googleStore.password`
 unset (or blank) and `GCSService` falls back to
@@ -204,37 +208,37 @@ gcloud auth application-default set-quota-project broad-dsde-dev
 Deployed environments are unchanged: the Helm chart mounts a Yale-managed key at
 `/etc/service-account.json` and sets `googleStore.password` to that path.
 
-#### Running in Docker Compose
+### Running in Docker Compose
 
 The app container has no `gcloud` login of its own. The compose template mounts
 `~/.config/gcloud/application_default_credentials.json` read-only, and sets
 `GOOGLE_APPLICATION_CREDENTIALS`. If the file does not exist, compose stops with an error. Run
 `gcloud auth application-default login` first.
 
-### Spin up application
+## Spin up application
 
 Make the config first (see "Render Configs"), then:
 
 ```bash
-mvn clean compile
+./mvnw clean compile
 docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ./scripts/index-es.sh
 ```
 
-The compose template starts the app from `target/classes`, so run `mvn clean compile` after each
+The compose template starts the app from `target/classes`, so run `./mvnw clean compile` after each
 code change, and restart the `app` service.
 
 Visit the local swagger page at the URL configured for your setup (the compose setup used at
 Broad serves https://local.dsde-dev.broadinstitute.org:27443).
 
-### Debugging
+## Debugging
 
 Port 7777 is open in the configured docker compose, on `127.0.0.1` only.
 Set up a remote debug configuration pointing to `local.dsde-dev.broadinstitute.org`
 and the defaults should be correct.
 
-### Developing with a local Elastic Search instance:
-#### Running with X-Pack Security enabled
+## Developing with a local Elastic Search instance
+### Running with X-Pack Security enabled
 
 The `elastic` service in the [compose template](scripts/templates/docker-compose.yaml) turns
 security **on**, which is what the security work (`GET /api/elasticSearch/capabilities` and native
@@ -256,13 +260,15 @@ same way here as it does against a deployed cluster:
 
 ```bash
 # What tier is this cluster on, and does it still have a trial to spend?
-curl -s -X GET  'localhost:8000/api/elasticSearch/license'
+curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  'https://local.dsde-dev.broadinstitute.org:27443/api/elasticSearch/license'
 # Start it. acknowledge=true is required: one trial per cluster, and it cannot be reverted.
-curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
+curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  'https://local.dsde-dev.broadinstitute.org:27443/api/elasticSearch/license/trial?acknowledge=true'
 ```
 
-Both need an Admin bearer token. Straight at the cluster works too, and is the quicker path when
-Consent is not running:
+Both go through the local proxy, and your gcloud account needs the Admin role. Straight at the
+cluster works too, and is the quicker path when Consent is not running:
 
 ```bash
 curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
@@ -278,13 +284,13 @@ To get an unauthenticated cluster back for a run, without editing your compose f
 ES_SECURITY_ENABLED=false docker compose -f config/docker-compose.yaml -f config/docker-compose.override.yaml up -d
 ```
 
-#### Which work actually needs security enabled
+### Which work actually needs security enabled
 
 Only the capability endpoint and native Elasticsearch document- and field-level security (DLS/FLS)
 require it. Application-layer authorization work does not — it never touches Elasticsearch security —
 so if you are not working on those, running with `ES_SECURITY_ENABLED=false` is fine.
 
-#### Enabling DLS/FLS locally (trial license required)
+### Enabling DLS/FLS locally (trial license required)
 
 Enabling security is necessary but **not sufficient** for DLS/FLS. The Docker image self-generates
 a **basic** license, and DLS/FLS is a Platinum/Enterprise feature. With a basic license, creating a
@@ -299,7 +305,8 @@ endpoint or against the cluster directly:
 ```bash
 # Through Consent (Admin bearer token required); reports what it changed, and refuses without
 # acknowledge=true because the trial can be started once per major version per cluster.
-curl -s -X POST 'localhost:8000/api/elasticSearch/license/trial?acknowledge=true'
+curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  'https://local.dsde-dev.broadinstitute.org:27443/api/elasticSearch/license/trial?acknowledge=true'
 
 # Or straight at the cluster.
 curl -u elastic:devpassword -XPOST 'localhost:9200/_license/start_trial?acknowledge=true'
@@ -322,7 +329,7 @@ Caveats:
 - Authentication, role-based access control, and API keys all work fine on the basic license. Only
   the DLS/FLS grants require trial/Platinum.
 
-#### Upgrading the local Elastic Search version
+### Upgrading the local Elastic Search version
 
 Everything described above — the two security modes, the license gating, and that an unenforceable
 DLS/FLS grant fails closed instead of returning unrestricted data — is asserted by tests, so an
@@ -334,7 +341,7 @@ upgrade does not need to be re-verified by hand:
 # 2. then match it here: scripts/templates/docker-compose.yaml, pom.xml (elasticsearch-rest-client)
 ```
 
-These four classes carry the JUnit tag `elasticsearch` and are **not** run by CI — see
+The `ElasticSearch*` classes carry the JUnit tag `elasticsearch` and are **not** run by CI — see
 "How they run in CI" below. Running them is a deliberate step when changing the Elasticsearch
 version or the Epic D security work, not something a build does for you.
 
@@ -347,8 +354,8 @@ See "Qualifying a new Elasticsearch version" in
 
 DUOS uses SendGrid for sending emails and FreeMarker for expanding email templates before 
 passing them to SendGrid. To add a new email, follow these steps:
-1. 
-2. Create the HTML template and add it to [src/main/resources/freemarker](src/main/resources/freemarker).
+
+1. Create the HTML template and add it to [src/main/resources/freemarker](src/main/resources/freemarker).
 2. Add a new entry to [EmailType](src/main/java/org/broadinstitute/consent/http/enumeration/EmailType.java) that references that file.
 3. Add a new [MailMessage](src/main/java/org/broadinstitute/consent/http/mail/message/MailMessage.java) subclass that references this EmailType and implements methods to provide data for the freemarker template and database operation
 4. Add a method to [EmailService](src/main/java/org/broadinstitute/consent/http/service/EmailService.java) that creates this message and passes it to sendMessage().
@@ -360,7 +367,9 @@ variables are needed to use this.  You will need the dotNet 8 SDK to generate a 
 
 Install the dotNet 8 SDK with:
 
-```$ brew install --cask dotnet-sdk@8```
+```bash
+brew install --cask dotnet-sdk@8
+```
 
 Register at the National Vulnerability Database for an API key here:
 https://nvd.nist.gov/developers/request-an-api-key
@@ -369,7 +378,9 @@ Assign the key value they issue you as environment variable NVD_API_KEY
 
 e.g.
 
-```$ export NVD_API_KEY=<your api key here>```
+```bash
+export NVD_API_KEY=<your api key here>
+```
 
 Register at the OSS Index for an API key:
 https://ossindex.sonatype.org/
@@ -378,16 +389,22 @@ Assign the username you used (email address) to the environment variable OSS_IND
 
 e.g.
 
-```$ export OSS_INDEX_USERNAME=<your username>```
+```bash
+export OSS_INDEX_USERNAME=<your username>
+```
 
 Assign the API Token (visible on the User Settings page) to the environment variable OSS_INDEX_PASSWORD
 
 e.g.
 
-```$ export OSS_INDEX_PASSWORD=<your API token>```
+```bash
+export OSS_INDEX_PASSWORD=<your API token>
+```
 
 Run the dependency checker:
-```$ mvn org.owasp:dependency-check-maven:check``` 
+```bash
+./mvnw org.owasp:dependency-check-maven:check
+```
 
 ### How to check infrastructure dependencies
 
@@ -396,7 +413,9 @@ that deploys Consent and DUOS: Terraform and its modules, Cloud SQL Postgres, th
 Proxy, ArgoCD, External Secrets, and the helm/helmfile/kubectl that Thelma pins. To see how far
 those lag behind upstream, run:
 
-```$ scripts/check-infra-deps.sh```
+```bash
+scripts/check-infra-deps.sh
+```
 
 This script requires `git`, `curl`, and `jq`; install any missing tools before running it.
 
@@ -409,10 +428,10 @@ in the script.
 ## Integration Testing
 
 Integration tests live in `src/test/java/**/integration/` and are run as part
-of the standard `mvn test` lifecycle — no special profile, external server, or
+of the standard `./mvnw test` lifecycle — no special profile, external server, or
 manual Postgres setup is required.
 
-#### How they work
+### How they work
 
 Each test class extends `ContainerTests`, which uses a JUnit 5
 `DropwizardAppExtension` to boot the full application in-process against the
@@ -424,7 +443,7 @@ via typed DAO calls (`@BeforeAll`). The seed data is fully synthetic and
 idempotent. To add new baseline rows, extend the relevant `seed*` helper method
 inside `ContainerTests`.
 
-#### Database
+### Database
 
 `ContainerTests` starts its own [Testcontainers](https://www.testcontainers.org/)
 `PostgreSQLContainer` in a static initializer and passes the container's
@@ -432,10 +451,10 @@ coordinates directly to `DropwizardAppExtension` via `ConfigOverride`. The
 hardcoded coordinates in `consent-ci.yaml` are never reached at runtime. No
 local Postgres is needed in any environment.
 
-#### How they run in CI
+### How they run in CI
 
 The GitHub Actions workflow at `.github/workflows/coverage.yaml` runs
-`mvn clean test` on every push/PR to `develop`, which exercises unit and
+`./mvnw clean test` on every push/PR to `develop`, which exercises unit and
 integration tests together via Testcontainers — no additional CI configuration
 is needed.
 
@@ -453,18 +472,18 @@ empty value on the command line, which overrides the profile:
 ./mvnw clean jacoco:prepare-agent test jacoco:report -DexcludedTestGroups=
 ```
 
-#### Running integration tests locally
+### Running integration tests locally
 
 **Integration tests only:**
 
 ```bash
-mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
+./mvnw clean test -Dtest="org.broadinstitute.consent.integration.**"
 ```
 
 **All tests** (unit + integration together, as CI does):
 
 ```bash
-mvn clean test
+./mvnw clean test
 ```
 
 Note that locally this *also* runs the Elasticsearch container tests, which CI

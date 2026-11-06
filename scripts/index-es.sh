@@ -36,7 +36,7 @@ fi
 echo "Indexing all datasets"
 # Only the host has the /etc/hosts entry for this name. --resolve also works in the Dev Container,
 # and curl still checks the certificate against the name.
-printf 'header = "Authorization: Bearer %s"\n' "$(gcloud auth print-access-token)" \
+printf 'header = "Authorization: Bearer %s"\n' "$(gcloud auth print-identity-token)" \
   | curl -sS -f -K - --resolve "$HOST:127.0.0.1" -o "$BODY" -X POST "https://$HOST/api/dataset/index"
 
 # The endpoint streams its result, so the status is 200 even when the indexing fails. Elasticsearch
