@@ -1,14 +1,12 @@
 package org.broadinstitute.consent.http.filters;
 
 import com.google.inject.Inject;
-import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
 import jakarta.annotation.Priority;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.regex.Pattern;
@@ -26,10 +24,9 @@ import java.util.regex.Pattern;
  * return 401, and open routes still work. Cache entries are not evicted, so the real user's
  * requests through the sidecar are not affected.
  *
- * <p>Dropwizard's {@code OAuthCredentialAuthFilter} also reads a bearer from the {@code
- * access_token} query parameter when there is no {@code Authorization} header. A request from a
- * peer that is not loopback with that parameter gets 401 at once. The filter does not remove the
- * parameter, because Jersey allows a change to the request URI only before resource matching.
+ * <p>The auth filter reads a bearer only from the {@code Authorization} header, never from the
+ * {@code access_token} query parameter (DT-4428). So removing the header is enough: a direct caller
+ * has no other way to send a bearer to the authenticators.
  *
  * <p>For a loopback peer, the cache is filled only on a route the sidecar authenticates (/api). See
  * the route pattern below.
@@ -70,12 +67,6 @@ public class RequestHeaderCacheFilter implements ContainerRequestFilter {
     if (!ClientIpResolver.isLoopback(servletRequest.getRemoteAddr())) {
       // Runs before the auth filter (Priorities.AUTHENTICATION), so the request has no bearer.
       headers.remove(HttpHeaders.AUTHORIZATION);
-      if (containerRequestContext
-          .getUriInfo()
-          .getQueryParameters()
-          .containsKey(OAuthCredentialAuthFilter.OAUTH_ACCESS_TOKEN_PARAM)) {
-        containerRequestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
-      }
       return;
     }
     if (!isAuthenticatedRoute(containerRequestContext)) {
