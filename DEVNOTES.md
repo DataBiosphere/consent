@@ -454,8 +454,8 @@ local Postgres is needed in any environment.
 ### How they run in CI
 
 The GitHub Actions workflow at `.github/workflows/coverage.yaml` runs
-`./mvnw clean test` on every push/PR to `develop`, which exercises unit and
-integration tests together via Testcontainers — no additional CI configuration
+`./mvnw clean jacoco:prepare-agent test jacoco:report` on every push/PR to `develop`, which
+exercises unit and integration tests together via Testcontainers — no additional CI configuration
 is needed.
 
 The exception is the Elasticsearch container tests. They are tagged
