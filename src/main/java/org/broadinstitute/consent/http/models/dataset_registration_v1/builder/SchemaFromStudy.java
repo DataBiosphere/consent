@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyAssetIdentifiers;
 import org.broadinstitute.consent.http.models.StudyAssets;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.AlternativeDataSharingPlanReason;
@@ -158,9 +159,14 @@ public class SchemaFromStudy {
           AlternativeDataSharingPlanAccessManagement.fromValue(
               alternativeDataSharingPlanAccessManagementVal));
     }
-    schemaV1.setModels(studyAssets.findAssetList(study.getProperties(), StudyAssets.MODELS));
+    schemaV1.setModels(
+        StudyAssetIdentifiers.strip(
+            StudyAssets.MODELS,
+            studyAssets.findAssetList(study.getProperties(), StudyAssets.MODELS)));
     schemaV1.setWorkspaces(
-        studyAssets.findAssetList(study.getProperties(), StudyAssets.WORKSPACES));
+        StudyAssetIdentifiers.strip(
+            StudyAssets.WORKSPACES,
+            studyAssets.findAssetList(study.getProperties(), StudyAssets.WORKSPACES)));
     schemaV1.setPresentations(
         studyAssets.findAssetList(study.getProperties(), StudyAssets.PRESENTATIONS));
     schemaV1.setPublications(
@@ -170,11 +176,13 @@ public class SchemaFromStudy {
     schemaV1.setIntellectualProperties(
         studyAssets.findAssetList(study.getProperties(), StudyAssets.INTELLECTUAL_PROPERTIES));
     schemaV1.setBiospecimens(
-        studyAssets.findAssetList(study.getProperties(), StudyAssets.BIOSPECIMENS));
+        StudyAssetIdentifiers.strip(
+            StudyAssets.BIOSPECIMENS,
+            studyAssets.findAssetList(study.getProperties(), StudyAssets.BIOSPECIMENS)));
     schemaV1.setFunding(studyAssets.findAssetList(study.getProperties(), StudyAssets.FUNDING));
     // The deprecated assets object still round-trips every promoted list alongside whatever
     // unpromoted keys remain, so a client editing this payload does not lose them.
-    schemaV1.setAssets(studyAssets.assemble(study.getProperties()));
+    schemaV1.setAssets(StudyAssetIdentifiers.strip(studyAssets.assemble(study.getProperties())));
     schemaV1.setData(findMapPropValue(study.getProperties(), data));
     schemaV1.setExternalIdentifier(findStringPropValue(study.getProperties(), externalIdentifier));
     schemaV1.setExternalIdentifierType(

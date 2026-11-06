@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -150,6 +151,27 @@ class StudyAssetServiceTest {
     allowVisibility(study);
 
     assertEquals(List.of(), service.getAssetsByType(1, user, "models"));
+  }
+
+  @Test
+  void testModelsAreServedWithTheirIdentifierAndNotAStoredOne() {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addProperty(
+        new StudyProperty(
+            "models",
+            GsonUtil.getInstance()
+                .toJsonTree(
+                    List.of(
+                        Map.of("modelId", 45, "duosIdentifier", "DUOS-M-999999"),
+                        Map.of("modelId", "client-id", "duosIdentifier", "DUOS-M-000001"))),
+            PropertyType.Json));
+    allowVisibility(study);
+
+    List<Object> models = service.getAssetsByType(1, user, "models");
+
+    assertEquals("DUOS-M-000045", ((Map<?, ?>) models.get(0)).get("duosIdentifier"));
+    assertFalse(((Map<?, ?>) models.get(1)).containsKey("duosIdentifier"));
   }
 
   /** The assets property is client-managed and unvalidated, so a bad value must not 500. */

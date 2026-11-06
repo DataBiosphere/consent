@@ -14,5 +14,5 @@ get:
         application/json:
           schema:
             type: array
-            items: { $ref: '../schemas/Workspace.yaml' }
+            items: { $ref: '../schemas/WorkspaceAsset.yaml' }
     404: { description: Study not found, or not visible to this user }

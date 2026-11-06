@@ -1,0 +1,9 @@
+type: object
+description: A workspace as a study's asset endpoint returns it.
+allOf:
+  - $ref: './Workspace.yaml'
+properties:
+  duosIdentifier:
+    type: string
+    readOnly: true
+    description: The workspace's DUOS identifier, such as `DUOS-W-000045`, derived from its id. Absent unless the id is a positive integer row id. Never stored; a value sent in a registration is ignored.
