@@ -209,7 +209,7 @@ public class HttpClientUtil implements ConsentLogger {
     try {
       request.setThrowExceptionOnExecuteError(false);
       // close() stops the context. Do not also call stop(), because each call records a time.
-      try (Timer.Context ignored = timer.time()) {
+      try (Timer.Context _ = timer.time()) {
         response = request.execute();
       }
     } catch (IOException e) {
