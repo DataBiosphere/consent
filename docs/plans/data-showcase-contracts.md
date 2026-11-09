@@ -47,6 +47,7 @@ The delivery plan's proposals apply where none of these sources decides.
 | `open-access-datasets` is curated or computed, chosen per showcase; open access only; card links straight to access | Decision; original Story 8 |
 | Item fields are Story 29's forms, plus the workflow `addedDate`; the artifact's extra fields (PI, versions, clone counts, groupings) are excluded | Current Story 29; decision |
 | Analysis Apps allow one featured card | Original Story 14 |
+| Resource cards (`featured-tools`, `featured-workspaces`) use typed entries in config, not catalog asset records; see [Resource cards and catalog asset records](#resource-cards-and-catalog-asset-records-s34) | Investigation 2026-11-09 (S3.4) |
 | Impact: an embed, or a periodically refreshed snapshot of through.bio data flagged as not live; attribution either way | Original Story 21 |
 | Conference: dates with time zone, location, description; live registration link or alert signup | Original Story 22; Story 29 |
 | Workshops: public signup and a private-training request path; the artifact's multi-session enrollment is not required | Original Story 23 |
@@ -176,6 +177,48 @@ lives in that DAO query, not in an enum.
 | `dac` | `dac.name` | DAC names, exact match |
 
 The values for one key are alternatives (any one can match). Multiple keys must all match.
+
+## Resource cards and catalog asset records (S3.4)
+
+The delivery plan left one question to S3.4: could the compute cards reuse existing catalog asset
+records instead of typed entries in config? This section records the answer for
+[DT-4356](https://broadworkbench.atlassian.net/browse/DT-4356). It was checked against consent
+`develop` at `372598324`.
+
+**What exists.** The asset identifiers plan ([DT-4209](https://broadworkbench.atlassian.net/browse/DT-4209))
+gives each registered AI model, workspace and biospecimen a catalog entry and a DUOS identifier
+(`DUOS-M-…`, `DUOS-W-…`, `DUOS-B-…`). A study's registration holds these assets. `Workspace.yaml`
+fields include `name`, `description`, `tags` and `url`, and so do `AiModel.yaml`'s. Neither has a
+thumbnail or a docs URL.
+
+**Why the MVP doesn't reuse them:**
+
+- **No record for analysis apps.** `featured-tools` lists apps such as a hosted notebook or a
+  workflow platform. No catalog asset type describes an app, so there is nothing to reuse.
+- **Different things.** A starter workspace in `featured-workspaces` is an editorial pick, usually a
+  tutorial or template. A `DUOS-W-…` workspace is a workspace registered with one study's data.
+  Some starter workspaces may never be registered.
+- **No public source.** The showcase is anonymous. Every route that returns asset fields needs a
+  signed-in user: `GET /api/asset-catalog/{identifier}`, and the Data Library search
+  (`POST /api/dataset/search/index`). The public lookup (`PublicShowcaseCatalogResource`) returns
+  datasets only. Its fields are the [S2.1 projection](#s21-catalog-projection), which has no asset
+  fields.
+- **Missing fields.** The cards' thumbnail and docs URL would still come from config.
+
+**Decision.** Resource cards use the typed entries in config that S1.2 defined. This matches the
+delivery plan's MVP choice.
+
+**What reuse would need later.** It would fit registered workspaces and AI models (the
+`ai-models` section, R2), not apps. It would need:
+
+- an identifier form for these sections, like the dataset shelves' `DUOS-` items
+- a public asset projection, with field rules approved by the data stewards and AppSec, as S2.1 needs
+  for datasets (`description` is free text)
+- eligibility rules: whether the asset must be live and `listed`, and in a public study
+- the showcase URL policy applied to the asset's `url`
+
+Reuse would keep cards current, the same argument that rules out copying dataset metadata. Raise it
+as a new story if a showcase needs registered workspaces or models.
 
 ## Design review decisions (2026-11-03)
 
