@@ -63,10 +63,11 @@ public class OidcAuthorityDAO implements ConsentLogger {
       logException(e);
       throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
     }
-    if (status >= 200 && status < 300) {
+    var family = Response.Status.Family.familyOf(status);
+    if (family == Response.Status.Family.SUCCESSFUL) {
       return body;
     }
-    if (status >= 400 && status < 500) {
+    if (family == Response.Status.Family.CLIENT_ERROR) {
       // A bad, expired or used grant, or a probe from a scanner. Return the same status to the
       // client and do not send an alert to Sentry. The B2C error fields let a log search find
       // token expirations.
