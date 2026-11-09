@@ -23,12 +23,15 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -38,6 +41,14 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 
 public class HttpClientUtil implements ConsentLogger {
+
+  /**
+   * A path segment that holds an ID: all digits, a UUID, or an email address. The default timer
+   * label replaces these segments, so that each ID does not add a timer.
+   */
+  private static final Pattern ID_SEGMENT =
+      Pattern.compile(
+          "\\d+|\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{12}|.*@.*");
 
   public record SimpleResponse(int code, String entity) {}
 
@@ -172,24 +183,34 @@ public class HttpClientUtil implements ConsentLogger {
   /**
    * Sends the request and returns the response for every status. Use this when the caller must read
    * an error body. {@link #handleHttpRequest} throws on some 4xx statuses before the caller can
-   * read the body.
+   * read the body. The timer for the request is named for the URL without its query string.
+   *
+   * @param request The HttpRequest
+   * @return HttpResponse
    */
   public HttpResponse executeRequest(HttpRequest request) {
-    String timerName =
-        String.format(
-            "org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
-            request.getRequestMethod(), request.getUrl().toString());
-    if (SharedMetricRegistries.tryGetDefault() == null) {
-      logWarn("Default SharedMetricRegistries is null, setting default");
-      SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
-    }
-    Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
+    return executeRequest(request, timerLabel(request.getUrl()));
+  }
+
+  /**
+   * Same as {@link #executeRequest(HttpRequest)}, but the timer is named for the given label. Use
+   * this method when the URL path holds an ID, such as an email address. A timer stays in the
+   * metric registry for the life of the process, so a label from each unique URL makes the registry
+   * grow without limit, and an ID in the name shows on the admin metrics page.
+   *
+   * @param request The HttpRequest
+   * @param timerLabel A label that does not change between calls to the same endpoint
+   * @return HttpResponse
+   */
+  public HttpResponse executeRequest(HttpRequest request, String timerLabel) {
+    String timerName = timerName(request.getRequestMethod(), timerLabel);
+    Timer timer = defaultMetricRegistry().timer(timerName);
     HttpResponse response;
     try {
       request.setThrowExceptionOnExecuteError(false);
-      try (Timer.Context context = timer.time()) {
+      // close() stops the context. Do not also call stop(), because each call records a time.
+      try (Timer.Context _ = timer.time()) {
         response = request.execute();
-        context.stop();
       }
     } catch (IOException e) {
       throw new ServerErrorException(
@@ -201,32 +222,90 @@ public class HttpClientUtil implements ConsentLogger {
     return response;
   }
 
+  /**
+   * Sends the request, and throws on a 400, 401, 403, 404 or 409 status. The timer for the request
+   * is named for the URL without its query string.
+   *
+   * @param request The HttpRequest
+   * @return HttpResponse
+   */
   public HttpResponse handleHttpRequest(HttpRequest request) {
-    HttpResponse response = executeRequest(request);
+    return handleHttpRequest(request, timerLabel(request.getUrl()));
+  }
+
+  /**
+   * Same as {@link #handleHttpRequest(HttpRequest)}, but the timer is named for the given label.
+   * See {@link #executeRequest(HttpRequest, String)}.
+   *
+   * @param request The HttpRequest
+   * @param timerLabel A label that does not change between calls to the same endpoint
+   * @return HttpResponse
+   */
+  public HttpResponse handleHttpRequest(HttpRequest request, String timerLabel) {
+    HttpResponse response = executeRequest(request, timerLabel);
     return switch (response.getStatusCode()) {
       case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
-        logErrorResponse(request, response);
+        logErrorResponse(request, response, timerLabel);
         throw new BadRequestException(response.getStatusMessage());
       }
       case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
-        logErrorResponse(request, response);
+        logErrorResponse(request, response, timerLabel);
         throw new NotAuthorizedException(
             Objects.requireNonNullElse(response.getStatusMessage(), "Unauthorized"), "Bearer");
       }
       case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
-        logErrorResponse(request, response);
+        logErrorResponse(request, response, timerLabel);
         throw new ForbiddenException(response.getStatusMessage());
       }
       case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
-        logErrorResponse(request, response);
+        logErrorResponse(request, response, timerLabel);
         throw new NotFoundException(response.getStatusMessage());
       }
       case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
-        logErrorResponse(request, response);
+        logErrorResponse(request, response, timerLabel);
         throw new ConsentConflictException(response.getStatusMessage());
       }
       default -> response;
     };
+  }
+
+  /**
+   * The default shared registry. Dropwizard sets it at startup. Without Dropwizard, as in unit
+   * tests, this sets it. Two threads can try to set it at the same time, and only one can win, so
+   * the other uses the registry that won.
+   */
+  private MetricRegistry defaultMetricRegistry() {
+    MetricRegistry registry = SharedMetricRegistries.tryGetDefault();
+    if (registry != null) {
+      return registry;
+    }
+    try {
+      logWarn("Default SharedMetricRegistries is null, setting default");
+      return SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
+    } catch (IllegalStateException e) {
+      return SharedMetricRegistries.getDefault();
+    }
+  }
+
+  private static String timerName(String method, String timerLabel) {
+    return String.format(
+        "org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s", method, timerLabel);
+  }
+
+  /**
+   * The scheme, host, port and path of the URL. The query string and the user info are not part of
+   * the label, because a caller can send any query value, and each new value adds a timer. A path
+   * segment that holds an ID (see {@link #ID_SEGMENT}) becomes "{id}", for the same reason, and so
+   * that no email shows in a timer name or a log line.
+   */
+  static String timerLabel(GenericUrl url) {
+    String port = url.getPort() == -1 ? "" : ":" + url.getPort();
+    List<String> pathParts = Objects.requireNonNullElse(url.getPathParts(), List.of());
+    String path =
+        pathParts.stream()
+            .map(part -> ID_SEGMENT.matcher(part).matches() ? "{id}" : part)
+            .collect(Collectors.joining("/"));
+    return url.getScheme() + "://" + url.getHost() + port + path;
   }
 
   private HttpHeaders buildHeaders(AuthUser authUser) {
@@ -236,7 +315,11 @@ public class HttpClientUtil implements ConsentLogger {
         .set("X-App-ID", "DUOS");
   }
 
-  private void logErrorResponse(HttpRequest request, HttpResponse response) {
+  /**
+   * Logs the method and the timer label, not the full URL. The full URL can hold an email in the
+   * path, or query values that a client sent.
+   */
+  private void logErrorResponse(HttpRequest request, HttpResponse response, String timerLabel) {
     String stackTrace =
         StackWalker.getInstance()
             .walk(
@@ -244,12 +327,11 @@ public class HttpClientUtil implements ConsentLogger {
                     frames
                         .limit(8)
                         .map(StackWalker.StackFrame::toString)
-                        .collect(java.util.stream.Collectors.joining(" -> ")));
+                        .collect(Collectors.joining(" -> ")));
     String method = request.getRequestMethod();
-    String url = String.valueOf(request.getUrl());
     logWarn(
         String.format(
             "HttpClient Request Failed: %s %s [%s %s]. Stack Trace: %s",
-            response.getStatusCode(), response.getStatusMessage(), method, url, stackTrace));
+            response.getStatusCode(), response.getStatusMessage(), method, timerLabel, stackTrace));
   }
 }
