@@ -8,7 +8,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -61,7 +62,7 @@ public class ShowcaseDatasetSummaryMapper
         rs.getString("dac_name"),
         TranslationUtil.summaryCodes(dataUseParser.parseDataUse(rs.getString("data_use"))),
         participantCount(firstValue(datasetProperties, ShowcasePublicField.PARTICIPANT_COUNT)),
-        storedDate(rs.getObject("available_date", LocalDateTime.class)),
+        storedDate(rs.getObject("available_date", OffsetDateTime.class)),
         accessUrl,
         StringUtils.trimToNull(firstValue(studyProperties, ShowcasePublicField.SPECIES)));
   }
@@ -95,9 +96,15 @@ public class ShowcaseDatasetSummaryMapper
     }
   }
 
-  /** The date part of a stored timestamp, unaffected by the JVM time zone. */
-  private static String storedDate(LocalDateTime timestamp) {
-    return timestamp == null ? null : timestamp.toLocalDate().toString();
+  /**
+   * The UTC date part of a stored timestamp, unaffected by the JVM time zone. The driver reads a
+   * {@code timestamp} column as UTC and a {@code timestamptz} column as its exact moment, so this
+   * gives the same date for both column types (DT-4452).
+   */
+  private static String storedDate(OffsetDateTime timestamp) {
+    return timestamp == null
+        ? null
+        : timestamp.withOffsetSameInstant(ZoneOffset.UTC).toLocalDate().toString();
   }
 
   /**

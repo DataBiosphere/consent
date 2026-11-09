@@ -15,7 +15,7 @@ public class DACAutomationRuleAuditMapper
   @Override
   public DACAutomationRuleAudit map(ResultSet rs, StatementContext ctx) throws SQLException {
     RuleAuditAction action = RuleAuditAction.valueOf(rs.getString("action"));
-    Timestamp actionDate = Timestamp.valueOf(rs.getString("action_date"));
+    Timestamp actionDate = rs.getTimestamp("action_date");
     DACAutomationRuleType rule = DACAutomationRuleType.valueOf(rs.getString("rule"));
     String email = rs.getString("email");
     String displayName = rs.getString("display_name");
