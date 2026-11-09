@@ -55,7 +55,9 @@ public class OidcService {
 
   private MultivaluedMap<String, String> getExtraAuthParams() {
     var extraAuthParams = new MultivaluedHashMap<String, String>();
-    URLEncodedUtils.parse(configuration.getExtraAuthParams(), StandardCharsets.UTF_8)
+    // A param without "=" has a null value. Skip it, because a query param needs a value.
+    URLEncodedUtils.parse(configuration.getExtraAuthParams(), StandardCharsets.UTF_8).stream()
+        .filter(param -> param.getValue() != null)
         .forEach(param -> extraAuthParams.add(param.getName(), param.getValue()));
     return extraAuthParams;
   }
