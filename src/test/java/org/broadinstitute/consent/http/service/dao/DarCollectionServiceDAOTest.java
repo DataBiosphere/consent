@@ -2,10 +2,13 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -248,6 +251,12 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
                                 ElectionStatus.CANCELED.getValue(),
                                 FIXED_DATE)));
 
+    List<Integer> canceledElectionIds =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).stream()
+            .map(Election::getElectionId)
+            .toList();
+    assertEquals(1, canceledElectionIds.size());
+
     // re-create elections & new votes:
     referenceIds.addAll(serviceDAO.createElectionsForDarByUser(chair.get(), dar));
 
@@ -263,6 +272,29 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
             .filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
             .count());
 
+    // The canceled election is archived in the same transaction that creates the new election,
+    // so NOW() gives its last_update the same value as the new election's create_date.
+    Integer canceledElectionId = canceledElectionIds.getFirst();
+    Integer newElectionId = createdElections.getFirst().getElectionId();
+    assertNotEquals(canceledElectionId, newElectionId);
+    assertTrue(electionDAO.findElectionById(canceledElectionId).getArchived());
+    Timestamp archivedAt =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT last_update FROM election WHERE election_id = :id")
+                    .bind("id", canceledElectionId)
+                    .mapTo(Timestamp.class)
+                    .one());
+    Timestamp createdAt =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT create_date FROM election WHERE election_id = :id")
+                    .bind("id", newElectionId)
+                    .mapTo(Timestamp.class)
+                    .one());
+    assertNotNull(archivedAt);
+    assertEquals(createdAt, archivedAt);
+
     // create progress report
     createProgressReportFromDAR(dar);
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
@@ -270,6 +302,66 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         serviceDAO.createElectionsForDarByUser(chair.get(), collection.getMostRecentDar());
     assertFalse(createdElectionsForProgressReport.isEmpty());
     assertEquals(1, createdElectionsForProgressReport.size());
+  }
+
+  /**
+   * When an election insert fails after the archive of the old elections, the whole transaction
+   * rolls back, so the old elections stay unarchived.
+   */
+  @Test
+  void testCreateElectionsForDarByUserRollsBackArchiveWhenInsertFails() {
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
+    Integer datasetId = dar.getDatasetIds().getFirst();
+    Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
+    assertTrue(dac.isPresent());
+    User chair =
+        dacDAO.findMembersByDacId(dac.get().getDacId()).stream()
+            .filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
+            .findFirst()
+            .orElseThrow();
+
+    serviceDAO.createElectionsForDarByUser(chair, dar);
+    List<Election> canceledElections =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
+    assertEquals(1, canceledElections.size());
+    Integer canceledElectionId = canceledElections.getFirst().getElectionId();
+    electionDAO.updateElectionById(
+        canceledElectionId, ElectionStatus.CANCELED.getValue(), FIXED_DATE);
+    assertFalse(electionDAO.findElectionById(canceledElectionId).getArchived());
+
+    // Reject every new election for this DAR, so the insert fails after the archive runs.
+    String rejectFunction = "reject_election_insert_" + randomAlphabetic(10).toLowerCase();
+    jdbi.useHandle(
+        h -> {
+          h.execute(
+              """
+              CREATE FUNCTION %s() RETURNS trigger LANGUAGE plpgsql AS $$
+              BEGIN
+                IF NEW.reference_id = '%s' THEN
+                  RAISE EXCEPTION 'election insert rejected for test';
+                END IF;
+                RETURN NEW;
+              END;
+              $$
+              """
+                  .formatted(rejectFunction, dar.getReferenceId()));
+          h.execute(
+              "CREATE TRIGGER %s BEFORE INSERT ON election FOR EACH ROW EXECUTE FUNCTION %s()"
+                  .formatted(rejectFunction, rejectFunction));
+        });
+    try {
+      assertThrows(
+          RuntimeException.class, () -> serviceDAO.createElectionsForDarByUser(chair, dar));
+    } finally {
+      jdbi.useHandle(
+          h -> {
+            h.execute("DROP TRIGGER IF EXISTS %s ON election".formatted(rejectFunction));
+            h.execute("DROP FUNCTION IF EXISTS %s()".formatted(rejectFunction));
+          });
+    }
+
+    assertFalse(electionDAO.findElectionById(canceledElectionId).getArchived());
   }
 
   private DataAccessRequest createProgressReportFromDAR(DataAccessRequest dar) {

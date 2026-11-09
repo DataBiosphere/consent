@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -86,7 +85,7 @@ public class DarCollectionServiceDAO {
                               .map(Election::getElectionId)
                               .toList();
                       if (!oldElectionIds.isEmpty()) {
-                        electionDAO.archiveElectionByIds(oldElectionIds, new Date());
+                        createElectionArchiveUpdate(handle, oldElectionIds).execute();
                       }
                       List<User> voteUsers = findVoteUsersForDataset(datasetId);
                       inserts.add(
@@ -172,7 +171,7 @@ public class DarCollectionServiceDAO {
     final String sql =
         """
         INSERT INTO vote (create_date, user_id, election_id, type, reminder_sent)
-            (SELECT current_timestamp, :userId, election_id, :voteType, false
+            (SELECT NOW(), :userId, election_id, :voteType, false
             FROM election
             WHERE election_type = :electionType
             AND reference_id = :referenceId
@@ -198,12 +197,27 @@ public class DarCollectionServiceDAO {
     return dacUsers.isEmpty() ? new ArrayList<>(userDAO.findNonDacUsersEnabledToVote()) : dacUsers;
   }
 
+  /// Archive elections on the transaction's handle, with the election and vote inserts. NOW()
+  /// returns the transaction start time, so the archived elections get the same last_update as the
+  /// create_date of the new elections.
+  private Update createElectionArchiveUpdate(Handle handle, List<Integer> electionIds) {
+    final String sql =
+        """
+        UPDATE election
+        SET archived = true, last_update = NOW()
+        WHERE election_id IN (<electionIds>)
+        """;
+    Update update = handle.createUpdate(sql);
+    update.bindList("electionIds", electionIds);
+    return update;
+  }
+
   private Update createElectionInsert(
       Handle handle, String electionType, String referenceId, Integer datasetId) {
     final String sql =
         """
         INSERT INTO election (election_type, status, create_date, reference_id, dataset_id, version)
-        VALUES (:electionType, :status, current_timestamp, :referenceId, :datasetId,
+        VALUES (:electionType, :status, NOW(), :referenceId, :datasetId,
             (SELECT coalesce (MAX(version), 0) + 1
             FROM election AS election_version
             WHERE reference_id = :referenceId
