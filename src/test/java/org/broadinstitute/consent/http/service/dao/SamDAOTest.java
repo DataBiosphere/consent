@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -411,6 +412,26 @@ class SamDAOTest extends WireMockTestHelper {
     } catch (Exception e) {
       fail(e.getMessage());
     }
+  }
+
+  /** The email in the URL path must not reach the timer name. */
+  @Test
+  void testGetV1UserByEmailKeepsEmailOutOfTimerName() throws Exception {
+    EmailResponse emailResponse = new EmailResponse("googleId", "email", "subjectId");
+    wireMockServer.stubFor(
+        any(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(GsonUtil.buildGson().toJson(emailResponse))));
+    String localPart = randomAlphabetic(12);
+
+    samDAO.getV1UserByEmail(duosUser, localPart + "@example.com");
+
+    var timerNames = SharedMetricRegistries.getDefault().getTimers().keySet();
+    assertTrue(timerNames.stream().anyMatch(name -> name.endsWith("/api/users/v1/{email}")));
+    assertFalse(timerNames.stream().anyMatch(name -> name.contains(localPart)));
   }
 
   @Test

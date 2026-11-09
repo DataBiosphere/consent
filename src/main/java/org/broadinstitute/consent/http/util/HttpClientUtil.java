@@ -169,11 +169,29 @@ public class HttpClientUtil implements ConsentLogger {
     return request;
   }
 
+  /**
+   * Executes the request and records its duration in a timer that is named for the request URL
+   * without its query string.
+   *
+   * @param request The HttpRequest
+   * @return HttpResponse
+   */
   public HttpResponse handleHttpRequest(HttpRequest request) {
-    String timerName =
-        String.format(
-            "org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
-            request.getRequestMethod(), request.getUrl().toString());
+    return handleHttpRequest(request, timerLabel(request.getUrl()));
+  }
+
+  /**
+   * Executes the request and records its duration in a timer that is named for the given label. Use
+   * this method when the URL path holds an ID, such as an email address. A timer stays in the
+   * metric registry for the life of the process, so a label from each unique URL makes the registry
+   * grow without limit, and an ID in the name shows on the admin metrics page.
+   *
+   * @param request The HttpRequest
+   * @param timerLabel A label that does not change between calls to the same endpoint
+   * @return HttpResponse
+   */
+  public HttpResponse handleHttpRequest(HttpRequest request, String timerLabel) {
+    String timerName = timerName(request.getRequestMethod(), timerLabel);
     if (SharedMetricRegistries.tryGetDefault() == null) {
       logWarn("Default SharedMetricRegistries is null, setting default");
       SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
@@ -182,9 +200,9 @@ public class HttpClientUtil implements ConsentLogger {
     try {
       request.setThrowExceptionOnExecuteError(false);
       HttpResponse response;
-      try (Timer.Context context = timer.time()) {
+      // close() stops the context. Do not also call stop(), because each call records a time.
+      try (Timer.Context ignored = timer.time()) {
         response = request.execute();
-        context.stop();
       }
       if (response != null) {
         return switch (response.getStatusCode()) {
@@ -217,6 +235,20 @@ public class HttpClientUtil implements ConsentLogger {
           "Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     }
     throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+  }
+
+  private static String timerName(String method, String timerLabel) {
+    return String.format(
+        "org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s", method, timerLabel);
+  }
+
+  /**
+   * The scheme, host, port and path of the URL. The query string and the user info are not part of
+   * the label, because a caller can send any query value, and each new value adds a timer.
+   */
+  static String timerLabel(GenericUrl url) {
+    String port = url.getPort() == -1 ? "" : ":" + url.getPort();
+    return url.getScheme() + "://" + url.getHost() + port + Objects.toString(url.getRawPath(), "");
   }
 
   private HttpHeaders buildHeaders(AuthUser authUser) {
