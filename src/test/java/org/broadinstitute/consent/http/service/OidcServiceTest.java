@@ -36,6 +36,17 @@ class OidcServiceTest {
   }
 
   @Test
+  void testGetAuthorizationURISendsTemplateCharactersAsLiteralText() {
+    var service = new OidcService(mockOidcAuthorityDAO, new OidcConfiguration());
+    var parameters = new MultivaluedHashMap<String, String>();
+    parameters.add("{x", "a{b} c");
+
+    when(mockOidcAuthorityDAO.getOidcAuthorityConfiguration()).thenReturn(testConfig);
+    var actual = service.getAuthorizationURI(parameters);
+    assertEquals(URI.create(testConfig.authorization_endpoint() + "?%7Bx=a%7Bb%7D+c"), actual);
+  }
+
+  @Test
   public void testGetAuthorizationURIWithExtraAuthParams() throws URISyntaxException {
     var configuration = new OidcConfiguration();
     configuration.setExtraAuthParams("foo1=bar1&foo2=bar2");

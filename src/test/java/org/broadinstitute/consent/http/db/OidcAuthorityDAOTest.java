@@ -6,8 +6,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -22,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +49,7 @@ class OidcAuthorityDAOTest extends WireMockTestHelper {
   void init() {
     OidcConfiguration config = new OidcConfiguration();
     config.setAuthorityEndpoint(getMockContainerBaseUrl());
-    dao = new OidcAuthorityDAO(new HttpClientUtil(new ServicesConfiguration()), config);
+    dao = spy(new OidcAuthorityDAO(new HttpClientUtil(new ServicesConfiguration()), config));
   }
 
   @Test
@@ -130,5 +141,102 @@ class OidcAuthorityDAOTest extends WireMockTestHelper {
                 .withBody(expectedResponse)));
     var actual = dao.oauthTokenPost(formParameters, queryParameters);
     assertEquals(expectedResponse, actual);
+  }
+
+  @Test
+  void testOauthTokenPostSendsTemplateCharactersAsLiteralText() {
+    // Values like these come from scanners. UriBuilder used to read the braces as a template.
+    var probeValue = "1%}nd82x'/\"<k26qf${{%{{\\";
+    var queryParameters = new MultivaluedHashMap<String, String>();
+    queryParameters.add("p", "test_policy");
+    queryParameters.add(probeValue, probeValue);
+    var tokenPath = "/oauth2/token";
+    dao.setOidcAuthorityConfiguration(
+        new OidcAuthorityConfiguration(null, null, getMockContainerBaseUrl() + tokenPath));
+    wireMockServer.stubFor(
+        post(urlPathEqualTo(tokenPath))
+            .withQueryParam("p", equalTo("test_policy"))
+            .withQueryParam(probeValue, equalTo(probeValue))
+            .willReturn(aResponse().withStatus(200).withBody("{}")));
+
+    assertEquals("{}", dao.oauthTokenPost(new MultivaluedHashMap<>(), queryParameters));
+    verify(dao, never()).logException(any(Exception.class));
+  }
+
+  /**
+   * B2C answers a bad, expired or used grant with a 4xx status. The client gets the same status,
+   * and the warning names the B2C error so that a log search can find token expirations.
+   */
+  @ParameterizedTest
+  @ValueSource(ints = {400, 403, 404, 409, 429})
+  void testOauthTokenPostUpstreamClientErrorKeepsStatusAndWarns(int status) {
+    stubTokenResponse(
+        status,
+        """
+        {"error":"invalid_grant","error_description":"AADB2C90080: The provided grant has expired."}
+        """);
+
+    var exception =
+        assertThrows(
+            ClientErrorException.class,
+            () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    assertEquals(status, exception.getResponse().getStatus());
+    verify(dao, never()).logException(any(Exception.class));
+    verify(dao)
+        .logWarn(
+            argThat(
+                message ->
+                    message.contains(String.valueOf(status))
+                        && message.contains("invalid_grant")
+                        && message.contains("AADB2C90080")));
+  }
+
+  /**
+   * B2C answers a bad client ID or client secret with 401. The client gets a 401 and Sentry gets no
+   * alert. The JDK HTTP client under NetHttpTransport drops the body of a 401 response to a POST,
+   * so the warning has the status but no B2C error fields.
+   */
+  @Test
+  void testOauthTokenPostUpstreamUnauthorizedKeepsStatusAndWarns() {
+    stubTokenResponse(401, "{\"error\":\"invalid_client\"}");
+
+    var exception =
+        assertThrows(
+            ClientErrorException.class,
+            () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    assertEquals(401, exception.getResponse().getStatus());
+    verify(dao, never()).logException(any(Exception.class));
+    verify(dao).logWarn(argThat(message -> message.contains("401")));
+  }
+
+  @Test
+  void testOauthTokenPostUpstreamClientErrorWithoutJsonBodyStillWarns() {
+    stubTokenResponse(400, "<html>Bad Request</html>");
+
+    var exception =
+        assertThrows(
+            ClientErrorException.class,
+            () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    assertEquals(400, exception.getResponse().getStatus());
+    verify(dao, never()).logException(any(Exception.class));
+    verify(dao).logWarn(argThat(message -> message.contains("400")));
+  }
+
+  @Test
+  void testOauthTokenPostUpstreamServerErrorLogsOnce() {
+    stubTokenResponse(503, "{\"error\":\"server_error\"}");
+
+    assertThrows(
+        ServerErrorException.class,
+        () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    verify(dao, times(1)).logException(any(Exception.class));
+  }
+
+  private void stubTokenResponse(int status, String body) {
+    var tokenPath = "/oauth2/token";
+    dao.setOidcAuthorityConfiguration(
+        new OidcAuthorityConfiguration(null, null, getMockContainerBaseUrl() + tokenPath));
+    wireMockServer.stubFor(
+        post(urlPathEqualTo(tokenPath)).willReturn(aResponse().withStatus(status).withBody(body)));
   }
 }

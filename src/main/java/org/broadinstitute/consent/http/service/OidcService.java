@@ -12,6 +12,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
 import org.broadinstitute.consent.http.models.OAuth2Configuration;
+import org.broadinstitute.consent.http.util.UriQueryParams;
 
 public class OidcService {
   public static final String SCOPE_PARAM = "scope";
@@ -31,11 +32,12 @@ public class OidcService {
     var uriBuilder =
         UriBuilder.fromUri(
             oidcAuthorityDAO.getOidcAuthorityConfiguration().authorization_endpoint());
-    parameters.forEach((key, value) -> uriBuilder.queryParam(key, value.toArray()));
-    getExtraAuthParams().forEach(param -> uriBuilder.queryParam(param.getName(), param.getValue()));
+    UriQueryParams.addAll(uriBuilder, parameters);
+    getExtraAuthParams()
+        .forEach(param -> UriQueryParams.add(uriBuilder, param.getName(), param.getValue()));
     if (configuration.isAddClientIdToScope()) {
-      uriBuilder.replaceQueryParam(
-          SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
+      UriQueryParams.replace(
+          uriBuilder, SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
     }
     return uriBuilder.build();
   }
