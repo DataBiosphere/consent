@@ -5,9 +5,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
@@ -33,8 +31,7 @@ public class OidcService {
         UriBuilder.fromUri(
             oidcAuthorityDAO.getOidcAuthorityConfiguration().authorization_endpoint());
     UriQueryParams.addAll(uriBuilder, parameters);
-    getExtraAuthParams()
-        .forEach(param -> UriQueryParams.add(uriBuilder, param.getName(), param.getValue()));
+    UriQueryParams.addAll(uriBuilder, getExtraAuthParams());
     if (configuration.isAddClientIdToScope()) {
       UriQueryParams.replace(
           uriBuilder, SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
@@ -56,8 +53,11 @@ public class OidcService {
         configuration.getClientId());
   }
 
-  private List<NameValuePair> getExtraAuthParams() {
-    return URLEncodedUtils.parse(configuration.getExtraAuthParams(), StandardCharsets.UTF_8);
+  private MultivaluedMap<String, String> getExtraAuthParams() {
+    var extraAuthParams = new MultivaluedHashMap<String, String>();
+    URLEncodedUtils.parse(configuration.getExtraAuthParams(), StandardCharsets.UTF_8)
+        .forEach(param -> extraAuthParams.add(param.getName(), param.getValue()));
+    return extraAuthParams;
   }
 
   private String addClientIdToScopes(String existingScopes) {

@@ -20,10 +20,6 @@ public final class UriQueryParams {
                 literal(name), values.stream().map(UriQueryParams::literal).toArray()));
   }
 
-  public static void add(UriBuilder builder, String name, String value) {
-    builder.queryParam(literal(name), literal(value));
-  }
-
   public static void replace(UriBuilder builder, String name, String value) {
     builder.replaceQueryParam(literal(name), literal(value));
   }
