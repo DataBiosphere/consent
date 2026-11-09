@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -122,7 +123,16 @@ class VoteServiceDAOTest extends DAOTestHelper {
           assertNotNull(v.getUpdateDate());
         });
     // NOW() returns the transaction start time, so every vote in one call gets the same date.
-    assertEquals(1, votes.stream().map(Vote::getUpdateDate).distinct().count());
+    // VoteMapper reads update_date as a day only, so read the full timestamps directly.
+    List<Timestamp> updateDates =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT DISTINCT update_date FROM vote WHERE vote_id IN (<voteIds>)")
+                    .bindList("voteIds", requestVoteIds)
+                    .mapTo(Timestamp.class)
+                    .list());
+    assertEquals(1, updateDates.size());
+    assertNotNull(updateDates.getFirst());
   }
 
   @Test
