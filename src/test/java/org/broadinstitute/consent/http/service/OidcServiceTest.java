@@ -36,6 +36,17 @@ class OidcServiceTest {
   }
 
   @Test
+  void testGetAuthorizationURISendsTemplateCharactersAsLiteralText() {
+    var service = new OidcService(mockOidcAuthorityDAO, new OidcConfiguration());
+    var parameters = new MultivaluedHashMap<String, String>();
+    parameters.add("{x", "a{b} c");
+
+    when(mockOidcAuthorityDAO.getOidcAuthorityConfiguration()).thenReturn(testConfig);
+    var actual = service.getAuthorizationURI(parameters);
+    assertEquals(URI.create(testConfig.authorization_endpoint() + "?%7Bx=a%7Bb%7D+c"), actual);
+  }
+
+  @Test
   public void testGetAuthorizationURIWithExtraAuthParams() throws URISyntaxException {
     var configuration = new OidcConfiguration();
     configuration.setExtraAuthParams("foo1=bar1&foo2=bar2");
@@ -44,6 +55,17 @@ class OidcServiceTest {
     when(mockOidcAuthorityDAO.getOidcAuthorityConfiguration()).thenReturn(testConfig);
     var actual = service.getAuthorizationURI(parameters);
     assertEquals(new URI(testConfig.authorization_endpoint() + "?foo1=bar1&foo2=bar2"), actual);
+  }
+
+  /** An extra auth param without "=" has no value. It must not break the authorize redirect. */
+  @Test
+  void testGetAuthorizationURIWithExtraAuthParamWithoutValue() {
+    var configuration = new OidcConfiguration();
+    configuration.setExtraAuthParams("foo1&foo2=bar2");
+    var service = new OidcService(mockOidcAuthorityDAO, configuration);
+    when(mockOidcAuthorityDAO.getOidcAuthorityConfiguration()).thenReturn(testConfig);
+    var actual = service.getAuthorizationURI(new MultivaluedHashMap<>());
+    assertEquals(URI.create(testConfig.authorization_endpoint() + "?foo2=bar2"), actual);
   }
 
   @Test

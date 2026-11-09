@@ -170,8 +170,54 @@ public class HttpClientUtil implements ConsentLogger {
   }
 
   /**
-   * Executes the request and records its duration in a timer that is named for the request URL
-   * without its query string.
+   * Sends the request and returns the response for every status. Use this when the caller must read
+   * an error body. {@link #handleHttpRequest} throws on some 4xx statuses before the caller can
+   * read the body. The timer for the request is named for the URL without its query string.
+   *
+   * @param request The HttpRequest
+   * @return HttpResponse
+   */
+  public HttpResponse executeRequest(HttpRequest request) {
+    return executeRequest(request, timerLabel(request.getUrl()));
+  }
+
+  /**
+   * Same as {@link #executeRequest(HttpRequest)}, but the timer is named for the given label. Use
+   * this method when the URL path holds an ID, such as an email address. A timer stays in the
+   * metric registry for the life of the process, so a label from each unique URL makes the registry
+   * grow without limit, and an ID in the name shows on the admin metrics page.
+   *
+   * @param request The HttpRequest
+   * @param timerLabel A label that does not change between calls to the same endpoint
+   * @return HttpResponse
+   */
+  public HttpResponse executeRequest(HttpRequest request, String timerLabel) {
+    String timerName = timerName(request.getRequestMethod(), timerLabel);
+    if (SharedMetricRegistries.tryGetDefault() == null) {
+      logWarn("Default SharedMetricRegistries is null, setting default");
+      SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
+    }
+    Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
+    HttpResponse response;
+    try {
+      request.setThrowExceptionOnExecuteError(false);
+      // close() stops the context. Do not also call stop(), because each call records a time.
+      try (Timer.Context ignored = timer.time()) {
+        response = request.execute();
+      }
+    } catch (IOException e) {
+      throw new ServerErrorException(
+          "Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    }
+    if (response == null) {
+      throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    }
+    return response;
+  }
+
+  /**
+   * Sends the request, and throws on a 400, 401, 403, 404 or 409 status. The timer for the request
+   * is named for the URL without its query string.
    *
    * @param request The HttpRequest
    * @return HttpResponse
@@ -181,60 +227,39 @@ public class HttpClientUtil implements ConsentLogger {
   }
 
   /**
-   * Executes the request and records its duration in a timer that is named for the given label. Use
-   * this method when the URL path holds an ID, such as an email address. A timer stays in the
-   * metric registry for the life of the process, so a label from each unique URL makes the registry
-   * grow without limit, and an ID in the name shows on the admin metrics page.
+   * Same as {@link #handleHttpRequest(HttpRequest)}, but the timer is named for the given label.
+   * See {@link #executeRequest(HttpRequest, String)}.
    *
    * @param request The HttpRequest
    * @param timerLabel A label that does not change between calls to the same endpoint
    * @return HttpResponse
    */
   public HttpResponse handleHttpRequest(HttpRequest request, String timerLabel) {
-    String timerName = timerName(request.getRequestMethod(), timerLabel);
-    if (SharedMetricRegistries.tryGetDefault() == null) {
-      logWarn("Default SharedMetricRegistries is null, setting default");
-      SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
-    }
-    Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
-    try {
-      request.setThrowExceptionOnExecuteError(false);
-      HttpResponse response;
-      // close() stops the context. Do not also call stop(), because each call records a time.
-      try (Timer.Context ignored = timer.time()) {
-        response = request.execute();
+    HttpResponse response = executeRequest(request, timerLabel);
+    return switch (response.getStatusCode()) {
+      case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
+        logErrorResponse(request, response);
+        throw new BadRequestException(response.getStatusMessage());
       }
-      if (response != null) {
-        return switch (response.getStatusCode()) {
-          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
-            logErrorResponse(request, response);
-            throw new BadRequestException(response.getStatusMessage());
-          }
-          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
-            logErrorResponse(request, response);
-            throw new NotAuthorizedException(
-                Objects.requireNonNullElse(response.getStatusMessage(), "Unauthorized"), "Bearer");
-          }
-          case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
-            logErrorResponse(request, response);
-            throw new ForbiddenException(response.getStatusMessage());
-          }
-          case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
-            logErrorResponse(request, response);
-            throw new NotFoundException(response.getStatusMessage());
-          }
-          case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
-            logErrorResponse(request, response);
-            throw new ConsentConflictException(response.getStatusMessage());
-          }
-          default -> response;
-        };
+      case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
+        logErrorResponse(request, response);
+        throw new NotAuthorizedException(
+            Objects.requireNonNullElse(response.getStatusMessage(), "Unauthorized"), "Bearer");
       }
-    } catch (IOException e) {
-      throw new ServerErrorException(
-          "Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
-    }
-    throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+      case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
+        logErrorResponse(request, response);
+        throw new ForbiddenException(response.getStatusMessage());
+      }
+      case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
+        logErrorResponse(request, response);
+        throw new NotFoundException(response.getStatusMessage());
+      }
+      case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
+        logErrorResponse(request, response);
+        throw new ConsentConflictException(response.getStatusMessage());
+      }
+      default -> response;
+    };
   }
 
   private static String timerName(String method, String timerLabel) {

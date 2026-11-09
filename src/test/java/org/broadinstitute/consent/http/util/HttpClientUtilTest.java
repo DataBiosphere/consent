@@ -15,6 +15,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -184,6 +185,41 @@ class HttpClientUtilTest extends WireMockTestHelper {
     assertEquals(
         "https://example.org/api/token",
         HttpClientUtil.timerLabel(new GenericUrl("https://example.org/api/token?code=abc")));
+  }
+
+  /**
+   * executeRequest uses the same timer name as handleHttpRequest. The OIDC token endpoint sends
+   * client query values through executeRequest, so this is the path that a scanner reaches.
+   */
+  @Test
+  void testExecuteRequestQueryValuesShareOneTimer() throws Exception {
+    wireMockServer.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(400)));
+    String path = "/token-" + randomAlphabetic(10);
+    String firstQuery = randomAlphabetic(10);
+    String secondQuery = randomAlphabetic(10);
+
+    clientUtil.executeRequest(
+        clientUtil.buildUnAuthedGetRequest(
+            new GenericUrl(mockServerBaseUrl() + path + "?code=" + firstQuery)));
+    clientUtil.executeRequest(
+        clientUtil.buildUnAuthedGetRequest(
+            new GenericUrl(mockServerBaseUrl() + path + "?code=" + secondQuery)));
+
+    String timerName =
+        "org.broadinstitute.consent.http.util.HttpClientUtil-GET-" + mockServerBaseUrl() + path;
+    assertEquals(2, SharedMetricRegistries.getDefault().getTimers().get(timerName).getCount());
+    assertFalse(
+        SharedMetricRegistries.getDefault().getTimers().keySet().stream()
+            .anyMatch(name -> name.contains(firstQuery) || name.contains(secondQuery)));
+  }
+
+  /** executeRequest gives the caller every status, so the caller can read an error body. */
+  @Test
+  void testExecuteRequestReturnsUnauthorizedResponse() throws Exception {
+    HttpRequest request = requestReturning("Unauthorized");
+
+    HttpResponse response = clientUtil.executeRequest(request);
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatusCode());
   }
 
   private HttpRequest requestReturning(String reasonPhrase) throws IOException {

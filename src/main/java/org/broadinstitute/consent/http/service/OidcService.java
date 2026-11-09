@@ -5,13 +5,12 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
 import org.broadinstitute.consent.http.models.OAuth2Configuration;
+import org.broadinstitute.consent.http.util.UriQueryParams;
 
 public class OidcService {
   public static final String SCOPE_PARAM = "scope";
@@ -31,11 +30,11 @@ public class OidcService {
     var uriBuilder =
         UriBuilder.fromUri(
             oidcAuthorityDAO.getOidcAuthorityConfiguration().authorization_endpoint());
-    parameters.forEach((key, value) -> uriBuilder.queryParam(key, value.toArray()));
-    getExtraAuthParams().forEach(param -> uriBuilder.queryParam(param.getName(), param.getValue()));
+    UriQueryParams.addAll(uriBuilder, parameters);
+    UriQueryParams.addAll(uriBuilder, getExtraAuthParams());
     if (configuration.isAddClientIdToScope()) {
-      uriBuilder.replaceQueryParam(
-          SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
+      UriQueryParams.replace(
+          uriBuilder, SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
     }
     return uriBuilder.build();
   }
@@ -54,8 +53,13 @@ public class OidcService {
         configuration.getClientId());
   }
 
-  private List<NameValuePair> getExtraAuthParams() {
-    return URLEncodedUtils.parse(configuration.getExtraAuthParams(), StandardCharsets.UTF_8);
+  private MultivaluedMap<String, String> getExtraAuthParams() {
+    var extraAuthParams = new MultivaluedHashMap<String, String>();
+    // A param without "=" has a null value. Skip it, because a query param needs a value.
+    URLEncodedUtils.parse(configuration.getExtraAuthParams(), StandardCharsets.UTF_8).stream()
+        .filter(param -> param.getValue() != null)
+        .forEach(param -> extraAuthParams.add(param.getName(), param.getValue()));
+    return extraAuthParams;
   }
 
   private String addClientIdToScopes(String existingScopes) {
