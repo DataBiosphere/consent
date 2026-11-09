@@ -298,4 +298,16 @@
   <include file="changesets/changelog-consent-2026-11-09-timestamptz-email-entity.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-09-timestamptz-match-entity.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-09-timestamptz-file-storage-object.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dar-collection.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-data-access-request.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dar-dataset-daa-snapshot.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-draft.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-election.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-vote.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dataset.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dataset-audit.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dataset-audit-property.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dataset-authorized-readers.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-dataset-property.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-study.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
