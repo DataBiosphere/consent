@@ -176,10 +176,7 @@ class OidcAuthorityDAOTest extends WireMockTestHelper {
         {"error":"invalid_grant","error_description":"AADB2C90080: The provided grant has expired."}
         """);
 
-    var exception =
-        assertThrows(
-            ClientErrorException.class,
-            () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    var exception = assertThrows(ClientErrorException.class, this::postTokenRequestWithoutParams);
     assertEquals(status, exception.getResponse().getStatus());
     verify(dao, never()).logException(any(Exception.class));
     verify(dao)
@@ -200,10 +197,7 @@ class OidcAuthorityDAOTest extends WireMockTestHelper {
   void testOauthTokenPostUpstreamUnauthorizedKeepsStatusAndWarns() {
     stubTokenResponse(401, "{\"error\":\"invalid_client\"}");
 
-    var exception =
-        assertThrows(
-            ClientErrorException.class,
-            () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    var exception = assertThrows(ClientErrorException.class, this::postTokenRequestWithoutParams);
     assertEquals(401, exception.getResponse().getStatus());
     verify(dao, never()).logException(any(Exception.class));
     verify(dao).logWarn(argThat(message -> message.contains("401")));
@@ -213,10 +207,7 @@ class OidcAuthorityDAOTest extends WireMockTestHelper {
   void testOauthTokenPostUpstreamClientErrorWithoutJsonBodyStillWarns() {
     stubTokenResponse(400, "<html>Bad Request</html>");
 
-    var exception =
-        assertThrows(
-            ClientErrorException.class,
-            () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    var exception = assertThrows(ClientErrorException.class, this::postTokenRequestWithoutParams);
     assertEquals(400, exception.getResponse().getStatus());
     verify(dao, never()).logException(any(Exception.class));
     verify(dao).logWarn(argThat(message -> message.contains("400")));
@@ -226,10 +217,12 @@ class OidcAuthorityDAOTest extends WireMockTestHelper {
   void testOauthTokenPostUpstreamServerErrorLogsOnce() {
     stubTokenResponse(503, "{\"error\":\"server_error\"}");
 
-    assertThrows(
-        ServerErrorException.class,
-        () -> dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>()));
+    assertThrows(ServerErrorException.class, this::postTokenRequestWithoutParams);
     verify(dao, times(1)).logException(any(Exception.class));
+  }
+
+  private void postTokenRequestWithoutParams() {
+    dao.oauthTokenPost(new MultivaluedHashMap<>(), new MultivaluedHashMap<>());
   }
 
   private void stubTokenResponse(int status, String body) {
