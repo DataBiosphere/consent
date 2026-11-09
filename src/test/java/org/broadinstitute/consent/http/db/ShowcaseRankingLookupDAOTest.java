@@ -316,7 +316,7 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
             handle.execute(
                 """
                 UPDATE dataset SET dac_approval = true,
-                    dac_approval_date = CAST(? AS timestamp) AT TIME ZONE 'UTC'
+                    dac_approval_date = CAST(? AS timestamp)
                 WHERE alias = ?
                 """,
                 approvalDate,

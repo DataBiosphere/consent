@@ -12,22 +12,28 @@ in the JVM default zone, and `NOW()` writes it as a clock time in the session zo
 zones are different, one column holds values from two zones. A `timestamptz` value is one exact
 moment, so the zones do not change what a write stores.
 
-## Delivery: two stacked PRs
+## Delivery: four stacked PRs
 
 Consent runs its migrations as an Argo Job before the new pods start. During a rollout, the old
 pods read the new schema. Two reads fail on a `timestamptz` column, so they change first.
 
+Each table has its own changeset file, `changelog-consent-2026-11-09-timestamptz-<table>.xml`.
+The changeset PRs group the tables by area, so that each PR stays under 500 lines.
+
 | PR | Branch | Change |
 | --- | --- | --- |
 | A | `DT-4452-showcase-date` | `ShowcaseDatasetSummaryMapper` reads `available_date` as `OffsetDateTime`, not `LocalDateTime`. `DACAutomationRuleAuditMapper` reads `action_date` with `getTimestamp`, not `Timestamp.valueOf(getString(...))`. Both reads work for both column types. |
-| B | `DT-4452-timestamptz` | `changelog-consent-2026-11-09-timestamptz.xml`: one changeset for each table. |
+| B1 | `DT-4452-timestamptz` | This plan, and 8 tables: `users`, `institution`, `library_card`, `acknowledgement`, `user_redaction_audit`, `feature_flag`, `feature_flag_audit`, `ontology_index`. |
+| B2 | `DT-4452-timestamptz-dac` | 10 tables: `dac`, `dac_audit`, `dac_rule_audit`, `dac_rule_settings`, `data_access_agreement`, `daa_audit`, `lc_daa_audit`, `email_entity`, `match_entity`, `file_storage_object`. |
+| B3 | `DT-4452-timestamptz-dar` | 12 tables: `dar_collection`, `data_access_request`, `dar_dataset_daa_snapshot`, `draft`, `election`, `vote`, `dataset`, `dataset_audit`, `dataset_audit_property`, `dataset_authorized_readers`, `dataset_property`, `study`. Also the showcase test helpers that set `dac_approval_date`. |
 
-Deploy PR A to every environment before you merge PR B.
+Deploy PR A to every environment before you merge a changeset PR. The changeset PRs can merge
+one at a time, in the order B1, B2, B3.
 
 ## Columns
 
 On 2026-11-09, a scratch database built from all changesets had 53 `timestamp without time zone`
-columns and no `date` columns. PR B changes 50 columns in 30 tables:
+columns and no `date` columns. PRs B1 to B3 change 50 columns in 30 tables:
 
 | Table | Columns |
 | --- | --- |
@@ -82,7 +88,7 @@ Consent Java, so this change does not include them. The BFF owners can convert t
 - The rollback converts back to `timestamp without time zone`, also in UTC. A scratch round trip
   gave back the same values.
 
-## Checks before you merge PR B
+## Checks before you merge a changeset PR
 
 1. **Compare the deployed schemas.** The deployed schema can be different from the changesets.
    Run this query against the dev, staging and prod exports. Compare the result with the 53
@@ -106,7 +112,7 @@ Consent Java, so this change does not include them. The BFF owners can convert t
     - The `TZ` variable and any `-Duser.timezone` for the Consent pods and the migration Job in
       terra-helmfile, and the default zone of the `broad-dsp-gcr-public/base/jre` image.
 
-## Behavior changes after PR B
+## Behavior changes after the changeset PRs
 
 - **Tests.** A local test JVM can use a zone other than UTC, while the test database uses UTC.
   Before, a Java date and `NOW()` in the same `timestamp` column could be some hours apart. After,

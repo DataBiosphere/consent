@@ -280,5 +280,12 @@
   <include file="changesets/changelog-consent-2026-11-04-asset-catalog-assets.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-05-bff-session-audit-rotation.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-05-dataset-index-confirmed.xml" relativeToChangelogFile="true" />
-  <include file="changesets/changelog-consent-2026-11-09-timestamptz.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-users.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-institution.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-library-card.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-acknowledgement.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-user-redaction-audit.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-feature-flag.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-feature-flag-audit.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-09-timestamptz-ontology-index.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
