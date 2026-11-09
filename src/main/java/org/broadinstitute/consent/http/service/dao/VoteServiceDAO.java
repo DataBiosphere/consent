@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -39,12 +38,11 @@ public class VoteServiceDAO {
     jdbi.useTransaction(
         h -> {
           final String updateVoteWithRationale =
-              "UPDATE vote SET vote = :vote, update_date = :updateDate, rationale = :rationale WHERE vote_id = :voteId";
+              "UPDATE vote SET vote = :vote, update_date = NOW(), rationale = :rationale WHERE vote_id = :voteId";
           final String updateVoteWithoutRationale =
-              "UPDATE vote SET vote = :vote, update_date = :updateDate WHERE vote_id = :voteId";
+              "UPDATE vote SET vote = :vote, update_date = NOW() WHERE vote_id = :voteId";
           final String updateElectionStatus =
               "UPDATE election SET status = :status WHERE election_id = :electionId";
-          final Date now = new Date();
           votes.forEach(
               vote -> {
                 Update voteUpdate;
@@ -55,7 +53,6 @@ public class VoteServiceDAO {
                   voteUpdate.bind("rationale", rationale);
                 }
                 voteUpdate.bind("vote", voteValue);
-                voteUpdate.bind("updateDate", now);
                 voteUpdate.bind("voteId", vote.getVoteId());
                 voteUpdate.execute();
                 if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())

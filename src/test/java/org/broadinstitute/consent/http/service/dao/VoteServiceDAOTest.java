@@ -45,12 +45,14 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
+    assertNull(vote.getUpdateDate());
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
     assertTrue(votes.getFirst().getVote());
     assertEquals(rationale, votes.getFirst().getRationale());
+    assertNotNull(votes.getFirst().getUpdateDate());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
     assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
@@ -63,12 +65,14 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createFinalVote(user.getUserId(), election.getElectionId());
+    assertNull(vote.getUpdateDate());
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, null);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
     assertTrue(votes.getFirst().getVote());
     assertNull(votes.getFirst().getRationale());
+    assertNotNull(votes.getFirst().getUpdateDate());
     assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
   }
 
@@ -80,12 +84,14 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createDacVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
+    assertNull(vote.getUpdateDate());
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
     assertTrue(votes.getFirst().getVote());
     assertEquals(rationale, votes.getFirst().getRationale());
+    assertNotNull(votes.getFirst().getUpdateDate());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertNotEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
     assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
@@ -113,7 +119,10 @@ class VoteServiceDAOTest extends DAOTestHelper {
           assertTrue(v.getVote());
           assertEquals(rationale, v.getRationale());
           assertTrue(requestVoteIds.contains(v.getVoteId()));
+          assertNotNull(v.getUpdateDate());
         });
+    // NOW() returns the transaction start time, so every vote in one call gets the same date.
+    assertEquals(1, votes.stream().map(Vote::getUpdateDate).distinct().count());
   }
 
   @Test
@@ -177,12 +186,14 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createRadarApproveVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
+    assertNull(vote.getUpdateDate());
 
     List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
     assertTrue(votes.getFirst().getVote());
     assertEquals(rationale, votes.getFirst().getRationale());
+    assertNotNull(votes.getFirst().getUpdateDate());
     Election foundElection = electionDAO.findElectionById(vote.getElectionId());
     assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
     assertEquals(vote.getVoteId(), votes.getFirst().getVoteId());
