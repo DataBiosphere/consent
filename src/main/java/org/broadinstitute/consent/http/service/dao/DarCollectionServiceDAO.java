@@ -197,9 +197,9 @@ public class DarCollectionServiceDAO {
     return dacUsers.isEmpty() ? new ArrayList<>(userDAO.findNonDacUsersEnabledToVote()) : dacUsers;
   }
 
-  /// Archive elections on the transaction's handle, so that a failed insert also rolls back the
-  /// archive. NOW() returns the transaction start time, so the archived elections get the same
-  /// last_update as the create_date of the new elections.
+  /// Archive elections on the transaction's handle, with the election and vote inserts. NOW()
+  /// returns the transaction start time, so the archived elections get the same last_update as the
+  /// create_date of the new elections.
   private Update createElectionArchiveUpdate(Handle handle, List<Integer> electionIds) {
     final String sql =
         """
