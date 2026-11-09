@@ -2,10 +2,12 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -248,6 +250,12 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
                                 ElectionStatus.CANCELED.getValue(),
                                 FIXED_DATE)));
 
+    List<Integer> canceledElectionIds =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).stream()
+            .map(Election::getElectionId)
+            .toList();
+    assertEquals(1, canceledElectionIds.size());
+
     // re-create elections & new votes:
     referenceIds.addAll(serviceDAO.createElectionsForDarByUser(chair.get(), dar));
 
@@ -262,6 +270,29 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         createdElections.stream()
             .filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
             .count());
+
+    // The canceled election is archived in the same transaction that creates the new election,
+    // so NOW() gives its last_update the same value as the new election's create_date.
+    Integer canceledElectionId = canceledElectionIds.getFirst();
+    Integer newElectionId = createdElections.getFirst().getElectionId();
+    assertNotEquals(canceledElectionId, newElectionId);
+    assertTrue(electionDAO.findElectionById(canceledElectionId).getArchived());
+    Timestamp archivedAt =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT last_update FROM election WHERE election_id = :id")
+                    .bind("id", canceledElectionId)
+                    .mapTo(Timestamp.class)
+                    .one());
+    Timestamp createdAt =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT create_date FROM election WHERE election_id = :id")
+                    .bind("id", newElectionId)
+                    .mapTo(Timestamp.class)
+                    .one());
+    assertNotNull(archivedAt);
+    assertEquals(createdAt, archivedAt);
 
     // create progress report
     createProgressReportFromDAR(dar);
