@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -125,6 +126,15 @@ class HttpClientUtilTest extends WireMockTestHelper {
     NotAuthorizedException e =
         assertThrows(NotAuthorizedException.class, () -> clientUtil.handleHttpRequest(request));
     assertTrue(e.getMessage().contains("Token expired"), e.getMessage());
+  }
+
+  /** executeRequest gives the caller every status, so the caller can read an error body. */
+  @Test
+  void testExecuteRequestReturnsUnauthorizedResponse() throws Exception {
+    HttpRequest request = requestReturning("Unauthorized");
+
+    HttpResponse response = clientUtil.executeRequest(request);
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatusCode());
   }
 
   private HttpRequest requestReturning(String reasonPhrase) throws IOException {

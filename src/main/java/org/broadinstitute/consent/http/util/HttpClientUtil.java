@@ -169,7 +169,12 @@ public class HttpClientUtil implements ConsentLogger {
     return request;
   }
 
-  public HttpResponse handleHttpRequest(HttpRequest request) {
+  /**
+   * Sends the request and returns the response for every status. Use this when the caller must read
+   * an error body. {@link #handleHttpRequest} throws on some 4xx statuses before the caller can
+   * read the body.
+   */
+  public HttpResponse executeRequest(HttpRequest request) {
     String timerName =
         String.format(
             "org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
@@ -179,44 +184,49 @@ public class HttpClientUtil implements ConsentLogger {
       SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
     }
     Timer timer = SharedMetricRegistries.getDefault().timer(timerName);
+    HttpResponse response;
     try {
       request.setThrowExceptionOnExecuteError(false);
-      HttpResponse response;
       try (Timer.Context context = timer.time()) {
         response = request.execute();
         context.stop();
-      }
-      if (response != null) {
-        return switch (response.getStatusCode()) {
-          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
-            logErrorResponse(request, response);
-            throw new BadRequestException(response.getStatusMessage());
-          }
-          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
-            logErrorResponse(request, response);
-            throw new NotAuthorizedException(
-                Objects.requireNonNullElse(response.getStatusMessage(), "Unauthorized"), "Bearer");
-          }
-          case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
-            logErrorResponse(request, response);
-            throw new ForbiddenException(response.getStatusMessage());
-          }
-          case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
-            logErrorResponse(request, response);
-            throw new NotFoundException(response.getStatusMessage());
-          }
-          case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
-            logErrorResponse(request, response);
-            throw new ConsentConflictException(response.getStatusMessage());
-          }
-          default -> response;
-        };
       }
     } catch (IOException e) {
       throw new ServerErrorException(
           "Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     }
-    throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    if (response == null) {
+      throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    }
+    return response;
+  }
+
+  public HttpResponse handleHttpRequest(HttpRequest request) {
+    HttpResponse response = executeRequest(request);
+    return switch (response.getStatusCode()) {
+      case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
+        logErrorResponse(request, response);
+        throw new BadRequestException(response.getStatusMessage());
+      }
+      case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
+        logErrorResponse(request, response);
+        throw new NotAuthorizedException(
+            Objects.requireNonNullElse(response.getStatusMessage(), "Unauthorized"), "Bearer");
+      }
+      case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
+        logErrorResponse(request, response);
+        throw new ForbiddenException(response.getStatusMessage());
+      }
+      case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
+        logErrorResponse(request, response);
+        throw new NotFoundException(response.getStatusMessage());
+      }
+      case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
+        logErrorResponse(request, response);
+        throw new ConsentConflictException(response.getStatusMessage());
+      }
+      default -> response;
+    };
   }
 
   private HttpHeaders buildHeaders(AuthUser authUser) {
