@@ -9,15 +9,16 @@
   -->
   <changeSet id="changelog-consent-2026-11-09-timestamptz-dac-audit" author="grushton">
     <preConditions onFail="HALT" onError="HALT"
-      onFailMessage="dac_audit must have 1 timestamp without time zone column(s): action_date. Compare the deployed schema with the changesets before you deploy.">
+      onFailMessage="dac_audit must have 1 timestamp or timestamptz column(s): action_date. Compare the deployed schema with the changesets before you deploy.">
       <dbms type="postgresql"/>
       <sqlCheck expectedResult="1">
         SELECT COUNT(*) FROM information_schema.columns
         WHERE table_schema = current_schema() AND table_name = 'dac_audit'
           AND column_name IN ('action_date')
-          AND data_type = 'timestamp without time zone'
+          AND data_type IN ('timestamp without time zone', 'timestamp with time zone')
       </sqlCheck>
     </preConditions>
+    <!-- A column that is already timestamptz in a deployed database does not change. -->
     <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
     <sql>SET LOCAL lock_timeout = '10s'</sql>
     <sql>SET LOCAL TimeZone = 'UTC'</sql>
