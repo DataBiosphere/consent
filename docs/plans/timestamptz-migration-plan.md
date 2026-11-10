@@ -117,12 +117,24 @@ Consent Java, so this change does not include them. The BFF owners can convert t
     ORDER BY c.data_type, c.table_name, c.column_name;
     ```
 
+   The result also has `timestamptz` columns that older changesets create, for example
+   `dataset.indexed_date`, `dataset.index_confirmed_date` and the study asset and catalog tables.
+   These rows are expected. Stop and find the cause if one of these is true:
+    - A column from the 53 above is missing, or has a type other than `timestamp` or
+      `timestamptz`.
+    - A `timestamp without time zone` column is not one of the 53 above.
+    - A column has the `date` type.
+
 2. **Confirm that the stored values are UTC.** The conversion is correct only if the Consent JVM
    and Cloud SQL wrote the values in UTC. An export does not keep the server settings, so check
    these in each environment:
     - The Cloud SQL `timezone` flag (the default is UTC).
     - The `TZ` variable and any `-Duser.timezone` for the Consent pods and the migration Job in
       terra-helmfile, and the default zone of the `broad-dsp-gcr-public/base/jre` image.
+    - The history of these settings. The current settings do not show how older rows were written.
+      Read the `git log` of the Consent values in terra-helmfile and the change history of the
+      Cloud SQL flags and the base image. If a writer used a zone other than UTC at any time, stop.
+      The rows from that time need their own conversion plan before you merge.
 
 ## Behavior changes after the changeset PRs
 
