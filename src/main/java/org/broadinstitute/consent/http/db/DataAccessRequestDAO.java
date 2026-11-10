@@ -180,14 +180,21 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           WITH qualifying_dars AS (
-              SELECT DISTINCT dar.reference_id, dar.collection_id
+              -- approval_date is when the DAC approved the DAR on this dataset: the deciding
+              -- vote's update date, never its create date, which is when the election opened.
+              -- It is null for a vote cast before update dates were recorded, and an unknown
+              -- date makes the earliest one unknown, so MIN must not skip it.
+              SELECT dar.reference_id, dar.collection_id,
+                  CASE WHEN BOOL_AND(final_access_vote.decision_date IS NOT NULL)
+                       THEN MIN(final_access_vote.decision_date) END AS approval_date
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
                   -- The most recently cast vote across the pair's elections, as the SO dashboard
                   -- ranks it, so a reopened pair keeps its grant until the new election decides
                   SELECT DISTINCT ON (e.reference_id, e.dataset_id)
-                      e.reference_id, e.dataset_id, v.vote AS last_vote
+                      e.reference_id, e.dataset_id, v.vote AS last_vote,
+                      v.update_date AS decision_date
                   FROM election e
                   INNER JOIN vote v ON v.election_id = e.election_id
                       AND v.vote IS NOT NULL
@@ -201,9 +208,22 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                   AND dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              GROUP BY dar.reference_id, dar.collection_id
           ), approved_collections AS (
-              -- One row per collection, carrying the day access to this dataset began
-              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission
+              -- One row per collection, carrying the day access to this dataset began, when the
+              -- DAC first approved an original DAR, and when it approved each renewing progress
+              -- report. A collection saved as several original DARs has no approval date if any
+              -- of them was approved undated. A closeout renews nothing, so it never contributes
+              -- a renewal date, and neither does a report with no approval date.
+              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission,
+                  CASE WHEN BOOL_AND(q.approval_date IS NOT NULL)
+                                FILTER (WHERE dar.parent_id IS NULL)
+                       THEN MIN(q.approval_date) FILTER (WHERE dar.parent_id IS NULL)
+                       END AS approval_date,
+                  ARRAY_AGG(q.approval_date ORDER BY q.approval_date) FILTER (
+                      WHERE dar.parent_id IS NOT NULL
+                          AND dar.data ->> 'closeoutSupplement' IS NULL
+                          AND q.approval_date IS NOT NULL) AS progress_report_approval_dates
               FROM qualifying_dars q
               INNER JOIN data_access_request dar ON dar.reference_id = q.reference_id
               GROUP BY q.collection_id
@@ -224,6 +244,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               approved_collections.first_submission AS submission_date,
               latest_dar.submission_date AS expiration_basis_date,
               closeouts.closeout_date,
+              approved_collections.approval_date,
+              approved_collections.progress_report_approval_dates,
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,
@@ -291,14 +313,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           WITH study_datasets AS (
               SELECT dataset_id FROM dataset WHERE study_id = :studyId
           ), qualifying_dars AS (
-              SELECT DISTINCT dar.reference_id, dar.collection_id
+              -- approval_date is when the DAC first approved the DAR on one of the study's
+              -- datasets, read from the deciding vote as in the dataset-scoped query. It is null
+              -- when any of those approvals is undated: that one may have been the first.
+              SELECT dar.reference_id, dar.collection_id,
+                  CASE WHEN BOOL_AND(final_access_vote.decision_date IS NOT NULL)
+                       THEN MIN(final_access_vote.decision_date) END AS approval_date
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN study_datasets sd ON sd.dataset_id = dd.dataset_id
               INNER JOIN (
                   -- The most recently cast vote, as in the dataset-scoped query
                   SELECT DISTINCT ON (e.reference_id, e.dataset_id)
-                      e.reference_id, e.dataset_id, v.vote AS last_vote
+                      e.reference_id, e.dataset_id, v.vote AS last_vote,
+                      v.update_date AS decision_date
                   FROM election e
                   -- Bound to the study's datasets here, not after: the outer join to dd.dataset_id
                   -- cannot be pushed in, so without this every dataaccess election in the table is
@@ -315,9 +343,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
                   AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+              GROUP BY dar.reference_id, dar.collection_id
           ), approved_collections AS (
-              -- One row per collection, carrying the day access to this study began
-              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission
+              -- One row per collection, carrying the day access to this study began and the
+              -- approval and renewal dates, as in the dataset-scoped query
+              SELECT q.collection_id, MIN(dar.submission_date) AS first_submission,
+                  CASE WHEN BOOL_AND(q.approval_date IS NOT NULL)
+                                FILTER (WHERE dar.parent_id IS NULL)
+                       THEN MIN(q.approval_date) FILTER (WHERE dar.parent_id IS NULL)
+                       END AS approval_date,
+                  ARRAY_AGG(q.approval_date ORDER BY q.approval_date) FILTER (
+                      WHERE dar.parent_id IS NOT NULL
+                          AND dar.data ->> 'closeoutSupplement' IS NULL
+                          AND q.approval_date IS NOT NULL) AS progress_report_approval_dates
               FROM qualifying_dars q
               INNER JOIN data_access_request dar ON dar.reference_id = q.reference_id
               GROUP BY q.collection_id
@@ -335,6 +373,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               approved_collections.first_submission AS submission_date,
               latest_dar.submission_date AS expiration_basis_date,
               closeouts.closeout_date,
+              approved_collections.approval_date,
+              approved_collections.progress_report_approval_dates,
               latest_dar.reference_id,
               latest_dar.update_date,
               latest_dar.data ->> 'projectTitle' AS project_title,

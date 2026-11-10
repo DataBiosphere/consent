@@ -1,11 +1,16 @@
 package org.broadinstitute.consent.http.models;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * One granted DAR collection, as the study and dataset pages list it.
  *
  * @param submissionDate when access began: the collection's earliest approved submission
+ * @param approvalDate when the DAC first approved the original DAR, null when an approval that
+ *     could be the first predates decision dates, or when only a progress report is approved
+ * @param progressReportApprovalDates when the DAC approved each renewing progress report, oldest
+ *     first; a report with an undated approval is left out
  * @param expirationDate when the term runs out: {@link
  *     DataAccessRequest#EXPIRATION_DURATION_MILLIS} after the newest approved submission, original
  *     or progress report
@@ -21,6 +26,8 @@ public record DarMetricsSummary(
     String referenceId,
     String institutionName,
     Boolean expired,
+    Timestamp approvalDate,
+    List<Timestamp> progressReportApprovalDates,
     Timestamp expirationDate,
     Timestamp closeoutDate) {
 
@@ -45,6 +52,8 @@ public record DarMetricsSummary(
         referenceId,
         null,
         expired,
+        approvalDate,
+        progressReportApprovalDates,
         expirationDate,
         closeoutDate);
   }
@@ -66,6 +75,8 @@ public record DarMetricsSummary(
         referenceId,
         null,
         expired,
+        null,
+        List.of(),
         null,
         null);
   }

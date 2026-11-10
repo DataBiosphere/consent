@@ -25,6 +25,23 @@ properties:
     description: >-
       Whether access has ended, by the term running out (see expirationDate) or by a closeout (see
       closeoutDate)
+  approvalDate:
+    type: integer
+    format: int64
+    description: >-
+      When the DAC approved the original DAR, in milliseconds since the epoch. On the study-scoped
+      route, the first approval on any of the study's datasets. Omitted when any approval it
+      could be predates recorded decision dates, since that one may have been the first, and when
+      no original DAR holds an approval here, only a progress report.
+  progressReportApprovalDates:
+    type: array
+    description: >-
+      When the DAC approved each progress report that renewed access, in milliseconds since the
+      epoch, oldest first. Empty when access was never renewed. Pending and denied reports,
+      closeouts, and reports with an approval that has no recorded date are left out.
+    items:
+      type: integer
+      format: int64
   expirationDate:
     type: integer
     format: int64

@@ -206,7 +206,19 @@ class MetricsResourceTest extends AbstractTestHelper {
     Timestamp now = new Timestamp(System.currentTimeMillis());
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            now, now, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", false, now, now);
+            now,
+            now,
+            "Project",
+            "DAR-1",
+            "Summary",
+            "RUS",
+            "ref-1",
+            "Broad",
+            false,
+            now,
+            List.of(now),
+            now,
+            now);
     when(service.generateDarSummaries(any(), any())).thenReturn(List.of(summary));
 
     Response response = resource.getDarSummaryData(duosUser, 1);
@@ -225,6 +237,8 @@ class MetricsResourceTest extends AbstractTestHelper {
             "referenceId",
             "institutionName",
             "expired",
+            "approvalDate",
+            "progressReportApprovalDates",
             "expirationDate",
             "closeoutDate"),
         fields);
@@ -245,6 +259,8 @@ class MetricsResourceTest extends AbstractTestHelper {
             "ref-1",
             null,
             false,
+            new Timestamp(2_000L),
+            List.of(new Timestamp(3_000L), new Timestamp(4_000L)),
             new Timestamp(5_000L),
             null);
     when(service.generateStudyDarSummaries(any(), any())).thenReturn(List.of(summary));
@@ -256,6 +272,12 @@ class MetricsResourceTest extends AbstractTestHelper {
             .get(0)
             .getAsJsonObject();
 
+    assertEquals(2_000L, json.get("approvalDate").getAsLong());
+    assertEquals(
+        List.of(3_000L, 4_000L),
+        json.getAsJsonArray("progressReportApprovalDates").asList().stream()
+            .map(e -> e.getAsLong())
+            .toList());
     assertEquals(5_000L, json.get("expirationDate").getAsLong());
     assertFalse(json.has("closeoutDate"), "A DAR that was not closed out sends no closeout date");
   }

@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -27,6 +29,8 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
         rs.getString("reference_id"),
         rs.getString("institution_name"),
         hasLapsed(closeoutDate != null ? closeoutDate : expirationDate),
+        rs.getTimestamp("approval_date"),
+        timestamps(rs.getArray("progress_report_approval_dates")),
         expirationDate,
         closeoutDate);
   }
@@ -59,5 +63,9 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
   /** Access ends when its term runs out or a closeout cuts it short, whichever happened. */
   private static boolean hasLapsed(Timestamp accessEnd) {
     return accessEnd != null && accessEnd.getTime() < System.currentTimeMillis();
+  }
+
+  private static List<Timestamp> timestamps(Array array) throws SQLException {
+    return array == null ? List.of() : List.of((Timestamp[]) array.getArray());
   }
 }
