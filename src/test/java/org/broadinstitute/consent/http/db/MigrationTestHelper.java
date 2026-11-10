@@ -15,7 +15,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.jupiter.api.BeforeEach;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Testcontainers and Liquibase plumbing for the standalone changeset tests, which run a single
@@ -26,8 +26,8 @@ abstract class MigrationTestHelper {
 
   // Shared by every subclass, and never stopped: Ryuk reaps it at JVM exit, and a container per
   // test class costs CI a start-up each.
-  private static final PostgreSQLContainer<?> POSTGRES =
-      new PostgreSQLContainer<>(DAOTestHelper.POSTGRES_IMAGE);
+  private static final PostgreSQLContainer POSTGRES =
+      new PostgreSQLContainer(DAOTestHelper.POSTGRES_IMAGE);
 
   static {
     POSTGRES.start();
