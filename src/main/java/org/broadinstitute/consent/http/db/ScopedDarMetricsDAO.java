@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.db;
 import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.ExpirationBucket;
+import org.broadinstitute.consent.http.models.RenewalBucket;
 import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -20,8 +22,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
  *
  * <p>Each query applies the same rule as the {@link DarMetricsDAO} fragment its javadoc names,
  * which documents the rule in full, with the DAC scope replaced by :datasetIds. A change to one
- * belongs in the other. The queries are written out whole rather than built from those fragments,
- * as docs/ai/CLAUDE.md asks.
+ * belongs in the other; {@code ScopedDarMetricsDAOTest} holds the two to the same totals. The
+ * queries are written out whole rather than built from those fragments, as docs/ai/CLAUDE.md asks.
  */
 public interface ScopedDarMetricsDAO {
 
@@ -183,6 +185,124 @@ public interface ScopedDarMetricsDAO {
       ORDER BY 1
       """)
   List<TurnaroundBucket> countPairTurnaround(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("datasetIds") List<Integer> datasetIds,
+      @Bind("bucket") String bucket);
+
+  /**
+   * DAR collections whose access to the datasets in scope ended in [:from, :to), and by :asOf, per
+   * access-end bucket and reason. As {@link DarMetricsDAO#EXPIRATIONS}: access to a dataset runs
+   * 8760 hours from the newest submission, original or progress report, whose most recently cast
+   * final or RADAR vote approved it; a closeout filed before the term runs out ends the whole
+   * collection's access on its filing date; and a collection has ended once access to every dataset
+   * in scope has, however its datasets outside the scope stand.
+   */
+  @RegisterConstructorMapper(ExpirationBucket.class)
+  @SqlQuery(
+      """
+      WITH ranked_dars AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.submission_date >= CAST(:from AS timestamp) - INTERVAL '366 days'
+          AND (dar.parent_id IS NULL OR dar.data->>'closeoutSupplement' IS NULL)
+          AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
+      ),
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               rd.collection_id, e.dataset_id, rd.submission_date, v.vote
+        FROM ranked_dars rd
+        JOIN dar_dataset dd ON dd.reference_id = rd.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        WHERE dd.dataset_id = ANY(CAST(:datasetIds AS int[]))
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      ),
+      term_ends AS (
+        SELECT collection_id,
+               MAX(submission_date)::timestamptz + INTERVAL '8760 hours' AS term_end
+        FROM last_votes
+        WHERE vote
+        GROUP BY collection_id, dataset_id
+      ),
+      collection_ends AS (
+        SELECT t.collection_id, MAX(t.term_end) AS term_end,
+               (SELECT MAX(dar.submission_date)::timestamptz FROM data_access_request dar
+                WHERE dar.collection_id = t.collection_id
+                  AND dar.submission_date IS NOT NULL
+                  AND dar.parent_id IS NOT NULL
+                  AND dar.data->>'closeoutSupplement' IS NOT NULL) AS closeout_date
+        FROM term_ends t
+        GROUP BY t.collection_id
+      ),
+      expirations AS (
+        SELECT LEAST(ce.term_end, ce.closeout_date) AS access_end,
+               CASE WHEN ce.closeout_date < ce.term_end THEN 'CLOSED_OUT' ELSE 'EXPIRED' END
+                 AS reason
+        FROM collection_ends ce
+        -- Selects nothing from it: the join drops legacy DARs with no collection, as the admin
+        -- report's does
+        JOIN dar_collection dc ON dc.collection_id = ce.collection_id
+      )
+      SELECT date_trunc(:bucket, access_end) AS bucket_start, reason, COUNT(*) AS count
+      FROM expirations
+      WHERE access_end >= :from AND access_end < :to AND access_end <= :asOf
+      GROUP BY 1, 2
+      ORDER BY 1, 2
+      """)
+  List<ExpirationBucket> countExpirations(
+      @Bind("from") Instant from,
+      @Bind("to") Instant to,
+      @Bind("datasetIds") List<Integer> datasetIds,
+      @Bind("asOf") Instant asOf,
+      @Bind("bucket") String bucket);
+
+  /**
+   * Datasets in scope renewed by progress reports submitted in [:from, :to), and the collections
+   * they renewed, per submission bucket. As {@link DarMetricsDAO#RENEWALS}: a renewal is a dataset
+   * approved on a progress report by its most recently cast final or RADAR vote; closeouts and
+   * canceled or archived reports renew nothing.
+   */
+  @RegisterConstructorMapper(RenewalBucket.class)
+  @SqlQuery(
+      """
+      WITH progress_reports AS (
+        SELECT dar.reference_id, dar.collection_id, dar.submission_date
+        FROM data_access_request dar
+        WHERE dar.parent_id IS NOT NULL
+          AND dar.data->>'closeoutSupplement' IS NULL
+          AND dar.submission_date >= :from AND dar.submission_date < :to
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('canceled', 'archived'))
+      ),
+      last_votes AS (
+        SELECT DISTINCT ON (e.reference_id, e.dataset_id)
+               pr.collection_id, pr.submission_date, v.vote
+        FROM progress_reports pr
+        JOIN dar_dataset dd ON dd.reference_id = pr.reference_id
+        JOIN election e
+          ON e.reference_id = dd.reference_id AND e.dataset_id = dd.dataset_id
+         AND LOWER(e.election_type) = 'dataaccess'
+        JOIN vote v
+          ON v.election_id = e.election_id AND v.vote IS NOT NULL
+         AND LOWER(v.type) IN ('final', 'radar_approve')
+        WHERE dd.dataset_id = ANY(CAST(:datasetIds AS int[]))
+        ORDER BY e.reference_id, e.dataset_id,
+                 COALESCE(v.update_date, v.create_date) DESC, v.vote_id DESC
+      )
+      SELECT date_trunc(:bucket, submission_date) AS bucket_start,
+             COUNT(*) AS renewal_count, COUNT(DISTINCT collection_id) AS collection_count
+      FROM last_votes
+      WHERE vote
+      GROUP BY 1
+      ORDER BY 1
+      """)
+  List<RenewalBucket> countRenewals(
       @Bind("from") Instant from,
       @Bind("to") Instant to,
       @Bind("datasetIds") List<Integer> datasetIds,
