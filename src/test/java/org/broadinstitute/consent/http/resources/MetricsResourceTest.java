@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,6 +42,7 @@ import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TermReport;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.UserReport;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -442,6 +444,41 @@ class MetricsResourceTest extends AbstractTestHelper {
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(report, response.getEntity());
+  }
+
+  /**
+   * A study's volume report is open beyond the DAC roles. Comparing whole field sets on the
+   * serialized response means a researcher or institution figure added under any key fails.
+   */
+  @Test
+  void aStudysVolumeReportServesTotalsWithNothingAboutWhoRequested() {
+    when(service.resolveStudyDarScope(eq(5), any())).thenReturn(SCOPE);
+    VolumeBucketCount bucket = new VolumeBucketCount(Instant.EPOCH, 2L, null, null, 3L);
+    when(service.getScopedDarVolume(any(), any(), eq(SCOPE), any()))
+        .thenReturn(
+            VolumeReport.of(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                MetricsBucket.DAY,
+                List.of(bucket),
+                List.of(),
+                List.of(),
+                List.of()));
+
+    Response response =
+        resource.getStudyDarReport(duosUser, "dar-volume", 5, "2026-01-01", "2026-01-01", "day");
+    var json =
+        JsonParser.parseString(GsonUtil.getInstance().toJson(response.getEntity()))
+            .getAsJsonObject();
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(2, json.get("total").getAsLong());
+    assertEquals(
+        Set.of("bucketStart", "darCount", "datasetCount"),
+        json.getAsJsonArray("buckets").get(0).getAsJsonObject().keySet());
+    for (String list : List.of("institutions", "researchers", "rows")) {
+      assertTrue(json.getAsJsonArray(list).isEmpty(), list);
+    }
   }
 
   /** Compares the whole field set, so a collaborator name or email added under any key fails. */
