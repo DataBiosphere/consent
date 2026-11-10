@@ -83,10 +83,17 @@ Consent Java, so this change does not include them. The BFF owners can convert t
   confirmed that the table file numbers did not change.
 - `SET LOCAL lock_timeout = '10s'` stops the deploy if a table is busy. One changeset for each
   table means that a retry does not repeat the tables that are done.
-- A `sqlCheck` precondition on each changeset counts the expected `timestamp` columns of its table.
-  If the deployed schema is different, the deploy halts (`onFail="HALT"`).
+- Some deployed columns are already `timestamptz`. In a copy of the dev database,
+  `dataset.create_date` is `timestamptz` ([DT-4457](https://broadworkbench.atlassian.net/browse/DT-4457)).
+  Old changesets created many columns as Liquibase `DATETIME`, and old Liquibase versions can have
+  made that `timestamptz`. An `ALTER` to the same type does not change the column or rebuild its
+  index, so each changeset accepts a column that is already `timestamptz`.
+- A `sqlCheck` precondition on each changeset checks that each listed column exists and is
+  `timestamp` or `timestamptz`. If a column is missing or has another type, such as `date`, the
+  deploy halts (`onFail="HALT"`).
 - The rollback converts back to `timestamp without time zone`, also in UTC. A scratch round trip
-  gave back the same values.
+  gave back the same values. The rollback also converts a column that was already `timestamptz`
+  before the change, so it does not give back that drift.
 
 ## Checks before you merge a changeset PR
 
