@@ -173,7 +173,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     dataset.setStudyId(10);
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.STUDY_READABLE));
@@ -194,7 +195,8 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesWithholdsRequesterIdentityWithoutAStudy() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.NO_STUDY));
@@ -218,7 +220,8 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesKeepsInstitutionForAnAdminOnAStudylessDataset() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.ADMIN));
@@ -235,7 +238,8 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesKeepsInstitutionForTheDatasetCreator() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.DATASET_CREATOR));
@@ -248,17 +252,20 @@ class MetricsServiceTest extends AbstractTestHelper {
   }
 
   /**
-   * The copy is positional, so this asserts every surviving field - including the two timestamps,
-   * which are the same type and adjacent, and so the pair a reorder would swap without the compiler
-   * noticing. Distinct values, because equal ones would survive a swap.
+   * The copy is positional, so this asserts every surviving field - including the timestamps, which
+   * are the same type and sit in adjacent pairs, and so the ones a reorder would swap without the
+   * compiler noticing. Distinct values, because equal ones would survive a swap.
    */
   @Test
   void testWithoutRequesterIdentityKeepsEverythingElse() {
     Timestamp updated = new Timestamp(2_000_000_000L);
     Timestamp submitted = new Timestamp(1_000_000_000L);
+    Timestamp expires = new Timestamp(1_300_000_000L);
+    Timestamp closedOut = new Timestamp(1_250_000_000L);
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            updated, submitted, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", true);
+            updated, submitted, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", true,
+            expires, closedOut);
 
     DarMetricsSummary redacted = summary.withoutRequesterIdentity();
 
@@ -272,6 +279,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals("RUS", redacted.rus());
     assertEquals("ref-1", redacted.referenceId());
     assertEquals(true, redacted.expired());
+    assertEquals(expires, redacted.expirationDate());
+    assertEquals(closedOut, redacted.closeoutDate());
   }
 
   /** A dataset the caller may not read yields no summaries, rather than its DAR project titles. */

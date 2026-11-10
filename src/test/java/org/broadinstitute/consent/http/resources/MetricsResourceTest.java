@@ -206,7 +206,7 @@ class MetricsResourceTest extends AbstractTestHelper {
     Timestamp now = new Timestamp(System.currentTimeMillis());
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            now, now, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", false);
+            now, now, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", false, now, now);
     when(service.generateDarSummaries(any(), any())).thenReturn(List.of(summary));
 
     Response response = resource.getDarSummaryData(duosUser, 1);
@@ -224,9 +224,40 @@ class MetricsResourceTest extends AbstractTestHelper {
             "rus",
             "referenceId",
             "institutionName",
-            "expired"),
+            "expired",
+            "expirationDate",
+            "closeoutDate"),
         fields);
     assertFalse(json.toLowerCase().contains("piname"), "No PI name is served with a DAR summary");
+  }
+
+  /** The pages read every lifecycle date as epoch milliseconds, and skip the ones not sent. */
+  @Test
+  void testDarSummariesServeLifecycleDatesAsEpochMillis() {
+    DarMetricsSummary summary =
+        new DarMetricsSummary(
+            null,
+            new Timestamp(1_000L),
+            "Project",
+            "DAR-1",
+            null,
+            null,
+            "ref-1",
+            null,
+            false,
+            new Timestamp(5_000L),
+            null);
+    when(service.generateStudyDarSummaries(any(), any())).thenReturn(List.of(summary));
+
+    Response response = resource.getStudyDarSummaryData(duosUser, 1);
+    var json =
+        JsonParser.parseString(GsonUtil.getInstance().toJson(response.getEntity()))
+            .getAsJsonArray()
+            .get(0)
+            .getAsJsonObject();
+
+    assertEquals(5_000L, json.get("expirationDate").getAsLong());
+    assertFalse(json.has("closeoutDate"), "A DAR that was not closed out sends no closeout date");
   }
 
   @Test
