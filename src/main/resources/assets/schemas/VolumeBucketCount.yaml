@@ -7,10 +7,10 @@ properties:
     type: integer
   researcherCount:
     type: integer
-    description: Distinct submitters.
+    description: Distinct submitters. Omitted on a study's or dataset's report.
   institutionCount:
     type: integer
-    description: Distinct institutions; DARs with none aren't counted.
+    description: Distinct institutions; DARs with none aren't counted. Omitted on a study's or dataset's report.
   datasetCount:
     type: integer
     description: Datasets requested, summed over the DARs.
