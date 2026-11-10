@@ -16,8 +16,10 @@ import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
 import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
+import org.broadinstitute.consent.http.db.ScopedDarMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.CreatedReport;
@@ -53,6 +55,8 @@ public class MetricsService {
 
   private final DataAccessRequestDAO darDAO;
   private final DarMetricsDAO darMetricsDAO;
+  private final ScopedDarMetricsDAO scopedDarMetricsDAO;
+  private final DatasetDAO datasetDAO;
   private final AccountMetricsDAO accountMetricsDAO;
   private final DatasetMetricsDAO datasetMetricsDAO;
   private final ElectionMetricsDAO electionMetricsDAO;
@@ -64,6 +68,8 @@ public class MetricsService {
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.darMetricsDAO = jdbi.onDemand(DarMetricsDAO.class);
+    this.scopedDarMetricsDAO = jdbi.onDemand(ScopedDarMetricsDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.accountMetricsDAO = jdbi.onDemand(AccountMetricsDAO.class);
     this.datasetMetricsDAO = jdbi.onDemand(DatasetMetricsDAO.class);
     this.electionMetricsDAO = jdbi.onDemand(ElectionMetricsDAO.class);
@@ -313,6 +319,96 @@ public class MetricsService {
         bucket,
         darMetricsDAO.countRenewals(start, end, dacIds, bucket.truncUnit()),
         darMetricsDAO.findRenewals(start, end, dacIds, limit, offset));
+  }
+
+  /**
+   * The datasets a study's DAR trend reports cover: the ones in the study now. Gated as the study's
+   * DAR summaries are, so whoever can read its DAR history can read its trends, and no one else.
+   */
+  public List<Integer> resolveStudyDarScope(Integer studyId, User user) {
+    requireStudy(studyId, user);
+    return datasetDAO.findDatasetIdsByStudyId(studyId);
+  }
+
+  /**
+   * The dataset a dataset page's DAR trend reports cover, gated as the dataset's DAR summaries are.
+   * The trends carry counts alone, so nothing is withheld for a dataset with no study.
+   */
+  public List<Integer> resolveDatasetDarScope(Integer datasetId, User user) {
+    datasetService.findDatasetWithoutFilesForRead(user, datasetId);
+    return List.of(datasetId);
+  }
+
+  /**
+   * Submission volume of original DARs submitted from {@code from} to {@code to} that request the
+   * datasets in {@code datasetIds}, which a {@code resolve*DarScope} method supplies. Totals only:
+   * no rows, institutions or researchers, since the page it serves is not limited to DAC roles.
+   */
+  public VolumeReport getScopedDarVolume(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return VolumeReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countDarVolume(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of(),
+        List.of(),
+        List.of());
+  }
+
+  /** {@link #getDarDatasetDecisions} for the datasets in {@code datasetIds}, totals only. */
+  public DecisionReport<DarDatasetDecision> getScopedDarDatasetDecisions(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return DecisionReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countPairDecisions(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of());
+  }
+
+  /**
+   * {@link #getDarDatasetDecisionTurnaround} for the datasets in {@code datasetIds}, totals only.
+   */
+  public TurnaroundReport<DarDatasetTurnaround> getScopedDarDatasetDecisionTurnaround(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return TurnaroundReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countPairTurnaround(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of());
+  }
+
+  /** {@link #getDarExpirations} for access to the datasets in {@code datasetIds}, totals only. */
+  public ExpirationReport getScopedDarExpirations(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return ExpirationReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countExpirations(
+            startOfDay(from),
+            startOfDay(to.plusDays(1)),
+            datasetIds,
+            Instant.now(),
+            bucket.truncUnit()),
+        List.of());
+  }
+
+  /** {@link #getDarRenewals} for the datasets in {@code datasetIds}, totals only. */
+  public RenewalReport getScopedDarRenewals(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return RenewalReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countRenewals(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of());
   }
 
   /** Users created from {@code from} to {@code to}, per bucket and per role they hold now. */

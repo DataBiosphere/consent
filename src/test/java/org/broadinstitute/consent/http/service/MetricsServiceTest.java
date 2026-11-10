@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.ForbiddenException;
@@ -25,8 +26,10 @@ import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
 import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
+import org.broadinstitute.consent.http.db.ScopedDarMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DarKind;
@@ -95,6 +98,7 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   private static final List<Integer> ALL_DACS = null;
   private static final List<Integer> DACS = List.of(4, 6);
+  private static final List<Integer> DATASETS = List.of(11, 12);
 
   @Mock private Jdbi jdbi;
 
@@ -103,6 +107,10 @@ class MetricsServiceTest extends AbstractTestHelper {
   @Mock private StudyRecommendationDAO recommendationDAO;
 
   @Mock private DarMetricsDAO darMetricsDAO;
+
+  @Mock private ScopedDarMetricsDAO scopedDarMetricsDAO;
+
+  @Mock private DatasetDAO datasetDAO;
 
   @Mock private AccountMetricsDAO accountMetricsDAO;
 
@@ -123,6 +131,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
+    when(jdbi.onDemand(ScopedDarMetricsDAO.class)).thenReturn(scopedDarMetricsDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
     when(jdbi.onDemand(AccountMetricsDAO.class)).thenReturn(accountMetricsDAO);
     when(jdbi.onDemand(DatasetMetricsDAO.class)).thenReturn(datasetMetricsDAO);
     when(jdbi.onDemand(ElectionMetricsDAO.class)).thenReturn(electionMetricsDAO);
@@ -684,6 +694,121 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(researchers, report.researchers());
     assertEquals(List.of(row), report.rows());
     assertEquals("2026-03-31", report.to());
+  }
+
+  /** A study's trends cover the datasets in it, for whoever may read its DAR summaries. */
+  @Test
+  void aStudysDarScopeIsItsDatasetsOnceTheStudyIsReadable() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
+
+    assertEquals(List.of(11, 12), service.resolveStudyDarScope(1, user));
+  }
+
+  @Test
+  void aStudyThatIsNotReadableHasNoDarScope() {
+    studyIsNotReadable();
+
+    assertThrows(NotFoundException.class, () -> service.resolveStudyDarScope(1, user));
+    verify(datasetDAO, never()).findDatasetIdsByStudyId(any());
+  }
+
+  @Test
+  void aDatasetsDarScopeIsTheDatasetOnceItIsReadable() {
+    when(datasetService.findDatasetWithoutFilesForRead(user, 7)).thenReturn(new Dataset());
+
+    assertEquals(List.of(7), service.resolveDatasetDarScope(7, user));
+  }
+
+  @Test
+  void aDatasetThatIsNotReadableHasNoDarScope() {
+    when(datasetService.findDatasetWithoutFilesForRead(user, 7))
+        .thenThrow(new ForbiddenException("User does not have permission"));
+
+    assertThrows(ForbiddenException.class, () -> service.resolveDatasetDarScope(7, user));
+  }
+
+  /** The page is open beyond the DAC roles: totals alone, and nothing about who requested. */
+  @Test
+  void scopedDarVolumeCoversWholeDaysAndCarriesTotalsOnly() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    List<VolumeBucketCount> buckets =
+        List.of(
+            new VolumeBucketCount(start, 3L, null, null, 4L),
+            new VolumeBucketCount(end, 1L, null, null, 1L));
+    when(scopedDarMetricsDAO.countDarVolume(start, end, DATASETS, "quarter")).thenReturn(buckets);
+
+    VolumeReport report =
+        service.getScopedDarVolume(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.QUARTER);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertTrue(report.institutions().isEmpty());
+    assertTrue(report.researchers().isEmpty());
+    assertTrue(report.rows().isEmpty());
+    assertEquals("2026-01-01", report.from());
+    assertEquals("2026-03-31", report.to());
+    verifyNoInteractions(darMetricsDAO);
+  }
+
+  @Test
+  void scopedDecisionReportsTotalTheirBucketsAndCarryNoRows() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    when(scopedDarMetricsDAO.countPairDecisions(start, end, DATASETS, "month"))
+        .thenReturn(
+            List.of(
+                new DecisionBucketCount(start, DecisionState.APPROVED, DecidedVia.MANUAL, 2L),
+                new DecisionBucketCount(start, DecisionState.PENDING, null, 3L)));
+    when(scopedDarMetricsDAO.countPairTurnaround(start, end, DATASETS, "month"))
+        .thenReturn(List.of(new TurnaroundBucket(start, 2L, 1L, 4.0, 4.0, 4)));
+
+    DecisionReport<?> decisions =
+        service.getScopedDarDatasetDecisions(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.MONTH);
+    TurnaroundReport<?> turnaround =
+        service.getScopedDarDatasetDecisionTurnaround(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.MONTH);
+
+    assertEquals(5, decisions.total());
+    assertTrue(decisions.rows().isEmpty());
+    assertEquals(2, turnaround.total());
+    assertEquals(1, turnaround.unmeasured());
+    assertTrue(turnaround.rows().isEmpty());
+    verifyNoInteractions(darMetricsDAO);
+  }
+
+  @Test
+  void scopedExpirationAndRenewalReportsTotalTheirBucketsAndCarryNoRows() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    Instant before = Instant.now();
+    ArgumentCaptor<Instant> asOf = ArgumentCaptor.forClass(Instant.class);
+    when(scopedDarMetricsDAO.countExpirations(
+            eq(start), eq(end), eq(DATASETS), asOf.capture(), eq("week")))
+        .thenReturn(
+            List.of(
+                new ExpirationBucket(start, AccessEndReason.EXPIRED, 2L),
+                new ExpirationBucket(start, AccessEndReason.CLOSED_OUT, 1L)));
+    when(scopedDarMetricsDAO.countRenewals(start, end, DATASETS, "week"))
+        .thenReturn(List.of(new RenewalBucket(start, 4L, 3L)));
+
+    ExpirationReport expirations =
+        service.getScopedDarExpirations(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.WEEK);
+    RenewalReport renewals =
+        service.getScopedDarRenewals(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.WEEK);
+
+    assertEquals(3, expirations.total());
+    assertTrue(expirations.rows().isEmpty());
+    // Access that has not ended yet is not reported, so the query is as of now
+    assertTrue(!asOf.getValue().isBefore(before) && !asOf.getValue().isAfter(Instant.now()));
+    assertEquals(4, renewals.total());
+    assertTrue(renewals.rows().isEmpty());
+    verifyNoInteractions(darMetricsDAO);
   }
 
   private static Instant startOfDay(LocalDate date) {
