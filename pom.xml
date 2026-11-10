@@ -100,7 +100,12 @@
         </dependencies>
         <configuration>
           <java>
-            <googleJavaFormat/>
+            <!-- Pinned so a Spotless bump can't change formatting rules: Spotless 3.11.0 moved its
+                 default to google-java-format 2.0.0, which reformats text blocks and lambdas.
+                 Upgrade deliberately, together with a spotless:apply of the whole codebase. -->
+            <googleJavaFormat>
+              <version>1.36.1</version>
+            </googleJavaFormat>
           </java>
         </configuration>
         <executions>
