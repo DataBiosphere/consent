@@ -16,9 +16,11 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
  * request the datasets in :datasetIds, counting only those datasets. An empty :datasetIds reads
  * nothing.
  *
- * <p>These pages are open to anyone who can read the study or dataset, so every query returns
- * counts alone: no DAR, collection, researcher or institution is identified, and there are no rows
- * to page.
+ * <p>Every query returns counts alone: no DAR, collection, researcher or institution is identified,
+ * and there are no rows to page. Who may read which is the caller's to decide: expirations and
+ * renewals cover granted access, and are for whoever can read the study or dataset. Volume,
+ * decisions and turnaround count denied and pending requests too, and are for the DAC in charge and
+ * admins. See {@code DarReportAudience}.
  *
  * <p>Each query applies the same rule as the {@link DarMetricsDAO} fragment its javadoc names,
  * which documents the rule in full, with the DAC scope replaced by :datasetIds. A change to one

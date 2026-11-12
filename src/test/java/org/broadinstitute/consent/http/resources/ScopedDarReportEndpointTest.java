@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -24,6 +26,7 @@ import jakarta.ws.rs.core.SecurityContext;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DecisionReport;
@@ -96,25 +99,61 @@ class ScopedDarReportEndpointTest {
     }
   }
 
+  /**
+   * Volume, decisions and turnaround count denied and pending requests, so each is read with the
+   * DAC in charge's scope. Expirations and renewals cover granted access, so each is read with the
+   * scope of whoever can read the DAR history. The two scopes differ here to show which is used.
+   */
   @Test
-  void eachStudyReportReadsTheStudysDatasets() {
-    when(service.resolveStudyDarScope(5, USER)).thenReturn(SCOPE);
+  void eachStudyReportReadsTheDatasetsItsAudienceMayRead() {
+    List<Integer> dacScope = List.of(11);
+    when(service.resolveStudyDarScope(5, USER, DarReportAudience.DAC_IN_CHARGE))
+        .thenReturn(dacScope);
+    when(service.resolveStudyDarScope(5, USER, DarReportAudience.HISTORY_READERS))
+        .thenReturn(SCOPE);
     stubReports();
 
     for (String report : reports()) {
       assertEquals(200, get("/api/metrics/" + report + "/study/5" + RANGE + "&bucket=month"));
     }
 
-    verify(service).getScopedDarVolume(FROM, TO, SCOPE, MetricsBucket.MONTH);
-    verify(service).getScopedDarDatasetDecisions(FROM, TO, SCOPE, MetricsBucket.MONTH);
-    verify(service).getScopedDarDatasetDecisionTurnaround(FROM, TO, SCOPE, MetricsBucket.MONTH);
+    verify(service).getScopedDarVolume(FROM, TO, dacScope, MetricsBucket.MONTH);
+    verify(service).getScopedDarDatasetDecisions(FROM, TO, dacScope, MetricsBucket.MONTH);
+    verify(service).getScopedDarDatasetDecisionTurnaround(FROM, TO, dacScope, MetricsBucket.MONTH);
     verify(service).getScopedDarExpirations(FROM, TO, SCOPE, MetricsBucket.MONTH);
     verify(service).getScopedDarRenewals(FROM, TO, SCOPE, MetricsBucket.MONTH);
   }
 
+  /** Whoever reads the history but is not the DAC in charge sees granted access and no more. */
+  @ParameterizedTest
+  @CsvSource({"study/5", "dataset/7"})
+  void aReaderWhoIsNotTheDacInChargeGetsOnlyTheReportsOnGrantedAccess(String target) {
+    ForbiddenException refusal = new ForbiddenException("Only the DAC in charge and admins");
+    when(service.resolveStudyDarScope(5, USER, DarReportAudience.DAC_IN_CHARGE)).thenThrow(refusal);
+    when(service.resolveDatasetDarScope(7, USER, DarReportAudience.DAC_IN_CHARGE))
+        .thenThrow(refusal);
+    when(service.resolveStudyDarScope(5, USER, DarReportAudience.HISTORY_READERS))
+        .thenReturn(SCOPE);
+    when(service.resolveDatasetDarScope(7, USER, DarReportAudience.HISTORY_READERS))
+        .thenReturn(List.of(7));
+    stubReports();
+
+    for (String report :
+        List.of("dar-volume", "dar-dataset-decisions", "dar-dataset-decision-turnaround")) {
+      assertEquals(403, get("/api/metrics/" + report + "/" + target + RANGE));
+    }
+    for (String report : List.of("dar-expirations", "dar-renewals")) {
+      assertEquals(200, get("/api/metrics/" + report + "/" + target + RANGE));
+    }
+
+    verify(service, never()).getScopedDarVolume(any(), any(), any(), any());
+    verify(service, never()).getScopedDarDatasetDecisions(any(), any(), any(), any());
+    verify(service, never()).getScopedDarDatasetDecisionTurnaround(any(), any(), any(), any());
+  }
+
   @Test
   void eachDatasetReportReadsThatDataset() {
-    when(service.resolveDatasetDarScope(7, USER)).thenReturn(List.of(7));
+    when(service.resolveDatasetDarScope(eq(7), eq(USER), any())).thenReturn(List.of(7));
     stubReports();
 
     for (String report : reports()) {
@@ -128,25 +167,27 @@ class ScopedDarReportEndpointTest {
         .getScopedDarDatasetDecisionTurnaround(FROM, TO, List.of(7), MetricsBucket.QUARTER);
     verify(service).getScopedDarExpirations(FROM, TO, List.of(7), MetricsBucket.QUARTER);
     verify(service).getScopedDarRenewals(FROM, TO, List.of(7), MetricsBucket.QUARTER);
+    verify(service, times(3)).resolveDatasetDarScope(7, USER, DarReportAudience.DAC_IN_CHARGE);
+    verify(service, times(2)).resolveDatasetDarScope(7, USER, DarReportAudience.HISTORY_READERS);
   }
 
   /** The caller's access is decided before any report is read. */
   @Test
   void theScopeIsResolvedBeforeTheReportIsQueried() {
-    when(service.resolveStudyDarScope(5, USER)).thenReturn(SCOPE);
+    when(service.resolveStudyDarScope(5, USER, DarReportAudience.DAC_IN_CHARGE)).thenReturn(SCOPE);
     stubReports();
 
     get("/api/metrics/dar-volume/study/5" + RANGE);
 
     InOrder order = inOrder(service);
-    order.verify(service).resolveStudyDarScope(5, USER);
+    order.verify(service).resolveStudyDarScope(5, USER, DarReportAudience.DAC_IN_CHARGE);
     order.verify(service).getScopedDarVolume(any(), any(), any(), any());
   }
 
   /** The page sends the admin report's paging and DAC parameters; none of them applies here. */
   @Test
   void pagingAndDacParametersAreAcceptedAndIgnored() {
-    when(service.resolveStudyDarScope(5, USER)).thenReturn(SCOPE);
+    when(service.resolveStudyDarScope(5, USER, DarReportAudience.DAC_IN_CHARGE)).thenReturn(SCOPE);
     stubReports();
 
     assertEquals(
@@ -154,32 +195,33 @@ class ScopedDarReportEndpointTest {
         get("/api/metrics/dar-volume/study/5" + RANGE + "&limit=5000&offset=-1&dacId=3&dacId=x"));
 
     verify(service).getScopedDarVolume(FROM, TO, SCOPE, MetricsBucket.QUARTER);
-    verify(service).resolveStudyDarScope(5, USER);
+    verify(service).resolveStudyDarScope(5, USER, DarReportAudience.DAC_IN_CHARGE);
     verifyNoMoreInteractions(service);
   }
 
   @Test
   void aStudyTheCallerCannotReadServesNoReport() {
-    when(service.resolveStudyDarScope(5, USER)).thenThrow(new NotFoundException("Study not found"));
+    when(service.resolveStudyDarScope(eq(5), eq(USER), any()))
+        .thenThrow(new NotFoundException("Study not found"));
 
     for (String report : reports()) {
       assertEquals(404, get("/api/metrics/" + report + "/study/5" + RANGE));
     }
 
-    verify(service, times(reports().size())).resolveStudyDarScope(5, USER);
+    verify(service, times(reports().size())).resolveStudyDarScope(eq(5), eq(USER), any());
     verifyNoMoreInteractions(service);
   }
 
   @Test
   void aDatasetTheCallerCannotReadServesNoReport() {
-    when(service.resolveDatasetDarScope(7, USER))
+    when(service.resolveDatasetDarScope(eq(7), eq(USER), any()))
         .thenThrow(new ForbiddenException("User does not have permission"));
 
     for (String report : reports()) {
       assertEquals(403, get("/api/metrics/" + report + "/dataset/7" + RANGE));
     }
 
-    verify(service, times(reports().size())).resolveDatasetDarScope(7, USER);
+    verify(service, times(reports().size())).resolveDatasetDarScope(eq(7), eq(USER), any());
     verifyNoMoreInteractions(service);
   }
 

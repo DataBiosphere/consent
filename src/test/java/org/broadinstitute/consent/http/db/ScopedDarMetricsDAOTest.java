@@ -61,7 +61,7 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     assertEquals(2, bucket.datasetCount());
   }
 
-  /** The pages are open beyond the DAC roles, so nothing counts who asked or from where. */
+  /** A study's or dataset's report is totals alone, so nothing counts who asked or from where. */
   @Test
   void volumeCountsNoResearchersOrInstitutions() {
     Integer dataset = createDataset();

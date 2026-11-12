@@ -4,9 +4,12 @@ get:
   description: |
     One of the DAR trend reports, covering only DARs that request the dataset and, in dataset-level figures, only that dataset.
 
-    Readable by whoever can read the dataset's granted DARs (`/api/metrics/dar-summaries/{datasetId}`): admins, the dataset's creator, readers of its study, and any authenticated user when the dataset belongs to no study. No DAC role is needed and there is no DAC scope.
+    Who may read a report depends on what it counts. Every report first requires being able to read the dataset's granted DARs (`/api/metrics/dar-summaries/{datasetId}`): admins, the dataset's creator, readers of its study, and any authenticated user when the dataset belongs to no study.
 
-    Because that audience is wider than the unscoped reports', the response carries totals only. `rows` is always empty. The volume report's `institutions` and `researchers` are always empty and its buckets omit `researcherCount` and `institutionCount`, so nothing says who requested the dataset. Otherwise each report has the shape and rules of its unscoped counterpart, `/api/metrics/{report}`.
+    - `dar-expirations` and `dar-renewals` cover granted access alone, which those granted DARs already list, so they need nothing more.
+    - `dar-volume`, `dar-dataset-decisions` and `dar-dataset-decision-turnaround` count requests that were denied or are still pending. They are for admins and for chairs and members of the dataset's DAC; anyone else gets a 403. A dataset no DAC is in charge of serves them to admins alone.
+
+    A `dacId` parameter changes nothing: the scope is always the dataset. The response carries totals only. `rows` is always empty. The volume report's `institutions` and `researchers` are always empty and its buckets omit `researcherCount` and `institutionCount`, so nothing says who requested the dataset. Otherwise each report has the shape and rules of its unscoped counterpart, `/api/metrics/{report}`.
 
     The reports that roll decisions up per DAR (`dar-decisions`, `dar-decision-turnaround`) are not served here: a DAR's other datasets would count toward them. The unscoped reports' `limit`, `offset` and `dacId` parameters are accepted and ignored.
   tags:
@@ -68,7 +71,7 @@ get:
     401:
       description: Unauthorized.
     403:
-      description: The dataset is not visible to this user.
+      description: The dataset is not visible to this user, or the report counts denied and pending requests and the caller is neither an admin nor a chair or member of the dataset's DAC.
     404:
       description: Dataset not found, or no such report for a dataset.
     429:

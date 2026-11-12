@@ -4,9 +4,12 @@ get:
   description: |
     One of the DAR trend reports, covering only DARs that request the study's datasets and, in dataset-level figures, only those datasets. The datasets are the ones in the study now.
 
-    Readable by whoever can read the study's granted DARs (`/api/metrics/dar-summaries/study/{studyId}`): the study's creator and custodians, admins, and any authenticated user once the study is publicly visible. No DAC role is needed and there is no DAC scope.
+    Who may read a report depends on what it counts. Every report first requires being able to read the study's granted DARs (`/api/metrics/dar-summaries/study/{studyId}`): the study's creator and custodians, admins, and any authenticated user once the study is publicly visible.
 
-    Because that audience is wider than the unscoped reports', the response carries totals only. `rows` is always empty. The volume report's `institutions` and `researchers` are always empty and its buckets omit `researcherCount` and `institutionCount`, so nothing says who requested the study's data. Otherwise each report has the shape and rules of its unscoped counterpart, `/api/metrics/{report}`.
+    - `dar-expirations` and `dar-renewals` cover granted access alone, which those granted DARs already list, so they need nothing more.
+    - `dar-volume`, `dar-dataset-decisions` and `dar-dataset-decision-turnaround` count requests that were denied or are still pending. They are for admins and for chairs and members of the DAC in charge. An admin reads them over the whole study. A chair or member reads them over the study's datasets their own DACs are in charge of, so a study shared between DACs shows each DAC its own requests. Anyone else gets a 403, including a chair or member whose DACs hold none of the study's datasets.
+
+    A `dacId` parameter changes nothing: the scope is the study, narrowed to their own DACs' datasets only for a chair or member reading one of the three restricted reports. The response carries totals only. `rows` is always empty. The volume report's `institutions` and `researchers` are always empty and its buckets omit `researcherCount` and `institutionCount`, so nothing says who requested the study's data. Otherwise each report has the shape and rules of its unscoped counterpart, `/api/metrics/{report}`.
 
     The reports that roll decisions up per DAR (`dar-decisions`, `dar-decision-turnaround`) are not served here: a DAR's other datasets can belong to other studies. The unscoped reports' `limit`, `offset` and `dacId` parameters are accepted and ignored.
   tags:
@@ -67,6 +70,8 @@ get:
       description: Missing or invalid query parameter.
     401:
       description: Unauthorized.
+    403:
+      description: The report counts denied and pending requests, and the caller is neither an admin nor a chair or member of a DAC in charge of one of the study's datasets.
     404:
       description: Study not found or not visible to this user, or no such report for a study.
     429:

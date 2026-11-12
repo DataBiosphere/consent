@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.db.ScopedDarMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DarKind;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
@@ -89,6 +90,8 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -696,39 +699,213 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals("2026-03-31", report.to());
   }
 
-  /** A study's trends cover the datasets in it, for whoever may read its DAR summaries. */
+  /**
+   * Reports on granted access cover the datasets in the study, for whoever may read its DAR
+   * summaries, whatever their role.
+   */
   @Test
-  void aStudysDarScopeIsItsDatasetsOnceTheStudyIsReadable() {
+  void aStudysHistoryReadersReadItsReportsOverEveryDatasetInIt() {
     studyIsVisible();
     when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
 
-    assertEquals(List.of(11, 12), service.resolveStudyDarScope(1, user));
+    assertEquals(
+        List.of(11, 12), service.resolveStudyDarScope(1, user, DarReportAudience.HISTORY_READERS));
   }
 
-  @Test
-  void aStudyThatIsNotReadableHasNoDarScope() {
+  /** The study's own gate comes first, so no role turns an unreadable study into a refusal. */
+  @ParameterizedTest
+  @EnumSource(DarReportAudience.class)
+  void aStudyThatIsNotReadableHasNoDarScope(DarReportAudience audience) {
     studyIsNotReadable();
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
 
-    assertThrows(NotFoundException.class, () -> service.resolveStudyDarScope(1, user));
+    assertThrows(NotFoundException.class, () -> service.resolveStudyDarScope(1, chair, audience));
+    verifyNoInteractions(datasetDAO);
+  }
+
+  /** Reports that count denied and pending requests are for those who decide them. */
+  @Test
+  void anAdminReadsADacInChargeReportOverTheWholeStudy() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
+
+    assertEquals(
+        List.of(11, 12),
+        service.resolveStudyDarScope(
+            1, userWithRoles(UserRoles.Admin()), DarReportAudience.DAC_IN_CHARGE));
+    verify(datasetDAO, never()).findDatasetIdsByStudyIdAndDacIds(any(), any());
+  }
+
+  /** Being an admin is enough, whatever DACs the admin also sits on. */
+  @Test
+  void anAdminWhoChairsAnotherDacStillReadsTheWholeStudy() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
+    User adminAndChair = userWithRoles(UserRoles.Admin(), dacRole(UserRoles.CHAIRPERSON, 9));
+
+    assertEquals(
+        List.of(11, 12),
+        service.resolveStudyDarScope(1, adminAndChair, DarReportAudience.DAC_IN_CHARGE));
+    verify(datasetDAO, never()).findDatasetIdsByStudyIdAndDacIds(any(), any());
+  }
+
+  /** An admin reads an empty report for a study with no datasets; no one else has a DAC there. */
+  @Test
+  void aStudyWithNoDatasetsHasADacInChargeScopeForAdminsAlone() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of());
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+    when(datasetDAO.findDatasetIdsByStudyIdAndDacIds(1, List.of(4))).thenReturn(List.of());
+
+    assertTrue(
+        service
+            .resolveStudyDarScope(
+                1, userWithRoles(UserRoles.Admin()), DarReportAudience.DAC_IN_CHARGE)
+            .isEmpty());
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, chair, DarReportAudience.DAC_IN_CHARGE));
+  }
+
+  /** A chair or member role that names no DAC is a role on no DAC. */
+  @Test
+  void aDacRoleWithNoDacIsNotInChargeOfAnything() {
+    studyIsVisible();
+    Dataset dataset = new Dataset();
+    dataset.setDacId(4);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(dataset);
+    User unassigned = userWithRoles(dacRole(UserRoles.CHAIRPERSON, null));
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, unassigned, DarReportAudience.DAC_IN_CHARGE));
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveDatasetDarScope(7, unassigned, DarReportAudience.DAC_IN_CHARGE));
+    verifyNoInteractions(datasetDAO);
+  }
+
+  /** A study shared between DACs shows each DAC the requests for its own datasets. */
+  @Test
+  void aChairOrMemberReadsADacInChargeReportOverTheirOwnDacsDatasets() {
+    studyIsVisible();
+    User chair =
+        userWithRoles(
+            dacRole(UserRoles.CHAIRPERSON, 4),
+            dacRole(UserRoles.MEMBER, 6),
+            UserRoles.Researcher());
+    when(datasetDAO.findDatasetIdsByStudyIdAndDacIds(1, List.of(4, 6))).thenReturn(List.of(12));
+
+    assertEquals(
+        List.of(12), service.resolveStudyDarScope(1, chair, DarReportAudience.DAC_IN_CHARGE));
     verify(datasetDAO, never()).findDatasetIdsByStudyId(any());
   }
 
   @Test
-  void aDatasetsDarScopeIsTheDatasetOnceItIsReadable() {
-    when(datasetService.findDatasetWithoutFilesForRead(user, 7)).thenReturn(new Dataset());
+  void aChairWhoseDacsHoldNoneOfTheStudysDatasetsIsRefusedADacInChargeReport() {
+    studyIsVisible();
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+    when(datasetDAO.findDatasetIdsByStudyIdAndDacIds(1, List.of(4))).thenReturn(List.of());
 
-    assertEquals(List.of(7), service.resolveDatasetDarScope(7, user));
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, chair, DarReportAudience.DAC_IN_CHARGE));
+  }
+
+  /** Reading the study is not enough: a user on no DAC is refused, whatever else they are. */
+  @Test
+  void aUserOnNoDacIsRefusedADacInChargeReportForAStudy() {
+    studyIsVisible();
+    User researcher = userWithRoles(UserRoles.Researcher(), UserRoles.SigningOfficial());
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, researcher, DarReportAudience.DAC_IN_CHARGE));
+    // `user` has no roles at all
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, user, DarReportAudience.DAC_IN_CHARGE));
+    verifyNoInteractions(datasetDAO);
   }
 
   @Test
-  void aDatasetThatIsNotReadableHasNoDarScope() {
-    when(datasetService.findDatasetWithoutFilesForRead(user, 7))
-        .thenThrow(new ForbiddenException("User does not have permission"));
+  void aDatasetsHistoryReadersReadItsReports() {
+    when(datasetService.findDatasetWithoutFilesForRead(user, 7)).thenReturn(new Dataset());
 
-    assertThrows(ForbiddenException.class, () -> service.resolveDatasetDarScope(7, user));
+    assertEquals(
+        List.of(7), service.resolveDatasetDarScope(7, user, DarReportAudience.HISTORY_READERS));
   }
 
-  /** The page is open beyond the DAC roles: totals alone, and nothing about who requested. */
+  /**
+   * The dataset's own gate comes first and answers as it does for the DAR summaries, so no role
+   * reads an unreadable dataset's reports and none changes what a missing one says.
+   */
+  @ParameterizedTest
+  @EnumSource(DarReportAudience.class)
+  void aDatasetThatIsNotReadableHasNoDarScope(DarReportAudience audience) {
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+    when(datasetService.findDatasetWithoutFilesForRead(chair, 7))
+        .thenThrow(new ForbiddenException("User does not have permission"));
+    when(datasetService.findDatasetWithoutFilesForRead(chair, 8))
+        .thenThrow(new NotFoundException("Entity not found"));
+
+    assertThrows(
+        ForbiddenException.class, () -> service.resolveDatasetDarScope(7, chair, audience));
+    assertThrows(NotFoundException.class, () -> service.resolveDatasetDarScope(8, chair, audience));
+  }
+
+  @Test
+  void anAdminOrTheDatasetsOwnDacReadsItsDacInChargeReports() {
+    Dataset dataset = new Dataset();
+    dataset.setDacId(4);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(dataset);
+
+    for (User allowed :
+        List.of(
+            userWithRoles(UserRoles.Admin()),
+            userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4)),
+            userWithRoles(dacRole(UserRoles.MEMBER, 9), dacRole(UserRoles.MEMBER, 4)))) {
+      assertEquals(
+          List.of(7), service.resolveDatasetDarScope(7, allowed, DarReportAudience.DAC_IN_CHARGE));
+    }
+  }
+
+  /**
+   * Another DAC's chair, a researcher, and a user with no roles can all read the dataset itself.
+   */
+  @Test
+  void anyoneElseIsRefusedADatasetsDacInChargeReports() {
+    Dataset dataset = new Dataset();
+    dataset.setDacId(4);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(dataset);
+
+    for (User refused :
+        List.of(
+            userWithRoles(dacRole(UserRoles.CHAIRPERSON, 5)),
+            userWithRoles(UserRoles.Researcher()),
+            user)) {
+      assertThrows(
+          ForbiddenException.class,
+          () -> service.resolveDatasetDarScope(7, refused, DarReportAudience.DAC_IN_CHARGE));
+    }
+  }
+
+  /** A dataset no DAC is in charge of, such as one converted to external, has no DAC to ask. */
+  @Test
+  void aDatasetWithNoDacKeepsItsDacInChargeReportsForAdmins() {
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(new Dataset());
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveDatasetDarScope(7, chair, DarReportAudience.DAC_IN_CHARGE));
+    assertEquals(
+        List.of(7),
+        service.resolveDatasetDarScope(
+            7, userWithRoles(UserRoles.Admin()), DarReportAudience.DAC_IN_CHARGE));
+  }
+
+  /** A study's or dataset's report is totals alone, with nothing about who requested. */
   @Test
   void scopedDarVolumeCoversWholeDaysAndCarriesTotalsOnly() {
     Instant start = startOfDay(LocalDate.of(2026, 1, 1));
