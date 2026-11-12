@@ -3,18 +3,21 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
   <!--
-    DT-4452: change the dac_audit date columns from timestamp to timestamptz. Refer to
+    DT-4452: change the vote date columns from timestamp to timestamptz. Refer to
     docs/plans/timestamptz-migration-plan.md for the UTC session zone, the precondition and the
     rollback.
+    Both columns change in one statement: idx_vote_cast_date indexes
+    COALESCE(update_date, create_date), and that expression fails while only one column is
+    timestamptz.
   -->
-  <changeSet id="changelog-consent-2026-11-09-timestamptz-dac-audit" author="grushton">
+  <changeSet id="changelog-consent-2026-11-12-timestamptz-vote" author="grushton">
     <preConditions onFail="HALT" onError="HALT"
-      onFailMessage="dac_audit must have 1 timestamp or timestamptz column(s): action_date. Compare the deployed schema with the changesets before you deploy.">
+      onFailMessage="vote must have 2 timestamp or timestamptz column(s): create_date, update_date. Compare the deployed schema with the changesets before you deploy.">
       <dbms type="postgresql"/>
-      <sqlCheck expectedResult="1">
+      <sqlCheck expectedResult="2">
         SELECT COUNT(*) FROM information_schema.columns
-        WHERE table_schema = current_schema() AND table_name = 'dac_audit'
-          AND column_name IN ('action_date')
+        WHERE table_schema = current_schema() AND table_name = 'vote'
+          AND column_name IN ('create_date', 'update_date')
           AND data_type IN ('timestamp without time zone', 'timestamp with time zone')
       </sqlCheck>
     </preConditions>
@@ -23,15 +26,17 @@
     <sql>SET LOCAL lock_timeout = '10s'</sql>
     <sql>SET LOCAL TimeZone = 'UTC'</sql>
     <sql>
-      ALTER TABLE dac_audit
-          ALTER COLUMN action_date TYPE timestamp with time zone
+      ALTER TABLE vote
+          ALTER COLUMN create_date TYPE timestamp with time zone,
+          ALTER COLUMN update_date TYPE timestamp with time zone
     </sql>
     <rollback>
       <sql>SET LOCAL lock_timeout = '10s'</sql>
       <sql>SET LOCAL TimeZone = 'UTC'</sql>
       <sql>
-        ALTER TABLE dac_audit
-            ALTER COLUMN action_date TYPE timestamp without time zone
+        ALTER TABLE vote
+            ALTER COLUMN create_date TYPE timestamp without time zone,
+            ALTER COLUMN update_date TYPE timestamp without time zone
       </sql>
     </rollback>
   </changeSet>
