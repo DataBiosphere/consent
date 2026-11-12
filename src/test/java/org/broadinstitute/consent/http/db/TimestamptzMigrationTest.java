@@ -79,9 +79,10 @@ class TimestamptzMigrationTest extends MigrationTestHelper {
     return changelog;
   }
 
-  /** Each test builds its own table, because the table comes from the test parameter. */
   @Override
-  protected void createPreMigrationSchema() {}
+  protected void createPreMigrationSchema() {
+    // Empty: each test builds its own table, because the table comes from the test parameter.
+  }
 
   @BeforeEach
   void useNewYork() {
