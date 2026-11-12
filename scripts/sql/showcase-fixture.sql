@@ -4,7 +4,7 @@
 -- run it against a shared environment.
 --
 -- The fixture's own rows use IDs from 990001, far above the dev dump's sequences, so they do not
--- collide with dumped rows. The duos-ui request-flow showcase names these aliases (DUOS-990001 ...).
+-- collide with dumped rows; once the dump's sequences reach that range, the seed stops. The duos-ui request-flow showcase names these aliases (DUOS-990001 ...).
 -- As the app does when it registers a dataset, the fixture's datasets get asset catalog entries,
 -- and the alias sequence moves past 990005, so the sequence never issues a fixture alias again: a
 -- dataset registered locally afterwards gets 990006 or higher. Each insert is an upsert on its
@@ -27,10 +27,29 @@ BEGIN;
 -- Refuses to run unless the session names the local target. scripts/seed-showcase-fixture.sh sets
 -- it (PGOPTIONS), and nothing else does, so pasting this file into a session on a shared or
 -- production database aborts the transaction before any write.
+--
+-- It also refuses two databases it would seed wrongly:
+-- - One migrated to the 2026-08-10 changeset but not the 2026-09-17 one. Its dataset_alias_allocate
+--   trigger replaces every inserted alias, so the fixture would get aliases other than DUOS-990001
+--   to DUOS-990005.
+-- - One whose ID sequences have reached the fixture's IDs. The app may already have given a row of
+--   its own one of them, and the upserts would overwrite it. The fixture sets its IDs by hand, so it
+--   never moves these sequences itself, and edits the app makes to fixture rows don't affect this.
 DO $$
 BEGIN
   IF current_setting('duos.showcase_fixture_target', true) IS DISTINCT FROM 'localdb' THEN
     RAISE EXCEPTION 'showcase fixture: run scripts/seed-showcase-fixture.sh, which targets the local database only';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'dataset_alias_allocate') THEN
+    RAISE EXCEPTION 'showcase fixture: the dataset_alias_allocate trigger would replace the fixture aliases; run the Consent migrations first';
+  END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM (VALUES ('users', 'user_id'), ('dac', 'dac_id'), ('study', 'study_id'),
+                 ('dataset', 'dataset_id'), ('dataset_property', 'property_id')) AS t(tbl, col)
+    WHERE COALESCE(pg_sequence_last_value(pg_get_serial_sequence(t.tbl, t.col)::regclass), 0) >= 990001
+  ) THEN
+    RAISE EXCEPTION 'showcase fixture: the app has issued IDs from 990001, which the fixture uses, so nothing was seeded';
   END IF;
 END
 $$;
@@ -153,8 +172,8 @@ WHERE NOT EXISTS (SELECT 1 FROM dictionary d WHERE LOWER(d.key) = LOWER(k.key));
 -- this range. Remove those rows from the fixture's datasets, so a reseed restores the fixture's
 -- own values. Only dataset properties go; data access requests are untouched.
 DELETE FROM dataset_property
-WHERE dataset_id BETWEEN 990001 AND 990099
-  AND property_id NOT BETWEEN 990001 AND 990099;
+WHERE dataset_id BETWEEN 990001 AND 990005
+  AND property_id NOT BETWEEN 990001 AND 990009;
 
 INSERT INTO dataset_property (property_id, dataset_id, property_key, schema_property, property_type,
                               property_value, create_date)

@@ -12,6 +12,8 @@ import java.util.List;
 import org.broadinstitute.consent.http.models.AssetCatalogCheck;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
 import org.broadinstitute.consent.http.models.User;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -24,6 +26,32 @@ class ShowcaseFixtureSeedDAOTest extends DAOTestHelper {
   private static final Path FIXTURE = Path.of("scripts", "sql", "showcase-fixture.sql");
   private static final List<Integer> FIXTURE_ALIASES =
       List.of(990001, 990002, 990003, 990004, 990005);
+
+  private int nextAliasBefore;
+  private int lastDictionaryKeyBefore;
+
+  @BeforeEach
+  void recordSharedState() {
+    nextAliasBefore = nextDatasetAlias();
+    lastDictionaryKeyBefore =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("SELECT COALESCE(MAX(key_id), 0) FROM dictionary")
+                    .mapTo(Integer.class)
+                    .one());
+  }
+
+  /**
+   * The table truncate before each DAO test keeps the dictionary and does not reset sequences, so
+   * remove the keys these tests add and put the alias sequence back where it was.
+   */
+  @AfterEach
+  void restoreSharedState() {
+    executeSql("TRUNCATE dataset_property");
+    executeSql("DELETE FROM dictionary WHERE key_id > " + lastDictionaryKeyBefore);
+    executeSql("SELECT setval('dataset_alias_seq', " + nextAliasBefore + ", false)");
+  }
 
   /** Runs the fixture in one session, with the target the runner script sets, or none. */
   private void seed(boolean local) throws IOException {
@@ -167,7 +195,76 @@ class ShowcaseFixtureSeedDAOTest extends DAOTestHelper {
                     .bind("id", datasetId)
                     .mapTo(Long.class)
                     .one());
-    assertEquals(990006L, alias);
+    assertTrue(alias > 990005, "alias " + alias + " is a fixture alias");
+  }
+
+  @Test
+  void testStopsWhenTheLegacyAliasTriggerExists() {
+    try {
+      executeSql(
+          """
+        CREATE OR REPLACE FUNCTION allocate_dataset_alias() RETURNS trigger AS $$
+        BEGIN
+          NEW.alias := nextval('dataset_alias_seq');
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
+        """);
+      executeSql(
+          """
+        CREATE TRIGGER dataset_alias_allocate BEFORE INSERT ON dataset
+          FOR EACH ROW EXECUTE FUNCTION allocate_dataset_alias()
+        """);
+      Exception error = assertThrows(Exception.class, this::seed);
+
+      assertTrue(error.getMessage().contains("run the Consent migrations first"));
+      assertEquals(List.of(), eligible());
+    } finally {
+      executeSql("DROP TRIGGER IF EXISTS dataset_alias_allocate ON dataset");
+      executeSql("DROP FUNCTION IF EXISTS allocate_dataset_alias()");
+    }
+  }
+
+  @Test
+  void testReseedsAfterTheAppEditsTheFixtureOwners() throws IOException {
+    seed();
+    User admin = createUser();
+    // The app can rename the DAC, redact the user, delete a study and change a dataset's submitter.
+    executeSql("UPDATE dac SET name = 'Renamed DAC' WHERE dac_id = 990001");
+    executeSql("UPDATE users SET email = 'redacted_x' WHERE user_id = 990001");
+    executeSql("DELETE FROM dataset_property WHERE dataset_id IN (990001, 990002, 990003, 990004)");
+    executeSql("DELETE FROM dataset WHERE study_id = 990001");
+    executeSql("DELETE FROM study WHERE study_id = 990001");
+    executeSql(
+        "UPDATE dataset SET create_user_id = " + admin.getUserId() + " WHERE dataset_id = 990005");
+
+    seed();
+
+    assertEquals(
+        List.of("DUOS-990001 controlled", "DUOS-990002 open", "DUOS-990003 external"), eligible());
+  }
+
+  @Test
+  void testStopsWhenTheAppHasIssuedAFixtureId() {
+    String sequence = "pg_get_serial_sequence('dataset', 'dataset_id')";
+    long before =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery("SELECT COALESCE(pg_sequence_last_value(" + sequence + "), 0)")
+                    .mapTo(Long.class)
+                    .one());
+    try {
+      executeSql("SELECT setval(" + sequence + ", 990003)");
+
+      Exception error = assertThrows(Exception.class, this::seed);
+
+      assertTrue(error.getMessage().contains("the app has issued IDs from 990001"));
+      assertEquals(List.of(), eligible());
+    } finally {
+      executeSql(
+          "SELECT setval(" + sequence + ", " + Math.max(before, 1) + ", " + (before > 0) + ")");
+    }
   }
 
   @Test
