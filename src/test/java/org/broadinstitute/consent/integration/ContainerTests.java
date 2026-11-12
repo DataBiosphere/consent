@@ -36,8 +36,8 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public abstract class ContainerTests implements ConsentLogger {
@@ -48,8 +48,8 @@ public abstract class ContainerTests implements ConsentLogger {
    * shutdown hook via Ryuk, so no explicit {@code @AfterAll} teardown is required.
    */
   @SuppressWarnings("resource")
-  private static final PostgreSQLContainer<?> POSTGRES =
-      new PostgreSQLContainer<>(DAOTestHelper.POSTGRES_IMAGE)
+  private static final PostgreSQLContainer POSTGRES =
+      new PostgreSQLContainer(DAOTestHelper.POSTGRES_IMAGE)
           .withCommand("postgres -c max_connections=20")
           .waitingFor(Wait.forListeningPorts());
 

@@ -37,8 +37,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 public class DAOTestHelper extends AbstractTestHelper implements TestExecutionListener {
 
@@ -102,7 +102,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   public void startUp() throws Exception {
     // Start the database. The test database is thrown away, so durability is turned off for speed.
     postgresContainer =
-        new PostgreSQLContainer<>(POSTGRES_IMAGE)
+        new PostgreSQLContainer(POSTGRES_IMAGE)
             .withCommand(
                 "postgres -c max_connections="
                     + maxConnections

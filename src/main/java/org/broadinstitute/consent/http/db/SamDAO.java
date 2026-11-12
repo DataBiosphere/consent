@@ -265,7 +265,11 @@ public class SamDAO implements ConsentLogger {
   public EmailResponse getV1UserByEmail(DuosUser duosUser, String email) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1UserUrl(email));
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, duosUser);
-    HttpResponse response = executeRequest(request);
+    // The email is in the URL path. Keep it out of the timer name, so that each email does not add
+    // a timer and no email shows on the admin metrics page.
+    String timerLabel =
+        configuration.getSamUrl() + ServicesConfiguration.SAM_V1_USER_EMAIL + "/{email}";
+    HttpResponse response = executeRequest(request, timerLabel);
     if (!response.isSuccessStatusCode()) {
       logException(
           "Error getting user by email from Sam: " + response.getStatusMessage(),
@@ -284,8 +288,25 @@ public class SamDAO implements ConsentLogger {
    * @return The HttpResponse
    */
   private HttpResponse executeRequest(HttpRequest request) {
+    setTimeouts(request);
+    return clientUtil.handleHttpRequest(request);
+  }
+
+  /**
+   * Same as {@link #executeRequest(HttpRequest)}, but the timer for the request uses the given
+   * label. Use it when the URL path holds an ID.
+   *
+   * @param request The HttpRequest
+   * @param timerLabel A label that does not change between calls to the same endpoint
+   * @return The HttpResponse
+   */
+  private HttpResponse executeRequest(HttpRequest request, String timerLabel) {
+    setTimeouts(request);
+    return clientUtil.handleHttpRequest(request, timerLabel);
+  }
+
+  private void setTimeouts(HttpRequest request) {
     request.setConnectTimeout(connectTimeoutMilliseconds);
     request.setReadTimeout(readTimeoutMilliseconds);
-    return clientUtil.handleHttpRequest(request);
   }
 }
