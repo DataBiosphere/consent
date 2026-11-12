@@ -27,7 +27,9 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class TimestamptzMigrationTest extends MigrationTestHelper {
 
-  private static final String PREFIX = "changelog-consent-2026-11-09-timestamptz-";
+  // Any date, so each stacked PR can keep the date of its own changesets.
+  private static final Pattern FILE =
+      Pattern.compile("changelog-consent-\\d{4}-\\d{2}-\\d{2}-timestamptz-[a-z-]+\\.xml");
   private static final Pattern TABLE = Pattern.compile("ALTER TABLE (\\w+)\\s");
   private static final Pattern COLUMN =
       Pattern.compile("ALTER COLUMN (\\w+) TYPE timestamp with time zone");
@@ -53,7 +55,7 @@ class TimestamptzMigrationTest extends MigrationTestHelper {
     try (Stream<Path> files = Files.list(directory)) {
       List<Change> changes =
           files
-              .filter(p -> p.getFileName().toString().startsWith(PREFIX))
+              .filter(p -> FILE.matcher(p.getFileName().toString()).matches())
               .sorted()
               .map(TimestamptzMigrationTest::change)
               .toList();
