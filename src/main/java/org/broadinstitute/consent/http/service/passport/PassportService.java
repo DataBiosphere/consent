@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.passport;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,9 +12,13 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 /** <a href="https://ga4gh.github.io/data-security/ga4gh-passport">GA4GH Passport</a> */
@@ -23,10 +28,12 @@ public class PassportService implements ConsentLogger {
   public static final int EXPIRATION_SECONDS = 3600;
 
   private final DatasetDAO datasetDAO;
+  private final DacService dacService;
 
   @Inject
-  public PassportService(DatasetDAO datasetDAO) {
+  public PassportService(DatasetDAO datasetDAO, DacService dacService) {
     this.datasetDAO = datasetDAO;
+    this.dacService = dacService;
   }
 
   public PassportClaim generatePassport(DuosUser duosUser) {
@@ -55,6 +62,70 @@ public class PassportService implements ConsentLogger {
             .flatMap(List::stream)
             .toList();
     return new PassportClaim(allVisas);
+  }
+
+  /**
+   * Generates a Data Passport for a specific dataset, as proposed in the GA4GH Data Passports
+   * specification (see <a *
+   * href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874">GA4GH Data Passports</a>).
+   * The returned {@link PassportClaim} uses the same envelope as a Researcher Passport but contains
+   * dataset-centric visas:
+   *
+   * <ul>
+   *   <li>{@link ApprovedUsersVisa} — links to the dataset's approved user API endpoint
+   *   <li>{@link ConsentedDataUseTermsVisa} — links to the dataset's DUO-coded data use terms
+   *   <li>{@link OversightBodiesVisa} — identifies the DAC governing the dataset
+   *   <li>{@link RequiredAgreementsVisa} — references the DAA users must accept (if one exists)
+   * </ul>
+   *
+   * <p>The {@code sub} field of each visa is the dataset identifier (e.g. {@code DUOS-000001})
+   * rather than a user subject ID, reflecting the dataset-centric nature of the passport.
+   *
+   * @param datasetIdentifier the formatted DUOS identifier, e.g. {@code DUOS-000001}
+   * @return a {@link PassportClaim} containing the Data Passport visas for the dataset
+   * @throws NotFoundException if the dataset does not exist
+   */
+  public PassportClaim generateDataPassport(String datasetIdentifier) {
+    Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
+    Dataset dataset = datasetDAO.findDatasetByAlias(alias);
+    if (dataset == null) {
+      throw new NotFoundException("Dataset not found: " + datasetIdentifier);
+    }
+
+    List<Visa> visas = new ArrayList<>();
+
+    // ApprovedUsers - links to the API endpoint describing approved users for the dataset
+    visas.add(visaFromVisaClaimType(datasetIdentifier, new ApprovedUsersVisa(datasetIdentifier)));
+
+    // ConsentedDataUseTerms — always present if the dataset exists
+    visas.add(visaFromVisaClaimType(datasetIdentifier, new ConsentedDataUseTermsVisa(dataset)));
+
+    // OversightBodies + RequiredAgreements — only when the dataset is associated with a DAC
+    if (dataset.getDacId() != null) {
+      try {
+        Dac dac = dacService.findById(dataset.getDacId());
+        addDacBackedVisas(datasetIdentifier, visas, dac);
+      } catch (UnsupportedOperationException e) {
+        logWarn(
+            "Unable to build DAC-backed visas for dataset %s; returning consented-data-use visa only"
+                .formatted(datasetIdentifier),
+            e);
+      }
+    }
+
+    return new PassportClaim(visas);
+  }
+
+  private void addDacBackedVisas(String datasetIdentifier, List<Visa> visas, Dac dac) {
+    if (dac == null) {
+      return;
+    }
+    visas.add(visaFromVisaClaimType(datasetIdentifier, new OversightBodiesVisa(dac)));
+    if (dac.getAssociatedDaa() != null) {
+      visas.add(
+          visaFromVisaClaimType(
+              datasetIdentifier, new RequiredAgreementsVisa(dac.getAssociatedDaa())));
+    }
   }
 
   protected List<Visa> buildControlledAccessGrants(
@@ -86,5 +157,89 @@ public class PassportService implements ConsentLogger {
 
   public static long getEpochSeconds(Instant instant) {
     return instant.getEpochSecond();
+  }
+
+  public static String getApprovedUsersEndpoint(String datasetIdentifier) {
+    return "https://consent.dsde-prod.broadinstitute.org/api/datataset/%s/approvedUsers"
+        .formatted(datasetIdentifier);
+  }
+
+  /**
+   * Converts a {@link DataUse} object to a list of <a
+   * href="https://www.ebi.ac.uk/ols/ontologies/duo">GA4GH DUO ontology</a> term identifiers that
+   * reflect the active data use conditions. Boolean fields are included when {@code true};
+   * String/List fields are included when non-blank/non-empty. Fields that have no standard DUO term
+   * are omitted.
+   *
+   * @param dataUse the DataUse to convert
+   * @return a list of DUO term identifiers, e.g. {@code ["DUO:0000004", "DUO:0000021"]}
+   */
+  public static List<String> dataUseToTermArray(DataUse dataUse) {
+    List<String> terms = new ArrayList<>();
+    if (dataUse == null) {
+      return terms;
+    }
+    // Note that fields like gender, pediatric, aiLlmUse, illegalBehavior, sexualDiseases,
+    // stigmatizeDiseases, vulnerablePopulations, psychologicalTraits, notHealth, controls,
+    // population, other, and secondaryOther are intentionally omitted as they have no standard DUO
+    // ontology term.
+
+    // ── Primary data use permissions ─────────────────────────────────────
+    // DUO:0000004 – no restriction (General Research Use, GRU)
+    if (Boolean.TRUE.equals(dataUse.getGeneralUse())) {
+      terms.add("DUO:0000004");
+    }
+    // DUO:0000006 – health or medical or biomedical research (HMB)
+    if (Boolean.TRUE.equals(dataUse.getHmbResearch())) {
+      terms.add("DUO:0000006");
+    }
+    // DUO:0000007 – disease specific research (DS); the restriction list already contains
+    // ontology term IDs (e.g. MONDO/HP/DOID), so include both the DUO classifier and each term.
+    if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
+      terms.add("DUO:0000007");
+      terms.addAll(dataUse.getDiseaseRestrictions());
+    }
+    // DUO:0000011 – population origins or ancestry research only (POA)
+    if (Boolean.TRUE.equals(dataUse.getPopulationOriginsAncestry())) {
+      terms.add("DUO:0000011");
+    }
+    // DUO:0000016 – genetic studies only (GSO)
+    if (Boolean.TRUE.equals(dataUse.getGeneticStudiesOnly())) {
+      terms.add("DUO:0000016");
+    }
+
+    // ── Secondary / modifier terms ────────────────────────────────────────
+    // DUO:0000015 – no general methods research (NMDS)
+    if (Boolean.TRUE.equals(dataUse.getMethodsResearch())) {
+      terms.add("DUO:0000015");
+    }
+    // DUO:0000018 – not-for-profit use only (NPU / NCU)
+    if (Boolean.TRUE.equals(dataUse.getNonProfitUse())) {
+      terms.add("DUO:0000018");
+    }
+    // DUO:0000019 – publication required (PUB)
+    if (Boolean.TRUE.equals(dataUse.getPublicationResults())) {
+      terms.add("DUO:0000019");
+    }
+    // DUO:0000020 – collaboration required (COL)
+    if (Boolean.TRUE.equals(dataUse.getCollaboratorRequired())) {
+      terms.add("DUO:0000020");
+    }
+    // DUO:0000021 – ethics approval required (IRB)
+    if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
+      terms.add("DUO:0000021");
+    }
+    // DUO:0000022 – geographical restriction (GS)
+    if (dataUse.getGeographicalRestrictions() != null
+        && !dataUse.getGeographicalRestrictions().isBlank()) {
+      terms.add("DUO:0000022");
+    }
+    // DUO:0000024 – publication moratorium (MOR)
+    if (dataUse.getPublicationMoratorium() != null
+        && !dataUse.getPublicationMoratorium().isBlank()) {
+      terms.add("DUO:0000024");
+    }
+
+    return terms;
   }
 }
