@@ -7,10 +7,16 @@ holds a point in time from `timestamp without time zone` to `timestamp with time
 
 ## Why
 
-A `timestamp` value is a clock time with no zone. pgjdbc writes a Java date into it as a clock time
-in the JVM default zone, and `NOW()` writes it as a clock time in the session zone. If the two
-zones are different, one column holds values from two zones. A `timestamptz` value is one exact
-moment, so the zones do not change what a write stores.
+A `timestamp` value is a clock time with no zone. Each writer stores the clock time in its own
+session zone. pgjdbc sets the session zone to the JVM zone, so a Java date and `NOW()` from one
+Consent JVM agree. But a writer in another zone stores a different clock time for the same moment.
+Examples are `psql`, a data fix script, a non-JDBC client, or a Consent JVM after a zone change.
+The column does not show which zone wrote a value. A `timestamptz` value is one exact moment, so
+the zone of the writer does not change what a write stores.
+
+The deployed schemas also have columns that are already `timestamptz`
+([DT-4457](https://broadworkbench.atlassian.net/browse/DT-4457)). One type for all date columns
+removes this difference between environments.
 
 ## Delivery
 
@@ -138,9 +144,10 @@ Consent Java, so this change does not include them. The BFF owners can convert t
 
 ## Behavior changes after the changeset PRs
 
-- **Tests.** A local test JVM can use a zone other than UTC, while the test database uses UTC.
-  Before, a Java date and `NOW()` in the same `timestamp` column could be some hours apart. After,
-  they agree. A test that expected the old difference must change.
+- **Tests.** A local test JVM can use a zone other than UTC, and the session zone is then the same
+  zone. SQL such as `CAST(? AS timestamp)` that writes into a `timestamptz` column now reads the
+  clock time in that zone. A test that expects a UTC value must give the zone, for example with
+  `AT TIME ZONE 'UTC'`. PR B3 does this for the showcase test helpers.
 - **SQL that depends on the session zone.** `date_trunc` and casts to `date` on a `timestamptz`
   value use the session zone. pgjdbc sets the session zone to the JVM zone. In UTC, the results do
   not change.
