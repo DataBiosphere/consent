@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.CreatedReport;
@@ -41,6 +43,7 @@ import org.broadinstitute.consent.http.models.StudyResearchOutputs;
 import org.broadinstitute.consent.http.models.TermReport;
 import org.broadinstitute.consent.http.models.TurnaroundReport;
 import org.broadinstitute.consent.http.models.UserReport;
+import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.broadinstitute.consent.http.models.VolumeReport;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -206,7 +209,19 @@ class MetricsResourceTest extends AbstractTestHelper {
     Timestamp now = new Timestamp(System.currentTimeMillis());
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            now, now, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", false);
+            now,
+            now,
+            "Project",
+            "DAR-1",
+            "Summary",
+            "RUS",
+            "ref-1",
+            "Broad",
+            false,
+            now,
+            List.of(now),
+            now,
+            now);
     when(service.generateDarSummaries(any(), any())).thenReturn(List.of(summary));
 
     Response response = resource.getDarSummaryData(duosUser, 1);
@@ -224,9 +239,50 @@ class MetricsResourceTest extends AbstractTestHelper {
             "rus",
             "referenceId",
             "institutionName",
-            "expired"),
+            "expired",
+            "approvalDate",
+            "progressReportApprovalDates",
+            "expirationDate",
+            "closeoutDate"),
         fields);
     assertFalse(json.toLowerCase().contains("piname"), "No PI name is served with a DAR summary");
+  }
+
+  /** The pages read every lifecycle date as epoch milliseconds, and skip the ones not sent. */
+  @Test
+  void testDarSummariesServeLifecycleDatesAsEpochMillis() {
+    DarMetricsSummary summary =
+        new DarMetricsSummary(
+            null,
+            new Timestamp(1_000L),
+            "Project",
+            "DAR-1",
+            null,
+            null,
+            "ref-1",
+            null,
+            false,
+            new Timestamp(2_000L),
+            List.of(new Timestamp(3_000L), new Timestamp(4_000L)),
+            new Timestamp(5_000L),
+            null);
+    when(service.generateStudyDarSummaries(any(), any())).thenReturn(List.of(summary));
+
+    Response response = resource.getStudyDarSummaryData(duosUser, 1);
+    var json =
+        JsonParser.parseString(GsonUtil.getInstance().toJson(response.getEntity()))
+            .getAsJsonArray()
+            .get(0)
+            .getAsJsonObject();
+
+    assertEquals(2_000L, json.get("approvalDate").getAsLong());
+    assertEquals(
+        List.of(3_000L, 4_000L),
+        json.getAsJsonArray("progressReportApprovalDates").asList().stream()
+            .map(e -> e.getAsLong())
+            .toList());
+    assertEquals(5_000L, json.get("expirationDate").getAsLong());
+    assertFalse(json.has("closeoutDate"), "A DAR that was not closed out sends no closeout date");
   }
 
   @Test
@@ -389,6 +445,42 @@ class MetricsResourceTest extends AbstractTestHelper {
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(report, response.getEntity());
+  }
+
+  /**
+   * A study's volume report carries totals alone, whoever reads it. Comparing whole field sets on
+   * the serialized response means a researcher or institution figure added under any key fails.
+   */
+  @Test
+  void aStudysVolumeReportServesTotalsWithNothingAboutWhoRequested() {
+    when(service.resolveStudyDarScope(eq(5), any(), eq(DarReportAudience.DAC_IN_CHARGE)))
+        .thenReturn(SCOPE);
+    VolumeBucketCount bucket = new VolumeBucketCount(Instant.EPOCH, 2L, null, null, 3L);
+    when(service.getScopedDarVolume(any(), any(), eq(SCOPE), any()))
+        .thenReturn(
+            VolumeReport.of(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 1, 1),
+                MetricsBucket.DAY,
+                List.of(bucket),
+                List.of(),
+                List.of(),
+                List.of()));
+
+    Response response =
+        resource.getStudyDarReport(duosUser, "dar-volume", 5, "2026-01-01", "2026-01-01", "day");
+    var json =
+        JsonParser.parseString(GsonUtil.getInstance().toJson(response.getEntity()))
+            .getAsJsonObject();
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    assertEquals(2, json.get("total").getAsLong());
+    assertEquals(
+        Set.of("bucketStart", "darCount", "datasetCount"),
+        json.getAsJsonArray("buckets").get(0).getAsJsonObject().keySet());
+    for (String list : List.of("institutions", "researchers", "rows")) {
+      assertTrue(json.getAsJsonArray(list).isEmpty(), list);
+    }
   }
 
   /** Compares the whole field set, so a collaborator name or email added under any key fails. */

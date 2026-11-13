@@ -1,7 +1,21 @@
 package org.broadinstitute.consent.http.models;
 
 import java.sql.Timestamp;
+import java.util.List;
 
+/**
+ * One granted DAR collection, as the study and dataset pages list it.
+ *
+ * @param submissionDate when access began: the collection's earliest approved submission
+ * @param approvalDate when the DAC first approved the original DAR, null when an approval that
+ *     could be the first predates decision dates, or when only a progress report is approved
+ * @param progressReportApprovalDates when the DAC approved each renewing progress report, oldest
+ *     first; a report with an undated approval is left out
+ * @param expirationDate when the term runs out: {@link
+ *     DataAccessRequest#EXPIRATION_DURATION_MILLIS} after the newest approved submission, original
+ *     or progress report
+ * @param closeoutDate when a closeout ended access before the term ran out, null otherwise
+ */
 public record DarMetricsSummary(
     Timestamp updateDate,
     Timestamp submissionDate,
@@ -11,7 +25,11 @@ public record DarMetricsSummary(
     String rus,
     String referenceId,
     String institutionName,
-    Boolean expired) {
+    Boolean expired,
+    Timestamp approvalDate,
+    List<Timestamp> progressReportApprovalDates,
+    Timestamp expirationDate,
+    Timestamp closeoutDate) {
 
   /**
    * The same summary with no requester identity on it.
@@ -33,7 +51,11 @@ public record DarMetricsSummary(
         rus,
         referenceId,
         null,
-        expired);
+        expired,
+        approvalDate,
+        progressReportApprovalDates,
+        expirationDate,
+        closeoutDate);
   }
 
   public DarMetricsSummary(
@@ -43,6 +65,19 @@ public record DarMetricsSummary(
       String nonTechRus,
       String referenceId,
       Boolean expired) {
-    this(updateDate, null, projectTitle, darCode, nonTechRus, null, referenceId, null, expired);
+    this(
+        updateDate,
+        null,
+        projectTitle,
+        darCode,
+        nonTechRus,
+        null,
+        referenceId,
+        null,
+        expired,
+        null,
+        List.of(),
+        null,
+        null);
   }
 }

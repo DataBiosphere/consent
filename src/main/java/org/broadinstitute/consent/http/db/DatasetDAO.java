@@ -393,6 +393,17 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("SELECT dataset_id FROM dataset WHERE study_id = :studyId")
   List<Integer> findDatasetIdsByStudyId(@Bind("studyId") Integer studyId);
 
+  /** The study's datasets that one of these DACs is in charge of; none for an empty list. */
+  @SqlQuery(
+      """
+      SELECT dataset_id FROM dataset
+      WHERE study_id = :studyId AND dac_id IN (<dacIds>)
+      ORDER BY dataset_id
+      """)
+  List<Integer> findDatasetIdsByStudyIdAndDacIds(
+      @Bind("studyId") Integer studyId,
+      @BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
+
   @SqlQuery(
       """
       SELECT

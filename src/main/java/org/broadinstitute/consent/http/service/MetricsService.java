@@ -16,9 +16,12 @@ import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
 import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
+import org.broadinstitute.consent.http.db.ScopedDarMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.CreatedReport;
 import org.broadinstitute.consent.http.models.DarDatasetDecision;
@@ -28,6 +31,7 @@ import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DarTurnaround;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetReport;
 import org.broadinstitute.consent.http.models.DecisionReport;
 import org.broadinstitute.consent.http.models.ElectionReport;
@@ -51,8 +55,13 @@ public class MetricsService {
   // null reads every DAC's datasets
   private static final List<Integer> ALL_DACS = null;
 
+  private static final String DAC_IN_CHARGE_ONLY =
+      "Only the DAC in charge of these datasets and admins can read this report";
+
   private final DataAccessRequestDAO darDAO;
   private final DarMetricsDAO darMetricsDAO;
+  private final ScopedDarMetricsDAO scopedDarMetricsDAO;
+  private final DatasetDAO datasetDAO;
   private final AccountMetricsDAO accountMetricsDAO;
   private final DatasetMetricsDAO datasetMetricsDAO;
   private final ElectionMetricsDAO electionMetricsDAO;
@@ -64,6 +73,8 @@ public class MetricsService {
   public MetricsService(Jdbi jdbi, DatasetService datasetService) {
     this.darDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.darMetricsDAO = jdbi.onDemand(DarMetricsDAO.class);
+    this.scopedDarMetricsDAO = jdbi.onDemand(ScopedDarMetricsDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.accountMetricsDAO = jdbi.onDemand(AccountMetricsDAO.class);
     this.datasetMetricsDAO = jdbi.onDemand(DatasetMetricsDAO.class);
     this.electionMetricsDAO = jdbi.onDemand(ElectionMetricsDAO.class);
@@ -141,16 +152,7 @@ public class MetricsService {
     if (user.hasUserRole(ADMIN)) {
       return dacIds.isEmpty() ? ALL_DACS : dacIds;
     }
-    List<Integer> own =
-        Objects.requireNonNullElse(user.getRoles(), List.<UserRole>of()).stream()
-            .filter(
-                r ->
-                    CHAIRPERSON.getRoleId().equals(r.getRoleId())
-                        || MEMBER.getRoleId().equals(r.getRoleId()))
-            .map(UserRole::getDacId)
-            .filter(Objects::nonNull)
-            .distinct()
-            .toList();
+    List<Integer> own = chairOrMemberDacIds(user);
     if (dacIds.isEmpty()) {
       return own;
     }
@@ -313,6 +315,134 @@ public class MetricsService {
         bucket,
         darMetricsDAO.countRenewals(start, end, dacIds, bucket.truncUnit()),
         darMetricsDAO.findRenewals(start, end, dacIds, limit, offset));
+  }
+
+  /** The DACs the user is a chair or member of. */
+  private static List<Integer> chairOrMemberDacIds(User user) {
+    return Objects.requireNonNullElse(user.getRoles(), List.<UserRole>of()).stream()
+        .filter(
+            r ->
+                CHAIRPERSON.getRoleId().equals(r.getRoleId())
+                    || MEMBER.getRoleId().equals(r.getRoleId()))
+        .map(UserRole::getDacId)
+        .filter(Objects::nonNull)
+        .distinct()
+        .toList();
+  }
+
+  /**
+   * The datasets one of a study's DAR trend reports covers for this user, from the datasets in the
+   * study now. Every report is gated as the study's DAR summaries are, so a study the user cannot
+   * read answers as it does there, whatever their role.
+   *
+   * <p>A report for {@link DarReportAudience#DAC_IN_CHARGE} is narrowed further. An admin reads it
+   * over the whole study. A chair or member reads it over the study's datasets their own DACs are
+   * in charge of, so a study shared between DACs shows each DAC its own requests. Anyone else, and
+   * a chair or member whose DACs hold none of the study's datasets, is refused.
+   */
+  public List<Integer> resolveStudyDarScope(
+      Integer studyId, User user, DarReportAudience audience) {
+    requireStudy(studyId, user);
+    if (audience == DarReportAudience.HISTORY_READERS || user.hasUserRole(ADMIN)) {
+      return datasetDAO.findDatasetIdsByStudyId(studyId);
+    }
+    List<Integer> dacIds = chairOrMemberDacIds(user);
+    List<Integer> inCharge =
+        dacIds.isEmpty() ? List.of() : datasetDAO.findDatasetIdsByStudyIdAndDacIds(studyId, dacIds);
+    if (inCharge.isEmpty()) {
+      throw new ForbiddenException(DAC_IN_CHARGE_ONLY);
+    }
+    return inCharge;
+  }
+
+  /**
+   * The dataset one of a dataset page's DAR trend reports covers, gated as the dataset's DAR
+   * summaries are. A report for {@link DarReportAudience#DAC_IN_CHARGE} is refused to anyone but an
+   * admin or a chair or member of the dataset's DAC; a dataset no DAC is in charge of is an admin's
+   * alone.
+   */
+  public List<Integer> resolveDatasetDarScope(
+      Integer datasetId, User user, DarReportAudience audience) {
+    Dataset dataset = datasetService.findDatasetWithoutFilesForRead(user, datasetId);
+    if (audience == DarReportAudience.DAC_IN_CHARGE
+        && !user.hasUserRole(ADMIN)
+        && (dataset.getDacId() == null
+            || !chairOrMemberDacIds(user).contains(dataset.getDacId()))) {
+      throw new ForbiddenException(DAC_IN_CHARGE_ONLY);
+    }
+    return List.of(datasetId);
+  }
+
+  /**
+   * Submission volume of original DARs submitted from {@code from} to {@code to} that request the
+   * datasets in {@code datasetIds}, which a {@code resolve*DarScope} method supplies. Totals only:
+   * no rows, institutions or researchers, as for every report on a study's or dataset's page.
+   */
+  public VolumeReport getScopedDarVolume(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return VolumeReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countDarVolume(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of(),
+        List.of(),
+        List.of());
+  }
+
+  /** {@link #getDarDatasetDecisions} for the datasets in {@code datasetIds}, totals only. */
+  public DecisionReport<DarDatasetDecision> getScopedDarDatasetDecisions(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return DecisionReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countPairDecisions(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of());
+  }
+
+  /**
+   * {@link #getDarDatasetDecisionTurnaround} for the datasets in {@code datasetIds}, totals only.
+   */
+  public TurnaroundReport<DarDatasetTurnaround> getScopedDarDatasetDecisionTurnaround(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return TurnaroundReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countPairTurnaround(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of());
+  }
+
+  /** {@link #getDarExpirations} for access to the datasets in {@code datasetIds}, totals only. */
+  public ExpirationReport getScopedDarExpirations(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return ExpirationReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countExpirations(
+            startOfDay(from),
+            startOfDay(to.plusDays(1)),
+            datasetIds,
+            Instant.now(),
+            bucket.truncUnit()),
+        List.of());
+  }
+
+  /** {@link #getDarRenewals} for the datasets in {@code datasetIds}, totals only. */
+  public RenewalReport getScopedDarRenewals(
+      LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket) {
+    return RenewalReport.of(
+        from,
+        to,
+        bucket,
+        scopedDarMetricsDAO.countRenewals(
+            startOfDay(from), startOfDay(to.plusDays(1)), datasetIds, bucket.truncUnit()),
+        List.of());
   }
 
   /** Users created from {@code from} to {@code to}, per bucket and per role they hold now. */

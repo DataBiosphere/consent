@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.ForbiddenException;
@@ -25,11 +26,14 @@ import org.broadinstitute.consent.http.db.AccountMetricsDAO;
 import org.broadinstitute.consent.http.db.DarMetricsDAO;
 import org.broadinstitute.consent.http.db.DarTermMetricsDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DatasetMetricsDAO;
 import org.broadinstitute.consent.http.db.ElectionMetricsDAO;
+import org.broadinstitute.consent.http.db.ScopedDarMetricsDAO;
 import org.broadinstitute.consent.http.db.StudyRecommendationDAO;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DarKind;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
@@ -86,6 +90,8 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -95,6 +101,7 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   private static final List<Integer> ALL_DACS = null;
   private static final List<Integer> DACS = List.of(4, 6);
+  private static final List<Integer> DATASETS = List.of(11, 12);
 
   @Mock private Jdbi jdbi;
 
@@ -103,6 +110,10 @@ class MetricsServiceTest extends AbstractTestHelper {
   @Mock private StudyRecommendationDAO recommendationDAO;
 
   @Mock private DarMetricsDAO darMetricsDAO;
+
+  @Mock private ScopedDarMetricsDAO scopedDarMetricsDAO;
+
+  @Mock private DatasetDAO datasetDAO;
 
   @Mock private AccountMetricsDAO accountMetricsDAO;
 
@@ -123,6 +134,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
     when(jdbi.onDemand(StudyRecommendationDAO.class)).thenReturn(recommendationDAO);
     when(jdbi.onDemand(DarMetricsDAO.class)).thenReturn(darMetricsDAO);
+    when(jdbi.onDemand(ScopedDarMetricsDAO.class)).thenReturn(scopedDarMetricsDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
     when(jdbi.onDemand(AccountMetricsDAO.class)).thenReturn(accountMetricsDAO);
     when(jdbi.onDemand(DatasetMetricsDAO.class)).thenReturn(datasetMetricsDAO);
     when(jdbi.onDemand(ElectionMetricsDAO.class)).thenReturn(electionMetricsDAO);
@@ -173,7 +186,9 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     dataset.setStudyId(10);
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.STUDY_READABLE));
@@ -194,7 +209,9 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesWithholdsRequesterIdentityWithoutAStudy() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.NO_STUDY));
@@ -218,7 +235,9 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesKeepsInstitutionForAnAdminOnAStudylessDataset() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.ADMIN));
@@ -235,7 +254,9 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testGenerateDarSummariesKeepsInstitutionForTheDatasetCreator() {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
-        new DarMetricsSummary(null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false);
+        new DarMetricsSummary(
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.DATASET_CREATOR));
@@ -248,17 +269,22 @@ class MetricsServiceTest extends AbstractTestHelper {
   }
 
   /**
-   * The copy is positional, so this asserts every surviving field - including the two timestamps,
-   * which are the same type and adjacent, and so the pair a reorder would swap without the compiler
-   * noticing. Distinct values, because equal ones would survive a swap.
+   * The copy is positional, so this asserts every surviving field - including the timestamps, which
+   * are the same type and sit in adjacent pairs, and so the ones a reorder would swap without the
+   * compiler noticing. Distinct values, because equal ones would survive a swap.
    */
   @Test
   void testWithoutRequesterIdentityKeepsEverythingElse() {
     Timestamp updated = new Timestamp(2_000_000_000L);
     Timestamp submitted = new Timestamp(1_000_000_000L);
+    Timestamp approved = new Timestamp(1_100_000_000L);
+    List<Timestamp> renewed = List.of(new Timestamp(1_200_000_000L));
+    Timestamp expires = new Timestamp(1_300_000_000L);
+    Timestamp closedOut = new Timestamp(1_250_000_000L);
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            updated, submitted, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", true);
+            updated, submitted, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", true,
+            approved, renewed, expires, closedOut);
 
     DarMetricsSummary redacted = summary.withoutRequesterIdentity();
 
@@ -272,6 +298,10 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals("RUS", redacted.rus());
     assertEquals("ref-1", redacted.referenceId());
     assertEquals(true, redacted.expired());
+    assertEquals(approved, redacted.approvalDate());
+    assertEquals(renewed, redacted.progressReportApprovalDates());
+    assertEquals(expires, redacted.expirationDate());
+    assertEquals(closedOut, redacted.closeoutDate());
   }
 
   /** A dataset the caller may not read yields no summaries, rather than its DAR project titles. */
@@ -667,6 +697,295 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals(researchers, report.researchers());
     assertEquals(List.of(row), report.rows());
     assertEquals("2026-03-31", report.to());
+  }
+
+  /**
+   * Reports on granted access cover the datasets in the study, for whoever may read its DAR
+   * summaries, whatever their role.
+   */
+  @Test
+  void aStudysHistoryReadersReadItsReportsOverEveryDatasetInIt() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
+
+    assertEquals(
+        List.of(11, 12), service.resolveStudyDarScope(1, user, DarReportAudience.HISTORY_READERS));
+  }
+
+  /** The study's own gate comes first, so no role turns an unreadable study into a refusal. */
+  @ParameterizedTest
+  @EnumSource(DarReportAudience.class)
+  void aStudyThatIsNotReadableHasNoDarScope(DarReportAudience audience) {
+    studyIsNotReadable();
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+
+    assertThrows(NotFoundException.class, () -> service.resolveStudyDarScope(1, chair, audience));
+    verifyNoInteractions(datasetDAO);
+  }
+
+  /** Reports that count denied and pending requests are for those who decide them. */
+  @Test
+  void anAdminReadsADacInChargeReportOverTheWholeStudy() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
+
+    assertEquals(
+        List.of(11, 12),
+        service.resolveStudyDarScope(
+            1, userWithRoles(UserRoles.Admin()), DarReportAudience.DAC_IN_CHARGE));
+    verify(datasetDAO, never()).findDatasetIdsByStudyIdAndDacIds(any(), any());
+  }
+
+  /** Being an admin is enough, whatever DACs the admin also sits on. */
+  @Test
+  void anAdminWhoChairsAnotherDacStillReadsTheWholeStudy() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of(11, 12));
+    User adminAndChair = userWithRoles(UserRoles.Admin(), dacRole(UserRoles.CHAIRPERSON, 9));
+
+    assertEquals(
+        List.of(11, 12),
+        service.resolveStudyDarScope(1, adminAndChair, DarReportAudience.DAC_IN_CHARGE));
+    verify(datasetDAO, never()).findDatasetIdsByStudyIdAndDacIds(any(), any());
+  }
+
+  /** An admin reads an empty report for a study with no datasets; no one else has a DAC there. */
+  @Test
+  void aStudyWithNoDatasetsHasADacInChargeScopeForAdminsAlone() {
+    studyIsVisible();
+    when(datasetDAO.findDatasetIdsByStudyId(1)).thenReturn(List.of());
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+    when(datasetDAO.findDatasetIdsByStudyIdAndDacIds(1, List.of(4))).thenReturn(List.of());
+
+    assertTrue(
+        service
+            .resolveStudyDarScope(
+                1, userWithRoles(UserRoles.Admin()), DarReportAudience.DAC_IN_CHARGE)
+            .isEmpty());
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, chair, DarReportAudience.DAC_IN_CHARGE));
+  }
+
+  /** A chair or member role that names no DAC is a role on no DAC. */
+  @Test
+  void aDacRoleWithNoDacIsNotInChargeOfAnything() {
+    studyIsVisible();
+    Dataset dataset = new Dataset();
+    dataset.setDacId(4);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(dataset);
+    User unassigned = userWithRoles(dacRole(UserRoles.CHAIRPERSON, null));
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, unassigned, DarReportAudience.DAC_IN_CHARGE));
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveDatasetDarScope(7, unassigned, DarReportAudience.DAC_IN_CHARGE));
+    verifyNoInteractions(datasetDAO);
+  }
+
+  /** A study shared between DACs shows each DAC the requests for its own datasets. */
+  @Test
+  void aChairOrMemberReadsADacInChargeReportOverTheirOwnDacsDatasets() {
+    studyIsVisible();
+    User chair =
+        userWithRoles(
+            dacRole(UserRoles.CHAIRPERSON, 4),
+            dacRole(UserRoles.MEMBER, 6),
+            UserRoles.Researcher());
+    when(datasetDAO.findDatasetIdsByStudyIdAndDacIds(1, List.of(4, 6))).thenReturn(List.of(12));
+
+    assertEquals(
+        List.of(12), service.resolveStudyDarScope(1, chair, DarReportAudience.DAC_IN_CHARGE));
+    verify(datasetDAO, never()).findDatasetIdsByStudyId(any());
+  }
+
+  @Test
+  void aChairWhoseDacsHoldNoneOfTheStudysDatasetsIsRefusedADacInChargeReport() {
+    studyIsVisible();
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+    when(datasetDAO.findDatasetIdsByStudyIdAndDacIds(1, List.of(4))).thenReturn(List.of());
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, chair, DarReportAudience.DAC_IN_CHARGE));
+  }
+
+  /** Reading the study is not enough: a user on no DAC is refused, whatever else they are. */
+  @Test
+  void aUserOnNoDacIsRefusedADacInChargeReportForAStudy() {
+    studyIsVisible();
+    User researcher = userWithRoles(UserRoles.Researcher(), UserRoles.SigningOfficial());
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, researcher, DarReportAudience.DAC_IN_CHARGE));
+    // `user` has no roles at all
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveStudyDarScope(1, user, DarReportAudience.DAC_IN_CHARGE));
+    verifyNoInteractions(datasetDAO);
+  }
+
+  @Test
+  void aDatasetsHistoryReadersReadItsReports() {
+    when(datasetService.findDatasetWithoutFilesForRead(user, 7)).thenReturn(new Dataset());
+
+    assertEquals(
+        List.of(7), service.resolveDatasetDarScope(7, user, DarReportAudience.HISTORY_READERS));
+  }
+
+  /**
+   * The dataset's own gate comes first and answers as it does for the DAR summaries, so no role
+   * reads an unreadable dataset's reports and none changes what a missing one says.
+   */
+  @ParameterizedTest
+  @EnumSource(DarReportAudience.class)
+  void aDatasetThatIsNotReadableHasNoDarScope(DarReportAudience audience) {
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+    when(datasetService.findDatasetWithoutFilesForRead(chair, 7))
+        .thenThrow(new ForbiddenException("User does not have permission"));
+    when(datasetService.findDatasetWithoutFilesForRead(chair, 8))
+        .thenThrow(new NotFoundException("Entity not found"));
+
+    assertThrows(
+        ForbiddenException.class, () -> service.resolveDatasetDarScope(7, chair, audience));
+    assertThrows(NotFoundException.class, () -> service.resolveDatasetDarScope(8, chair, audience));
+  }
+
+  @Test
+  void anAdminOrTheDatasetsOwnDacReadsItsDacInChargeReports() {
+    Dataset dataset = new Dataset();
+    dataset.setDacId(4);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(dataset);
+
+    for (User allowed :
+        List.of(
+            userWithRoles(UserRoles.Admin()),
+            userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4)),
+            userWithRoles(dacRole(UserRoles.MEMBER, 9), dacRole(UserRoles.MEMBER, 4)))) {
+      assertEquals(
+          List.of(7), service.resolveDatasetDarScope(7, allowed, DarReportAudience.DAC_IN_CHARGE));
+    }
+  }
+
+  /**
+   * Another DAC's chair, a researcher, and a user with no roles can all read the dataset itself.
+   */
+  @Test
+  void anyoneElseIsRefusedADatasetsDacInChargeReports() {
+    Dataset dataset = new Dataset();
+    dataset.setDacId(4);
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(dataset);
+
+    for (User refused :
+        List.of(
+            userWithRoles(dacRole(UserRoles.CHAIRPERSON, 5)),
+            userWithRoles(UserRoles.Researcher()),
+            user)) {
+      assertThrows(
+          ForbiddenException.class,
+          () -> service.resolveDatasetDarScope(7, refused, DarReportAudience.DAC_IN_CHARGE));
+    }
+  }
+
+  /** A dataset no DAC is in charge of, such as one converted to external, has no DAC to ask. */
+  @Test
+  void aDatasetWithNoDacKeepsItsDacInChargeReportsForAdmins() {
+    when(datasetService.findDatasetWithoutFilesForRead(any(), eq(7))).thenReturn(new Dataset());
+    User chair = userWithRoles(dacRole(UserRoles.CHAIRPERSON, 4));
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.resolveDatasetDarScope(7, chair, DarReportAudience.DAC_IN_CHARGE));
+    assertEquals(
+        List.of(7),
+        service.resolveDatasetDarScope(
+            7, userWithRoles(UserRoles.Admin()), DarReportAudience.DAC_IN_CHARGE));
+  }
+
+  /** A study's or dataset's report is totals alone, with nothing about who requested. */
+  @Test
+  void scopedDarVolumeCoversWholeDaysAndCarriesTotalsOnly() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    List<VolumeBucketCount> buckets =
+        List.of(
+            new VolumeBucketCount(start, 3L, null, null, 4L),
+            new VolumeBucketCount(end, 1L, null, null, 1L));
+    when(scopedDarMetricsDAO.countDarVolume(start, end, DATASETS, "quarter")).thenReturn(buckets);
+
+    VolumeReport report =
+        service.getScopedDarVolume(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.QUARTER);
+
+    assertEquals(4, report.total());
+    assertEquals(buckets, report.buckets());
+    assertTrue(report.institutions().isEmpty());
+    assertTrue(report.researchers().isEmpty());
+    assertTrue(report.rows().isEmpty());
+    assertEquals("2026-01-01", report.from());
+    assertEquals("2026-03-31", report.to());
+    verifyNoInteractions(darMetricsDAO);
+  }
+
+  @Test
+  void scopedDecisionReportsTotalTheirBucketsAndCarryNoRows() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    when(scopedDarMetricsDAO.countPairDecisions(start, end, DATASETS, "month"))
+        .thenReturn(
+            List.of(
+                new DecisionBucketCount(start, DecisionState.APPROVED, DecidedVia.MANUAL, 2L),
+                new DecisionBucketCount(start, DecisionState.PENDING, null, 3L)));
+    when(scopedDarMetricsDAO.countPairTurnaround(start, end, DATASETS, "month"))
+        .thenReturn(List.of(new TurnaroundBucket(start, 2L, 1L, 4.0, 4.0, 4)));
+
+    DecisionReport<?> decisions =
+        service.getScopedDarDatasetDecisions(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.MONTH);
+    TurnaroundReport<?> turnaround =
+        service.getScopedDarDatasetDecisionTurnaround(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.MONTH);
+
+    assertEquals(5, decisions.total());
+    assertTrue(decisions.rows().isEmpty());
+    assertEquals(2, turnaround.total());
+    assertEquals(1, turnaround.unmeasured());
+    assertTrue(turnaround.rows().isEmpty());
+    verifyNoInteractions(darMetricsDAO);
+  }
+
+  @Test
+  void scopedExpirationAndRenewalReportsTotalTheirBucketsAndCarryNoRows() {
+    Instant start = startOfDay(LocalDate.of(2026, 1, 1));
+    Instant end = startOfDay(LocalDate.of(2026, 4, 1));
+    Instant before = Instant.now();
+    ArgumentCaptor<Instant> asOf = ArgumentCaptor.forClass(Instant.class);
+    when(scopedDarMetricsDAO.countExpirations(
+            eq(start), eq(end), eq(DATASETS), asOf.capture(), eq("week")))
+        .thenReturn(
+            List.of(
+                new ExpirationBucket(start, AccessEndReason.EXPIRED, 2L),
+                new ExpirationBucket(start, AccessEndReason.CLOSED_OUT, 1L)));
+    when(scopedDarMetricsDAO.countRenewals(start, end, DATASETS, "week"))
+        .thenReturn(List.of(new RenewalBucket(start, 4L, 3L)));
+
+    ExpirationReport expirations =
+        service.getScopedDarExpirations(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.WEEK);
+    RenewalReport renewals =
+        service.getScopedDarRenewals(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31), DATASETS, MetricsBucket.WEEK);
+
+    assertEquals(3, expirations.total());
+    assertTrue(expirations.rows().isEmpty());
+    // Access that has not ended yet is not reported, so the query is as of now
+    assertTrue(!asOf.getValue().isBefore(before) && !asOf.getValue().isAfter(Instant.now()));
+    assertEquals(4, renewals.total());
+    assertTrue(renewals.rows().isEmpty());
+    verifyNoInteractions(darMetricsDAO);
   }
 
   private static Instant startOfDay(LocalDate date) {

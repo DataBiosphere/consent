@@ -7,6 +7,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -16,7 +17,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -255,6 +258,51 @@ public class MetricsResource extends Resource {
         dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarRenewals);
   }
 
+  /**
+   * One of the DAR trend reports {@link #servedScopedReport} names, over one study's datasets, for
+   * that report's audience: whoever can read the study's DAR summaries, or the DAC in charge and
+   * admins alone. Either way it carries totals only. The query parameters the unscoped report also
+   * takes (limit, offset, dacId) are accepted and unused.
+   */
+  @GET
+  @Path("/{report}/study/{studyId}")
+  @Produces("application/json")
+  @PermitAll
+  public Response getStudyDarReport(
+      @Auth DuosUser user,
+      @PathParam("report") String report,
+      @PathParam("studyId") Integer studyId,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return scopedReport(
+        report,
+        audience -> metricsService.resolveStudyDarScope(studyId, user.getUser(), audience),
+        from,
+        to,
+        bucket);
+  }
+
+  /** {@link #getStudyDarReport} over one dataset, for the same audiences. */
+  @GET
+  @Path("/{report}/dataset/{datasetId}")
+  @Produces("application/json")
+  @PermitAll
+  public Response getDatasetDarReport(
+      @Auth DuosUser user,
+      @PathParam("report") String report,
+      @PathParam("datasetId") Integer datasetId,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return scopedReport(
+        report,
+        audience -> metricsService.resolveDatasetDarScope(datasetId, user.getUser(), audience),
+        from,
+        to,
+        bucket);
+  }
+
   @GET
   @Path("/users")
   @Produces("application/json")
@@ -368,6 +416,65 @@ public class MetricsResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private interface DatasetScopedReportQuery {
+    Object run(LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket);
+  }
+
+  /** A report served for one study or dataset, and who may read it there. */
+  private record ScopedReport(DarReportAudience audience, DatasetScopedReportQuery query) {}
+
+  /**
+   * A report over one study's or dataset's DARs. An unknown report is not found before anything
+   * else is read. The scope is what checks the caller is in the report's audience for the study or
+   * dataset: it resolves once the range parses, as the DAC scope does, and always before the report
+   * is queried.
+   */
+  private Response scopedReport(
+      String report,
+      Function<DarReportAudience, List<Integer>> datasetScope,
+      String from,
+      String to,
+      String bucket) {
+    try {
+      ScopedReport served = servedScopedReport(report);
+      LocalDate start = parseDate("from", from);
+      LocalDate end = parseRangeEnd(start, to);
+      MetricsBucket unit = parseBucket(bucket);
+      List<Integer> datasetIds = datasetScope.apply(served.audience());
+      return Response.ok(served.query().run(start, end, datasetIds, unit)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * The reports served for one study or dataset. The rest either roll decisions up per DAR, whose
+   * other datasets can belong to other studies, or aren't about a study's or dataset's DARs.
+   *
+   * <p>Volume, decisions and turnaround count requests that were denied or are still pending, so
+   * they are for the DAC in charge and admins. Expirations and renewals cover granted access alone,
+   * which the DAR history already lists, so they are for whoever can read that history.
+   */
+  private ScopedReport servedScopedReport(String report) {
+    return switch (report) {
+      case "dar-volume" ->
+          new ScopedReport(DarReportAudience.DAC_IN_CHARGE, metricsService::getScopedDarVolume);
+      case "dar-dataset-decisions" ->
+          new ScopedReport(
+              DarReportAudience.DAC_IN_CHARGE, metricsService::getScopedDarDatasetDecisions);
+      case "dar-dataset-decision-turnaround" ->
+          new ScopedReport(
+              DarReportAudience.DAC_IN_CHARGE,
+              metricsService::getScopedDarDatasetDecisionTurnaround);
+      case "dar-expirations" ->
+          new ScopedReport(
+              DarReportAudience.HISTORY_READERS, metricsService::getScopedDarExpirations);
+      case "dar-renewals" ->
+          new ScopedReport(DarReportAudience.HISTORY_READERS, metricsService::getScopedDarRenewals);
+      default -> throw new NotFoundException("No such report for a study or dataset");
+    };
   }
 
   private interface RangeReportQuery<R> {
