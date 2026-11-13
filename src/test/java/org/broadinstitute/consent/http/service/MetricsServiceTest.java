@@ -174,7 +174,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     dataset.setStudyId(10);
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.STUDY_READABLE));
@@ -196,7 +197,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.NO_STUDY));
@@ -221,7 +223,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.ADMIN));
@@ -239,7 +242,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
     DarMetricsSummary summary =
         new DarMetricsSummary(
-            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, null);
+            null, null, "Project", "DAR-1", null, null, "ref-1", "Broad", false, null, List.of(),
+            null, null);
 
     when(datasetService.findDatasetByIdForReadWithBasis(user, dataset.getDatasetId()))
         .thenReturn(new DatasetRead(dataset, DatasetReadBasis.DATASET_CREATOR));
@@ -260,12 +264,14 @@ class MetricsServiceTest extends AbstractTestHelper {
   void testWithoutRequesterIdentityKeepsEverythingElse() {
     Timestamp updated = new Timestamp(2_000_000_000L);
     Timestamp submitted = new Timestamp(1_000_000_000L);
+    Timestamp approved = new Timestamp(1_100_000_000L);
+    List<Timestamp> renewed = List.of(new Timestamp(1_200_000_000L));
     Timestamp expires = new Timestamp(1_300_000_000L);
     Timestamp closedOut = new Timestamp(1_250_000_000L);
     DarMetricsSummary summary =
         new DarMetricsSummary(
             updated, submitted, "Project", "DAR-1", "Summary", "RUS", "ref-1", "Broad", true,
-            expires, closedOut);
+            approved, renewed, expires, closedOut);
 
     DarMetricsSummary redacted = summary.withoutRequesterIdentity();
 
@@ -279,6 +285,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     assertEquals("RUS", redacted.rus());
     assertEquals("ref-1", redacted.referenceId());
     assertEquals(true, redacted.expired());
+    assertEquals(approved, redacted.approvalDate());
+    assertEquals(renewed, redacted.progressReportApprovalDates());
     assertEquals(expires, redacted.expirationDate());
     assertEquals(closedOut, redacted.closeoutDate());
   }
