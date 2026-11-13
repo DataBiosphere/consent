@@ -48,7 +48,7 @@ The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change.
 4. Update `DEVNOTES.md`. A developer must run `docker volume rm consent_pgdata` one time, because
    the 18 image cannot start on a volume that has Postgres 16 data.
 5. Update the image tag in `render-local-configs-plan.md`.
-6. Run `mvn clean test`.
+6. Run `./mvnw clean test`.
 7. Run a fresh `docker compose up` with a dev dump. Make sure that the dump loads.
 
 Merge this pull request before the dev upgrade. The `pg_dump` 16 client refuses an 18 server. The
