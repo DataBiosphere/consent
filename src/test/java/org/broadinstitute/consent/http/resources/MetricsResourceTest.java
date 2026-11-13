@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.DarReportAudience;
 import org.broadinstitute.consent.http.enumeration.InstitutionSource;
 import org.broadinstitute.consent.http.enumeration.MetricsBucket;
 import org.broadinstitute.consent.http.models.CreatedReport;
@@ -447,12 +448,13 @@ class MetricsResourceTest extends AbstractTestHelper {
   }
 
   /**
-   * A study's volume report is open beyond the DAC roles. Comparing whole field sets on the
-   * serialized response means a researcher or institution figure added under any key fails.
+   * A study's volume report carries totals alone, whoever reads it. Comparing whole field sets on
+   * the serialized response means a researcher or institution figure added under any key fails.
    */
   @Test
   void aStudysVolumeReportServesTotalsWithNothingAboutWhoRequested() {
-    when(service.resolveStudyDarScope(eq(5), any())).thenReturn(SCOPE);
+    when(service.resolveStudyDarScope(eq(5), any(), eq(DarReportAudience.DAC_IN_CHARGE)))
+        .thenReturn(SCOPE);
     VolumeBucketCount bucket = new VolumeBucketCount(Instant.EPOCH, 2L, null, null, 3L);
     when(service.getScopedDarVolume(any(), any(), eq(SCOPE), any()))
         .thenReturn(
