@@ -61,8 +61,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -348,6 +350,51 @@ class UserServiceTest extends AbstractTestHelper {
     List<UserRole> roles = List.of(generateRole(roleId));
     u.setRoles(roles);
     assertThrows(BadRequestException.class, () -> service.createUser(u));
+  }
+
+  private static Stream<Arguments> invalidRequestedRoleProvider() {
+    return Stream.of(
+        // The name passes the role check but the id belongs to a different role.
+        Arguments.of(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.RESEARCHER.getRoleName())),
+        Arguments.of(
+            new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.RESEARCHER.getRoleName())),
+        Arguments.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.ADMIN.getRoleName())),
+        // Missing or unknown values.
+        Arguments.of(new UserRole(null, UserRoles.RESEARCHER.getRoleName())),
+        Arguments.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), null)),
+        Arguments.of(new UserRole(99, UserRoles.RESEARCHER.getRoleName())),
+        // Names match exactly, including case.
+        Arguments.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), "researcher")));
+  }
+
+  @ParameterizedTest
+  @MethodSource("invalidRequestedRoleProvider")
+  void testCreateUserRoleIdAndNameMustMatch(UserRole role) {
+    User u = generateUser();
+    u.setRoles(List.of(role));
+    BadRequestException e = assertThrows(BadRequestException.class, () -> service.createUser(u));
+    assertEquals(UserService.ROLE_ID_NAME_MISMATCH, e.getMessage());
+    verifyNoInteractions(userServiceDAO);
+  }
+
+  @Test
+  void testCreateUserInsertsCanonicalRoles() {
+    User u = generateUser();
+    UserRole requested = UserRoles.SigningOfficial();
+    requested.setDacId(12);
+    u.setRoles(List.of(UserRoles.Researcher(), requested));
+    when(userServiceDAO.createUser(any())).thenReturn(u);
+
+    service.createUser(u);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userServiceDAO).createUser(captor.capture());
+    List<UserRole> inserted = captor.getValue().getRoles();
+    assertEquals(2, inserted.size());
+    assertEquals(UserRoles.RESEARCHER.getRoleId(), inserted.get(0).getRoleId());
+    assertEquals(UserRoles.SIGNINGOFFICIAL.getRoleId(), inserted.get(1).getRoleId());
+    assertEquals(UserRoles.SIGNINGOFFICIAL.getRoleName(), inserted.get(1).getName());
+    assertNull(inserted.get(1).getDacId());
   }
 
   @Test
