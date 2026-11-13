@@ -351,7 +351,7 @@ The steps:
    each `-e` with no value, so Docker copies the value from the script environment. The secrets
    are not in the command line or the process list. The proxy listens on its default
    `127.0.0.1`, and the container publishes no ports.
-3. Run `pg_isready`, then `pg_dump --no-owner --no-privileges`, from the `postgres:16.14-alpine`
+3. Run `pg_isready`, then `pg_dump --no-owner --no-privileges`, from the `postgres:18.7-alpine`
    image (the same image as the local database), with `--network container:<proxy>`. So they
    connect to the proxy on `127.0.0.1`. `PGPASSWORD` goes in the same way as the token.
 4. Compress the output with `gzip` into a temp file in `config/`. The Postgres image loads
