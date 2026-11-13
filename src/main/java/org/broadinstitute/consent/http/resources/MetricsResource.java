@@ -7,6 +7,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -255,6 +256,50 @@ public class MetricsResource extends Resource {
         dacScope(user, dacIds), from, to, bucket, limit, offset, metricsService::getDarRenewals);
   }
 
+  /**
+   * One of the DAR trend reports {@link #scopedReportQuery} names, over one study's datasets.
+   * Readable by whoever can read the study's DAR summaries, so it carries totals only. The query
+   * parameters the unscoped report also takes (limit, offset, dacId) are accepted and unused.
+   */
+  @GET
+  @Path("/{report}/study/{studyId}")
+  @Produces("application/json")
+  @PermitAll
+  public Response getStudyDarReport(
+      @Auth DuosUser user,
+      @PathParam("report") String report,
+      @PathParam("studyId") Integer studyId,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return scopedReport(
+        report,
+        () -> metricsService.resolveStudyDarScope(studyId, user.getUser()),
+        from,
+        to,
+        bucket);
+  }
+
+  /** {@link #getStudyDarReport} over one dataset, for whoever can read its DAR summaries. */
+  @GET
+  @Path("/{report}/dataset/{datasetId}")
+  @Produces("application/json")
+  @PermitAll
+  public Response getDatasetDarReport(
+      @Auth DuosUser user,
+      @PathParam("report") String report,
+      @PathParam("datasetId") Integer datasetId,
+      @QueryParam("from") String from,
+      @QueryParam("to") String to,
+      @DefaultValue("quarter") @QueryParam("bucket") String bucket) {
+    return scopedReport(
+        report,
+        () -> metricsService.resolveDatasetDarScope(datasetId, user.getUser()),
+        from,
+        to,
+        bucket);
+  }
+
   @GET
   @Path("/users")
   @Produces("application/json")
@@ -368,6 +413,44 @@ public class MetricsResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private interface DatasetScopedReportQuery {
+    Object run(LocalDate from, LocalDate to, List<Integer> datasetIds, MetricsBucket bucket);
+  }
+
+  /**
+   * A report over one study's or dataset's DARs. An unknown report is not found before anything
+   * else is read. The scope is what checks the caller may read the study or dataset: it resolves
+   * once the range parses, as the DAC scope does, and always before the report is queried.
+   */
+  private Response scopedReport(
+      String report, Supplier<List<Integer>> datasetScope, String from, String to, String bucket) {
+    try {
+      DatasetScopedReportQuery query = scopedReportQuery(report);
+      LocalDate start = parseDate("from", from);
+      LocalDate end = parseRangeEnd(start, to);
+      MetricsBucket unit = parseBucket(bucket);
+      return Response.ok(query.run(start, end, datasetScope.get(), unit)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * The reports served for one study or dataset. The rest either roll decisions up per DAR, whose
+   * other datasets can belong to other studies, or aren't about a study's or dataset's DARs.
+   */
+  private DatasetScopedReportQuery scopedReportQuery(String report) {
+    return switch (report) {
+      case "dar-volume" -> metricsService::getScopedDarVolume;
+      case "dar-dataset-decisions" -> metricsService::getScopedDarDatasetDecisions;
+      case "dar-dataset-decision-turnaround" ->
+          metricsService::getScopedDarDatasetDecisionTurnaround;
+      case "dar-expirations" -> metricsService::getScopedDarExpirations;
+      case "dar-renewals" -> metricsService::getScopedDarRenewals;
+      default -> throw new NotFoundException("No such report for a study or dataset");
+    };
   }
 
   private interface RangeReportQuery<R> {
