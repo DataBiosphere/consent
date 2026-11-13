@@ -57,16 +57,33 @@ After the Consent pull request merges, the tests run on Postgres 18, and prod st
 until DT-4324. SQL that uses a feature from version 17 or 18 can pass the tests and fail in prod.
 Keep this period short. In a review, look for such SQL.
 
+## Confirmed by test
+
+These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL instance.
+
+- Consent: the full test suite passes (6393 tests, which include the migration tests).
+- Local Consent database: a dev dump loads into the compose database, and the data stays after
+  a container recreate.
+- BEE: a BEE that had Postgres 16 data started from the BEE branch. The export, backup, and
+  import steps completed. A sign in to DUOS made a new user record in Consent.
+- DUOS backend: the session schema applies, and the audit triggers on `user_sessions` fire. 42
+  Playwright tests pass with the servers on Postgres 18.
+- DUOS backend with local Consent: the UI with the backend on, and a local Consent stack on
+  Postgres 18, operates normally. A new row in `user_sessions` shows the session. The addition
+  and removal of user roles work.
+- Dump versions: a `pg_dump` 18 dump of the session schema fails on Postgres 16.13 with
+  `unrecognized configuration parameter "transaction_timeout"`. A `pg_dump` 16 dump loads on
+  Postgres 18.7.
+
 ## Not confirmed
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirms it for
   each instance.
-- The BEE render shows the correct images, but no BEE that has Postgres 16 data was upgraded.
-- `scripts/export-db.sh` was not run against a Postgres 18 server.
-- The DUOS backend and its `pg` driver were not tested against a Postgres 18 server. The
-  integration tests in step 3 do this.
-- A dump from the `pg_dump` 18 client was not loaded into a Postgres 16 container. The failure
-  that step 3 describes is expected, not seen.
+- No test used a Cloud SQL instance on Postgres 18. The rehearsal in step 5 is the first.
+- `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this.
+- The BEE test did not compare row counts before and after the upgrade.
+- The Playwright tests that need the automation accounts did not run locally. The `duos-ui` CI
+  must show them.
 - The rollback procedure was not rehearsed.
 - The Slack channel list and the note about the sync from Terra Data Repository (TDR) come from
   the upgrade from 11 to 16 in 2024. Make sure that they are still correct.
