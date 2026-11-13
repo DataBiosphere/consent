@@ -160,6 +160,43 @@ dataset does not index.
 For each local call through the proxy (port 27443), use `gcloud auth print-identity-token`. The
 proxy fails on opaque access tokens when it runs under Rosetta.
 
+### Data Showcase fixture
+
+[seed-showcase-fixture.sh](scripts/seed-showcase-fixture.sh) loads synthetic datasets into the local
+database for testing showcase request flows (DT-4358): the showcase lookup, the dataset page and a
+data access request, all in your local stack. Showcase configs list production identifiers, which
+name other datasets locally, so these tests need records that belong to this database.
+
+| Alias | Access | Returned by the showcase lookup |
+| ----- | ------ | ------------------------------- |
+| `DUOS-990001` | controlled, DAC-approved | Yes |
+| `DUOS-990002` | open, with a URL | Yes |
+| `DUOS-990003` | external, with a URL | Yes |
+| `DUOS-990004` | controlled, not approved | No |
+| `DUOS-990005` | controlled, approved, private study | No |
+
+They belong to "Showcase Fixture DAC", two synthetic studies and a synthetic user, all with IDs from
+990001, far above the dump's sequences. The script does what the app does when it registers a
+dataset: it adds any missing dictionary key, gives each dataset an asset catalog entry (when the
+database has the catalog), and moves the alias sequence past 990005. A dataset you register
+locally afterwards gets alias 990006 or higher. Running the script again restores the fixture's
+rows and keeps any request you made against them. Afterwards, run
+[index-es.sh](scripts/index-es.sh), because the dataset page finds datasets through Elasticsearch.
+To review a request, add your user to the DAC as its chair. The lookup answers only when the
+rendered `consent.yaml` has this block (a dotted `showcase.publicLookupEnabled` key is ignored):
+
+```yaml
+showcase:
+  publicLookupEnabled: true
+```
+
+The script runs `psql` inside the `localdb` container and has no host or credential arguments. It
+stops unless `DOCKER_HOST`, `DOCKER_CONTEXT` and the active context all name a local Unix socket. The
+SQL ([showcase-fixture.sql](scripts/sql/showcase-fixture.sql)) also refuses to run unless the session
+sets `duos.showcase_fixture_target=localdb`, which only the script does. Pasting it into a session
+on a shared or production database aborts before any write. Neither file is a Liquibase changeset,
+and the image ships only the jar, so no deployment runs them.
+
 ### Liquibase
 
 `liquibase.runOnStartup` is an optional flag. The application runs the Liquibase changesets at

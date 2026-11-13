@@ -1,0 +1,84 @@
+get:
+  operationId: apiMetricsReportDatasetDatasetIdGet
+  summary: DAR trend report for one dataset
+  description: |
+    One of the DAR trend reports, covering only DARs that request the dataset and, in dataset-level figures, only that dataset.
+
+    Who may read a report depends on what it counts. Every report first requires being able to read the dataset's granted DARs (`/api/metrics/dar-summaries/{datasetId}`): admins, the dataset's creator, readers of its study, and any authenticated user when the dataset belongs to no study.
+
+    - `dar-expirations` and `dar-renewals` cover granted access alone, which those granted DARs already list, so they need nothing more.
+    - `dar-volume`, `dar-dataset-decisions` and `dar-dataset-decision-turnaround` count requests that were denied or are still pending. They are for admins and for chairs and members of the dataset's DAC; anyone else gets a 403. A dataset no DAC is in charge of serves them to admins alone.
+
+    A `dacId` parameter changes nothing: the scope is always the dataset. The response carries totals only. `rows` is always empty. The volume report's `institutions` and `researchers` are always empty and its buckets omit `researcherCount` and `institutionCount`, so nothing says who requested the dataset. Otherwise each report has the shape and rules of its unscoped counterpart, `/api/metrics/{report}`.
+
+    The reports that roll decisions up per DAR (`dar-decisions`, `dar-decision-turnaround`) are not served here: a DAR's other datasets would count toward them. The unscoped reports' `limit`, `offset` and `dacId` parameters are accepted and ignored.
+  tags:
+    - Metrics
+  parameters:
+    - name: report
+      in: path
+      required: true
+      description: The report to read.
+      schema:
+        type: string
+        enum:
+          - dar-volume
+          - dar-dataset-decisions
+          - dar-dataset-decision-turnaround
+          - dar-expirations
+          - dar-renewals
+    - name: datasetId
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: from
+      in: query
+      required: true
+      description: First date to include, as yyyy-MM-dd, from 1900 to 9999. The access-end date for dar-expirations, the submission date for the rest.
+      schema:
+        type: string
+        format: date
+    - name: to
+      in: query
+      required: true
+      description: Last date to include, as yyyy-MM-dd, from 1900 to 9999. Not before from.
+      schema:
+        type: string
+        format: date
+    - name: bucket
+      in: query
+      required: false
+      description: Date bucket for the counts.
+      schema:
+        type: string
+        enum: [day, week, month, quarter]
+        default: quarter
+  responses:
+    200:
+      description: The report's counts per bucket, with no rows.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '../schemas/DarVolumeReport.yaml'
+              - $ref: '../schemas/DarDatasetDecisionReport.yaml'
+              - $ref: '../schemas/DarDatasetTurnaroundReport.yaml'
+              - $ref: '../schemas/DarExpirationReport.yaml'
+              - $ref: '../schemas/DarRenewalReport.yaml'
+    400:
+      description: Missing or invalid query parameter.
+    401:
+      description: Unauthorized.
+    403:
+      description: The dataset is not visible to this user, or the report counts denied and pending requests and the caller is neither an admin nor a chair or member of the dataset's DAC.
+    404:
+      description: Dataset not found, or no such report for a dataset.
+    429:
+      description: Too Many Requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error

@@ -957,6 +957,10 @@ paths:
     $ref: './paths/darSummariesByDatasetId.yaml'
   /api/metrics/dar-summaries/study/{studyId}:
     $ref: './paths/studyDarSummaries.yaml'
+  /api/metrics/{report}/study/{studyId}:
+    $ref: './paths/studyDarReport.yaml'
+  /api/metrics/{report}/dataset/{datasetId}:
+    $ref: './paths/datasetDarReport.yaml'
   /api/metrics/research-outputs/study/{studyId}:
     $ref: './paths/studyResearchOutputs.yaml'
   /api/metrics/study-recommendations/{studyId}/similar:

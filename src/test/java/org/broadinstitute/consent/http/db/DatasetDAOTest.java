@@ -1695,6 +1695,37 @@ class DatasetDAOTest extends DAOTestHelper {
                 .one());
   }
 
+  /** The datasets of a study that the given DACs are in charge of, and no one else's. */
+  @Test
+  void testFindDatasetIdsByStudyIdAndDacIds() {
+    User user = createUser();
+    Study study = insertStudyWithProperties();
+    Study otherStudy = insertStudyWithProperties();
+    Integer dacA = dacDAO.createDac("DAC A " + randomAlphabetic(8), "A", user.getUserId());
+    Integer dacB = dacDAO.createDac("DAC B " + randomAlphabetic(8), "B", user.getUserId());
+    Dataset underA = insertDataset();
+    Dataset underB = insertDataset();
+    Dataset underNoDac = insertDataset();
+    Dataset elsewhere = insertDataset();
+    for (Dataset dataset : List.of(underA, underB, underNoDac)) {
+      datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    }
+    datasetDAO.updateStudyId(elsewhere.getDatasetId(), otherStudy.getStudyId());
+    datasetDAO.updateDatasetDacId(underA.getDatasetId(), dacA);
+    datasetDAO.updateDatasetDacId(underB.getDatasetId(), dacB);
+    datasetDAO.updateDatasetDacId(elsewhere.getDatasetId(), dacA);
+    Integer studyId = study.getStudyId();
+
+    assertEquals(
+        List.of(underA.getDatasetId()),
+        datasetDAO.findDatasetIdsByStudyIdAndDacIds(studyId, List.of(dacA)));
+    assertEquals(
+        List.of(underA.getDatasetId(), underB.getDatasetId()),
+        datasetDAO.findDatasetIdsByStudyIdAndDacIds(studyId, List.of(dacB, dacA)));
+    assertTrue(datasetDAO.findDatasetIdsByStudyIdAndDacIds(studyId, List.of()).isEmpty());
+    assertTrue(datasetDAO.findDatasetIdsByStudyIdAndDacIds(studyId, List.of(-1)).isEmpty());
+  }
+
   @Test
   void testGetRecentDacApprovedDatasetStudyIds() {
     User user = createUser();
