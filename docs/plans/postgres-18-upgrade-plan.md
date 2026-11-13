@@ -19,7 +19,7 @@ Consent has no runtime code that depends on the Postgres version. The work is in
 | --- | --- | --- |
 | `consent` | The Postgres image for tests and for the local scripts. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
-| `duos-ui` | The Postgres image for the integration tests and for the local database. | Not open yet |
+| `duos-ui` | The Postgres image for the integration tests and for the local database. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153) |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
@@ -106,7 +106,8 @@ The DUOS backend connects to the same database, and `duos-ui` has its own Postgr
 2. Set the same image for the `db` service in `docker-compose.override.yaml`. This service has no
    data volume, so the data directory change does not apply.
 3. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
-4. Make sure that the integration tests pass.
+4. Add the image version to `DEVNOTES.md`.
+5. Make sure that the integration tests pass.
 
 Merge this pull request soon after the Consent pull request. The local database of `duos-ui` loads
 a Consent dump. After step 1 merges, `scripts/export-db.sh` makes dumps with the `pg_dump` 18
