@@ -41,6 +41,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.CounterDAO;
@@ -91,6 +92,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
@@ -368,6 +371,37 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO).updateRequiresSOApproval(eq(true), anyString());
+  }
+
+  static Stream<Arguments> mismatchedDaaIds() {
+    return Stream.of(
+        Arguments.of("none supplied", Set.of(), Set.of(1)),
+        Arguments.of("one required DAA omitted", Set.of(1), Set.of(1, 2)),
+        Arguments.of("one DAA that is not required", Set.of(1, 2), Set.of(1)),
+        Arguments.of("a different DAA", Set.of(2), Set.of(1)));
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("mismatchedDaaIds")
+  void testCreateDataAccessRequest_RejectsMismatchedDaaIds(
+      String description, Set<Integer> suppliedDaaIds, Set<Integer> requiredDaaIds) {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setReferenceId("id");
+    dar.getData().setDaaIds(suppliedDaaIds);
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(daaDAO.findDaaIdsByDatasetIds(dar.getDatasetIds())).thenReturn(requiredDaaIds);
+
+    BadRequestException e =
+        assertThrows(
+            BadRequestException.class, () -> service.createDataAccessRequest(user, dar, request));
+
+    assertEquals("All of the DAAs required were not acknowledged.", e.getMessage());
+    // Submission stops at validation: no draft lookup and no transaction.
+    verify(dataAccessRequestDAO, never()).findByReferenceId(any());
+    verify(dataAccessRequestServiceDAO, never()).inTransaction(any());
   }
 
   @Test
