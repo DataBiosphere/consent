@@ -85,8 +85,8 @@ These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL 
 - The Playwright tests that need the automation accounts did not run locally. The `duos-ui` CI
   must show them.
 - The rollback procedure was not rehearsed.
-- The Slack channel list and the note about the sync from Terra Data Repository (TDR) come from
-  the upgrade from 11 to 16 in 2024. Make sure that they are still correct.
+- The note about the sync from Terra Data Repository (TDR) comes from the upgrade from 11 to 16
+  in 2024. Make sure that it is still correct.
 
 ## Step 1: Consent pull request
 
@@ -237,11 +237,11 @@ the newest dev version each night, so do its upgrade during the work day.
 
 1. Tell these Slack channels. Give the environment, the start time, the expected downtime from the
    rehearsal, and the two services that stop.
-   - `#dsp-data-custodian-journeys`
-   - `#dsde-qa`
+   - `#dsp-data-team`
    - `#workbench-oncall`
-   - `#workbench-resilience`
    - `#workbench-release`
+   - `#classic-terra-collaboration`
+   - `#terra-devops-champions`
 2. Make sure that no Consent or DUOS deploy starts during the upgrade. A deploy runs the Liquibase
    migration job, and the job fails when the database is not available. For dev, do not merge to
    `develop` during the upgrade.
