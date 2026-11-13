@@ -22,7 +22,25 @@ properties:
     description: The DAR's research use statement
   expired:
     type: boolean
-    description: Whether the DAR is expired
+    description: >-
+      Whether access has ended, by the term running out (see expirationDate) or by a closeout (see
+      closeoutDate)
+  expirationDate:
+    type: integer
+    format: int64
+    description: >-
+      When the term of access runs out, in milliseconds since the epoch: 365 days after the
+      submission date of the newest approved submission, original DAR or progress report. The term
+      runs from that submission date, not from the day the DAC approved it, which is the rule
+      `expired` and every other grant check applies. Still sent when a closeout ended access
+      earlier.
+  closeoutDate:
+    type: integer
+    format: int64
+    description: >-
+      When a closeout ended access before its term ran out, in milliseconds since the epoch.
+      Omitted when the DAR was not closed out, and when the closeout was filed after the term had
+      already run out, since that access expired.
   referenceId:
     type: string
     description: The reference identifier for the DAR
