@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <!--
+    DT-4452: change the data_access_agreement date columns from timestamp to timestamptz. Refer to
+    docs/plans/timestamptz-migration-plan.md for the UTC session zone, the precondition and the
+    rollback.
+  -->
+  <changeSet id="changelog-consent-2026-11-13-timestamptz-data-access-agreement" author="grushton">
+    <preConditions onFail="HALT" onError="HALT"
+      onFailMessage="data_access_agreement must have 2 timestamp or timestamptz column(s): create_date, update_date. Compare the deployed schema with the changesets before you deploy.">
+      <dbms type="postgresql"/>
+      <sqlCheck expectedResult="2">
+        SELECT COUNT(*) FROM information_schema.columns
+        WHERE table_schema = current_schema() AND table_name = 'data_access_agreement'
+          AND column_name IN ('create_date', 'update_date')
+          AND data_type IN ('timestamp without time zone', 'timestamp with time zone')
+      </sqlCheck>
+    </preConditions>
+    <!-- A column that is already timestamptz in a deployed database does not change. -->
+    <!-- SET LOCAL ends with this changeset's transaction. A busy table fails the deploy fast. -->
+    <sql>SET LOCAL lock_timeout = '10s'</sql>
+    <sql>SET LOCAL TimeZone = 'UTC'</sql>
+    <sql>
+      ALTER TABLE data_access_agreement
+          ALTER COLUMN create_date TYPE timestamp with time zone,
+          ALTER COLUMN update_date TYPE timestamp with time zone
+    </sql>
+    <rollback>
+      <sql>SET LOCAL lock_timeout = '10s'</sql>
+      <sql>SET LOCAL TimeZone = 'UTC'</sql>
+      <sql>
+        ALTER TABLE data_access_agreement
+            ALTER COLUMN create_date TYPE timestamp without time zone,
+            ALTER COLUMN update_date TYPE timestamp without time zone
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
