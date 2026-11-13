@@ -13,12 +13,13 @@ secret.
 
 ## Scope
 
-Consent has no runtime code that depends on the Postgres version. The work is in three repos.
+Consent has no runtime code that depends on the Postgres version. The work is in four repos.
 
 | Repo | Change | Status |
 | --- | --- | --- |
 | `consent` | The Postgres image for tests and for the local scripts. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
+| `duos-ui` | The Postgres image for the integration tests and for the local database. | Not open yet |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
@@ -47,6 +48,7 @@ the ones that can apply to Consent.
 | Foreign key error code (18) | A violation of a `RESTRICT` foreign key now reports SQLSTATE `23001`, not `23503`. Consent code reads `23503`, but no changeset makes a `RESTRICT` foreign key. |
 | `AFTER` triggers (18) | These triggers now run as the role that queued the event. Consent does not change role in a session. |
 | Password hashing (18) | PostgreSQL 18 warns about MD5 passwords. The `consent` role already uses SCRAM-SHA-256. See `consent-role-scram-password-plan.md`. |
+| DUOS backend | Its database code needs no change. It uses the `pg` driver 8.21.0 and reads and writes only the `user_sessions` table. Its SQL uses no feature that changes in 17 or 18, and it does not read SQLSTATE codes. The audit triggers on `user_sessions` are in the Consent changesets. |
 | Data directory (18) | The official `postgres:18` image moved its data directory to `/var/lib/postgresql/18/docker`. This affects the local compose file. It does not affect the BEE chart, which sets `PGDATA` to `/data/pgdata`. |
 
 ## Risk between the dev upgrade and the prod upgrade
@@ -61,6 +63,10 @@ Keep this period short. In a review, look for such SQL.
   each instance.
 - The BEE render shows the correct images, but no BEE that has Postgres 16 data was upgraded.
 - `scripts/export-db.sh` was not run against a Postgres 18 server.
+- The DUOS backend and its `pg` driver were not tested against a Postgres 18 server. The
+  integration tests in step 3 do this.
+- A dump from the `pg_dump` 18 client was not loaded into a Postgres 16 container. The failure
+  that step 3 describes is expected, not seen.
 - The rollback procedure was not rehearsed.
 - The Slack channel list and the note about the sync from Terra Data Repository (TDR) come from
   the upgrade from 11 to 16 in 2024. Make sure that they are still correct.
@@ -91,7 +97,23 @@ than itself, so the 16 client fails after the upgrade. The 18 client can read a 
    the import step and the main container use `postgres:18`.
 4. Start a new BEE. Make sure that the `consent-postgres` pod starts.
 
-## Step 3: Pre-checks
+## Step 3: duos-ui pull request
+
+The DUOS backend connects to the same database, and `duos-ui` has its own Postgres image pins.
+
+1. Set the image to `postgres:18.7-alpine` in `.github/workflows/integration-tests.yml`. The
+   Playwright integration tests then run the DUOS backend on Postgres 18.
+2. Set the same image for the `db` service in `docker-compose.override.yaml`. This service has no
+   data volume, so the data directory change does not apply.
+3. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
+4. Make sure that the integration tests pass.
+
+Merge this pull request soon after the Consent pull request. The local database of `duos-ui` loads
+a Consent dump. After step 1 merges, `scripts/export-db.sh` makes dumps with the `pg_dump` 18
+client. Such a dump sets `transaction_timeout`, which Postgres 16 does not know, so the load into
+a Postgres 16 container fails.
+
+## Step 4: Pre-checks
 
 Do these checks on each environment before its upgrade. For the SQL checks, connect with
 `scripts/db-connect.sh <env>`.
@@ -147,7 +169,7 @@ Do these checks on each environment before its upgrade. For the SQL checks, conn
 
 8. Make sure that the instance has no operation in progress.
 
-## Step 4: Rehearsal on a clone
+## Step 5: Rehearsal on a clone
 
 Do the rehearsal for each environment. It gives the expected downtime. The upgrade from 11 to 16
 took 15 to 17 minutes.
@@ -177,10 +199,10 @@ took 15 to 17 minutes.
    psql -h 127.0.0.1 -p 5433 -U <user> -d consent
    ```
 
-4. In `psql`, do the SQL checks of step 6, and run `ANALYZE;`.
+4. In `psql`, do the SQL checks of step 7, and run `ANALYZE;`.
 5. Optional: to test Consent on the upgraded data, make a dump through the proxy with the
    `pg_dump` 18 client and the `--no-owner --no-privileges` options. Load it as `DEVNOTES.md`
-   describes, and do the smoke tests of step 6. A dump has real user data. Do not copy, share, or
+   describes, and do the smoke tests of step 7. A dump has real user data. Do not copy, share, or
    upload it.
 6. Delete the clone:
 
@@ -188,7 +210,7 @@ took 15 to 17 minutes.
    gcloud sql instances delete <instance>-pg18-rehearsal --project <project>
    ```
 
-## Step 5: Upgrade
+## Step 6: Upgrade
 
 Upgrade dev first. Upgrade staging after dev operates on Postgres 18 with no problem. Staging gets
 the newest dev version each night, so do its upgrade during the work day.
@@ -233,7 +255,7 @@ difference.
 
 Do not change `prod.tfvars` for DT-3587.
 
-## Step 6: After each upgrade
+## Step 7: After each upgrade
 
 1. Make sure that the version is 18:
 
@@ -261,7 +283,7 @@ A downgrade in place is not possible.
 3. Change `db_name` in the Terraform variables, and import the new instance into the Terraform
    state.
 
-Data that the services write after the upgrade is lost. The rehearsal in step 4 decreases this
+Data that the services write after the upgrade is lost. The rehearsal in step 5 decreases this
 risk.
 
 ## Alternative
