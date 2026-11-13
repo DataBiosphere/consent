@@ -19,7 +19,7 @@ Consent has no runtime code that depends on the Postgres version. The work is in
 | --- | --- | --- |
 | `consent` | The Postgres image for the local scripts. The image for the tests stays on 16 until DT-4324. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
-| `duos-ui` | The Postgres image for the integration tests and for the local database. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153) |
+| `duos-ui` | The Postgres image for the local database. The image for the integration tests stays on 16 until DT-4324. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153) |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
@@ -62,7 +62,10 @@ that operates differently on 18 can pass the tests and fail in dev. Dev and stag
 problem before prod gets the change. The full test suite also passed one time on Postgres 18.7,
 on 2026-11-13.
 
-Set the test image to Postgres 18 in the work for DT-4324, and run the full test suite again.
+The integration tests of `duos-ui` follow the same rule. Their image in
+`.github/workflows/integration-tests.yml` stays on Postgres 16.
+
+Set the two test images to Postgres 18 in the work for DT-4324, and run the tests again.
 
 ## Confirmed by test
 
@@ -75,7 +78,8 @@ These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL 
 - BEE: a BEE that had Postgres 16 data started from the BEE branch. The export, backup, and
   import steps completed. A sign in to DUOS made a new user record in Consent.
 - DUOS backend: the session schema applies, and the audit triggers on `user_sessions` fire. 42
-  Playwright tests pass with the servers on Postgres 18.
+  Playwright tests passed in one local run with the servers on Postgres 18. The test image in
+  the repo stays on 16.
 - DUOS backend with local Consent: the UI with the backend on, and a local Consent stack on
   Postgres 18, operates normally. A new row in `user_sessions` shows the session. The addition
   and removal of user roles work.
@@ -90,8 +94,8 @@ These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL 
 - No test used a Cloud SQL instance on Postgres 18. The rehearsal in step 5 is the first.
 - `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this.
 - The BEE test did not compare row counts before and after the upgrade.
-- The Playwright tests that need the automation accounts did not run locally. The `duos-ui` CI
-  must show them.
+- The Playwright tests that need the automation accounts did not run on Postgres 18. They did not
+  run locally, and the `duos-ui` CI stays on Postgres 16.
 - The rollback procedure was not rehearsed.
 - The note about the sync from Terra Data Repository (TDR) comes from the upgrade from 11 to 16
   in 2024. Make sure that it is still correct.
@@ -127,12 +131,13 @@ than itself, so the 16 client fails after the upgrade. The 18 client can read a 
 
 The DUOS backend connects to the same database, and `duos-ui` has its own Postgres image pins.
 
-1. Set the image to `postgres:18.7-alpine` in `.github/workflows/integration-tests.yml`. The
-   Playwright integration tests then run the DUOS backend on Postgres 18.
-2. Set the same image for the `db` service in `docker-compose.override.yaml`. This service has no
-   data volume, so the data directory change does not apply.
-3. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
-4. Add the image version to `DEVNOTES.md`.
+1. Set the image to `postgres:18.7-alpine` for the `db` service in
+   `docker-compose.override.yaml`. This service has no data volume, so the data directory change
+   does not apply.
+2. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
+3. Add the image version to `DEVNOTES.md`.
+4. Do not change the image in `.github/workflows/integration-tests.yml`. See "The tests stay on
+   Postgres 16 until the prod upgrade".
 5. Make sure that the integration tests pass.
 
 Merge this pull request soon after the Consent pull request. The local database of `duos-ui` loads
