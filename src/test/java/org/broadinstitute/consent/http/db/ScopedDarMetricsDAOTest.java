@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -8,13 +9,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
+import org.broadinstitute.consent.http.models.ExpirationBucket;
+import org.broadinstitute.consent.http.models.RenewalBucket;
 import org.broadinstitute.consent.http.models.TurnaroundBucket;
 import org.broadinstitute.consent.http.models.VolumeBucketCount;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +31,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
 
+  private static final List<Integer> ALL_DACS = null;
+
   private static final Instant FROM = Instant.parse("2000-01-01T00:00:00Z");
   private static final Instant TO = Instant.parse("2100-01-01T00:00:00Z");
   private static final Instant SUBMITTED = Instant.parse("2026-02-10T12:00:00Z");
@@ -31,10 +40,12 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
 
   private final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
   private ScopedDarMetricsDAO dao;
+  private DarMetricsDAO adminDao;
 
   @BeforeEach
   void setUpDaos() {
     dao = jdbi.onDemand(ScopedDarMetricsDAO.class);
+    adminDao = jdbi.onDemand(DarMetricsDAO.class);
   }
 
   @Test
@@ -225,6 +236,129 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     assertNull(bucket.meanDays());
   }
 
+  @Test
+  void aCollectionEndsWhenAccessToTheDatasetsInScopeDoes() {
+    Integer lapsed = createDataset();
+    Integer renewed = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    String dar = createDar(submitted, lapsed, renewed);
+    approve(dar, lapsed, submitted.plus(Duration.ofDays(5)));
+    approve(dar, renewed, submitted.plus(Duration.ofDays(5)));
+    Instant reported = now.minus(Duration.ofDays(100));
+    approve(createProgressReport(dar, reported, renewed), renewed, reported);
+
+    assertTrue(expirations(List.of(renewed)).isEmpty());
+    assertTrue(expirations(List.of(lapsed, renewed)).isEmpty());
+    List<ExpirationBucket> ended = expirations(List.of(lapsed));
+    assertEquals(1, ended.size());
+    assertEquals(AccessEndReason.EXPIRED, ended.getFirst().reason());
+    assertEquals(1, ended.getFirst().count());
+  }
+
+  @Test
+  void aCloseoutBeforeTheTermRunsOutIsCountedAsClosedOut() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(100));
+    String dar = createDar(submitted, dataset);
+    approve(dar, dataset, submitted.plus(Duration.ofDays(5)));
+    createCloseout(dar, now.minus(Duration.ofDays(10)));
+    Integer stray = createDataset();
+    approve(createDar(closeoutData(), submitted, stray), stray, submitted);
+
+    List<ExpirationBucket> ended = expirations(List.of(dataset));
+    assertEquals(1, ended.size());
+    assertEquals(AccessEndReason.CLOSED_OUT, ended.getFirst().reason());
+    assertTrue(
+        expirations(List.of(stray)).isEmpty(), "A supplement on an original DAR closes nothing");
+  }
+
+  @Test
+  void aCloseoutFiledAfterTheTermRanOutIsCountedAsExpired() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(500));
+    String dar = createDar(submitted, dataset);
+    approve(dar, dataset, submitted.plus(Duration.ofDays(5)));
+    // The closeout carries a dataset and an approval, which must not start a new term
+    String closeout = createCloseout(dar, now.minus(Duration.ofDays(10)));
+    dataAccessRequestDAO.insertDARDatasetRelation(closeout, dataset);
+    approve(closeout, dataset, now.minus(Duration.ofDays(9)));
+
+    List<ExpirationBucket> ended = expirations(List.of(dataset));
+    assertEquals(1, ended.size());
+    assertEquals(AccessEndReason.EXPIRED, ended.getFirst().reason());
+  }
+
+  @Test
+  void archivedDarsGrantNoAccessToExpire() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    approve(createDar(withStatus("Archived"), submitted, dataset), dataset, submitted);
+
+    assertTrue(expirations(List.of(dataset)).isEmpty());
+  }
+
+  @Test
+  void expirationsAreCountedInTheRangeAndOnlyOnceTheyHaveHappened() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    approve(createDar(submitted, dataset), dataset, submitted);
+    Instant end = submitted.plus(TERM);
+    List<Integer> scope = List.of(dataset);
+
+    assertEquals(1, dao.countExpirations(end, end.plusSeconds(1), scope, now, "quarter").size());
+    assertTrue(
+        dao.countExpirations(end.minus(Duration.ofDays(1)), end, scope, now, "quarter").isEmpty());
+    assertTrue(dao.countExpirations(FROM, TO, scope, end.minusSeconds(1), "quarter").isEmpty());
+  }
+
+  @Test
+  void renewalsCountOnlyDatasetsInScope() {
+    Integer inScope = createDataset();
+    Integer outside = createDataset();
+    Integer denied = createDataset();
+    String dar = createDar(now.minus(Duration.ofDays(400)), inScope, outside, denied);
+    Instant reported = now.minus(Duration.ofDays(100));
+    String report = createProgressReport(dar, reported, inScope, outside, denied);
+    approve(report, inScope, reported.plus(Duration.ofDays(1)));
+    approve(report, outside, reported.plus(Duration.ofDays(1)));
+    decide(report, denied, false, reported.plus(Duration.ofDays(1)));
+
+    RenewalBucket bucket = onlyRenewal(List.of(inScope, denied));
+    assertEquals(1, bucket.renewalCount());
+    assertEquals(1, bucket.collectionCount());
+    assertEquals(2, onlyRenewal(List.of(inScope, outside)).renewalCount());
+    assertTrue(dao.countRenewals(FROM, TO, List.of(denied), "month").isEmpty());
+  }
+
+  @Test
+  void originalDarsPendingReportsAndCloseoutsAreNotRenewals() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    String dar = createDar(submitted, dataset);
+    approve(dar, dataset, submitted);
+    String report = createProgressReport(dar, now.minus(Duration.ofDays(100)), dataset);
+    election(report, dataset, ElectionStatus.OPEN);
+    // A closeout carrying a dataset and an approval, so only its being a closeout rules it out
+    String closeout = createCloseout(report, now.minus(Duration.ofDays(10)));
+    dataAccessRequestDAO.insertDARDatasetRelation(closeout, dataset);
+    approve(closeout, dataset, now.minus(Duration.ofDays(9)));
+
+    assertTrue(dao.countRenewals(FROM, TO, List.of(dataset), "month").isEmpty());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Canceled", "Archived"})
+  void canceledAndArchivedProgressReportsAreNotRenewals(String status) {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    String dar = createDar(submitted, dataset);
+    approve(dar, dataset, submitted);
+    Instant reported = now.minus(Duration.ofDays(100));
+    approve(createProgressReport(dar, withStatus(status), reported, dataset), dataset, reported);
+
+    assertTrue(dao.countRenewals(FROM, TO, List.of(dataset), "month").isEmpty());
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"day", "week", "month", "quarter"})
   void anEmptyScopeReadsNothing(String bucket) {
@@ -239,7 +373,187 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     assertTrue(dao.countDarVolume(FROM, TO, none, bucket).isEmpty());
     assertTrue(dao.countPairDecisions(FROM, TO, none, bucket).isEmpty());
     assertTrue(dao.countPairTurnaround(FROM, TO, none, bucket).isEmpty());
+    assertTrue(dao.countExpirations(FROM, TO, none, now, bucket).isEmpty());
+    assertTrue(dao.countRenewals(FROM, TO, none, bucket).isEmpty());
     assertFalse(dao.countDarVolume(FROM, TO, List.of(dataset), bucket).isEmpty());
+  }
+
+  /**
+   * The scoped queries restate the admin reports' rules rather than share their SQL, so this holds
+   * the two together: scoped to every dataset, each scoped report must total what the admin report
+   * does over every DAC.
+   */
+  @ParameterizedTest
+  @ValueSource(strings = {"day", "week", "month", "quarter"})
+  void scopedToEveryDatasetTheTotalsMatchTheAdminReports(String bucket) {
+    List<Integer> everyDataset = createVariedHistory();
+
+    // Every report is compared, so one run names each query that has drifted
+    assertAll(
+        () ->
+            assertEquals(
+                adminDao.countPairDecisions(FROM, TO, ALL_DACS, bucket),
+                dao.countPairDecisions(FROM, TO, everyDataset, bucket),
+                "decisions"),
+        () ->
+            assertEquals(
+                adminDao.countPairTurnaround(FROM, TO, ALL_DACS, bucket),
+                dao.countPairTurnaround(FROM, TO, everyDataset, bucket),
+                "turnaround"),
+        () ->
+            assertEquals(
+                adminDao.countExpirations(FROM, TO, ALL_DACS, now, bucket),
+                dao.countExpirations(FROM, TO, everyDataset, now, bucket),
+                "expirations"),
+        () ->
+            assertEquals(
+                adminDao.countRenewals(FROM, TO, ALL_DACS, bucket),
+                dao.countRenewals(FROM, TO, everyDataset, bucket),
+                "renewals"),
+        () ->
+            assertEquals(
+                adminDao.countDarVolume(FROM, TO, ALL_DACS, bucket).stream()
+                    .map(
+                        b ->
+                            new VolumeBucketCount(
+                                b.bucketStart(), b.darCount(), null, null, b.datasetCount()))
+                    .toList(),
+                dao.countDarVolume(FROM, TO, everyDataset, bucket),
+                "volume"));
+  }
+
+  /** Collections in every state the reports tell apart, returning every dataset they request. */
+  private List<Integer> createVariedHistory() {
+    Integer expired = createDataset();
+    Instant longAgo = now.minus(Duration.ofDays(800));
+    approve(createDar(longAgo, expired), expired, longAgo.plus(Duration.ofDays(3)));
+
+    Integer renewed = createDataset();
+    Integer dropped = createDataset();
+    String renewedDar = createDar(now.minus(Duration.ofDays(500)), renewed, dropped);
+    approve(renewedDar, renewed, now.minus(Duration.ofDays(490)));
+    decide(renewedDar, dropped, VoteType.RADAR_APPROVE, true, now.minus(Duration.ofDays(499)));
+    Instant reported = now.minus(Duration.ofDays(200));
+    approve(createProgressReport(renewedDar, reported, renewed), renewed, reported.plusSeconds(90));
+
+    // The closeout carries a dataset and an approval, so only its being a closeout keeps it from
+    // counting as a renewal
+    Integer closed = createDataset();
+    String closedDar = createDar(now.minus(Duration.ofDays(100)), closed);
+    approve(closedDar, closed, null);
+    String closeout = createCloseout(closedDar, now.minus(Duration.ofDays(10)));
+    dataAccessRequestDAO.insertDARDatasetRelation(closeout, closed);
+    approve(closeout, closed, now.minus(Duration.ofDays(9)));
+
+    Integer denied = createDataset();
+    Integer pending = createDataset();
+    Integer canceled = createDataset();
+    Integer unopened = createDataset();
+    String mixedDar =
+        createDar(now.minus(Duration.ofDays(40)), denied, pending, canceled, unopened);
+    decide(mixedDar, denied, false, now.minus(Duration.ofDays(33)));
+    election(mixedDar, pending, ElectionStatus.OPEN);
+    election(mixedDar, canceled, ElectionStatus.CANCELED);
+
+    Integer firstSibling = createDataset();
+    Integer secondSibling = createDataset();
+    String sibling = createDar(now.minus(Duration.ofDays(700)), firstSibling);
+    approve(sibling, firstSibling, now.minus(Duration.ofDays(690)));
+    approve(
+        createSiblingDar(sibling, now.minus(Duration.ofDays(600)), secondSibling),
+        secondSibling,
+        now.minus(Duration.ofDays(580)));
+
+    // Approved, then reopened with no new vote: pending and untimed, but still a grant
+    Integer reopened = createDataset();
+    String reopenedDar = createDar(now.minus(Duration.ofDays(450)), reopened);
+    approve(reopenedDar, reopened, now.minus(Duration.ofDays(440)));
+    election(reopenedDar, reopened, ElectionStatus.OPEN);
+
+    // Closed out after the term ran out, by a closeout that also carries a dataset and an
+    // approval: expired, since a closeout starts no new term
+    Integer lateClosed = createDataset();
+    Instant lateClosedOn = now.minus(Duration.ofDays(500));
+    String lateClosedDar = createDar(lateClosedOn, lateClosed);
+    approve(lateClosedDar, lateClosed, lateClosedOn.plus(Duration.ofDays(2)));
+    String lateCloseout = createCloseout(lateClosedDar, now.minus(Duration.ofDays(12)));
+    dataAccessRequestDAO.insertDARDatasetRelation(lateCloseout, lateClosed);
+    approve(lateCloseout, lateClosed, now.minus(Duration.ofDays(11)));
+
+    // A grant and its renewal, each approved amid votes and elections that decide nothing
+    Integer noisy = createDataset();
+    Instant noisyOn = now.minus(Duration.ofDays(460));
+    String noisyDar = createDar(noisyOn, noisy);
+    approveAmidNoise(noisyDar, noisy, noisyOn.plus(Duration.ofDays(4)));
+    Instant noisyReportOn = now.minus(Duration.ofDays(380));
+    approveAmidNoise(
+        createProgressReport(noisyDar, noisyReportOn, noisy),
+        noisy,
+        noisyReportOn.plus(Duration.ofDays(4)));
+
+    // A legacy submission with no collection
+    Integer uncollected = createDataset();
+    Instant uncollectedOn = now.minus(Duration.ofDays(650));
+    approve(createDarWithoutCollection(uncollectedOn, uncollected), uncollected, uncollectedOn);
+
+    List<Integer> datasets =
+        new ArrayList<>(
+            List.of(
+                expired,
+                renewed,
+                dropped,
+                closed,
+                denied,
+                pending,
+                canceled,
+                unopened,
+                firstSibling,
+                secondSibling,
+                reopened,
+                lateClosed,
+                noisy,
+                uncollected));
+
+    // Canceled and archived submissions, each approved before its status changed
+    for (String status : List.of("Canceled", "Archived")) {
+      Integer withdrawn = createDataset();
+      Instant withdrawnOn = now.minus(Duration.ofDays(420));
+      approve(createDar(withStatus(status), withdrawnOn, withdrawn), withdrawn, withdrawnOn);
+
+      Integer withdrawnRenewal = createDataset();
+      Instant parentOn = now.minus(Duration.ofDays(820));
+      String parent = createDar(parentOn, withdrawnRenewal);
+      approve(parent, withdrawnRenewal, parentOn.plus(Duration.ofDays(2)));
+      Instant reportOn = now.minus(Duration.ofDays(430));
+      approve(
+          createProgressReport(parent, withStatus(status), reportOn, withdrawnRenewal),
+          withdrawnRenewal,
+          reportOn.plus(Duration.ofDays(2)));
+
+      datasets.add(withdrawn);
+      datasets.add(withdrawnRenewal);
+    }
+    return datasets;
+  }
+
+  /**
+   * Approves the pair by a final vote, then adds what every real election also holds and what must
+   * decide nothing: a later member vote against, a final vote never cast, and a research-purpose
+   * election closed later with a final vote against.
+   */
+  private void approveAmidNoise(String referenceId, Integer datasetId, Instant on) {
+    Integer electionId = election(referenceId, datasetId, ElectionStatus.CLOSED);
+    castVote(electionId, VoteType.FINAL, true, on);
+    castVote(electionId, VoteType.DAC, false, on.plus(Duration.ofDays(1)));
+    voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
+    Integer researchPurposeElection =
+        electionDAO.insertElection(
+            ElectionType.RP.getValue(),
+            ElectionStatus.CLOSED.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
+    castVote(researchPurposeElection, VoteType.FINAL, false, on.plus(Duration.ofDays(2)));
   }
 
   private static DataAccessRequestData withStatus(String status) {
@@ -265,5 +579,15 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     List<TurnaroundBucket> buckets = dao.countPairTurnaround(FROM, TO, datasetIds, "month");
     assertEquals(1, buckets.size());
     return buckets.getFirst();
+  }
+
+  private RenewalBucket onlyRenewal(List<Integer> datasetIds) {
+    List<RenewalBucket> buckets = dao.countRenewals(FROM, TO, datasetIds, "month");
+    assertEquals(1, buckets.size());
+    return buckets.getFirst();
+  }
+
+  private List<ExpirationBucket> expirations(List<Integer> datasetIds) {
+    return dao.countExpirations(FROM, TO, datasetIds, now, "quarter");
   }
 }

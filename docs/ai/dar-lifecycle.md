@@ -230,7 +230,9 @@ AND data ->> 'closeoutSupplement' IS NOT NULL
   - Collection summaries and dashboards: `DarCollectionSummaryDAO` (the `closeout` column),
     `DacDashboardDAO` (`has_closeout`), `SigningOfficialDashboardDAO` (`needs_so`,
     `awaiting_so`).
-  - Metrics: `DarMetricsDAO` (`EXPIRATIONS`, the SO-approval `kind`, `RENEWALS`).
+  - Metrics: `DarMetricsDAO` (`EXPIRATIONS`, the SO-approval `kind`, `RENEWALS`), and their
+    study- and dataset-scoped copies in `ScopedDarMetricsDAO` (`countExpirations`,
+    `countRenewals`). The scoped queries restate the `DarMetricsDAO` rules; change both together.
 - When you add a query that detects a closeout, apply the rule. Test it with a real closeout
   (a progress report with a parent) **and** with a supplement on an original DAR, which must not
   close anything.
