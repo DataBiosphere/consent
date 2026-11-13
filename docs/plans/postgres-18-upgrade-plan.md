@@ -3,40 +3,67 @@
 [DT-3587](https://broadworkbench.atlassian.net/browse/DT-3587) upgrades the Consent Cloud SQL
 instances in dev and staging from PostgreSQL 16 to 18.
 [DT-4324](https://broadworkbench.atlassian.net/browse/DT-4324) does the same for prod. This plan
-uses the Cloud SQL major version upgrade in place, the same procedure as the
-[upgrade from 11 to 16](https://broadworkbench.atlassian.net/wiki/spaces/dt/pages/3319627778).
+uses the Cloud SQL major version upgrade in place, started from the Google Cloud console. The
+Terraform changes after the upgrade.
 
-This document contains no instance names. Each command uses `<instance>` and `<project>`. The
-instance name is the `db_name` value in the Terraform variables of the environment. It is also the
-`instance_name` value in the `consent-postgres-creds` secret.
+This document is the full record of the procedure. It contains no instance names. Each command
+uses `<instance>` and `<project>`. The instance name is the `db_name` value in the Terraform
+variables of the environment. It is also the `instance_name` value in the `consent-postgres-creds`
+secret.
 
 ## Scope
 
 Consent has no runtime code that depends on the Postgres version. The work is in three repos.
 
-| Repo | Change |
-| --- | --- |
-| `consent` | The Postgres image for tests and for the local scripts. |
-| `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). |
-| `terraform-ap-deployments` | The `db_version` value for each environment. |
+| Repo | Change | Status |
+| --- | --- | --- |
+| `consent` | The Postgres image for tests and for the local scripts. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
+| `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
+| `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
-The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change.
+The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
+includes the migration tests, passes on Postgres 18.7 with these versions.
+
+## Services that stop during the upgrade
+
+The instance is not available during the upgrade. Two services use it:
+
+- Consent.
+- The DUOS backend. Its Cloud SQL proxy connects to the same instance and database, with the same
+  `consent-postgres-creds` secret.
 
 ## Compatibility review
+
+The review used the "Migration" lists in the PostgreSQL 17 and 18 release notes. These items are
+the ones that can apply to Consent.
 
 | Area | Result |
 | --- | --- |
 | Extensions | The migrations create none. The instances set the `cloudsql.enable_pg_cron` flag to `on`, so `pg_cron` can be installed. Cloud SQL supports `pg_cron` on PostgreSQL 18. |
-| Functions and triggers | The trigger functions are plain plpgsql. PostgreSQL 17 restricts `search_path` for maintenance operations. This applies only to functions in expression indexes or materialized views. Consent has neither. |
-| Full-text search | PostgreSQL 18 uses the default collation provider of the cluster. Cloud SQL uses libc, so nothing changes. `OntologyDAO` also names the `'english'` configuration. |
-| Password hashing | PostgreSQL 18 warns about MD5 passwords. The `consent` role already uses SCRAM-SHA-256. See `consent-role-scram-password-plan.md`. |
-| Data directory | The official `postgres:18` image moved its data directory to `/var/lib/postgresql/18/docker`. This affects the local compose file. It does not affect the BEE chart, which sets `PGDATA` to `/data/pgdata`. |
+| Database flags | The Terraform sets eight flags: `cloudsql.enable_pg_cron` and seven `log_*` flags. The release notes for 17 and 18 remove none of them. |
+| Functions in indexes (17) | PostgreSQL 17 uses a safe `search_path` for maintenance operations. This applies to user functions in expression indexes and materialized views. Consent has expression indexes and one stored generated column. They use only built-in functions and operators (`LOWER`, `TRIM`, `COALESCE`, `->`, `to_tsvector`). Consent has no materialized view. |
+| Generated columns (18) | In PostgreSQL 18, a generated column is virtual unless it says `STORED`. The one generated column, `ontology_index.search_vector`, says `STORED`. |
+| Full-text search (18) | PostgreSQL 18 uses the default collation provider of the cluster. Cloud SQL uses libc, so nothing changes. The generated column and `OntologyDAO` also name the `'english'` configuration. |
+| Foreign key error code (18) | A violation of a `RESTRICT` foreign key now reports SQLSTATE `23001`, not `23503`. Consent code reads `23503`, but no changeset makes a `RESTRICT` foreign key. |
+| `AFTER` triggers (18) | These triggers now run as the role that queued the event. Consent does not change role in a session. |
+| Password hashing (18) | PostgreSQL 18 warns about MD5 passwords. The `consent` role already uses SCRAM-SHA-256. See `consent-role-scram-password-plan.md`. |
+| Data directory (18) | The official `postgres:18` image moved its data directory to `/var/lib/postgresql/18/docker`. This affects the local compose file. It does not affect the BEE chart, which sets `PGDATA` to `/data/pgdata`. |
+
+## Risk between the dev upgrade and the prod upgrade
+
+After the Consent pull request merges, the tests run on Postgres 18, and prod stays on Postgres 16
+until DT-4324. SQL that uses a feature from version 17 or 18 can pass the tests and fail in prod.
+Keep this period short. In a review, look for such SQL.
 
 ## Not confirmed
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirms it for
   each instance.
-- The BEE upgrade path for a BEE that has Postgres 16 data is not tested. See step 2.
+- The BEE render shows the correct images, but no BEE that has Postgres 16 data was upgraded.
+- `scripts/export-db.sh` was not run against a Postgres 18 server.
+- The rollback procedure was not rehearsed.
+- The Slack channel list and the note about the sync from Terra Data Repository (TDR) come from
+  the upgrade from 11 to 16 in 2024. Make sure that they are still correct.
 
 ## Step 1: Consent pull request
 
@@ -49,23 +76,25 @@ The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change.
    the 18 image cannot start on a volume that has Postgres 16 data.
 5. Update the image tag in `render-local-configs-plan.md`.
 6. Run `./mvnw clean test`.
-7. Run a fresh `docker compose up` with a dev dump. Make sure that the dump loads.
+7. Start the local compose database with a dev dump. Make sure that the dump loads.
 
-Merge this pull request before the dev upgrade. The `pg_dump` 16 client refuses an 18 server. The
-`pg_dump` 18 client can read a 16 server.
+Merge this pull request before the dev upgrade. A `pg_dump` client refuses a server that is newer
+than itself, so the 16 client fails after the upgrade. The 18 client can read a 16 server.
 
 ## Step 2: BEE pull request (terra-helmfile)
 
 1. In `values/app/consent/bee.yaml.gotmpl`, set `postgres.imageConfig.tag` to `18`.
-2. In the same file, set `postgres.upgrade.from.imageConfig.tag` to `16`. The value is `9.6`
-   today. The export step of the chart stops if its image version is different from the version
-   of the data.
-3. Render the consent chart for a BEE. Make sure that the two image tags are correct.
+2. In the same file, set `postgres.upgrade.from.imageConfig.tag` to `16`. The value was `9.6`.
+   The export step of the chart stops if its image version is different from the version of the
+   data.
+3. Render the consent chart for a BEE. Make sure that the export step uses `postgres:16`, and that
+   the import step and the main container use `postgres:18`.
 4. Start a new BEE. Make sure that the `consent-postgres` pod starts.
 
 ## Step 3: Pre-checks
 
-Do these checks on each environment before its upgrade.
+Do these checks on each environment before its upgrade. For the SQL checks, connect with
+`scripts/db-connect.sh <env>`.
 
 1. Make sure that `POSTGRES_18` is an upgrade target:
 
@@ -74,24 +103,54 @@ Do these checks on each environment before its upgrade.
      --format='value(upgradableDatabaseVersions[].name)'
    ```
 
-2. List the extensions in each database, `postgres` included. Expect `plpgsql` and possibly
+2. Make sure that automated backups are on and that the instance has no read replicas. The
+   Terraform for this instance sets no backup configuration and defines no replica.
+
+   ```bash
+   gcloud sql instances describe <instance> --project <project> \
+     --format='yaml(settings.backupConfiguration.enabled,replicaNames)'
+   ```
+
+3. List the extensions in each database, `postgres` included. Expect `plpgsql` and possibly
    `pg_cron`.
 
    ```sql
    SELECT extname, extversion FROM pg_extension;
    ```
 
-3. List the replication slots. The upgrade deletes logical slots.
+4. If `pg_cron` is installed, record its jobs. Compare them after the upgrade.
 
    ```sql
-   SELECT * FROM pg_replication_slots;
+   SELECT jobid, schedule, command, database, active FROM cron.job;
    ```
 
-4. Make sure that the instance has no read replicas. The Terraform defines none.
-5. Make sure that no view depends on `pg_stat_activity` or `pg_stat_replication`.
-6. Make sure that automated backups are on.
+5. List the replication slots. The upgrade deletes logical slots. Expect no rows.
+
+   ```sql
+   SELECT slot_name, slot_type FROM pg_replication_slots;
+   ```
+
+6. Make sure that no view depends on `pg_stat_activity` or `pg_stat_replication`. Expect no rows.
+
+   ```sql
+   SELECT schemaname, viewname FROM pg_views
+   WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+     AND definition ~ 'pg_stat_(activity|replication)';
+   ```
+
+7. Make sure that the `postgres` and `template1` databases use the `en_US.UTF8` collation. The
+   upgrade needs this.
+
+   ```sql
+   SELECT datname, datcollate FROM pg_database;
+   ```
+
+8. Make sure that the instance has no operation in progress.
 
 ## Step 4: Rehearsal on a clone
+
+Do the rehearsal for each environment. It gives the expected downtime. The upgrade from 11 to 16
+took 15 to 17 minutes.
 
 1. Clone the instance:
 
@@ -99,55 +158,111 @@ Do these checks on each environment before its upgrade.
    gcloud sql instances clone <instance> <instance>-pg18-rehearsal --project <project>
    ```
 
-2. Upgrade the clone, and record the time. The upgrade from 11 to 16 took 15 to 17 minutes.
+2. Upgrade the clone, and record the time:
 
    ```bash
    gcloud sql instances patch <instance>-pg18-rehearsal --project <project> \
      --database-version=POSTGRES_18
    ```
 
-3. Export the clone with the scripts from step 1. Load the dump locally and do the smoke tests
-   in step 6.
-4. Delete the clone.
+3. Connect to the clone. `scripts/db-connect.sh` and `scripts/export-db.sh` read the instance name
+   from the secret, so they cannot connect to a clone. Start the proxy directly. The clone has the
+   same users and passwords as the instance.
+
+   ```bash
+   cloud-sql-proxy --port 5433 <project>:us-central1:<instance>-pg18-rehearsal
+   ```
+
+   ```bash
+   psql -h 127.0.0.1 -p 5433 -U <user> -d consent
+   ```
+
+4. In `psql`, do the SQL checks of step 6, and run `ANALYZE;`.
+5. Optional: to test Consent on the upgraded data, make a dump through the proxy with the
+   `pg_dump` 18 client and the `--no-owner --no-privileges` options. Load it as `DEVNOTES.md`
+   describes, and do the smoke tests of step 6. A dump has real user data. Do not copy, share, or
+   upload it.
+6. Delete the clone:
+
+   ```bash
+   gcloud sql instances delete <instance>-pg18-rehearsal --project <project>
+   ```
 
 ## Step 5: Upgrade
 
-Upgrade dev first, then staging.
+Upgrade dev first. Upgrade staging after dev operates on Postgres 18 with no problem. Staging gets
+the newest dev version each night, so do its upgrade during the work day.
 
-1. Tell the Slack channels that the Confluence page lists. Include the expected downtime.
-2. Create a manual backup with a clear description.
-3. Start immediately after the hourly sync from Terra Data Repository (TDR) completes.
-4. In `terraform-ap-deployments`, set `db_version` to `POSTGRES_18` in
+### Before the upgrade
+
+1. Tell these Slack channels. Give the environment, the start time, the expected downtime from the
+   rehearsal, and the two services that stop.
+   - `#dsp-data-custodian-journeys`
+   - `#dsde-qa`
+   - `#workbench-oncall`
+   - `#workbench-resilience`
+   - `#workbench-release`
+2. Make sure that no Consent or DUOS deploy starts during the upgrade. A deploy runs the Liquibase
+   migration job, and the job fails when the database is not available. For dev, do not merge to
+   `develop` during the upgrade.
+3. Start immediately after the hourly sync from TDR completes. This was a lesson from the upgrade
+   from 11 to 16.
+
+### In the Google Cloud console
+
+1. Open the instance.
+2. Open **Backups**, and create a backup with a clear description.
+3. Go back to **Overview**, and select **Edit**.
+4. Open the upgrade page, and select PostgreSQL 18.
+5. Start the upgrade.
+6. Wait until the operation completes.
+
+Cloud SQL also makes a backup immediately before the upgrade and a second backup after it.
+
+### Terraform, after the upgrade
+
+Do this on the same day. Until it merges, a Terraform plan for the environment shows a version
+difference.
+
+1. In `terraform-ap-deployments`, set `db_version` to `POSTGRES_18` in
    `dsp-duos/consent/tfvars/<env>.tfvars`. Open a pull request.
-5. Comment `atlantis plan -p consent-<env>`. Autoplan is off for these projects.
-6. Read the plan. It must show an update in place. If it shows a replacement, stop.
-7. Comment `atlantis apply -p consent-<env>`.
-
-The instance is not available during the upgrade, so Consent API calls fail until it completes.
-
-If you upgrade through the console or `gcloud`, merge the Terraform change immediately after. If
-you do not, the next apply shows a version difference.
+2. Comment `atlantis plan -p consent-<env>`. Autoplan is off for these projects.
+3. Read the plan. It must show no change to the instance. If it shows a replacement or a version
+   change, stop and find the cause.
+4. Apply and merge.
 
 Do not change `prod.tfvars` for DT-3587.
 
 ## Step 6: After each upgrade
 
-1. Make sure that `SELECT version();` shows 18.
-2. Run `ANALYZE;`.
-3. Make sure that the `/status` endpoint is healthy.
-4. Make sure that the next deploy runs the Liquibase migration job without errors.
-5. Do the smoke tests: log in, list datasets, open a data access request, and search the ontology.
-6. Monitor Query Insights for slower queries for some days.
+1. Make sure that the version is 18:
+
+   ```sql
+   SELECT version();
+   ```
+
+2. Run `ANALYZE;` in the `consent` database.
+3. If `pg_cron` is installed, compare `cron.job` with the record from pre-check 4.
+4. Make sure that the Consent `/status` endpoint is healthy.
+5. Make sure that the next deploy runs the Liquibase migration job without errors.
+6. Do the smoke tests in DUOS: log in, list datasets, open a data access request, and search the
+   ontology. The log in also tests the connection of the DUOS backend.
+7. Run `./scripts/export-db.sh <env>`, and make sure that the dump is complete.
+8. Tell the Slack channels that the upgrade is complete.
+9. Monitor Query Insights for slower queries for some days.
 
 ## Rollback
 
 A downgrade in place is not possible.
 
 1. Restore the backup from before the upgrade into a new Postgres 16 instance.
-2. Set `instance_name` in `consent-postgres-creds` to the new instance, then restart Consent.
-3. Update the Terraform to agree.
+2. Set `instance_name` in `consent-postgres-creds` to the new instance. Consent and the DUOS
+   backend both read this secret. Restart the two services.
+3. Change `db_name` in the Terraform variables, and import the new instance into the Terraform
+   state.
 
-Data that Consent writes after the upgrade is lost. The rehearsal in step 4 decreases this risk.
+Data that the services write after the upgrade is lost. The rehearsal in step 4 decreases this
+risk.
 
 ## Alternative
 
