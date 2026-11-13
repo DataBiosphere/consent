@@ -17,13 +17,13 @@ Consent has no runtime code that depends on the Postgres version. The work is in
 
 | Repo | Change | Status |
 | --- | --- | --- |
-| `consent` | The Postgres image for tests and for the local scripts. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
+| `consent` | The Postgres image for the local scripts. The image for the tests stays on 16 until DT-4324. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
 | `duos-ui` | The Postgres image for the integration tests and for the local database. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153) |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
-includes the migration tests, passes on Postgres 18.7 with these versions.
+includes the migration tests, passed on Postgres 18.7 with these versions.
 
 ## Services that stop during the upgrade
 
@@ -51,17 +51,25 @@ the ones that can apply to Consent.
 | DUOS backend | Its database code needs no change. It uses the `pg` driver 8.21.0 and reads and writes only the `user_sessions` table. Its SQL uses no feature that changes in 17 or 18, and it does not read SQLSTATE codes. The audit triggers on `user_sessions` are in the Consent changesets. |
 | Data directory (18) | The official `postgres:18` image moved its data directory to `/var/lib/postgresql/18/docker`. This affects the local compose file. It does not affect the BEE chart, which sets `PGDATA` to `/data/pgdata`. |
 
-## Risk between the dev upgrade and the prod upgrade
+## The tests stay on Postgres 16 until the prod upgrade
 
-After the Consent pull request merges, the tests run on Postgres 18, and prod stays on Postgres 16
-until DT-4324. SQL that uses a feature from version 17 or 18 can pass the tests and fail in prod.
-Keep this period short. In a review, look for such SQL.
+The Consent tests use the image in `DAOTestHelper.POSTGRES_IMAGE`. This image stays on Postgres 16
+until DT-4324 upgrades prod. Thus the tests always run on the version that prod runs. SQL that
+uses a feature from version 17 or 18 fails in the tests, and it cannot go to prod.
+
+The cost is that the tests do not run on the version of dev and staging after their upgrade. SQL
+that operates differently on 18 can pass the tests and fail in dev. Dev and staging find such a
+problem before prod gets the change. The full test suite also passed one time on Postgres 18.7,
+on 2026-11-13.
+
+Set the test image to Postgres 18 in the work for DT-4324, and run the full test suite again.
 
 ## Confirmed by test
 
 These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL instance.
 
-- Consent: the full test suite passes (6393 tests, which include the migration tests).
+- Consent: the full test suite passed with the test image set to 18.7 (6393 tests, which include
+  the migration tests). This was one run. The test image in the repo stays on 16.
 - Local Consent database: a dev dump loads into the compose database, and the data stays after
   a container recreate.
 - BEE: a BEE that had Postgres 16 data started from the BEE branch. The export, backup, and
@@ -90,14 +98,15 @@ These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL 
 
 ## Step 1: Consent pull request
 
-1. Set `POSTGRES_IMAGE` to `postgres:18.7-alpine` in `DAOTestHelper.java`. The DAO tests, the
-   migration tests, and the integration tests all use this value.
-2. Set the same tag in `scripts/export-db.sh` and `scripts/templates/docker-compose.yaml`.
-3. In the compose file, change the volume target from `/var/lib/postgresql/data` to
+1. Set the tag to `postgres:18.7-alpine` in `scripts/export-db.sh` and
+   `scripts/templates/docker-compose.yaml`.
+2. In the compose file, change the volume target from `/var/lib/postgresql/data` to
    `/var/lib/postgresql`.
-4. Update `DEVNOTES.md`. A developer must run `docker volume rm consent_pgdata` one time, because
+3. Update `DEVNOTES.md`. A developer must run `docker volume rm consent_pgdata` one time, because
    the 18 image cannot start on a volume that has Postgres 16 data.
-5. Update the image tag in `render-local-configs-plan.md`.
+4. Update the image tag in `render-local-configs-plan.md`.
+5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java`. See "The tests stay on Postgres 16
+   until the prod upgrade".
 6. Run `./mvnw clean test`.
 7. Start the local compose database with a dev dump. Make sure that the dump loads.
 
@@ -303,8 +312,9 @@ A downgrade in place is not possible.
    1. In `<env>.tfvars`, set `db_name` to the new instance.
    2. In `<env>.tfvars`, make sure that `db_version` is `POSTGRES_16`. If the change from step 6
       is merged, set the value back.
-   3. Remove the upgraded instance from the state. The address can hold only one instance, so the
-      import fails without this step:
+   3. Remove the upgraded instance from the state. Do not plan or apply before this step: a new
+      `db_name` with the old state gives a replacement, which deletes the upgraded instance. The
+      address can also hold only one instance, so the import fails without this step:
 
       ```bash
       terraform state rm google_sql_database_instance.consent-db

@@ -42,7 +42,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 public class DAOTestHelper extends AbstractTestHelper implements TestExecutionListener {
 
-  public static final String POSTGRES_IMAGE = "postgres:18.7-alpine";
+  public static final String POSTGRES_IMAGE = "postgres:16.10-alpine";
   public static final String EMPTY_JSON_DOCUMENT = "{}";
   private static final int maxConnections = 100;
   private static final ConfigOverride maxConnectionsOverride =
