@@ -298,8 +298,28 @@ A downgrade in place is not possible.
 1. Restore the backup from before the upgrade into a new Postgres 16 instance.
 2. Set `instance_name` in `consent-postgres-creds` to the new instance. Consent and the DUOS
    backend both read this secret. Restart the two services.
-3. Change `db_name` in the Terraform variables, and import the new instance into the Terraform
-   state.
+3. Make Terraform agree with the restored instance. Do these steps in `terraform-ap-deployments`,
+   in `dsp-duos/consent`, with the workspace of the environment:
+   1. In `<env>.tfvars`, set `db_name` to the new instance.
+   2. In `<env>.tfvars`, make sure that `db_version` is `POSTGRES_16`. If the change from step 6
+      is merged, set the value back.
+   3. Remove the upgraded instance from the state. The address can hold only one instance, so the
+      import fails without this step:
+
+      ```bash
+      terraform state rm google_sql_database_instance.consent-db
+      ```
+
+   4. Import the restored instance:
+
+      ```bash
+      terraform import -var-file=tfvars/<env>.tfvars google_sql_database_instance.consent-db <project>/<new instance>
+      ```
+
+   5. Comment `atlantis plan -p consent-<env>`. The plan must show no change to the instance. If
+      it shows a version change, do not apply: an apply upgrades the restored instance again.
+4. Terraform does not manage the upgraded instance after step 3. Delete it in the console when you
+   are sure that you do not need it.
 
 Data that the services write after the upgrade is lost. The rehearsal in step 5 decreases this
 risk.
