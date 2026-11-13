@@ -351,7 +351,7 @@ The steps:
    each `-e` with no value, so Docker copies the value from the script environment. The secrets
    are not in the command line or the process list. The proxy listens on its default
    `127.0.0.1`, and the container publishes no ports.
-3. Run `pg_isready`, then `pg_dump --no-owner --no-privileges`, from the `postgres:16.14-alpine`
+3. Run `pg_isready`, then `pg_dump --no-owner --no-privileges`, from the `postgres:18.7-alpine`
    image (the same image as the local database), with `--network container:<proxy>`. So they
    connect to the proxy on `127.0.0.1`. `PGPASSWORD` goes in the same way as the token.
 4. Compress the output with `gzip` into a temp file in `config/`. The Postgres image loads
@@ -386,9 +386,12 @@ The dumps that developers use today have `Owner: -` on each object, so somebody 
 has `OWNER TO` and `GRANT` statements for Cloud SQL roles, such as `cloudsqlsuperuser`, which do
 not exist in local Postgres. The load then stops at the first error.
 
-Why run `pg_dump` in the image: a `pg_dump` from a newer major version can write settings that
-Postgres 16 does not know (for example `transaction_timeout` from version 17). The image version
-always matches the local database.
+Why run `pg_dump` in the image: the image version always matches the local database, so the dump
+has only settings that the local database knows. A `pg_dump` from a newer major version can write
+settings that an older database refuses (for example `transaction_timeout` from version 17). The
+image is Postgres 18. Its `pg_dump` can read a Postgres 16 or a Postgres 18 server, so the script
+works before and after the Cloud SQL upgrade. A `pg_dump` refuses a server that is newer than
+itself.
 
 #### Data Handling
 
