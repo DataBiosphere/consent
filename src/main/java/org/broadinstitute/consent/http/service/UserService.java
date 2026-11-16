@@ -13,13 +13,13 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -50,6 +50,8 @@ public class UserService implements ConsentLogger {
   public static final String LIBRARY_CARD_FIELD = "libraryCard";
   public static final String USER_PROPERTIES_FIELD = "properties";
   public static final String USER_STATUS_INFO_FIELD = "userStatusInfo";
+  public static final String ROLE_ID_NAME_MISMATCH =
+      "Invalid role: each role needs a roleId and a name that refer to the same role.";
 
   private final UserPropertyDAO userPropertyDAO;
   private final UserDAO userDAO;
@@ -350,26 +352,34 @@ public class UserService implements ConsentLogger {
     if (StringUtils.isEmpty(user.getEmail())) {
       throw new BadRequestException("Email address cannot be empty");
     }
-    Set<String> validRoleNameList =
-        Stream.of(
-                UserRoles.ADMIN,
-                UserRoles.ALUMNI,
-                UserRoles.DATASUBMITTER,
-                UserRoles.ITDIRECTOR,
-                UserRoles.RESEARCHER,
-                UserRoles.SERVICE_ACCOUNT,
-                UserRoles.SIGNINGOFFICIAL)
-            .map(UserRoles::getRoleName)
-            .collect(Collectors.toSet());
-    user.getRoles()
-        .forEach(
-            role -> {
-              if (!validRoleNameList.contains(role.getName())) {
-                String validRoleNames = String.join(", ", validRoleNameList);
-                throw new BadRequestException(
-                    "Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
-              }
-            });
+    Set<UserRoles> validRoles =
+        Set.of(
+            UserRoles.ADMIN,
+            UserRoles.ALUMNI,
+            UserRoles.DATASUBMITTER,
+            UserRoles.ITDIRECTOR,
+            UserRoles.RESEARCHER,
+            UserRoles.SERVICE_ACCOUNT,
+            UserRoles.SIGNINGOFFICIAL);
+    List<UserRole> validatedRoles = new ArrayList<>();
+    for (UserRole role : user.getRoles()) {
+      UserRoles matched = UserRoles.getUserRoleMatching(role);
+      if (matched == null) {
+        throw new BadRequestException(ROLE_ID_NAME_MISMATCH);
+      }
+      if (!validRoles.contains(matched)) {
+        String validRoleNames =
+            validRoles.stream()
+                .map(UserRoles::getRoleName)
+                .sorted()
+                .collect(Collectors.joining(", "));
+        throw new BadRequestException(
+            "Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
+      }
+      // Insert the role's own id and name, never values copied from the request.
+      validatedRoles.add(new UserRole(matched.getRoleId(), matched.getRoleName()));
+    }
+    user.setRoles(validatedRoles);
   }
 
   public List<User> findUsersInJsonArray(String json, String arrayKey) {

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -66,6 +68,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
@@ -1355,6 +1358,80 @@ class UserResourceTest extends AbstractTestHelper {
     try (var response = userResource.createNewUser(adminUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
+  }
+
+  private static Stream<Arguments> nonAdminCallerAndOtherRoleIdProvider() {
+    return Stream.of(UserRoles.Chairperson(), UserRoles.SigningOfficial())
+        .flatMap(
+            callerRole ->
+                Stream.of(UserRoles.values())
+                    .filter(r -> r != UserRoles.RESEARCHER)
+                    .map(r -> Arguments.of(callerRole, r.getRoleId())));
+  }
+
+  @ParameterizedTest
+  @MethodSource("nonAdminCallerAndOtherRoleIdProvider")
+  void testCreateNewUserNonAdminResearcherNameWithOtherRoleId(UserRole callerRole, int roleId) {
+    DuosUser caller =
+        new DuosUser(
+            authUser, new User(1, TEST_EMAIL, "Test User", new Date(), List.of(callerRole)));
+    UserRole forged = new UserRole(roleId, UserRoles.RESEARCHER.getRoleName());
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest("New User", "test@test.com", true, List.of(forged));
+
+    try (var response = userResource.createNewUser(caller, gson.toJson(request))) {
+      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+    verify(userService, never()).createUser(any());
+  }
+
+  @Test
+  void testCreateNewUserNonAdminInsertsCanonicalResearcherRole() {
+    DuosUser signingOfficial =
+        new DuosUser(
+            authUser,
+            new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.SigningOfficial())));
+    UserRole requested = UserRoles.Researcher();
+    requested.setDacId(3);
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest("New User", "test@test.com", true, List.of(requested));
+    User createdUser =
+        new User(2, request.email(), request.displayName(), new Date(), request.roles());
+    when(userService.createUser(any())).thenReturn(createdUser);
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080/");
+
+    try (var response = userResource.createNewUser(signingOfficial, gson.toJson(request))) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userService).createUser(captor.capture());
+    List<UserRole> roles = captor.getValue().getRoles();
+    assertEquals(1, roles.size());
+    assertEquals(UserRoles.RESEARCHER.getRoleId(), roles.get(0).getRoleId());
+    assertEquals(UserRoles.RESEARCHER.getRoleName(), roles.get(0).getName());
+    assertNull(roles.get(0).getDacId());
+  }
+
+  @Test
+  void testCreateNewUserAdminMismatchedRoleRejected() {
+    DuosUser adminUser =
+        new DuosUser(
+            authUser, new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.Admin())));
+    UserRole forged =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.RESEARCHER.getRoleName());
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest("New User", "test@test.com", true, List.of(forged));
+    // Admin requests are validated by UserService.createUser (see UserServiceTest).
+    when(userService.createUser(any()))
+        .thenThrow(new BadRequestException(UserService.ROLE_ID_NAME_MISMATCH));
+
+    try (var response = userResource.createNewUser(adminUser, gson.toJson(request))) {
+      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userService).createUser(captor.capture());
+    assertEquals(
+        UserRoles.CHAIRPERSON.getRoleId(), captor.getValue().getRoles().get(0).getRoleId());
   }
 
   private Map<String, Acknowledgement> getDefaultAcknowledgementForUser(

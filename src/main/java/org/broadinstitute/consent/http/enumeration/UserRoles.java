@@ -84,6 +84,22 @@ public enum UserRoles {
     return null;
   }
 
+  /**
+   * Find the role that a requested role's id and name both refer to. The name must match exactly,
+   * including case.
+   *
+   * @param requested a role from a request, with a role id and a name
+   * @return the matching role, or null when the id or name is missing, unknown, or they refer to
+   *     different roles
+   */
+  public static UserRoles getUserRoleMatching(UserRole requested) {
+    if (requested == null || requested.getRoleId() == null || requested.getName() == null) {
+      return null;
+    }
+    UserRoles role = getUserRoleFromId(requested.getRoleId());
+    return role != null && role.getRoleName().equals(requested.getName()) ? role : null;
+  }
+
   public static boolean isValidRole(String roleName) {
     if (Objects.isNull(roleName)) {
       return false;

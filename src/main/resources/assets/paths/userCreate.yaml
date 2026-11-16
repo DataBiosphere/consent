@@ -11,8 +11,12 @@ post:
         - Researcher
         - ServiceAccount
         - SigningOfficial
-      Chairpersons are only allowed to create users with the Researcher role. Chairpersons can
-      subsequently add created users to DACs they manage as Members or Chairpersons.
+      Chairpersons and Signing Officials are only allowed to create users with the Researcher
+      role. Chairpersons can subsequently add created users to DACs they manage as Members or
+      Chairpersons.
+
+      Each role must include both a roleId and a name, and they must refer to the same role.
+      If roles is omitted or empty, the user is created with the Researcher role.
     required: true
     content:
       application/json:
@@ -29,7 +33,11 @@ post:
             roles:
               type: array
               items:
-                $ref: '../schemas/UserRole.yaml'
+                allOf:
+                  - $ref: '../schemas/UserRole.yaml'
+                  - required:
+                      - roleId
+                      - name
   tags:
     - User
   responses:
@@ -40,7 +48,9 @@ post:
           schema:
             $ref: '../schemas/User.yaml'
     400:
-      description: Malformed user entity.
+      description: |
+        Malformed user entity, or a role whose roleId and name are missing or refer to
+        different roles.
     403:
         description: |
           Forbidden. The user does not have permission to create a user with the specified roles

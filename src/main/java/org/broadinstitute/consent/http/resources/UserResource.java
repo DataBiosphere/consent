@@ -564,28 +564,29 @@ public class UserResource extends Resource {
       CreateDuosUserRequest createDuosUserRequest =
           gson.fromJson(json, CreateDuosUserRequest.class);
       createDuosUserRequest.validate();
+      User newUser = createDuosUserRequest.newUser();
 
       // Non-admins have additional restrictions when creating new users
       if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
         String existingUserEmail = duosUser.getUser().getEmail();
-        String newUserEmail = createDuosUserRequest.newUser().getEmail();
 
         // Enforce that the new user email domain matches the creator's institution domains
         institutionAndLibraryCardEnforcement.validateEmailsFromSameInstitution(
-            newUserEmail, existingUserEmail);
+            newUser.getEmail(), existingUserEmail);
 
         // Non-admins can only create users with the Researcher role
-        createDuosUserRequest
-            .roles()
-            .forEach(
-                role -> {
-                  if (!role.getName().equals(UserRoles.RESEARCHER.getRoleName())) {
-                    throw new ForbiddenException(
-                        "You can only create users with the Researcher role.");
-                  }
-                });
+        for (UserRole role : newUser.getRoles()) {
+          UserRoles matched = UserRoles.getUserRoleMatching(role);
+          if (matched == null) {
+            throw new BadRequestException(UserService.ROLE_ID_NAME_MISMATCH);
+          }
+          if (matched != UserRoles.RESEARCHER) {
+            throw new ForbiddenException("You can only create users with the Researcher role.");
+          }
+        }
+        newUser.setRoles(List.of(UserRoles.Researcher()));
       }
-      User user = userService.createUser(createDuosUserRequest.newUser());
+      User user = userService.createUser(newUser);
       URI uri =
           new URI("%sapi/user/%d".formatted(servicesConfiguration.getLocalURL(), user.getUserId()));
       return Response.created(uri).entity(user).build();
