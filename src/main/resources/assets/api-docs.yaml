@@ -380,6 +380,9 @@ paths:
           description: Unauthorized.
         403:
           description: Updates are restricted to the create user.
+        409:
+          description: >-
+            Conflict. The draft has elections, or the update lost a lock conflict and can be retried.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -482,6 +485,9 @@ paths:
                 $ref: './schemas/DataAccessRequest.yaml'
         401:
           description: Unauthorized.
+        409:
+          description: >-
+            Conflict. The draft has elections, or the update lost a lock conflict and can be retried.
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -550,6 +556,9 @@ paths:
                 $ref: './schemas/DataAccessRequest.yaml'
         401:
           description: Unauthorized.
+        409:
+          description: >-
+            Conflict. The draft has elections, or the update lost a lock conflict and can be retried.
         429:
           description: Too Many Requests - rate limit exceeded
           content:

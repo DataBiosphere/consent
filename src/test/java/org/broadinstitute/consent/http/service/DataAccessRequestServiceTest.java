@@ -1522,6 +1522,20 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
+  void testUpdateByReferenceIdDeadlockIsConflict() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    // A collection-first writer (resubmit, cancel, SO approval) held the collection lock.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestServiceDAO)
+        .updateByReferenceId(user, dar);
+
+    assertThrows(ConsentConflictException.class, () -> service.updateByReferenceId(user, dar));
+  }
+
+  @Test
   void testUpdateByReferenceIdVersion2_WithCollection() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
