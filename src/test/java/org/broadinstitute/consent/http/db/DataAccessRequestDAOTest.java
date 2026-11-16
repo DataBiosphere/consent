@@ -2950,6 +2950,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertApprovedInBothScopes(s, lastCast);
   }
 
+  @Test
+  void testLockDataAccessRequest() {
+    StudyDar s = createStudyDar();
+    String referenceId = s.dar().getReferenceId();
+
+    assertEquals(
+        referenceId,
+        dataAccessRequestDAO.inTransaction(dao -> dao.lockDataAccessRequest(referenceId)));
+    assertNull(dataAccessRequestDAO.lockDataAccessRequest("no-such-reference-id"));
+  }
+
   private record StudyDar(Integer studyId, Dataset dataset, DataAccessRequest dar) {}
 
   private StudyDar createStudyDar() {

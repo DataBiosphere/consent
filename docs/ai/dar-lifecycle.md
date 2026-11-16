@@ -43,7 +43,8 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   (`DarCollectionService.updateCollectionToDraftStatus`) turns its DARs back into drafts: it nulls
   `submission_date` but keeps `collection_id`, and `createDataAccessRequest` later reuses that
   collection. So never test `collection_id IS NULL` to find drafts.
-- No elections, no grants. Drafts never count toward approvals, dashboards, or closeout logic.
+- No grants, and normally no elections. Drafts never count toward approvals, dashboards, or
+  closeout logic. A draft that has elections can't be submitted (409).
 - **Only an original DAR is *created* as a draft.** Progress reports are inserted already
   submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
   progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit
@@ -70,6 +71,9 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   `submission_date` (`DataAccessRequestDAO.findApprovedDARsByDatasetId`,
   `DatasetDAO.getApprovedDatasets`). Newer submissions in the collection don't extend it unless
   they are approved themselves.
+- Submitting an existing draft locks its DAR row and re-reads it, then locks its collection (if
+  any). It is rejected if another submit already committed (422), or, checked under the collection
+  lock, if the draft has any election (409). The submit uses the collection read under the lock.
 - Pre-2022 collections can hold **several original DARs** (one per dataset). Queries that pick
   "the latest DAR" must also read the non-canceled sibling originals; see `DacDashboardDAO` and
   `DarCollectionSummaryDAO`.
@@ -258,9 +262,16 @@ precondition that must hold at commit belongs after `lockCollection`, not only i
 - Don't catch a SQL error inside the locked callback and carry on: Postgres has already aborted
   the transaction, so the commit silently rolls back. Let it propagate out of `inTransaction`,
   then handle it (as `DACAutomationRuleService.openElectionAndApprove` does).
+- Submitting a draft locks the DAR row **before** its collection, and so does a draft edit
+  (`DataAccessRequestServiceDAO.updateByReferenceId` updates the DAR, then the collection).
+  Resubmit, researcher cancel and signing official approval lock the collection first and then
+  write DAR rows, so either kind can deadlock with the other on the same collection. Postgres
+  aborts one of the two; a path maps that to a retryable 409 only if it calls
+  `throwIfLockFailure`, and returns a 500 otherwise.
 - A deadlock or lock timeout while waiting for the lock (SQL states `40P01`, `55P03`, `40001`)
-  is a retryable conflict. `CollectionLocks.throwIfLockFailure` turns it into a 409; votes,
-  rationale updates and progress report creation use it.
+  is a retryable conflict. `CollectionLocks.throwIfLockFailure` turns it into a 409. Search for
+  its callers to see which paths use it; a path that takes the collection lock and doesn't call
+  it returns a 500 on a lock failure.
 
 JDBI 3 (3.52.x) binds one handle per thread: `Jdbi.withHandle` reuses the thread's `handleScope`,
 and `Handle.inTransaction` joins an open transaction. So on-demand DAOs and nested

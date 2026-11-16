@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
@@ -164,6 +165,18 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (var response = resource.createDataAccessRequest(duosUserWithCards, request, info, "")) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
+  }
+
+  @Test
+  void testCreateDataAccessRequestConflict() {
+    doThrow(new ConsentConflictException("Elections present"))
+        .when(dataAccessRequestService)
+        .createDataAccessRequest(any(), any(), any());
+
+    try (var response = resource.createDataAccessRequest(duosUser, request, info, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+    }
+    verify(darCollectionService, never()).createElectionsForNewDarCollection(any());
   }
 
   @Test
