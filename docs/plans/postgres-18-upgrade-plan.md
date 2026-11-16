@@ -291,10 +291,15 @@ took 15 to 17 minutes.
 
 | Check | Dev, 2026-11-16 | Staging |
 | --- | --- | --- |
-| Upgrade of the clone | Completed. | Not done |
+| Clone | Completed in 4 minutes 31 seconds. | Not done |
+| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Not done |
 | Version | PostgreSQL 18.6. | Not done |
 | `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Not done |
 | Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | Not done |
+
+The upgrade time is the full time of the update operation. It includes the backup before the
+upgrade (41 seconds) and the backup after it (61 seconds). For the dev upgrade, tell the Slack
+channels to expect a downtime of approximately 15 minutes.
 
 Cloud SQL gave version 18.6. The local image is 18.7. A `pg_dump` 18.7 client can read an 18.6
 server, because the major version is the same.
