@@ -62,6 +62,24 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   List<Integer> findDatasetIdsByCollectionId(@Bind("collectionId") Integer collectionId);
 
+  /**
+   * Whether the DAR is still submitted with this submission date. False for a draft, and for a DAR
+   * whose submission date changed since the caller read it. Compared to the millisecond: the column
+   * keeps microseconds (progress reports use now()), but a Java Date, a bound Date and a Gson copy
+   * of a collection keep only milliseconds.
+   */
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request
+          WHERE reference_id = :referenceId
+            AND date_trunc('milliseconds', submission_date)
+                = date_trunc('milliseconds', CAST(:submissionDate AS timestamptz))
+      )
+      """)
+  boolean isSubmittedAt(
+      @Bind("referenceId") String referenceId, @Bind("submissionDate") Date submissionDate);
+
   @SqlQuery(
       """
       SELECT EXISTS (

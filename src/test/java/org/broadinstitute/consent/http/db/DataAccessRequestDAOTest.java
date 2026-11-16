@@ -2962,6 +2962,59 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     return new StudyDar(studyId, dataset, dar);
   }
 
+  @Test
+  void testIsSubmittedAt() {
+    StudyDar submitted = createStudyDar();
+    DataAccessRequest stored =
+        dataAccessRequestDAO.findByReferenceId(submitted.dar().getReferenceId());
+    String draftReferenceId = "synthetic-draft-is-submitted";
+    dataAccessRequestDAO.insertDataAccessRequest(
+        submitted.dar().getCollectionId(),
+        draftReferenceId,
+        submitted.dar().getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        new DataAccessRequestData(),
+        "synthetic-era");
+
+    assertTrue(
+        dataAccessRequestDAO.isSubmittedAt(stored.getReferenceId(), stored.getSubmissionDate()));
+    // The chair's copy comes from the collection query.
+    DataAccessRequest fromCollection =
+        darCollectionDAO
+            .findDARCollectionByCollectionId(stored.getCollectionId())
+            .getDars()
+            .get(stored.getReferenceId());
+    assertTrue(
+        dataAccessRequestDAO.isSubmittedAt(
+            fromCollection.getReferenceId(), fromCollection.getSubmissionDate()));
+    // Submitted again since it was read: a different submission date.
+    assertFalse(
+        dataAccessRequestDAO.isSubmittedAt(
+            stored.getReferenceId(), new Date(stored.getSubmissionDate().getTime() + 60_000)));
+    assertFalse(dataAccessRequestDAO.isSubmittedAt(draftReferenceId, new Date()));
+
+    // Progress reports store now(), with microseconds. A caller's copy keeps milliseconds.
+    jdbi.useHandle(
+        h ->
+            h.execute(
+                "UPDATE data_access_request SET submission_date = '2026-03-04 05:06:07.123456' "
+                    + "WHERE reference_id = ?",
+                stored.getReferenceId()));
+    DataAccessRequest micro = dataAccessRequestDAO.findByReferenceId(stored.getReferenceId());
+    assertEquals(123_456_000, micro.getSubmissionDate().getNanos());
+    assertTrue(
+        dataAccessRequestDAO.isSubmittedAt(micro.getReferenceId(), micro.getSubmissionDate()));
+    assertTrue(
+        dataAccessRequestDAO.isSubmittedAt(
+            micro.getReferenceId(), new Date(micro.getSubmissionDate().getTime())));
+    assertFalse(
+        dataAccessRequestDAO.isSubmittedAt(
+            micro.getReferenceId(), new Date(micro.getSubmissionDate().getTime() + 1)));
+    assertFalse(dataAccessRequestDAO.isSubmittedAt("no-such-reference-id", new Date()));
+  }
+
   /** Archives the pair's elections and opens a new one with no vote cast, as a reopen does. */
   private Election reopen(StudyDar s) {
     List<Integer> earlier =
