@@ -69,7 +69,8 @@ Set the two test images to Postgres 18 in the work for DT-4324, and run the test
 
 ## Confirmed by test
 
-These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL instance.
+These tests used Postgres 18.7 in containers or in a BEE. The rehearsal for dev in step 5 used a
+Cloud SQL instance. See its results there.
 
 - Consent: the full test suite passed with the test image set to 18.7 (6393 tests, which include
   the migration tests). This was one run. The test image in the repo stays on 16.
@@ -91,7 +92,8 @@ These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL 
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
   for dev. Staging is not confirmed.
-- No test used a Cloud SQL instance on Postgres 18. The rehearsal in step 5 is the first.
+- No Consent or DUOS service connected to a Cloud SQL instance on Postgres 18. The rehearsal for
+  dev upgraded a clone and did the SQL checks only.
 - `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this.
 - The BEE test did not compare row counts before and after the upgrade.
 - The Playwright tests that need the automation accounts did not run on Postgres 18. They did not
@@ -273,7 +275,8 @@ took 15 to 17 minutes.
    psql -h 127.0.0.1 -p 5433 -U <user> -d consent
    ```
 
-4. In `psql`, do the SQL checks of step 7, and run `ANALYZE;`.
+4. In `psql`, do the SQL checks of step 7, and run `ANALYZE;`. The checks of step 7 that use a
+   service do not apply, because no service connects to the clone.
 5. Optional: to test Consent on the upgraded data, make a dump through the proxy with the
    `pg_dump` 18 client and the `--no-owner --no-privileges` options. Load it as `DEVNOTES.md`
    describes, and do the smoke tests of step 7. A dump has real user data. Do not copy, share, or
@@ -283,6 +286,18 @@ took 15 to 17 minutes.
    ```bash
    gcloud sql instances delete <instance>-pg18-rehearsal --project <project>
    ```
+
+### Results
+
+| Check | Dev, 2026-11-16 | Staging |
+| --- | --- | --- |
+| Upgrade of the clone | Completed. | Not done |
+| Version | PostgreSQL 18.6. | Not done |
+| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Not done |
+| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | Not done |
+
+Cloud SQL gave version 18.6. The local image is 18.7. A `pg_dump` 18.7 client can read an 18.6
+server, because the major version is the same.
 
 ## Step 6: Upgrade
 
@@ -337,7 +352,10 @@ Do not change `prod.tfvars` for DT-3587.
    SELECT version();
    ```
 
-2. Run `ANALYZE;` in the `consent` database.
+2. Run `ANALYZE;` in the `consent` database. The `consent` role is not a superuser, so
+   PostgreSQL gives a warning for each shared system catalog, for example
+   `permission denied to analyze "pg_authid", skipping it`. The rehearsal for dev gave 11 such
+   warnings. They are not a problem. A warning for a table in the `consent` schema is a problem.
 3. If `pg_cron` is installed, make sure that the `postgres` database still lists it, and compare
    `cron.job` with the record from pre-check 4.
 4. Make sure that the Consent `/status` endpoint is healthy.
