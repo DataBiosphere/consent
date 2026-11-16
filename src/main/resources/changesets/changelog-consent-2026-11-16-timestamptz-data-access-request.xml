@@ -7,7 +7,7 @@
     docs/plans/timestamptz-migration-plan.md for the UTC session zone, the precondition and the
     rollback.
   -->
-  <changeSet id="changelog-consent-2026-11-12-timestamptz-data-access-request" author="grushton">
+  <changeSet id="changelog-consent-2026-11-16-timestamptz-data-access-request" author="grushton">
     <preConditions onFail="HALT" onError="HALT"
       onFailMessage="data_access_request must have 5 timestamp or timestamptz column(s): approving_so_timestamp, create_date, institution_snapshot_date, submission_date, update_date. Compare the deployed schema with the changesets before you deploy.">
       <dbms type="postgresql"/>

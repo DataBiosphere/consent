@@ -10,7 +10,7 @@
     COALESCE(update_date, create_date), and that expression fails while only one column is
     timestamptz.
   -->
-  <changeSet id="changelog-consent-2026-11-12-timestamptz-vote" author="grushton">
+  <changeSet id="changelog-consent-2026-11-16-timestamptz-vote" author="grushton">
     <preConditions onFail="HALT" onError="HALT"
       onFailMessage="vote must have 2 timestamp or timestamptz column(s): create_date, update_date. Compare the deployed schema with the changesets before you deploy.">
       <dbms type="postgresql"/>

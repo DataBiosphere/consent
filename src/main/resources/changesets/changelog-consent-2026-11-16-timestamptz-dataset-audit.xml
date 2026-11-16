@@ -7,7 +7,7 @@
     docs/plans/timestamptz-migration-plan.md for the UTC session zone, the precondition and the
     rollback.
   -->
-  <changeSet id="changelog-consent-2026-11-12-timestamptz-dataset-audit" author="grushton">
+  <changeSet id="changelog-consent-2026-11-16-timestamptz-dataset-audit" author="grushton">
     <preConditions onFail="HALT" onError="HALT"
       onFailMessage="dataset_audit must have 1 timestamp or timestamptz column(s): modification_date. Compare the deployed schema with the changesets before you deploy.">
       <dbms type="postgresql"/>
