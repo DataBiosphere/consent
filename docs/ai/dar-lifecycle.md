@@ -35,6 +35,10 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
 | Progress report | set | set (parent DAR id) | set at insert; resubmit can null it | `DataAccessRequestDAO.insertProgressReport` |
 | Closeout | set | set (the original DAR or a progress report) | set, always (resubmit is rejected) | a progress report whose `data.closeoutSupplement` has reasons |
 
+`data.status` is server-managed. The DAR create, draft and update endpoints ignore a `status` in the
+request body (`DataAccessRequestResource`): a new draft or a submission (including submitting an
+existing draft) gets none, and a draft edit keeps the stored value (`keepStoredStatus`).
+
 ### 1. Draft
 
 - Created by `DataAccessRequestService.insertDraftDataAccessRequest`; edited through

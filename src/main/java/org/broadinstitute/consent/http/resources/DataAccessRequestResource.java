@@ -212,6 +212,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      keepStoredStatus(data, originalDar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
@@ -288,6 +289,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      keepStoredStatus(data, originalDar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
@@ -609,6 +611,9 @@ public class DataAccessRequestResource extends Resource {
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
     DataAccessRequestData data = DataAccessRequestData.populateDARData(json);
+    // Only the server sets a DAR's status. A new draft or a submission (even of an existing draft)
+    // never starts with one.
+    data.setStatus(null);
     // When posting a submitted dar, there are two cases:
     // 1. those that existed previously as a draft dar
     // 2. those that are brand new
@@ -639,6 +644,17 @@ public class DataAccessRequestResource extends Resource {
     newDar.setData(data);
     newDar.addDatasetIds(data.getDatasetIds());
     return newDar;
+  }
+
+  /**
+   * Only the server sets a DAR's status (researcher cancel), so a draft edit ignores any status the
+   * client sends and keeps the stored one.
+   */
+  private static void keepStoredStatus(DataAccessRequestData data, DataAccessRequest stored) {
+    data.setStatus(
+        Objects.nonNull(stored) && Objects.nonNull(stored.getData())
+            ? stored.getData().getStatus()
+            : null);
   }
 
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
