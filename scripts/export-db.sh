@@ -19,8 +19,10 @@ source "$SCRIPT_DIR/lib/common.sh"
 DB_ENV="${1:-dev}"
 REPO_CONFIG="$(cd "$SCRIPT_DIR/.." && pwd)/config"
 CONFIG_DIR="${2:-$REPO_CONFIG}"
-# The same image as the local database, so pg_dump writes only settings that Postgres 16 knows.
-POSTGRES_IMAGE="postgres:16.14-alpine"
+# The same image as the local database, so pg_dump writes only settings that the local database
+# knows. pg_dump refuses a server newer than itself, so this version must not be older than the
+# Cloud SQL version. The Postgres 18 pg_dump can read a Postgres 16 or a Postgres 18 server.
+POSTGRES_IMAGE="postgres:18.7-alpine"
 
 # The project comes only from this table, so the gcloud default project has no effect. Refuse
 # prod before the script reads a secret.

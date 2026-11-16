@@ -148,6 +148,10 @@ docker compose -f config/docker-compose.yaml -f config/docker-compose.override.y
 
 If the load fails, `docker logs localdb` shows the error.
 
+The database image is Postgres 18. A `consent_pgdata` volume from the Postgres 16 image has its
+data in a different directory, and the Postgres 18 image stops when it finds it. If `localdb` does
+not start after you update, do the same steps to remove the volume and load the dump again.
+
 ### Elasticsearch index
 
 [index-es.sh](scripts/index-es.sh) fills the local `dataset` index from the local database, with

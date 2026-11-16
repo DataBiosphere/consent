@@ -89,7 +89,7 @@ services:
 
   # The rendered consent.yaml connects to sqlproxy:5432, so this service keeps that name.
   sqlproxy:
-    image: postgres:16.14-alpine
+    image: postgres:18.7-alpine
     container_name: localdb
     ports:
       # On all interfaces, because the duos-ui compose mode reaches it through host-gateway. The
@@ -107,8 +107,9 @@ services:
         bind:
           create_host_path: false
       # The database stays after `docker compose down`. The image loads the dump only into an
-      # empty volume. See DEVNOTES.md to load a new dump.
-      - pgdata:/var/lib/postgresql/data
+      # empty volume. See DEVNOTES.md to load a new dump. The Postgres 18 image keeps its data in
+      # /var/lib/postgresql/18/docker, so the volume is at the parent directory.
+      - pgdata:/var/lib/postgresql
     environment:
       PGGSSENCMODE: disable
       POSTGRES_DB: consent
