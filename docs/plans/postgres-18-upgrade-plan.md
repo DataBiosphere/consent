@@ -40,7 +40,7 @@ the ones that can apply to Consent.
 
 | Area | Result |
 | --- | --- |
-| Extensions | The migrations create none. The instances set the `cloudsql.enable_pg_cron` flag to `on`, so `pg_cron` can be installed. Cloud SQL supports `pg_cron` on PostgreSQL 18. |
+| Extensions | The migrations create none. The instances set the `cloudsql.enable_pg_cron` flag to `on`, so `pg_cron` can be installed. In dev, `pg_cron` 1.6.7 is installed in the `postgres` database. Cloud SQL supports `pg_cron` on PostgreSQL 18. |
 | Database flags | The Terraform sets eight flags: `cloudsql.enable_pg_cron` and seven `log_*` flags. The release notes for 17 and 18 remove none of them. |
 | Functions in indexes (17) | PostgreSQL 17 uses a safe `search_path` for maintenance operations. This applies to user functions in expression indexes and materialized views. Consent has expression indexes and one stored generated column. They use only built-in functions and operators (`LOWER`, `TRIM`, `COALESCE`, `->`, `to_tsvector`). Consent has no materialized view. |
 | Generated columns (18) | In PostgreSQL 18, a generated column is virtual unless it says `STORED`. The one generated column, `ontology_index.search_vector`, says `STORED`. |
@@ -89,8 +89,8 @@ These tests used Postgres 18.7 in containers or in a BEE. None used a Cloud SQL 
 
 ## Not confirmed
 
-- The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirms it for
-  each instance.
+- The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
+  for dev. Staging is not confirmed.
 - No test used a Cloud SQL instance on Postgres 18. The rehearsal in step 5 is the first.
 - `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this.
 - The BEE test did not compare row counts before and after the upgrade.
@@ -148,7 +148,12 @@ a Postgres 16 container fails.
 ## Step 4: Pre-checks
 
 Do these checks on each environment before its upgrade. For the SQL checks, connect with
-`scripts/db-connect.sh <env>`.
+`scripts/db-connect.sh <env>`. The script starts `psql` in the `consent` database. To change to a
+different database in the same session, use `\c`:
+
+```
+\c postgres
+```
 
 1. Make sure that `POSTGRES_18` is an upgrade target:
 
@@ -165,18 +170,31 @@ Do these checks on each environment before its upgrade. For the SQL checks, conn
      --format='yaml(settings.backupConfiguration.enabled,replicaNames)'
    ```
 
-3. List the extensions in each database, `postgres` included. Expect `plpgsql` and possibly
-   `pg_cron`.
+3. List the extensions in the `consent` database and in the `postgres` database. Expect `plpgsql`
+   in each of them. `pg_cron` installs in one database only, which the `cron.database_name` flag
+   names. The default is `postgres`, and the Terraform does not set this flag. Thus expect
+   `pg_cron` in `postgres` and not in `consent`.
 
    ```sql
    SELECT extname, extversion FROM pg_extension;
    ```
 
-4. If `pg_cron` is installed, record its jobs. Compare them after the upgrade.
+4. If `pg_cron` is installed, record its jobs. Compare them after the upgrade. Run this query in
+   the database that has the extension.
 
    ```sql
-   SELECT jobid, schedule, command, database, active FROM cron.job;
+   SELECT jobid, schedule, command, database, username, active FROM cron.job;
    ```
+
+   The `cron.job` table has row-level security, so a role sees only the jobs that it owns. No
+   rows does not prove that no jobs exist. The sequence for the job IDs has no such limit:
+
+   ```sql
+   SELECT last_value, is_called FROM cron.jobid_seq;
+   ```
+
+   If `is_called` is `f`, no job was ever made on the instance. If it is `t`, run the first
+   query again as the role that owns the jobs.
 
 5. List the replication slots. The upgrade deletes logical slots. Expect no rows.
 
@@ -184,7 +202,8 @@ Do these checks on each environment before its upgrade. For the SQL checks, conn
    SELECT slot_name, slot_type FROM pg_replication_slots;
    ```
 
-6. Make sure that no view depends on `pg_stat_activity` or `pg_stat_replication`. Expect no rows.
+6. Make sure that no view depends on `pg_stat_activity` or `pg_stat_replication`. The query reads
+   only the current database, so run it in `consent` and in `postgres`. Expect no rows.
 
    ```sql
    SELECT schemaname, viewname FROM pg_views
@@ -199,7 +218,30 @@ Do these checks on each environment before its upgrade. For the SQL checks, conn
    SELECT datname, datcollate FROM pg_database;
    ```
 
-8. Make sure that the instance has no operation in progress.
+8. Make sure that the instance has no operation in progress. Expect an empty list.
+
+   ```bash
+   gcloud sql operations list --instance <instance> --project <project> \
+     --filter='status!=DONE'
+   ```
+
+### Results
+
+| Check | Dev, 2026-11-16 | Staging |
+| --- | --- | --- |
+| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Not done |
+| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Not done |
+| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Not done |
+| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Not done |
+| 5. Replication slots | Pass. No slots. | Not done |
+| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Not done |
+| 7. Collation | Pass. All databases use `en_US.UTF8`. | Not done |
+| 8. Operations | Pass. No operation in progress. | Not done |
+
+The dev server was on PostgreSQL 16.15.
+
+The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job.
+Dev has neither job. This does not change the upgrade. It is a different problem.
 
 ## Step 5: Rehearsal on a clone
 
@@ -296,7 +338,8 @@ Do not change `prod.tfvars` for DT-3587.
    ```
 
 2. Run `ANALYZE;` in the `consent` database.
-3. If `pg_cron` is installed, compare `cron.job` with the record from pre-check 4.
+3. If `pg_cron` is installed, make sure that the `postgres` database still lists it, and compare
+   `cron.job` with the record from pre-check 4.
 4. Make sure that the Consent `/status` endpoint is healthy.
 5. Make sure that the next deploy runs the Liquibase migration job without errors.
 6. Do the smoke tests in DUOS: log in, list datasets, open a data access request, and search the
