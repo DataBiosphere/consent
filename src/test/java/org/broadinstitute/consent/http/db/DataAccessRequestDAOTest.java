@@ -1981,6 +1981,31 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testHasElectionsInCollection() {
+    StudyDar withElection = createStudyDar();
+    Integer collectionId = withElection.dar().getCollectionId();
+    StudyDar other = createStudyDar();
+    assertFalse(dataAccessRequestDAO.hasElectionsInCollection(collectionId));
+
+    // A canceled RP election on a sibling DAR still counts.
+    DataAccessRequest sibling =
+        createDataAccessRequest(withElection.dar().getUserId(), collectionId);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.RP.getValue(),
+            ElectionStatus.CANCELED.getValue(),
+            new Date(),
+            sibling.getReferenceId(),
+            withElection.dataset().getDatasetId());
+
+    assertTrue(dataAccessRequestDAO.hasElectionsInCollection(collectionId));
+    assertFalse(dataAccessRequestDAO.hasElectionsInCollection(other.dar().getCollectionId()));
+
+    electionDAO.archiveElectionByIds(List.of(electionId), new Date());
+    assertTrue(dataAccessRequestDAO.hasElectionsInCollection(collectionId));
+  }
+
+  @Test
   void testSubmittedOriginalDarWithCloseoutSupplementIsNotACloseout() {
     StudyDar grant = createStudyDar();
     castFinalVote(grant.dar().getReferenceId(), grant.dataset(), new Date(), true);

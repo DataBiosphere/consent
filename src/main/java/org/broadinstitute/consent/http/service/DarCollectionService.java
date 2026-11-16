@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 
 public class DarCollectionService implements ConsentLogger {
 
@@ -632,26 +633,39 @@ public class DarCollectionService implements ConsentLogger {
 
   public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
     Integer collectionId = sourceCollection.getDarCollectionId();
-    dataAccessRequestDAO.inTransaction(
-        dao -> {
-          // Reverting to drafts nulls every submission_date, which would undo a closeout.
-          CollectionLocks.lockOpenCollection(dao, collectionId);
-          sourceCollection
-              .getDars()
-              .values()
-              .forEach(
-                  (d) -> {
-                    Date now = new Date();
-                    DataAccessRequestData newData =
-                        new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
-                    newData.setStatus(null);
-                    newData.setReferenceId(d.getReferenceId());
-                    daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
-                    dataAccessRequestDAO.updateDataByReferenceId(
-                        d.getReferenceId(), d.getUserId(), null, now, newData, null);
-                  });
-          return null;
-        });
+    try {
+      dataAccessRequestDAO.inTransaction(
+          dao -> {
+            // Reverting to drafts nulls every submission_date, which would undo a closeout.
+            CollectionLocks.lockOpenCollection(dao, collectionId);
+            // A DAR with elections has been under DAC review, so it can't become a draft again.
+            // Every election-opening path takes the same lock, so this holds until commit.
+            if (dao.hasElectionsInCollection(collectionId)) {
+              throw new ConsentConflictException(
+                  "Elections present on DARs; cannot resubmit collection");
+            }
+            sourceCollection
+                .getDars()
+                .values()
+                .forEach(
+                    (d) -> {
+                      Date now = new Date();
+                      DataAccessRequestData newData =
+                          new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                      newData.setStatus(null);
+                      newData.setReferenceId(d.getReferenceId());
+                      daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                      dataAccessRequestDAO.updateDataByReferenceId(
+                          d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                    });
+            return null;
+          });
+    } catch (JdbiException e) {
+      // Submitting a draft in this collection locks its DAR row and then the collection, the
+      // reverse of this path, so either can be the deadlock victim. That is a retryable conflict.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
 
     // get updated collection
     DarCollection updatedCollection =

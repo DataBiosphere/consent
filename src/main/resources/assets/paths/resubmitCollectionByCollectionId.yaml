@@ -23,7 +23,9 @@ put:
     404:
       description: Not Found
     409:
-      description: Conflict. A collection with a submitted closeout cannot be resubmitted.
+      description: >-
+        Conflict. A collection with a submitted closeout, or with an election on any of its
+        DARs, cannot be resubmitted.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

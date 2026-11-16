@@ -47,9 +47,10 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
 - **Only an original DAR is *created* as a draft.** Progress reports are inserted already
   submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
   progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit
-  needs a canceled DAR in the collection, so this mostly affects pre-2022 collections with a
-  canceled sibling original. A closed-out collection can't be resubmitted (409, under the
-  collection lock), so a closeout never loses its `submission_date`.
+  needs a canceled DAR in the collection, and is rejected (409, under the collection lock) when a
+  closeout exists or when any DAR in the collection has an election of any type or status,
+  archived or canceled included (`DataAccessRequestDAO.hasElectionsInCollection`). A DAR the DAC
+  has reviewed never becomes a draft again, and a closeout never loses its `submission_date`.
 
 ### 2. Original DAR (submission)
 
