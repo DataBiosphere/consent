@@ -518,7 +518,7 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
-        uploadDocumentContents(
+        uploadReplacingDocument(
             DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
       }
       if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
@@ -527,8 +527,25 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
-        uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
+        uploadReplacingDocument(
+            DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
       }
+    }
+  }
+
+  /**
+   * Upload for a progress report not yet saved: a document it replaces was uploaded earlier in the
+   * same request and nothing refers to it, so delete it now.
+   */
+  private void uploadReplacingDocument(
+      DarDocumentType type,
+      DataAccessRequest progressReport,
+      InputStream uploadInputStream,
+      FormDataContentDisposition fileDetail)
+      throws IOException {
+    String replaced = uploadDocumentContents(type, progressReport, uploadInputStream, fileDetail);
+    if (Objects.nonNull(replaced)) {
+      deleteDarDocument(progressReport, replaced);
     }
   }
 
@@ -662,8 +679,45 @@ public class DataAccessRequestResource extends Resource {
     if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
-    uploadDocumentContents(type, dar, uploadInputStream, fileDetail);
-    return dataAccessRequestService.updateByReferenceId(user, dar);
+    String previousLocation = uploadDocumentContents(type, dar, uploadInputStream, fileDetail);
+    DataAccessRequest updated;
+    try {
+      updated = dataAccessRequestService.updateByReferenceId(user, dar);
+    } catch (RuntimeException e) {
+      // Usually nothing was saved, but a failure can also follow a commit. Remove the upload only
+      // if the stored DAR doesn't point to it.
+      deleteUploadIfUnreferenced(type, dar, newDocumentLocation(type, dar));
+      throw e;
+    }
+    if (Objects.nonNull(previousLocation)) {
+      deleteDarDocument(dar, previousLocation);
+    }
+    return updated;
+  }
+
+  private void deleteUploadIfUnreferenced(
+      DarDocumentType type, DataAccessRequest dar, String uploadLocation) {
+    DataAccessRequest stored;
+    try {
+      stored = dataAccessRequestService.findByReferenceId(dar.getReferenceId());
+    } catch (RuntimeException e) {
+      // Can't tell whether the DAR refers to it: an orphaned blob is better than a missing one.
+      logWarn(
+          "Kept upload %s for DAR %s: %s"
+              .formatted(uploadLocation, dar.getReferenceId(), e.getMessage()));
+      return;
+    }
+    if (stored == null
+        || stored.getData() == null
+        || !uploadLocation.equals(newDocumentLocation(type, stored))) {
+      deleteDarDocument(dar, uploadLocation);
+    }
+  }
+
+  private static String newDocumentLocation(DarDocumentType type, DataAccessRequest dar) {
+    return DarDocumentType.IRB.equals(type)
+        ? dar.getData().getIrbDocumentLocation()
+        : dar.getData().getCollaborationLetterLocation();
   }
 
   /**
@@ -673,9 +727,10 @@ public class DataAccessRequestResource extends Resource {
    * @param dar The Data Access Request
    * @param uploadInputStream The input stream of the file to be uploaded
    * @param fileDetail The file details
+   * @return the location of the document this one replaces, or null. It is not deleted here.
    * @throws IOException if an error occurs during upload
    */
-  public void uploadDocumentContents(
+  public String uploadDocumentContents(
       DarDocumentType type,
       DataAccessRequest dar,
       InputStream uploadInputStream,
@@ -686,26 +741,23 @@ public class DataAccessRequestResource extends Resource {
     String fileName = fileDetail.getFileName();
     UUID id = UUID.randomUUID();
     BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), id);
+    String previousLocation = null;
     switch (type) {
       case IRB:
-        // Delete the current document if it exists
-        if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
-          deleteDarDocument(dar, dar.getData().getIrbDocumentLocation());
-        }
+        previousLocation = dar.getData().getIrbDocumentLocation();
         dar.getData().setIrbDocumentLocation(blobId.getName());
         dar.getData().setIrbDocumentName(fileName);
         break;
       case COLLABORATION:
-        // Delete the current document if it exists
-        if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
-          deleteDarDocument(dar, dar.getData().getCollaborationLetterLocation());
-        }
+        previousLocation = dar.getData().getCollaborationLetterLocation();
         dar.getData().setCollaborationLetterLocation(blobId.getName());
         dar.getData().setCollaborationLetterName(fileName);
         break;
       default:
         break;
     }
+    // The caller deletes the previous document once the DAR no longer refers to it.
+    return previousLocation;
   }
 
   private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {

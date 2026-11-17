@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -50,6 +51,7 @@ import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
@@ -416,7 +418,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUploadIrbDocumentWithPreviousIrbDocument() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setIrbDocumentLocation(randomAlphabetic(10));
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
     dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -430,6 +433,137 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
+    var order = inOrder(dataAccessRequestService, gcsService);
+    order.verify(dataAccessRequestService).updateByReferenceId(any(), any());
+    order.verify(gcsService).deleteDocument(previousLocation);
+  }
+
+  @Test
+  void testUploadIrbDocumentKeepsPreviousDocumentWhenUpdateFails() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
+    dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
+    // The second read is the cleanup's: the stored DAR still points to the previous document.
+    DataAccessRequest stored = generateDataAccessRequest();
+    stored.getData().setIrbDocumentLocation(previousLocation);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
+    // A submit committed after the draft check, so the guarded update rejects the edit.
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenThrow(new SubmittedDARCannotBeEditedException());
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "new-upload"));
+
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
+    verify(gcsService).deleteDocument("new-upload");
+    verify(gcsService, never()).deleteDocument(previousLocation);
+  }
+
+  @Test
+  void testUploadIrbDocumentDeletesNewDocumentWhenDraftHasElections() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
+    // The second read is the cleanup's: the stored DAR still points to the previous document.
+    DataAccessRequest stored = generateDataAccessRequest();
+    stored.getData().setIrbDocumentLocation(previousLocation);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenThrow(new ConsentConflictException("Elections present"));
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "new-upload"));
+
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
+    assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+    verify(gcsService).deleteDocument("new-upload");
+    verify(gcsService, never()).deleteDocument(previousLocation);
+  }
+
+  @Test
+  void testUploadIrbDocumentKeepsNewDocumentWhenTheDarCannotBeReadBack() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
+    // The save fails, and so does the read that would show whether it was saved.
+    when(dataAccessRequestService.findByReferenceId(any()))
+        .thenReturn(dar)
+        .thenThrow(new IllegalStateException("database unavailable"));
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenThrow(new IllegalStateException("database unavailable"));
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "new-upload"));
+
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
+    assertEquals(500, response.getStatus());
+    // The DAR may point to the new upload, so it stays; the previous document stays too.
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
+  @Test
+  void testUploadIrbDocumentKeepsNewDocumentWhenSavedDespiteFailure() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
+    // The update committed, then failed (for example while restoring autocommit).
+    DataAccessRequest stored = generateDataAccessRequest();
+    stored.getData().setIrbDocumentLocation("new-upload");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenThrow(new IllegalStateException("failed after commit"));
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "new-upload"));
+
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
+    assertEquals(500, response.getStatus());
+    // The saved DAR points to the new upload, so it stays.
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
+  @Test
+  void testUploadIrbDocumentDeletesNewDocumentWhenUpdateFails() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
+    // The second read is the cleanup's: the stored DAR still points to the previous document.
+    DataAccessRequest stored = generateDataAccessRequest();
+    stored.getData().setIrbDocumentLocation(previousLocation);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
+    // A database error: the update saved nothing, so nothing refers to the new upload.
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenThrow(new IllegalStateException("database error"));
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "new-upload"));
+
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
+    assertEquals(500, response.getStatus());
+    verify(gcsService).deleteDocument("new-upload");
+    verify(gcsService, never()).deleteDocument(previousLocation);
   }
 
   private Pair<InputStream, FormDataContentDisposition> mockFormDataMultiPart(String fileName) {
@@ -766,6 +900,38 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void populateProgressReportWithDocumentsDeletesReplacedUpload() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1, 2));
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(
+        new DataUseBuilder()
+            .setCollaboratorRequired(true)
+            .setEthicsApprovalRequired(false)
+            .build());
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+    when(datasetService.findDatasetById(mockUser, 2)).thenReturn(dataset);
+    InputStream collabInputStream =
+        IOUtils.toInputStream("collab content", Charset.defaultCharset());
+    FormDataContentDisposition collabFileDetails = mock(FormDataContentDisposition.class);
+    when(collabFileDetails.getFileName()).thenReturn("collab_document.txt");
+    when(collabFileDetails.getType()).thenReturn("text/plain");
+    when(collabFileDetails.getSize()).thenReturn(1L);
+    // Each dataset that requires the document uploads it again.
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "first"))
+        .thenReturn(BlobId.of("bucket", "second"));
+
+    resource.populateProgressReportWithDocuments(
+        mockUser, collabInputStream, collabFileDetails, null, null, childDar, parentDar);
+
+    assertEquals("second", childDar.getData().getCollaborationLetterLocation());
+    verify(gcsService).deleteDocument("first");
+    verify(gcsService, never()).deleteDocument("second");
+  }
+
+  @Test
   void closeoutDocumentValidationIgnoresClientDatasetSelection() throws Exception {
     DataAccessRequest closeout = generateDataAccessRequest();
     closeout.setParentId(1);
@@ -941,9 +1107,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     BlobId mockBlobId = BlobId.of("bucket", newLocation);
     when(gcsService.storeDocument(eq(uploadInputStream), eq(fileType), any()))
         .thenReturn(mockBlobId);
-    when(gcsService.deleteDocument(existingLocation)).thenReturn(true);
 
-    resource.uploadDocumentContents(documentType, dar, uploadInputStream, fileDetail);
+    assertEquals(
+        existingLocation,
+        resource.uploadDocumentContents(documentType, dar, uploadInputStream, fileDetail));
+    // The caller deletes the replaced document only after the DAR stops referring to it.
+    verify(gcsService, never()).deleteDocument(any());
 
     if (DarDocumentType.COLLABORATION.equals(documentType)) {
       assertEquals(newLocation, dar.getData().getCollaborationLetterLocation());
