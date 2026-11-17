@@ -2017,6 +2017,41 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    * collection the moment one exists.
    */
   @Test
+  void testResetDarApprovalSO() {
+    StudyDar s = createStudyDar();
+    String referenceId = s.dar().getReferenceId();
+    dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+    dataAccessRequestDAO.updateDarApprovalSO(s.dar().getUserId(), referenceId);
+    assertNotNull(
+        dataAccessRequestDAO.findByReferenceId(referenceId).getApprovingSigningOfficialUserId());
+
+    dataAccessRequestDAO.resetDarApprovalSO(referenceId);
+
+    DataAccessRequest reset = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNull(reset.getApprovingSigningOfficialUserId());
+    assertNull(reset.getApprovingSigningOfficialApprovedDate());
+    assertFalse(reset.getRequiresSOApproval());
+  }
+
+  @Test
+  void testUpdateDraftToSubmittedForCollectionRemovesSigningOfficialApproval() {
+    StudyDar s = createStudyDar();
+    String referenceId = s.dar().getReferenceId();
+    // An approval left on a draft by data from before drafts could not be approved.
+    dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+    dataAccessRequestDAO.updateDarApprovalSO(s.dar().getUserId(), referenceId);
+
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(
+        s.dar().getCollectionId(), referenceId);
+
+    DataAccessRequest submitted = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNotNull(submitted.getSubmissionDate());
+    assertNull(submitted.getApprovingSigningOfficialUserId());
+    assertNull(submitted.getApprovingSigningOfficialApprovedDate());
+    assertFalse(submitted.getRequiresSOApproval());
+  }
+
+  @Test
   void testFindSummaryMetricApprovedDARsClosesOutEveryDatasetInTheCollection() {
     User requester = createUserWithInstitution();
     Integer studyId = createStudy(requester);

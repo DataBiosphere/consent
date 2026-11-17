@@ -647,6 +647,9 @@ public class DarCollectionService implements ConsentLogger {
                     newData.setStatus(null);
                     newData.setReferenceId(d.getReferenceId());
                     daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                    // The content can change before it is submitted again, so a signing official
+                    // has to approve it again.
+                    dao.resetDarApprovalSO(d.getReferenceId());
                     dataAccessRequestDAO.updateDataByReferenceId(
                         d.getReferenceId(), d.getUserId(), null, now, newData, null);
                   });
@@ -929,6 +932,11 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection approveDarCollection(
       User user, DarCollection collection, ContainerRequest request)
       throws ConsentConflictException, BadRequestException, ForbiddenException {
+    // A draft can still change, so a collection that holds one can't be approved.
+    if (collection.getDars().values().stream()
+        .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
+      throw new ConsentConflictException("A collection that has a draft cannot be approved.");
+    }
     DataAccessRequest dar = collection.getMostRecentDar();
     if (dar.getRequiresSOApproval()) {
       approveDataAccessRequestBySigningOfficial(user, dar, request);
@@ -1501,6 +1509,13 @@ public class DarCollectionService implements ConsentLogger {
                 "Data access request %s not found".formatted(dar.getReferenceId()));
           }
           validateSigningOfficialApproval(signingOfficial, locked);
+          // The approval is for the submission read at the start of this request. A different
+          // submission date under the lock means different content (compared in milliseconds: the
+          // first read's copy keeps no more).
+          if (locked.getSubmissionDate().getTime() != dar.getSubmissionDate().getTime()) {
+            throw new ConsentConflictException(
+                "The data access request changed since it was loaded. Reload it and try again.");
+          }
           dao.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
           return null;
         });
@@ -1524,6 +1539,10 @@ public class DarCollectionService implements ConsentLogger {
     if (signingOfficial.getEmail() == null
         || !signingOfficial.getEmail().equalsIgnoreCase(darSigningOfficialEmail)) {
       throw new ForbiddenException("You are not the Signing Official for this request.");
+    }
+    // A draft can still change, so an approval would not apply to what gets submitted.
+    if (dar.getSubmissionDate() == null) {
+      throw new ConsentConflictException("A draft cannot be approved.");
     }
   }
 

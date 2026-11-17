@@ -764,14 +764,18 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("eraCommonsId") String eraCommonsId);
 
   /**
-   * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest
+   * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest. Any signing official
+   * approval on the draft is removed: a draft can't be approved, so one there predates the content
+   * being submitted. The caller sets requires_so_approval again when the submission needs it.
    *
    * @param referenceId String
    */
   @SqlUpdate(
       """
           UPDATE data_access_request
-            SET  submission_date = now(), collection_id = :collectionId
+            SET  submission_date = now(), collection_id = :collectionId,
+                 approving_so_id = NULL, approving_so_timestamp = NULL,
+                 requires_so_approval = FALSE
           WHERE reference_id = :referenceId
        """)
   void updateDraftToSubmittedForCollection(
@@ -795,6 +799,18 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     """)
   void updateDarApprovalSO(
       @Bind("id") Integer signingOfficialUserId, @Bind("referenceId") String referenceId);
+
+  /**
+   * Removes a signing official's approval, which applies only to the content they approved, and the
+   * requirement for one, which the next submit works out again.
+   */
+  @SqlUpdate(
+      """
+        UPDATE data_access_request
+          SET approving_so_id = NULL, approving_so_timestamp = NULL, requires_so_approval = FALSE
+        WHERE reference_id = :referenceId
+    """)
+  void resetDarApprovalSO(@Bind("referenceId") String referenceId);
 
   @SqlUpdate(
       """

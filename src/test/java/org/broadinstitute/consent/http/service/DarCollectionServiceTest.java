@@ -838,6 +838,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     notASigningOfficial.setEmail("email2");
     notASigningOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(true);
@@ -887,6 +888,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("email2");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
     DataAccessRequestData darData = new DataAccessRequestData();
@@ -913,6 +915,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("email2");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(true);
@@ -927,6 +930,98 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateCollectionToDraftStatusResetsSigningOfficialApproval() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setUserId(1);
+    dar.setData(new DataAccessRequestData());
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(11);
+    sourceCollection.addDar(dar);
+    when(darCollectionDAO.findDARCollectionByCollectionId(11)).thenReturn(sourceCollection);
+
+    service.updateCollectionToDraftStatus(sourceCollection);
+
+    // The researcher can change the content, so a signing official approves it again.
+    verify(dataAccessRequestDAO).resetDarApprovalSO(dar.getReferenceId());
+  }
+
+  @Test
+  void testApproveCollectionWithADraftAmongSeveralDarsIsConflict() {
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    signingOfficial.setEmail("email2");
+    signingOfficial.setUserId(2);
+    DataAccessRequest submitted = new DataAccessRequest();
+    submitted.setReferenceId(UUID.randomUUID().toString());
+    submitted.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
+    submitted.setRequiresSOApproval(true);
+    DataAccessRequest draft = new DataAccessRequest();
+    draft.setReferenceId(UUID.randomUUID().toString());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(submitted);
+    collection.addDar(draft);
+
+    // 409, not the NullPointerException getMostRecentDar throws on a draft.
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(signingOfficial, collection, request));
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
+  }
+
+  @Test
+  void testApproveCollectionRejectsDarSubmittedAgainSinceLoaded() {
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    signingOfficial.setEmail("email2");
+    signingOfficial.setUserId(2);
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
+    DataAccessRequest loaded = new DataAccessRequest();
+    loaded.setReferenceId(UUID.randomUUID().toString());
+    loaded.setSubmissionDate(new Timestamp(1_000_000L));
+    loaded.setRequiresSOApproval(true);
+    loaded.setData(darData);
+    // The stored DAR has a newer submission date than the loaded copy.
+    DataAccessRequest current = new DataAccessRequest();
+    current.setReferenceId(loaded.getReferenceId());
+    current.setSubmissionDate(new Timestamp(2_000_000L));
+    current.setRequiresSOApproval(true);
+    current.setData(darData);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(loaded);
+    when(dataAccessRequestDAO.findByReferenceId(loaded.getReferenceId())).thenReturn(current);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(signingOfficial, collection, request));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  @Test
+  void testApproveCollectionRejectsDraft() {
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    signingOfficial.setEmail("email2");
+    signingOfficial.setUserId(2);
+    // A draft (no submission date) whose content can still change.
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setUserId(1);
+    dar.setRequiresSOApproval(true);
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
+    dar.setData(darData);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(signingOfficial, collection, request));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  @Test
   void testApproveDarCollectionDMI() {
     User user = new User();
     user.setEmail("email");
@@ -936,6 +1031,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("email2");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
     DataAccessRequestData darData = new DataAccessRequestData();
@@ -967,6 +1063,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("email2");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setParentId(-1);
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
@@ -999,6 +1096,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
     signingOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(true);
@@ -1025,6 +1123,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("email2");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
     dar.setRequiresSOApproval(true);
@@ -1049,6 +1148,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("so@example.com");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = makeDarAwaitingApprovalBy(signingOfficial);
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(dataAccessRequestDAO.hasSubmittedCloseout(dar.getCollectionId())).thenReturn(true);
@@ -1070,6 +1170,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     signingOfficial.setEmail("so@example.com");
     signingOfficial.setUserId(2);
     DataAccessRequest dar = makeDarAwaitingApprovalBy(signingOfficial);
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(null);
@@ -1084,6 +1185,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private static DataAccessRequest makeDarAwaitingApprovalBy(User signingOfficial) {
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setRequiresSOApproval(true);
     DataAccessRequestData darData = new DataAccessRequestData();

@@ -241,6 +241,15 @@ public class DACAutomationRuleService implements ConsentLogger {
       User researcher, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
     try {
       DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+      // A submission that needs signing official approval gets no rule decisions until it has one.
+      // The DAR may have changed since the caller's approval.
+      if (dar == null
+          || (dar.getRequiresSOApproval() && dar.getApprovingSigningOfficialUserId() == null)) {
+        logInfo(
+            "DAC rules not triggered for DAR %s: awaiting signing official approval"
+                .formatted(referenceId));
+        return;
+      }
       List<Vote> approvalVotes = new ArrayList<>();
       datasetIds.forEach(
           datasetId -> {
