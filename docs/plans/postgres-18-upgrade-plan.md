@@ -315,8 +315,7 @@ methods. Load it as `DEVNOTES.md` describes.
 - Make a dump through the proxy with the `pg_dump` 18 client and the
   `--no-owner --no-privileges` options.
 
-The file has real user data. Do not copy, share, or upload it. Delete the object in the bucket
-after the download.
+The file has real user data. Do not copy, share, or upload it.
 
 For test 2, use the `docker-compose.cloudsql.yaml` mode of `duos-ui`. Set `CLOUDSQL_INSTANCE` in
 `.env.local` to the connection name of the clone. The users and passwords are the same as on the
