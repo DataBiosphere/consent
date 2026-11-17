@@ -304,7 +304,7 @@ upgrade made. Do them before you delete the clone. Test 2 needs the clone.
 | --- | --- | --- |
 | 1. Local Consent | An export of the upgraded clone, in the local compose database. | Pass. Sign in works, and `GET /api/user/me` gives the user. The Consent log has no errors. |
 | 2. Local DUOS backend | The upgraded clone, through the Cloud SQL proxy. | Pass. Sign in works, and the UI shows an active session. |
-| 3. Local DUOS backend with local Consent | The same export as test 1. | Not done |
+| 3. Local DUOS backend with local Consent | The same export as test 1. | Pass. Sign in works, and the local database shows the sign in. |
 
 For test 1, `scripts/export-db.sh` cannot connect to a clone, so make the file by one of these
 methods. Load it as `DEVNOTES.md` describes.
