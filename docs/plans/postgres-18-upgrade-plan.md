@@ -92,9 +92,10 @@ Cloud SQL instance. See its results there.
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
   for dev. Staging is not confirmed.
-- No Consent or DUOS service connected to a Cloud SQL instance on Postgres 18. The rehearsal for
-  dev upgraded a clone and did the SQL checks only.
-- `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this.
+- Consent did not connect directly to a Cloud SQL instance on Postgres 18. In the rehearsal for
+  dev, Consent used an export of the upgraded clone. The DUOS backend did connect to the clone.
+- `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this. The
+  rehearsal for dev used a Cloud SQL export, not this script.
 - The BEE test did not compare row counts before and after the upgrade.
 - The Playwright tests that need the automation accounts did not run on Postgres 18. They did not
   run locally, and the `duos-ui` CI stays on Postgres 16.
@@ -277,10 +278,7 @@ took 15 to 17 minutes.
 
 4. In `psql`, do the SQL checks of step 7, and run `ANALYZE;`. The checks of step 7 that use a
    service do not apply, because no service connects to the clone.
-5. Optional: to test Consent on the upgraded data, make a dump through the proxy with the
-   `pg_dump` 18 client and the `--no-owner --no-privileges` options. Load it as `DEVNOTES.md`
-   describes, and do the smoke tests of step 7. A dump has real user data. Do not copy, share, or
-   upload it.
+5. Optional: do the tests with the services that "Tests with the services" describes.
 6. Delete the clone:
 
    ```bash
@@ -296,6 +294,36 @@ took 15 to 17 minutes.
 | Version | PostgreSQL 18.6. | Not done |
 | `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Not done |
 | Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | Not done |
+
+### Tests with the services
+
+These tests are optional. They show that the services operate on a database that the Cloud SQL
+upgrade made. Do them before you delete the clone. Test 2 needs the clone.
+
+| Test | Database | Dev, 2026-11-17 |
+| --- | --- | --- |
+| 1. Local Consent | An export of the upgraded clone, in the local compose database. | Pass. Sign in works, and `GET /api/user/me` gives the user. The Consent log has no errors. |
+| 2. Local DUOS backend | The upgraded clone, through the Cloud SQL proxy. | Pass. Sign in works, and the UI shows an active session. |
+| 3. Local DUOS backend with local Consent | The same export as test 1. | Not done |
+
+For test 1, `scripts/export-db.sh` cannot connect to a clone, so make the file by one of these
+methods. Load it as `DEVNOTES.md` describes.
+
+- Export the `consent` database from Cloud SQL into a bucket, and download the file. Remove the
+  lines at the end of the file that give rights to the Cloud SQL superuser, because the local
+  database does not have that role. The test for dev used this method.
+- Make a dump through the proxy with the `pg_dump` 18 client and the
+  `--no-owner --no-privileges` options.
+
+The file has real user data. Do not copy, share, or upload it. Delete the object in the bucket
+after the download.
+
+For test 2, use the `docker-compose.cloudsql.yaml` mode of `duos-ui`. Set `CLOUDSQL_INSTANCE` in
+`.env.local` to the connection name of the clone. The users and passwords are the same as on the
+instance. Set the value back after the test. The sessions from this test go into the clone only.
+
+For test 3, use the `docker-compose.consent.yaml` mode of `duos-ui` with the Consent stack of
+test 1.
 
 The upgrade time is the full time of the update operation. It includes the backup before the
 upgrade (41 seconds) and the backup after it (61 seconds). For the dev upgrade, tell the Slack
