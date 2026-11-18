@@ -283,8 +283,9 @@ public class DACAutomationRuleService implements ConsentLogger {
       try {
         v = openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
       } catch (ConsentConflictException e) {
-        // The collection was closed out after submission. Skip this dataset so approvals already
-        // made for other datasets still send their notifications.
+        // The collection was closed out, or the DAR turned back into a draft, after submission.
+        // Skip this dataset so approvals already made for other datasets still send their
+        // notifications.
         logInfo(
             String.format(
                 "Rule %s not triggered for DAC id: %s and dataset id: %s: %s",
@@ -318,6 +319,10 @@ public class DACAutomationRuleService implements ConsentLogger {
       return dataAccessRequestDAO.inTransaction(
           dao -> {
             CollectionLocks.lockOpenCollection(dao, dar.getCollectionId());
+            // The DAR was read before the lock; skip it if it is no longer submitted.
+            if (!dao.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate())) {
+              throw new ConsentConflictException("The Data Access Request is no longer submitted.");
+            }
             return openElectionAndApproveInTransaction(
                 rule, ruleImplementation, dar, dataset, request);
           });

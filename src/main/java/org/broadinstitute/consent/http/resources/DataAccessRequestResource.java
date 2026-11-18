@@ -212,6 +212,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      keepStoredStatus(data, originalDar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
@@ -288,6 +289,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
+      keepStoredStatus(data, originalDar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
@@ -503,6 +505,10 @@ public class DataAccessRequestResource extends Resource {
     if (childDar.getIsCloseoutProgressReport()) {
       return;
     }
+    // Each document is uploaded once, however many datasets require it: the request's stream can
+    // only be read once.
+    boolean uploadCollab = false;
+    boolean uploadEthics = false;
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {
@@ -518,8 +524,8 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
-        uploadDocumentContents(
-            DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
+        // Without a new file, the parent's document satisfies the requirement.
+        uploadCollab = collabFileDetails != null;
       }
       if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
@@ -527,8 +533,16 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
-        uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
+        uploadEthics = ethicsFileDetails != null;
       }
+    }
+    // The report's document locations start empty, so these uploads replace nothing.
+    if (uploadCollab) {
+      uploadDocumentContents(
+          DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
+    }
+    if (uploadEthics) {
+      uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
     }
   }
 
@@ -609,6 +623,9 @@ public class DataAccessRequestResource extends Resource {
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
     DataAccessRequestData data = DataAccessRequestData.populateDARData(json);
+    // Only the server sets a DAR's status. A new draft or a submission (even of an existing draft)
+    // never starts with one.
+    data.setStatus(null);
     // When posting a submitted dar, there are two cases:
     // 1. those that existed previously as a draft dar
     // 2. those that are brand new
@@ -641,6 +658,14 @@ public class DataAccessRequestResource extends Resource {
     return newDar;
   }
 
+  /**
+   * Only the server sets a DAR's status (researcher cancel), so a draft edit ignores any status the
+   * client sends and keeps the stored one.
+   */
+  private static void keepStoredStatus(DataAccessRequestData data, DataAccessRequest stored) {
+    data.setStatus(Objects.nonNull(stored.getData()) ? stored.getData().getStatus() : null);
+  }
+
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
     if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
@@ -662,8 +687,52 @@ public class DataAccessRequestResource extends Resource {
     if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
-    uploadDocumentContents(type, dar, uploadInputStream, fileDetail);
-    return dataAccessRequestService.updateByReferenceId(user, dar);
+    String previousLocation = uploadDocumentContents(type, dar, uploadInputStream, fileDetail);
+    DataAccessRequest updated;
+    try {
+      updated = dataAccessRequestService.updateByReferenceId(user, dar);
+    } catch (RuntimeException e) {
+      // Usually nothing was saved, but a failure can also follow a commit. Check which document
+      // the stored DAR points to before deleting anything.
+      reconcileFailedSave(type, dar, newDocumentLocation(type, dar), previousLocation);
+      throw e;
+    }
+    if (Objects.nonNull(previousLocation)) {
+      deleteDarDocument(dar, previousLocation);
+    }
+    return updated;
+  }
+
+  private void reconcileFailedSave(
+      DarDocumentType type, DataAccessRequest dar, String uploadLocation, String previousLocation) {
+    DataAccessRequest stored;
+    try {
+      stored = dataAccessRequestService.findByReferenceId(dar.getReferenceId());
+    } catch (NotFoundException e) {
+      // The DAR is gone, so nothing refers to the upload.
+      deleteDarDocument(dar, uploadLocation);
+      return;
+    } catch (RuntimeException e) {
+      // Can't tell whether the DAR refers to it: an orphaned blob is better than a missing one.
+      logWarn(
+          "Kept upload %s for DAR %s: %s"
+              .formatted(uploadLocation, dar.getReferenceId(), e.getMessage()));
+      return;
+    }
+    if (stored.getData() != null && uploadLocation.equals(newDocumentLocation(type, stored))) {
+      // The save committed: the previous document is the one nothing refers to now.
+      if (Objects.nonNull(previousLocation)) {
+        deleteDarDocument(dar, previousLocation);
+      }
+    } else {
+      deleteDarDocument(dar, uploadLocation);
+    }
+  }
+
+  private static String newDocumentLocation(DarDocumentType type, DataAccessRequest dar) {
+    return DarDocumentType.IRB.equals(type)
+        ? dar.getData().getIrbDocumentLocation()
+        : dar.getData().getCollaborationLetterLocation();
   }
 
   /**
@@ -673,9 +742,10 @@ public class DataAccessRequestResource extends Resource {
    * @param dar The Data Access Request
    * @param uploadInputStream The input stream of the file to be uploaded
    * @param fileDetail The file details
+   * @return the location of the document this one replaces, or null. It is not deleted here.
    * @throws IOException if an error occurs during upload
    */
-  public void uploadDocumentContents(
+  public String uploadDocumentContents(
       DarDocumentType type,
       DataAccessRequest dar,
       InputStream uploadInputStream,
@@ -686,26 +756,23 @@ public class DataAccessRequestResource extends Resource {
     String fileName = fileDetail.getFileName();
     UUID id = UUID.randomUUID();
     BlobId blobId = gcsService.storeDocument(uploadInputStream, fileDetail.getType(), id);
+    String previousLocation = null;
     switch (type) {
       case IRB:
-        // Delete the current document if it exists
-        if (Objects.nonNull(dar.getData().getIrbDocumentLocation())) {
-          deleteDarDocument(dar, dar.getData().getIrbDocumentLocation());
-        }
+        previousLocation = dar.getData().getIrbDocumentLocation();
         dar.getData().setIrbDocumentLocation(blobId.getName());
         dar.getData().setIrbDocumentName(fileName);
         break;
       case COLLABORATION:
-        // Delete the current document if it exists
-        if (Objects.nonNull(dar.getData().getCollaborationLetterLocation())) {
-          deleteDarDocument(dar, dar.getData().getCollaborationLetterLocation());
-        }
+        previousLocation = dar.getData().getCollaborationLetterLocation();
         dar.getData().setCollaborationLetterLocation(blobId.getName());
         dar.getData().setCollaborationLetterName(fileName);
         break;
       default:
         break;
     }
+    // The caller deletes the previous document once the DAR no longer refers to it.
+    return previousLocation;
   }
 
   private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {

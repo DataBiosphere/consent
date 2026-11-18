@@ -274,6 +274,43 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateByReferenceIdKeepsTheRowsStatus() {
+    User user = createUser();
+    // A status the server set; findByReferenceId hides archived DARs, so not "Archived".
+    String archived = randomAlphanumeric(10);
+    DataAccessRequestData archivedData = new DataAccessRequestData();
+    archivedData.setStatus("ServerValue");
+    String noStatus = randomAlphanumeric(10);
+    for (String referenceId : List.of(archived, noStatus)) {
+      dataAccessRequestDAO.insertDataAccessRequest(
+          createDarCollection().getDarCollectionId(),
+          referenceId,
+          user.getUserId(),
+          new Date(),
+          null,
+          new Date(),
+          referenceId.equals(archived) ? archivedData : new DataAccessRequestData(),
+          user.getEraCommonsId());
+    }
+
+    for (String referenceId : List.of(archived, noStatus)) {
+      DataAccessRequest edit = new DataAccessRequest();
+      edit.setReferenceId(referenceId);
+      DataAccessRequestData data = new DataAccessRequestData();
+      data.setStatus("ClientValue");
+      data.setOtherText("edited");
+      edit.setData(data);
+      edit.setDatasetIds(List.of());
+      serviceDAO.updateByReferenceId(user, edit);
+    }
+
+    DataAccessRequest storedArchived = dataAccessRequestDAO.findByReferenceId(archived);
+    assertEquals("ServerValue", storedArchived.getData().getStatus());
+    assertEquals("edited", storedArchived.getData().getOtherText());
+    assertNull(dataAccessRequestDAO.findByReferenceId(noStatus).getData().getStatus());
+  }
+
+  @Test
   void transactionRollsBackDataAccessRequestWhenDatasetInsertFails() {
     User user = createUser();
     String referenceId = UUID.randomUUID().toString();

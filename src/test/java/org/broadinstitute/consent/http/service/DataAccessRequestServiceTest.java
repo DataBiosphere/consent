@@ -21,6 +21,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -234,6 +235,140 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
         .updateSubmissionInstitution(dar.getReferenceId(), user.getInstitutionId());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_RejectsDraftWithElections() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(5);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+    when(electionDAO.findElectionsByReferenceId(dar.getReferenceId()))
+        .thenReturn(List.of(new Election()));
+
+    assertThrows(
+        ConsentConflictException.class, () -> service.createDataAccessRequest(user, dar, request));
+
+    InOrder order = inOrder(dataAccessRequestDAO, electionDAO);
+    order.verify(dataAccessRequestDAO).lockDataAccessRequest(dar.getReferenceId());
+    order.verify(dataAccessRequestDAO).lockCollection(5);
+    order.verify(electionDAO).findElectionsByReferenceId(dar.getReferenceId());
+    verify(dataAccessRequestDAO, never())
+        .insertDataAccessRequest(any(), any(), any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+    verify(dataAccessRequestDAO, never())
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_DraftDeletedConcurrentlyIsNotFound() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(9);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    // The unlocked check sees a draft; the re-read under the lock finds nothing.
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
+        .thenReturn(dar)
+        .thenReturn(null);
+
+    assertThrows(
+        NotFoundException.class, () -> service.createDataAccessRequest(user, dar, request));
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_RejectsDraftInAClosedOutCollection() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(10);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(10)).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class, () -> service.createDataAccessRequest(user, dar, request));
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_RejectsDraftSubmittedConcurrently() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(7);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    DataAccessRequest submitted = generateDataAccessRequest();
+    submitted.setReferenceId(dar.getReferenceId());
+    submitted.setSubmissionDate(new Timestamp(System.currentTimeMillis()));
+    // The unlocked check sees a draft; the re-read under the lock sees the other submit's commit.
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
+        .thenReturn(dar)
+        .thenReturn(submitted);
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class,
+        () -> service.createDataAccessRequest(user, dar, request));
+
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockDataAccessRequest(dar.getReferenceId());
+    order.verify(dataAccessRequestDAO).findByReferenceId(dar.getReferenceId());
+    verify(dataAccessRequestDAO, times(2)).findByReferenceId(dar.getReferenceId());
+    verify(dataAccessRequestDAO, never()).lockCollection(any());
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_DeadlockOnDraftIsConflict() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(8);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+    // A collection-first writer (resubmit, cancel, SO approval) held the collection lock.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestDAO)
+        .lockCollection(8);
+
+    assertThrows(
+        ConsentConflictException.class, () -> service.createDataAccessRequest(user, dar, request));
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_SubmitsDraftInCollectionWithoutElections() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(6);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+
+    assertNotNull(service.createDataAccessRequest(user, dar, request));
+
+    InOrder order = inOrder(dataAccessRequestDAO, electionDAO);
+    order.verify(dataAccessRequestDAO).lockDataAccessRequest(dar.getReferenceId());
+    order.verify(dataAccessRequestDAO).lockCollection(6);
+    order.verify(electionDAO).findElectionsByReferenceId(dar.getReferenceId());
+    order.verify(dataAccessRequestDAO).updateDraftToSubmittedForCollection(6, dar.getReferenceId());
   }
 
   @Test

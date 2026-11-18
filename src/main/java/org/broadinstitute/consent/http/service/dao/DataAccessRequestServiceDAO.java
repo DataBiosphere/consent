@@ -61,7 +61,10 @@ public class DataAccessRequestServiceDAO {
     final String updateDataByReferenceId =
         """
           UPDATE data_access_request
-          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId,
+          SET data = jsonb_set(
+              regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb - 'status',
+              '{status}', COALESCE(data -> 'status', 'null'::jsonb)),
+            user_id = :userId,
           update_date = :updateDate
           WHERE reference_id = :referenceId AND submission_date IS NULL
             AND NOT EXISTS (
@@ -85,6 +88,8 @@ public class DataAccessRequestServiceDAO {
           VALUES (:referenceId, :datasetId)
           ON CONFLICT DO NOTHING
         """;
+    // The row's own status is kept, whatever the edit sends: only the server sets it, and a cancel
+    // that commits while this edit waits on the row is not overwritten.
     jdbi.useTransaction(
         h -> {
           Update darUpdate = h.createUpdate(updateDataByReferenceId);

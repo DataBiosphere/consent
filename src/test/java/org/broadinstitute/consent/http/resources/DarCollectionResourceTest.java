@@ -2,7 +2,10 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -22,6 +25,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -574,6 +578,65 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     try (var response =
         resource.resubmitDarCollection(duosResearcher, collection.getDarCollectionId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testResubmitDarCollection_NullStatusIsNotCanceled() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(2);
+    collection.setCreateUserId(researcher.getUserId());
+    collection.addDar(dar);
+    when(darCollectionService.getByCollectionId(researcher, 2)).thenReturn(collection);
+
+    try (var response = resource.resubmitDarCollection(duosResearcher, 2)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(darCollectionService, never()).updateCollectionToDraftStatus(any());
+  }
+
+  @Test
+  void testResubmitDarCollection_CanceledDarBesideNullStatusDar() {
+    DataAccessRequest activeDar = new DataAccessRequest();
+    activeDar.setReferenceId(UUID.randomUUID().toString());
+    activeDar.setData(new DataAccessRequestData());
+    DataAccessRequest canceledDar = new DataAccessRequest();
+    canceledDar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData canceledData = new DataAccessRequestData();
+    canceledData.setStatus(DarStatus.CANCELED.getValue());
+    canceledDar.setData(canceledData);
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(3);
+    collection.setCreateUserId(researcher.getUserId());
+    collection.addDar(activeDar);
+    collection.addDar(canceledDar);
+    when(darCollectionService.getByCollectionId(researcher, 3)).thenReturn(collection);
+
+    try (var response = resource.resubmitDarCollection(duosResearcher, 3)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testResubmitDarCollection_ElectionsPresent() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setStatus(DarStatus.CANCELED.getValue());
+    dar.setData(data);
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(4);
+    collection.setCreateUserId(researcher.getUserId());
+    collection.addDar(dar);
+    when(darCollectionService.getByCollectionId(researcher, 4)).thenReturn(collection);
+    when(darCollectionService.updateCollectionToDraftStatus(collection))
+        .thenThrow(new ConsentConflictException("Elections present"));
+
+    try (var response = resource.resubmitDarCollection(duosResearcher, 4)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
     }
   }
 

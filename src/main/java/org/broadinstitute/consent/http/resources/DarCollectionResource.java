@@ -22,10 +22,10 @@ import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
-import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
@@ -300,8 +300,7 @@ public class DarCollectionResource extends Resource {
 
   private void validateCollectionIsCanceled(DarCollection collection) {
     boolean isCanceled =
-        collection.getDars().values().stream()
-            .anyMatch(d -> d.getData().getStatus().equalsIgnoreCase(DarStatus.CANCELED.getValue()));
+        collection.getDars().values().stream().anyMatch(DataAccessRequest::isCanceled);
     if (!isCanceled) {
       throw new BadRequestException();
     }
