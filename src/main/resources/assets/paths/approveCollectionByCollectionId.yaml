@@ -26,7 +26,10 @@ post:
     404:
       description: Not Found
     409:
-      description: Conflict. The collection does not require approval, or it has a submitted closeout.
+      description: >-
+        Conflict. The collection does not require approval, has a submitted closeout, or holds a
+        draft, the DAR is canceled, or the DAR's submission date changed while the request waited
+        for the collection lock.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

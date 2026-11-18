@@ -2042,6 +2042,52 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
    * collection the moment one exists.
    */
   @Test
+  void testResetDarApprovalSO() {
+    StudyDar s = createStudyDar();
+    String referenceId = s.dar().getReferenceId();
+    dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+    dataAccessRequestDAO.updateDarApprovalSO(s.dar().getUserId(), referenceId);
+    assertNotNull(
+        dataAccessRequestDAO.findByReferenceId(referenceId).getApprovingSigningOfficialUserId());
+
+    dataAccessRequestDAO.resetDarApprovalSO(referenceId);
+
+    DataAccessRequest reset = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNull(reset.getApprovingSigningOfficialUserId());
+    assertNull(reset.getApprovingSigningOfficialApprovedDate());
+    // The requirement stays until the next submit works it out again.
+    assertTrue(reset.getRequiresSOApproval());
+  }
+
+  @Test
+  void testUpdateDraftToSubmittedForCollectionRemovesSigningOfficialApproval() {
+    StudyDar s = createStudyDar();
+    String referenceId = s.dar().getReferenceId();
+    // An approval left on a draft by data from before drafts could not be approved.
+    dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+    dataAccessRequestDAO.updateDarApprovalSO(s.dar().getUserId(), referenceId);
+
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(
+        s.dar().getCollectionId(), referenceId);
+
+    DataAccessRequest submitted = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertNotNull(submitted.getSubmissionDate());
+    assertNull(submitted.getApprovingSigningOfficialUserId());
+    assertNull(submitted.getApprovingSigningOfficialApprovedDate());
+    // NULL (no requirement), not FALSE: the model maps both to false, so read the column.
+    Boolean requirementIsNull =
+        jdbi.withHandle(
+            h ->
+                h.createQuery(
+                        "SELECT requires_so_approval IS NULL FROM data_access_request "
+                            + "WHERE reference_id = :referenceId")
+                    .bind("referenceId", referenceId)
+                    .mapTo(Boolean.class)
+                    .one());
+    assertTrue(requirementIsNull);
+  }
+
+  @Test
   void testFindSummaryMetricApprovedDARsClosesOutEveryDatasetInTheCollection() {
     User requester = createUserWithInstitution();
     Integer studyId = createStudy(requester);
