@@ -969,7 +969,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       long submittedHoursAgo, int expected) {
     Dataset dataset = createDARDAOTestDataset();
     User user = createUserWithInstitution();
-    Timestamp submitted = Timestamp.from(Instant.now().minus(submittedHoursAgo, ChronoUnit.HOURS));
+    // The query compares the submission date with now() in the database. Read the time from the
+    // database too: its clock can differ from the JVM clock, which made the 8760 case fail.
+    Instant databaseNow =
+        jdbi.withHandle(
+            handle -> handle.createQuery("SELECT now()").mapTo(Timestamp.class).one().toInstant());
+    Timestamp submitted = Timestamp.from(databaseNow.minus(submittedHoursAgo, ChronoUnit.HOURS));
     DataAccessRequest dar = createDAR(user, dataset, uniqueDarCode(), submitted);
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
