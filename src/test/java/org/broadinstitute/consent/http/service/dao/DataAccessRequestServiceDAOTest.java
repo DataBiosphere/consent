@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
+import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -18,6 +19,8 @@ import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -68,7 +71,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         user.getUserId(),
         old,
-        old,
+        null,
         old,
         new DataAccessRequestData(),
         user.getEraCommonsId());
@@ -119,7 +122,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         user.getUserId(),
         old,
-        old,
+        null,
         old,
         new DataAccessRequestData(),
         user.getEraCommonsId());
@@ -152,7 +155,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         user.getUserId(),
         new Date(),
-        new Date(),
+        null,
         new Date(),
         original,
         user.getEraCommonsId());
@@ -171,6 +174,103 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
     assertEquals("original", stored.getData().getOtherText());
     assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdRejectsSubmittedDar() {
+    Dataset dataset = createDataset();
+    Dataset otherDataset = createDataset();
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData original = new DataAccessRequestData();
+    original.setOtherText("original");
+    Integer collectionId = createDarCollection().getDarCollectionId();
+    // Submitted after the caller read it as a draft.
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        new Date(),
+        new Date(),
+        original,
+        user.getEraCommonsId());
+    dataAccessRequestDAO.insertAllDarDatasets(
+        List.of(new DarDataset(referenceId, dataset.getDatasetId())));
+    // Submitted, with an election: still reported as submitted (422), not 409.
+    electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        dataset.getDatasetId());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(referenceId);
+    dar.setCollectionId(collectionId);
+    DataAccessRequestData changed = new DataAccessRequestData();
+    changed.setOtherText("changed");
+    dar.setData(changed);
+    dar.setDatasetIds(List.of(otherDataset.getDatasetId()));
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class, () -> serviceDAO.updateByReferenceId(user, dar));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertFalse(stored.getDraft());
+    assertEquals("original", stored.getData().getOtherText());
+    assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdRejectsDraftWithElections() {
+    Dataset dataset = createDataset();
+    Dataset otherDataset = createDataset();
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData original = new DataAccessRequestData();
+    original.setOtherText("original");
+    // A draft that has an election.
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        original,
+        user.getEraCommonsId());
+    dataAccessRequestDAO.insertAllDarDatasets(
+        List.of(new DarDataset(referenceId, dataset.getDatasetId())));
+    electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CLOSED.getValue(),
+        new Date(),
+        referenceId,
+        dataset.getDatasetId());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(referenceId);
+    DataAccessRequestData changed = new DataAccessRequestData();
+    changed.setOtherText("changed");
+    dar.setData(changed);
+    dar.setDatasetIds(List.of(otherDataset.getDatasetId()));
+
+    assertThrows(ConsentConflictException.class, () -> serviceDAO.updateByReferenceId(user, dar));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertEquals("original", stored.getData().getOtherText());
+    assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdOfADeletedDraftIsNotFound() {
+    User user = createUser();
+    DataAccessRequest dar = new DataAccessRequest();
+    // Deleted after the caller read it as a draft.
+    dar.setReferenceId(randomAlphanumeric(10));
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of());
+
+    assertThrows(NotFoundException.class, () -> serviceDAO.updateByReferenceId(user, dar));
   }
 
   @Test

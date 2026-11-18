@@ -767,7 +767,14 @@ public class DataAccessRequestService implements ConsentLogger {
     if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
-    return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
+    try {
+      return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
+    } catch (JdbiException e) {
+      // The edit locks the DAR row, then its collection; resubmit, researcher cancel and signing
+      // official approval take them in the other order, so a deadlock is a retryable conflict.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
   }
 
   /**
