@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,25 +60,8 @@ class SigningOfficialApprovalLockTest extends DAOTestHelper {
   @Test
   void approvalOfASubmissionReplacedWhileWaitingIsRejected() throws Exception {
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId());
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DataAccessRequestData data = dar.getData();
-    data.setSigningOfficialEmail(signingOfficial.getEmail());
-    dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(),
-        dar.getUserId(),
-        dar.getSubmissionDate(),
-        dar.getUpdateDate(),
-        data,
-        dar.getEraCommonsId());
-    dataAccessRequestDAO.updateRequiresSOApproval(true, dar.getReferenceId());
+    DataAccessRequest dar = createDarAwaitingApprovalBy(signingOfficial);
     Integer collectionId = dar.getCollectionId();
-    // Leave only this DAR in the collection, so it is the one the approval acts on.
-    jdbi.useHandle(
-        h ->
-            h.execute(
-                "DELETE FROM data_access_request WHERE collection_id = ? AND reference_id <> ?",
-                collectionId,
-                dar.getReferenceId()));
     // What the signing official's page loaded.
     DarCollection loaded = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     AtomicInteger holderPid = new AtomicInteger();
@@ -123,6 +107,45 @@ class SigningOfficialApprovalLockTest extends DAOTestHelper {
         dataAccessRequestDAO
             .findByReferenceId(dar.getReferenceId())
             .getApprovingSigningOfficialUserId());
+  }
+
+  @Test
+  void approvalOfAnUnchangedSubmissionIsRecorded() {
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId());
+    DataAccessRequest dar = createDarAwaitingApprovalBy(signingOfficial);
+    DarCollection loaded = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+
+    service.approveDarCollection(signingOfficial, loaded, mock(ContainerRequest.class));
+
+    // The submission date read under the lock matches the one loaded (to the millisecond).
+    assertEquals(
+        signingOfficial.getUserId(),
+        dataAccessRequestDAO
+            .findByReferenceId(dar.getReferenceId())
+            .getApprovingSigningOfficialUserId());
+  }
+
+  /** A submitted DAR that needs this signing official's approval, alone in its collection. */
+  private DataAccessRequest createDarAwaitingApprovalBy(User signingOfficial) {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    DataAccessRequestData data = dar.getData();
+    data.setSigningOfficialEmail(signingOfficial.getEmail());
+    dataAccessRequestDAO.updateDataByReferenceId(
+        dar.getReferenceId(),
+        dar.getUserId(),
+        dar.getSubmissionDate(),
+        dar.getUpdateDate(),
+        data,
+        dar.getEraCommonsId());
+    dataAccessRequestDAO.updateRequiresSOApproval(true, dar.getReferenceId());
+    // Leave only this DAR in the collection, so it is the one the approval acts on.
+    jdbi.useHandle(
+        h ->
+            h.execute(
+                "DELETE FROM data_access_request WHERE collection_id = ? AND reference_id <> ?",
+                dar.getCollectionId(),
+                dar.getReferenceId()));
+    return dar;
   }
 
   /** Waits until a transaction is blocked by the given backend, so the test exercises the wait. */

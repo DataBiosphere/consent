@@ -75,11 +75,11 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   `DarCollectionSummaryDAO`.
 - `validateDar` rejects a `closeoutSupplement`. Original DARs cannot close anything out.
 - A signing official's approval (`approving_so_id`, `approving_so_timestamp`) applies to the
-  content they approved. Resubmit removes it, with `requires_so_approval`, on every DAR in the
-  collection (`DataAccessRequestDAO.resetDarApprovalSO`); submitting a draft removes any left
-  from older data and sets `requires_so_approval` again when needed; and a signing official can't
-  approve a draft, a collection that has one, or a DAR whose submission date changed while the
-  approval waited for the collection lock (409).
+  content they approved. Resubmit removes it on every DAR in the collection and keeps
+  `requires_so_approval` (`DataAccessRequestDAO.resetDarApprovalSO`); submitting a draft removes
+  any left from older data, resets `requires_so_approval` to NULL and sets it again when needed;
+  and a signing official can't approve a draft, a collection that has one, or a DAR whose
+  submission date changed while the approval waited for the collection lock (409).
   DAC automation rules skip a DAR that needs signing official approval and doesn't have it
   (`DACAutomationRuleService.triggerDACRuleSettings`).
 

@@ -2030,7 +2030,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest reset = dataAccessRequestDAO.findByReferenceId(referenceId);
     assertNull(reset.getApprovingSigningOfficialUserId());
     assertNull(reset.getApprovingSigningOfficialApprovedDate());
-    assertFalse(reset.getRequiresSOApproval());
+    // The requirement stays until the next submit works it out again.
+    assertTrue(reset.getRequiresSOApproval());
   }
 
   @Test
@@ -2048,7 +2049,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(submitted.getSubmissionDate());
     assertNull(submitted.getApprovingSigningOfficialUserId());
     assertNull(submitted.getApprovingSigningOfficialApprovedDate());
-    assertFalse(submitted.getRequiresSOApproval());
+    // NULL (no requirement), not FALSE: the model maps both to false, so read the column.
+    Boolean requirementIsNull =
+        jdbi.withHandle(
+            h ->
+                h.createQuery(
+                        "SELECT requires_so_approval IS NULL FROM data_access_request "
+                            + "WHERE reference_id = :referenceId")
+                    .bind("referenceId", referenceId)
+                    .mapTo(Boolean.class)
+                    .one());
+    assertTrue(requirementIsNull);
   }
 
   @Test
