@@ -503,6 +503,10 @@ public class DataAccessRequestResource extends Resource {
     if (childDar.getIsCloseoutProgressReport()) {
       return;
     }
+    // Each document is uploaded once, however many datasets require it: the request's stream can
+    // only be read once.
+    boolean uploadCollab = false;
+    boolean uploadEthics = false;
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {
@@ -518,8 +522,8 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
-        uploadReplacingDocument(
-            DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
+        // Without a new file, the parent's document satisfies the requirement.
+        uploadCollab = collabFileDetails != null;
       }
       if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
@@ -527,25 +531,16 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
-        uploadReplacingDocument(
-            DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
+        uploadEthics = ethicsFileDetails != null;
       }
     }
-  }
-
-  /**
-   * Upload for a progress report not yet saved: a document it replaces was uploaded earlier in the
-   * same request and nothing refers to it, so delete it now.
-   */
-  private void uploadReplacingDocument(
-      DarDocumentType type,
-      DataAccessRequest progressReport,
-      InputStream uploadInputStream,
-      FormDataContentDisposition fileDetail)
-      throws IOException {
-    String replaced = uploadDocumentContents(type, progressReport, uploadInputStream, fileDetail);
-    if (Objects.nonNull(replaced)) {
-      deleteDarDocument(progressReport, replaced);
+    // The report's document locations start empty, so these uploads replace nothing.
+    if (uploadCollab) {
+      uploadDocumentContents(
+          DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
+    }
+    if (uploadEthics) {
+      uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
     }
   }
 

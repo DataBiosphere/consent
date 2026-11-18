@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -33,6 +34,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -900,16 +902,36 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void populateProgressReportWithDocumentsDeletesReplacedUpload() throws Exception {
+  void populateProgressReportWithDocumentsUsesTheParentDocumentsWhenNoneAreSent() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setCollaborationLetterLocation("parent_collab_location");
+    parentDar.getData().setIrbDocumentLocation("parent_irb_location");
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(
+        new DataUseBuilder().setCollaboratorRequired(true).setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+
+    assertDoesNotThrow(
+        () ->
+            resource.populateProgressReportWithDocuments(
+                mockUser, null, null, null, null, childDar, parentDar));
+
+    verify(gcsService, never()).storeDocument(any(), any(), any());
+    assertNull(childDar.getData().getCollaborationLetterLocation());
+    assertNull(childDar.getData().getIrbDocumentLocation());
+  }
+
+  @Test
+  void populateProgressReportWithDocumentsUploadsEachDocumentOnce() throws Exception {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest childDar = generateDataAccessRequest();
     childDar.setDatasetIds(List.of(1, 2));
+    // Both datasets require both documents.
     Dataset dataset = new Dataset();
     dataset.setDataUse(
-        new DataUseBuilder()
-            .setCollaboratorRequired(true)
-            .setEthicsApprovalRequired(false)
-            .build());
+        new DataUseBuilder().setCollaboratorRequired(true).setEthicsApprovalRequired(true).build());
     when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
     when(datasetService.findDatasetById(mockUser, 2)).thenReturn(dataset);
     InputStream collabInputStream =
@@ -918,17 +940,36 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(collabFileDetails.getFileName()).thenReturn("collab_document.txt");
     when(collabFileDetails.getType()).thenReturn("text/plain");
     when(collabFileDetails.getSize()).thenReturn(1L);
-    // Each dataset that requires the document uploads it again.
+    InputStream ethicsInputStream =
+        IOUtils.toInputStream("ethics content", Charset.defaultCharset());
+    FormDataContentDisposition ethicsFileDetails = mock(FormDataContentDisposition.class);
+    when(ethicsFileDetails.getFileName()).thenReturn("ethics_document.txt");
+    when(ethicsFileDetails.getType()).thenReturn("text/plain");
+    when(ethicsFileDetails.getSize()).thenReturn(1L);
+    // Record what each upload stores: a drained stream would store nothing.
+    List<String> stored = new ArrayList<>();
     when(gcsService.storeDocument(any(), any(), any()))
-        .thenReturn(BlobId.of("bucket", "first"))
-        .thenReturn(BlobId.of("bucket", "second"));
+        .thenAnswer(
+            invocation -> {
+              stored.add(
+                  IOUtils.toString(
+                      (InputStream) invocation.getArgument(0), Charset.defaultCharset()));
+              return BlobId.of("bucket", "blob-" + stored.size());
+            });
 
     resource.populateProgressReportWithDocuments(
-        mockUser, collabInputStream, collabFileDetails, null, null, childDar, parentDar);
+        mockUser,
+        collabInputStream,
+        collabFileDetails,
+        ethicsInputStream,
+        ethicsFileDetails,
+        childDar,
+        parentDar);
 
-    assertEquals("second", childDar.getData().getCollaborationLetterLocation());
-    verify(gcsService).deleteDocument("first");
-    verify(gcsService, never()).deleteDocument("second");
+    assertEquals(List.of("collab content", "ethics content"), stored);
+    assertEquals("blob-1", childDar.getData().getCollaborationLetterLocation());
+    assertEquals("blob-2", childDar.getData().getIrbDocumentLocation());
+    verify(gcsService, never()).deleteDocument(any());
   }
 
   @Test
