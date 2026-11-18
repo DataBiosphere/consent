@@ -426,6 +426,38 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateByReferenceIdTakesNoClientStatusWhenNoneIsStored() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response =
+        resource.updateByReferenceId(duosUser, "", "{\"status\":\"ClientValue\"}")) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    assertNull(captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testUpdatePartialDataAccessRequestTakesNoClientStatusWhenNoneIsStored() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response =
+        resource.updatePartialDataAccessRequest(duosUser, "", "{\"status\":\"ClientValue\"}")) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    assertNull(captor.getValue().getData().getStatus());
+  }
+
+  @Test
   void testUpdatePartialDataAccessRequestForbidden() {
     User invalidUser = new User(1000, authUser.getEmail(), "Display Name", new Date());
     DuosUser invalidDuosUser = new DuosUser(authUser, invalidUser);

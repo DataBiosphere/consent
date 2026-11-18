@@ -651,10 +651,7 @@ public class DataAccessRequestResource extends Resource {
    * client sends and keeps the stored one.
    */
   private static void keepStoredStatus(DataAccessRequestData data, DataAccessRequest stored) {
-    data.setStatus(
-        Objects.nonNull(stored) && Objects.nonNull(stored.getData())
-            ? stored.getData().getStatus()
-            : null);
+    data.setStatus(Objects.nonNull(stored.getData()) ? stored.getData().getStatus() : null);
   }
 
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
