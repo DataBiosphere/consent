@@ -837,11 +837,18 @@ public class DarCollectionService implements ConsentLogger {
         && !user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
-    return dataAccessRequestDAO.inTransaction(
-        dao -> {
-          CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
-          return cancelDarCollectionByRoleInTransaction(user, collection, role);
-        });
+    try {
+      return dataAccessRequestDAO.inTransaction(
+          dao -> {
+            CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
+            return cancelDarCollectionByRoleInTransaction(user, collection, role);
+          });
+    } catch (JdbiException e) {
+      // A draft edit in this collection updates its DAR row and then the collection, the reverse
+      // of this path, so either can be the deadlock victim. That is a retryable conflict.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
   }
 
   private DarCollection cancelDarCollectionByRoleInTransaction(

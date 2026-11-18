@@ -522,6 +522,29 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCancelDarCollectionAsResearcherDeadlockIsConflict() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    User user = new User();
+    user.setUserId(1);
+    collection.setCreateUserId(user.getUserId());
+    // A draft edit in this collection held its DAR row and waited on the collection.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestDAO)
+        .lockCollection(collection.getDarCollectionId());
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
+    verify(dataAccessRequestDAO, never()).cancelByReferenceIds(anyList());
+  }
+
+  @Test
   void testCancelDarCollectionAsResearcher_NoElections() {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
