@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -47,6 +48,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -81,6 +83,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -330,6 +333,128 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (var response = resource.updatePartialDataAccessRequest(duosUser, "", "{}")) {
       assertEquals(200, response.getStatus());
     }
+  }
+
+  @Test
+  void testCreateDataAccessRequestIgnoresClientStatus() {
+    DataAccessRequest created = generateDataAccessRequest();
+    created.setCollectionId(1);
+    when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(created);
+    when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+    when(info.getRequestUriBuilder()).thenReturn(builder);
+
+    try (var response =
+        resource.createDataAccessRequest(duosUser, request, info, "{\"status\":\"Archived\"}")) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).createDataAccessRequest(any(), captor.capture(), any());
+    assertNull(captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testCreateDataAccessRequestFromDraftClearsStatus() {
+    DataAccessRequest draft = generateDataAccessRequest();
+    draft.getData().setStatus(DarStatus.ARCHIVED.getValue());
+    when(dataAccessRequestService.findByReferenceId(draft.getReferenceId())).thenReturn(draft);
+    DataAccessRequest created = generateDataAccessRequest();
+    created.setCollectionId(1);
+    when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(created);
+    when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+    when(info.getRequestUriBuilder()).thenReturn(builder);
+    String body =
+        "{\"referenceId\":\"%s\",\"status\":\"ClientValue\"}".formatted(draft.getReferenceId());
+
+    try (var response = resource.createDataAccessRequest(duosUser, request, info, body)) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).createDataAccessRequest(any(), captor.capture(), any());
+    assertEquals(draft.getReferenceId(), captor.getValue().getReferenceId());
+    assertNull(captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testCreateDraftDataAccessRequestIgnoresClientStatus() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
+    when(builder.path(anyString())).thenReturn(builder);
+    when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+    when(info.getRequestUriBuilder()).thenReturn(builder);
+
+    try (var response =
+        resource.createDraftDataAccessRequest(duosUser, info, "{\"status\":\"ClientValue\"}")) {
+      assertEquals(201, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).insertDraftDataAccessRequest(any(), captor.capture());
+    assertNull(captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testUpdateByReferenceIdKeepsStoredStatus() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setStatus(DarStatus.ARCHIVED.getValue());
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response =
+        resource.updateByReferenceId(duosUser, "", "{\"status\":\"ClientValue\"}")) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    assertEquals(DarStatus.ARCHIVED.getValue(), captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testUpdatePartialDataAccessRequestKeepsStoredStatus() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setStatus(DarStatus.ARCHIVED.getValue());
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response =
+        resource.updatePartialDataAccessRequest(duosUser, "", "{\"status\":\"ClientValue\"}")) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    assertEquals(DarStatus.ARCHIVED.getValue(), captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testUpdateByReferenceIdTakesNoClientStatusWhenNoneIsStored() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response =
+        resource.updateByReferenceId(duosUser, "", "{\"status\":\"ClientValue\"}")) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    assertNull(captor.getValue().getData().getStatus());
+  }
+
+  @Test
+  void testUpdatePartialDataAccessRequestTakesNoClientStatusWhenNoneIsStored() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response =
+        resource.updatePartialDataAccessRequest(duosUser, "", "{\"status\":\"ClientValue\"}")) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    assertNull(captor.getValue().getData().getStatus());
   }
 
   @Test
