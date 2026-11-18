@@ -81,6 +81,8 @@ public class DarCollectionService implements ConsentLogger {
       "User is not a chairperson for any dataset in this collection";
   private static final String DRAFT_ELECTION_ERROR =
       "Cannot open elections on a collection that has a draft.";
+  private static final String CHANGED_ELECTION_ERROR =
+      "The collection changed since it was loaded. Reload it and try again.";
   private static final String CREATE_ELECTION_DATASET_ERROR = "At least one dataset is required";
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -996,7 +998,7 @@ public class DarCollectionService implements ConsentLogger {
                   // Resubmit takes the same lock, so this sees a resubmit (and any submit after
                   // it) that committed after the collection was loaded.
                   if (!dao.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate())) {
-                    throw new ConsentConflictException(DRAFT_ELECTION_ERROR);
+                    throw new ConsentConflictException(CHANGED_ELECTION_ERROR);
                   }
                   return collectionServiceDAO.createElectionsForDarByUser(user, dar);
                 });
@@ -1133,7 +1135,9 @@ public class DarCollectionService implements ConsentLogger {
     // A collection that holds a draft gets no elections and no new-request emails.
     if (darCollection.getDars().values().stream()
         .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
-      logWarn("Skipping new DAR processing for collection id with a draft: " + collectionId);
+      logException(
+          new IllegalStateException(
+              "Skipping new DAR processing for collection id with a draft: " + collectionId));
       return null;
     }
 

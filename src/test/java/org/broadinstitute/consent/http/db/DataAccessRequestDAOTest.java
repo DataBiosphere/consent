@@ -3013,6 +3013,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.isSubmittedAt(
             micro.getReferenceId(), new Date(micro.getSubmissionDate().getTime() + 1)));
     assertFalse(dataAccessRequestDAO.isSubmittedAt("no-such-reference-id", new Date()));
+    assertFalse(dataAccessRequestDAO.isSubmittedAt(draftReferenceId, null));
   }
 
   /** Archives the pair's elections and opens a new one with no vote cast, as a reopen does. */
