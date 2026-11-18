@@ -32,7 +32,7 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
 | --- | --- | --- | --- | --- |
 | Draft | `NULL`, or set (a canceled collection reset to draft) | `NULL` | `NULL` | `DataAccessRequestService.insertDraftDataAccessRequest` |
 | Original DAR | set | `NULL` | set | `DataAccessRequestService.createDataAccessRequest` |
-| Progress report | set | set (parent DAR id) | set at insert; resubmit can null it | `DataAccessRequestDAO.insertProgressReport` |
+| Progress report | set | set (parent DAR id) | set at insert; null only in older data | `DataAccessRequestDAO.insertProgressReport` |
 | Closeout | set | set (the original DAR or a progress report) | set, always (resubmit is rejected) | a progress report whose `data.closeoutSupplement` has reasons |
 
 ### 1. Draft
@@ -45,8 +45,9 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   collection. So never test `collection_id IS NULL` to find drafts.
 - No elections, no grants. Drafts never count toward approvals, dashboards, or closeout logic.
 - **Only an original DAR is *created* as a draft.** Progress reports are inserted already
-  submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
-  progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit
+  submitted. A progress report needs an approved parent, so its collection has elections and
+  can't be resubmitted; a progress report with no `submission_date` (and `parent_id` set) exists
+  only in older data. Resubmit nulls `submission_date` on every DAR in the collection. It
   needs a canceled DAR in the collection, and is rejected (409, under the collection lock) when a
   closeout exists or when any DAR in the collection has an election of any type or status,
   archived or canceled included (`DataAccessRequestDAO.hasElectionsInCollection`). A DAR the DAC

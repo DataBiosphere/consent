@@ -639,7 +639,8 @@ public class DarCollectionService implements ConsentLogger {
             // Reverting to drafts nulls every submission_date, which would undo a closeout.
             CollectionLocks.lockOpenCollection(dao, collectionId);
             // A DAR with elections has been under DAC review, so it can't become a draft again.
-            // Every election-opening path takes the same lock, so this holds until commit.
+            // Every election-opening path takes the same lock, so no election is added before
+            // this commits.
             if (dao.hasElectionsInCollection(collectionId)) {
               throw new ConsentConflictException(
                   "Elections present on DARs; cannot resubmit collection");
@@ -661,8 +662,8 @@ public class DarCollectionService implements ConsentLogger {
             return null;
           });
     } catch (JdbiException e) {
-      // Submitting a draft in this collection locks its DAR row and then the collection, the
-      // reverse of this path, so either can be the deadlock victim. That is a retryable conflict.
+      // Waiting on the collection lock can end in a deadlock or lock timeout with another writer.
+      // That is a retryable conflict.
       CollectionLocks.throwIfLockFailure(e);
       throw e;
     }
