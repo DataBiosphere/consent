@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 
 public class DarCollectionService implements ConsentLogger {
 
@@ -79,6 +80,10 @@ public class DarCollectionService implements ConsentLogger {
   private static final String CREATE_ELECTION_ROLE_ERROR = "Only chairpersons can create elections";
   private static final String CREATE_ELECTION_DAC_ERROR =
       "User is not a chairperson for any dataset in this collection";
+  private static final String DRAFT_ELECTION_ERROR =
+      "Cannot open elections on a collection that has a draft.";
+  private static final String CHANGED_ELECTION_ERROR =
+      "The collection changed since it was loaded. Reload it and try again.";
   private static final String CREATE_ELECTION_DATASET_ERROR = "At least one dataset is required";
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -632,29 +637,43 @@ public class DarCollectionService implements ConsentLogger {
 
   public DarCollectionSummary updateCollectionToDraftStatus(DarCollection sourceCollection) {
     Integer collectionId = sourceCollection.getDarCollectionId();
-    dataAccessRequestDAO.inTransaction(
-        dao -> {
-          // Reverting to drafts nulls every submission_date, which would undo a closeout.
-          CollectionLocks.lockOpenCollection(dao, collectionId);
-          sourceCollection
-              .getDars()
-              .values()
-              .forEach(
-                  (d) -> {
-                    Date now = new Date();
-                    DataAccessRequestData newData =
-                        new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
-                    newData.setStatus(null);
-                    newData.setReferenceId(d.getReferenceId());
-                    daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
-                    // The content can change before it is submitted again, so a signing official
-                    // has to approve it again.
-                    dao.resetDarApprovalSO(d.getReferenceId());
-                    dataAccessRequestDAO.updateDataByReferenceId(
-                        d.getReferenceId(), d.getUserId(), null, now, newData, null);
-                  });
-          return null;
-        });
+    try {
+      dataAccessRequestDAO.inTransaction(
+          dao -> {
+            // Reverting to drafts nulls every submission_date, which would undo a closeout.
+            CollectionLocks.lockOpenCollection(dao, collectionId);
+            // A DAR with elections has been under DAC review, so it can't become a draft again.
+            // Every election-opening path takes the same lock, so no election is added before
+            // this commits.
+            if (dao.hasElectionsInCollection(collectionId)) {
+              throw new ConsentConflictException(
+                  "Elections present on DARs; cannot resubmit collection");
+            }
+            sourceCollection
+                .getDars()
+                .values()
+                .forEach(
+                    (d) -> {
+                      Date now = new Date();
+                      DataAccessRequestData newData =
+                          new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                      newData.setStatus(null);
+                      newData.setReferenceId(d.getReferenceId());
+                      daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                      // The content can change before it is submitted again, so a signing
+                      // official has to approve it again.
+                      dao.resetDarApprovalSO(d.getReferenceId());
+                      dataAccessRequestDAO.updateDataByReferenceId(
+                          d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                    });
+            return null;
+          });
+    } catch (JdbiException e) {
+      // Waiting on the collection lock can end in a deadlock or lock timeout with another writer.
+      // That is a retryable conflict.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
 
     // get updated collection
     DarCollection updatedCollection =
@@ -957,6 +976,12 @@ public class DarCollectionService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.CHAIRPERSON)) {
       throw new ForbiddenException(CREATE_ELECTION_ROLE_ERROR);
     }
+    // A draft isn't under review, so a collection that holds one gets no elections.
+    // A DAR loaded as a draft but submitted since is rejected too: the copy here would be stale.
+    if (collection.getDars().values().stream()
+        .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
+      throw new ConsentConflictException(DRAFT_ELECTION_ERROR);
+    }
     DataAccessRequest dar = collection.getMostRecentDar();
     if (Objects.isNull(dar)) {
       throw new BadRequestException(
@@ -993,6 +1018,11 @@ public class DarCollectionService implements ConsentLogger {
             dataAccessRequestDAO.inTransaction(
                 dao -> {
                   CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
+                  // Resubmit takes the same lock, so this sees a resubmit (and any submit after
+                  // it) that committed after the collection was loaded.
+                  if (!dao.isSubmittedAt(dar.getReferenceId(), dar.getSubmissionDate())) {
+                    throw new ConsentConflictException(CHANGED_ELECTION_ERROR);
+                  }
                   return collectionServiceDAO.createElectionsForDarByUser(user, dar);
                 });
         if (createdElectionReferenceIds.isEmpty()) {
@@ -1053,7 +1083,15 @@ public class DarCollectionService implements ConsentLogger {
     dataAccessRequestDAO.inTransaction(
         dao -> {
           CollectionLocks.lockOpenCollection(dao, collectionId);
-          createElectionsAndVotesForAutoOpenDacs(context.classification(), context.latestDar());
+          // The DAR was read before the lock. If it is no longer submitted, it gets no elections.
+          DataAccessRequest latestDar = context.latestDar();
+          if (!dao.isSubmittedAt(latestDar.getReferenceId(), latestDar.getSubmissionDate())) {
+            logWarn(
+                "Skipping elections for DAR %s: no longer submitted"
+                    .formatted(latestDar.getReferenceId()));
+            return null;
+          }
+          createElectionsAndVotesForAutoOpenDacs(context.classification(), latestDar);
           return null;
         });
   }
@@ -1117,6 +1155,15 @@ public class DarCollectionService implements ConsentLogger {
     if (darCollection.getDars().values().stream()
         .anyMatch(DataAccessRequest::getIsCloseoutProgressReport)) {
       logWarn("Skipping new DAR processing for closed out collection id: " + collectionId);
+      return null;
+    }
+
+    // A collection that holds a draft gets no elections and no new-request emails.
+    if (darCollection.getDars().values().stream()
+        .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
+      logException(
+          new IllegalStateException(
+              "Skipping new DAR processing for collection id with a draft: " + collectionId));
       return null;
     }
 

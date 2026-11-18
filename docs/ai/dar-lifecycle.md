@@ -32,8 +32,14 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
 | --- | --- | --- | --- | --- |
 | Draft | `NULL`, or set (a canceled collection reset to draft) | `NULL` | `NULL` | `DataAccessRequestService.insertDraftDataAccessRequest` |
 | Original DAR | set | `NULL` | set | `DataAccessRequestService.createDataAccessRequest` |
-| Progress report | set | set (parent DAR id) | set at insert; resubmit can null it | `DataAccessRequestDAO.insertProgressReport` |
+| Progress report | set | set (parent DAR id) | set at insert; null only in older data | `DataAccessRequestDAO.insertProgressReport` |
 | Closeout | set | set (the original DAR or a progress report) | set, always (resubmit is rejected) | a progress report whose `data.closeoutSupplement` has reasons |
+
+`data.status` is server-managed. The DAR create, draft and update endpoints ignore a `status` in the
+request body (`DataAccessRequestResource`): a new draft or an original DAR submission (including
+submitting an existing draft) gets none, and a draft edit keeps the stored value (`keepStoredStatus`,
+and the edit's UPDATE takes it from the row it updates). A progress report copies its parent's data,
+status included (`DataAccessRequest.populateProgressReportFromJsonString`).
 
 ### 1. Draft
 
@@ -43,13 +49,16 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   (`DarCollectionService.updateCollectionToDraftStatus`) turns its DARs back into drafts: it nulls
   `submission_date` but keeps `collection_id`, and `createDataAccessRequest` later reuses that
   collection. So never test `collection_id IS NULL` to find drafts.
-- No elections, no grants. Drafts never count toward approvals, dashboards, or closeout logic.
+- No grants, and normally no elections. Drafts never count toward approvals, dashboards, or
+  closeout logic.
 - **Only an original DAR is *created* as a draft.** Progress reports are inserted already
-  submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
-  progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit
-  needs a canceled DAR in the collection, so this mostly affects pre-2022 collections with a
-  canceled sibling original. A closed-out collection can't be resubmitted (409, under the
-  collection lock), so a closeout never loses its `submission_date`.
+  submitted. A progress report needs an approved parent, so its collection has elections and
+  can't be resubmitted; a progress report with no `submission_date` (and `parent_id` set) exists
+  only in older data. Resubmit nulls `submission_date` on every DAR in the collection. It
+  needs a canceled DAR in the collection, and is rejected (409, under the collection lock) when a
+  closeout exists or when any DAR in the collection has an election of any type or status,
+  archived or canceled included (`DataAccessRequestDAO.hasElectionsInCollection`). A DAR the DAC
+  has reviewed never becomes a draft again, and a closeout never loses its `submission_date`.
 
 ### 2. Original DAR (submission)
 
@@ -64,12 +73,22 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   it, so it writes `NULL` back).
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
-  rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`).
+  rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`). None of
+  them opens elections on a draft: the chair gets 409 when any DAR in the collection is a draft,
+  and every path re-checks under the collection lock that its DAR is still submitted with the
+  date it read (`DataAccessRequestDAO.isSubmittedAt`, compared to the millisecond because
+  progress reports store microseconds and Java copies keep milliseconds). The automated paths
+  skip a DAR that fails the check, and new-DAR processing (elections and new-request emails)
+  skips a collection that holds a draft.
 - A grant is a (DAR, dataset) pair whose most recent `final` or `radar_approve` vote on a
   DataAccess election approved it. Access runs 8760 hours from **that DAR's own**
   `submission_date` (`DataAccessRequestDAO.findApprovedDARsByDatasetId`,
   `DatasetDAO.getApprovedDatasets`). Newer submissions in the collection don't extend it unless
   they are approved themselves.
+- Submitting an existing draft locks its DAR row and re-reads it, then locks its collection (if
+  any). It is rejected if the draft was deleted (404), if another submit already committed (422),
+  or, checked under the collection lock, if the collection has been closed out or the draft has
+  any election (409). The submit uses the collection read under the lock.
 - Pre-2022 collections can hold **several original DARs** (one per dataset). Queries that pick
   "the latest DAR" must also read the non-canceled sibling originals; see `DacDashboardDAO` and
   `DarCollectionSummaryDAO`.
@@ -269,9 +288,16 @@ precondition that must hold at commit belongs after `lockCollection`, not only i
 - Don't catch a SQL error inside the locked callback and carry on: Postgres has already aborted
   the transaction, so the commit silently rolls back. Let it propagate out of `inTransaction`,
   then handle it (as `DACAutomationRuleService.openElectionAndApprove` does).
+- Submitting a draft locks the DAR row **before** its collection, and so does a draft edit
+  (`DataAccessRequestServiceDAO.updateByReferenceId` updates the DAR, then the collection).
+  Resubmit, researcher cancel and signing official approval lock the collection first and then
+  write DAR rows, so either kind can deadlock with the other on the same collection. Postgres
+  aborts one of the two; a path maps that to a retryable 409 only if it calls
+  `throwIfLockFailure`, and returns a 500 otherwise.
 - A deadlock or lock timeout while waiting for the lock (SQL states `40P01`, `55P03`, `40001`)
-  is a retryable conflict. `CollectionLocks.throwIfLockFailure` turns it into a 409; votes,
-  rationale updates and progress report creation use it.
+  is a retryable conflict. `CollectionLocks.throwIfLockFailure` turns it into a 409. Search for
+  its callers to see which paths use it; a path that takes the collection lock and doesn't call
+  it returns a 500 on a lock failure.
 
 JDBI 3 (3.52.x) binds one handle per thread: `Jdbi.withHandle` reuses the thread's `handleScope`,
 and `Handle.inTransaction` joins an open transaction. So on-demand DAOs and nested

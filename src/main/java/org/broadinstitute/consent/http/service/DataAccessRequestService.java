@@ -250,9 +250,14 @@ public class DataAccessRequestService implements ConsentLogger {
             transactionDAOs -> {
               DataAccessRequestDAO transactionalDarDAO = transactionDAOs.dataAccessRequestDAO();
               DaaDAO transactionalDaaDAO = transactionDAOs.daaDAO();
+              // Use the draft as read under its lock, not the unlocked read above.
+              DataAccessRequest lockedDraft =
+                  Objects.nonNull(existingDar)
+                      ? validateDraftUnderLock(transactionDAOs, existingDar.getReferenceId())
+                      : null;
               Integer collectionId =
-                  Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())
-                      ? existingDar.getCollectionId()
+                  Objects.nonNull(lockedDraft) && Objects.nonNull(lockedDraft.getCollectionId())
+                      ? lockedDraft.getCollectionId()
                       : transactionDAOs
                           .darCollectionDAO()
                           .insertDarCollection(
@@ -305,6 +310,41 @@ public class DataAccessRequestService implements ConsentLogger {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     }
     return findByReferenceId(referenceId);
+  }
+
+  /**
+   * Re-check the draft under lock before submitting it. Another submit may have committed since the
+   * unlocked draft check, and a DAR with elections has been under DAC review, so neither can be
+   * submitted again. Locks the DAR row, then its collection, the same order as a draft edit;
+   * elections are opened under the collection lock. Returns the draft as read under the lock.
+   */
+  @VisibleForTesting
+  static DataAccessRequest validateDraftUnderLock(
+      DataAccessRequestServiceDAO.TransactionDAOs transactionDAOs, String referenceId) {
+    DataAccessRequestDAO darDAO = transactionDAOs.dataAccessRequestDAO();
+    DataAccessRequest current;
+    try {
+      darDAO.lockDataAccessRequest(referenceId);
+      current = darDAO.findByReferenceId(referenceId);
+      if (Objects.isNull(current)) {
+        throw new NotFoundException("Data access request %s not found".formatted(referenceId));
+      }
+      if (!current.getDraft()) {
+        throw new SubmittedDARCannotBeEditedException();
+      }
+      if (Objects.nonNull(current.getCollectionId())) {
+        // Also rejects a submit into a collection that has been closed out.
+        CollectionLocks.lockOpenCollection(darDAO, current.getCollectionId());
+      }
+    } catch (JdbiException e) {
+      // A deadlock with a collection-first writer aborts the transaction; rethrowing rolls it back.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
+    if (!transactionDAOs.electionDAO().findElectionsByReferenceId(referenceId).isEmpty()) {
+      throw new ConsentConflictException("Elections present on this DAR; cannot submit it again");
+    }
+    return current;
   }
 
   /**

@@ -41,6 +41,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       "SELECT collection_id FROM dar_collection WHERE collection_id = :collectionId FOR UPDATE")
   Integer lockCollection(@Bind("collectionId") Integer collectionId);
 
+  /**
+   * Lock one DAR row until the transaction commits. NO KEY UPDATE is the lock a plain UPDATE takes,
+   * so it doesn't block inserts that reference the row by foreign key. Lock the DAR before its
+   * collection, the order a draft edit uses.
+   */
+  @SqlQuery(
+      """
+      SELECT reference_id FROM data_access_request
+      WHERE reference_id = :referenceId
+      FOR NO KEY UPDATE
+      """)
+  String lockDataAccessRequest(@Bind("referenceId") String referenceId);
+
   /** Lock in a stable order for vote batches spanning multiple collections. */
   @SqlQuery(
       """
@@ -62,6 +75,24 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   List<Integer> findDatasetIdsByCollectionId(@Bind("collectionId") Integer collectionId);
 
+  /**
+   * Whether the DAR is still submitted with this submission date. False for a draft, and for a DAR
+   * whose submission date changed since the caller read it. Compared to the millisecond: the column
+   * keeps microseconds (progress reports use now()), but a Java Date, a bound Date and a Gson copy
+   * of a collection keep only milliseconds.
+   */
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request
+          WHERE reference_id = :referenceId
+            AND date_trunc('milliseconds', submission_date)
+                = date_trunc('milliseconds', CAST(:submissionDate AS timestamptz))
+      )
+      """)
+  boolean isSubmittedAt(
+      @Bind("referenceId") String referenceId, @Bind("submissionDate") Date submissionDate);
+
   @SqlQuery(
       """
       SELECT EXISTS (
@@ -71,6 +102,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       )
       """)
   boolean hasSubmittedCloseout(@Bind("collectionId") Integer collectionId);
+
+  /**
+   * Whether any DAR in the collection has an election, of any type or status. Archived and canceled
+   * elections count: they show the collection has been under DAC review.
+   */
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request dar
+          INNER JOIN election e ON e.reference_id = dar.reference_id
+          WHERE dar.collection_id = :collectionId
+      )
+      """)
+  boolean hasElectionsInCollection(@Bind("collectionId") Integer collectionId);
 
   @SqlQuery(
       """
