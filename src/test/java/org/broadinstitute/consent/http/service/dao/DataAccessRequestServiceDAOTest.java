@@ -197,6 +197,13 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         user.getEraCommonsId());
     dataAccessRequestDAO.insertAllDarDatasets(
         List.of(new DarDataset(referenceId, dataset.getDatasetId())));
+    // Submitted, with an election: still reported as submitted (422), not 409.
+    electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        dataset.getDatasetId());
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(referenceId);
     dar.setCollectionId(collectionId);

@@ -43,7 +43,8 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   (`DarCollectionService.updateCollectionToDraftStatus`) turns its DARs back into drafts: it nulls
   `submission_date` but keeps `collection_id`, and `createDataAccessRequest` later reuses that
   collection. So never test `collection_id IS NULL` to find drafts.
-- No elections, no grants. Drafts never count toward approvals, dashboards, or closeout logic.
+- No grants, and normally no elections. Drafts never count toward approvals, dashboards, or
+  closeout logic.
 - **Only an original DAR is *created* as a draft.** Progress reports are inserted already
   submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
   progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit

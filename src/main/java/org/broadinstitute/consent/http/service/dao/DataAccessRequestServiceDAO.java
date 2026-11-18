@@ -71,9 +71,9 @@ public class DataAccessRequestServiceDAO {
         """
           SELECT EXISTS (SELECT 1 FROM election WHERE reference_id = :referenceId)
         """;
-    final String exists =
+    final String isDraft =
         """
-          SELECT EXISTS (SELECT 1 FROM data_access_request WHERE reference_id = :referenceId)
+          SELECT submission_date IS NULL FROM data_access_request WHERE reference_id = :referenceId
         """;
     final String deleteDarDatasetRelationByReferenceId =
         """
@@ -96,26 +96,36 @@ public class DataAccessRequestServiceDAO {
           // earlier read, and a submit may have committed since; the guard keeps an edit from
           // turning a submitted DAR back into a draft.
           if (darUpdate.execute() == 0) {
-            if (!h.createQuery(exists)
-                .bind("referenceId", referenceId)
-                .mapTo(Boolean.class)
-                .one()) {
-              throw new NotFoundException(
-                  "Data access request %s not found".formatted(referenceId));
+            boolean draft =
+                h.createQuery(isDraft)
+                    .bind("referenceId", referenceId)
+                    .mapTo(Boolean.class)
+                    .findOne()
+                    .orElseThrow(
+                        () ->
+                            new NotFoundException(
+                                "Data access request %s not found".formatted(referenceId)));
+            if (!draft) {
+              throw new SubmittedDARCannotBeEditedException();
             }
-            if (h.createQuery(hasElections)
-                .bind("referenceId", referenceId)
-                .mapTo(Boolean.class)
-                .one()) {
-              throw new ConsentConflictException(
-                  "Elections present on this DAR; it cannot be edited");
-            }
-            throw new SubmittedDARCannotBeEditedException();
+            throw new ConsentConflictException(
+                "Elections present on this DAR; it cannot be edited");
           }
 
           if (Objects.nonNull(dar.getCollectionId())) {
             darCollectionDAO.updateDarCollection(
                 dar.getCollectionId(), user.getUserId(), Date.from(now));
+            // Elections are opened under the collection lock, which the line above now holds; one
+            // committed while this edit waited for it fails the edit here.
+            boolean elections =
+                h.createQuery(hasElections)
+                    .bind("referenceId", referenceId)
+                    .mapTo(Boolean.class)
+                    .one();
+            if (elections) {
+              throw new ConsentConflictException(
+                  "Elections present on this DAR; it cannot be edited");
+            }
           }
 
           Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
