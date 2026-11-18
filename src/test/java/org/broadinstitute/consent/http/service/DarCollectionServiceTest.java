@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,6 +30,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -88,6 +90,7 @@ import org.broadinstitute.consent.http.service.DarCollectionService.DacUserClass
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.sqlobject.transaction.TransactionalCallback;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -465,6 +468,29 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
+  }
+
+  @Test
+  void testCancelDarCollectionAsResearcherDeadlockIsConflict() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    User user = new User();
+    user.setUserId(1);
+    collection.setCreateUserId(user.getUserId());
+    // A draft edit in this collection held its DAR row and waited on the collection.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestDAO)
+        .lockCollection(collection.getDarCollectionId());
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
+    verify(dataAccessRequestDAO, never()).cancelByReferenceIds(anyList());
   }
 
   @Test

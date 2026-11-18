@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 
 public class DarCollectionService implements ConsentLogger {
 
@@ -815,11 +816,18 @@ public class DarCollectionService implements ConsentLogger {
         && !user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
-    return dataAccessRequestDAO.inTransaction(
-        dao -> {
-          CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
-          return cancelDarCollectionByRoleInTransaction(user, collection, role);
-        });
+    try {
+      return dataAccessRequestDAO.inTransaction(
+          dao -> {
+            CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
+            return cancelDarCollectionByRoleInTransaction(user, collection, role);
+          });
+    } catch (JdbiException e) {
+      // A draft edit in this collection updates its DAR row and then the collection, the reverse
+      // of this path, so either can be the deadlock victim. That is a retryable conflict.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
   }
 
   private DarCollection cancelDarCollectionByRoleInTransaction(
