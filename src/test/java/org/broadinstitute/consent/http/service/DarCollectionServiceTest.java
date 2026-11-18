@@ -12,9 +12,11 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,6 +31,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -88,6 +91,7 @@ import org.broadinstitute.consent.http.service.DarCollectionService.DacUserClass
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.sqlobject.transaction.TransactionalCallback;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -186,6 +190,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(firstReferenceId);
     verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(secondReferenceId);
+    verify(dataAccessRequestDAO).hasElectionsInCollection(collectionId);
+    verify(dataAccessRequestDAO)
+        .updateDataByReferenceId(
+            eq(firstReferenceId), eq(userId), isNull(), any(), any(), isNull());
   }
 
   @Test
@@ -205,6 +213,51 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(7);
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(7);
+    verify(dataAccessRequestDAO, never())
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(daaDAO, never()).deleteDarDatasetDaaSnapshotsByReferenceId(any());
+  }
+
+  @Test
+  void testUpdateCollectionToDraftStatusDeadlockIsConflict() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(9);
+    sourceCollection.addDar(dar);
+    // A submit of a draft in this collection held the collection lock and waited on a DAR row.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestDAO)
+        .lockCollection(9);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateCollectionToDraftStatus(sourceCollection));
+    verify(dataAccessRequestDAO, never())
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateCollectionToDraftStatusRejectsCollectionWithElections() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(8);
+    sourceCollection.addDar(dar);
+    when(dataAccessRequestDAO.hasElectionsInCollection(8)).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateCollectionToDraftStatus(sourceCollection));
+
+    // The election check runs under the collection lock.
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).lockCollection(8);
+    order.verify(dataAccessRequestDAO).hasElectionsInCollection(8);
     verify(dataAccessRequestDAO, never())
         .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
     verify(daaDAO, never()).deleteDarDatasetDaaSnapshotsByReferenceId(any());

@@ -72,6 +72,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   boolean hasSubmittedCloseout(@Bind("collectionId") Integer collectionId);
 
+  /**
+   * Whether any DAR in the collection has an election, of any type or status. Archived and canceled
+   * elections count: they show the collection has been under DAC review.
+   */
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request dar
+          INNER JOIN election e ON e.reference_id = dar.reference_id
+          WHERE dar.collection_id = :collectionId
+      )
+      """)
+  boolean hasElectionsInCollection(@Bind("collectionId") Integer collectionId);
+
   @SqlQuery(
       """
       SELECT EXISTS (
