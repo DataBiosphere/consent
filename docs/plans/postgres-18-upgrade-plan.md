@@ -6,6 +6,9 @@ instances in dev and staging from PostgreSQL 16 to 18.
 uses the Cloud SQL major version upgrade in place, started from the Google Cloud console. The
 Terraform changes after the upgrade.
 
+Dev and staging are on PostgreSQL 18. Prod is not. See "Prod (DT-4324)" for the work that
+remains.
+
 This document is the full record of the procedure. It contains no instance names. Each command
 uses `<instance>` and `<project>`. The instance name is the `db_name` value in the Terraform
 variables of the environment. It is also the `instance_name` value in the `consent-postgres-creds`
@@ -17,9 +20,9 @@ Consent has no runtime code that depends on the Postgres version. The work is in
 
 | Repo | Change | Status |
 | --- | --- | --- |
-| `consent` | The Postgres image for the local scripts. The image for the tests stays on 16 until DT-4324. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
+| `consent` | The Postgres image for the local scripts. The image for the tests stays on 16 until DT-4324. | [#3282](https://github.com/DataBiosphere/consent/pull/3282). Tests: [#3297](https://github.com/DataBiosphere/consent/pull/3297), open until the prod upgrade. |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
-| `duos-ui` | The Postgres image for the local database. The image for the integration tests stays on 16 until DT-4324. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153) |
+| `duos-ui` | The Postgres image for the local database. The image for the integration tests stays on 16 until DT-4324. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153). Tests: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171), open until the prod upgrade. |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
@@ -65,7 +68,15 @@ on 2026-11-13.
 The integration tests of `duos-ui` follow the same rule. Their image in
 `.github/workflows/integration-tests.yml` stays on Postgres 16.
 
-Set the two test images to Postgres 18 in the work for DT-4324, and run the tests again.
+Two pull requests set the test images to `postgres:18.7-alpine` for DT-4324:
+
+- `consent`: [#3297](https://github.com/DataBiosphere/consent/pull/3297) changes
+  `DAOTestHelper.POSTGRES_IMAGE`.
+- `duos-ui`: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171) changes the image in
+  `.github/workflows/integration-tests.yml`.
+
+The CI checks of the two pull requests passed on 18.7 on 2026-11-18. Merge them when prod is on
+PostgreSQL 18, and not before.
 
 ## Confirmed by test
 
@@ -84,6 +95,8 @@ Cloud SQL instance. See its results there.
 - DUOS backend with local Consent: the UI with the backend on, and a local Consent stack on
   Postgres 18, operates normally. A new row in `user_sessions` shows the session. The addition
   and removal of user roles work.
+- CI on 18.7: the checks of consent #3297 and duos-ui #4171 passed with the test images set to
+  18.7. For `duos-ui`, this includes the Playwright tests in CI.
 - Dump versions: a `pg_dump` 18 dump of the session schema fails on Postgres 16.13 with
   `unrecognized configuration parameter "transaction_timeout"`. A `pg_dump` 16 dump loads on
   Postgres 18.7.
@@ -91,15 +104,14 @@ Cloud SQL instance. See its results there.
 ## Not confirmed
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
-  for dev and for staging. Prod is not confirmed.
+  for dev and for staging. Prod is not confirmed. Pre-check 1 for prod confirms it.
 - Consent did not connect directly to a Cloud SQL instance on Postgres 18. In the rehearsal for
   dev and for staging, Consent used an export of the upgraded clone. In the rehearsal for dev,
   the DUOS backend did connect to the clone.
 - `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this. The
   rehearsal for dev used a Cloud SQL export, not this script.
 - The BEE test did not compare row counts before and after the upgrade.
-- The Playwright tests that need the automation accounts did not run on Postgres 18. They did not
-  run locally, and the `duos-ui` CI stays on Postgres 16.
+- The Playwright tests that need the automation accounts did not run locally on Postgres 18.
 - The rollback procedure was not rehearsed.
 - The note about the sync from Terra Data Repository (TDR) comes from the upgrade from 11 to 16
   in 2024. Make sure that it is still correct.
@@ -375,7 +387,7 @@ difference.
    change, stop and find the cause.
 4. Apply and merge.
 
-Do not change `prod.tfvars` for DT-3587.
+Do not change `prod.tfvars` for DT-3587. Change it for DT-4324, after the prod upgrade.
 
 ## Step 7: After each upgrade
 
@@ -398,6 +410,27 @@ Do not change `prod.tfvars` for DT-3587.
 7. Run `./scripts/export-db.sh <env>`, and make sure that the dump is complete.
 8. Tell the Slack channels that the upgrade is complete.
 9. Monitor Query Insights for slower queries for some days.
+
+## Prod (DT-4324)
+
+Steps 1, 2, and 3 are complete, and prod does not need them again. Do steps 4 to 7 for prod, with
+these differences.
+
+| Step | Difference for prod |
+| --- | --- |
+| 4. Pre-checks | None. Record the results in a new column of the results table. |
+| 5. Rehearsal | Do it on a clone of the prod instance. The times for dev and staging do not give the downtime for prod. Use the time from this rehearsal. |
+| 5. Tests with the services | The file from a prod clone has real user data from prod. The rule at the end of that section applies. |
+| 6. Before the upgrade | Also tell the DUOS users about the downtime. Make sure that no release goes to prod during the upgrade. |
+| 6. Terraform | Set `db_version` in `prod.tfvars`, and use the Atlantis project for prod. |
+| 7. After the upgrade | Item 7 does not apply. `scripts/export-db.sh` does not export prod. |
+| Rollback | The same procedure. It was not rehearsed, and data that the services write after the upgrade is lost. |
+
+After prod is on PostgreSQL 18:
+
+1. Merge [consent #3297](https://github.com/DataBiosphere/consent/pull/3297) and
+   [duos-ui #4171](https://github.com/DataBiosphere/duos-ui/pull/4171).
+2. Update the section "The tests stay on Postgres 16 until the prod upgrade" in this document.
 
 ## Rollback
 
