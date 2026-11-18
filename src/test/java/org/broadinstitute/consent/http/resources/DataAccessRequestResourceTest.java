@@ -450,7 +450,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest stored = generateDataAccessRequest();
     stored.getData().setIrbDocumentLocation(previousLocation);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
-    // A submit committed after the draft check, so the guarded update rejects the edit.
+    // The save is rejected, so nothing is saved.
     when(dataAccessRequestService.updateByReferenceId(any(), any()))
         .thenThrow(new SubmittedDARCannotBeEditedException());
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
@@ -468,7 +468,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUploadIrbDocumentDeletesNewDocumentWhenDraftHasElections() throws Exception {
+  void testUploadIrbDocumentDeletesNewDocumentWhenTheSaveConflicts() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
     String previousLocation = randomAlphabetic(10);
     dar.getData().setIrbDocumentLocation(previousLocation);
@@ -518,7 +518,32 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUploadIrbDocumentKeepsNewDocumentWhenSavedDespiteFailure() throws Exception {
+  void testUploadIrbDocumentDeletesNewDocumentWhenTheDarIsGone() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setIrbDocumentLocation(previousLocation);
+    // The DAR was deleted while the upload ran.
+    when(dataAccessRequestService.findByReferenceId(any()))
+        .thenReturn(dar)
+        .thenThrow(new NotFoundException("gone"));
+    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+        .thenThrow(new NotFoundException("gone"));
+    InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("bucket", "new-upload"));
+
+    Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
+    assertEquals(404, response.getStatus());
+    verify(gcsService).deleteDocument("new-upload");
+    verify(gcsService, never()).deleteDocument(previousLocation);
+  }
+
+  @Test
+  void testUploadIrbDocumentDeletesPreviousDocumentWhenSavedDespiteFailure() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
     String previousLocation = randomAlphabetic(10);
     dar.getData().setIrbDocumentLocation(previousLocation);
@@ -538,8 +563,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(500, response.getStatus());
-    // The saved DAR points to the new upload, so it stays.
-    verify(gcsService, never()).deleteDocument(any());
+    // The saved DAR points to the new upload, so it stays and the previous document goes.
+    verify(gcsService).deleteDocument(previousLocation);
+    verify(gcsService, never()).deleteDocument("new-upload");
   }
 
   @Test

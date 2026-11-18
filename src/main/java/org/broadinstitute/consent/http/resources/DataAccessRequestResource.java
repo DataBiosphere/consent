@@ -679,9 +679,9 @@ public class DataAccessRequestResource extends Resource {
     try {
       updated = dataAccessRequestService.updateByReferenceId(user, dar);
     } catch (RuntimeException e) {
-      // Usually nothing was saved, but a failure can also follow a commit. Remove the upload only
-      // if the stored DAR doesn't point to it.
-      deleteUploadIfUnreferenced(type, dar, newDocumentLocation(type, dar));
+      // Usually nothing was saved, but a failure can also follow a commit. Check which document
+      // the stored DAR points to before deleting anything.
+      reconcileFailedSave(type, dar, newDocumentLocation(type, dar), previousLocation);
       throw e;
     }
     if (Objects.nonNull(previousLocation)) {
@@ -690,11 +690,15 @@ public class DataAccessRequestResource extends Resource {
     return updated;
   }
 
-  private void deleteUploadIfUnreferenced(
-      DarDocumentType type, DataAccessRequest dar, String uploadLocation) {
+  private void reconcileFailedSave(
+      DarDocumentType type, DataAccessRequest dar, String uploadLocation, String previousLocation) {
     DataAccessRequest stored;
     try {
       stored = dataAccessRequestService.findByReferenceId(dar.getReferenceId());
+    } catch (NotFoundException e) {
+      // The DAR is gone, so nothing refers to the upload.
+      deleteDarDocument(dar, uploadLocation);
+      return;
     } catch (RuntimeException e) {
       // Can't tell whether the DAR refers to it: an orphaned blob is better than a missing one.
       logWarn(
@@ -702,9 +706,12 @@ public class DataAccessRequestResource extends Resource {
               .formatted(uploadLocation, dar.getReferenceId(), e.getMessage()));
       return;
     }
-    if (stored == null
-        || stored.getData() == null
-        || !uploadLocation.equals(newDocumentLocation(type, stored))) {
+    if (stored.getData() != null && uploadLocation.equals(newDocumentLocation(type, stored))) {
+      // The save committed: the previous document is the one nothing refers to now.
+      if (Objects.nonNull(previousLocation)) {
+        deleteDarDocument(dar, previousLocation);
+      }
+    } else {
       deleteDarDocument(dar, uploadLocation);
     }
   }
