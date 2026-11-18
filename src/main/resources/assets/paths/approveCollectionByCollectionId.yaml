@@ -28,8 +28,8 @@ post:
     409:
       description: >-
         Conflict. The collection does not require approval, has a submitted closeout, or holds a
-        draft, or the DAR's submission date changed while the request waited for the collection
-        lock.
+        draft, the DAR is canceled, or the DAR's submission date changed while the request waited
+        for the collection lock.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

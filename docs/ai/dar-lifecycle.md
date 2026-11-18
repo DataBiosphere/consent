@@ -78,10 +78,13 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   content they approved. Resubmit removes it on every DAR in the collection and keeps
   `requires_so_approval` (`DataAccessRequestDAO.resetDarApprovalSO`); submitting a draft removes
   any left from older data, resets `requires_so_approval` to NULL and sets it again when needed;
-  and a signing official can't approve a draft, a collection that has one, or a DAR whose
-  submission date changed while the approval waited for the collection lock (409).
+  and a signing official can't approve a draft, a collection that has one, a canceled DAR, or a
+  DAR whose submission date changed while the approval waited for the collection lock (409).
   DAC automation rules skip a DAR that needs signing official approval and doesn't have it
-  (`DACAutomationRuleService.triggerDACRuleSettings`).
+  (`DACAutomationRuleService.triggerDACRuleSettings`). Submission also defers auto-open elections
+  and DAC notices for that DAR; the approval runs the rules, then opens those elections and sends
+  those notices if the approved DAR is still the collection's most recent
+  (`DarCollectionService.processApprovedSubmission`).
 
 ### 3. Progress report (renewal, optional)
 
