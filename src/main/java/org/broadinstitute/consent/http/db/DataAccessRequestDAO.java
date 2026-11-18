@@ -41,6 +41,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       "SELECT collection_id FROM dar_collection WHERE collection_id = :collectionId FOR UPDATE")
   Integer lockCollection(@Bind("collectionId") Integer collectionId);
 
+  /**
+   * Lock one DAR row until the transaction commits. NO KEY UPDATE is the lock a plain UPDATE takes,
+   * so it doesn't block inserts that reference the row by foreign key. Lock the DAR before its
+   * collection, the order a draft edit uses.
+   */
+  @SqlQuery(
+      """
+      SELECT reference_id FROM data_access_request
+      WHERE reference_id = :referenceId
+      FOR NO KEY UPDATE
+      """)
+  String lockDataAccessRequest(@Bind("referenceId") String referenceId);
+
   /** Lock in a stable order for vote batches spanning multiple collections. */
   @SqlQuery(
       """
