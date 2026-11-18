@@ -20,7 +20,8 @@ class DarCollectionTest {
   @Test
   void getMostRecentDarPrefersASubmittedDarOverADraft() {
     DarCollection collection = new DarCollection();
-    DataAccessRequest draft = dar("a", 1);
+    // The draft has the highest id, so ordering by id alone would wrongly pick it.
+    DataAccessRequest draft = dar("a", 4);
     draft.setSubmissionDate(null);
     collection.addDar(draft);
     collection.addDar(dar("b", 2));
