@@ -44,7 +44,7 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   `submission_date` but keeps `collection_id`, and `createDataAccessRequest` later reuses that
   collection. So never test `collection_id IS NULL` to find drafts.
 - No grants, and normally no elections. Drafts never count toward approvals, dashboards, or
-  closeout logic. A draft that has elections can't be submitted (409).
+  closeout logic.
 - **Only an original DAR is *created* as a draft.** Progress reports are inserted already
   submitted, but resubmit nulls `submission_date` on **every** DAR in the collection, so a
   progress report in a resubmitted collection is a draft too (with `parent_id` set). Resubmit
@@ -72,8 +72,9 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
   `DatasetDAO.getApprovedDatasets`). Newer submissions in the collection don't extend it unless
   they are approved themselves.
 - Submitting an existing draft locks its DAR row and re-reads it, then locks its collection (if
-  any). It is rejected if another submit already committed (422), or, checked under the collection
-  lock, if the draft has any election (409). The submit uses the collection read under the lock.
+  any). It is rejected if the draft was deleted (404), if another submit already committed (422),
+  or, checked under the collection lock, if the collection has been closed out or the draft has
+  any election (409). The submit uses the collection read under the lock.
 - Pre-2022 collections can hold **several original DARs** (one per dataset). Queries that pick
   "the latest DAR" must also read the non-canceled sibling originals; see `DacDashboardDAO` and
   `DarCollectionSummaryDAO`.

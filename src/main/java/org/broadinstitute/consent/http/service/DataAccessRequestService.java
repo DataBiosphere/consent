@@ -326,11 +326,15 @@ public class DataAccessRequestService implements ConsentLogger {
     try {
       darDAO.lockDataAccessRequest(referenceId);
       current = darDAO.findByReferenceId(referenceId);
-      if (Objects.isNull(current) || !current.getDraft()) {
+      if (Objects.isNull(current)) {
+        throw new NotFoundException("Data access request %s not found".formatted(referenceId));
+      }
+      if (!current.getDraft()) {
         throw new SubmittedDARCannotBeEditedException();
       }
       if (Objects.nonNull(current.getCollectionId())) {
-        darDAO.lockCollection(current.getCollectionId());
+        // Also rejects a submit into a collection that has been closed out.
+        CollectionLocks.lockOpenCollection(darDAO, current.getCollectionId());
       }
     } catch (JdbiException e) {
       // A deadlock with a collection-first writer aborts the transaction; rethrowing rolls it back.

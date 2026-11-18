@@ -25,10 +25,14 @@ post:
               $ref: '../schemas/DataAccessRequest.yaml'
     401:
       description: Unauthorized.
+    404:
+      description: Not Found. The draft being submitted no longer exists.
     409:
       description: >-
-        Conflict. The submitted draft already has elections and cannot be submitted again, or the
-        submit lost a lock conflict and can be retried.
+        Conflict. The submitted draft already has elections and cannot be submitted again, its
+        collection has been closed out, or the submit lost a lock conflict and can be retried.
+    422:
+      description: Unprocessable Entity. The DAR has already been submitted.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

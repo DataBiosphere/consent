@@ -265,6 +265,42 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateDataAccessRequest_DraftDeletedConcurrentlyIsNotFound() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(9);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    // The unlocked check sees a draft; the re-read under the lock finds nothing.
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId()))
+        .thenReturn(dar)
+        .thenReturn(null);
+
+    assertThrows(
+        NotFoundException.class, () -> service.createDataAccessRequest(user, dar, request));
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_RejectsDraftInAClosedOutCollection() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(10);
+    dar.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestDAO.hasSubmittedCloseout(10)).thenReturn(true);
+
+    assertThrows(
+        ConsentConflictException.class, () -> service.createDataAccessRequest(user, dar, request));
+    verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
+  }
+
+  @Test
   void testCreateDataAccessRequest_RejectsDraftSubmittedConcurrently() {
     mockTransactionalDaos();
     DataAccessRequest dar = generateDataAccessRequest();

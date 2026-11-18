@@ -39,7 +39,8 @@ class DraftSubmitLockTest extends DAOTestHelper {
   @AfterEach
   void stopExecutor() throws InterruptedException {
     executor.shutdownNow();
-    // Interrupting the lock holder rolls it back, which frees the waiter; let both finish.
+    // Interrupting the lock holder ends its wait and it commits, which frees the waiter; let both
+    // finish.
     assertTrue(executor.awaitTermination(15, TimeUnit.SECONDS));
   }
 
