@@ -183,7 +183,7 @@ goes.
 
 | Precedent | Where | Why it helps |
 | --- | --- | --- |
-| Ontology search moved from ES to PostgreSQL | `ontology_index` table, `OntologyDAO.findByQuery`, DT-2530 and DT-2875 | A generated `tsvector` column, a GIN index, and a prefix `tsquery`. The same pattern applies here. |
+| Ontology search moved from ES to PostgreSQL | `ontology_index` table, `OntologyDAO.findByQuery`, [DT-2530](https://broadworkbench.atlassian.net/browse/DT-2530) and [DT-2875](https://broadworkbench.atlassian.net/browse/DT-2875) | A generated `tsvector` column, a GIN index, and a prefix `tsquery`. The same pattern applies here. |
 | Study card fields in SQL | `StudyRecommendationDAO` | SQL already derives participant count, access management, data use codes, and asset counts in the way that ES indexes them. |
 | GIN indexes on `jsonb` | `data_access_request.data` | The team already operates this index type. |
 
@@ -430,7 +430,7 @@ request by hand can then no longer see hidden studies. This makes access tighter
 approve it as a decision.
 
 **Product approval is necessary for this change.** The source for the rules is the access contract
-(`es-access-contract.md`, section A), which the Jira epics DT-3816 to DT-3823 use. Section 7.5
+(`es-access-contract.md`, section A), which the Jira epics [DT-3816](https://broadworkbench.atlassian.net/browse/DT-3816) to [DT-3823](https://broadworkbench.atlassian.net/browse/DT-3823) use. Section 7.5
 compares the contract with the table below. The two do not agree. Until product approves, the
 server rule sets must be the rules in the table below, which are the rules of today.
 
@@ -512,14 +512,14 @@ Thus "keep the authorization of today" has two possible meanings for search. Pro
 
 | Epic | Jira | Effect of this migration |
 | --- | --- | --- |
-| A. Discovery and contract | DT-3816 | Done, except A-3 (DT-3827). The contract stays valid. The ES capability record has no more use. |
-| B. Index schema | DT-3817 | Mostly not necessary. Access rules join live tables, so no `accessPolicy` object and no index version migration. A custodian change has effect immediately. |
-| C. Auth context service | DT-3818 | Still necessary. Tickets C-1 and C-2 give the caller context and the shared predicates that the SQL filter uses. |
-| D. Native ES security | DT-3819 | Not applicable. |
-| E. Query mediation | DT-3820 | E-1 and E-4 are not necessary with option 3, because no client query language exists. E-2 becomes a SQL `WHERE` clause. E-3 becomes the `SELECT` list. |
-| F. API hardening | DT-3821 | F-2 and F-3 (DT-3848, DT-3849) are the server-owned search API. They are "deferrable" in Jira. Option 3 is that API. This answers OPEN-11 with "yes". |
-| G. Frontend alignment | DT-3822 | Phase 5 of this design does G-1 to G-4. |
-| H. Rollout and docs | DT-3823 | The feature flag, the comparison of the two systems, and the switch in section 9 do the work of H-1 and H-3. H-2 (audit log) stays separate. |
+| A. Discovery and contract | [DT-3816](https://broadworkbench.atlassian.net/browse/DT-3816) | Done, except A-3 ([DT-3827](https://broadworkbench.atlassian.net/browse/DT-3827)). The contract stays valid. The ES capability record has no more use. |
+| B. Index schema | [DT-3817](https://broadworkbench.atlassian.net/browse/DT-3817) | Mostly not necessary. Access rules join live tables, so no `accessPolicy` object and no index version migration. A custodian change has effect immediately. |
+| C. Auth context service | [DT-3818](https://broadworkbench.atlassian.net/browse/DT-3818) | Still necessary. Tickets C-1 and C-2 give the caller context and the shared predicates that the SQL filter uses. |
+| D. Native ES security | [DT-3819](https://broadworkbench.atlassian.net/browse/DT-3819) | Not applicable. |
+| E. Query mediation | [DT-3820](https://broadworkbench.atlassian.net/browse/DT-3820) | E-1 and E-4 are not necessary with option 3, because no client query language exists. E-2 becomes a SQL `WHERE` clause. E-3 becomes the `SELECT` list. |
+| F. API hardening | [DT-3821](https://broadworkbench.atlassian.net/browse/DT-3821) | F-2 and F-3 ([DT-3848](https://broadworkbench.atlassian.net/browse/DT-3848), [DT-3849](https://broadworkbench.atlassian.net/browse/DT-3849)) are the server-owned search API. They are "deferrable" in Jira. Option 3 is that API. This answers OPEN-11 with "yes". |
+| G. Frontend alignment | [DT-3822](https://broadworkbench.atlassian.net/browse/DT-3822) | Phase 5 of this design does G-1 to G-4. |
+| H. Rollout and docs | [DT-3823](https://broadworkbench.atlassian.net/browse/DT-3823) | The feature flag, the comparison of the two systems, and the switch in section 9 do the work of H-1 and H-3. H-2 (audit log) stays separate. |
 
 Option 3 delivers a large part of Epics E, F, and G as a side effect. That work is already in the
 backlog. This reduces the true additional cost of the migration.
