@@ -131,6 +131,10 @@ failure to record is logged and doesn't fail the request.
 - `POST /api/dar/v2/progress_report/{parentReferenceId}` →
   `DataAccessRequest.populateProgressReportFromJsonString` (copies the parent's data and overlays
   the report fields) → `DataAccessRequestService.createProgressReport`.
+- Documents: a report's document fields start empty. For each document a dataset requires, the
+  report gets the uploaded file, or without one its own copy of the parent's file
+  (`GCSService.copyDocument`, under a new name), so it can serve the document and a later renewal
+  finds it. A missing parent file is a 400. A failed report deletes only its own files.
 - Preconditions. Closeouts go through the same endpoint; they share the ones not marked
   "ordinary reports only":
   - The caller owns the parent.

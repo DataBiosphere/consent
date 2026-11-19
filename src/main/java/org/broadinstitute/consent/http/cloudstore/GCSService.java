@@ -7,6 +7,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -113,6 +114,31 @@ public class GCSService implements ConsentLogger {
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
     Blob blob = storage.create(blobInfo, bytes);
     return blob.getBlobId();
+  }
+
+  /**
+   * Copy a document to a new blob in the same bucket.
+   *
+   * @param sourceBlobIdName String value of the source document's blob id name
+   * @param id UUID of the copy
+   * @return BlobId of the copy
+   * @throws NotFoundException when the source document doesn't exist
+   */
+  public BlobId copyDocument(String sourceBlobIdName, UUID id) throws NotFoundException {
+    BlobId source = BlobId.of(config.getBucket(), sourceBlobIdName);
+    if (storage.get(source) == null) {
+      throw new NotFoundException("Document not found: " + sourceBlobIdName);
+    }
+    BlobId target = BlobId.of(config.getBucket(), id.toString());
+    try {
+      return storage.copy(Storage.CopyRequest.of(source, target)).getResult().getBlobId();
+    } catch (StorageException e) {
+      // Deleted between the check and the copy.
+      if (e.getCode() == 404) {
+        throw new NotFoundException("Document not found: " + sourceBlobIdName);
+      }
+      throw e;
+    }
   }
 
   /**
