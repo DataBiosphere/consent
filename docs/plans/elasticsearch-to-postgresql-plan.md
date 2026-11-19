@@ -5,9 +5,6 @@ Ticket: [DT-4437](https://broadworkbench.atlassian.net/browse/DT-4437)
 **Status: draft (2026-11-19). No decision is made.** Section 9 gives a draft recommendation.
 Section 11 lists the questions that the team must answer before the recommendation is final.
 
-**This part of the document has sections 1 to 6 and section 12.** Sections 7 to 11 are in the
-pull request that follows this one. References to those sections point to it.
-
 Related documents:
 
 - [`elasticsearch-service-duos-ui-usage.md`](elasticsearch-service-duos-ui-usage.md): the usage
@@ -465,6 +462,427 @@ Size key from the existing plan: **S** is about 1 day, **M** is 2 to 3 days, **L
 | Fine-grained access control later | Rules repeat in each endpoint | Needs Epic E mediation on a query language that the team does not control | One location for rules. Rules join live tables. |
 | External API clients that send ES queries | Break | Continue to work, for the shapes that the translator accepts | Break |
 | Work that later becomes waste | Low | **High.** The translator has no use after duos-ui moves to a typed request. | Low |
+
+## 7. Security
+
+### 7.1 Today
+
+- The server sends client queries to ES with one shared credential.
+- The server adds no filter. The browser builds each visibility rule.
+- Any user who signs in can read each document in the index.
+- The access control epics exist to correct this.
+
+### 7.2 What changes when ES goes
+
+| Item in the existing plans | After the move |
+| --- | --- |
+| Epic D (ES document-level and field-level security) | Not applicable. The license dependency goes. |
+| Question OPEN-13 (does a different client read the data with the service credential?) | The question moves to PostgreSQL. It does not go away. The DUOS BFF already signs in with the `consent` database role. Its code reads only `user_sessions` today. If a different reader of the search data is probable, row-level security is the equivalent of Epic D. |
+| Epic E-0 (server-owned aggregations) | Options 1 and 3 give this by design. Option 2 gives it only for the shapes that the translator accepts. |
+| Epic E-1 (query mediation) | Options 1 and 3 give this by design. No client query language exists. Option 2 must still build it. |
+| Epic E-2 (injected visibility filter) | A SQL `WHERE` clause that the server adds. It can join live tables. |
+| Epic E-3 (response field allowlist) | The `SELECT` list, or a projection of the stored document. |
+| Epic B (access metadata in each document) | Smaller. Access rules can join live tables such as DAC membership and institution. A rule change has effect immediately, without an index write. |
+| Epic C (auth context service) | No change. Still necessary. |
+| ES capability service, probes, and tests | Removed. |
+| Access contract (`es-access-contract.md`) | Stays valid. Its dimension matrix and field classification do not depend on the mechanism. |
+
+### 7.3 Fine-grained access control
+
+- A PostgreSQL search can enforce a rule with a join to the live tables. The rule can use DAC
+  membership, institution, an explicit list of users, or policy tags.
+- The access contract forecasts rules of this type (its section G.4). In SQL each rule is one more
+  predicate. There is no credential to create for each request.
+- PostgreSQL row-level security is a possible second layer later. Consent uses one database role
+  today, so row-level security needs a session variable for each request. This design does not
+  include it.
+- Hidden data must not change counts or facets. In SQL, the visibility predicate applies before each
+  aggregate, so this condition holds by construction.
+
+### 7.4 Rule for this migration
+
+Decision 3 of the access contract says that a change must keep the authorization of today, unless
+the team approves an expansion. The migration must obey this rule.
+
+Options 1 and 3 move the visibility rules from the browser to the server. A user who changes the
+request by hand can then no longer see hidden studies. This makes access tighter. The team must
+approve it as a decision.
+
+**Product approval is necessary for this change.** The source for the rules is the access contract
+(`es-access-contract.md`, section A), which the Jira epics [DT-3816](https://broadworkbench.atlassian.net/browse/DT-3816) to [DT-3823](https://broadworkbench.atlassian.net/browse/DT-3823) use. Section 7.5
+compares the contract with the table below. The two do not agree. Until product approves, the
+server rule sets must be the rules in the table below, which are the rules of today.
+
+The rules are not the same for each caller today. One rule for all callers hides data that some
+pages show now. The server must keep one rule set for each scope:
+
+| Caller | Public visibility rule | Approved rule | Other scope |
+| --- | --- | --- | --- |
+| Data Library | Yes, unless the user is Chairperson, Data Submitter, Admin, or Signing Official | Yes | Branded library, if one is selected |
+| Submissions page | Same as the Data Library | No | Ownership by the user |
+| Study page | No | No | One study |
+| Dataset page | No | No | One dataset |
+| DAC Datasets, Manage DAC, DAC Profile | No | No | DAC ids |
+| DAR review and DUC addendum | No | No | Dataset ids |
+| Researcher dashboard | Yes, with the same role exception | Yes | Ownership for the submission count |
+| DAC dashboard | Public, or in a DAC of the user | Yes | None |
+| Signing Official dashboard | No | No | Institution of the user |
+
+A proposal to make these rules tighter or the same is a separate decision. The open items of the
+access contract cover such changes.
+
+**The approved rule applies to some results only.** The registry must give the predicate for each
+result and each count:
+
+| Result or count | Approved rule today |
+| --- | --- |
+| Dataset rows on the Datasets tab | Yes |
+| Dataset count (`datasets_count`) in the Data Library and on the Researcher and DAC dashboards | Yes |
+| Study rows, study count, and asset rows and counts | No. A public study that has only one controlled dataset without approval is still in these results. |
+| Chairperson count of datasets in the DACs of the user | No. This count also has no public visibility rule. |
+| Submission count and the Submissions page | No |
+| Study page grid | No |
+
+### 7.4a Authorization of each scope
+
+The server must authorize the scope before it applies the rules of the scope. An id from the session
+tells the server who the user is. It does not tell the server that the user can use a scope or read
+a target.
+
+The column "Today" shows that the two ES endpoints make none of these checks. The column "Draft
+rule" comes from the role limits of the duos-ui pages. It is a proposal, and product must confirm it
+with the visibility rule (question 6).
+
+| Scope | Today | Draft rule: who can use it | Draft rule: permitted targets |
+| --- | --- | --- | --- |
+| Library, with or without a branded library | Each user who signs in | Each user who signs in | No target. The branded library key must be in the server list. The "my institution" library uses the institution from the session. |
+| Owned by the user | Each user who signs in can send an ownership clause for a different user | Data Submitter, Chairperson, Admin | The user id and email come from the session only. |
+| DAC | Each user who signs in can send each DAC id | Chairperson and Member for their DACs. Admin for each DAC. | Each DAC id in the request must be a DAC of the user, unless the user is an Admin. |
+| One study | Each user who signs in can read each study | Open. Product must decide: each user who signs in (as today), or the contract rule (`canReadStudy`). | The study id. If the contract rule applies, the server tests it for that study. |
+| One dataset, or a list of dataset ids | Each user who signs in can read each dataset | Open, with the same two choices. For the DAR pages, a possible rule is that the datasets must be in a DAR that the user can read. | Each dataset id. |
+| Institution (Signing Official dashboard) | Server-built. The institution comes from the user. | Signing Official | The institution from the session only. |
+
+Rules for each scope:
+
+- A request for a scope that the user cannot use gets a 403 response, not an empty result.
+- A request with a target id that the user cannot read gets a 403 or a 404 response. The team must
+  select one and use it for each scope.
+- If the study scope and the dataset scope stay open to each user who signs in, the public
+  visibility rule controls discovery in the library only. It does not protect a study from a user
+  who has the id. This is the behavior of today. The document must say so to product.
+
+### 7.5 The source of the rules, and a conflict
+
+**Sources**
+
+- The Jira epics [DT-3816](https://broadworkbench.atlassian.net/browse/DT-3816) to
+  [DT-3823](https://broadworkbench.atlassian.net/browse/DT-3823) are "Elasticsearch Document
+  Visibility", Epics A to H. They are the Jira form of the plans in this directory.
+- Ticket A-2 ([DT-3826](https://broadworkbench.atlassian.net/browse/DT-3826), Completed) is the
+  access contract. Its section A is the statement of the rules.
+
+**The rule in the access contract**
+
+The contract takes its rule from `DatasetService` (`readBasis`, `canReadStudy`,
+`isCreatorOrCustodian`). A user can read a dataset if one of these conditions is true:
+
+1. The user is an Admin.
+2. The study has `publicVisibility = true`.
+3. The dataset has no study.
+4. The user created the dataset.
+5. The user created the study.
+6. The email of the user is in the data custodian list of the study. The match is exact and is
+   case-sensitive.
+
+The contract gives no access for these items. Each is deferred until product approves it:
+
+- DAC member or DAC chair (OPEN-3).
+- Institution, policy tags, and explicit user lists (OPEN-5).
+- `dacApproval`. The contract calls it a display attribute, not authorization (OPEN-4).
+
+**Three rule sets exist today**
+
+| Rule set | Where | Who sees a study that is not public |
+| --- | --- | --- |
+| Access contract | `DatasetService`, for the dataset endpoints | Admin, dataset creator, study creator, custodian |
+| Role rule | duos-ui `isRestrictedToPublicVisibility`, and `DashboardSearchService` on the server | Chairperson, Data Submitter, Admin, Signing Official |
+| None | Study page, Dataset page, DAC pages, DAR review, Signing Official dashboard (ES queries) | Each user who signs in |
+
+**The conflict**
+
+The table in section 7.4 records the role rule, because that is what the search pages do today.
+The contract records the `DatasetService` rule. They give different results:
+
+| User | Contract rule | Role rule in the Data Library |
+| --- | --- | --- |
+| Chairperson, Data Submitter, or Signing Official who is not the creator or a custodian | Does not see a study that is not public | Sees it |
+| Researcher who is the creator or a custodian of a study that is not public | Sees it | Does not see it |
+| Admin | Sees all | Sees all |
+
+The contract and the epics do not mention the role rule. Ticket G-1 says that the browser filter
+goes away when the server filter implements the contract rows. That change removes studies that are
+not public from the library view of each Chairperson, Data Submitter, and Signing Official. The
+contract does not record this as a change.
+
+Thus "keep the authorization of today" has two possible meanings for search. Product must select one
+(question 6). Until then, the server rule sets are the table in section 7.4.
+
+**How the epics map to this migration**
+
+| Epic | Jira | Effect of this migration |
+| --- | --- | --- |
+| A. Discovery and contract | [DT-3816](https://broadworkbench.atlassian.net/browse/DT-3816) | Done, except A-3 ([DT-3827](https://broadworkbench.atlassian.net/browse/DT-3827)). The contract stays valid. The ES capability record has no more use. |
+| B. Index schema | [DT-3817](https://broadworkbench.atlassian.net/browse/DT-3817) | Mostly not necessary. Access rules join live tables, so no `accessPolicy` object and no index version migration. A custodian change has effect immediately. |
+| C. Auth context service | [DT-3818](https://broadworkbench.atlassian.net/browse/DT-3818) | Still necessary. Tickets C-1 and C-2 give the caller context and the shared predicates that the SQL filter uses. |
+| D. Native ES security | [DT-3819](https://broadworkbench.atlassian.net/browse/DT-3819) | Not applicable. |
+| E. Query mediation | [DT-3820](https://broadworkbench.atlassian.net/browse/DT-3820) | E-1 and E-4 are not necessary with option 3, because no client query language exists. E-2 becomes a SQL `WHERE` clause. E-3 becomes the `SELECT` list. |
+| F. API hardening | [DT-3821](https://broadworkbench.atlassian.net/browse/DT-3821) | F-2 and F-3 ([DT-3848](https://broadworkbench.atlassian.net/browse/DT-3848), [DT-3849](https://broadworkbench.atlassian.net/browse/DT-3849)) are the server-owned search API. They are "deferrable" in Jira. Option 3 is that API. This answers OPEN-11 with "yes". |
+| G. Frontend alignment | [DT-3822](https://broadworkbench.atlassian.net/browse/DT-3822) | Phase 5 of this design does G-1 to G-4. |
+| H. Rollout and docs | [DT-3823](https://broadworkbench.atlassian.net/browse/DT-3823) | The feature flag, the comparison of the two systems, and the switch in section 9 do the work of H-1 and H-3. H-2 (audit log) stays separate. |
+
+Option 3 delivers a large part of Epics E, F, and G as a side effect. That work is already in the
+backlog. This reduces the true additional cost of the migration.
+
+## 8. What the team must remove or change
+
+This list applies to each option.
+
+**consent**
+
+- `ElasticSearchService`: the client calls go. The document builder stays under storage B. Under
+  storage A or storage C, SQL replaces it.
+- `DashboardSearchService`: the three dashboard queries become SQL.
+- `ElasticSearchCapabilityService` (1989 lines), its resource, its models, and its OpenAPI paths.
+- `ElasticSearchHealthCheck`, and the `elastic-search` entry in `StatusResource`.
+- `ElasticSearchSupport`, `ElasticSearchConfiguration`, and the Guice providers in `ConsentModule`.
+- The `elasticSearch` configuration block, which includes the unused `indexName` key.
+- The `elasticsearch-rest-client` dependency, the Apache HttpComponents 4 pin, and the Testcontainers
+  ES dependency.
+- About 30 test files. Seven Testcontainers classes go. The `ci` profile exclusion goes.
+- `scripts/index-es.sh`, the `elastic` service in the compose template, and `ELASTIC_PASSWORD` in
+  `render-configs.sh`.
+- `DEVNOTES.md`, `docs/ONBOARDING.md`, and `docs/README.md`.
+- `dataset.index_confirmed_date`, if the write joins the transaction. `AssetLookupDAO` and
+  `AssetLookupService` read this column and must change at the same time.
+- The index endpoints (`/api/dataset/index...`): see section 4.1a.
+
+**duos-ui**
+
+- `searchDatasetIndex` and `searchDatasetIndexV2` in `DataSet.ts`.
+- `src/types/elastic.ts`.
+- The query builders: `filterRegistry.ts`, the ten asset definitions, `libraryVersions.ts`,
+  `useLibraryData.ts`, `useLibraryTabCounts.ts`, and `useStudyDetailsData.ts`. Option 2 leaves them.
+- The four v1 callers.
+- About 25 test files with ES queries or mock ES responses.
+- The `elastic-search` key in the status types.
+
+**Infrastructure**
+
+- The `elasticSearch` values and secrets in terra-helmfile.
+- The ES clusters for dev, staging, and production.
+
+**Documents**
+
+- Mark the three ES plans as superseded where this design replaces them.
+- `study-asset-records-plan.md` proposes an ES mapping. That part is no longer necessary.
+
+## 9. Draft recommendation
+
+**Option 3 with storage B, delivered in phases.** Use `pg_trgm` from option 4 if the parity test
+shows a need.
+
+Reasons:
+
+1. Option 2 costs almost the same as option 3 and leaves the team with an emulator and with the
+   browser in control of visibility.
+   Option 3 is also the server-owned search API that tickets F-2 and F-3 already plan (section 7.5).
+2. Option 1 becomes option 3 as soon as the Data Library endpoint exists.
+3. Option 3 gives the results of Epics E-0, E-1, and E-2 as a side effect.
+4. Storage B keeps the documents identical, so a test can compare the two systems. Storage A and
+   storage C change the field logic at the same time as the search engine (section 4.1).
+
+### 9.1 Phases
+
+| Phase | Work | Draft size | Repository |
+| --- | --- | --- | --- |
+| 1 | Search document table, write in the transaction, first fill | L | consent |
+| 2 | Dashboard counts in SQL | M | consent |
+| 3 | Generic search service: registry, `datasets` view, scopes for the four v1 callers | XL | consent |
+| 4 | `studies` and `counts` views, asset filters, facets | XL | consent |
+| 5 | duos-ui: v1 callers, then the Data Library builders and readers | XL to 2 XL | duos-ui |
+| 6 | Parity test with generated data, shadow comparison in the deployed environment, publication check | L to XL | consent |
+| 7 | Switch, observe, stop ES use, measure zero traffic, stop the clusters. Then remove the ES code and configuration. | L | all |
+
+Phases 1 and 2 have no effect on users and can start immediately. Phases 3 and 5 can run in parallel
+after the team agrees on the request.
+
+### 9.1a Does this fit the date?
+
+Only one milestone must occur before the renewal: **ES has no reads and no writes, and the team
+measured this.** That is phases 1 to 6 and steps 1 to 8 of the switch. The cluster can stop at
+step 9. The removal of code, tests, documents, and configuration in step 10 can follow after the
+date.
+
+- The target for the milestone is 20 January 2027, one sprint before 1 February.
+- The milestone is about 5 to 7 person-weeks by the draft sizes.
+- About three work sprints remain, which is about 6 weeks.
+- One person cannot do it by the target.
+- Four people on the team can do duos-ui work, and all four can work on this migration.
+- Four people for three work sprints is about 24 person-weeks. The milestone needs 5 to 7. Thus the
+  milestone fits the date with a large margin, if the draft sizes are correct to a factor of two.
+- A possible division: two people in consent (phases 1 to 4 and 6) and two people in duos-ui
+  (phase 5).
+- The team must agree on the request (section 5.3) in the first sprint. This agreement is the item
+  that lets the two repositories work in parallel.
+- Product approval of the visibility rules is the other item on the critical path. Ask for it in the
+  first sprint.
+- The fallback in section 9.3 is now improbable. It stays in the plan for a late approval or for a
+  loss of people.
+
+These numbers are estimates. The team has not checked the sizes.
+
+### 9.2 Switch
+
+1. Deploy the new table. Write to ES and to PostgreSQL.
+2. Compare the three sets of published dataset ids and correct each difference (section 9.4). This
+   is a gate. Do not continue with a difference that has no decision.
+3. Fill the table from the agreed set.
+4. Release the new endpoint. The old endpoints stay.
+5. Change duos-ui to the new endpoint behind a feature flag.
+6. Observe one release. Compare results and database load.
+7. Stop all ES use with configuration, not with a code removal:
+   - Stop the ES writes.
+   - Make the two old search endpoints return an error, because they read ES.
+   - Stop the ES health check, or `/status` reports a degraded service after the cluster stops.
+   - Confirm that the dashboards read PostgreSQL.
+8. Measure zero ES traffic from consent in each environment for an agreed period.
+9. Stop the ES clusters. **Steps 1 to 9 must be complete before the renewal.**
+10. Remove the old endpoints, the ES code, the tests, and the configuration. This step can follow
+    after the renewal.
+
+Rollback:
+
+- Until step 7: set the duos-ui flag off.
+- From step 7 to step 9: start the ES writes again and build the full index again. The cluster
+  still exists.
+- After step 9: no rollback to ES.
+
+### 9.3 If duos-ui capacity is not available before the date
+
+A narrow form of option 2 is the fallback. Translate only the shapes in section 3.3 and plan to
+remove the translator later. The team must accept the waste in section 6.
+
+### 9.4 Parity test and publication check
+
+**Test data**
+
+The repository rule is "Use synthetic test data only" (`AGENTS.md`). A database export can contain
+user sessions and private submission data. Thus the parity test does not use a local export of
+production data.
+
+- **Tests in the repository** use a generated data set. The data set must contain:
+  - Publication differences: a dataset with `indexed_date` and no document, and the reverse.
+  - Each combination of roles, and users who are creators and custodians without a role.
+  - Each asset type and each asset field that a filter uses.
+  - Studies that are not public, datasets without a study, and controlled datasets without approval.
+  - Identifiers, email addresses, and URLs in the text fields.
+  - The quantity of production: about 10,000 datasets.
+- **Real data** is compared in the deployed environment, without an export. During the period with
+  two writes (steps 1 to 6 of the switch), the server sends each search to the two systems and
+  records the differences in ids and counts, without the document content. This is the shadow mode
+  of ticket H-3 ([DT-3856](https://broadworkbench.atlassian.net/browse/DT-3856)).
+
+**Publication check (gate for step 2 of the switch)**
+
+In each environment, compare three sets of dataset ids:
+
+1. The ids in the ES index.
+2. The rows with `indexed_date`.
+3. The rows with `index_confirmed_date`.
+
+| Difference | Probable cause | Action before the fill |
+| --- | --- | --- |
+| `indexed_date` is set, no ES document, no confirmed date | ES rejected the write | Decide for each dataset: publish it (send it again and confirm) or clear `indexed_date`. |
+| ES document, no `indexed_date` | A delete from ES did not complete, or an old document | Decide for each dataset: remove the document or set the date. |
+| `indexed_date` is set, ES document, no confirmed date | The write occurred before `index_confirmed_date` existed, or the confirmation did not complete | Send the dataset again so that ES confirms it. |
+
+The author did not check if datasets that were indexed before the `index_confirmed_date` changeset
+have that column set. The comparison shows this.
+
+The fill uses the agreed set only after the three sets agree, or after each difference has a
+decision.
+
+**Query comparison**
+
+- Send the queries of section 3.3 to both systems.
+- Compare document sets, counts, and facet values. Record each difference.
+- Decide for each difference: correct it, or accept it and document it. The team accepts small
+  differences in search box results if they are documented. Differences in filters, counts, and
+  facets are not in that group and need a correction or a separate decision.
+
+### 9.5 External API clients
+
+The two search endpoints accept raw ES queries from each user who signs in. The team knows of no
+caller other than duos-ui. External API users exist, and one external research partner is a
+possible caller.
+
+1. Read the access logs for `POST /api/dataset/search/index` and `/index/v2`. Find the requests that
+   do not come from duos-ui. Do this in the first sprint, because the result can change the plan.
+2. Ask the known external API users if they call these endpoints.
+3. If no external caller exists: mark the two endpoints as deprecated in the OpenAPI document, then
+   stop them at step 7 of the switch.
+4. If an external caller exists:
+   - Give the caller the new typed endpoint and a date for the removal.
+   - Do not keep ES for one client.
+   - A narrow translator for the query shapes of that client is the last choice. It brings back
+     the maintenance cost of option 2.
+
+An external caller gets the server-owned visibility rules too. A client that reads studies that are
+not public through a raw query today can lose those results.
+
+## 10. Risks
+
+| Risk | Effect | Mitigation |
+| --- | --- | --- |
+| The date | A late finish causes a renewal for one more year | Start phases 1 and 2 now. Ask if a short renewal is possible. |
+| Search box parity | Users find different results | The team accepts small differences that are documented. The parity test finds them. `pg_trgm` for identifiers. |
+| Database load | Tab counts run on each filter change. The database connection limit is fixed. | The data is small (about 6,000 to 10,000 rows), so each query is short. Measure in the deployed environment and with generated data of the same quantity. Combine the counts and the page into one request. |
+| Stale documents | Same as today under storage B | Accept for now. Move fields to live joins or to a standard view later (section 4.1). |
+| Result order | Order without a sort changes | Define a default sort. |
+| Two repositories | Releases must agree | New endpoint beside the old ones. Feature flag in duos-ui. |
+| External API clients | The team knows of no external caller of the search endpoints. But external API users exist, and one of them is a possible caller. Options 1 and 3 break a client that sends ES queries. | See section 9.5. |
+
+## 11. Open questions
+
+1. ~~What is the exact renewal date?~~ **Answered:** not known. February is the only guide. This
+   plan uses 1 February 2027. A person who knows the contract can still confirm the date.
+2. ~~What is the yearly ES cost?~~ **Answered:** the team knows the fee and expects an
+   increase. This document does not record the amount. See section 1.3.
+3. ~~How many datasets are in production?~~ **Answered:** about 6,000 in dev and in production, and
+   more than 10,000 in the next two quarters. Open part: the number of studies.
+4. ~~Can duos-ui changes occur in this period?~~ **Answered:** yes. Four people on the team can do
+   duos-ui work, and all four can work on this migration.
+5. ~~Does a client other than duos-ui call the two search endpoints?~~ **Answered:** the team knows
+   of none. External API users exist, and one of them is a possible caller. Open part: the access log
+   check and the answers from those users (section 9.5).
+6. ~~Who approves server-owned visibility rules?~~ **Answered:** product must approve. Open parts
+   for product (section 7.5):
+   - Which rule applies to search for a study that is not public: the contract rule (Admin, creator,
+     custodian) or the role rule (Chairperson, Data Submitter, Admin, Signing Official)?
+   - Does a creator or custodian without one of those roles see the study in the Data Library?
+   - Do the pages that have no rule today (Study page, Dataset page, DAC pages, DAR review, Signing
+     Official dashboard) get the same rule as the Data Library?
+   - Is the approved rule (`dacApproval`) a display filter only, as OPEN-4 proposes?
+7. Is a short ES renewal, of months and not a year, possible as a fallback?
+8. ~~Are small differences in search box results acceptable if the team documents them?~~
+   **Answered:** yes.
+9. ~~Do the admin index endpoints keep their paths?~~ **Answered:** admins use the single-dataset
+   endpoints to publish a dataset and to remove it from the library, so those two operations stay in
+   each storage type. See section 4.1a. Open part: the names of the paths.
+10. Is a delay between a dataset change and its effect in search acceptable? If the answer is yes,
+    how long? Storage C2 with a scheduled refresh is possible only with a yes (section 4.1).
+11. How long does a search box query take on a standard view with 10,000 datasets? Storage C1 is
+    possible only if this time is acceptable (section 4.1).
 
 ## 12. Sources
 
