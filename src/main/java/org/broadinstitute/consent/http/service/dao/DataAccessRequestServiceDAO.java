@@ -143,10 +143,10 @@ public class DataAccessRequestServiceDAO {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
     boolean irb = DarDocumentType.IRB.equals(type);
-    String locationKey = irb ? "irbDocumentLocation" : "collaborationLetterLocation";
+    String locationField = irb ? "irbDocumentLocation" : "collaborationLetterLocation";
     JsonObject patch = new JsonObject();
     patch.addProperty(
-        locationKey,
+        locationField,
         irb
             ? dar.getData().getIrbDocumentLocation()
             : dar.getData().getCollaborationLetterLocation());
@@ -157,7 +157,7 @@ public class DataAccessRequestServiceDAO {
         """
           UPDATE data_access_request d
           SET data = d.data || CAST(:patch AS jsonb), update_date = :updateDate
-          FROM (SELECT reference_id, data ->> :locationKey AS previous
+          FROM (SELECT reference_id, data ->> :locationField AS previous
                 FROM data_access_request WHERE reference_id = :referenceId FOR NO KEY UPDATE) old
           WHERE d.reference_id = old.reference_id AND d.submission_date IS NULL
             AND NOT EXISTS (SELECT 1 FROM election e WHERE e.reference_id = d.reference_id)
@@ -171,7 +171,7 @@ public class DataAccessRequestServiceDAO {
               h.createQuery(saveDocument)
                   .bind("patch", patch.toString())
                   .bind("updateDate", now)
-                  .bind("locationKey", locationKey)
+                  .bind("locationField", locationField)
                   .bind("referenceId", referenceId)
                   .mapTo(String.class)
                   .findOne();
@@ -192,8 +192,10 @@ public class DataAccessRequestServiceDAO {
   private static void throwWhyNotUpdated(Handle h, String referenceId) {
     boolean draft =
         h.createQuery(
-                "SELECT submission_date IS NULL FROM data_access_request"
-                    + " WHERE reference_id = :referenceId")
+                """
+                  SELECT submission_date IS NULL FROM data_access_request
+                  WHERE reference_id = :referenceId
+                """)
             .bind("referenceId", referenceId)
             .mapTo(Boolean.class)
             .findOne()
