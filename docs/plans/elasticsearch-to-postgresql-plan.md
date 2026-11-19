@@ -220,9 +220,15 @@ Notes for storage B:
 - Access rules must not come from the stored document. They must join the live tables (section 7).
 - The first fill of the table needs the Java document builder. Thus the fill is an admin endpoint
   call after deploy, not a Liquibase changeset.
-- The fill must use only the datasets where `indexed_date IS NOT NULL`. `POST /api/dataset/index`
-  uses `findAllDatasetIds` today and writes every dataset. An unchanged call publishes datasets that
-  are not in the library, and it changes the answers of `AssetLookupDAO`.
+- The fill must not use all datasets. `POST /api/dataset/index` uses `findAllDatasetIds` today and
+  writes every dataset. An unchanged call publishes datasets that are not in the library, and it
+  changes the answers of `AssetLookupDAO`.
+- `indexed_date IS NOT NULL` is not a safe source for the fill without a check.
+  `indexDatasetTerms` sets `indexed_date` before it sends the document to ES. If ES rejects the
+  first write, the date stays, but the dataset is not in search and `index_confirmed_date` is null.
+  A fill from `indexed_date` publishes that dataset for the first time.
+- Thus the three sets must agree before the fill: the ids in ES, the rows with `indexed_date`, and
+  the rows with `index_confirmed_date`. Section 9.4 makes this comparison a gate for the switch.
 
 ### 4.1a The admin index endpoints
 
@@ -244,16 +250,29 @@ Two notes for storage B. They are the opinion of the author:
   dataset in the library and `DELETE` to remove it. Thus these two operations must stay in storage A
   and in storage B.
 
+Publication has three types of event today. The design must keep them separate:
+
+| Event | Cause today | Rule for the new design |
+| --- | --- | --- |
+| First publication, automatic | Dataset registration. A dataset that a study update adds. DAC approval of a dataset. Conversion of DAC datasets to external. A DAC rule toggle, for each dataset of the DAC. | Creates the row (storage B) or sets the column (storage A). No admin call is necessary. |
+| First publication, by an admin | `POST /api/dataset/index/{datasetId}` | Same result as the automatic event. |
+| Refresh | Each other dataset, study, or data use change | Changes a row only if the dataset is already published. Must not publish. |
+| Removal | `DELETE /api/dataset/index/{datasetId}`, dataset delete, study delete | Deletes the row or clears the column. |
+
 Consequences:
 
-- "Published in the library" is an admin decision for each dataset. It is not a result of the data.
-  The design must store it explicitly. `dataset.indexed_date` already has this meaning (section 3.5).
-- Storage A needs that column in each search query as a filter.
+- "Published in the library" is a state that the design must store explicitly. Most datasets get it
+  automatically at registration. Admins can also set it and clear it. `dataset.indexed_date`
+  already has this meaning (section 3.5).
+- A design that creates rows only on an admin call leaves each new registration out of search.
+- Storage A needs that state in each search query as a filter.
 - Storage B must keep the rule that a row exists only for a published dataset. The first fill must
   obey it (section 4.1).
+- A DAC approval and a DAC rule toggle force a write today. Thus they publish a dataset again after
+  an admin removed it. The team must decide if the new design keeps this behavior.
 - The parity test must compare the set of published datasets before and after the switch
   (section 9.4).
-- The audit rows `INDEXED` and `DEINDEXED` record these admin operations today. Keep them.
+- The audit rows `INDEXED` and `DEINDEXED` record these operations today. Keep them.
 
 Decision still open: keep the three paths, or give them names that do not say "index".
 
@@ -280,7 +299,7 @@ Notes on the search box:
   parser. Identifiers such as `DUOS-000123`, email addresses, and URLs give different tokens.
 - The `english` configuration stems words. ES does not stem here. Use the `simple` configuration.
 - The `pg_trgm` extension can add substring match for identifiers and email addresses.
-- A side-by-side test on real data must measure the differences (section 9.4).
+- A side-by-side comparison must measure the differences (section 9.4).
 
 ## 5. The options
 
@@ -331,7 +350,12 @@ One new endpoint accepts a small typed request that the team owns. It is not ES 
 A field registry on the server maps each key to a SQL expression, a type, and the operations that it
 permits. The server builds the SQL from the registry. The server adds the visibility rules for the
 `scope` of the request (section 7.4). The server reads the user id, the DAC ids, and the institution
-of the user from the session. It does not accept them from the request.
+of the user from the session.
+
+The request selects the scope, and some scopes have weaker visibility rules than the Data Library.
+Thus each scope needs its own authorization: a necessary role, and a check of each target id.
+Section 7.4a defines this. Without it, a user can select a weak scope to avoid the Data Library
+rule.
 
 - **For:**
   - duos-ui already has registries (`filterRegistry.ts`, the asset definitions,
@@ -451,6 +475,46 @@ pages show now. The server must keep one rule set for each scope:
 
 A proposal to make these rules tighter or the same is a separate decision. The open items of the
 access contract cover such changes.
+
+**The approved rule applies to some results only.** The registry must give the predicate for each
+result and each count:
+
+| Result or count | Approved rule today |
+| --- | --- |
+| Dataset rows on the Datasets tab | Yes |
+| Dataset count (`datasets_count`) in the Data Library and on the Researcher and DAC dashboards | Yes |
+| Study rows, study count, and asset rows and counts | No. A public study that has only one controlled dataset without approval is still in these results. |
+| Chairperson count of datasets in the DACs of the user | No. This count also has no public visibility rule. |
+| Submission count and the Submissions page | No |
+| Study page grid | No |
+
+### 7.4a Authorization of each scope
+
+The server must authorize the scope before it applies the rules of the scope. An id from the session
+tells the server who the user is. It does not tell the server that the user can use a scope or read
+a target.
+
+The column "Today" shows that the two ES endpoints make none of these checks. The column "Draft
+rule" comes from the role limits of the duos-ui pages. It is a proposal, and product must confirm it
+with the visibility rule (question 6).
+
+| Scope | Today | Draft rule: who can use it | Draft rule: permitted targets |
+| --- | --- | --- | --- |
+| Library, with or without a branded library | Each user who signs in | Each user who signs in | No target. The branded library key must be in the server list. The "my institution" library uses the institution from the session. |
+| Owned by the user | Each user who signs in can send an ownership clause for a different user | Data Submitter, Chairperson, Admin | The user id and email come from the session only. |
+| DAC | Each user who signs in can send each DAC id | Chairperson and Member for their DACs. Admin for each DAC. | Each DAC id in the request must be a DAC of the user, unless the user is an Admin. |
+| One study | Each user who signs in can read each study | Open. Product must decide: each user who signs in (as today), or the contract rule (`canReadStudy`). | The study id. If the contract rule applies, the server tests it for that study. |
+| One dataset, or a list of dataset ids | Each user who signs in can read each dataset | Open, with the same two choices. For the DAR pages, a possible rule is that the datasets must be in a DAR that the user can read. | Each dataset id. |
+| Institution (Signing Official dashboard) | Server-built. The institution comes from the user. | Signing Official | The institution from the session only. |
+
+Rules for each scope:
+
+- A request for a scope that the user cannot use gets a 403 response, not an empty result.
+- A request with a target id that the user cannot read gets a 403 or a 404 response. The team must
+  select one and use it for each scope.
+- If the study scope and the dataset scope stay open to each user who signs in, the public
+  visibility rule controls discovery in the library only. It does not protect a study from a user
+  who has the id. This is the behavior of today. The document must say so to product.
 
 ### 7.5 The source of the rules, and a conflict
 
@@ -589,17 +653,18 @@ Reasons:
 | 3 | Generic search service: registry, `datasets` view, scopes for the four v1 callers | XL | consent |
 | 4 | `studies` and `counts` views, asset filters, facets | XL | consent |
 | 5 | duos-ui: v1 callers, then the Data Library builders and readers | XL to 2 XL | duos-ui |
-| 6 | Parity test against an export of production data | L | consent |
-| 7 | Switch, observe, then remove ES code, configuration, and clusters | L | all |
+| 6 | Parity test with generated data, shadow comparison in the deployed environment, publication check | L to XL | consent |
+| 7 | Switch, observe, stop ES use, measure zero traffic, stop the clusters. Then remove the ES code and configuration. | L | all |
 
 Phases 1 and 2 have no effect on users and can start immediately. Phases 3 and 5 can run in parallel
 after the team agrees on the request.
 
 ### 9.1a Does this fit the date?
 
-Only one milestone must occur before the renewal: **ES has no reads and no writes.** That is phases
-1 to 6 and steps 1 to 5 of the switch. The removal of code, tests, documents, and configuration in
-phase 7 can follow after the date.
+Only one milestone must occur before the renewal: **ES has no reads and no writes, and the team
+measured this.** That is phases 1 to 6 and steps 1 to 8 of the switch. The cluster can stop at
+step 9. The removal of code, tests, documents, and configuration in step 10 can follow after the
+date.
 
 - The target for the milestone is 20 January 2027, one sprint before 1 February.
 - The milestone is about 5 to 7 person-weeks by the draft sizes.
@@ -622,25 +687,76 @@ These numbers are estimates. The team has not checked the sizes.
 ### 9.2 Switch
 
 1. Deploy the new table. Write to ES and to PostgreSQL.
-2. Fill the table with the admin endpoint.
-3. Release the new endpoint. The old endpoints stay.
-4. Change duos-ui to the new endpoint behind a feature flag.
-5. Observe one release. Compare results and database load.
-6. Remove the old endpoints, the ES writes, and the ES code.
-7. Stop the ES clusters.
+2. Compare the three sets of published dataset ids and correct each difference (section 9.4). This
+   is a gate. Do not continue with a difference that has no decision.
+3. Fill the table from the agreed set.
+4. Release the new endpoint. The old endpoints stay.
+5. Change duos-ui to the new endpoint behind a feature flag.
+6. Observe one release. Compare results and database load.
+7. Stop all ES use with configuration, not with a code removal:
+   - Stop the ES writes.
+   - Make the two old search endpoints return an error, because they read ES.
+   - Stop the ES health check, or `/status` reports a degraded service after the cluster stops.
+   - Confirm that the dashboards read PostgreSQL.
+8. Measure zero ES traffic from consent in each environment for an agreed period.
+9. Stop the ES clusters. **Steps 1 to 9 must be complete before the renewal.**
+10. Remove the old endpoints, the ES code, the tests, and the configuration. This step can follow
+    after the renewal.
 
-Rollback is possible until step 6: set the flag off.
+Rollback:
+
+- Until step 7: set the duos-ui flag off.
+- From step 7 to step 9: start the ES writes again and build the full index again. The cluster
+  still exists.
+- After step 9: no rollback to ES.
 
 ### 9.3 If duos-ui capacity is not available before the date
 
 A narrow form of option 2 is the fallback. Translate only the shapes in section 3.3 and plan to
 remove the translator later. The team must accept the waste in section 6.
 
-### 9.4 Parity test
+### 9.4 Parity test and publication check
 
-- Load an export of production data into a local database and a local ES.
-- Compare three sets of dataset ids: the ES index, the rows with `indexed_date`, and the rows with
-  `index_confirmed_date`. The differences show what the first fill will change.
+**Test data**
+
+The repository rule is "Use synthetic test data only" (`AGENTS.md`). A database export can contain
+user sessions and private submission data. Thus the parity test does not use a local export of
+production data.
+
+- **Tests in the repository** use a generated data set. The data set must contain:
+  - Publication differences: a dataset with `indexed_date` and no document, and the reverse.
+  - Each combination of roles, and users who are creators and custodians without a role.
+  - Each asset type and each asset field that a filter uses.
+  - Studies that are not public, datasets without a study, and controlled datasets without approval.
+  - Identifiers, email addresses, and URLs in the text fields.
+  - The quantity of production: about 10,000 datasets.
+- **Real data** is compared in the deployed environment, without an export. During the period with
+  two writes (steps 1 to 6 of the switch), the server sends each search to the two systems and
+  records the differences in ids and counts, without the document content. This is the shadow mode
+  of ticket H-3 ([DT-3856](https://broadworkbench.atlassian.net/browse/DT-3856)).
+
+**Publication check (gate for step 2 of the switch)**
+
+In each environment, compare three sets of dataset ids:
+
+1. The ids in the ES index.
+2. The rows with `indexed_date`.
+3. The rows with `index_confirmed_date`.
+
+| Difference | Probable cause | Action before the fill |
+| --- | --- | --- |
+| `indexed_date` is set, no ES document, no confirmed date | ES rejected the write | Decide for each dataset: publish it (send it again and confirm) or clear `indexed_date`. |
+| ES document, no `indexed_date` | A delete from ES did not complete, or an old document | Decide for each dataset: remove the document or set the date. |
+| `indexed_date` is set, ES document, no confirmed date | The write occurred before `index_confirmed_date` existed, or the confirmation did not complete | Send the dataset again so that ES confirms it. |
+
+The author did not check if datasets that were indexed before the `index_confirmed_date` changeset
+have that column set. The comparison shows this.
+
+The fill uses the agreed set only after the three sets agree, or after each difference has a
+decision.
+
+**Query comparison**
+
 - Send the queries of section 3.3 to both systems.
 - Compare document sets, counts, and facet values. Record each difference.
 - Decide for each difference: correct it, or accept it and document it. The team accepts small
@@ -657,7 +773,7 @@ possible caller.
    do not come from duos-ui. Do this in the first sprint, because the result can change the plan.
 2. Ask the known external API users if they call these endpoints.
 3. If no external caller exists: mark the two endpoints as deprecated in the OpenAPI document, then
-   remove them at step 6 of the switch.
+   stop them at step 7 of the switch.
 4. If an external caller exists:
    - Give the caller the new typed endpoint and a date for the removal.
    - Do not keep ES for one client.
@@ -673,7 +789,7 @@ not public through a raw query today can lose those results.
 | --- | --- | --- |
 | The date | A late finish causes a renewal for one more year | Start phases 1 and 2 now. Ask if a short renewal is possible. |
 | Search box parity | Users find different results | The team accepts small differences that are documented. The parity test finds them. `pg_trgm` for identifiers. |
-| Database load | Tab counts run on each filter change. The database connection limit is fixed. | The data is small (about 6,000 to 10,000 rows), so each query is short. Measure with real data. Combine the counts and the page into one request. |
+| Database load | Tab counts run on each filter change. The database connection limit is fixed. | The data is small (about 6,000 to 10,000 rows), so each query is short. Measure in the deployed environment and with generated data of the same quantity. Combine the counts and the page into one request. |
 | Stale documents | Same as today under storage B | Accept for now. Move fields to live joins later. |
 | Result order | Order without a sort changes | Define a default sort. |
 | Two repositories | Releases must agree | New endpoint beside the old ones. Feature flag in duos-ui. |
