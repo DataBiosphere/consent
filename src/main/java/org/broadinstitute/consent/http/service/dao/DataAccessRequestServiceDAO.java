@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -67,8 +66,8 @@ public class DataAccessRequestServiceDAO {
   }
 
   /**
-   * A draft edit's save: the saved DAR, and the document locations it removed that no DAR refers to
-   * any more, for the caller to delete once the save has committed.
+   * A draft edit's save: the saved DAR, and the document locations it removed, for the caller to
+   * delete once the save has committed and nothing else refers to them.
    */
   public record DraftSave(DataAccessRequest dar, List<String> removedDocuments) {}
 
@@ -112,8 +111,9 @@ public class DataAccessRequestServiceDAO {
           SELECT data ->> 'irbDocumentLocation', data ->> 'collaborationLetterLocation'
           FROM data_access_request WHERE reference_id = :referenceId
         """;
-    List<String> removedDocuments = new ArrayList<>();
-    jdbi.useTransaction(
+    // The saved DAR is read in the same transaction, so a failure after the commit can't lose the
+    // locations this edit removed.
+    return jdbi.inTransaction(
         h -> {
           // The row lock is taken here, so the locations read before and after are this edit's.
           List<String> before =
@@ -133,11 +133,8 @@ public class DataAccessRequestServiceDAO {
           checkNoElectionsUnderCollectionLock(h, dar, user, now);
 
           List<String> after = readLocations(h, documentLocations, referenceId);
-          DataAccessRequestDAO darDAO = h.attach(DataAccessRequestDAO.class);
-          before.stream()
-              .filter(location -> !after.contains(location))
-              .filter(location -> !darDAO.isDocumentReferenced(location))
-              .forEach(removedDocuments::add);
+          List<String> removedDocuments =
+              before.stream().filter(location -> !after.contains(location)).toList();
 
           Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
           darDatasetDelete.bind("referenceId", dar.getReferenceId());
@@ -151,8 +148,10 @@ public class DataAccessRequestServiceDAO {
                 darDatasetInsert.bind("datasetId", id);
                 darDatasetInsert.execute();
               });
+          return new DraftSave(
+              h.attach(DataAccessRequestDAO.class).findByReferenceId(referenceId),
+              removedDocuments);
         });
-    return new DraftSave(dataAccessRequestDAO.findByReferenceId(referenceId), removedDocuments);
   }
 
   /** The DAR's non-null document locations, as the query reads them. */

@@ -428,9 +428,10 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     assertEquals("edited", saved.getOtherText());
   }
 
-  // A location planted before document fields were server-managed can be shared with another DAR.
+  // The edit reports every location it removed; whether another DAR still uses it is checked
+  // after the commit, before the file is deleted.
   @Test
-  void testUpdateByReferenceIdDoesNotReportADocumentAnotherDarUses() {
+  void testUpdateByReferenceIdReportsARemovedLocationAnotherDarUses() {
     User user = createUser();
     DataAccessRequestData shared = new DataAccessRequestData();
     shared.setCollaborationLetterLocation("shared-letter");
@@ -453,7 +454,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
     var result = serviceDAO.updateByReferenceId(user, edit, List.of("status"));
 
-    assertTrue(result.removedDocuments().isEmpty());
+    assertEquals(List.of("shared-letter"), result.removedDocuments());
     assertNull(
         dataAccessRequestDAO.findByReferenceId(draftId).getData().getCollaborationLetterLocation());
   }

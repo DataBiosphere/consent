@@ -327,9 +327,6 @@ public class DataAccessRequestService implements ConsentLogger {
               if (requiresSOApproval) {
                 transactionalDarDAO.updateRequiresSOApproval(true, transactionReferenceId);
               }
-              // Another DAR may share a location planted before document fields were
-              // server-managed; that document stays.
-              removedDocuments.removeIf(transactionalDarDAO::isDocumentReferenced);
               return transactionReferenceId;
             });
     deleteRemovedDocuments(referenceId, removedDocuments);
@@ -339,15 +336,15 @@ public class DataAccessRequestService implements ConsentLogger {
     return findByReferenceId(referenceId);
   }
 
-  /**
-   * Deletes the documents a committed save removed from a draft. A failure leaves an unreferenced
-   * file, so it is logged rather than failing the save.
-   */
   /** Whether a DAR or a file storage object refers to the file at this bucket location. */
   public boolean isDocumentReferenced(String location) {
     return dataAccessRequestDAO.isDocumentReferenced(location);
   }
 
+  /**
+   * Deletes the documents a committed save removed from a draft. A failure leaves an unreferenced
+   * file, so it is logged rather than failing the save.
+   */
   private void deleteRemovedDocuments(String referenceId, List<String> locations) {
     for (String location : locations) {
       // DAR uploads name files with a random UUID; anything else came from elsewhere.
@@ -357,6 +354,15 @@ public class DataAccessRequestService implements ConsentLogger {
         continue;
       }
       try {
+        // Checked after the commit, so two drafts removing a shared legacy location at the same
+        // time don't each still see the other's reference. A planted location can be shared with
+        // another DAR or name a file storage object (DAA, dataset or draft file).
+        if (isDocumentReferenced(location)) {
+          logWarn(
+              "Kept removed document %s of DAR %s: still referenced"
+                  .formatted(location, referenceId));
+          continue;
+        }
         gcsService.deleteDocument(location);
       } catch (Exception e) {
         logWarn(

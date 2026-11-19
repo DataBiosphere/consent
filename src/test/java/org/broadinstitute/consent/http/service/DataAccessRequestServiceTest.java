@@ -400,6 +400,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertNotNull(service.createDataAccessRequest(user, dar, request));
 
     verify(gcsService, times(sharedWithAnotherDar ? 0 : 1)).deleteDocument(OWN_IRB);
+    // The reference check runs after the submission's writes, not inside its transaction.
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).updateSubmissionInstitution(any(), any());
+    order.verify(dataAccessRequestDAO).isDocumentReferenced(OWN_IRB);
   }
 
   @Test
@@ -433,6 +437,36 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(true);
 
     assertTrue(service.isDocumentReferenced(OWN_IRB));
+  }
+
+  // Another DAR, or a file storage object, may still use a legacy location the edit removed.
+  @Test
+  void testUpdateByReferenceIdKeepsARemovedFileSomethingElseRefersTo() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of(OWN_IRB)));
+    when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(true);
+
+    service.updateByReferenceId(user, dar, List.of("status"));
+
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
+  // The save has committed, so a failed reference check skips that file, not the rest.
+  @Test
+  void testUpdateByReferenceIdContinuesWhenAReferenceCheckFails() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    String other = UUID.randomUUID().toString();
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of(OWN_IRB, other)));
+    when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB))
+        .thenThrow(new IllegalStateException("database unavailable"));
+
+    assertEquals(dar, service.updateByReferenceId(user, dar, List.of("status")));
+    verify(gcsService, never()).deleteDocument(OWN_IRB);
+    verify(gcsService).deleteDocument(other);
   }
 
   @Test
