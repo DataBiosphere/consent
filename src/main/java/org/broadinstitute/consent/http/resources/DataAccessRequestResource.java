@@ -62,6 +62,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.DocumentSave;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -695,19 +696,20 @@ public class DataAccessRequestResource extends Resource {
       throw new SubmittedDARCannotBeEditedException();
     }
     String previousLocation = uploadDocumentContents(type, dar, uploadInputStream, fileDetail);
-    DataAccessRequest updated;
+    DocumentSave saved;
     try {
-      updated = dataAccessRequestService.updateByReferenceId(user, dar);
+      // Saves only this document's fields; returns the location it replaced, read under the lock.
+      saved = dataAccessRequestService.saveDocument(user, dar, type);
     } catch (RuntimeException e) {
       // Usually nothing was saved, but a failure can also follow a commit. Check which document
       // the stored DAR points to before deleting anything.
       reconcileFailedSave(type, dar, newDocumentLocation(type, dar), previousLocation);
       throw e;
     }
-    if (Objects.nonNull(previousLocation)) {
-      deleteDarDocument(dar, previousLocation);
+    if (Objects.nonNull(saved.previousLocation())) {
+      deleteDarDocument(dar, saved.previousLocation());
     }
-    return updated;
+    return saved.dar();
   }
 
   private void reconcileFailedSave(

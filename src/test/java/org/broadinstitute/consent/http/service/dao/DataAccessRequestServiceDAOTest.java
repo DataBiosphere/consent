@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -308,6 +309,81 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     assertEquals("ServerValue", storedArchived.getData().getStatus());
     assertEquals("edited", storedArchived.getData().getOtherText());
     assertNull(dataAccessRequestDAO.findByReferenceId(noStatus).getData().getStatus());
+  }
+
+  private String insertDraftWithIrbDocument(User user, String location) {
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setIrbDocumentLocation(location);
+    data.setIrbDocumentName(location + ".pdf");
+    data.setOtherText("original");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        data,
+        user.getEraCommonsId());
+    return referenceId;
+  }
+
+  @Test
+  void testSaveDocumentKeepsAnEditThatCommittedMeanwhile() {
+    User user = createUser();
+    String referenceId = insertDraftWithIrbDocument(user, "own-irb");
+    // The upload read the draft, then an edit committed before the upload saved.
+    DataAccessRequest upload = dataAccessRequestDAO.findByReferenceId(referenceId);
+    DataAccessRequest edit = dataAccessRequestDAO.findByReferenceId(referenceId);
+    edit.getData().setOtherText("edited");
+    edit.setDatasetIds(List.of());
+    serviceDAO.updateByReferenceId(user, edit);
+    upload.getData().setIrbDocumentLocation("new-irb");
+    upload.getData().setIrbDocumentName("new-irb.pdf");
+
+    var saved = serviceDAO.saveDocument(user, upload, DarDocumentType.IRB);
+
+    assertEquals("own-irb", saved.previousLocation());
+    DataAccessRequestData stored = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
+    assertEquals("new-irb", stored.getIrbDocumentLocation());
+    assertEquals("new-irb.pdf", stored.getIrbDocumentName());
+    assertEquals("edited", stored.getOtherText());
+  }
+
+  @Test
+  void testSaveDocumentWithoutAPreviousDocument() {
+    User user = createUser();
+    String referenceId = insertDraftWithIrbDocument(user, "own-irb");
+    DataAccessRequest upload = dataAccessRequestDAO.findByReferenceId(referenceId);
+    upload.getData().setCollaborationLetterLocation("new-letter");
+    upload.getData().setCollaborationLetterName("new-letter.pdf");
+
+    var saved = serviceDAO.saveDocument(user, upload, DarDocumentType.COLLABORATION);
+
+    assertNull(saved.previousLocation());
+    DataAccessRequestData stored = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
+    assertEquals("new-letter", stored.getCollaborationLetterLocation());
+    assertEquals("own-irb", stored.getIrbDocumentLocation());
+  }
+
+  @Test
+  void testSaveDocumentRejectsASubmittedOrMissingDar() {
+    User user = createUser();
+    String referenceId = insertDraftWithIrbDocument(user, "own-irb");
+    DataAccessRequest upload = dataAccessRequestDAO.findByReferenceId(referenceId);
+    upload.getData().setIrbDocumentLocation("new-irb");
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(upload.getCollectionId(), referenceId);
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class,
+        () -> serviceDAO.saveDocument(user, upload, DarDocumentType.IRB));
+    assertEquals(
+        "own-irb",
+        dataAccessRequestDAO.findByReferenceId(referenceId).getData().getIrbDocumentLocation());
+    upload.setReferenceId(randomAlphanumeric(10));
+    assertThrows(
+        NotFoundException.class, () -> serviceDAO.saveDocument(user, upload, DarDocumentType.IRB));
   }
 
   @Test

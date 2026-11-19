@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -1682,6 +1683,18 @@ institution or library cards issued: Internal Collaborator member:  \
 """
             .formatted(collaboratorUser.getEmail()),
         exception.getMessage());
+  }
+
+  @Test
+  void testSaveDocumentRejectsASubmittedDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(1000));
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class,
+        () -> service.saveDocument(user, dar, DarDocumentType.IRB));
+    verify(dataAccessRequestServiceDAO, never()).saveDocument(any(), any(), any());
   }
 
   @Test

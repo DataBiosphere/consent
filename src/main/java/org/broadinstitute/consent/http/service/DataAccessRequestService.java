@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -758,6 +759,24 @@ public class DataAccessRequestService implements ConsentLogger {
         LAB_STAFF + " " + MEMBERS,
         errorSummary);
     return errorSummary;
+  }
+
+  /**
+   * Saves an uploaded document's location and name on a draft (see {@link
+   * DataAccessRequestServiceDAO#saveDocument}).
+   */
+  public DataAccessRequestServiceDAO.DocumentSave saveDocument(
+      User user, DataAccessRequest dar, DarDocumentType type) {
+    if (!dar.getDraft()) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
+    try {
+      return dataAccessRequestServiceDAO.saveDocument(user, dar, type);
+    } catch (JdbiException e) {
+      // Waiting on the DAR row or its collection can end in a deadlock with another writer.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
   }
 
   /**
