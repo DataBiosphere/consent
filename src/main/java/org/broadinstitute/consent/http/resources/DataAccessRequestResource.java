@@ -24,9 +24,9 @@ import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -575,16 +575,19 @@ public class DataAccessRequestResource extends Resource {
   }
 
   /**
-   * An empty file doesn't satisfy a required document. Browsers don't send a size, so the content
-   * is read to check.
+   * An empty file doesn't satisfy a required document. Browsers don't send a size, so the first
+   * byte is read to check, then put back for the upload.
    */
   private static InputStream requireContent(InputStream content, String document)
       throws IOException {
-    byte[] bytes = content == null ? new byte[0] : content.readAllBytes();
-    if (bytes.length == 0) {
+    PushbackInputStream stream =
+        new PushbackInputStream(content == null ? InputStream.nullInputStream() : content, 1);
+    int first = stream.read();
+    if (first == -1) {
       throw new BadRequestException(document + " document is empty");
     }
-    return new ByteArrayInputStream(bytes);
+    stream.unread(first);
+    return stream;
   }
 
   /** Gives a progress report its own copy of its parent's document of this type. */

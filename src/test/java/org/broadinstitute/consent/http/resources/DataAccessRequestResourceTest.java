@@ -1340,8 +1340,17 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(ethicsFileDetails.getType()).thenReturn(fileType);
 
     BlobId blobId = BlobId.of("bucket", "location");
-    // The content is read to check it isn't empty, so the stored stream is a copy.
-    when(gcsService.storeDocument(any(), eq(fileType), any())).thenReturn(blobId);
+    // The first byte is read to check the file isn't empty, so the stored stream wraps the upload
+    // and must still hold all of its content.
+    List<String> stored = new ArrayList<>();
+    when(gcsService.storeDocument(any(), eq(fileType), any()))
+        .thenAnswer(
+            invocation -> {
+              stored.add(
+                  IOUtils.toString(
+                      invocation.getArgument(0, InputStream.class), Charset.defaultCharset()));
+              return blobId;
+            });
     resource.populateProgressReportWithDocuments(
         mockUser,
         collabInputStream,
@@ -1350,7 +1359,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         ethicsFileDetails,
         childDar,
         parentDar);
-    verify(gcsService, times(2)).storeDocument(any(), any(), any());
+    assertEquals(List.of("collab content", "ethics content"), stored);
   }
 
   // Without a new file the report gets its own copy of the parent's document, so it can serve it
