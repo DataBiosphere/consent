@@ -195,23 +195,32 @@ PostgreSQL. The two decisions are almost independent.
 
 ### 4.1 Storage decision
 
-| | A. Live joins | B. Search document table |
-| --- | --- | --- |
-| Design | Each search joins `dataset`, `study`, `dataset_property`, `study_property`, `dac`, `users`, and `institution`. | One row for each dataset in a new table. The row holds the document as `jsonb`, a `tsvector` column, and typed columns for the common filters. |
-| Document builder | Written again as SQL. | `toDatasetTerm` stays. Its output goes to the table and not to ES. |
-| Write triggers | None. Data is always current. | The fifteen current triggers stay. The write joins the database transaction. |
-| Stale data | None. | The same stale cases as today (section 3.4), unless a view or trigger replaces them later. |
-| Query difficulty | High. Properties are key and value rows. Assets are JSON in `study_property`. | Low to medium. `jsonb` operators and normal columns. |
-| Parity risk | High. All field logic changes at one time. | Low. The documents are identical to the ES documents. |
-| "Published" meaning | Needs a new explicit column. | A row in the table means published. `indexed_date` keeps its meaning. |
+Storage C is a database view. It has two variants. C1 is a standard view. C2 is a materialized
+view. A peer review of this draft added storage C.
+
+| | A. Live joins | B. Search document table | C1. Standard view | C2. Materialized view |
+| --- | --- | --- | --- | --- |
+| Design | Each search joins `dataset`, `study`, `dataset_property`, `study_property`, `dac`, `users`, and `institution`. | One row for each dataset in a new table. The row holds the document as `jsonb`, a `tsvector` column, and typed columns for the common filters. | A named view holds the joins of storage A. Each search reads the view. PostgreSQL runs the joins on each query. | The same view definition, but PostgreSQL stores the result. A refresh builds the full result again. |
+| Document builder | Written again as SQL. | `toDatasetTerm` stays. Its output goes to the table and not to ES. | Written again as SQL, in the view definition. | Written again as SQL, in the view definition. |
+| Write triggers | None. Data is always current. | The fifteen current triggers stay. The write joins the database transaction. | None. Data is always current. | A refresh after each change, or a refresh on a schedule. No write for one row exists. |
+| Stale data | None. | The same stale cases as today (section 3.4), unless live joins or a view replace them later. | None. | All fields are stale between two refreshes. A refresh also corrects the name changes that storage B leaves stale. |
+| Indexes for search | On the base tables only. | Yes. A GIN index on the `tsvector` column. | None on the view. Each query computes the search text again. | Yes. A GIN index on the `tsvector` column. |
+| Query difficulty | High. Properties are key and value rows. Assets are JSON in `study_property`. | Low to medium. `jsonb` operators and normal columns. | High one time, in the view definition. Low in each search query. | High one time, in the view definition. Low in each search query. |
+| Parity risk | High. All field logic changes at one time. | Low. The documents are identical to the ES documents. | High, as in storage A. | High, as in storage A. |
+| "Published" meaning | Needs a new explicit column. | A row in the table means published. `indexed_date` keeps its meaning. | Needs the explicit column. The view definition filters on it. | Needs the explicit column. The change shows in search only after a refresh. |
+| First fill | Not necessary. | An admin endpoint call after deploy. | Not necessary. | The Liquibase changeset fills the view. No admin call is necessary. |
+| Change to the document shape | Change the queries. | Change `toDatasetTerm`, then build all rows again. | A changeset replaces the view. | A changeset must drop and create the view. `CREATE OR REPLACE` does not exist for a materialized view. |
 
 **Draft position: storage B.** It changes the smallest quantity of logic, and it makes a comparison
-with ES possible document by document. Storage A can replace B later, one field at a time.
+with ES possible document by document. Storage A or storage C1 can replace B later, one field at a
+time.
 
 Data size: the table holds about 6,000 rows now and more than 10,000 soon. This is small for
 PostgreSQL. A full scan of the table is fast at this size, so most filters do not need an index.
 The `tsvector` column gets a GIN index. Measure before the team adds more indexes. The size does
-not change the choice between storage A and storage B.
+not change the choice between storage A and storage B. The size helps storage C1 and storage C2:
+the joins and a full refresh are small at this size. But only a measurement can show that they are
+fast enough (see the notes for storage C).
 
 Notes for storage B:
 
@@ -230,15 +239,59 @@ Notes for storage B:
 - Thus the three sets must agree before the fill: the ids in ES, the rows with `indexed_date`, and
   the rows with `index_confirmed_date`. Section 9.4 makes this comparison a gate for the switch.
 
+Notes for storage C. The PostgreSQL and Cloud SQL facts come from the documents in section 12. The
+conclusions are the opinion of the author:
+
+- **C1 is storage A with a name.** It needs the same SQL as storage A and it has the same parity
+  risk. Its gain is one definition that the search service, the dashboards, and a person with
+  `psql` can all read.
+- **C1 has no index of its own.** The search box needs a `tsvector` over about 70 fields. C1
+  computes it across the joins for each dataset on each query. The tab counts run on each filter
+  change. This can be fast enough at 10,000 rows. Measure it before the team selects C1.
+- **C2 cannot change one row.** `REFRESH MATERIALIZED VIEW` replaces the full contents. A
+  registration, an admin publish, and an admin removal (section 4.1a) each need a full refresh
+  before search shows the change.
+- **Each time to refresh C2 has a cost:**
+
+  | Time of the refresh | Effect |
+  | --- | --- |
+  | In the transaction of the data change | Search is correct at commit. But only one refresh can run at a time, so the writes wait for each other. The cost of each write also increases with the number of datasets. |
+  | After the commit | The stale-on-failure case of today comes back. Storage B removes that case. |
+  | On a schedule | A new dataset is absent from search until the next refresh. No scheduled job exists today (section 3.4). `pg_cron` is on the Cloud SQL list, but it adds a new part to operate. |
+
+- **A refresh of C2 can block readers.** `REFRESH ... CONCURRENTLY` does not block them. It needs
+  a unique index on a plain column, for example `dataset_id`, and a view that already has data.
+- **`pg_ivm` does not solve this for the team.** The extension updates a materialized view row by
+  row, and Cloud SQL supports it. But the Cloud SQL document says that it is not compatible with an
+  in-place major version upgrade or with a data export. The team does upgrades in place
+  ([DT-3587](https://broadworkbench.atlassian.net/browse/DT-3587)).
+- **The data use summary is the hardest field.** `TranslationUtil.translateSummary` builds it in
+  Java from a list of rules. `StudyRecommendationDAO` derives the primary codes in SQL, and its
+  comment records one known difference from the index. A view must also derive the secondary codes
+  and each description, because duos-ui reads them (`BucketUtils.ts`, `DataUseUtils.tsx`).
+- **"Published" needs the explicit column in C1 and in C2,** as in storage A. The publication
+  check in section 9.4 then applies to that column.
+- **C1 and C2 make the comparison with ES weaker.** Under storage B the same Java code builds the
+  ES document and the PostgreSQL document. Under storage A or C the comparison tests new field
+  logic and a new search engine at the same time.
+- **The repository has no database view today.** Storage C adds a new type of object to the
+  changesets and to the test setup.
+- **Access rules do not come from a C2 view,** for the same reason as storage B. They join the
+  live tables (section 7).
+
+A combination is possible later, and it does not change the draft position. A standard view can
+join the storage B table with `dac`, `users`, and `institution` to give the current names. That
+view removes the stale name cases of section 3.4, and `toDatasetTerm` stays.
+
 ### 4.1a The admin index endpoints
 
 Three admin endpoints exist today: build all documents, build one document, and remove one document.
 
-| | A. Live joins | B. Search document table |
-| --- | --- | --- |
-| Build one document (`POST /api/dataset/index/{datasetId}`) | **Necessary as "publish".** It sets an explicit column. No document exists. | **Necessary as "publish".** It also builds one row again if a dataset is in doubt. |
-| Remove one document (`DELETE /api/dataset/index/{datasetId}`) | **Necessary as "remove from the library".** It clears the column. | **Necessary as "remove from the library".** It deletes the row. |
-| Build all documents (`POST /api/dataset/index`) | Not necessary. | See the two notes below. |
+| | A. Live joins, and C1. Standard view | B. Search document table | C2. Materialized view |
+| --- | --- | --- | --- |
+| Build one document (`POST /api/dataset/index/{datasetId}`) | **Necessary as "publish".** It sets an explicit column. No document exists. | **Necessary as "publish".** It also builds one row again if a dataset is in doubt. | **Necessary as "publish".** It sets the column. Search shows the dataset after the next refresh. |
+| Remove one document (`DELETE /api/dataset/index/{datasetId}`) | **Necessary as "remove from the library".** It clears the column. | **Necessary as "remove from the library".** It deletes the row. | **Necessary as "remove from the library".** It clears the column. Search shows the dataset until the next refresh. |
+| Build all documents (`POST /api/dataset/index`) | Not necessary. | See the two notes below. | Useful as "refresh the view now". |
 
 Two notes for storage B. They are the opinion of the author:
 
@@ -247,14 +300,14 @@ Two notes for storage B. They are the opinion of the author:
   new build. A start-up task or a one-time job can do the same work, but a bulk operation of some
   type must exist.
 - The single-dataset endpoints do more than repair. **Confirmed:** admins use `POST` to publish a
-  dataset in the library and `DELETE` to remove it. Thus these two operations must stay in storage A
-  and in storage B.
+  dataset in the library and `DELETE` to remove it. Thus these two operations must stay in each
+  storage type.
 
 Publication has three types of event today. The design must keep them separate:
 
 | Event | Cause today | Rule for the new design |
 | --- | --- | --- |
-| First publication, automatic | Dataset registration. A dataset that a study update adds. DAC approval of a dataset. Conversion of DAC datasets to external. A DAC rule toggle, for each dataset of the DAC. | Creates the row (storage B) or sets the column (storage A). No admin call is necessary. |
+| First publication, automatic | Dataset registration. A dataset that a study update adds. DAC approval of a dataset. Conversion of DAC datasets to external. A DAC rule toggle, for each dataset of the DAC. | Creates the row (storage B) or sets the column (storage A and storage C). No admin call is necessary. |
 | First publication, by an admin | `POST /api/dataset/index/{datasetId}` | Same result as the automatic event. |
 | Refresh | Each other dataset, study, or data use change | Changes a row only if the dataset is already published. Must not publish. |
 | Removal | `DELETE /api/dataset/index/{datasetId}`, dataset delete, study delete | Deletes the row or clears the column. |
@@ -266,6 +319,8 @@ Consequences:
   already has this meaning (section 3.5).
 - A design that creates rows only on an admin call leaves each new registration out of search.
 - Storage A needs that state in each search query as a filter.
+- Storage C puts that filter in the view definition. Storage C2 shows a change to that state only
+  after a refresh.
 - Storage B must keep the rule that a row exists only for a published dataset. The first fill must
   obey it (section 4.1).
 - A DAC approval and a DAC rule toggle force a write today. Thus they publish a dataset again after
@@ -594,7 +649,8 @@ This list applies to each option.
 
 **consent**
 
-- `ElasticSearchService`: the client calls go. The document builder stays under storage B.
+- `ElasticSearchService`: the client calls go. The document builder stays under storage B. Under
+  storage A or storage C, SQL replaces it.
 - `DashboardSearchService`: the three dashboard queries become SQL.
 - `ElasticSearchCapabilityService` (1989 lines), its resource, its models, and its OpenAPI paths.
 - `ElasticSearchHealthCheck`, and the `elastic-search` entry in `StatusResource`.
@@ -642,7 +698,8 @@ Reasons:
    Option 3 is also the server-owned search API that tickets F-2 and F-3 already plan (section 7.5).
 2. Option 1 becomes option 3 as soon as the Data Library endpoint exists.
 3. Option 3 gives the results of Epics E-0, E-1, and E-2 as a side effect.
-4. Storage B keeps the documents identical, so a test can compare the two systems.
+4. Storage B keeps the documents identical, so a test can compare the two systems. Storage A and
+   storage C change the field logic at the same time as the search engine (section 4.1).
 
 ### 9.1 Phases
 
@@ -790,7 +847,7 @@ not public through a raw query today can lose those results.
 | The date | A late finish causes a renewal for one more year | Start phases 1 and 2 now. Ask if a short renewal is possible. |
 | Search box parity | Users find different results | The team accepts small differences that are documented. The parity test finds them. `pg_trgm` for identifiers. |
 | Database load | Tab counts run on each filter change. The database connection limit is fixed. | The data is small (about 6,000 to 10,000 rows), so each query is short. Measure in the deployed environment and with generated data of the same quantity. Combine the counts and the page into one request. |
-| Stale documents | Same as today under storage B | Accept for now. Move fields to live joins later. |
+| Stale documents | Same as today under storage B | Accept for now. Move fields to live joins or to a standard view later (section 4.1). |
 | Result order | Order without a sort changes | Define a default sort. |
 | Two repositories | Releases must agree | New endpoint beside the old ones. Feature flag in duos-ui. |
 | External API clients | The team knows of no external caller of the search endpoints. But external API users exist, and one of them is a possible caller. Options 1 and 3 break a client that sends ES queries. | See section 9.5. |
@@ -822,11 +879,17 @@ not public through a raw query today can lose those results.
 9. ~~Do the admin index endpoints keep their paths?~~ **Answered:** admins use the single-dataset
    endpoints to publish a dataset and to remove it from the library, so those two operations stay in
    each storage type. See section 4.1a. Open part: the names of the paths.
+10. Is a delay between a dataset change and its effect in search acceptable? If the answer is yes,
+    how long? Storage C2 with a scheduled refresh is possible only with a yes (section 4.1).
+11. How long does a search box query take on a standard view with 10,000 datasets? Storage C1 is
+    possible only if this time is acceptable (section 4.1).
 
 ## 12. Sources
 
 - consent at `dfa588c47` and duos-ui at `84fe8af4`.
 - Cloud SQL supported extensions:
   <https://docs.cloud.google.com/sql/docs/postgres/extensions>
+- PostgreSQL `REFRESH MATERIALIZED VIEW`:
+  <https://www.postgresql.org/docs/18/sql-refreshmaterializedview.html>
 - ParadeDB documentation: <https://www.paradedb.com/docs/welcome/introduction.md>
 - `sql2dsl` (wrong direction): <https://github.com/eolinker/sql2dsl>
