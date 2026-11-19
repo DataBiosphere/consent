@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -168,6 +169,58 @@ class DraftEditLockTest extends DAOTestHelper {
     assertEquals(
         "reviewed content",
         dataAccessRequestDAO.findByReferenceId(referenceId).getData().getOtherText());
+  }
+
+  // An upload reads the location it replaces under the row lock, not from its earlier read.
+  @Test
+  void uploadWaitingOnAnotherUploadReplacesTheLocationThatOneSaved() throws Exception {
+    User user = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(uniqueDarCode(), user.getUserId(), new Date());
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData original = new DataAccessRequestData();
+    original.setIrbDocumentLocation("original-irb");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId, referenceId, user.getUserId(), new Date(), null, new Date(), original, null);
+    // The second upload read the draft while it still pointed to the original document.
+    DataAccessRequest second = dataAccessRequestDAO.findByReferenceId(referenceId);
+    second.getData().setIrbDocumentLocation("second-irb");
+    second.getData().setIrbDocumentName("second-irb.pdf");
+    AtomicInteger holderPid = new AtomicInteger();
+    CountDownLatch locked = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+
+    // The first upload saves its document and holds the row until it commits.
+    Future<?> first =
+        executor.submit(
+            () -> {
+              jdbi.useTransaction(
+                  h -> {
+                    h.execute(
+                        "UPDATE data_access_request SET data = data || "
+                            + "'{\"irbDocumentLocation\": \"first-irb\"}'::jsonb "
+                            + "WHERE reference_id = ?",
+                        referenceId);
+                    holderPid.set(
+                        h.createQuery("SELECT pg_backend_pid()").mapTo(Integer.class).one());
+                    locked.countDown();
+                    release.await(10, TimeUnit.SECONDS);
+                  });
+              return null;
+            });
+    assertTrue(locked.await(10, TimeUnit.SECONDS));
+
+    Future<DataAccessRequestServiceDAO.DocumentSave> saved =
+        executor.submit(() -> serviceDAO.saveDocument(user, second, DarDocumentType.IRB));
+    awaitATransactionBlockedBy(holderPid.get());
+    release.countDown();
+    first.get(10, TimeUnit.SECONDS);
+
+    // The first upload's document is the one the draft no longer refers to.
+    assertEquals("first-irb", saved.get(10, TimeUnit.SECONDS).previousLocation());
+    assertEquals(
+        "second-irb",
+        dataAccessRequestDAO.findByReferenceId(referenceId).getData().getIrbDocumentLocation());
   }
 
   /** Waits until a transaction is blocked by the given backend, so the test exercises the wait. */

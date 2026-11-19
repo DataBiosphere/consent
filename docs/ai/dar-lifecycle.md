@@ -297,7 +297,9 @@ precondition that must hold at commit belongs after `lockCollection`, not only i
   the transaction, so the commit silently rolls back. Let it propagate out of `inTransaction`,
   then handle it (as `DACAutomationRuleService.openElectionAndApprove` does).
 - Submitting a draft locks the DAR row **before** its collection, and so does a draft edit
-  (`DataAccessRequestServiceDAO.updateByReferenceId` updates the DAR, then the collection).
+  (`DataAccessRequestServiceDAO.updateByReferenceId` updates the DAR, then the collection) and a
+  document upload (`DataAccessRequestServiceDAO.saveDocument`), which writes only its own two
+  fields and reads the location it replaces under the row lock.
   Resubmit, researcher cancel and signing official approval lock the collection first and then
   write DAR rows, so either kind can deadlock with the other on the same collection. Postgres
   aborts one of the two; a path maps that to a retryable 409 only if it calls

@@ -79,6 +79,7 @@ import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.DocumentSave;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -663,7 +664,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUploadIrbDocument() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave(null, dar));
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -692,7 +694,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String previousLocation = randomAlphabetic(10);
     dar.getData().setIrbDocumentLocation(previousLocation);
     dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave(previousLocation, dar));
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -705,8 +708,30 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
     var order = inOrder(dataAccessRequestService, gcsService);
-    order.verify(dataAccessRequestService).updateByReferenceId(any(), any());
+    order.verify(dataAccessRequestService).saveDocument(any(), any(), any());
     order.verify(gcsService).deleteDocument(previousLocation);
+  }
+
+  // Another upload committed after this one read the DAR: the row's location is the one replaced.
+  @Test
+  void testUploadIrbDocumentDeletesTheLocationTheRowHeld() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setIrbDocumentLocation("read-location");
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave("row-location", dar));
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new"));
+
+    Response response =
+        resource.uploadIrbDocument(
+            duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData);
+    assertEquals(200, response.getStatus());
+    verify(gcsService).deleteDocument("row-location");
+    verify(gcsService, never()).deleteDocument("read-location");
   }
 
   @Test
@@ -720,7 +745,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     stored.getData().setIrbDocumentLocation(previousLocation);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
     // The save is rejected, so nothing is saved.
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
         .thenThrow(new SubmittedDARCannotBeEditedException());
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -745,7 +770,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest stored = generateDataAccessRequest();
     stored.getData().setIrbDocumentLocation(previousLocation);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
         .thenThrow(new ConsentConflictException("Elections present"));
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -770,7 +795,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any()))
         .thenReturn(dar)
         .thenThrow(new IllegalStateException("database unavailable"));
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
         .thenThrow(new IllegalStateException("database unavailable"));
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -795,7 +820,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any()))
         .thenReturn(dar)
         .thenThrow(new NotFoundException("gone"));
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
         .thenThrow(new NotFoundException("gone"));
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -820,7 +845,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest stored = generateDataAccessRequest();
     stored.getData().setIrbDocumentLocation("new-upload");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
         .thenThrow(new IllegalStateException("failed after commit"));
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -847,7 +872,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     stored.getData().setIrbDocumentLocation(previousLocation);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar).thenReturn(stored);
     // A database error: the update saved nothing, so nothing refers to the new upload.
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
         .thenThrow(new IllegalStateException("database error"));
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -1513,7 +1538,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUploadCollaborationDocument() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave(null, dar));
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
@@ -1541,9 +1567,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUploadCollaborationDocumentWithPreviousDocument() throws Exception {
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setCollaborationLetterLocation(randomAlphabetic(10));
+    String previousLocation = randomAlphabetic(10);
+    dar.getData().setCollaborationLetterLocation(previousLocation);
     dar.getData().setCollaborationLetterName(randomAlphabetic(10) + ".txt");
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave(previousLocation, dar));
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);

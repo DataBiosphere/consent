@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
@@ -7,16 +8,19 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
@@ -85,14 +89,6 @@ public class DataAccessRequestServiceDAO {
             AND NOT EXISTS (
                 SELECT 1 FROM election e WHERE e.reference_id = data_access_request.reference_id)
         """;
-    final String hasElections =
-        """
-          SELECT EXISTS (SELECT 1 FROM election WHERE reference_id = :referenceId)
-        """;
-    final String isDraft =
-        """
-          SELECT submission_date IS NULL FROM data_access_request WHERE reference_id = :referenceId
-        """;
     final String deleteDarDatasetRelationByReferenceId =
         """
           DELETE FROM dar_dataset WHERE reference_id = :referenceId
@@ -115,37 +111,9 @@ public class DataAccessRequestServiceDAO {
           // earlier read, and a submit may have committed since; the guard keeps an edit from
           // turning a submitted DAR back into a draft.
           if (darUpdate.execute() == 0) {
-            boolean draft =
-                h.createQuery(isDraft)
-                    .bind("referenceId", referenceId)
-                    .mapTo(Boolean.class)
-                    .findOne()
-                    .orElseThrow(
-                        () ->
-                            new NotFoundException(
-                                "Data access request %s not found".formatted(referenceId)));
-            if (!draft) {
-              throw new SubmittedDARCannotBeEditedException();
-            }
-            throw new ConsentConflictException(
-                "Elections present on this DAR; it cannot be edited");
+            throwWhyNotUpdated(h, referenceId);
           }
-
-          if (Objects.nonNull(dar.getCollectionId())) {
-            darCollectionDAO.updateDarCollection(
-                dar.getCollectionId(), user.getUserId(), Date.from(now));
-            // Elections are opened under the collection lock, which the line above now holds; one
-            // committed while this edit waited for it fails the edit here.
-            boolean elections =
-                h.createQuery(hasElections)
-                    .bind("referenceId", referenceId)
-                    .mapTo(Boolean.class)
-                    .one();
-            if (elections) {
-              throw new ConsentConflictException(
-                  "Elections present on this DAR; it cannot be edited");
-            }
-          }
+          checkNoElectionsUnderCollectionLock(h, dar, user, now);
 
           Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
           darDatasetDelete.bind("referenceId", dar.getReferenceId());
@@ -161,5 +129,101 @@ public class DataAccessRequestServiceDAO {
               });
         });
     return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  /** A document upload's save: the location it replaced, if any, and the saved DAR. */
+  public record DocumentSave(String previousLocation, DataAccessRequest dar) {}
+
+  /**
+   * Saves an uploaded document's location and name on a draft, and nothing else, so an edit or
+   * another upload that commits meanwhile is not overwritten. Returns the location it replaced, as
+   * read under the row lock, so the caller deletes the document the draft no longer refers to.
+   */
+  public DocumentSave saveDocument(User user, DataAccessRequest dar, DarDocumentType type) {
+    Instant now = Instant.now();
+    String referenceId = dar.getReferenceId();
+    boolean irb = DarDocumentType.IRB.equals(type);
+    String locationKey = irb ? "irbDocumentLocation" : "collaborationLetterLocation";
+    JsonObject patch = new JsonObject();
+    patch.addProperty(
+        locationKey,
+        irb
+            ? dar.getData().getIrbDocumentLocation()
+            : dar.getData().getCollaborationLetterLocation());
+    patch.addProperty(
+        irb ? "irbDocumentName" : "collaborationLetterName",
+        irb ? dar.getData().getIrbDocumentName() : dar.getData().getCollaborationLetterName());
+    final String saveDocument =
+        """
+          UPDATE data_access_request d
+          SET data = d.data || CAST(:patch AS jsonb), update_date = :updateDate
+          FROM (SELECT reference_id, data ->> :locationKey AS previous
+                FROM data_access_request WHERE reference_id = :referenceId FOR NO KEY UPDATE) old
+          WHERE d.reference_id = old.reference_id AND d.submission_date IS NULL
+            AND NOT EXISTS (SELECT 1 FROM election e WHERE e.reference_id = d.reference_id)
+          RETURNING COALESCE(old.previous, '')
+        """;
+    // The saved DAR is read in the same transaction, so a failure after the commit can't lose the
+    // location this save replaced.
+    return jdbi.inTransaction(
+        h -> {
+          Optional<String> saved =
+              h.createQuery(saveDocument)
+                  .bind("patch", patch.toString())
+                  .bind("updateDate", now)
+                  .bind("locationKey", locationKey)
+                  .bind("referenceId", referenceId)
+                  .mapTo(String.class)
+                  .findOne();
+          if (saved.isEmpty()) {
+            throwWhyNotUpdated(h, referenceId);
+          }
+          checkNoElectionsUnderCollectionLock(h, dar, user, now);
+          return new DocumentSave(
+              saved.get().isEmpty() ? null : saved.get(),
+              h.attach(DataAccessRequestDAO.class).findByReferenceId(referenceId));
+        });
+  }
+
+  /**
+   * Only a draft with no elections can be changed. Explains why an update guarded on that matched
+   * no row: the DAR is gone (404), submitted (422), or a draft with elections (409).
+   */
+  private static void throwWhyNotUpdated(Handle h, String referenceId) {
+    boolean draft =
+        h.createQuery(
+                "SELECT submission_date IS NULL FROM data_access_request"
+                    + " WHERE reference_id = :referenceId")
+            .bind("referenceId", referenceId)
+            .mapTo(Boolean.class)
+            .findOne()
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "Data access request %s not found".formatted(referenceId)));
+    if (!draft) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
+    throw new ConsentConflictException("Elections present on this DAR; it cannot be edited");
+  }
+
+  /**
+   * Takes the DAR's collection lock, under which elections are opened, and fails the change if one
+   * committed while it waited.
+   */
+  private void checkNoElectionsUnderCollectionLock(
+      Handle h, DataAccessRequest dar, User user, Instant now) {
+    if (Objects.isNull(dar.getCollectionId())) {
+      return;
+    }
+    darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), Date.from(now));
+    boolean elections =
+        h.createQuery("SELECT EXISTS (SELECT 1 FROM election WHERE reference_id = :referenceId)")
+            .bind("referenceId", dar.getReferenceId())
+            .mapTo(Boolean.class)
+            .one();
+    if (elections) {
+      throw new ConsentConflictException("Elections present on this DAR; it cannot be edited");
+    }
   }
 }
