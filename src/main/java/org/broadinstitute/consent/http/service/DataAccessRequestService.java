@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -101,6 +103,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final DacService dacService;
   private final DACAutomationRuleService ruleService;
   private final String serverUrl;
+  private final GCSService gcsService;
 
   @Inject
   public DataAccessRequestService(
@@ -113,7 +116,8 @@ public class DataAccessRequestService implements ConsentLogger {
       EmailService emailService,
       DACAutomationRuleService ruleService,
       CountryValidator countryValidator,
-      ConsentConfiguration config) {
+      ConsentConfiguration config,
+      GCSService gcsService) {
     this.counterService = counterService;
     this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
@@ -131,6 +135,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.emailService = emailService;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
     this.countryValidator = countryValidator;
+    this.gcsService = gcsService;
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -246,6 +251,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
     boolean requiresSOApproval = requiresSOApproval(user, datasetIds);
+    List<String> removedDocuments = new ArrayList<>();
     String referenceId =
         dataAccessRequestServiceDAO.inTransaction(
             transactionDAOs -> {
@@ -260,6 +266,18 @@ public class DataAccessRequestService implements ConsentLogger {
               // lock, so an upload that committed first is kept.
               darData.keepStoredDocuments(
                   Objects.nonNull(lockedDraft) ? lockedDraft.getData() : null);
+              if (Objects.nonNull(lockedDraft)) {
+                // A document the draft had and the submission doesn't is removed.
+                Stream.of(
+                        lockedDraft.getData().getIrbDocumentLocation(),
+                        lockedDraft.getData().getCollaborationLetterLocation())
+                    .filter(Objects::nonNull)
+                    .filter(
+                        location ->
+                            !location.equals(darData.getIrbDocumentLocation())
+                                && !location.equals(darData.getCollaborationLetterLocation()))
+                    .forEach(removedDocuments::add);
+              }
               Integer collectionId =
                   Objects.nonNull(lockedDraft) && Objects.nonNull(lockedDraft.getCollectionId())
                       ? lockedDraft.getCollectionId()
@@ -309,12 +327,50 @@ public class DataAccessRequestService implements ConsentLogger {
               if (requiresSOApproval) {
                 transactionalDarDAO.updateRequiresSOApproval(true, transactionReferenceId);
               }
+              // Another DAR may share a location planted before document fields were
+              // server-managed; that document stays.
+              removedDocuments.removeIf(transactionalDarDAO::isDocumentReferenced);
               return transactionReferenceId;
             });
+    deleteRemovedDocuments(referenceId, removedDocuments);
     if (!requiresSOApproval) {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     }
     return findByReferenceId(referenceId);
+  }
+
+  /**
+   * Deletes the documents a committed save removed from a draft. A failure leaves an unreferenced
+   * file, so it is logged rather than failing the save.
+   */
+  /** Whether a DAR or a file storage object refers to the file at this bucket location. */
+  public boolean isDocumentReferenced(String location) {
+    return dataAccessRequestDAO.isDocumentReferenced(location);
+  }
+
+  private void deleteRemovedDocuments(String referenceId, List<String> locations) {
+    for (String location : locations) {
+      // DAR uploads name files with a random UUID; anything else came from elsewhere.
+      if (!isUuid(location)) {
+        logWarn(
+            "Kept removed document %s of DAR %s: not an upload".formatted(location, referenceId));
+        continue;
+      }
+      try {
+        gcsService.deleteDocument(location);
+      } catch (Exception e) {
+        logWarn(
+            "Unable to delete removed document %s of DAR %s".formatted(location, referenceId), e);
+      }
+    }
+  }
+
+  private static boolean isUuid(String value) {
+    try {
+      return UUID.fromString(value).toString().equals(value);
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   /**
@@ -797,7 +853,10 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new SubmittedDARCannotBeEditedException();
     }
     try {
-      return dataAccessRequestServiceDAO.updateByReferenceId(user, dar, keepFromRow);
+      DataAccessRequestServiceDAO.DraftSave saved =
+          dataAccessRequestServiceDAO.updateByReferenceId(user, dar, keepFromRow);
+      deleteRemovedDocuments(dar.getReferenceId(), saved.removedDocuments());
+      return saved.dar();
     } catch (JdbiException e) {
       // The edit locks the DAR row, then its collection; resubmit, researcher cancel and signing
       // official approval take them in the other order, so a deadlock is a retryable conflict.

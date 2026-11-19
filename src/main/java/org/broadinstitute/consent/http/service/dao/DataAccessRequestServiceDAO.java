@@ -4,12 +4,14 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -61,15 +63,21 @@ public class DataAccessRequestServiceDAO {
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
-    return updateByReferenceId(user, dar, List.of("status"));
+    return updateByReferenceId(user, dar, List.of("status")).dar();
   }
+
+  /**
+   * A draft edit's save: the saved DAR, and the document locations it removed that no DAR refers to
+   * any more, for the caller to delete once the save has committed.
+   */
+  public record DraftSave(DataAccessRequest dar, List<String> removedDocuments) {}
 
   /**
    * Saves a draft's data. The keys in {@code keepFromRow} are server-managed: their values come
    * from the row being updated, not from {@code dar}, so a client can't set them and a change that
    * commits while this update waits on the row (a cancel, a document upload) is not overwritten.
    */
-  public DataAccessRequest updateByReferenceId(
+  public DraftSave updateByReferenceId(
       User user, DataAccessRequest dar, Collection<String> keepFromRow) {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
@@ -99,8 +107,17 @@ public class DataAccessRequestServiceDAO {
           VALUES (:referenceId, :datasetId)
           ON CONFLICT DO NOTHING
         """;
+    final String documentLocations =
+        """
+          SELECT data ->> 'irbDocumentLocation', data ->> 'collaborationLetterLocation'
+          FROM data_access_request WHERE reference_id = :referenceId
+        """;
+    List<String> removedDocuments = new ArrayList<>();
     jdbi.useTransaction(
         h -> {
+          // The row lock is taken here, so the locations read before and after are this edit's.
+          List<String> before =
+              readLocations(h, documentLocations + " FOR NO KEY UPDATE", referenceId);
           Update darUpdate = h.createUpdate(updateDataByReferenceId);
           darUpdate.bind("referenceId", referenceId);
           darUpdate.bind("userId", user.getUserId());
@@ -115,6 +132,13 @@ public class DataAccessRequestServiceDAO {
           }
           checkNoElectionsUnderCollectionLock(h, dar, user, now);
 
+          List<String> after = readLocations(h, documentLocations, referenceId);
+          DataAccessRequestDAO darDAO = h.attach(DataAccessRequestDAO.class);
+          before.stream()
+              .filter(location -> !after.contains(location))
+              .filter(location -> !darDAO.isDocumentReferenced(location))
+              .forEach(removedDocuments::add);
+
           Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
           darDatasetDelete.bind("referenceId", dar.getReferenceId());
           darDatasetDelete.execute();
@@ -128,7 +152,18 @@ public class DataAccessRequestServiceDAO {
                 darDatasetInsert.execute();
               });
         });
-    return dataAccessRequestDAO.findByReferenceId(referenceId);
+    return new DraftSave(dataAccessRequestDAO.findByReferenceId(referenceId), removedDocuments);
+  }
+
+  /** The DAR's non-null document locations, as the query reads them. */
+  private static List<String> readLocations(Handle h, String sql, String referenceId) {
+    return h.createQuery(sql)
+        .bind("referenceId", referenceId)
+        .map(
+            (rs, ctx) ->
+                Stream.of(rs.getString(1), rs.getString(2)).filter(Objects::nonNull).toList())
+        .findOne()
+        .orElse(List.of());
   }
 
   /** A document upload's save: the location it replaced, if any, and the saved DAR. */

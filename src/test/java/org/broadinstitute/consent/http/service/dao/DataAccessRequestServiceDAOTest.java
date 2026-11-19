@@ -10,6 +10,7 @@ import static org.mockito.Mockito.spy;
 
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -413,15 +414,69 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     data.setOtherText("edited");
     edit.setData(data);
     edit.setDatasetIds(List.of());
-    serviceDAO.updateByReferenceId(
-        user, edit, List.of("status", "irbDocumentLocation", "irbDocumentName"));
+    var result =
+        serviceDAO.updateByReferenceId(
+            user, edit, List.of("status", "irbDocumentLocation", "irbDocumentName"));
 
+    // The removed letter is reported for deletion; the kept IRB document isn't.
+    assertEquals(List.of("own-letter"), result.removedDocuments());
     DataAccessRequestData saved = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
     assertEquals("own-irb", saved.getIrbDocumentLocation());
     assertEquals("own-irb.pdf", saved.getIrbDocumentName());
     assertNull(saved.getCollaborationLetterLocation());
     assertNull(saved.getCollaborationLetterName());
     assertEquals("edited", saved.getOtherText());
+  }
+
+  // A location planted before document fields were server-managed can be shared with another DAR.
+  @Test
+  void testUpdateByReferenceIdDoesNotReportADocumentAnotherDarUses() {
+    User user = createUser();
+    DataAccessRequestData shared = new DataAccessRequestData();
+    shared.setCollaborationLetterLocation("shared-letter");
+    String draftId = randomAlphanumeric(10);
+    for (String referenceId : List.of(draftId, randomAlphanumeric(10))) {
+      dataAccessRequestDAO.insertDataAccessRequest(
+          createDarCollection().getDarCollectionId(),
+          referenceId,
+          user.getUserId(),
+          new Date(),
+          null,
+          new Date(),
+          shared,
+          user.getEraCommonsId());
+    }
+    DataAccessRequest edit = new DataAccessRequest();
+    edit.setReferenceId(draftId);
+    edit.setData(new DataAccessRequestData());
+    edit.setDatasetIds(List.of());
+
+    var result = serviceDAO.updateByReferenceId(user, edit, List.of("status"));
+
+    assertTrue(result.removedDocuments().isEmpty());
+    assertNull(
+        dataAccessRequestDAO.findByReferenceId(draftId).getData().getCollaborationLetterLocation());
+  }
+
+  // DAAs, dataset and draft files share the bucket; a planted location may name one of them.
+  @Test
+  void testIsDocumentReferencedFindsAFileStorageObject() {
+    User user = createUser();
+    String blob = UUID.randomUUID().toString();
+    fileStorageObjectDAO.insertNewFile(
+        "daa.pdf",
+        "DATA_ACCESS_AGREEMENT",
+        "gs://bucket/" + blob,
+        "application/pdf",
+        "1",
+        user.getUserId(),
+        Instant.now());
+
+    assertTrue(dataAccessRequestDAO.isDocumentReferenced(blob));
+    assertFalse(dataAccessRequestDAO.isDocumentReferenced(UUID.randomUUID().toString()));
+    // A planted location is compared literally, not as a pattern.
+    assertFalse(dataAccessRequestDAO.isDocumentReferenced("%"));
+    assertFalse(dataAccessRequestDAO.isDocumentReferenced("planted\\"));
   }
 
   @Test

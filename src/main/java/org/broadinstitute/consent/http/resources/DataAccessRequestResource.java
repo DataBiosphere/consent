@@ -786,6 +786,14 @@ public class DataAccessRequestResource extends Resource {
 
   private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {
     try {
+      // A location planted before document fields were server-managed can name a file that
+      // another DAR or a file storage object (DAA, dataset or draft file) still uses.
+      if (dataAccessRequestService.isDocumentReferenced(blobIdName)) {
+        logWarn(
+            "Kept document %s of DAR %s: still referenced"
+                .formatted(blobIdName, dar.getReferenceId()));
+        return;
+      }
       gcsService.deleteDocument(blobIdName);
     } catch (Exception e) {
       String message =

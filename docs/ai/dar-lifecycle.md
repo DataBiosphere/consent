@@ -46,7 +46,12 @@ The document fields (`irbDocumentLocation`, `irbDocumentName`, `collaborationLet
 (`DataAccessRequestData.keepStoredDocuments`). A new draft or a new DAR gets none; a draft edit keeps
 the stored ones (taken from the row it updates); submitting a draft keeps the draft's, read under its
 lock. A client can only remove a document: a missing, null or empty location clears that document's
-location and name (duos-ui sends an empty one on save and leaves it out on submit).
+location and name (duos-ui sends an empty one on save and leaves it out on submit). A save or submit
+that removes a document deletes its file once it commits, unless something else refers to it (another
+DAR, or a file storage object: DAAs, dataset and draft files share the bucket) or it isn't a DAR upload
+(not UUID-named) (`DataAccessRequestService.deleteRemovedDocuments`). An upload replacing a document,
+and the cleanup after a failed save or a failed progress report, also keep a file something else
+refers to, so a report that committed before a later step failed keeps its documents.
 
 ### 1. Draft
 
