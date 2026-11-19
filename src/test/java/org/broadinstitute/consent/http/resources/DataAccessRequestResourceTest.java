@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -295,7 +297,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     user.setLibraryCard(new LibraryCard());
     try {
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-      when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+      when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
@@ -343,7 +345,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testUpdatePartialDataAccessRequest() {
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList())).thenReturn(dar);
 
     try (var response = resource.updatePartialDataAccessRequest(duosUser, "", "{}")) {
       assertEquals(200, response.getStatus());
@@ -411,7 +413,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setStatus(DarStatus.ARCHIVED.getValue());
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
         .thenReturn(generateDataAccessRequest());
 
     try (var response =
@@ -419,7 +421,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(200, response.getStatus());
     }
     ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
-    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture(), anyList());
     assertEquals(DarStatus.ARCHIVED.getValue(), captor.getValue().getData().getStatus());
   }
 
@@ -428,7 +430,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setStatus(DarStatus.ARCHIVED.getValue());
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
         .thenReturn(generateDataAccessRequest());
 
     try (var response =
@@ -436,7 +438,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(200, response.getStatus());
     }
     ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
-    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture(), anyList());
     assertEquals(DarStatus.ARCHIVED.getValue(), captor.getValue().getData().getStatus());
   }
 
@@ -444,7 +446,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testUpdateByReferenceIdTakesNoClientStatusWhenNoneIsStored() {
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
         .thenReturn(generateDataAccessRequest());
 
     try (var response =
@@ -452,15 +454,146 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(200, response.getStatus());
     }
     ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
-    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture(), anyList());
     assertNull(captor.getValue().getData().getStatus());
+  }
+
+  // Every document field a client could send, pointing at someone else's blobs.
+  private static final String PLANTED_DOCUMENTS =
+      """
+      {"irbDocumentLocation":"other-irb","irbDocumentName":"other-irb.pdf",
+       "collaborationLetterLocation":"other-letter","collaborationLetterName":"other-letter.pdf"}
+      """;
+
+  private static final List<String> ALL_KEPT_FROM_ROW =
+      Stream.of(
+              List.of("status"),
+              DataAccessRequestData.IRB_DOCUMENT_KEYS,
+              DataAccessRequestData.COLLABORATION_LETTER_KEYS)
+          .flatMap(List::stream)
+          .toList();
+
+  private DataAccessRequest darWithDocuments() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setIrbDocumentLocation("own-irb");
+    dar.getData().setIrbDocumentName("own-irb.pdf");
+    dar.getData().setCollaborationLetterLocation("own-letter");
+    dar.getData().setCollaborationLetterName("own-letter.pdf");
+    return dar;
+  }
+
+  private static void assertDocuments(DataAccessRequestData data, String irb, String letter) {
+    assertEquals(irb, data.getIrbDocumentLocation());
+    assertEquals(Objects.isNull(irb) ? null : irb + ".pdf", data.getIrbDocumentName());
+    assertEquals(letter, data.getCollaborationLetterLocation());
+    assertEquals(
+        Objects.isNull(letter) ? null : letter + ".pdf", data.getCollaborationLetterName());
+  }
+
+  @Test
+  void testCreateDraftDataAccessRequestIgnoresClientDocuments() {
+    when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any()))
+        .thenReturn(generateDataAccessRequest());
+    when(builder.path(anyString())).thenReturn(builder);
+    when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
+    when(info.getRequestUriBuilder()).thenReturn(builder);
+
+    try (var response = resource.createDraftDataAccessRequest(duosUser, info, PLANTED_DOCUMENTS)) {
+      assertEquals(201, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).insertDraftDataAccessRequest(any(), captor.capture());
+    assertDocuments(captor.getValue().getData(), null, null);
+  }
+
+  @Test
+  void testUpdateByReferenceIdKeepsStoredDocuments() {
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(darWithDocuments());
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response = resource.updateByReferenceId(duosUser, "", PLANTED_DOCUMENTS)) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService)
+        .updateByReferenceId(any(), captor.capture(), eq(ALL_KEPT_FROM_ROW));
+    assertDocuments(captor.getValue().getData(), "own-irb", "own-letter");
+  }
+
+  @Test
+  void testUpdatePartialDataAccessRequestKeepsStoredDocuments() {
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(darWithDocuments());
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
+        .thenReturn(generateDataAccessRequest());
+
+    try (var response = resource.updatePartialDataAccessRequest(duosUser, "", PLANTED_DOCUMENTS)) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService)
+        .updateByReferenceId(any(), captor.capture(), eq(ALL_KEPT_FROM_ROW));
+    assertDocuments(captor.getValue().getData(), "own-irb", "own-letter");
+  }
+
+  // duos-ui sends an empty location when a researcher removes or replaces a document.
+  @Test
+  void testUpdatePartialDataAccessRequestEmptyLocationRemovesDocument() {
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(darWithDocuments());
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
+        .thenReturn(generateDataAccessRequest());
+    String body =
+        """
+        {"irbDocumentLocation":"","irbDocumentName":"",
+         "collaborationLetterLocation":"other-letter","collaborationLetterName":"other-letter.pdf"}
+        """;
+
+    try (var response = resource.updatePartialDataAccessRequest(duosUser, "", body)) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService)
+        .updateByReferenceId(
+            any(),
+            captor.capture(),
+            eq(List.of("status", "collaborationLetterLocation", "collaborationLetterName")));
+    assertDocuments(captor.getValue().getData(), null, "own-letter");
+  }
+
+  // A location planted by an edit can't make the next upload delete another DAR's document.
+  @Test
+  void testUploadAfterPlantedLocationDeletesOnlyTheDraftsOwnDocument() throws Exception {
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(darWithDocuments());
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
+        .thenReturn(generateDataAccessRequest());
+    try (var response = resource.updatePartialDataAccessRequest(duosUser, "", PLANTED_DOCUMENTS)) {
+      assertEquals(200, response.getStatus());
+    }
+    ArgumentCaptor<DataAccessRequest> saved = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService).updateByReferenceId(any(), saved.capture(), anyList());
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(saved.getValue());
+    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(saved.getValue());
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("new-irb.pdf");
+    when(formData.getType()).thenReturn("pdf");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new-irb"));
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+
+    try (var response =
+        resource.uploadIrbDocument(
+            duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData)) {
+      assertEquals(200, response.getStatus());
+    }
+    verify(gcsService).deleteDocument("own-irb");
+    verify(gcsService, never()).deleteDocument("other-irb");
   }
 
   @Test
   void testUpdatePartialDataAccessRequestTakesNoClientStatusWhenNoneIsStored() {
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    when(dataAccessRequestService.updateByReferenceId(any(), any()))
+    when(dataAccessRequestService.updateByReferenceId(any(), any(), anyList()))
         .thenReturn(generateDataAccessRequest());
 
     try (var response =
@@ -468,7 +601,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(200, response.getStatus());
     }
     ArgumentCaptor<DataAccessRequest> captor = ArgumentCaptor.forClass(DataAccessRequest.class);
-    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture());
+    verify(dataAccessRequestService).updateByReferenceId(any(), captor.capture(), anyList());
     assertNull(captor.getValue().getData().getStatus());
   }
 

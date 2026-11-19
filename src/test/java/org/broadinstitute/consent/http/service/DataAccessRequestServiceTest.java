@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -372,12 +373,46 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateDataAccessRequest_SubmitsTheDraftsOwnDocuments() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.getData().setIrbDocumentLocation("other-irb");
+    dar.getData().setIrbDocumentName("other-irb.pdf");
+    dar.getData().setCollaborationLetterLocation("other-letter");
+    DataAccessRequest draft = generateDataAccessRequest();
+    draft.setReferenceId(dar.getReferenceId());
+    draft.getData().setIrbDocumentLocation("own-irb");
+    draft.getData().setIrbDocumentName("own-irb.pdf");
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(draft);
+
+    assertNotNull(service.createDataAccessRequest(user, dar, request));
+
+    // The documents come from the draft as read under its lock, not from the request.
+    ArgumentCaptor<DataAccessRequestData> saved =
+        ArgumentCaptor.forClass(DataAccessRequestData.class);
+    verify(dataAccessRequestDAO)
+        .updateDataByReferenceId(
+            eq(dar.getReferenceId()), any(), any(), any(), saved.capture(), any());
+    assertEquals("own-irb", saved.getValue().getIrbDocumentLocation());
+    assertEquals("own-irb.pdf", saved.getValue().getIrbDocumentName());
+    assertNull(saved.getValue().getCollaborationLetterLocation());
+    assertNull(saved.getValue().getCollaborationLetterName());
+  }
+
+  @Test
   void testCreateDataAccessRequest_Create() {
     mockTransactionalDaos();
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
     dar.setReferenceId("id");
+    // A new DAR has no uploads, so document fields sent with it are dropped.
+    dar.getData().setIrbDocumentLocation("other-irb");
+    dar.getData().setCollaborationLetterLocation("other-letter");
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
@@ -404,6 +439,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertNotNull(newDar);
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
     ArgumentCaptor<String> insertedReferenceId = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<DataAccessRequestData> insertedData =
+        ArgumentCaptor.forClass(DataAccessRequestData.class);
     verify(dataAccessRequestDAO)
         .insertDataAccessRequest(
             anyInt(),
@@ -412,8 +449,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             any(Date.class),
             any(Date.class),
             any(Date.class),
-            any(DataAccessRequestData.class),
+            insertedData.capture(),
             anyString());
+    assertNull(insertedData.getValue().getIrbDocumentLocation());
+    assertNull(insertedData.getValue().getCollaborationLetterLocation());
     verify(dataAccessRequestDAO)
         .updateSubmissionInstitution(insertedReferenceId.getValue(), user.getInstitutionId());
   }
@@ -1651,7 +1690,7 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setCollectionId(randomInt(0, 100));
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
-    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any())).thenReturn(dar);
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
     assertNotNull(newDar);
   }
@@ -1665,7 +1704,7 @@ institution or library cards issued: Internal Collaborator member:  \
             new UnableToExecuteStatementException(
                 "lock", new SQLException("deadlock detected", "40P01"), null))
         .when(dataAccessRequestServiceDAO)
-        .updateByReferenceId(user, dar);
+        .updateByReferenceId(user, dar, List.of("status"));
 
     assertThrows(ConsentConflictException.class, () -> service.updateByReferenceId(user, dar));
   }
@@ -1675,7 +1714,8 @@ institution or library cards issued: Internal Collaborator member:  \
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
-    when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar, List.of("status")))
+        .thenReturn(dar);
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
     assertNotNull(newDar);
   }

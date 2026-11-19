@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequestData {
@@ -173,6 +174,36 @@ public class DataAccessRequestData {
     DataAccessRequestData data = new Gson().fromJson(jsonString, DataAccessRequestData.class);
     validateOntologyEntries(data);
     return data;
+  }
+
+  /** The keys of each document's fields, which only the document upload endpoints set. */
+  public static final List<String> IRB_DOCUMENT_KEYS =
+      List.of("irbDocumentLocation", "irbDocumentName");
+
+  public static final List<String> COLLABORATION_LETTER_KEYS =
+      List.of("collaborationLetterLocation", "collaborationLetterName");
+
+  /**
+   * Replaces the document fields of data a client sent with the stored ones, so a client can't
+   * point a DAR at a document. A client can only remove a document: a missing, null or empty
+   * location clears that document's location and name. duos-ui sends an empty one on save and
+   * leaves it out on submit when a researcher removes or replaces a file.
+   *
+   * @param stored The DAR's stored data, or null for a new DAR, which has no documents.
+   * @return The keys whose stored values were kept.
+   */
+  public List<String> keepStoredDocuments(DataAccessRequestData stored) {
+    boolean keepIrb = Objects.nonNull(stored) && !StringUtils.isBlank(irbDocumentLocation);
+    irbDocumentLocation = keepIrb ? stored.irbDocumentLocation : null;
+    irbDocumentName = keepIrb ? stored.irbDocumentName : null;
+    boolean keepLetter =
+        Objects.nonNull(stored) && !StringUtils.isBlank(collaborationLetterLocation);
+    collaborationLetterLocation = keepLetter ? stored.collaborationLetterLocation : null;
+    collaborationLetterName = keepLetter ? stored.collaborationLetterName : null;
+    return Stream.concat(
+            keepIrb ? IRB_DOCUMENT_KEYS.stream() : Stream.empty(),
+            keepLetter ? COLLABORATION_LETTER_KEYS.stream() : Stream.empty())
+        .toList();
   }
 
   public String getReferenceId() {
