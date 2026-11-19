@@ -573,7 +573,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     ArgumentCaptor<DataAccessRequest> saved = ArgumentCaptor.forClass(DataAccessRequest.class);
     verify(dataAccessRequestService).updateByReferenceId(any(), saved.capture(), anyList());
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(saved.getValue());
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(saved.getValue());
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave("own-irb", saved.getValue()));
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("new-irb.pdf");
     when(formData.getType()).thenReturn("pdf");
