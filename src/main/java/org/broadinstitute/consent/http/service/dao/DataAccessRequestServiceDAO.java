@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.dao;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -56,14 +57,28 @@ public class DataAccessRequestServiceDAO {
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
+    return updateByReferenceId(user, dar, List.of("status"));
+  }
+
+  /**
+   * Saves a draft's data. The keys in {@code keepFromRow} are server-managed: their values come
+   * from the row being updated, not from {@code dar}, so a client can't set them and a change that
+   * commits while this update waits on the row (a cancel, a document upload) is not overwritten.
+   */
+  public DataAccessRequest updateByReferenceId(
+      User user, DataAccessRequest dar, Collection<String> keepFromRow) {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
     final String updateDataByReferenceId =
         """
           UPDATE data_access_request
-          SET data = jsonb_set(
-              regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb - 'status',
-              '{status}', COALESCE(data -> 'status', 'null'::jsonb)),
+          SET data = (regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb
+                  - CAST(:keepFromRow AS text[]))
+              || COALESCE(
+                  (SELECT jsonb_object_agg(k, data -> k)
+                   FROM unnest(CAST(:keepFromRow AS text[])) AS k
+                   WHERE data -> k IS NOT NULL),
+                  '{}'::jsonb),
             user_id = :userId,
           update_date = :updateDate
           WHERE reference_id = :referenceId AND submission_date IS NULL
@@ -88,8 +103,6 @@ public class DataAccessRequestServiceDAO {
           VALUES (:referenceId, :datasetId)
           ON CONFLICT DO NOTHING
         """;
-    // The row's own status is kept, whatever the edit sends: only the server sets it, and a cancel
-    // that commits while this edit waits on the row is not overwritten.
     jdbi.useTransaction(
         h -> {
           Update darUpdate = h.createUpdate(updateDataByReferenceId);
@@ -97,6 +110,7 @@ public class DataAccessRequestServiceDAO {
           darUpdate.bind("userId", user.getUserId());
           darUpdate.bind("updateDate", now);
           darUpdate.bind("data", dar.getData().toString());
+          darUpdate.bindArray("keepFromRow", String.class, List.copyOf(keepFromRow));
           // Only a draft with no elections can be edited. The caller's draft check ran on an
           // earlier read, and a submit may have committed since; the guard keeps an edit from
           // turning a submitted DAR back into a draft.

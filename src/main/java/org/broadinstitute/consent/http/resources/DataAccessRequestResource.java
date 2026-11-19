@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -212,13 +213,13 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
-      keepStoredStatus(data, originalDar);
+      List<String> keepFromRow = keepServerManagedFields(data, originalDar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceId(user, originalDar);
+          dataAccessRequestService.updateByReferenceId(user, originalDar, keepFromRow);
       matchService.reprocessMatchesForPurpose(referenceId);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
@@ -268,6 +269,8 @@ public class DataAccessRequestResource extends Resource {
     try {
       User user = duosUser.getUser();
       DataAccessRequest newDar = populateDarFromJsonString(user, dar);
+      // A new draft has no uploads yet, so it has no documents.
+      newDar.getData().keepStoredDocuments(null);
       DataAccessRequest result =
           dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
       URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
@@ -289,14 +292,14 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
       checkAuthorizedUpdateUser(user, originalDar);
       DataAccessRequestData data = DataAccessRequestData.fromString(dar);
-      keepStoredStatus(data, originalDar);
+      List<String> keepFromRow = keepServerManagedFields(data, originalDar);
       // Keep dar data reference id in sync with the dar until we fully deprecate
       // it in dar data.
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       originalDar.setDatasetIds(data.getDatasetIds());
       DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceId(user, originalDar);
+          dataAccessRequestService.updateByReferenceId(user, originalDar, keepFromRow);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -659,11 +662,15 @@ public class DataAccessRequestResource extends Resource {
   }
 
   /**
-   * Only the server sets a DAR's status (researcher cancel), so a draft edit ignores any status the
-   * client sends and keeps the stored one.
+   * Only the server sets a DAR's status (researcher cancel) and its document fields (the upload
+   * endpoints), so a draft edit keeps the stored ones; a client can only remove a document. Returns
+   * the keys the update takes from the stored row.
    */
-  private static void keepStoredStatus(DataAccessRequestData data, DataAccessRequest stored) {
+  private static List<String> keepServerManagedFields(
+      DataAccessRequestData data, DataAccessRequest stored) {
     data.setStatus(Objects.nonNull(stored.getData()) ? stored.getData().getStatus() : null);
+    return Stream.concat(Stream.of("status"), data.keepStoredDocuments(stored.getData()).stream())
+        .toList();
   }
 
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {

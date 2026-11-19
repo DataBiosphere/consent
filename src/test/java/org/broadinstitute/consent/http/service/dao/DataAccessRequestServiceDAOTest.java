@@ -311,6 +311,44 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateByReferenceIdKeepsTheRowsDocuments() {
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData stored = new DataAccessRequestData();
+    stored.setIrbDocumentLocation("own-irb");
+    stored.setIrbDocumentName("own-irb.pdf");
+    stored.setCollaborationLetterLocation("own-letter");
+    stored.setCollaborationLetterName("own-letter.pdf");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        stored,
+        user.getEraCommonsId());
+
+    // The IRB document is kept from the row whatever the edit sends; the letter was removed.
+    DataAccessRequest edit = new DataAccessRequest();
+    edit.setReferenceId(referenceId);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setIrbDocumentLocation("other-irb");
+    data.setOtherText("edited");
+    edit.setData(data);
+    edit.setDatasetIds(List.of());
+    serviceDAO.updateByReferenceId(
+        user, edit, List.of("status", "irbDocumentLocation", "irbDocumentName"));
+
+    DataAccessRequestData saved = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
+    assertEquals("own-irb", saved.getIrbDocumentLocation());
+    assertEquals("own-irb.pdf", saved.getIrbDocumentName());
+    assertNull(saved.getCollaborationLetterLocation());
+    assertNull(saved.getCollaborationLetterName());
+    assertEquals("edited", saved.getOtherText());
+  }
+
+  @Test
   void transactionRollsBackDataAccessRequestWhenDatasetInsertFails() {
     User user = createUser();
     String referenceId = UUID.randomUUID().toString();

@@ -255,6 +255,10 @@ public class DataAccessRequestService implements ConsentLogger {
                   Objects.nonNull(existingDar)
                       ? validateDraftUnderLock(transactionDAOs, existingDar.getReferenceId())
                       : null;
+              // Documents come from the draft's uploads, never from the request. Read under the
+              // lock, so an upload that committed first is kept.
+              darData.keepStoredDocuments(
+                  Objects.nonNull(lockedDraft) ? lockedDraft.getData() : null);
               Integer collectionId =
                   Objects.nonNull(lockedDraft) && Objects.nonNull(lockedDraft.getCollectionId())
                       ? lockedDraft.getCollectionId()
@@ -764,11 +768,17 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The updated DataAccessRequest
    */
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
+    return updateByReferenceId(user, dar, List.of("status"));
+  }
+
+  /** Saves a draft's data; the keys in {@code keepFromRow} keep the stored row's values. */
+  public DataAccessRequest updateByReferenceId(
+      User user, DataAccessRequest dar, List<String> keepFromRow) {
     if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
     try {
-      return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
+      return dataAccessRequestServiceDAO.updateByReferenceId(user, dar, keepFromRow);
     } catch (JdbiException e) {
       // The edit locks the DAR row, then its collection; resubmit, researcher cancel and signing
       // official approval take them in the other order, so a deadlock is a retryable conflict.

@@ -37,9 +37,16 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
 
 `data.status` is server-managed. The DAR create, draft and update endpoints ignore a `status` in the
 request body (`DataAccessRequestResource`): a new draft or an original DAR submission (including
-submitting an existing draft) gets none, and a draft edit keeps the stored value (`keepStoredStatus`,
-and the edit's UPDATE takes it from the row it updates). A progress report copies its parent's data,
-status included (`DataAccessRequest.populateProgressReportFromJsonString`).
+submitting an existing draft) gets none, and a draft edit keeps the stored value
+(`keepServerManagedFields`, and the edit's UPDATE takes it from the row it updates). A progress
+report copies its parent's data, status included (`DataAccessRequest.populateProgressReportFromJsonString`).
+
+The document fields (`irbDocumentLocation`, `irbDocumentName`, `collaborationLetterLocation`,
+`collaborationLetterName`) are server-managed too: only the document upload endpoints set them
+(`DataAccessRequestData.keepStoredDocuments`). A new draft or a new DAR gets none; a draft edit keeps
+the stored ones (taken from the row it updates); submitting a draft keeps the draft's, read under its
+lock. A client can only remove a document: a missing, null or empty location clears that document's
+location and name (duos-ui sends an empty one on save and leaves it out on submit).
 
 ### 1. Draft
 
