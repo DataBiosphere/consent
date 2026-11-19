@@ -68,6 +68,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   boolean isDocumentReferenced(@Bind("location") String location);
 
+  /** Records a DAR document file deleted from the bucket. */
+  @SqlUpdate(
+      """
+      INSERT INTO dar_document_deletion (reference_id, document_type, blob_name, reason, user_id)
+      VALUES (:referenceId, :documentType, :blobName, :reason, :userId)
+      """)
+  void insertDocumentDeletion(
+      @Bind("referenceId") String referenceId,
+      @Bind("documentType") String documentType,
+      @Bind("blobName") String blobName,
+      @Bind("reason") String reason,
+      @Bind("userId") Integer userId);
+
   /** Lock in a stable order for vote batches spanning multiple collections. */
   @SqlQuery(
       """

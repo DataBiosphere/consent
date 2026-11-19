@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.CounterService;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.RemovedDocument;
 import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -419,7 +420,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
             user, edit, List.of("status", "irbDocumentLocation", "irbDocumentName"));
 
     // The removed letter is reported for deletion; the kept IRB document isn't.
-    assertEquals(List.of("own-letter"), result.removedDocuments());
+    assertEquals(
+        List.of(new RemovedDocument(DarDocumentType.COLLABORATION, "own-letter")),
+        result.removedDocuments());
     DataAccessRequestData saved = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
     assertEquals("own-irb", saved.getIrbDocumentLocation());
     assertEquals("own-irb.pdf", saved.getIrbDocumentName());
@@ -454,7 +457,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
     var result = serviceDAO.updateByReferenceId(user, edit, List.of("status"));
 
-    assertEquals(List.of("shared-letter"), result.removedDocuments());
+    assertEquals(
+        List.of(new RemovedDocument(DarDocumentType.COLLABORATION, "shared-letter")),
+        result.removedDocuments());
     assertNull(
         dataAccessRequestDAO.findByReferenceId(draftId).getData().getCollaborationLetterLocation());
   }
@@ -478,6 +483,34 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     // A planted location is compared literally, not as a pattern.
     assertFalse(dataAccessRequestDAO.isDocumentReferenced("%"));
     assertFalse(dataAccessRequestDAO.isDocumentReferenced("planted\\"));
+  }
+
+  @Test
+  void testInsertDocumentDeletion() {
+    User user = createUser();
+    dataAccessRequestDAO.insertDocumentDeletion(
+        "ref-1", "IRB", "blob-1", "REPLACED", user.getUserId());
+
+    var row =
+        jdbi.withHandle(
+            h ->
+                h.createQuery(
+                        """
+                        SELECT reference_id, document_type, blob_name, reason, user_id,
+                          delete_date IS NOT NULL AS dated
+                        FROM dar_document_deletion WHERE reference_id = 'ref-1'
+                        """)
+                    .mapToMap()
+                    .one());
+    assertEquals("IRB", row.get("document_type"));
+    assertEquals("blob-1", row.get("blob_name"));
+    assertEquals("REPLACED", row.get("reason"));
+    assertEquals(user.getUserId(), row.get("user_id"));
+    assertEquals(true, row.get("dated"));
+    // Only known document types and reasons are stored.
+    assertThrows(
+        Exception.class,
+        () -> dataAccessRequestDAO.insertDocumentDeletion("ref-1", "IRB", "blob-2", "OTHER", null));
   }
 
   @Test

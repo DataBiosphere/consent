@@ -51,7 +51,10 @@ that removes a document deletes its file once it commits, unless something else 
 DAR, or a file storage object: DAAs, dataset and draft files share the bucket) or it isn't a DAR upload
 (not UUID-named) (`DataAccessRequestService.deleteRemovedDocuments`). An upload replacing a document,
 and the cleanup after a failed save or a failed progress report, also keep a file something else
-refers to, so a report that committed before a later step failed keeps its documents.
+refers to, so a report that committed before a later step failed keeps its documents. Every file
+deleted from the bucket is recorded in `dar_document_deletion` (DAR, document type, blob name,
+reason, the DAR owner's user id, time) by `DataAccessRequestService.recordDocumentDeletion`; a
+failure to record is logged and doesn't fail the request.
 
 ### 1. Draft
 

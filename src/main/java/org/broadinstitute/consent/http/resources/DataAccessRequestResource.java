@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +37,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -484,7 +484,7 @@ public class DataAccessRequestResource extends Resource {
       return dataAccessRequestService.createProgressReport(
           user, progressReport, parentDar, request);
     } catch (IOException | RuntimeException e) {
-      rollbackProgressReportDocuments(progressReport);
+      rollbackProgressReportDocuments(progressReport, user.getUserId());
       throw e;
     }
   }
@@ -550,13 +550,18 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  private void rollbackProgressReportDocuments(DataAccessRequest progressReport) {
-    Set<String> uploadedDocumentLocations = new HashSet<>();
-    uploadedDocumentLocations.add(progressReport.getData().getCollaborationLetterLocation());
-    uploadedDocumentLocations.add(progressReport.getData().getIrbDocumentLocation());
-    uploadedDocumentLocations.stream()
-        .filter(Objects::nonNull)
-        .forEach(location -> deleteDarDocument(progressReport, location));
+  private void rollbackProgressReportDocuments(DataAccessRequest progressReport, Integer userId) {
+    for (DarDocumentType type : DarDocumentType.values()) {
+      String location = newDocumentLocation(type, progressReport);
+      if (Objects.nonNull(location)) {
+        deleteDarDocument(
+            progressReport,
+            type,
+            location,
+            DarDocumentDeletionReason.FAILED_REPORT_CLEANUP,
+            userId);
+      }
+    }
   }
 
   @GET
@@ -707,7 +712,8 @@ public class DataAccessRequestResource extends Resource {
       throw e;
     }
     if (Objects.nonNull(saved.previousLocation())) {
-      deleteDarDocument(dar, saved.previousLocation());
+      deleteDarDocument(
+          dar, type, saved.previousLocation(), DarDocumentDeletionReason.REPLACED, dar.getUserId());
     }
     return saved.dar();
   }
@@ -719,7 +725,12 @@ public class DataAccessRequestResource extends Resource {
       stored = dataAccessRequestService.findByReferenceId(dar.getReferenceId());
     } catch (NotFoundException e) {
       // The DAR is gone, so nothing refers to the upload.
-      deleteDarDocument(dar, uploadLocation);
+      deleteDarDocument(
+          dar,
+          type,
+          uploadLocation,
+          DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+          dar.getUserId());
       return;
     } catch (RuntimeException e) {
       // Can't tell whether the DAR refers to it: an orphaned blob is better than a missing one.
@@ -731,10 +742,16 @@ public class DataAccessRequestResource extends Resource {
     if (stored.getData() != null && uploadLocation.equals(newDocumentLocation(type, stored))) {
       // The save committed: the previous document is the one nothing refers to now.
       if (Objects.nonNull(previousLocation)) {
-        deleteDarDocument(dar, previousLocation);
+        deleteDarDocument(
+            dar, type, previousLocation, DarDocumentDeletionReason.REPLACED, dar.getUserId());
       }
     } else {
-      deleteDarDocument(dar, uploadLocation);
+      deleteDarDocument(
+          dar,
+          type,
+          uploadLocation,
+          DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+          dar.getUserId());
     }
   }
 
@@ -784,7 +801,16 @@ public class DataAccessRequestResource extends Resource {
     return previousLocation;
   }
 
-  private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {
+  /**
+   * Deletes a DAR document's file and records the deletion, unless something else still refers to
+   * the file. The DAR's owner is recorded: only the owner can upload, save or file a report.
+   */
+  private void deleteDarDocument(
+      DataAccessRequest dar,
+      DarDocumentType type,
+      String blobIdName,
+      DarDocumentDeletionReason reason,
+      Integer userId) {
     try {
       // A location planted before document fields were server-managed can name a file that
       // another DAR or a file storage object (DAA, dataset or draft file) still uses.
@@ -794,7 +820,10 @@ public class DataAccessRequestResource extends Resource {
                 .formatted(blobIdName, dar.getReferenceId()));
         return;
       }
-      gcsService.deleteDocument(blobIdName);
+      if (gcsService.deleteDocument(blobIdName)) {
+        dataAccessRequestService.recordDocumentDeletion(
+            dar.getReferenceId(), type, blobIdName, reason, userId);
+      }
     } catch (Exception e) {
       String message =
           String.format(

@@ -310,4 +310,5 @@
   <include file="changesets/changelog-consent-2026-11-16-timestamptz-dataset-authorized-readers.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-16-timestamptz-dataset-property.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-11-16-timestamptz-study.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-11-19-dar-document-deletion.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
