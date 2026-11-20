@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.Strictness;
 import com.google.gson.stream.MalformedJsonException;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -303,6 +305,12 @@ public abstract class Resource implements ConsentLogger {
     if (body == null || body.isBlank()) {
       return null;
     }
+    // An unknown or misspelled key would otherwise read as {}, which approves as before.
+    JsonObject fields = STRICT_GSON.fromJson(body, JsonObject.class);
+    if (fields != null && !Set.of("referenceId", "submissionDate").containsAll(fields.keySet())) {
+      throw new BadRequestException("Only referenceId and submissionDate name the submission");
+    }
+    // Read from the text: a parsed tree would truncate a fractional or overflowing date.
     SubmissionApproval approval = STRICT_GSON.fromJson(body, SubmissionApproval.class);
     if (approval == null || approval.isEmpty()) {
       return approval;

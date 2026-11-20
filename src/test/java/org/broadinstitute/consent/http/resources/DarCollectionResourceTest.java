@@ -748,7 +748,14 @@ class DarCollectionResourceTest extends AbstractTestHelper {
         // Lenient-only syntax: single quotes, an unquoted name, a trailing value.
         "{'referenceId': 'ref', 'submissionDate': 1700000000123}",
         "{referenceId: \"ref\", \"submissionDate\": 1700000000123}",
-        "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123} {}"
+        "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123} {}",
+        // An unknown key, alone or beside both values, and a body that isn't an object.
+        "{\"reference_id\": \"ref\"}",
+        "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123, \"extra\": 1}",
+        "[]",
+        // A date that isn't a whole number of milliseconds.
+        "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123.5}",
+        "{\"referenceId\": \"ref\", \"submissionDate\": 1e30}"
       })
   void testApproveCollectionRejectsAPartialOrMalformedSubmission(String body) {
     try (var response = resource.approveCollection(duosSigningOfficial, 1, request, body)) {
