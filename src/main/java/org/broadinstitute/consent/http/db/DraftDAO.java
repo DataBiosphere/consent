@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -60,13 +59,12 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           INSERT into draft
               (name, create_date, create_user_id, update_date,
               update_user_id, json, uuid, draft_type)
-          (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId,
+          (SELECT :name, NOW(), :createdUserId, NOW(), :createdUserId,
               :json::jsonb, :uuid, :draftType)
           """)
   @GetGeneratedKeys
   Integer insert(
       @Bind("name") String name,
-      @Bind("createdDate") Instant createdDate,
       @Bind("createdUserId") Integer createdUserId,
       @Bind("json") String json,
       @Bind("uuid") UUID uuid,
@@ -78,7 +76,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       """
       UPDATE draft
       SET name = :name,
-          update_date = :updateDate,
+          update_date = NOW(),
           update_user_id = :updateUserId,
           json = :json::jsonb,
           draft_type = :draftType
@@ -86,7 +84,6 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       """)
   void updateDraftByDraftUUID(
       @Bind("name") String name,
-      @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("json") String json,
       @Bind("uuid") UUID uuid,
@@ -96,14 +93,11 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       """
       UPDATE draft
       SET
-          update_date = :updateDate,
+          update_date = NOW(),
           update_user_id = :updateUserId
       WHERE uuid = :uuid
       """)
-  int updateDraftByDraftUUID(
-      @Bind("uuid") UUID uuid,
-      @Bind("updateDate") Instant updateDate,
-      @Bind("updateUserId") Integer updateUserId);
+  int updateDraftByDraftUUID(@Bind("uuid") UUID uuid, @Bind("updateUserId") Integer updateUserId);
 
   @UseRowReducer(DraftReducer.class)
   @SqlQuery(
