@@ -24,7 +24,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -637,7 +636,6 @@ class UserServiceTest extends AbstractTestHelper {
   void testGetUsersByDaaId() {
     User u1 = generateUser();
     int dacId = randomInt(0, 50);
-    Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
     DataAccessAgreement daa = new DataAccessAgreement();
@@ -655,7 +653,6 @@ class UserServiceTest extends AbstractTestHelper {
     User u1 = generateUser();
     User u2 = generateUser();
     int dacId = randomInt(0, 50);
-    Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
     int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
@@ -676,7 +673,6 @@ class UserServiceTest extends AbstractTestHelper {
     User u3 = generateUser();
     int dacId = randomInt(0, 50);
     int dacId2 = randomInt(0, 50);
-    Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
     LibraryCard card3 = generateLibraryCard(u3);
@@ -703,7 +699,6 @@ class UserServiceTest extends AbstractTestHelper {
   void testGetUsersByDaaIdNoMatchingUsers() {
     User u1 = generateUser();
     int dacId = randomInt(0, 50);
-    Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
     DataAccessAgreement daa = new DataAccessAgreement();

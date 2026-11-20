@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
@@ -246,7 +245,6 @@ class LibraryCardDAOTest extends DAOTestHelper {
             randomAlphabetic(5),
             randomAlphabetic(5),
             createUser().getUserId());
-    Instant now = Instant.now();
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), libraryCard.getUserId(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, libraryCard.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(
