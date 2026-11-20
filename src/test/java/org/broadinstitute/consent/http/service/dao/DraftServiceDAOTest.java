@@ -33,6 +33,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -68,6 +69,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftServiceDAOTest extends DAOTestHelper {
+
+  /** A fixed past value, so a check that an update moved update_date forward does not race. */
+  private static final Instant PAST_UPDATE_DATE = Instant.parse("2020-01-01T00:00:00Z");
+
+  private void setUpdateDateInThePast(UUID draftId) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE draft SET update_date = :updateDate WHERE uuid = :uuid")
+                .bind("updateDate", PAST_UPDATE_DATE)
+                .bind("uuid", draftId)
+                .execute());
+  }
+
   private static GCSService gcsService;
   private static DraftServiceDAO draftServiceDAO;
 
@@ -461,13 +475,13 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertNotEquals(newDraftName, draft.getName());
     draft.setName(newDraftName);
     draft.setJson(updatedJson);
+    setUpdateDateInThePast(draft.getUUID());
     DraftInterface updatedDraft = draftServiceDAO.updateDraft(draft, user);
     assertEquals(draft.getUUID(), updatedDraft.getUUID());
     assertEquals(newDraftName, updatedDraft.getName());
     assertEquals(updatedJson, updatedDraft.getJson());
-    // The update writes NOW(), and updateDraft reads the draft back, so the date comes from the
-    // row.
-    assertTrue(updatedDraft.getUpdateDate().after(originalDocumentDate));
+    // updateDraft reads the draft back, so the update date comes from the row that NOW() wrote.
+    assertTrue(updatedDraft.getUpdateDate().toInstant().isAfter(PAST_UPDATE_DATE));
     assertThinUser(updatedDraft.getCreateUser());
     assertThinUser(updatedDraft.getUpdateUser());
   }

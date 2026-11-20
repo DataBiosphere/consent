@@ -12,8 +12,8 @@ import static org.mockito.Mockito.mock;
 import com.google.cloud.storage.BlobId;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -34,6 +34,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftDAOTest extends DAOTestHelper {
+
+  /** A fixed past value, so a check that an update moved update_date forward does not race. */
+  private static final Instant PAST_UPDATE_DATE = Instant.parse("2020-01-01T00:00:00Z");
+
+  private void setUpdateDateInThePast(UUID draftId) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE draft SET update_date = :updateDate WHERE uuid = :uuid")
+                .bind("updateDate", PAST_UPDATE_DATE)
+                .bind("uuid", draftId)
+                .execute());
+  }
 
   @Test
   void testInsertOperation() {
@@ -106,7 +118,7 @@ class DraftDAOTest extends DAOTestHelper {
         draft.getType().getValue());
     DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertFalse(Objects.isNull(returnedDraft));
-    Date insertedUpdateDate = returnedDraft.getUpdateDate();
+    setUpdateDateInThePast(uuid);
     assertEquals(jsonText, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
     String revisedJson = "{\"Name\": \"Bob\"}";
@@ -121,7 +133,7 @@ class DraftDAOTest extends DAOTestHelper {
     assertFalse(Objects.isNull(returnedDraft));
     assertEquals(revisedJson, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
-    assertTrue(returnedDraft.getUpdateDate().after(insertedUpdateDate));
+    assertTrue(returnedDraft.getUpdateDate().toInstant().isAfter(PAST_UPDATE_DATE));
   }
 
   @Test
@@ -140,13 +152,13 @@ class DraftDAOTest extends DAOTestHelper {
     DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(uuid, returnedDraft.getUUID());
     assertEquals(user1.getUserId(), returnedDraft.getUpdateUser().getUserId());
-    Date insertedUpdateDate = returnedDraft.getUpdateDate();
+    setUpdateDateInThePast(uuid);
 
     draftDAO.updateDraftByDraftUUID(uuid, user2.getUserId());
 
     returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(user2.getUserId(), returnedDraft.getUpdateUser().getUserId());
-    assertTrue(returnedDraft.getUpdateDate().after(insertedUpdateDate));
+    assertTrue(returnedDraft.getUpdateDate().toInstant().isAfter(PAST_UPDATE_DATE));
   }
 
   @Test
