@@ -2862,11 +2862,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   private Dataset createDARDAOTestDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     List<DatasetProperty> list = new ArrayList<>();
     DatasetProperty dsp = new DatasetProperty();
     dsp.setDatasetId(id);
@@ -3167,11 +3166,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -3180,7 +3178,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(System.currentTimeMillis()),
             userId,
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),

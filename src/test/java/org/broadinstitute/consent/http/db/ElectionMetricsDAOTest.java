@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -178,12 +177,7 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
 
   private Integer dataset(Integer dacId) {
     return datasetDAO.insertDataset(
-        "Dataset " + UUID.randomUUID(),
-        Timestamp.from(Instant.now()),
-        userId,
-        UUID.randomUUID().toString(),
-        "{}",
-        dacId);
+        "Dataset " + UUID.randomUUID(), userId, UUID.randomUUID().toString(), "{}", dacId);
   }
 
   private Integer dac() {

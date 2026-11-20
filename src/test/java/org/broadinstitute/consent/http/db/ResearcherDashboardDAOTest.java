@@ -515,7 +515,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
             user.getUserId());
     return datasetDAO.insertDataset(
         "Dashboard dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         EMPTY_JSON_DOCUMENT,

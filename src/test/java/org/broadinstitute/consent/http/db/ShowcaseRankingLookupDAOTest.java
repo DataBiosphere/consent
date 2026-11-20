@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -296,11 +295,11 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(
             "Example Cohort " + UUID.randomUUID(),
-            Timestamp.from(Instant.parse(created)),
             user.getUserId(),
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
+    setDatasetDates(id, Instant.parse(created));
     datasetDAO.updateStudyId(id, studyId);
     insertProperty(id, ACCESS, access);
     String identifier = datasetDAO.findDatasetById(id).getDatasetIdentifier();

@@ -23,7 +23,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -52,6 +51,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.Dac;
@@ -702,6 +702,78 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
     assertEquals(1, audits.size());
     assertEquals(AuditActions.UPDATE.name(), audits.getFirst().getAction());
+  }
+
+  @Test
+  void testUpdateDatasetWithMatchingDac() {
+    Dataset dataset = createDataset();
+    Integer dacId = createDac().getDacId();
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dacId);
+    DatasetUpdate update =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            "renamed",
+            dataset.getCreateUserId(),
+            dacId,
+            List.of(),
+            List.of());
+
+    serviceDAO.updateDataset(update);
+
+    Dataset stored = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertEquals("renamed", stored.getName());
+    assertEquals(dacId, stored.getDacId());
+  }
+
+  @Test
+  void testDatasetDacLockBlocksADacChange() throws Exception {
+    Dataset dataset = createDataset();
+    Integer dacId = createDac().getDacId();
+    try (var executor = Executors.newSingleThreadExecutor();
+        var handle = jdbi.open()) {
+      handle.begin();
+      handle.attach(DatasetDAO.class).lockDatasetDacId(dataset.getDatasetId());
+      CountDownLatch started = new CountDownLatch(1);
+      Future<?> move =
+          executor.submit(
+              () -> {
+                started.countDown();
+                datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dacId);
+              });
+      try {
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        awaitLockWait(move, "SET dac_id");
+      } finally {
+        handle.commit();
+      }
+      move.get(5, TimeUnit.SECONDS);
+
+      assertEquals(dacId, datasetDAO.findDatasetById(dataset.getDatasetId()).getDacId());
+    }
+  }
+
+  @Test
+  void testUpdateDatasetRejectsChangedDac() {
+    Dataset dataset = createDataset();
+    Integer authorizedDacId = createDac().getDacId();
+    Integer movedToDacId = createDac().getDacId();
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), movedToDacId);
+    int audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size();
+    DatasetUpdate update =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            "renamed",
+            dataset.getCreateUserId(),
+            authorizedDacId,
+            List.of(),
+            List.of());
+
+    assertThrows(ConsentConflictException.class, () -> serviceDAO.updateDataset(update));
+
+    Dataset stored = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertEquals(dataset.getName(), stored.getName());
+    assertEquals(movedToDacId, stored.getDacId());
+    assertEquals(audits, datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size());
   }
 
   /** A file with no blob fails after the dataset row and its audit are written. */
@@ -1378,7 +1450,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
           .attach(DatasetDAO.class)
           .insertDataset(
               randomAlphabetic(20),
-              new Timestamp(new Date().getTime()),
               userId,
               UUID.randomUUID().toString(),
               new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -2969,11 +3040,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }
 

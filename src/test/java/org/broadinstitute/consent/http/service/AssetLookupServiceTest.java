@@ -9,8 +9,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
@@ -299,7 +297,6 @@ class AssetLookupServiceTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            Timestamp.from(Instant.now()),
             createUser().getUserId(),
             UUID.randomUUID().toString(),
             "{}",

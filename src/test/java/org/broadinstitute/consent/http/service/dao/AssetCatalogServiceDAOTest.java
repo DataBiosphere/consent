@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -236,12 +234,7 @@ class AssetCatalogServiceDAOTest extends DAOTestHelper {
 
   private Integer insertDataset() {
     return datasetDAO.insertDataset(
-        randomAlphabetic(20),
-        Timestamp.from(Instant.now()),
-        createUser().getUserId(),
-        UUID.randomUUID().toString(),
-        "{}",
-        null);
+        randomAlphabetic(20), createUser().getUserId(), UUID.randomUUID().toString(), "{}", null);
   }
 
   private Integer insertStudy() {

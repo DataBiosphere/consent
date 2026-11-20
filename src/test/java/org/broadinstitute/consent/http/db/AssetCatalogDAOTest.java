@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.AssetType;
@@ -295,12 +294,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
 
   private Integer insertDataset() {
     return datasetDAO.insertDataset(
-        randomAlphabetic(20),
-        Timestamp.from(Instant.now()),
-        createUser().getUserId(),
-        UUID.randomUUID().toString(),
-        "{}",
-        null);
+        randomAlphabetic(20), createUser().getUserId(), UUID.randomUUID().toString(), "{}", null);
   }
 
   private Integer insertStudy() {

@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.ws.rs.core.MediaType;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,7 +132,6 @@ class DacDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(new Date().getTime()),
             user.getUserId(),
             randomAlphabetic(20),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -149,7 +147,6 @@ class DacDAOTest extends DAOTestHelper {
     Integer datasetId2 =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(new Date().getTime()),
             user.getUserId(),
             randomAlphabetic(20),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -177,7 +174,6 @@ class DacDAOTest extends DAOTestHelper {
     Integer approvedDatasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(new Date().getTime()),
             user.getUserId(),
             randomAlphabetic(20),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -185,7 +181,6 @@ class DacDAOTest extends DAOTestHelper {
     Integer pendingDatasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(new Date().getTime()),
             user.getUserId(),
             randomAlphabetic(20),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -731,11 +726,10 @@ class DacDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphabetic(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -754,11 +748,10 @@ class DacDAOTest extends DAOTestHelper {
   private Dataset createDatasetWithDac(Integer dacId) {
     User user = createUser();
     String name = "Name_" + randomAlphabetic(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), dacId);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }

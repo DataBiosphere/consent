@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -1190,7 +1189,6 @@ class MailMessageDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(
             "Name_" + randomAlphabetic(20),
-            new Timestamp(System.currentTimeMillis()),
             createUser().getUserId(),
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),

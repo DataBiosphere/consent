@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-import java.sql.Timestamp;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -60,14 +59,7 @@ class ElectionDraftLockTest extends DAOTestHelper {
         dacDAO.createDac(randomAlphabetic(10), randomAlphabetic(10), createUser().getUserId());
     Integer chairId = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dacId).getUserId();
     User chair = userDAO.findUserById(chairId);
-    Integer datasetId =
-        datasetDAO.insertDataset(
-            randomAlphabetic(10),
-            new Timestamp(System.currentTimeMillis()),
-            chairId,
-            null,
-            null,
-            dacId);
+    Integer datasetId = datasetDAO.insertDataset(randomAlphabetic(10), chairId, null, null, dacId);
     DataAccessRequest dar = createDataAccessRequestV3();
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), datasetId);
     Integer collectionId = dar.getCollectionId();

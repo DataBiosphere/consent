@@ -701,11 +701,10 @@ class StudyDAOTest extends DAOTestHelper {
   private Dataset insertDatasetForStudy(Integer studyId) {
     User user = createUser();
     String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
 
     datasetDAO.updateStudyId(id, studyId);
 
@@ -715,11 +714,10 @@ class StudyDAOTest extends DAOTestHelper {
   private Dataset insertDataset() {
     User user = createUser();
     String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }
 

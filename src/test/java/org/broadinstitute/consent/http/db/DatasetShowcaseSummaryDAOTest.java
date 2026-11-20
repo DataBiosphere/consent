@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.RecordComponent;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -404,11 +403,11 @@ class DatasetShowcaseSummaryDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(
             name,
-            Timestamp.from(CREATED),
             user.getUserId(),
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
+    setDatasetDates(id, CREATED);
     if (studyId != null) {
       datasetDAO.updateStudyId(id, studyId);
     }
