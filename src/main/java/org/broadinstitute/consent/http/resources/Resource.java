@@ -301,8 +301,8 @@ public abstract class Resource implements ConsentLogger {
       GsonUtil.getInstance().newBuilder().setStrictness(Strictness.STRICT).create();
 
   /**
-   * Reads the submission a signing official's approval names. Clients that predate it send no body
-   * or {}, which reads as null.
+   * Reads the submission a signing official's approval names. An approval must name it: no body or
+   * {} is a 400.
    */
   protected SubmissionApproval readSubmissionApproval(String body) {
     return readSubmissionApproval(body, null);
@@ -320,18 +320,14 @@ public abstract class Resource implements ConsentLogger {
             ? "Name the approved submission with its referenceId and submissionDate"
             : "Name the approved submission with its submissionDate";
     if (body == null || body.isBlank()) {
-      return null;
+      throw new BadRequestException(unnamed);
     }
     // A JSON null fails here: it isn't an object. A body of only a byte order mark reads as null.
     JsonObject fields = STRICT_GSON.fromJson(body, JsonObject.class);
-    if (fields == null) {
+    if (fields == null || fields.isEmpty()) {
       throw new BadRequestException(unnamed);
     }
-    // Only what clients that predate the named submission send, {}, approves without it.
-    if (fields.isEmpty()) {
-      return null;
-    }
-    // An unknown or misspelled key would otherwise go unchecked.
+    // An unknown or misspelled key is refused rather than ignored.
     if (!Set.of("referenceId", "submissionDate").containsAll(fields.keySet())) {
       throw new BadRequestException("Only referenceId and submissionDate name the submission");
     }

@@ -15,7 +15,7 @@ post:
   requestBody:
     description: >-
       The submission the signing official reviewed, with its referenceId and submissionDate.
-    required: false
+    required: true
     content:
       application/json:
         schema:
@@ -29,8 +29,8 @@ post:
             $ref: '../schemas/DarCollection.yaml'
     400:
       description: >-
-        Bad Request. Check error details. A body that names a submission without both its
-        referenceId and submissionDate is rejected.
+        Bad Request. Check error details. A request that doesn't name the submission with both its
+        referenceId and submissionDate (including no body or {}) is rejected.
     401:
       description: Not authorized to perform this action.
     404:

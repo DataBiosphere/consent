@@ -607,8 +607,8 @@ public class DataAccessRequestService implements ConsentLogger {
   /**
    * Records a signing official's approval of a closeout, when it is the submission they reviewed.
    *
-   * @param approved The submission the official approves. Null or empty is accepted while clients
-   *     move to sending it, and logged.
+   * @param approved The submission the official approves. The resource requires it; null or empty
+   *     skips the check and is logged.
    * @throws ConsentConflictException The closeout isn't the named submission
    */
   public void approveDataAccessRequestCloseout(

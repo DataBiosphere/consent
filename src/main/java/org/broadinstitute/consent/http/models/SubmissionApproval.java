@@ -9,7 +9,7 @@ package org.broadinstitute.consent.http.models;
  */
 public record SubmissionApproval(String referenceId, Long submissionDate) {
 
-  /** Clients that predate this record send an empty body or {}. */
+  /** Names no submission. The resources refuse it; service callers may leave the approval out. */
   public boolean isEmpty() {
     return referenceId == null && submissionDate == null;
   }
