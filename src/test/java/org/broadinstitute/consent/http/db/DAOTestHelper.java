@@ -253,7 +253,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     int i2 = randomInt(5, 10);
     int i3 = randomInt(3, 5);
     String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", institutionId, new Date());
+    Integer userId = userDAO.insertUser(email, "display name", institutionId);
     Map<String, Object> userData = new HashMap<>();
     userData.put("email", email);
     userDAO.updateData(userId, GsonUtil.getInstance().toJson(userData));

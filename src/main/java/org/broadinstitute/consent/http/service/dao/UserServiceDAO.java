@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.util.Date;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -49,8 +48,7 @@ public class UserServiceDAO {
           UserRoleDAO userRoleDAOT = transactionHandle.attach(UserRoleDAO.class);
           LibraryCardDAO libraryCardDAOT = transactionHandle.attach(LibraryCardDAO.class);
           Integer userId =
-              userDAOT.insertUser(
-                  user.getEmail(), user.getDisplayName(), user.getInstitutionId(), new Date());
+              userDAOT.insertUser(user.getEmail(), user.getDisplayName(), user.getInstitutionId());
           userDAOT.updateEmailPreference(userId, user.getEmailPreference());
           for (UserRole role : user.getRoles()) {
             userRoleDAOT.insertSingleUserRole(role.getRoleId(), userId);
@@ -58,12 +56,7 @@ public class UserServiceDAO {
           LibraryCard libraryCard = libraryCardDAOT.findLibraryCardByUserEmail(user.getEmail());
           if (libraryCard != null) {
             libraryCardDAOT.updateLibraryCardById(
-                libraryCard.getId(),
-                userId,
-                user.getDisplayName(),
-                user.getEmail(),
-                userId,
-                new Date());
+                libraryCard.getId(), userId, user.getDisplayName(), user.getEmail(), userId);
           }
           return userDAOT.findUserById(userId);
         });
