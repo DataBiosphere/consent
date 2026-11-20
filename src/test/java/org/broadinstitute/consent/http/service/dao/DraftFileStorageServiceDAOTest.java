@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,7 +72,10 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
           assertThat(testFiles, hasKey(fileStorageObject.getFileName()));
           assertEquals(fileStorageObject.getCreateUserId(), user.getUserId());
           assertEquals(fileStorageObject.getCategory(), FileCategory.DRAFT_UPLOADED_FILE);
+          assertNotNull(fileStorageObject.getCreateDate());
         });
+    // NOW() returns the transaction start time, so all files in one insert share one date.
+    assertEquals(1, storedFiles.stream().map(FileStorageObject::getCreateDate).distinct().count());
   }
 
   @Test
