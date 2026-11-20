@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,6 +20,8 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,12 +33,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.DraftFileStorageServiceDAO.UploadedDocument;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,17 +68,26 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(4);
-    List<FileStorageObject> storedFiles = store(associatedUUID, user, testFiles);
+    List<UploadedDocument> uploaded =
+        draftFileStorageServiceDAO.uploadDocuments(associatedUUID, user, testFiles);
+    // insertFileRows joins this transaction, so NOW() here is the value that the insert writes.
+    // A date from Java, even one shared by the whole batch, does not match it.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    List<FileStorageObject> storedFiles =
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(
+                  h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+              return draftFileStorageServiceDAO.insertFileRows(uploaded, associatedUUID, user);
+            });
     assertThat(storedFiles, hasSize(4));
     storedFiles.forEach(
         fileStorageObject -> {
           assertThat(testFiles, hasKey(fileStorageObject.getFileName()));
           assertEquals(fileStorageObject.getCreateUserId(), user.getUserId());
           assertEquals(fileStorageObject.getCategory(), FileCategory.DRAFT_UPLOADED_FILE);
-          assertNotNull(fileStorageObject.getCreateDate());
+          assertEquals(transactionNow.get(), fileStorageObject.getCreateDate());
         });
-    // NOW() returns the transaction start time, so all files in one insert share one date.
-    assertEquals(1, storedFiles.stream().map(FileStorageObject::getCreateDate).distinct().count());
   }
 
   @Test
