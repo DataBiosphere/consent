@@ -3,13 +3,18 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jakarta.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -32,7 +37,9 @@ public class SupportResourceTest extends ResourceTest {
 
   @BeforeEach
   public void setUp() {
-    supportResource = new SupportResource(supportRequestService);
+    StoreConfiguration storeConfiguration = new StoreConfiguration();
+    storeConfiguration.setMaxUploadBytes(4);
+    supportResource = new SupportResource(supportRequestService, storeConfiguration);
   }
 
   @ParameterizedTest
@@ -165,9 +172,27 @@ public class SupportResourceTest extends ResourceTest {
     JsonObject obj = new JsonObject();
     obj.add("token", new JsonPrimitive("token value"));
     when(supportRequestService.postAttachmentToSupport(any())).thenReturn(obj);
-    try (Response response = supportResource.postUpload("test".getBytes())) {
+    try (Response response = supportResource.postUpload(body("test"))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
+    // The whole attachment, at the limit, goes to support.
+    verify(supportRequestService).postAttachmentToSupport("test".getBytes());
+  }
+
+  // Past the limit the attachment is a 400, read no further than one byte past it, and never sent.
+  @Test
+  void testPostUploadOverTheLimit() throws Exception {
+    InputStream body = body("tests and more");
+
+    try (Response response = supportResource.postUpload(body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    assertEquals(" and more", new String(body.readAllBytes()));
+    verify(supportRequestService, never()).postAttachmentToSupport(any());
+  }
+
+  private static InputStream body(String content) {
+    return new ByteArrayInputStream(content.getBytes());
   }
 
   @Test
@@ -175,7 +200,7 @@ public class SupportResourceTest extends ResourceTest {
     doThrow(new UnprocessableEntityException("Unprocessable"))
         .when(supportRequestService)
         .postAttachmentToSupport(any());
-    try (Response response = supportResource.postUpload("test".getBytes())) {
+    try (Response response = supportResource.postUpload(body("test"))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
     }
   }
