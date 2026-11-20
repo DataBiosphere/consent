@@ -1020,7 +1020,6 @@ public class DatasetService implements ConsentLogger {
               study.getDataTypes(),
               study.getPublicVisibility(),
               userId,
-              Instant.now(),
               UUID.randomUUID());
       study.setStudyId(studyId);
     } else {
@@ -1038,8 +1037,7 @@ public class DatasetService implements ConsentLogger {
           study.getPiWebsiteUrl(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
-          userId,
-          Instant.now());
+          userId);
     }
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
 

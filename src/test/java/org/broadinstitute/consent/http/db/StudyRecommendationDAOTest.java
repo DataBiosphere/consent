@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -279,7 +278,6 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
         dataTypes,
         publicVisibility,
         user.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 

@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonParser;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -402,7 +401,6 @@ class StudyAssetRecordDAOTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         createUser().getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 }

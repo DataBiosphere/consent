@@ -136,7 +136,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
               :name, :description,
               :piName, :piEmail, :dataTypes,
               :publicVisibility,
-              :createUserId, :createDate,
+              :createUserId, NOW(),
               :uuid
           )
       """)
@@ -149,7 +149,6 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("dataTypes") List<String> dataTypes,
       @Bind("publicVisibility") Boolean publicVisibility,
       @Bind("createUserId") Integer createUserId,
-      @Bind("createDate") Instant createDate,
       @Bind("uuid") UUID uuid);
 
   /**
@@ -176,7 +175,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
               data_types = :dataTypes,
               public_visibility = :publicVisibility,
               update_user_id = :updateUserId,
-              update_date = :updateDate
+              update_date = NOW()
           WHERE study_id = :studyId
       """)
   void updateStudy(
@@ -191,8 +190,7 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("piWebsiteUrl") String piWebsiteUrl,
       @Bind("dataTypes") List<String> dataTypes,
       @Bind("publicVisibility") Boolean publicVisibility,
-      @Bind("updateUserId") Integer updateUserId,
-      @Bind("updateDate") Instant updateDate);
+      @Bind("updateUserId") Integer updateUserId);
 
   @SqlUpdate(
       """

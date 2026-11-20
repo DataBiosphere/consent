@@ -40,7 +40,6 @@ abstract class DarLifecycleDAOTestHelper extends DAOTestHelper {
         List.of("Genomic"),
         true,
         user.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 

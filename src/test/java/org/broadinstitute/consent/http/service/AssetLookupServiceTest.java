@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
@@ -318,7 +317,6 @@ class AssetLookupServiceTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         createUser().getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 }

@@ -146,15 +146,17 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer study(LocalDateTime created) {
-    return studyDAO.insertStudy(
-        "Study " + UUID.randomUUID(),
-        "description",
-        "PI",
-        null,
-        List.of(),
-        true,
-        userId,
-        at(created),
-        UUID.randomUUID());
+    Integer studyId =
+        studyDAO.insertStudy(
+            "Study " + UUID.randomUUID(),
+            "description",
+            "PI",
+            null,
+            List.of(),
+            true,
+            userId,
+            UUID.randomUUID());
+    setStudyCreateDate(studyId, at(created));
+    return studyId;
   }
 }

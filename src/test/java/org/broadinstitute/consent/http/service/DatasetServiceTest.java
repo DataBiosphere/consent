@@ -1845,7 +1845,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.setStudyId(newStudyId);
 
     when(studyDAO.findStudyByName("New Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -1853,7 +1853,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     Study result = datasetService.convertDatasetToStudy(admin, dataset, conversion);
 
     assertNotNull(result);
-    verify(studyDAO).insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    verify(studyDAO).insertStudy(any(), any(), any(), any(), any(), any(), any(), any());
     verify(datasetDAO).updateStudyId(10, newStudyId);
   }
 
@@ -1870,7 +1870,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.setStudyId(newStudyId);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -1894,7 +1894,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.setStudyId(newStudyId);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -1948,7 +1948,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.setStudyId(newStudyId);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -1977,7 +1977,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dictionary participantsDict = new Dictionary(3, "# of participants", false, 3, 3);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms())
@@ -2007,7 +2007,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dictionary phenotypeDict = new Dictionary(1, "Phenotype/Indication", false, 1, 1);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of(phenotypeDict));
@@ -2034,7 +2034,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     Dictionary urlDict = new Dictionary(5, "URL", false, 5, 5);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of(dataLocationDict, urlDict));
@@ -2062,7 +2062,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.setStudyId(newStudyId);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -2088,7 +2088,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     submitter.setUserId(99);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -2112,7 +2112,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.setStudyId(newStudyId);
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -2156,22 +2156,20 @@ class DatasetServiceTest extends AbstractTestHelper {
     // any() assertion would pass just as happily if two of them were transposed.
     verify(studyDAO)
         .updateStudy(
-            eq(77),
-            eq("Existing Study"),
-            eq("A converted study"),
-            eq("Dr Convert"),
-            eq("convert@example.org"),
-            eq(9),
-            eq("0000-0002-1825-0097"),
-            eq("https://linkedin.com/in/example"),
-            eq("https://example.org"),
-            eq(List.of("Genomic")),
-            eq(true),
+            77,
+            "Existing Study",
+            "A converted study",
+            "Dr Convert",
+            "convert@example.org",
+            9,
+            "0000-0002-1825-0097",
+            "https://linkedin.com/in/example",
+            "https://example.org",
+            List.of("Genomic"),
+            true,
             // The dataset's creator, not the admin performing the conversion
-            eq(5),
-            any(Instant.class));
-    verify(studyDAO, never())
-        .insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+            5);
+    verify(studyDAO, never()).insertStudy(any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -2190,7 +2188,7 @@ class DatasetServiceTest extends AbstractTestHelper {
         new StudyProperty("phenotypeIndication", "Cancer", PropertyType.String));
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -2215,7 +2213,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     createdStudy.addProperties(new StudyProperty("nihAnvilUse", "Yes", PropertyType.String));
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
-    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -2238,7 +2236,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     when(studyDAO.findStudyByName("Study")).thenReturn(null);
     when(studyDAO.insertStudy(
-            any(), any(), any(), any(), any(), any(), eq(admin.getUserId()), any(), any()))
+            any(), any(), any(), any(), any(), any(), eq(admin.getUserId()), any()))
         .thenReturn(newStudyId);
     when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
     when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
@@ -2247,7 +2245,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     assertNotNull(result);
     verify(studyDAO)
-        .insertStudy(any(), any(), any(), any(), any(), any(), eq(admin.getUserId()), any(), any());
+        .insertStudy(any(), any(), any(), any(), any(), any(), eq(admin.getUserId()), any());
   }
 
   // ==================== updateStudyCustodians ====================

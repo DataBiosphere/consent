@@ -408,4 +408,14 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
                 .bind("id", datasetId)
                 .execute());
   }
+
+  /** insertStudy always writes NOW() to create_date, so set the date that a test needs. */
+  protected void setStudyCreateDate(Integer studyId, Instant createDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE study SET create_date = :createDate WHERE study_id = :id")
+                .bind("createDate", createDate)
+                .bind("id", studyId)
+                .execute());
+  }
 }

@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -247,7 +246,6 @@ class AssetCatalogServiceDAOTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         createUser().getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 }

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.AssetType;
@@ -245,7 +244,6 @@ class AssetCatalogCheckTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         createUser().getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 }
