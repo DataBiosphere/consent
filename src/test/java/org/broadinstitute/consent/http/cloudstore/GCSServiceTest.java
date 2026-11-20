@@ -24,6 +24,7 @@ import com.google.cloud.storage.CopyWriter;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -149,8 +151,15 @@ class GCSServiceTest extends AbstractTestHelper {
     when(writer.getResult()).thenReturn(copied);
     when(storage.get(any(BlobId.class))).thenReturn(blob);
     when(storage.copy(any(Storage.CopyRequest.class))).thenReturn(writer);
+    UUID id = UUID.randomUUID();
 
-    assertEquals(copy, service.copyDocument("source", UUID.randomUUID()));
+    assertEquals(copy, service.copyDocument("source", id));
+    ArgumentCaptor<Storage.CopyRequest> request =
+        ArgumentCaptor.forClass(Storage.CopyRequest.class);
+    verify(storage).copy(request.capture());
+    assertEquals(BlobId.of(config.getBucket(), "source"), request.getValue().getSource());
+    assertEquals(config.getBucket(), request.getValue().getTarget().getBucket());
+    assertEquals(id.toString(), request.getValue().getTarget().getName());
   }
 
   @Test
@@ -174,13 +183,17 @@ class GCSServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCopyDocumentRethrowsOtherStorageErrors() {
+  void testCopyDocumentHidesOtherStorageErrors() {
     initStore();
     when(storage.get(any(BlobId.class))).thenReturn(blob);
     when(storage.copy(any(Storage.CopyRequest.class)))
-        .thenThrow(new StorageException(503, "Unavailable"));
+        .thenThrow(new StorageException(503, "Unavailable: internal detail"));
 
-    assertThrows(StorageException.class, () -> service.copyDocument("source", UUID.randomUUID()));
+    ServerErrorException e =
+        assertThrows(
+            ServerErrorException.class, () -> service.copyDocument("source", UUID.randomUUID()));
+    assertEquals(500, e.getResponse().getStatus());
+    assertEquals("Unable to copy the document", e.getMessage());
   }
 
   @Test

@@ -12,6 +12,8 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
+import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -137,7 +139,10 @@ public class GCSService implements ConsentLogger {
       if (e.getCode() == 404) {
         throw new NotFoundException("Document not found: " + sourceBlobIdName);
       }
-      throw e;
+      // The storage message stays in the log; the client gets a generic error.
+      logException("Unable to copy document " + sourceBlobIdName, e);
+      throw new ServerErrorException(
+          "Unable to copy the document", Response.Status.INTERNAL_SERVER_ERROR);
     }
   }
 

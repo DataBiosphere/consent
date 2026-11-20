@@ -30,6 +30,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -1241,6 +1242,45 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     }
 
     verify(gcsService, never()).deleteDocument(any());
+  }
+
+  // The collaboration letter uploads, then the ethics document fails: the uploaded letter goes.
+  @Test
+  void testPostProgressReportDeletesTheFirstUploadWhenTheSecondFails() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(user.getUserId());
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(
+        new DataUseBuilder().setCollaboratorRequired(true).setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
+    FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
+    when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
+    when(collaborationFile.getType()).thenReturn("text/plain");
+    FormDataContentDisposition ethicsFile = mock(FormDataContentDisposition.class);
+    when(ethicsFile.getFileName()).thenReturn("ethics.pdf");
+    when(ethicsFile.getType()).thenReturn("application/pdf");
+    when(gcsService.storeDocument(any(), eq("text/plain"), any()))
+        .thenReturn(BlobId.of("bucket", "uploaded-collaboration"));
+    when(gcsService.storeDocument(any(), eq("application/pdf"), any()))
+        .thenThrow(new IOException("storage unavailable"));
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser,
+            request,
+            "",
+            "{\"datasetIds\":[1]}",
+            IOUtils.toInputStream("letter", Charset.defaultCharset()),
+            collaborationFile,
+            IOUtils.toInputStream("ethics", Charset.defaultCharset()),
+            ethicsFile)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    verify(gcsService).deleteDocument("uploaded-collaboration");
+    verify(dataAccessRequestService, never()).createProgressReport(any(), any(), any(), any());
   }
 
   @Test
