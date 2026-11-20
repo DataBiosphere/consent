@@ -66,7 +66,26 @@ class BoundedUploadJettyTest {
     public Response spilled(@FormDataParam("file") InputStream file) {
       return Response.ok(Integer.toString(temporaryFiles().size())).build();
     }
+
+    @POST
+    @Path("upload")
+    @UploadSizeLimited
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response upload(@FormDataParam("file") InputStream file) throws IOException {
+      return Response.ok(Long.toString(file.transferTo(java.io.OutputStream.nullOutputStream())))
+          .build();
+    }
+
+    @POST
+    @Path("binary")
+    @UploadSizeLimited
+    @Consumes("application/binary")
+    public Response binary(byte[] body) {
+      return Response.ok(Integer.toString(body.length)).build();
+    }
   }
+
+  private static final long UPLOAD_LIMIT = 100_000;
 
   @TempDir private static java.nio.file.Path tempDir;
   private static Server server;
@@ -79,6 +98,7 @@ class BoundedUploadJettyTest {
             .register(new UploadResource())
             .register(TemplateSizeLimitFilter.class)
             .register(RequestTooLargeExceptionMapper.class)
+            .register(new UploadSizeLimitFeature(UPLOAD_LIMIT))
             .register(MultiPartFeature.class)
             .register(new MultiPartProperties().tempDir(tempDir.toString()).resolver());
     server = new Server(0);
@@ -124,6 +144,34 @@ class BoundedUploadJettyTest {
     assertEquals("1", response.body());
   }
 
+  @Test
+  void testAnUploadSentChunkedPastTheLimitIsRefusedAndLeavesNoTemporaryFile() throws Exception {
+    HttpResponse<String> response = sendChunked("upload", multipart((int) UPLOAD_LIMIT + 1));
+
+    assertEquals(Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), response.statusCode());
+    assertEquals(
+        "{\"message\":\"Request is too large. Max size is: 0.1 MB\",\"code\":413}",
+        response.body());
+    assertEquals(List.of(), temporaryFiles());
+  }
+
+  @Test
+  void testAnUploadWithinTheLimitIsRead() throws Exception {
+    HttpResponse<String> response = sendChunked("upload", multipart(60_000));
+
+    assertEquals(Response.Status.OK.getStatusCode(), response.statusCode());
+    assertEquals("60000", response.body());
+  }
+
+  // Not multipart: read straight into the parameter, with no temporary file, but bounded the same.
+  @Test
+  void testABinaryUploadSentChunkedPastTheLimitIsRefused() throws Exception {
+    HttpResponse<String> response =
+        sendChunked("binary", "application/binary", new byte[(int) UPLOAD_LIMIT + 1]);
+
+    assertEquals(Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), response.statusCode());
+  }
+
   /** A multipart body with one file part of the given size. */
   static byte[] multipart(int fileBytes) {
     byte[] head =
@@ -140,9 +188,14 @@ class BoundedUploadJettyTest {
 
   /** Sends the body with no declared length, as a chunked request. */
   static HttpResponse<String> sendChunked(String path, byte[] body) throws Exception {
+    return sendChunked(path, "multipart/form-data; boundary=b", body);
+  }
+
+  static HttpResponse<String> sendChunked(String path, String contentType, byte[] body)
+      throws Exception {
     HttpRequest request =
         HttpRequest.newBuilder(URI.create(base + "/" + path))
-            .header("Content-Type", "multipart/form-data; boundary=b")
+            .header("Content-Type", contentType)
             .POST(HttpRequest.BodyPublishers.ofInputStream(() -> new ByteArrayInputStream(body)))
             .build();
     try (HttpClient client = HttpClient.newHttpClient()) {

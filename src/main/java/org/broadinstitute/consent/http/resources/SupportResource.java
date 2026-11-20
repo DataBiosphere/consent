@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
 import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.broadinstitute.consent.http.filters.UploadSizeLimited;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -48,6 +49,7 @@ public class SupportResource extends Resource {
 
   @POST
   @Path("upload")
+  @UploadSizeLimited
   @Consumes("application/binary")
   @Produces(MediaType.APPLICATION_JSON)
   public Response postUpload(InputStream body) {
