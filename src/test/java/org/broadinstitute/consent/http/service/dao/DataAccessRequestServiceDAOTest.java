@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -511,6 +513,21 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     assertThrows(
         Exception.class,
         () -> dataAccessRequestDAO.insertDocumentDeletion("ref-1", "IRB", "blob-2", "OTHER", null));
+  }
+
+  // The table's CHECK constraints list the enum names, so a new constant needs a migration. Each
+  // combination the service can write must insert.
+  @Test
+  void testInsertDocumentDeletionAcceptsEveryTypeAndReason() {
+    for (DarDocumentType type : DarDocumentType.values()) {
+      for (DarDocumentDeletionReason reason : DarDocumentDeletionReason.values()) {
+        assertDoesNotThrow(
+            () ->
+                dataAccessRequestDAO.insertDocumentDeletion(
+                    "ref-all", type.name(), "blob", reason.name(), null),
+            type + " " + reason);
+      }
+    }
   }
 
   @Test
