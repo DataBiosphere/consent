@@ -2039,8 +2039,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         "https://pi.example.com",
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
     Study studyWithPiDetails = studyDAO.findStudyById(study.getStudyId());
 
     // A patch that does not touch PI details must keep them intact
@@ -2094,8 +2093,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         "https://pi.example.com",
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
     Study studyWithPiDetails = studyDAO.findStudyById(study.getStudyId());
 
     // Go through the wire path, since explicit JSON nulls are what signal a clear
@@ -2134,8 +2132,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         "https://pi.example.com",
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
     Study studyWithPiDetails = studyDAO.findStudyById(study.getStudyId());
 
     Study patched =

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -164,7 +163,6 @@ class AssetCatalogAssetsMigrationTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         createUser().getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 }

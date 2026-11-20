@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonParser;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -205,7 +204,6 @@ class StudyAssetsMigrationTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         user.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 

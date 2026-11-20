@@ -312,7 +312,6 @@ class AssetCatalogDAOTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         createUser().getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 

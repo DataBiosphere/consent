@@ -1225,7 +1225,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
     Integer collectionId =
@@ -1368,7 +1367,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     Dataset datasetOne = createDataset();
     Dataset datasetTwo = createDataset();
@@ -1420,7 +1418,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     Dataset dataset = createDataset();
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
@@ -1458,7 +1455,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     Dataset dataset = createDataset();
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
@@ -1593,7 +1589,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             grantee.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     Dataset granted = createDataset();
     Dataset denied = createDataset();
@@ -2272,7 +2267,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         creator.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 
@@ -2327,7 +2321,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
     Integer collectionId =
@@ -2946,7 +2939,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             List.of(randomAlphabetic(10)),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     Dataset inStudy = createDataset();
     Dataset outsideStudy = createDataset();

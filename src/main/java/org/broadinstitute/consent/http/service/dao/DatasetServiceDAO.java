@@ -292,7 +292,6 @@ public class DatasetServiceDAO implements ConsentLogger {
             insert.dataTypes,
             insert.publicVisibility,
             insert.userId,
-            Instant.now(),
             uuid);
     if (insert.piInstitutionId != null) {
       studyDAOLocal.updateStudyPiInstitutionId(studyId, insert.piInstitutionId);
@@ -388,8 +387,7 @@ public class DatasetServiceDAO implements ConsentLogger {
         piDetails.piWebsiteUrl(),
         update.dataTypes,
         update.publicVisibility,
-        update.userId,
-        Instant.now());
+        update.userId);
 
     if (replaceProps) {
       studyDAOLocal.deleteStudyPropertiesByStudyId(update.studyId);

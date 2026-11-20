@@ -315,8 +315,7 @@ class DatasetDAOTest extends DAOTestHelper {
         null,
         study.getDataTypes(),
         study.getPublicVisibility(),
-        updateUser.getUserId(),
-        Instant.now());
+        updateUser.getUserId());
 
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
 
@@ -1898,8 +1897,7 @@ class DatasetDAOTest extends DAOTestHelper {
         "https://example.org",
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
     Dataset dataset = createDataset(true);
     datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
 
@@ -1931,7 +1929,6 @@ class DatasetDAOTest extends DAOTestHelper {
             dataTypes,
             publicVisibility,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
 
     studyDAO.insertStudyProperty(id, "prop1", PropertyType.String.toString(), "asdf");

@@ -7,6 +7,7 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -381,5 +382,15 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     } finally {
       executeSql("ALTER TABLE dataset ALTER COLUMN alias TYPE bigint");
     }
+  }
+
+  /** insertStudy always writes NOW() to create_date, so set the date that a test needs. */
+  protected void setStudyCreateDate(Integer studyId, Instant createDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE study SET create_date = :createDate WHERE study_id = :id")
+                .bind("createDate", createDate)
+                .bind("id", studyId)
+                .execute());
   }
 }

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.models.StudyComment;
@@ -235,7 +234,6 @@ class StudyCommentDAOTest extends DAOTestHelper {
         List.of(randomAlphabetic(10)),
         true,
         user.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 
