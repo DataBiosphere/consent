@@ -535,7 +535,8 @@ The design of the search box is not complete. These points are open:
   character that is not a letter, a digit, or a space. With it, `DUOS-000123` does not match as one
   identifier. The dataset search needs its own rule for identifiers, email addresses, and URLs.
 - **`unaccent` in an index.** `unaccent()` is not `IMMUTABLE`, so a generated column or an index
-  expression cannot call it directly, as the `ontology_index` precedent does for its text. It needs
+  expression cannot call it directly. The generated column of the `ontology_index` precedent
+  cannot get it in that way. It needs
   an immutable wrapper function, or a text search configuration that uses the `unaccent`
   dictionary.
 
