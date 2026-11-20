@@ -1401,7 +1401,6 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @Test
   void testGetApprovedDatasetsForMultiDACElections() {
-    Date now = new Date();
     // user with a mix of approved and unapproved datasets
     User user = createUser();
     User chairperson1 = createUser();
@@ -1981,7 +1980,6 @@ class DatasetDAOTest extends DAOTestHelper {
   private Dataset createDataset(boolean dacApproval) {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     Instant instant = Instant.now();
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
