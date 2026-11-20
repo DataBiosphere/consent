@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -170,6 +171,9 @@ public class DatasetRegistrationService implements ConsentLogger {
                       createDatasetUpdate(
                           cg.getDatasetId(), user, datasetUpdate, files, uploadedFileCache, idx);
                   datasetUpdates.add(update);
+                } catch (UploadTooLargeException e) {
+                  // The whole update fails: a skipped consent group would lose the client's file.
+                  throw e;
                 } catch (Exception e) {
                   logException(e);
                 }
@@ -178,6 +182,8 @@ public class DatasetRegistrationService implements ConsentLogger {
                   DatasetServiceDAO.DatasetInsert insert =
                       createDatasetInsert(registration, user, files, uploadedFileCache, idx);
                   datasetInserts.add(insert);
+                } catch (UploadTooLargeException e) {
+                  throw e;
                 } catch (Exception e) {
                   logException(e);
                 }
