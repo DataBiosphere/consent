@@ -327,10 +327,18 @@ Storage A and storage C1 store no copy. In each storage type, the response proje
 fields a caller gets, not the storage (section 7.2). A stored copy must also change when an admin
 redacts a user, or the copy keeps the old value (section 3.4).
 
+The publication column of storage A, C1, and C2 needs a first fill too. The source is the same as
+for the storage B table: the set of published datasets after the comparison of section 9.4, not
+`indexed_date` without a check. `dataset.indexed_date` can be that column, but only after the
+comparison corrected it.
+
 Notes for storage B:
 
 - The write must occur in the same transaction as the data change. Then the document cannot differ
-  from the data after a failure, and `index_confirmed_date` is no longer necessary.
+  from the data after a failure, and `index_confirmed_date` is no longer necessary as a
+  confirmation. But `AssetLookupDAO` reads that column to decide if a study or a dataset is in the
+  library (section 3.5). Those two queries must change to the new publication state before the
+  column goes. The switch in section 9.2 has a step for this.
 - The current index calls do not give this. The team must change them:
   - Registration calls the index after the database write is complete
     (`DatasetRegistrationService`). The team must check each of the other triggers.
@@ -375,10 +383,16 @@ conclusions are the opinion of the author:
 
   | Time of the refresh | Effect |
   | --- | --- |
-  | In the transaction of the data change | Search is correct at commit. But only one refresh can run at a time, so the writes wait for each other. The cost of each write also increases with the number of datasets. |
+  | In the transaction of the data change | Search is correct at commit only if one write runs at a time. With two writes at the same time, a refresh can use a snapshot from before the other write committed, and that change then stays out of the view (see the note below). Only one refresh can run at a time, so the writes wait for each other. A refresh without `CONCURRENTLY` also keeps its lock until the write transaction commits, so readers wait for the full write. The cost of each write also increases with the number of datasets. |
   | After the commit | The stale-on-failure case of today comes back. Storage B removes that case. |
   | On a schedule | A new dataset is absent from search until the next refresh. No scheduled job exists today (section 3.4). `pg_cron` is on the Cloud SQL list, but it adds a new part to operate. |
 
+- **A refresh in the write transaction needs an explicit lock.** A reviewer checked the
+  PostgreSQL 16 source: at the default isolation level, a refresh takes its snapshot before it
+  waits for the lock on the view. `CONCURRENTLY` has the same behavior. The author did not check
+  the source. Two possible corrections exist: take the lock on the view with `LOCK TABLE` before
+  the refresh, or run the refresh at `SERIALIZABLE` with a retry. Each makes all writes run one
+  after the other.
 - **A refresh of C2 can block readers.** `REFRESH ... CONCURRENTLY` does not block them. It needs
   a unique index on a plain column, for example `dataset_id`, and a view that already has data.
 - **A removal must not wait for a refresh.** If a refresh is late or fails, a dataset that an admin
@@ -440,18 +454,23 @@ Consequences:
 
 - "Published in the library" is a state that the design must store explicitly. Most datasets get it
   automatically at registration. Admins can also set it and clear it. `dataset.indexed_date`
-  already has this meaning (section 3.5).
+  has this meaning by design (section 3.5), but its values are not all correct today, because an
+  index write sets it before ES accepts the document (section 4.1).
 - A design that creates rows only on an admin call leaves each new registration out of search.
 - Storage A needs that state in each search query as a filter.
 - Storage C puts that filter in the view definition. Storage C2 shows a change to that state only
   after a refresh.
 - Storage B must keep the rule that a row exists only for a published dataset. The first fill must
   obey it (section 4.1).
-- A DAC approval and a DAC rule toggle force a write today. Thus they publish a dataset again after
-  an admin removed it. The team must decide if the new design keeps this behavior.
+- A DAC approval, a DAC rule toggle, and the conversion of DAC datasets to external each force a
+  write today, without a check that the dataset is published. Thus they publish a dataset again
+  after an admin removed it. The team must decide if the new design keeps this behavior.
 - The parity test must compare the set of published datasets before and after the switch
   (section 9.4).
-- The audit rows `INDEXED` and `DEINDEXED` record these operations today. Keep them.
+- Only a removal writes an audit row today (`DEINDEXED`, through `deleteIndex`). The `INDEXED`
+  action exists, but no publication path writes it: publication calls
+  `DatasetDAO.updateDatasetsIndexedDate`, which writes no audit row. Thus the new design must add
+  the audit of each publication, and the parity test cannot use `INDEXED` rows as a source.
 
 Decision still open: keep the three paths, or give them names that do not say "index".
 
@@ -459,14 +478,20 @@ Decision still open: keep the three paths, or give them names that do not say "i
 
 | ES function | PostgreSQL equivalent | Parity risk |
 | --- | --- | --- |
-| `term`, `terms` on keyword values | `=` and `= ANY(...)` on a column or a `jsonb` path | Low |
+| `term`, `terms` on a keyword field with one value | `=` and `= ANY(...)` on a column or a `jsonb` path | Low |
+| `term`, `terms` on a keyword field with a list of values (`study.data.tags`, `study.dataTypes`, `study.dataCustodianEmail`, dataset `cloud`) | `?` and `?|` on a `jsonb` array, `&&` on a typed array, or `EXISTS` on the elements. Not `=`. | **Medium.** ES matches if one element matches. `=` on the full value does not. The branded library scopes send `terms` on the study tags, so a study with two tags leaves its library if the map uses `=`. The field registry must record, for each field, if it holds a list. |
+| `exists` | `IS NOT NULL`, or `?` for a `jsonb` key | Low. Each Data Library query sends `exists: study`, so a dataset without a study is not in the Data Library. |
+| `bool` `should` with `minimum_should_match` | `OR`, in a group with parentheses | Low |
+| Match on `_id` | `dataset_id = ANY(...)` | Low |
 | `term` on an analyzed field (for example `accessManagement: "controlled"`) | `lower(col) = ...` | Low. ES matches the lowercase token. SQL must do the same. |
 | `match`, `match_phrase` in filters | Equality that ignores case, or `@>` on `jsonb` | Medium. ES matches a token. SQL matches the full value, unless the design uses text search. |
 | `range` on numbers and dates | `>=` and `<=` as two separate comparisons on typed values. Not `BETWEEN`. | Low. duos-ui sends ranges with only a minimum or only a maximum (`filterRegistry.ts`), so each comparison is optional. Dates in assets are strings and need a safe cast. |
 | `must_not` `term`, as in the approved filter (`accessManagement` is not `controlled`) | `IS DISTINCT FROM`, or `<>` with an explicit `IS NULL` case | Medium. `must_not` also matches a dataset that has no `accessManagement` value. A SQL `<>` drops that dataset, so the counts decrease. |
 | Filters on asset arrays | `jsonb_path_exists` or `EXISTS` on `jsonb_array_elements` | **Medium. The results change.** ES matches the full document. Two asset filters can thus match two different assets of one study. The asset tabs check each row again in the browser, but the study and dataset tabs and their counts keep that match. A SQL `EXISTS` on one array element removes it. The team must keep the two behaviors, or product must accept the change (section 11). |
 | `multi_match` `phrase_prefix` across about 70 fields | One `tsvector` column with the `simple` configuration and a `tsquery` of the form `a <-> b:*` | **High.** See the notes below. |
-| `terms` aggregation | `GROUP BY` with `count(*)` | Low. ES returns 10 buckets by default. SQL needs an explicit limit. |
+| `terms` aggregation on a field with one value | `GROUP BY` with `count(*)` | Low. ES returns 10 buckets by default. SQL needs an explicit limit. |
+| `terms` aggregation on a field with a list of values (`study.dataTypes`, `dataUse.primary.code`, `dataUse.secondary.code`) | Expand the elements with `unnest` or `jsonb_array_elements_text`, then `count(DISTINCT dataset_id)` for each element | **Medium.** ES puts each element in its own bucket and counts a document one time for each bucket. `GROUP BY` on the full list makes one bucket for each list, so `["WGS", "RNA"]` is in neither the WGS count nor the RNA count. |
+| `filter` aggregation | `count(*) FILTER (WHERE ...)` | Low |
 | `cardinality` | `count(DISTINCT ...)` | Low. SQL is exact. ES is approximate. |
 | `composite` and `terms` on `study.studyId` with `top_hits` | `GROUP BY study_id`, or a query on the `study` table | Low in SQL. High if the server must emulate the ES response shape. |
 | `sum`, `value_count` | `sum()`, `count()` | Low |
@@ -494,6 +519,27 @@ Notes on the search box:
 - The `english` configuration stems words. ES does not stem here. Use the `simple` configuration.
 - The `pg_trgm` extension can add substring match for identifiers and email addresses.
 - A side-by-side comparison must measure the differences (section 9.4).
+
+The design of the search box is not complete. These points are open:
+
+- **How the fields go into the `tsvector`.** If the builder joins about 70 fields into one text, the
+  operator `<->` can match the last word of one field and the first word of the next. ES
+  `phrase_prefix` matches in one field only. A gap between the fields in the `tsvector` positions
+  can prevent this. The design must say how.
+- **How the user text becomes a `tsquery`.** `to_tsquery` gives an error on text such as `a & (`.
+  The server must build the query from clean tokens, and it must not send the user text directly.
+- **The existing sanitizer is not sufficient.** `OntologyDAO.sanitizeForTsQuery` removes each
+  character that is not a letter, a digit, or a space. With it, `DUOS-000123` does not match as one
+  identifier. The dataset search needs its own rule for identifiers, email addresses, and URLs.
+- **`unaccent` in an index.** `unaccent()` is not `IMMUTABLE`, so a generated column or an index
+  expression cannot call it directly. The generated column of the `ontology_index` precedent
+  cannot get it in that way. It needs
+  an immutable wrapper function, or a text search configuration that uses the `unaccent`
+  dictionary.
+
+Add to the parity test (section 9.4): a study with two tags in a branded library, a facet on a
+field with a list of values, a phrase that crosses two fields, and a search for text with `tsquery`
+operator characters.
 
 ## 5. The options
 
@@ -595,7 +641,8 @@ Size key from the existing plan: **S** is about 1 day, **M** is 2 to 3 days, **L
 | Maintenance | Medium. Many endpoints, each simple. | **High.** The team owns an ES emulator. The browser stays tied to ES query language. | **Low.** One registry on each side. |
 | Scope in consent | About 12 endpoints, storage, dashboards, removal | Parser, clause translator, aggregation emulator, storage, dashboards, removal | One service and registry, storage, dashboards, removal |
 | Scope in duos-ui | **Large.** Each caller changes. | **None.** | Medium to large. The query builders and response readers change. The structure stays. |
-| Draft effort | 8 to 10 person-weeks | 5 to 7 person-weeks, plus Epic E mediation later | 6 to 8 person-weeks |
+| Draft effort | 8 to 10 person-weeks | 5 to 7 person-weeks. This number does not include the Epic E mediation that option 2 needs for server-owned visibility, so it is not equal in scope to the other two numbers. | 6 to 8 person-weeks |
+| Goals and anti-goals (section 1) | Satisfies each one. | Fails two anti-goals without more work: consent becomes an ES emulator, and the visibility rules stay in the browser. | Satisfies each one. |
 | Largest risk for the date | The quantity of duos-ui work | Parity of analyzer behavior and of response shapes | Design time for the request, and duos-ui capacity |
 | Security today | Server owns each query | The browser still builds the visibility rules, unless mediation is added | Server owns each query and each visibility rule |
 | Fine-grained access control later | Rules repeat in each endpoint | Needs Epic E mediation on a query language that the team does not control | One location for rules. Rules join live tables. |
