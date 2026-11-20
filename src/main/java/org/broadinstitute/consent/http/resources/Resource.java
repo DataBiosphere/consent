@@ -302,6 +302,16 @@ public abstract class Resource implements ConsentLogger {
    * or {}, which reads as null or empty.
    */
   protected SubmissionApproval readSubmissionApproval(String body) {
+    return readSubmissionApproval(body, null);
+  }
+
+  /**
+   * Reads the submission an approval names when the path names its DAR, so the body may give only
+   * the submission date.
+   *
+   * @param pathReferenceId The DAR the path names; null when the body must name it
+   */
+  protected SubmissionApproval readSubmissionApproval(String body, String pathReferenceId) {
     if (body == null || body.isBlank()) {
       return null;
     }
@@ -315,11 +325,14 @@ public abstract class Resource implements ConsentLogger {
     if (approval == null || approval.isEmpty()) {
       return approval;
     }
-    if (approval.submissionDate() == null || approval.referenceId() == null) {
+    String referenceId = approval.referenceId() == null ? pathReferenceId : approval.referenceId();
+    if (approval.submissionDate() == null || referenceId == null) {
       throw new BadRequestException(
-          "Name the approved submission with its referenceId and submissionDate");
+          pathReferenceId == null
+              ? "Name the approved submission with its referenceId and submissionDate"
+              : "Name the approved submission with its submissionDate");
     }
-    return approval;
+    return new SubmissionApproval(referenceId, approval.submissionDate());
   }
 
   protected void validateFileDetails(ContentDisposition contentDisposition) {

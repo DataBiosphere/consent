@@ -4,6 +4,7 @@ description: >-
   409 when the request's current submission differs. Clients that predate it may send no body or
   {}, which is accepted while clients move to sending it. A body that names a submission gives
   both values.
+additionalProperties: false
 oneOf:
   - maxProperties: 0
   - required:

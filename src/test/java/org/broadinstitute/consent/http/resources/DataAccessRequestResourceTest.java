@@ -72,6 +72,7 @@ import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -2356,13 +2357,61 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testApproveCloseout() {
     String referenceId = UUID.randomUUID().toString();
-    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId);
+    doNothing()
+        .when(dataAccessRequestService)
+        .approveDataAccessRequestCloseout(user, referenceId, null);
     when(dataAccessRequestService.findByReferenceId(referenceId))
         .thenReturn(new DataAccessRequest());
     when(datasetService.findDatasetsByIds(user, List.of())).thenReturn(List.of());
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  // A closeout names its DAR in the path, so the body needs only the submission date.
+  @Test
+  void testApproveCloseoutPassesTheNamedSubmission() {
+    String referenceId = UUID.randomUUID().toString();
+    when(dataAccessRequestService.findByReferenceId(referenceId))
+        .thenReturn(new DataAccessRequest());
+    try (Response response =
+        resource.approveCloseout(
+            duosUser, request, referenceId, "{\"submissionDate\": 1700000000123}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(dataAccessRequestService)
+        .approveDataAccessRequestCloseout(
+            user, referenceId, new SubmissionApproval(referenceId, 1700000000123L));
+  }
+
+  // A body that names another DAR is passed on as named, and the service refuses it.
+  @Test
+  void testApproveCloseoutPassesTheBodysReferenceId() {
+    String referenceId = UUID.randomUUID().toString();
+    when(dataAccessRequestService.findByReferenceId(referenceId))
+        .thenReturn(new DataAccessRequest());
+    try (Response response =
+        resource.approveCloseout(
+            duosUser,
+            request,
+            referenceId,
+            "{\"referenceId\": \"other\", \"submissionDate\": 1700000000123}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(dataAccessRequestService)
+        .approveDataAccessRequestCloseout(
+            user, referenceId, new SubmissionApproval("other", 1700000000123L));
+  }
+
+  @Test
+  void testApproveCloseoutRejectsASubmissionWithoutADate() {
+    String referenceId = UUID.randomUUID().toString();
+    try (Response response =
+        resource.approveCloseout(
+            duosUser, request, referenceId, "{\"referenceId\": \"" + referenceId + "\"}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(dataAccessRequestService, never()).approveDataAccessRequestCloseout(any(), any(), any());
   }
 
   @Test
@@ -2370,8 +2419,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     doThrow(BadRequestException.class)
         .when(dataAccessRequestService)
-        .approveDataAccessRequestCloseout(user, referenceId);
-    try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+        .approveDataAccessRequestCloseout(user, referenceId, null);
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
