@@ -80,6 +80,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.DataUseGroup;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -99,6 +100,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -941,7 +943,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(user, collection, request));
+        () -> service.approveDarCollection(user, collection, request, null));
   }
 
   @Test
@@ -965,7 +967,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.approveDarCollection(notASigningOfficial, collection, request));
+        () -> service.approveDarCollection(notASigningOfficial, collection, request, null));
     // Rejected before the collection lock is taken.
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
@@ -988,7 +990,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     // Rejected before the collection lock is taken.
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
@@ -1015,7 +1017,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     // Rejected before the collection lock is taken.
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
@@ -1041,7 +1043,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.addDar(dar);
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
 
-    assertDoesNotThrow(() -> service.approveDarCollection(signingOfficial, collection, request));
+    assertDoesNotThrow(
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
   }
 
   @Test
@@ -1063,7 +1066,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(anyInt(), anyString());
   }
 
@@ -1097,7 +1100,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
     when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(reloaded);
 
-    service.approveDarCollection(signingOfficial, collection, request);
+    service.approveDarCollection(signingOfficial, collection, request, null);
 
     verify(dataAccessRequestDAO).updateDarApprovalSO(2, dar.getReferenceId());
     // Only the approval itself took the collection lock.
@@ -1166,7 +1169,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     // 409, not the NullPointerException getMostRecentDar throws on a draft.
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
@@ -1195,8 +1198,141 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  // The official approves the submission they reviewed, which the request names.
+  @Test
+  void testApproveCollectionForTheNamedSubmission() {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    stubStoredCollection(dar);
+
+    service.approveDarCollection(
+        approvingOfficial(),
+        collection,
+        request,
+        new SubmissionApproval(dar.getReferenceId(), 1_000_000L));
+
+    verify(dataAccessRequestDAO).updateDarApprovalSO(2, dar.getReferenceId());
+  }
+
+  // Clients that predate the named submission send {}, which approves as before.
+  @Test
+  void testApproveCollectionWithAnEmptySubmission() {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+
+    service.approveDarCollection(
+        approvingOfficial(), collection, request, new SubmissionApproval(null, null));
+
+    verify(dataAccessRequestDAO).updateDarApprovalSO(2, dar.getReferenceId());
+  }
+
+  @Test
+  void testApproveCollectionRejectsAnOlderSubmissionDate() {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    stubStoredCollection(dar);
+    SubmissionApproval reviewed = new SubmissionApproval(dar.getReferenceId(), 999_999L);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
+    // Compared under the collection lock.
+    verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  // A progress report submitted after the official opened the collection is a different DAR.
+  @Test
+  void testApproveCollectionRejectsAnotherDar() {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    DataAccessRequest newer = approvableDar(2_000_000L);
+    stubStoredCollection(dar, newer);
+    SubmissionApproval reviewed = new SubmissionApproval(newer.getReferenceId(), 2_000_000L);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  // The named DAR was the latest when loaded, but a newer submission committed while the approval
+  // waited for the collection lock.
+  @Test
+  void testApproveCollectionRejectsASubmissionNoLongerTheLatest() {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    stubStoredCollection(dar, approvableDar(2_000_000L));
+    SubmissionApproval reviewed = new SubmissionApproval(dar.getReferenceId(), 1_000_000L);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  // A draft or a missing collection under the lock leaves no latest submission to approve.
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testApproveCollectionRejectsWithoutALatestSubmission(boolean draftAdded) {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    if (draftAdded) {
+      DataAccessRequest draft = approvableDar(0);
+      draft.setSubmissionDate(null);
+      stubStoredCollection(dar, draft);
+    }
+    SubmissionApproval reviewed = new SubmissionApproval(dar.getReferenceId(), 1_000_000L);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  /** The collection as stored, read under the lock. */
+  private void stubStoredCollection(DataAccessRequest... dars) {
+    DarCollection stored = new DarCollection();
+    for (DataAccessRequest d : dars) {
+      stored.addDar(d);
+    }
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(stored);
+  }
+
+  private static User approvingOfficial() {
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    signingOfficial.setEmail("email2");
+    signingOfficial.setUserId(2);
+    return signingOfficial;
+  }
+
+  private static DataAccessRequest approvableDar(long submissionDate) {
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail("email2");
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setCollectionId(1);
+    dar.setSubmissionDate(new Timestamp(submissionDate));
+    dar.setRequiresSOApproval(true);
+    dar.setData(darData);
+    return dar;
   }
 
   @Test
@@ -1218,7 +1354,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
   }
 
@@ -1247,7 +1383,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    service.approveDarCollection(signingOfficial, collection, request);
+    service.approveDarCollection(signingOfficial, collection, request, null);
     verify(dacAutomationRuleService, never())
         .triggerDACRuleSettings(any(), anyList(), anyString(), any());
     verify(dataAccessRequestDAO)
@@ -1354,7 +1490,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
       stubInTransactionToExecute();
     }
 
-    service.approveDarCollection(signingOfficial, collection, request);
+    service.approveDarCollection(signingOfficial, collection, request, null);
 
     int processed = processes ? 1 : 0;
     verify(dacAutomationRuleService, times(processed))
@@ -1394,7 +1530,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    service.approveDarCollection(signingOfficial, collection, request);
+    service.approveDarCollection(signingOfficial, collection, request, null);
     verify(dacAutomationRuleService, never())
         .triggerDACRuleSettings(any(), anyList(), anyString(), any());
     verify(dataAccessRequestDAO)
@@ -1422,7 +1558,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     // Rejected before the collection lock is taken.
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
@@ -1451,7 +1587,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         BadRequestException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     // Rejected before the collection lock is taken.
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
@@ -1469,7 +1605,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
 
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
@@ -1491,7 +1627,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         NotFoundException.class,
-        () -> service.approveDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
 
     verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
