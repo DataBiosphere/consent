@@ -138,7 +138,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     match.setMatch(true);
     match.setFailed(false);
     match.setAbstain(false);
-    match.setCreateDate(new Date());
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     matchDAO.insertMatch(match);
 
@@ -1202,7 +1201,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     match.setMatch(true);
     match.setFailed(false);
     match.setAbstain(false);
-    match.setCreateDate(new Date());
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     matchDAO.insertMatch(match);
     User user = createUser();
@@ -3124,7 +3122,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     match.setMatch(true);
     match.setFailed(false);
     match.setAbstain(false);
-    match.setCreateDate(new Date());
     match.setAlgorithmVersion(MatchAlgorithm.V1.getVersion());
     matchDAO.insertMatch(match);
   }

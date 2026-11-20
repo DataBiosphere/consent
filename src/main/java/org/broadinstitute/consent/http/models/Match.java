@@ -70,7 +70,6 @@ public class Match {
     this.setMatch(match);
     this.setAbstain(abstain);
     this.setFailed(failed);
-    this.setCreateDate(new Date());
     this.setAlgorithmVersion(algorithm.getVersion());
     this.setRationales(rationales);
   }
