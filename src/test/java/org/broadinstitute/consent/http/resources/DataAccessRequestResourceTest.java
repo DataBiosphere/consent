@@ -713,6 +713,27 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     order.verify(gcsService).deleteDocument(previousLocation);
   }
 
+  // A location planted before document fields were server-managed can name a file still in use.
+  @Test
+  void testUploadIrbDocumentKeepsAReplacedFileSomethingElseRefersTo() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.saveDocument(any(), any(), any()))
+        .thenReturn(new DocumentSave("shared-location", dar));
+    when(dataAccessRequestService.isDocumentReferenced("shared-location")).thenReturn(true);
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(formData.getSize()).thenReturn(1L);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new"));
+
+    Response response =
+        resource.uploadIrbDocument(
+            duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData);
+    assertEquals(200, response.getStatus());
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
   // Another upload committed after this one read the DAR: the row's location is the one replaced.
   @Test
   void testUploadIrbDocumentDeletesTheLocationTheRowHeld() throws Exception {
@@ -1137,6 +1158,43 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     }
 
     verify(gcsService).deleteDocument("uploaded-collaboration");
+  }
+
+  // The report committed, then a later step failed: the committed report refers to its uploads.
+  @Test
+  void testPostProgressReportKeepsUploadsTheCommittedReportRefersTo() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(user.getUserId());
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setCollaboratorRequired(true).build());
+    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
+    FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
+    when(collaborationFile.getSize()).thenReturn(1L);
+    when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
+    when(collaborationFile.getType()).thenReturn("text/plain");
+    when(gcsService.storeDocument(any(), eq("text/plain"), any()))
+        .thenReturn(BlobId.of("bucket", "uploaded-collaboration"));
+    doThrow(new IllegalStateException("read after commit failed"))
+        .when(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
+    when(dataAccessRequestService.isDocumentReferenced("uploaded-collaboration")).thenReturn(true);
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser,
+            request,
+            "",
+            "{\"datasetIds\":[1]}",
+            IOUtils.toInputStream("synthetic collaboration", Charset.defaultCharset()),
+            collaborationFile,
+            null,
+            null)) {
+      assertEquals(500, response.getStatus());
+    }
+
+    verify(gcsService, never()).deleteDocument(any());
   }
 
   @Test
