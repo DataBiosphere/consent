@@ -697,24 +697,24 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   SET
     dac_approval = :dacApproval,
     dac_approval_date = now(),
-    update_date = :updateDate,
+    update_date = NOW(),
     update_user_id = :updateUserId
   WHERE dataset_id = :datasetId
   """)
   void updateDatasetApproval(
       @Bind("dacApproval") Boolean dacApproved,
-      @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("datasetId") Integer datasetId);
 
+  /** Sets indexed_date to NOW() when indexed is true, or clears it when indexed is false. */
   @SqlUpdate(
       """
       UPDATE dataset
-      SET indexed_date = :indexedDate
+      SET indexed_date = CASE WHEN :indexed THEN NOW() ELSE NULL END
       WHERE dataset_id = :datasetId
       """)
   void updateDatasetIndexedDate(
-      @Bind("datasetId") Integer datasetId, @Bind("indexedDate") Instant indexedDate);
+      @Bind("datasetId") Integer datasetId, @Bind("indexed") boolean indexed);
 
   @SqlUpdate(
       """

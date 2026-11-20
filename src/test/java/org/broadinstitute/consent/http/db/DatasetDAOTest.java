@@ -1108,13 +1108,23 @@ class DatasetDAOTest extends DAOTestHelper {
   void testUpdateDatasetApproval() {
     User updateUser = createUser();
     Dataset dataset = insertDataset();
-    datasetDAO.updateDatasetApproval(
-        true, Instant.now(), updateUser.getUserId(), dataset.getDatasetId());
+    // A fixed past date makes sure that the update writes a new value.
+    setDatasetDates(dataset.getDatasetId(), Instant.parse("2020-01-01T00:00:00Z"));
+
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          datasetDAO.updateDatasetApproval(true, updateUser.getUserId(), dataset.getDatasetId());
+        });
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDataset);
     assertTrue(updatedDataset.getDacApproval());
-    datasetDAO.updateDatasetApproval(
-        false, Instant.now(), updateUser.getUserId(), dataset.getDatasetId());
+    assertEquals(updateUser.getUserId(), updatedDataset.getUpdateUserId());
+    assertEquals(transactionNow.get(), updatedDataset.getUpdateDate().toInstant());
+    datasetDAO.updateDatasetApproval(false, updateUser.getUserId(), dataset.getDatasetId());
     Dataset updatedDatasetAfterApprovalFalse = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDatasetAfterApprovalFalse);
     assertEquals(dataset.getDatasetId(), updatedDatasetAfterApprovalFalse.getDatasetId());
@@ -1459,10 +1469,8 @@ class DatasetDAOTest extends DAOTestHelper {
         dataset2.getDatasetName(),
         chairperson1.getUserId(),
         dac1.getDacId());
-    datasetDAO.updateDatasetApproval(
-        true, Instant.now(), chairperson1.getUserId(), dataset1.getDatasetId());
-    datasetDAO.updateDatasetApproval(
-        true, Instant.now(), chairperson1.getUserId(), dataset2.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, chairperson1.getUserId(), dataset1.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, chairperson1.getUserId(), dataset2.getDatasetId());
 
     Dac dac2 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
@@ -1475,10 +1483,8 @@ class DatasetDAOTest extends DAOTestHelper {
         dataset4.getDatasetName(),
         chairperson2.getUserId(),
         dac2.getDacId());
-    datasetDAO.updateDatasetApproval(
-        true, Instant.now(), chairperson2.getUserId(), dataset3.getDatasetId());
-    datasetDAO.updateDatasetApproval(
-        true, Instant.now(), chairperson2.getUserId(), dataset4.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, chairperson2.getUserId(), dataset3.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, chairperson2.getUserId(), dataset4.getDatasetId());
 
     DarCollection darCollection =
         createDarCollectionWithDatasetsNewModel(
@@ -1641,10 +1647,18 @@ class DatasetDAOTest extends DAOTestHelper {
   @Test
   void testUpdateDatasetIndexedDate() {
     Dataset dataset = insertDataset();
-    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), Instant.now());
+
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), true);
+        });
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
-    assertNotNull(updatedDataset.getIndexedDate());
-    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);
+    assertEquals(transactionNow.get(), updatedDataset.getIndexedDate().toInstant());
+    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), false);
     Dataset updatedDataset2 = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNull(updatedDataset2.getIndexedDate());
   }
@@ -1657,7 +1671,7 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetsIndexedDate(datasetIds);
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDataset.getIndexedDate());
-    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);
+    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), false);
     Dataset updatedDataset2 = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNull(updatedDataset2.getIndexedDate());
   }
@@ -1740,7 +1754,7 @@ class DatasetDAOTest extends DAOTestHelper {
     List<Integer> studyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
 
     assertEquals(0, studyIds.size());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), dataset.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, user.getUserId(), dataset.getDatasetId());
 
     studyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
     assertEquals(1, studyIds.size());
@@ -2013,12 +2027,11 @@ class DatasetDAOTest extends DAOTestHelper {
   private Dataset createDataset(boolean dacApproval) {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Instant instant = Instant.now();
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
         datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
-    datasetDAO.updateDatasetApproval(dacApproval, instant, user.getUserId(), id);
+    datasetDAO.updateDatasetApproval(dacApproval, user.getUserId(), id);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -2050,6 +2063,6 @@ class DatasetDAOTest extends DAOTestHelper {
     updateVote(
         finalVoteApproval, "rationale", new Date(), voteId, false, electionId, new Date(), false);
     electionDAO.updateElectionById(electionId, ElectionStatus.CLOSED.getValue(), new Date());
-    datasetDAO.updateDatasetApproval(finalVoteApproval, Instant.now(), userId, datasetId);
+    datasetDAO.updateDatasetApproval(finalVoteApproval, userId, datasetId);
   }
 }
