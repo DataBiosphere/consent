@@ -82,14 +82,12 @@ class UserDAOTest extends DAOTestHelper {
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
     int dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
-    int daaId =
-        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
+    int daaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), lcId, daaId);
     int dacId2 =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
-    int daaId2 =
-        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId2);
+    int daaId2 = daaDAO.createDaa(user.getUserId(), user.getUserId(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), lcId, daaId2);
     UserProperty eraExpProp = new UserProperty();
     eraExpProp.setPropertyKey(UserFields.ERA_EXPIRATION_DATE.getValue());
@@ -265,8 +263,7 @@ class UserDAOTest extends DAOTestHelper {
         createUserWithRole(UserRoles.RESEARCHER.getRoleId(), signingOfficial.getInstitutionId());
     User admin = createUserWithRole(UserRoles.ADMIN.getRoleId());
     int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), admin.getUserId());
-    Instant now = Instant.now();
-    int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
+    int daaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), dacId);
     int lcId1 =
         libraryCardDAO.insertLibraryCard(
             user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId());
@@ -442,9 +439,8 @@ class UserDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     int dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
-    Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
-    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
     libraryCardDAO.createLibraryCardDaaRelation(
         card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId);
     User lcUser = userDAO.findUserById(card.getUserId());
@@ -471,13 +467,12 @@ class UserDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     int dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
-    Instant now = Instant.now();
     LibraryCard card1 = createLibraryCard();
-    int daaId1 = daaDAO.createDaa(card1.getUserId(), now, card1.getUserId(), now, dacId);
+    int daaId1 = daaDAO.createDaa(card1.getUserId(), card1.getUserId(), dacId);
     libraryCardDAO.createLibraryCardDaaRelation(
         card1.getUserId(), signingOfficial.getUserId(), card1.getId(), daaId1);
     LibraryCard card2 = createLibraryCard();
-    int daaId2 = daaDAO.createDaa(card2.getUserId(), now, card2.getUserId(), now, dacId);
+    int daaId2 = daaDAO.createDaa(card2.getUserId(), card2.getUserId(), dacId);
     libraryCardDAO.createLibraryCardDaaRelation(
         card2.getUserId(), signingOfficial.getUserId(), card2.getId(), daaId2);
 

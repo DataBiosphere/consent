@@ -546,13 +546,7 @@ public class FileStorageObjectService implements ConsentLogger {
 
     Integer fileStorageObjectId =
         fileStorageObjectDAO.insertNewFile(
-            fileName,
-            category.getValue(),
-            blobId.toGsUtilUri(),
-            mediaType,
-            entityId,
-            createUserId,
-            Instant.now());
+            fileName, category.getValue(), blobId.toGsUtilUri(), mediaType, entityId, createUserId);
 
     return fileStorageObjectDAO.findFileById(fileStorageObjectId);
   }

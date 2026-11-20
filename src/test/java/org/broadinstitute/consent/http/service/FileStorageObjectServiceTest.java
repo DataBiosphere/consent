@@ -87,13 +87,12 @@ class FileStorageObjectServiceTest {
     String blob = randomAlphabetic(10);
 
     when(fileStorageObjectDAO.insertNewFile(
-            eq(fileName),
-            eq(category.getValue()),
-            eq(BlobId.of(bucket, blob).toGsUtilUri()),
-            eq(mediaType),
-            eq(entityId),
-            eq(createUserId),
-            any()))
+            fileName,
+            category.getValue(),
+            BlobId.of(bucket, blob).toGsUtilUri(),
+            mediaType,
+            entityId,
+            createUserId))
         .thenReturn(10);
 
     FileStorageObject newFileStorageObject = new FileStorageObject();
@@ -112,13 +111,12 @@ class FileStorageObjectServiceTest {
 
     verify(fileStorageObjectDAO, times(1))
         .insertNewFile(
-            eq(fileName),
-            eq(category.getValue()),
-            eq(BlobId.of(bucket, blob).toGsUtilUri()),
-            eq(mediaType),
-            eq(entityId),
-            eq(createUserId),
-            any());
+            fileName,
+            category.getValue(),
+            BlobId.of(bucket, blob).toGsUtilUri(),
+            mediaType,
+            entityId,
+            createUserId);
   }
 
   @Test
@@ -406,13 +404,12 @@ class FileStorageObjectServiceTest {
     when(gcsService.storeDocument(eq(inputStream), eq("application/octet-stream"), any()))
         .thenReturn(BlobId.of("bucket", "object"));
     when(fileStorageObjectDAO.insertNewFile(
-            eq("upload.pdf"),
-            eq(FileCategory.DATA_ACCESS_AGREEMENT.getValue()),
-            eq(BlobId.of("bucket", "object").toGsUtilUri()),
-            eq("application/octet-stream"),
-            eq("456"),
-            eq(25),
-            any()))
+            "upload.pdf",
+            FileCategory.DATA_ACCESS_AGREEMENT.getValue(),
+            BlobId.of("bucket", "object").toGsUtilUri(),
+            "application/octet-stream",
+            "456",
+            25))
         .thenReturn(90);
     when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
 
@@ -422,13 +419,12 @@ class FileStorageObjectServiceTest {
     assertEquals(created, result);
     verify(fileStorageObjectDAO)
         .insertNewFile(
-            eq("upload.pdf"),
-            eq(FileCategory.DATA_ACCESS_AGREEMENT.getValue()),
-            eq(BlobId.of("bucket", "object").toGsUtilUri()),
-            eq("application/octet-stream"),
-            eq("456"),
-            eq(25),
-            any());
+            "upload.pdf",
+            FileCategory.DATA_ACCESS_AGREEMENT.getValue(),
+            BlobId.of("bucket", "object").toGsUtilUri(),
+            "application/octet-stream",
+            "456",
+            25);
   }
 
   @Test
@@ -657,13 +653,12 @@ class FileStorageObjectServiceTest {
     when(gcsService.storeDocument(eq(inputStream), eq("application/octet-stream"), any()))
         .thenReturn(BlobId.of("bucket", "object"));
     when(fileStorageObjectDAO.insertNewFile(
-            eq("upload.pdf"),
-            eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
-            eq(BlobId.of("bucket", "object").toGsUtilUri()),
-            eq("application/octet-stream"),
-            eq("123"),
-            eq(25),
-            any()))
+            "upload.pdf",
+            FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
+            BlobId.of("bucket", "object").toGsUtilUri(),
+            "application/octet-stream",
+            "123",
+            25))
         .thenReturn(90);
     when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
 
@@ -675,13 +670,12 @@ class FileStorageObjectServiceTest {
     verify(datasetService).findDatasetByIdForRead(user, 123);
     verify(fileStorageObjectDAO)
         .insertNewFile(
-            eq("upload.pdf"),
-            eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
-            eq(BlobId.of("bucket", "object").toGsUtilUri()),
-            eq("application/octet-stream"),
-            eq("123"),
-            eq(25),
-            any());
+            "upload.pdf",
+            FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
+            BlobId.of("bucket", "object").toGsUtilUri(),
+            "application/octet-stream",
+            "123",
+            25);
   }
 
   @Test

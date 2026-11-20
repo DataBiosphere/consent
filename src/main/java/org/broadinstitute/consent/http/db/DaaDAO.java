@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -201,12 +200,10 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   boolean wasDaaLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
 
   /**
-   * Create a Daa given name, description, and create date
+   * Create a Daa. The create and update dates are the database time.
    *
    * @param createUserId The id of the user who created this DAA
-   * @param createDate The date this new DAA was created
    * @param updateUserId The id of the user who updated this DAA
-   * @param updateDate The date that this DAA was updated
    * @param initialDacId The id for the initial DAC this DAA was created for
    * @return Integer
    */
@@ -214,7 +211,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       """
       WITH new_daa AS (
           INSERT INTO data_access_agreement (create_user_id, create_date, update_user_id, update_date, initial_dac_id)
-          VALUES (:createUserId, :createDate, :updateUserId, :updateDate, :initialDacId)
+          VALUES (:createUserId, NOW(), :updateUserId, NOW(), :initialDacId)
           RETURNING daa_id
       ),
       audit AS (
@@ -226,9 +223,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       """)
   Integer createDaa(
       @Bind("createUserId") Integer createUserId,
-      @Bind("createDate") Instant createDate,
       @Bind("updateUserId") Integer updateUserId,
-      @Bind("updateDate") Instant updateDate,
       @Bind("initialDacId") Integer initialDacId);
 
   @SqlUpdate(

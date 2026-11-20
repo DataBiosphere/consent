@@ -602,7 +602,7 @@ class DaaServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(999);
     Integer dacId = 17;
-    when(daaDAO.createDaa(any(), any(), any(), any(), any())).thenReturn(700);
+    when(daaDAO.createDaa(any(), any(), any())).thenReturn(700);
 
     initService();
 
@@ -615,7 +615,7 @@ class DaaServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(77);
     Integer dacId = 18;
-    when(daaDAO.createDaa(any(), any(), any(), any(), any())).thenReturn(801);
+    when(daaDAO.createDaa(any(), any(), any())).thenReturn(801);
 
     initService();
 
