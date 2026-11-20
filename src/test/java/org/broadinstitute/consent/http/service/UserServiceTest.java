@@ -639,7 +639,7 @@ class UserServiceTest extends AbstractTestHelper {
     int dacId = randomInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
-    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     when(daaDAO.findById(any())).thenReturn(daa);
@@ -658,7 +658,7 @@ class UserServiceTest extends AbstractTestHelper {
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
-    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     when(daaDAO.findById(daaId)).thenReturn(daa);
@@ -680,8 +680,8 @@ class UserServiceTest extends AbstractTestHelper {
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
     LibraryCard card3 = generateLibraryCard(u3);
-    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
-    int daaId2 = daaDAO.createDaa(card3.getUserId(), now, card3.getUserId(), now, dacId2);
+    int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
+    int daaId2 = daaDAO.createDaa(card3.getUserId(), card3.getUserId(), dacId2);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     DataAccessAgreement daa2 = new DataAccessAgreement();
@@ -705,7 +705,7 @@ class UserServiceTest extends AbstractTestHelper {
     int dacId = randomInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
-    int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
+    int daaId = daaDAO.createDaa(card.getUserId(), card.getUserId(), dacId);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     when(daaDAO.findById(any())).thenReturn(daa);

@@ -7,6 +7,7 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -381,5 +382,16 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     } finally {
       executeSql("ALTER TABLE dataset ALTER COLUMN alias TYPE bigint");
     }
+  }
+
+  /** insertNewFile always writes NOW(), so set the create date that an ordering test needs. */
+  protected void setFileCreateDate(Integer fileStorageObjectId, Instant createDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    "UPDATE file_storage_object SET create_date = :createDate WHERE file_storage_object_id = :id")
+                .bind("createDate", createDate)
+                .bind("id", fileStorageObjectId)
+                .execute());
   }
 }

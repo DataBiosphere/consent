@@ -28,7 +28,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           VALUES
           (:fileName, :category, :gcsFileUri,
           :mediaType, :entityId, :createUserId,
-          :createDate, false)
+          NOW(), false)
           """)
   @GetGeneratedKeys
   Integer insertNewFile(
@@ -37,8 +37,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
       @Bind("gcsFileUri") String gcsFileUri,
       @Bind("mediaType") String mediaType,
       @Bind("entityId") String entityId,
-      @Bind("createUserId") Integer createUserId,
-      @Bind("createDate") Instant createDate);
+      @Bind("createUserId") Integer createUserId);
 
   @SqlBatch(
       """

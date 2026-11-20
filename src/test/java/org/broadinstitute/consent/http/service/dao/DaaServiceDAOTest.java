@@ -152,7 +152,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
         dacDAO.createDac(
             randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), creator.getUserId());
     Instant now = Instant.now();
-    return daaDAO.createDaa(creator.getUserId(), now, creator.getUserId(), now, dacId);
+    return daaDAO.createDaa(creator.getUserId(), creator.getUserId(), dacId);
   }
 
   private LibraryCard insertCardFor(User user, User creator) {

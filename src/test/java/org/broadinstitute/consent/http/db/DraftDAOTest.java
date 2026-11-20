@@ -217,8 +217,7 @@ class DraftDAOTest extends DAOTestHelper {
         fso.getBlobId().toGsUtilUri(),
         fso.getMediaType(),
         draft.getUUID().toString(),
-        user1.getUserId(),
-        fso.getCreateDate());
+        user1.getUserId());
     Collection<DraftInterface> drafts = draftDAO.findDraftsByUserId(user1.getUserId());
     assertThat(drafts, hasSize(1));
     Set<FileStorageObject> storedFiles = drafts.iterator().next().getStoredFiles();
