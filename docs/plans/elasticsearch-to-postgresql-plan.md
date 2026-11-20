@@ -229,6 +229,16 @@ Notes for storage B:
 
 - The write must occur in the same transaction as the data change. Then the document cannot differ
   from the data after a failure, and `index_confirmed_date` is no longer necessary.
+- The current index calls do not give this. The team must change them:
+  - Registration calls the index after the database write is complete
+    (`DatasetRegistrationService`). The team must check each of the other triggers.
+  - A DAC rule toggle writes on an executor, after the commit (`DACAutomationRuleService`).
+  - The document builder reads through its own DAO objects. Those reads and the row write must use
+    the transaction of the data change, or the row can contain data from before the change.
+  - A DAC rule toggle writes one row for each dataset of the DAC. In the transaction, that work
+    occurs before the commit. Measure it for the largest DAC. If it is too slow, the toggle needs a
+    different design, for example one SQL statement that changes only the rule fields.
+  - This work is part of phase 1. The draft size of phase 1 does not include it yet.
 - Access rules must not come from the stored document. They must join the live tables (section 7).
 - The first fill of the table needs the Java document builder. Thus the fill is an admin endpoint
   call after deploy, not a Liquibase changeset.
@@ -241,6 +251,11 @@ Notes for storage B:
   A fill from `indexed_date` publishes that dataset for the first time.
 - Thus the three sets must agree before the fill: the ids in ES, the rows with `indexed_date`, and
   the rows with `index_confirmed_date`. Section 9.4 makes this comparison a gate for the switch.
+- The fill runs while live writes occur. An admin can remove a dataset after the comparison and
+  before the fill gets to that dataset. A fill from a fixed list of ids then creates the row again.
+  Thus the fill must read the publication state again for each dataset, in the transaction that
+  writes the row, and with the same row lock as a live write. If the dataset is not published at
+  that moment, the fill writes no row.
 
 Notes for storage C. The PostgreSQL and Cloud SQL facts come from the documents in section 12. The
 conclusions are the opinion of the author:
@@ -264,6 +279,10 @@ conclusions are the opinion of the author:
 
 - **A refresh of C2 can block readers.** `REFRESH ... CONCURRENTLY` does not block them. It needs
   a unique index on a plain column, for example `dataset_id`, and a view that already has data.
+- **A removal must not wait for a refresh.** If a refresh is late or fails, a dataset that an admin
+  removed stays in a C2 view. Thus each search on C2 must join the live publication column, for
+  the results and for each count. The removal then has effect at commit. A new publication can
+  wait for the refresh. A removal cannot.
 - **`pg_ivm` does not solve this for the team.** The extension updates a materialized view row by
   row, and Cloud SQL supports it. But the Cloud SQL document says that it is not compatible with an
   in-place major version upgrade or with a data export. The team does upgrades in place
@@ -293,7 +312,7 @@ Three admin endpoints exist today: build all documents, build one document, and 
 | | A. Live joins, and C1. Standard view | B. Search document table | C2. Materialized view |
 | --- | --- | --- | --- |
 | Build one document (`POST /api/dataset/index/{datasetId}`) | **Necessary as "publish".** It sets an explicit column. No document exists. | **Necessary as "publish".** It also builds one row again if a dataset is in doubt. | **Necessary as "publish".** It sets the column. Search shows the dataset after the next refresh. |
-| Remove one document (`DELETE /api/dataset/index/{datasetId}`) | **Necessary as "remove from the library".** It clears the column. | **Necessary as "remove from the library".** It deletes the row. | **Necessary as "remove from the library".** It clears the column. Search shows the dataset until the next refresh. |
+| Remove one document (`DELETE /api/dataset/index/{datasetId}`) | **Necessary as "remove from the library".** It clears the column. | **Necessary as "remove from the library".** It deletes the row. | **Necessary as "remove from the library".** It clears the column. The view contains the dataset until the next refresh, so search must also join the live column (section 4.1). |
 | Build all documents (`POST /api/dataset/index`) | Not necessary. | See the two notes below. | Useful as "refresh the view now". |
 
 Two notes for storage B. They are the opinion of the author:
@@ -341,15 +360,30 @@ Decision still open: keep the three paths, or give them names that do not say "i
 | `term`, `terms` on keyword values | `=` and `= ANY(...)` on a column or a `jsonb` path | Low |
 | `term` on an analyzed field (for example `accessManagement: "controlled"`) | `lower(col) = ...` | Low. ES matches the lowercase token. SQL must do the same. |
 | `match`, `match_phrase` in filters | Equality that ignores case, or `@>` on `jsonb` | Medium. ES matches a token. SQL matches the full value, unless the design uses text search. |
-| `range` on numbers and dates | `BETWEEN` on typed values | Low. Dates in assets are strings and need a safe cast. |
-| Filters on asset arrays | `jsonb_path_exists` or `EXISTS` on `jsonb_array_elements` | Better than ES. SQL can match one array element. ES matches the full document, so the browser filters rows again. |
+| `range` on numbers and dates | `>=` and `<=` as two separate comparisons on typed values. Not `BETWEEN`. | Low. duos-ui sends ranges with only a minimum or only a maximum (`filterRegistry.ts`), so each comparison is optional. Dates in assets are strings and need a safe cast. |
+| `must_not` `term`, as in the approved filter (`accessManagement` is not `controlled`) | `IS DISTINCT FROM`, or `<>` with an explicit `IS NULL` case | Medium. `must_not` also matches a dataset that has no `accessManagement` value. A SQL `<>` drops that dataset, so the counts decrease. |
+| Filters on asset arrays | `jsonb_path_exists` or `EXISTS` on `jsonb_array_elements` | **Medium. The results change.** ES matches the full document. Two asset filters can thus match two different assets of one study. The asset tabs check each row again in the browser, but the study and dataset tabs and their counts keep that match. A SQL `EXISTS` on one array element removes it. The team must keep the two behaviors, or product must accept the change (section 11). |
 | `multi_match` `phrase_prefix` across about 70 fields | One `tsvector` column with the `simple` configuration and a `tsquery` of the form `a <-> b:*` | **High.** See the notes below. |
 | `terms` aggregation | `GROUP BY` with `count(*)` | Low. ES returns 10 buckets by default. SQL needs an explicit limit. |
 | `cardinality` | `count(DISTINCT ...)` | Low. SQL is exact. ES is approximate. |
 | `composite` and `terms` on `study.studyId` with `top_hits` | `GROUP BY study_id`, or a query on the `study` table | Low in SQL. High if the server must emulate the ES response shape. |
 | `sum`, `value_count` | `sum()`, `count()` | Low |
 | Default order by `_score` | `ts_rank`, or an explicit default sort | Medium. Result order changes when there is no sort. |
-| Limit of 10000 results | None | The limit goes away. |
+| Limit of 10000 results | None | The ES limit goes away. The new service must set its own limits. See the notes below. |
+
+Notes on limits. The search service uses the same database as all other consent traffic, so each
+request must have a limit:
+
+- A maximum page size, and a maximum offset or a keyset page.
+- A maximum number of ids in a scope, and a maximum number of filters and of filter values.
+- A maximum number of facets in one request, and a maximum number of buckets in one facet.
+- A statement timeout on each search query.
+- The callers that send `size: 10000` today (section 3.3) need a decision: a larger limit for
+  those scopes, or pages.
+
+The parity test (section 9.4) must include a range with only a minimum, a range with only a
+maximum, a dataset with no `accessManagement` value, and a study where two asset filters match two
+different assets.
 
 Notes on the search box:
 
