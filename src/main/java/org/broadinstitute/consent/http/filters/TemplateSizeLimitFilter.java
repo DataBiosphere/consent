@@ -6,10 +6,9 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.ext.Provider;
-import java.io.FilterInputStream;
+import jakarta.ws.rs.ext.ReaderInterceptor;
+import jakarta.ws.rs.ext.ReaderInterceptorContext;
 import java.io.IOException;
-import java.io.InputStream;
-import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
 import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.broadinstitute.consent.http.util.ContentLength;
@@ -25,14 +24,13 @@ import org.broadinstitute.consent.http.util.ContentLength;
  * is refused before a byte of the body is read, which is the honest oversize upload. A body sent
  * chunked, or under a {@code Content-Length} that lies, has no length to check, so the entity
  * stream is bounded as well and stops the read at the cap. That second refusal is raised while
- * Jersey is reading the body, and reaches the client as a 413 through {@link
- * TemplateTooLargeExceptionMapper} rather than from the resource method; whether Jersey routes
- * every reader-phase failure there is best-effort, but the read stops at the cap either way.
+ * Jersey is reading the body, so this also intercepts the read, to answer it with a 413 ({@link
+ * BoundedEntityStream#readOrRefuse}) after MIMEPull has deleted what it wrote to temporary disk.
  */
 @Provider
 @TemplateSizeLimited
 @Priority(Priorities.USER)
-public class TemplateSizeLimitFilter implements ContainerRequestFilter {
+public class TemplateSizeLimitFilter implements ContainerRequestFilter, ReaderInterceptor {
 
   /**
    * What the multipart envelope adds around the file: the boundaries, the part headers, and the
@@ -54,52 +52,14 @@ public class TemplateSizeLimitFilter implements ContainerRequestFilter {
       return;
     }
     requestContext.setEntityStream(
-        new BoundedEntityStream(requestContext.getEntityStream(), MAX_REQUEST_BYTES));
+        new BoundedEntityStream(
+            requestContext.getEntityStream(),
+            MAX_REQUEST_BYTES,
+            StudyTemplateValidationService.TOO_LARGE_MESSAGE));
   }
 
-  /** Refuses to hand out more than the cap, so a body with no declared length is bounded too. */
-  private static final class BoundedEntityStream extends FilterInputStream {
-
-    private final long limit;
-    private long read;
-
-    private BoundedEntityStream(InputStream in, long limit) {
-      super(in);
-      this.limit = limit;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int value = super.read();
-      if (value != -1) {
-        count(1);
-      }
-      return value;
-    }
-
-    @Override
-    public int read(byte[] buffer, int offset, int length) throws IOException {
-      int count = super.read(buffer, offset, length);
-      if (count > 0) {
-        count(count);
-      }
-      return count;
-    }
-
-    @Override
-    public long skip(long requested) throws IOException {
-      long skipped = super.skip(requested);
-      if (skipped > 0) {
-        count(skipped);
-      }
-      return skipped;
-    }
-
-    private void count(long bytes) {
-      read += bytes;
-      if (read > limit) {
-        throw new TemplateTooLargeException(StudyTemplateValidationService.TOO_LARGE_MESSAGE);
-      }
-    }
+  @Override
+  public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException {
+    return BoundedEntityStream.readOrRefuse(context);
   }
 }

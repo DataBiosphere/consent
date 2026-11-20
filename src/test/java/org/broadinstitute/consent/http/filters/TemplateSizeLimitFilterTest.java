@@ -8,13 +8,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ReaderInterceptorContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.broadinstitute.consent.http.exceptions.TemplateTooLargeException;
+import org.broadinstitute.consent.http.exceptions.RequestTooLargeException;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.junit.jupiter.api.Test;
@@ -75,8 +77,8 @@ class TemplateSizeLimitFilterTest {
     InputStream bounded =
         boundedStreamOver(new byte[(int) TemplateSizeLimitFilter.MAX_REQUEST_BYTES + 1], null);
 
-    TemplateTooLargeException e =
-        assertThrows(TemplateTooLargeException.class, bounded::readAllBytes);
+    RequestTooLargeException e =
+        assertThrows(RequestTooLargeException.class, bounded::readAllBytes);
     assertEquals(StudyTemplateValidationService.TOO_LARGE_MESSAGE, e.getMessage());
   }
 
@@ -85,7 +87,7 @@ class TemplateSizeLimitFilterTest {
     InputStream bounded =
         boundedStreamOver(new byte[(int) TemplateSizeLimitFilter.MAX_REQUEST_BYTES + 1], "10");
 
-    assertThrows(TemplateTooLargeException.class, bounded::readAllBytes);
+    assertThrows(RequestTooLargeException.class, bounded::readAllBytes);
   }
 
   @Test
@@ -115,7 +117,7 @@ class TemplateSizeLimitFilterTest {
   void testTheBoundedStreamCountsABodyReadOneByteAtATime() {
     InputStream bounded = boundedStreamOver(oversizeBody(), null);
 
-    assertThrows(TemplateTooLargeException.class, () -> readEveryByte(bounded));
+    assertThrows(RequestTooLargeException.class, () -> readEveryByte(bounded));
   }
 
   @Test
@@ -124,7 +126,7 @@ class TemplateSizeLimitFilterTest {
     InputStream bounded = boundedStreamOver(oversizeBody(), null);
 
     assertThrows(
-        TemplateTooLargeException.class,
+        RequestTooLargeException.class,
         () -> bounded.skip(TemplateSizeLimitFilter.MAX_REQUEST_BYTES + 1));
   }
 
@@ -139,6 +141,43 @@ class TemplateSizeLimitFilterTest {
     // Nothing left to skip, so nothing is counted against the cap.
     bounded.readAllBytes();
     assertEquals(0, bounded.skip(1));
+  }
+
+  @Test
+  void testTheBoundedStreamRefusesMarks() {
+    assertEquals(false, boundedStreamOver(new byte[1], null).markSupported());
+  }
+
+  @Test
+  void testAReadTheStreamStoppedIsAnswered413() throws IOException {
+    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
+    when(context.proceed()).thenThrow(new RequestTooLargeException("Template is too large"));
+
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> filter.aroundReadFrom(context));
+    assertEquals(
+        Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), e.getResponse().getStatus());
+    assertEquals(
+        new Error(
+            "Template is too large", Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()),
+        e.getResponse().getEntity());
+  }
+
+  @Test
+  void testAReadWithinTheCapIsPassedThrough() throws IOException {
+    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
+    when(context.proceed()).thenReturn("entity");
+
+    assertEquals("entity", filter.aroundReadFrom(context));
+  }
+
+  @Test
+  void testOtherReadFailuresAreLeftAlone() throws IOException {
+    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
+    IOException failure = new IOException("connection reset");
+    when(context.proceed()).thenThrow(failure);
+
+    assertEquals(failure, assertThrows(IOException.class, () -> filter.aroundReadFrom(context)));
   }
 
   private static void readEveryByte(InputStream stream) throws IOException {
