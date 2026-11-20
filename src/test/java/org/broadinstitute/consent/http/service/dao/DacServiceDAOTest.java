@@ -93,8 +93,7 @@ class DacServiceDAOTest extends DAOTestHelper {
               "verification url: " + randomAlphabetic(10),
               "verification file name: " + randomAlphabetic(10),
               "org type: " + randomAlphabetic(10),
-              superUser.getUserId(),
-              new Date());
+              superUser.getUserId());
           int userLcId =
               libraryCardDAO.insertLibraryCard(
                   lcUser.getUserId(),

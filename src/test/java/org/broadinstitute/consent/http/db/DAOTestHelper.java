@@ -275,8 +275,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
             randomAlphabetic(10),
             randomAlphabetic(10),
             OrganizationType.NON_PROFIT.getValue(),
-            adminId,
-            new Date());
+            adminId);
     User user = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), institutionId);
     return userDAO.findUserById(user.getUserId());
   }
