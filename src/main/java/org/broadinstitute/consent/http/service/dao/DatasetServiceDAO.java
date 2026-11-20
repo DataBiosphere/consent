@@ -7,10 +7,8 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -600,8 +598,7 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   private void addAuditRecord(Integer datasetId, String name, Integer userId, AuditActions action) {
     DatasetAudit audit =
-        new DatasetAudit(
-            datasetId, null, name, new Date(), userId, action.getValue().toUpperCase());
+        new DatasetAudit(datasetId, null, name, userId, action.getValue().toUpperCase());
     datasetDAO.insertDatasetAudit(audit);
   }
 
@@ -658,7 +655,6 @@ public class DatasetServiceDAO implements ConsentLogger {
       Integer datasetId,
       List<DatasetProperty> properties,
       Set<DatasetProperty> existingProps) {
-    Timestamp now = new Timestamp(new Date().getTime());
     List<Update> updates = new ArrayList<>();
     HashSet<String> existingPropNames =
         new HashSet<>(existingProps.stream().map(DatasetProperty::getPropertyName).toList());
@@ -667,20 +663,19 @@ public class DatasetServiceDAO implements ConsentLogger {
         prop -> {
           if (!existingPropNames.contains(prop.getPropertyName())) {
             prop.setDatasetId(datasetId);
-            prop.setCreateDate(now);
-            updates.add(createPropertyInsert(handle, prop, now));
+            updates.add(createPropertyInsert(handle, prop));
           }
         });
     return updates;
   }
 
-  private Update createPropertyInsert(Handle handle, DatasetProperty property, Timestamp now) {
+  private Update createPropertyInsert(Handle handle, DatasetProperty property) {
     final String sql =
         """
             INSERT INTO dataset_property (dataset_id, property_key, schema_property, property_value, property_type, create_date )
             SELECT :datasetId,
                     (SELECT DISTINCT key_id FROM dictionary WHERE LOWER(key) = LOWER(:propertyName) ORDER BY key_id LIMIT 1),
-                    :schemaProperty, :propertyStringValue, :propertyTypeValue, :createDate
+                    :schemaProperty, :propertyStringValue, :propertyTypeValue, NOW()
         """;
     Update insert = handle.createUpdate(sql);
     insert.bind("datasetId", property.getDatasetId());
@@ -689,7 +684,6 @@ public class DatasetServiceDAO implements ConsentLogger {
     insert.bind("schemaProperty", property.getSchemaProperty());
     insert.bind("propertyStringValue", property.getPropertyValueAsString());
     insert.bind("propertyTypeValue", property.getPropertyTypeAsString());
-    insert.bind("createDate", now);
     return insert;
   }
 
