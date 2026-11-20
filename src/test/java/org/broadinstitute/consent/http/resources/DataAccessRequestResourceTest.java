@@ -51,6 +51,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -711,6 +712,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var order = inOrder(dataAccessRequestService, gcsService);
     order.verify(dataAccessRequestService).saveDocument(any(), any(), any());
     order.verify(gcsService).deleteDocument(previousLocation);
+    order
+        .verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            previousLocation,
+            DarDocumentDeletionReason.REPLACED,
+            dar.getUserId());
   }
 
   // A location planted before document fields were server-managed can name a file still in use.
@@ -732,6 +741,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
             duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData);
     assertEquals(200, response.getStatus());
     verify(gcsService, never()).deleteDocument(any());
+    verify(dataAccessRequestService, never())
+        .recordDocumentDeletion(any(), any(), any(), any(), any());
   }
 
   // Another upload committed after this one read the DAR: the row's location is the one replaced.
@@ -851,11 +862,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
+    when(gcsService.deleteDocument("new-upload")).thenReturn(true);
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(404, response.getStatus());
     verify(gcsService).deleteDocument("new-upload");
     verify(gcsService, never()).deleteDocument(previousLocation);
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            "new-upload",
+            DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+            dar.getUserId());
   }
 
   @Test
@@ -876,12 +895,20 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
+    when(gcsService.deleteDocument(previousLocation)).thenReturn(true);
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(500, response.getStatus());
     // The saved DAR points to the new upload, so it stays and the previous document goes.
     verify(gcsService).deleteDocument(previousLocation);
     verify(gcsService, never()).deleteDocument("new-upload");
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            previousLocation,
+            DarDocumentDeletionReason.REPLACED,
+            dar.getUserId());
   }
 
   @Test
@@ -903,11 +930,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
+    when(gcsService.deleteDocument("new-upload")).thenReturn(true);
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(500, response.getStatus());
     verify(gcsService).deleteDocument("new-upload");
     verify(gcsService, never()).deleteDocument(previousLocation);
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            "new-upload",
+            DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+            dar.getUserId());
   }
 
   private Pair<InputStream, FormDataContentDisposition> mockFormDataMultiPart(String fileName) {
@@ -1143,6 +1178,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     doThrow(new BadRequestException("persistence failed"))
         .when(dataAccessRequestService)
         .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
+    when(gcsService.deleteDocument("uploaded-collaboration")).thenReturn(true);
 
     try (var response =
         resource.postProgressReport(
@@ -1158,6 +1194,16 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     }
 
     verify(gcsService).deleteDocument("uploaded-collaboration");
+    ArgumentCaptor<DataAccessRequest> report = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService)
+        .createProgressReport(eq(user), report.capture(), eq(parentDar), eq(request));
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            eq(report.getValue().getReferenceId()),
+            eq(DarDocumentType.COLLABORATION),
+            eq("uploaded-collaboration"),
+            eq(DarDocumentDeletionReason.FAILED_REPORT_CLEANUP),
+            eq(user.getUserId()));
   }
 
   // The report committed, then a later step failed: the committed report refers to its uploads.
