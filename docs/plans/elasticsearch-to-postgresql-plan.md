@@ -511,11 +511,11 @@ Size key from the existing plan: **S** is about 1 day, **M** is 2 to 3 days, **L
 | Item in the existing plans | After the move |
 | --- | --- |
 | Epic D (ES document-level and field-level security) | Not applicable. The license dependency goes. |
-| Question OPEN-13 (does a different client read the data with the service credential?) | The question moves to PostgreSQL. It does not go away. The DUOS BFF already signs in with the `consent` database role. Its code reads only `user_sessions` today. If a different reader of the search data is probable, row-level security is the equivalent of Epic D. |
+| Question OPEN-13 (does a different client read the data with the service credential?) | The question moves to PostgreSQL. It does not go away. The DUOS BFF already signs in with the `consent` database role. Its code reads only `user_sessions` today. But the `consent` role creates the search table and thus owns it, so the BFF connection has full rights on that table. Row-level security does not make a limit here, because the owner of a table is exempt by default. Give the BFF its own database role with grants for the session data only, and check those grants before the search table goes to production. Row-level security is then the equivalent of Epic D for a different reader of the search data. |
 | Epic E-0 (server-owned aggregations) | Options 1 and 3 give this by design. Option 2 gives it only for the shapes that the translator accepts. |
 | Epic E-1 (query mediation) | Options 1 and 3 give this by design. No client query language exists. Option 2 must still build it. |
 | Epic E-2 (injected visibility filter) | A SQL `WHERE` clause that the server adds. It can join live tables. |
-| Epic E-3 (response field allowlist) | The `SELECT` list, or a projection of the stored document. |
+| Epic E-3 (response field allowlist) | The `SELECT` list, or a projection of the stored document. This protects the returned rows only. A facet key, a sort key, and a text match can also show the value of a protected field. Thus the field registry must say, for each field, which operations can use it: return, filter, facet, sort, and text search. The leak tests of the access contract (`ElasticSearchLeakDefensePocTest`) must move to the new API as negative tests. |
 | Epic B (access metadata in each document) | Smaller. Access rules can join live tables such as DAC membership and institution. A rule change has effect immediately, without an index write. |
 | Epic C (auth context service) | No change. Still necessary. |
 | ES capability service, probes, and tests | Removed. |
@@ -697,7 +697,9 @@ This list applies to each option.
   `render-configs.sh`.
 - `DEVNOTES.md`, `docs/ONBOARDING.md`, and `docs/README.md`.
 - `dataset.index_confirmed_date`, if the write joins the transaction. `AssetLookupDAO` and
-  `AssetLookupService` read this column and must change at the same time.
+  `AssetLookupService` read this column. They must change to the PostgreSQL publication state
+  before the ES writes stop (step 7 of section 9.2), not at this cleanup. Only an ES write sets the
+  column, so after step 7 a new publication does not set it.
 - The index endpoints (`/api/dataset/index...`): see section 4.1a.
 
 **duos-ui**
@@ -747,6 +749,10 @@ Reasons:
 | 6 | Parity test with generated data, shadow comparison in the deployed environment, publication check | L to XL | consent |
 | 7 | Switch, observe, stop ES use, measure zero traffic, stop the clusters. Then remove the ES code and configuration. | L | all |
 
+Phase 1 also moves the document builder reads and the row write into the transaction of each
+data change (section 4.1). The size of phase 1 does not include that work yet, and it can be
+larger than L.
+
 Phases 1 and 2 have no effect on users and can start immediately. Phases 3 and 5 can run in parallel
 after the team agrees on the request.
 
@@ -780,11 +786,19 @@ These numbers are estimates. The team has not checked the sizes.
 1. Deploy the new table. Write to ES and to PostgreSQL.
 2. Compare the three sets of published dataset ids and correct each difference (section 9.4). This
    is a gate. Do not continue with a difference that has no decision.
-3. Fill the table from the agreed set.
+3. Fill the table from the agreed set. The fill reads the publication state again for each
+   dataset, with the lock of a live write, so it cannot undo a removal that occurs during the fill
+   (section 4.1). Then compare the table with the published set (second gate in section 9.4). Do
+   not continue with a difference.
 4. Release the new endpoint. The old endpoints stay.
 5. Change duos-ui to the new endpoint behind a feature flag.
-6. Observe one release. Compare results and database load.
-7. Stop all ES use with configuration, not with a code removal:
+6. Observe one release. Compare results and database load. In this period:
+   - Change `AssetLookupDAO` to the PostgreSQL publication state. Test a publication and a removal.
+   - Measure the HTTP traffic on the two old search endpoints, by caller. ES traffic is not a
+     sufficient measure, because step 7 stops it for all clients at the same time.
+   - Do the second gate of section 9.4 again.
+7. Stop all ES use with configuration, not with a code removal. Do this step only when the old
+   search endpoints get no traffic, or when each caller that remains has a decision (section 9.5):
    - Stop the ES writes.
    - Make the two old search endpoints return an error, because they read ES.
    - Stop the ES health check, or `/status` reports a degraded service after the cluster stops.
@@ -797,8 +811,15 @@ These numbers are estimates. The team has not checked the sizes.
 Rollback:
 
 - Until step 7: set the duos-ui flag off.
-- From step 7 to step 9: start the ES writes again and build the full index again. The cluster
-  still exists.
+- From step 7 to step 9: the cluster still exists, but its documents are old. Do these steps in
+  order:
+  1. Start the ES writes again.
+  2. Build the index from the published set in PostgreSQL. Do not use `POST /api/dataset/index`
+     without a change: it writes all datasets, and it publishes datasets that an admin removed
+     (section 4.1).
+  3. Delete each ES document that is not in the published set.
+  4. Compare the ids in ES with the published set. Open the old search endpoints only when the
+     two sets agree.
 - After step 9: no rollback to ES.
 
 ### 9.3 If duos-ui capacity is not available before the date
@@ -845,6 +866,23 @@ have that column set. The comparison shows this.
 
 The fill uses the agreed set only after the three sets agree, or after each difference has a
 decision.
+
+**Search table check (second gate, for steps 3 and 6 of the switch)**
+
+The first gate compares three sets that exist before the fill. It cannot find a row that the fill
+or a live write omitted or added. Thus a second comparison is necessary:
+
+- Compare the dataset ids in the search table with the published set in PostgreSQL
+  (`indexed_date`, after the first gate corrected it).
+- A missing row and an extra row are each a defect. Correct the cause, not only the row.
+- Do the comparison after the fill, and again before PostgreSQL reads start for users.
+- Keep the comparison as an admin check that can run at any time after the switch.
+
+**Negative tests**
+
+- For each protected field of the access contract, test that a caller without access cannot get
+  its value through a returned row, a facet, a sort, or a text match (section 7.2).
+- Test that a removed dataset is absent from results and from counts at commit.
 
 **Query comparison**
 
@@ -917,6 +955,9 @@ not public through a raw query today can lose those results.
     how long? Storage C2 with a scheduled refresh is possible only with a yes (section 4.1).
 11. How long does a search box query take on a standard view with 10,000 datasets? Storage C1 is
     possible only if this time is acceptable (section 4.1).
+12. For product: two asset filters can match two different assets of one study today, and the
+    study and dataset tabs then show that study. Must the new search keep this, or must the two
+    filters match the same asset (section 4.2)?
 
 ## 12. Sources
 
