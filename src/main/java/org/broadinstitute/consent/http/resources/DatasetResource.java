@@ -188,7 +188,7 @@ public class DatasetResource extends Resource {
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
 
       Dataset updatedDataset =
-          datasetRegistrationService.updateDataset(datasetId, user, update, files);
+          datasetRegistrationService.updateDataset(datasetExists, user, update, files);
       return Response.ok().entity(updatedDataset).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

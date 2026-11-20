@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -1106,6 +1107,20 @@ class DatasetResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
     verify(datasetRegistrationService, never()).updateDataset(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateDatasetDacChangedConflict() throws IOException {
+    user.addRole(UserRoles.Admin());
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(new Dataset());
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any()))
+        .thenThrow(new ConsentConflictException("Dataset DAC changed during the update"));
+    String json = createDataset(user);
+
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+    }
   }
 
   @Test

@@ -310,7 +310,7 @@ public class DatasetRegistrationService implements ConsentLogger {
    * @return List of created Datasets from the provided registration schema
    */
   public Dataset updateDataset(
-      Integer datasetId, User user, DatasetUpdate update, Map<String, FormDataBodyPart> files)
+      Dataset dataset, User user, DatasetUpdate update, Map<String, FormDataBodyPart> files)
       throws IOException {
 
     if (Objects.isNull(update.getName())) {
@@ -321,11 +321,11 @@ public class DatasetRegistrationService implements ConsentLogger {
       throw new BadRequestException("DAC Id is required");
     }
 
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
-
     if (!Objects.equals(dataset.getDacId(), update.getDacId())) {
       throw new BadRequestException("DAC Id update is not yet supported");
     }
+
+    Integer datasetId = dataset.getDatasetId();
 
     Map<String, BlobId> uploadedFileCache = new HashMap<>();
 

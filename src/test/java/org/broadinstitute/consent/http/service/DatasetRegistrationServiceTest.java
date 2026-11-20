@@ -865,7 +865,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertDoesNotThrow(
         () -> {
-          datasetRegistrationService.updateDataset(dataset.getDatasetId(), user, update, Map.of());
+          datasetRegistrationService.updateDataset(dataset, user, update, Map.of());
         },
         "Update Error");
   }
@@ -1121,7 +1121,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertThrows(
         BadRequestException.class,
-        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+        () -> datasetRegistrationService.updateDataset(new Dataset(), user, update, Map.of()));
   }
 
   @Test
@@ -1133,7 +1133,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertThrows(
         BadRequestException.class,
-        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+        () -> datasetRegistrationService.updateDataset(new Dataset(), user, update, Map.of()));
   }
 
   @Test
@@ -1142,14 +1142,14 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDacId(1);
-    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
     org.broadinstitute.consent.http.models.DatasetUpdate update =
         new org.broadinstitute.consent.http.models.DatasetUpdate(
             randomAlphabetic(10), 2, List.of());
 
     assertThrows(
         BadRequestException.class,
-        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+        () -> datasetRegistrationService.updateDataset(dataset, user, update, Map.of()));
+    verify(datasetServiceDAO, never()).updateDataset(any());
   }
 
   @Test
@@ -1216,7 +1216,6 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDacId(2);
-    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "cert"));
     when(gcsService.hasBytes(any())).thenReturn(true);
     doThrow(new UnableToExecuteStatementException("rejected"))
@@ -1230,7 +1229,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertThrows(
         UnableToExecuteStatementException.class,
-        () -> datasetRegistrationService.updateDataset(1, user, update, files));
+        () -> datasetRegistrationService.updateDataset(dataset, user, update, files));
 
     verify(gcsService).deleteDocument("cert");
   }

@@ -73,6 +73,8 @@ put:
       description: The user is not an Admin or a Chairperson
     404:
       description: Dataset not found, or the user does not have access to update it
+    409:
+      description: The dataset's DAC changed while the update was in progress
     429:
       description: Too Many Requests - rate limit exceeded
       content:

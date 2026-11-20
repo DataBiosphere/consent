@@ -546,6 +546,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         aliases, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue());
   }
 
+  @SqlQuery("SELECT dac_id FROM dataset WHERE dataset_id = :datasetId FOR NO KEY UPDATE")
+  Integer lockDatasetDacId(@Bind("datasetId") Integer datasetId);
+
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
   void updateDatasetDacId(@Bind("datasetId") Integer datasetId, @Bind("dacId") Integer dacId);
 
