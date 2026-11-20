@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
@@ -64,6 +65,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.RemovedDocument;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -251,7 +253,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
     boolean requiresSOApproval = requiresSOApproval(user, datasetIds);
-    List<String> removedDocuments = new ArrayList<>();
+    List<RemovedDocument> removedDocuments = new ArrayList<>();
     String referenceId =
         dataAccessRequestServiceDAO.inTransaction(
             transactionDAOs -> {
@@ -269,13 +271,18 @@ public class DataAccessRequestService implements ConsentLogger {
               if (Objects.nonNull(lockedDraft)) {
                 // A document the draft had and the submission doesn't is removed.
                 Stream.of(
-                        lockedDraft.getData().getIrbDocumentLocation(),
-                        lockedDraft.getData().getCollaborationLetterLocation())
-                    .filter(Objects::nonNull)
+                        new RemovedDocument(
+                            DarDocumentType.IRB, lockedDraft.getData().getIrbDocumentLocation()),
+                        new RemovedDocument(
+                            DarDocumentType.COLLABORATION,
+                            lockedDraft.getData().getCollaborationLetterLocation()))
+                    .filter(document -> Objects.nonNull(document.location()))
                     .filter(
-                        location ->
-                            !location.equals(darData.getIrbDocumentLocation())
-                                && !location.equals(darData.getCollaborationLetterLocation()))
+                        document ->
+                            !document.location().equals(darData.getIrbDocumentLocation())
+                                && !document
+                                    .location()
+                                    .equals(darData.getCollaborationLetterLocation()))
                     .forEach(removedDocuments::add);
               }
               Integer collectionId =
@@ -329,7 +336,7 @@ public class DataAccessRequestService implements ConsentLogger {
               }
               return transactionReferenceId;
             });
-    deleteRemovedDocuments(referenceId, removedDocuments);
+    deleteRemovedDocuments(referenceId, user.getUserId(), removedDocuments);
     if (!requiresSOApproval) {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     }
@@ -342,11 +349,34 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   /**
-   * Deletes the documents a committed save removed from a draft. A failure leaves an unreferenced
-   * file, so it is logged rather than failing the save.
+   * Records a DAR document file deleted from the bucket. The file is already gone, so a failure to
+   * record it is logged rather than failing the request.
    */
-  private void deleteRemovedDocuments(String referenceId, List<String> locations) {
-    for (String location : locations) {
+  public void recordDocumentDeletion(
+      String referenceId,
+      DarDocumentType type,
+      String location,
+      DarDocumentDeletionReason reason,
+      Integer userId) {
+    try {
+      dataAccessRequestDAO.insertDocumentDeletion(
+          referenceId, type.name(), location, reason.name(), userId);
+    } catch (Exception e) {
+      logException(
+          "Unable to record the deletion of %s document %s of DAR %s"
+              .formatted(type, location, referenceId),
+          e);
+    }
+  }
+
+  /**
+   * Deletes the documents a committed save removed from a draft, and records each deletion. A
+   * failure leaves an unreferenced file, so it is logged rather than failing the save.
+   */
+  private void deleteRemovedDocuments(
+      String referenceId, Integer userId, List<RemovedDocument> documents) {
+    for (RemovedDocument document : documents) {
+      String location = document.location();
       // DAR uploads name files with a random UUID; anything else came from elsewhere.
       if (!isUuid(location)) {
         logWarn(
@@ -363,7 +393,10 @@ public class DataAccessRequestService implements ConsentLogger {
                   .formatted(location, referenceId));
           continue;
         }
-        gcsService.deleteDocument(location);
+        if (gcsService.deleteDocument(location)) {
+          recordDocumentDeletion(
+              referenceId, document.type(), location, DarDocumentDeletionReason.REMOVED, userId);
+        }
       } catch (Exception e) {
         logWarn(
             "Unable to delete removed document %s of DAR %s".formatted(location, referenceId), e);
@@ -861,7 +894,7 @@ public class DataAccessRequestService implements ConsentLogger {
     try {
       DataAccessRequestServiceDAO.DraftSave saved =
           dataAccessRequestServiceDAO.updateByReferenceId(user, dar, keepFromRow);
-      deleteRemovedDocuments(dar.getReferenceId(), saved.removedDocuments());
+      deleteRemovedDocuments(dar.getReferenceId(), user.getUserId(), saved.removedDocuments());
       return saved.dar();
     } catch (JdbiException e) {
       // The edit locks the DAR row, then its collection; resubmit, researcher cancel and signing

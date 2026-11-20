@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+  <!-- One row per DAR document file deleted from the bucket (DT-4487). No foreign keys, so the
+       record outlives the DAR and the user. -->
+  <changeSet id="changelog-consent-2026-11-19-dar-document-deletion" author="otchet">
+    <createTable tableName="dar_document_deletion">
+      <column name="deletion_id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+      <column name="reference_id" type="TEXT"><constraints nullable="false"/></column>
+      <column name="document_type" type="TEXT"><constraints nullable="false"/></column>
+      <column name="blob_name" type="TEXT"><constraints nullable="false"/></column>
+      <column name="reason" type="TEXT"><constraints nullable="false"/></column>
+      <column name="user_id" type="INTEGER"/>
+      <column name="delete_date" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()"><constraints nullable="false"/></column>
+    </createTable>
+    <createIndex tableName="dar_document_deletion" indexName="idx_dar_document_deletion_reference_id">
+      <column name="reference_id"/>
+    </createIndex>
+    <sql>
+      ALTER TABLE dar_document_deletion
+        ADD CONSTRAINT dar_document_deletion_type_valid CHECK (document_type IN ('IRB', 'COLLABORATION'))
+    </sql>
+    <sql>
+      ALTER TABLE dar_document_deletion
+        ADD CONSTRAINT dar_document_deletion_reason_valid
+        CHECK (reason IN ('REPLACED', 'REMOVED', 'FAILED_SAVE_CLEANUP', 'FAILED_REPORT_CLEANUP'))
+    </sql>
+    <!-- The raw SQL above has no automatic inverse; dropping the table undoes the whole change. -->
+    <rollback>
+      <dropTable tableName="dar_document_deletion"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

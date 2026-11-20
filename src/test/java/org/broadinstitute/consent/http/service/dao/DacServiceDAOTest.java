@@ -76,13 +76,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   "dac email: " + randomAlphabetic(10),
                   createUser().getUserId());
           // Data Access Agreement
-          int daaId =
-              daaDAO.createDaa(
-                  superUser.getUserId(),
-                  new Date().toInstant(),
-                  superUser.getUserId(),
-                  new Date().toInstant(),
-                  dacId);
+          int daaId = daaDAO.createDaa(superUser.getUserId(), superUser.getUserId(), dacId);
           // DAC->DAA Association.
           daaDAO.createDacDaaRelation(dacId, daaId, superUser.getUserId());
           // Library Card User

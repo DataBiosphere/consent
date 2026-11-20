@@ -30,6 +30,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -51,6 +52,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -711,6 +713,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var order = inOrder(dataAccessRequestService, gcsService);
     order.verify(dataAccessRequestService).saveDocument(any(), any(), any());
     order.verify(gcsService).deleteDocument(previousLocation);
+    order
+        .verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            previousLocation,
+            DarDocumentDeletionReason.REPLACED,
+            dar.getUserId());
   }
 
   // A location planted before document fields were server-managed can name a file still in use.
@@ -732,6 +742,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
             duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData);
     assertEquals(200, response.getStatus());
     verify(gcsService, never()).deleteDocument(any());
+    verify(dataAccessRequestService, never())
+        .recordDocumentDeletion(any(), any(), any(), any(), any());
   }
 
   // Another upload committed after this one read the DAR: the row's location is the one replaced.
@@ -851,11 +863,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
+    when(gcsService.deleteDocument("new-upload")).thenReturn(true);
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(404, response.getStatus());
     verify(gcsService).deleteDocument("new-upload");
     verify(gcsService, never()).deleteDocument(previousLocation);
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            "new-upload",
+            DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+            dar.getUserId());
   }
 
   @Test
@@ -876,12 +896,20 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
+    when(gcsService.deleteDocument(previousLocation)).thenReturn(true);
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(500, response.getStatus());
     // The saved DAR points to the new upload, so it stays and the previous document goes.
     verify(gcsService).deleteDocument(previousLocation);
     verify(gcsService, never()).deleteDocument("new-upload");
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            previousLocation,
+            DarDocumentDeletionReason.REPLACED,
+            dar.getUserId());
   }
 
   @Test
@@ -903,11 +931,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
+    when(gcsService.deleteDocument("new-upload")).thenReturn(true);
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(500, response.getStatus());
     verify(gcsService).deleteDocument("new-upload");
     verify(gcsService, never()).deleteDocument(previousLocation);
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            dar.getReferenceId(),
+            DarDocumentType.IRB,
+            "new-upload",
+            DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+            dar.getUserId());
   }
 
   private Pair<InputStream, FormDataContentDisposition> mockFormDataMultiPart(String fileName) {
@@ -1143,6 +1179,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     doThrow(new BadRequestException("persistence failed"))
         .when(dataAccessRequestService)
         .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
+    when(gcsService.deleteDocument("uploaded-collaboration")).thenReturn(true);
 
     try (var response =
         resource.postProgressReport(
@@ -1158,6 +1195,16 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     }
 
     verify(gcsService).deleteDocument("uploaded-collaboration");
+    ArgumentCaptor<DataAccessRequest> report = ArgumentCaptor.forClass(DataAccessRequest.class);
+    verify(dataAccessRequestService)
+        .createProgressReport(eq(user), report.capture(), eq(parentDar), eq(request));
+    verify(dataAccessRequestService)
+        .recordDocumentDeletion(
+            eq(report.getValue().getReferenceId()),
+            eq(DarDocumentType.COLLABORATION),
+            eq("uploaded-collaboration"),
+            eq(DarDocumentDeletionReason.FAILED_REPORT_CLEANUP),
+            eq(user.getUserId()));
   }
 
   // The report committed, then a later step failed: the committed report refers to its uploads.
@@ -1195,6 +1242,72 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     }
 
     verify(gcsService, never()).deleteDocument(any());
+  }
+
+  // The collaboration letter uploads, then the ethics document fails: the uploaded letter goes.
+  @Test
+  void testPostProgressReportDeletesTheFirstUploadWhenTheSecondFails() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(user.getUserId());
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(
+        new DataUseBuilder().setCollaboratorRequired(true).setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
+    FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
+    when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
+    when(collaborationFile.getType()).thenReturn("text/plain");
+    FormDataContentDisposition ethicsFile = mock(FormDataContentDisposition.class);
+    when(ethicsFile.getFileName()).thenReturn("ethics.pdf");
+    when(ethicsFile.getType()).thenReturn("application/pdf");
+    when(gcsService.storeDocument(any(), eq("text/plain"), any()))
+        .thenReturn(BlobId.of("bucket", "uploaded-collaboration"));
+    when(gcsService.storeDocument(any(), eq("application/pdf"), any()))
+        .thenThrow(new IOException("storage unavailable"));
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser,
+            request,
+            "",
+            "{\"datasetIds\":[1]}",
+            IOUtils.toInputStream("letter", Charset.defaultCharset()),
+            collaborationFile,
+            IOUtils.toInputStream("ethics", Charset.defaultCharset()),
+            ethicsFile)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    verify(gcsService).deleteDocument("uploaded-collaboration");
+    verify(dataAccessRequestService, never()).createProgressReport(any(), any(), any(), any());
+  }
+
+  @Test
+  void testPostProgressReportDeletesOnlyItsCopyOfTheParentDocumentWhenCreationFails()
+      throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(user.getUserId());
+    parentDar.getData().setIrbDocumentLocation("parent-irb");
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
+    when(gcsService.copyDocument(eq("parent-irb"), any()))
+        .thenReturn(BlobId.of("bucket", "copied-irb"));
+    doThrow(new BadRequestException("persistence failed"))
+        .when(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
+
+    try (var response =
+        resource.postProgressReport(
+            duosUser, request, "", "{\"datasetIds\":[1]}", null, null, null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+
+    verify(gcsService).deleteDocument("copied-irb");
+    verify(gcsService, never()).deleteDocument("parent-irb");
   }
 
   @Test
@@ -1267,8 +1380,17 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(ethicsFileDetails.getType()).thenReturn(fileType);
 
     BlobId blobId = BlobId.of("bucket", "location");
-    when(gcsService.storeDocument(eq(collabInputStream), eq(fileType), any())).thenReturn(blobId);
-    when(gcsService.storeDocument(eq(ethicsInputStream), eq(fileType), any())).thenReturn(blobId);
+    // The first byte is read to check the file isn't empty, so the stored stream wraps the upload
+    // and must still hold all of its content.
+    List<String> stored = new ArrayList<>();
+    when(gcsService.storeDocument(any(), eq(fileType), any()))
+        .thenAnswer(
+            invocation -> {
+              stored.add(
+                  IOUtils.toString(
+                      invocation.getArgument(0, InputStream.class), Charset.defaultCharset()));
+              return blobId;
+            });
     resource.populateProgressReportWithDocuments(
         mockUser,
         collabInputStream,
@@ -1277,20 +1399,29 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         ethicsFileDetails,
         childDar,
         parentDar);
-    verify(gcsService, times(2)).storeDocument(any(), any(), any());
+    assertEquals(List.of("collab content", "ethics content"), stored);
   }
 
+  // Without a new file the report gets its own copy of the parent's document, so it can serve it
+  // and a later renewal, with this report as its parent, finds it.
   @Test
-  void populateProgressReportWithDocumentsUsesTheParentDocumentsWhenNoneAreSent() throws Exception {
+  void populateProgressReportWithDocumentsCopiesTheParentDocumentsWhenNoneAreSent()
+      throws Exception {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.getData().setCollaborationLetterLocation("parent_collab_location");
+    parentDar.getData().setCollaborationLetterName("letter.pdf");
     parentDar.getData().setIrbDocumentLocation("parent_irb_location");
+    parentDar.getData().setIrbDocumentName("irb.pdf");
     DataAccessRequest childDar = generateDataAccessRequest();
     childDar.setDatasetIds(List.of(1));
     Dataset dataset = new Dataset();
     dataset.setDataUse(
         new DataUseBuilder().setCollaboratorRequired(true).setEthicsApprovalRequired(true).build());
     when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+    when(gcsService.copyDocument(eq("parent_collab_location"), any()))
+        .thenReturn(BlobId.of("bucket", "copied-collab"));
+    when(gcsService.copyDocument(eq("parent_irb_location"), any()))
+        .thenReturn(BlobId.of("bucket", "copied-irb"));
 
     assertDoesNotThrow(
         () ->
@@ -1298,7 +1429,110 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
                 mockUser, null, null, null, null, childDar, parentDar));
 
     verify(gcsService, never()).storeDocument(any(), any(), any());
-    assertNull(childDar.getData().getCollaborationLetterLocation());
+    assertEquals("copied-collab", childDar.getData().getCollaborationLetterLocation());
+    assertEquals("letter.pdf", childDar.getData().getCollaborationLetterName());
+    assertEquals("copied-irb", childDar.getData().getIrbDocumentLocation());
+    assertEquals("irb.pdf", childDar.getData().getIrbDocumentName());
+  }
+
+  // duos-ui sends an empty part for a document it has no file for: details without a file name.
+  @Test
+  void populateProgressReportWithDocumentsCopiesForAnEmptyPart() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setCollaborationLetterLocation("parent_collab_location");
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setCollaboratorRequired(true).build());
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+    FormDataContentDisposition emptyPart = mock(FormDataContentDisposition.class);
+    when(gcsService.copyDocument(eq("parent_collab_location"), any()))
+        .thenReturn(BlobId.of("bucket", "copied-collab"));
+
+    resource.populateProgressReportWithDocuments(
+        mockUser,
+        IOUtils.toInputStream("", Charset.defaultCharset()),
+        emptyPart,
+        null,
+        null,
+        childDar,
+        parentDar);
+
+    verify(gcsService, never()).storeDocument(any(), any(), any());
+    assertEquals("copied-collab", childDar.getData().getCollaborationLetterLocation());
+  }
+
+  // Browsers don't send a size, so a real file arrives with size -1.
+  @Test
+  void populateProgressReportWithDocumentsAcceptsAFileWithoutASize() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+    FormDataContentDisposition file = mock(FormDataContentDisposition.class);
+    when(file.getFileName()).thenReturn("irb.pdf");
+    when(file.getType()).thenReturn("application/pdf");
+    when(file.getSize()).thenReturn(-1L);
+    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new-irb"));
+
+    resource.populateProgressReportWithDocuments(
+        mockUser,
+        null,
+        null,
+        IOUtils.toInputStream("irb", Charset.defaultCharset()),
+        file,
+        childDar,
+        parentDar);
+
+    assertEquals("new-irb", childDar.getData().getIrbDocumentLocation());
+    verify(gcsService, never()).copyDocument(any(), any());
+  }
+
+  // A named but empty file doesn't satisfy the requirement, even with no size sent.
+  @Test
+  void populateProgressReportWithDocumentsRejectsAnEmptyFile() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+    FormDataContentDisposition file = mock(FormDataContentDisposition.class);
+    when(file.getFileName()).thenReturn("irb.pdf");
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            resource.populateProgressReportWithDocuments(
+                mockUser,
+                null,
+                null,
+                IOUtils.toInputStream("", Charset.defaultCharset()),
+                file,
+                childDar,
+                parentDar));
+    verify(gcsService, never()).storeDocument(any(), any(), any());
+  }
+
+  @Test
+  void populateProgressReportWithDocumentsRejectsAMissingParentDocument() throws Exception {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setIrbDocumentLocation("missing_irb_location");
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(new DataUseBuilder().setEthicsApprovalRequired(true).build());
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
+    when(gcsService.copyDocument(eq("missing_irb_location"), any()))
+        .thenThrow(new NotFoundException("Document not found"));
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            resource.populateProgressReportWithDocuments(
+                mockUser, null, null, null, null, childDar, parentDar));
     assertNull(childDar.getData().getIrbDocumentLocation());
   }
 

@@ -69,7 +69,10 @@ public class DataAccessRequestServiceDAO {
    * A draft edit's save: the saved DAR, and the document locations it removed, for the caller to
    * delete once the save has committed and nothing else refers to them.
    */
-  public record DraftSave(DataAccessRequest dar, List<String> removedDocuments) {}
+  public record DraftSave(DataAccessRequest dar, List<RemovedDocument> removedDocuments) {}
+
+  /** A document a save removed: which document, and its file's location. */
+  public record RemovedDocument(DarDocumentType type, String location) {}
 
   /**
    * Saves a draft's data. The keys in {@code keepFromRow} are server-managed: their values come
@@ -116,7 +119,7 @@ public class DataAccessRequestServiceDAO {
     return jdbi.inTransaction(
         h -> {
           // The row lock is taken here, so the locations read before and after are this edit's.
-          List<String> before =
+          List<RemovedDocument> before =
               readLocations(h, documentLocations + " FOR NO KEY UPDATE", referenceId);
           Update darUpdate = h.createUpdate(updateDataByReferenceId);
           darUpdate.bind("referenceId", referenceId);
@@ -132,9 +135,12 @@ public class DataAccessRequestServiceDAO {
           }
           checkNoElectionsUnderCollectionLock(h, dar, user, now);
 
-          List<String> after = readLocations(h, documentLocations, referenceId);
-          List<String> removedDocuments =
-              before.stream().filter(location -> !after.contains(location)).toList();
+          List<String> after =
+              readLocations(h, documentLocations, referenceId).stream()
+                  .map(RemovedDocument::location)
+                  .toList();
+          List<RemovedDocument> removedDocuments =
+              before.stream().filter(document -> !after.contains(document.location())).toList();
 
           Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
           darDatasetDelete.bind("referenceId", dar.getReferenceId());
@@ -154,13 +160,17 @@ public class DataAccessRequestServiceDAO {
         });
   }
 
-  /** The DAR's non-null document locations, as the query reads them. */
-  private static List<String> readLocations(Handle h, String sql, String referenceId) {
+  /** The DAR's documents that have a location, as the query reads them. */
+  private static List<RemovedDocument> readLocations(Handle h, String sql, String referenceId) {
     return h.createQuery(sql)
         .bind("referenceId", referenceId)
         .map(
             (rs, ctx) ->
-                Stream.of(rs.getString(1), rs.getString(2)).filter(Objects::nonNull).toList())
+                Stream.of(
+                        new RemovedDocument(DarDocumentType.IRB, rs.getString(1)),
+                        new RemovedDocument(DarDocumentType.COLLABORATION, rs.getString(2)))
+                    .filter(document -> Objects.nonNull(document.location()))
+                    .toList())
         .findOne()
         .orElse(List.of());
   }

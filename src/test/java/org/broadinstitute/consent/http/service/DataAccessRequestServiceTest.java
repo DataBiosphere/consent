@@ -57,6 +57,7 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -89,6 +90,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.DraftSave;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.RemovedDocument;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
@@ -380,6 +382,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   private static final String OWN_IRB = UUID.randomUUID().toString();
 
+  private static RemovedDocument irb(String location) {
+    return new RemovedDocument(DarDocumentType.IRB, location);
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
   void testCreateDataAccessRequest_DeletesADocumentTheSubmissionRemoved(
@@ -390,16 +396,25 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest draft = generateDataAccessRequest();
     draft.setReferenceId(dar.getReferenceId());
     draft.getData().setIrbDocumentLocation(OWN_IRB);
+    String ownLetter = UUID.randomUUID().toString();
+    draft.getData().setCollaborationLetterLocation(ownLetter);
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(draft);
     when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(sharedWithAnotherDar);
+    when(gcsService.deleteDocument(any())).thenReturn(true);
 
-    // The submission has no IRB document: the researcher removed it.
+    // The submission has neither document: the researcher removed both.
     assertNotNull(service.createDataAccessRequest(user, dar, request));
 
     verify(gcsService, times(sharedWithAnotherDar ? 0 : 1)).deleteDocument(OWN_IRB);
+    // Each deleted file is recorded with its own document type.
+    verify(dataAccessRequestDAO, times(sharedWithAnotherDar ? 0 : 1))
+        .insertDocumentDeletion(dar.getReferenceId(), "IRB", OWN_IRB, "REMOVED", user.getUserId());
+    verify(dataAccessRequestDAO)
+        .insertDocumentDeletion(
+            dar.getReferenceId(), "COLLABORATION", ownLetter, "REMOVED", user.getUserId());
     // The reference check runs after the submission's writes, not inside its transaction.
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).updateSubmissionInstitution(any(), any());
@@ -412,7 +427,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     // Uploads name files with a UUID; another name came from elsewhere and is kept.
     when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
-        .thenReturn(new DraftSave(dar, List.of(OWN_IRB, "ontology/terms.json")));
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB), irb("ontology/terms.json"))));
 
     service.updateByReferenceId(user, dar, List.of("status"));
 
@@ -426,7 +441,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
-        .thenReturn(new DraftSave(dar, List.of(OWN_IRB)));
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB))));
     when(gcsService.deleteDocument(OWN_IRB)).thenThrow(new IllegalStateException("storage down"));
 
     assertEquals(dar, service.updateByReferenceId(user, dar, List.of("status")));
@@ -445,7 +460,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
-        .thenReturn(new DraftSave(dar, List.of(OWN_IRB)));
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB))));
     when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(true);
 
     service.updateByReferenceId(user, dar, List.of("status"));
@@ -460,13 +475,48 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     String other = UUID.randomUUID().toString();
     when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
-        .thenReturn(new DraftSave(dar, List.of(OWN_IRB, other)));
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB), irb(other))));
     when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB))
         .thenThrow(new IllegalStateException("database unavailable"));
 
     assertEquals(dar, service.updateByReferenceId(user, dar, List.of("status")));
     verify(gcsService, never()).deleteDocument(OWN_IRB);
     verify(gcsService).deleteDocument(other);
+  }
+
+  @Test
+  void testUpdateByReferenceIdRecordsEachDeletedFile() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    String notDeleted = UUID.randomUUID().toString();
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(
+            new DraftSave(
+                dar,
+                List.of(
+                    irb(OWN_IRB), new RemovedDocument(DarDocumentType.COLLABORATION, notDeleted))));
+    when(gcsService.deleteDocument(OWN_IRB)).thenReturn(true);
+
+    service.updateByReferenceId(user, dar, List.of("status"));
+
+    // Only a file the bucket actually deleted is recorded.
+    verify(dataAccessRequestDAO)
+        .insertDocumentDeletion(dar.getReferenceId(), "IRB", OWN_IRB, "REMOVED", user.getUserId());
+    verify(dataAccessRequestDAO, never())
+        .insertDocumentDeletion(any(), any(), eq(notDeleted), any(), any());
+  }
+
+  // The file is already gone, so a failure to record it doesn't fail the request.
+  @Test
+  void testRecordDocumentDeletionLogsAFailure() {
+    doThrow(new IllegalStateException("database unavailable"))
+        .when(dataAccessRequestDAO)
+        .insertDocumentDeletion(any(), any(), any(), any(), any());
+
+    assertDoesNotThrow(
+        () ->
+            service.recordDocumentDeletion(
+                "ref", DarDocumentType.IRB, OWN_IRB, DarDocumentDeletionReason.REPLACED, 1));
   }
 
   @Test

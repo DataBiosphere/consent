@@ -51,7 +51,10 @@ that removes a document deletes its file once it commits, unless something else 
 DAR, or a file storage object: DAAs, dataset and draft files share the bucket) or it isn't a DAR upload
 (not UUID-named) (`DataAccessRequestService.deleteRemovedDocuments`). An upload replacing a document,
 and the cleanup after a failed save or a failed progress report, also keep a file something else
-refers to, so a report that committed before a later step failed keeps its documents.
+refers to, so a report that committed before a later step failed keeps its documents. Every file
+deleted from the bucket is recorded in `dar_document_deletion` (DAR, document type, blob name,
+reason, the DAR owner's user id, time) by `DataAccessRequestService.recordDocumentDeletion`; a
+failure to record is logged and doesn't fail the request.
 
 ### 1. Draft
 
@@ -128,6 +131,10 @@ refers to, so a report that committed before a later step failed keeps its docum
 - `POST /api/dar/v2/progress_report/{parentReferenceId}` →
   `DataAccessRequest.populateProgressReportFromJsonString` (copies the parent's data and overlays
   the report fields) → `DataAccessRequestService.createProgressReport`.
+- Documents: a report's document fields start empty. For each document a dataset requires, the
+  report gets the uploaded file, or without one its own copy of the parent's file
+  (`GCSService.copyDocument`, under a new name), so it can serve the document and a later renewal
+  finds it. A missing parent file is a 400. A failed report deletes only its own files.
 - Preconditions. Closeouts go through the same endpoint; they share the ones not marked
   "ordinary reports only":
   - The caller owns the parent.
