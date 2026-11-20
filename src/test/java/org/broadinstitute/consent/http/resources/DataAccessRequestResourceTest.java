@@ -92,6 +92,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -2403,15 +2404,28 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
             user, referenceId, new SubmissionApproval("other", 1700000000123L));
   }
 
-  @Test
-  void testApproveCloseoutRejectsASubmissionWithoutADate() {
-    String referenceId = UUID.randomUUID().toString();
+  @ParameterizedTest
+  // A body of only a byte order mark reads as JSON null.
+  @ValueSource(
+      strings = {"{\"referenceId\": \"ref\"}", "{\"submissionDate\": null}", "null", "\uFEFF"})
+  void testApproveCloseoutRejectsASubmissionWithoutADate(String body) {
     try (Response response =
-        resource.approveCloseout(
-            duosUser, request, referenceId, "{\"referenceId\": \"" + referenceId + "\"}")) {
+        resource.approveCloseout(duosUser, request, UUID.randomUUID().toString(), body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
     verify(dataAccessRequestService, never()).approveDataAccessRequestCloseout(any(), any(), any());
+  }
+
+  // Clients that predate the named submission send {}, which approves as before.
+  @Test
+  void testApproveCloseoutAcceptsAnEmptyBody() {
+    String referenceId = UUID.randomUUID().toString();
+    when(dataAccessRequestService.findByReferenceId(referenceId))
+        .thenReturn(new DataAccessRequest());
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId, " {} ")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId, null);
   }
 
   @Test

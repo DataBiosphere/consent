@@ -299,7 +299,7 @@ public abstract class Resource implements ConsentLogger {
 
   /**
    * Reads the submission a signing official's approval names. Clients that predate it send no body
-   * or {}, which reads as null or empty.
+   * or {}, which reads as null.
    */
   protected SubmissionApproval readSubmissionApproval(String body) {
     return readSubmissionApproval(body, null);
@@ -312,25 +312,31 @@ public abstract class Resource implements ConsentLogger {
    * @param pathReferenceId The DAR the path names; null when the body must name it
    */
   protected SubmissionApproval readSubmissionApproval(String body, String pathReferenceId) {
+    String unnamed =
+        pathReferenceId == null
+            ? "Name the approved submission with its referenceId and submissionDate"
+            : "Name the approved submission with its submissionDate";
     if (body == null || body.isBlank()) {
       return null;
     }
-    // An unknown or misspelled key would otherwise read as {}, which approves as before.
+    // A JSON null fails here: it isn't an object. A body of only a byte order mark reads as null.
     JsonObject fields = STRICT_GSON.fromJson(body, JsonObject.class);
-    if (fields != null && !Set.of("referenceId", "submissionDate").containsAll(fields.keySet())) {
+    if (fields == null) {
+      throw new BadRequestException(unnamed);
+    }
+    // Only what clients that predate the named submission send, {}, approves without it.
+    if (fields.isEmpty()) {
+      return null;
+    }
+    // An unknown or misspelled key would otherwise go unchecked.
+    if (!Set.of("referenceId", "submissionDate").containsAll(fields.keySet())) {
       throw new BadRequestException("Only referenceId and submissionDate name the submission");
     }
     // Read from the text: a parsed tree would truncate a fractional or overflowing date.
     SubmissionApproval approval = STRICT_GSON.fromJson(body, SubmissionApproval.class);
-    if (approval == null || approval.isEmpty()) {
-      return approval;
-    }
     String referenceId = approval.referenceId() == null ? pathReferenceId : approval.referenceId();
     if (approval.submissionDate() == null || referenceId == null) {
-      throw new BadRequestException(
-          pathReferenceId == null
-              ? "Name the approved submission with its referenceId and submissionDate"
-              : "Name the approved submission with its submissionDate");
+      throw new BadRequestException(unnamed);
     }
     return new SubmissionApproval(referenceId, approval.submissionDate());
   }
