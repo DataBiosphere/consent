@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.filters.TemplateSizeLimitFilter;
+import org.broadinstitute.consent.http.filters.UploadSizeLimitFeature;
 import org.broadinstitute.consent.http.health.EcmHealthCheck;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
@@ -258,6 +259,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(PublicRateLimitFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
     registerRequestSizeLimits(env.jersey());
+    env.jersey()
+        .register(new UploadSizeLimitFeature(config.getUploadConfiguration().getMaxRequestBytes()));
     env.jersey().register(EmailSendIdFilter.class);
   }
 
