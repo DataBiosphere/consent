@@ -7,6 +7,7 @@ import io.dropwizard.jdbi3.JdbiFactory;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -252,7 +253,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     int i2 = randomInt(5, 10);
     int i3 = randomInt(3, 5);
     String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", institutionId, new Date());
+    Integer userId = userDAO.insertUser(email, "display name", institutionId);
     Map<String, Object> userData = new HashMap<>();
     userData.put("email", email);
     userDAO.updateData(userId, GsonUtil.getInstance().toJson(userData));
@@ -381,5 +382,30 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     } finally {
       executeSql("ALTER TABLE dataset ALTER COLUMN alias TYPE bigint");
     }
+  }
+
+  /** insertNewFile always writes NOW(), so set the create date that an ordering test needs. */
+  protected void setFileCreateDate(Integer fileStorageObjectId, Instant createDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    "UPDATE file_storage_object SET create_date = :createDate WHERE file_storage_object_id = :id")
+                .bind("createDate", createDate)
+                .bind("id", fileStorageObjectId)
+                .execute());
+  }
+
+  /**
+   * insertDataset always writes NOW() to create_date and update_date, so set the dates that a
+   * metrics or ordering test needs.
+   */
+  protected void setDatasetDates(Integer datasetId, Instant date) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    "UPDATE dataset SET create_date = :date, update_date = :date WHERE dataset_id = :id")
+                .bind("date", date)
+                .bind("id", datasetId)
+                .execute());
   }
 }

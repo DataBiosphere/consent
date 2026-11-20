@@ -31,7 +31,6 @@ class DACAutomationRuleServiceTransactionTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             "Synthetic dataset " + UUID.randomUUID(),
-            FIXED_TIMESTAMP,
             admin.getUserId(),
             UUID.randomUUID().toString(),
             EMPTY_JSON_DOCUMENT,

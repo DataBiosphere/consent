@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -44,6 +46,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -54,6 +57,8 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
@@ -84,6 +89,8 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.DraftSave;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.RemovedDocument;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
@@ -113,6 +120,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private static final String USER_NAME = "Display Name";
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock private Jdbi jdbi;
+  @Mock private GCSService gcsService;
   @Mock private CounterService counterService;
   @Mock private CounterDAO counterDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
@@ -201,7 +209,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             emailService,
             ruleService,
             new CountryValidator(),
-            config);
+            config,
+            gcsService);
   }
 
   private void mockTransactionalDaos() {
@@ -371,6 +380,189 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     order.verify(dataAccessRequestDAO).updateDraftToSubmittedForCollection(6, dar.getReferenceId());
   }
 
+  private static final String OWN_IRB = UUID.randomUUID().toString();
+
+  private static RemovedDocument irb(String location) {
+    return new RemovedDocument(DarDocumentType.IRB, location);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testCreateDataAccessRequest_DeletesADocumentTheSubmissionRemoved(
+      boolean sharedWithAnotherDar) {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    DataAccessRequest draft = generateDataAccessRequest();
+    draft.setReferenceId(dar.getReferenceId());
+    draft.getData().setIrbDocumentLocation(OWN_IRB);
+    String ownLetter = UUID.randomUUID().toString();
+    draft.getData().setCollaborationLetterLocation(ownLetter);
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(draft);
+    when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(sharedWithAnotherDar);
+    when(gcsService.deleteDocument(any())).thenReturn(true);
+
+    // The submission has neither document: the researcher removed both.
+    assertNotNull(service.createDataAccessRequest(user, dar, request));
+
+    verify(gcsService, times(sharedWithAnotherDar ? 0 : 1)).deleteDocument(OWN_IRB);
+    // Each deleted file is recorded with its own document type.
+    verify(dataAccessRequestDAO, times(sharedWithAnotherDar ? 0 : 1))
+        .insertDocumentDeletion(dar.getReferenceId(), "IRB", OWN_IRB, "REMOVED", user.getUserId());
+    verify(dataAccessRequestDAO)
+        .insertDocumentDeletion(
+            dar.getReferenceId(), "COLLABORATION", ownLetter, "REMOVED", user.getUserId());
+    // The reference check runs after the submission's writes, not inside its transaction.
+    InOrder order = inOrder(dataAccessRequestDAO);
+    order.verify(dataAccessRequestDAO).updateSubmissionInstitution(any(), any());
+    order.verify(dataAccessRequestDAO).isDocumentReferenced(OWN_IRB);
+  }
+
+  @Test
+  void testUpdateByReferenceIdDeletesRemovedDocumentsAfterTheSave() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    // Uploads name files with a UUID; another name came from elsewhere and is kept.
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB), irb("ontology/terms.json"))));
+
+    service.updateByReferenceId(user, dar, List.of("status"));
+
+    verify(gcsService).deleteDocument(OWN_IRB);
+    verify(gcsService, never()).deleteDocument("ontology/terms.json");
+  }
+
+  // The save has committed, so a failed delete only leaves an unreferenced file.
+  @Test
+  void testUpdateByReferenceIdReturnsTheSavedDarWhenADeleteFails() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB))));
+    when(gcsService.deleteDocument(OWN_IRB)).thenThrow(new IllegalStateException("storage down"));
+
+    assertEquals(dar, service.updateByReferenceId(user, dar, List.of("status")));
+  }
+
+  @Test
+  void testIsDocumentReferenced() {
+    when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(true);
+
+    assertTrue(service.isDocumentReferenced(OWN_IRB));
+  }
+
+  // Another DAR, or a file storage object, may still use a legacy location the edit removed.
+  @Test
+  void testUpdateByReferenceIdKeepsARemovedFileSomethingElseRefersTo() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB))));
+    when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB)).thenReturn(true);
+
+    service.updateByReferenceId(user, dar, List.of("status"));
+
+    verify(gcsService, never()).deleteDocument(any());
+  }
+
+  // The save has committed, so a failed reference check skips that file, not the rest.
+  @Test
+  void testUpdateByReferenceIdContinuesWhenAReferenceCheckFails() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    String other = UUID.randomUUID().toString();
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of(irb(OWN_IRB), irb(other))));
+    when(dataAccessRequestDAO.isDocumentReferenced(OWN_IRB))
+        .thenThrow(new IllegalStateException("database unavailable"));
+
+    assertEquals(dar, service.updateByReferenceId(user, dar, List.of("status")));
+    verify(gcsService, never()).deleteDocument(OWN_IRB);
+    verify(gcsService).deleteDocument(other);
+  }
+
+  @Test
+  void testUpdateByReferenceIdRecordsEachDeletedFile() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    String notDeleted = UUID.randomUUID().toString();
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(
+            new DraftSave(
+                dar,
+                List.of(
+                    irb(OWN_IRB), new RemovedDocument(DarDocumentType.COLLABORATION, notDeleted))));
+    when(gcsService.deleteDocument(OWN_IRB)).thenReturn(true);
+
+    service.updateByReferenceId(user, dar, List.of("status"));
+
+    // Only a file the bucket actually deleted is recorded.
+    verify(dataAccessRequestDAO)
+        .insertDocumentDeletion(dar.getReferenceId(), "IRB", OWN_IRB, "REMOVED", user.getUserId());
+    verify(dataAccessRequestDAO, never())
+        .insertDocumentDeletion(any(), any(), eq(notDeleted), any(), any());
+  }
+
+  // The file is already gone, so a failure to record it doesn't fail the request.
+  @Test
+  void testRecordDocumentDeletionLogsAFailure() {
+    doThrow(new IllegalStateException("database unavailable"))
+        .when(dataAccessRequestDAO)
+        .insertDocumentDeletion(any(), any(), any(), any(), any());
+
+    assertDoesNotThrow(
+        () ->
+            service.recordDocumentDeletion(
+                "ref", DarDocumentType.IRB, OWN_IRB, DarDocumentDeletionReason.REPLACED, 1));
+  }
+
+  @Test
+  void testUpdateByReferenceIdDeletesNothingWhenTheSaveFails() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenThrow(new ConsentConflictException("Elections present"));
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateByReferenceId(user, dar, List.of("status")));
+    verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testCreateDataAccessRequest_SubmitsTheDraftsOwnDocuments() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.getData().setIrbDocumentLocation("other-irb");
+    dar.getData().setIrbDocumentName("other-irb.pdf");
+    dar.getData().setCollaborationLetterLocation("other-letter");
+    DataAccessRequest draft = generateDataAccessRequest();
+    draft.setReferenceId(dar.getReferenceId());
+    draft.getData().setIrbDocumentLocation("own-irb");
+    draft.getData().setIrbDocumentName("own-irb.pdf");
+    User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(draft);
+
+    assertNotNull(service.createDataAccessRequest(user, dar, request));
+
+    // The documents come from the draft as read under its lock, not from the request.
+    ArgumentCaptor<DataAccessRequestData> saved =
+        ArgumentCaptor.forClass(DataAccessRequestData.class);
+    verify(dataAccessRequestDAO)
+        .updateDataByReferenceId(
+            eq(dar.getReferenceId()), any(), any(), any(), saved.capture(), any());
+    assertEquals("own-irb", saved.getValue().getIrbDocumentLocation());
+    assertEquals("own-irb.pdf", saved.getValue().getIrbDocumentName());
+    assertNull(saved.getValue().getCollaborationLetterLocation());
+    assertNull(saved.getValue().getCollaborationLetterName());
+  }
+
   @Test
   void testCreateDataAccessRequest_Create() {
     mockTransactionalDaos();
@@ -378,6 +570,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
     dar.setReferenceId("id");
+    // A new DAR has no uploads, so document fields sent with it are dropped.
+    dar.getData().setIrbDocumentLocation("other-irb");
+    dar.getData().setCollaborationLetterLocation("other-letter");
     User user = createUserWithPrerequisites();
     mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
@@ -404,6 +599,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertNotNull(newDar);
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
     ArgumentCaptor<String> insertedReferenceId = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<DataAccessRequestData> insertedData =
+        ArgumentCaptor.forClass(DataAccessRequestData.class);
     verify(dataAccessRequestDAO)
         .insertDataAccessRequest(
             anyInt(),
@@ -412,8 +609,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             any(Date.class),
             any(Date.class),
             any(Date.class),
-            any(DataAccessRequestData.class),
+            insertedData.capture(),
             anyString());
+    assertNull(insertedData.getValue().getIrbDocumentLocation());
+    assertNull(insertedData.getValue().getCollaborationLetterLocation());
     verify(dataAccessRequestDAO)
         .updateSubmissionInstitution(insertedReferenceId.getValue(), user.getInstitutionId());
   }
@@ -1646,14 +1845,41 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
+  void testSaveDocumentRejectsASubmittedDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setSubmissionDate(new Timestamp(1000));
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class,
+        () -> service.saveDocument(user, dar, DarDocumentType.IRB));
+    verify(dataAccessRequestServiceDAO, never()).saveDocument(any(), any(), any());
+  }
+
+  @Test
   void testUpdateByReferenceIdVersion2() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setCollectionId(randomInt(0, 100));
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
-    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any(), any()))
+        .thenReturn(new DraftSave(dar, List.of()));
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
     assertNotNull(newDar);
+  }
+
+  @Test
+  void testUpdateByReferenceIdDeadlockIsConflict() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
+    // A collection-first writer (resubmit, cancel, SO approval) held the collection lock.
+    doThrow(
+            new UnableToExecuteStatementException(
+                "lock", new SQLException("deadlock detected", "40P01"), null))
+        .when(dataAccessRequestServiceDAO)
+        .updateByReferenceId(user, dar, List.of("status"));
+
+    assertThrows(ConsentConflictException.class, () -> service.updateByReferenceId(user, dar));
   }
 
   @Test
@@ -1661,7 +1887,8 @@ institution or library cards issued: Internal Collaborator member:  \
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", FIXED_DATE);
     dar.addDatasetIds(List.of(1, 2, 3));
-    when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
+    when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar, List.of("status")))
+        .thenReturn(new DraftSave(dar, List.of()));
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
     assertNotNull(newDar);
   }

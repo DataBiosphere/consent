@@ -214,17 +214,14 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId = dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
     Integer deletedDacId = dacDAO.createDac("Old DAC", "old@example.org", "", user.getUserId());
-    Integer deletedDaaId =
-        daaDAO.createDaa(
-            user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), deletedDacId);
+    Integer deletedDaaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), deletedDacId);
     daaDAO.createDacDaaRelation(deletedDacId, deletedDaaId, user.getUserId());
     dacDAO.deleteDac(deletedDacId, user.getUserId());
-    Integer daaId =
-        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
     Integer cardId =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(), "name", user.getEmail(), user.getUserId(), FIXED_DATE);
+            user.getUserId(), "name", user.getEmail(), user.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), cardId, daaId);
 
     DashboardDatabaseCounts counts = counts();
@@ -274,7 +271,6 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   private Integer createDataset(User user) {
     return datasetDAO.insertDataset(
         "Dashboard dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",

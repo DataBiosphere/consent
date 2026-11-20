@@ -37,9 +37,24 @@ progress report. The only reliable draft marker is `submission_date IS NULL`: a 
 
 `data.status` is server-managed. The DAR create, draft and update endpoints ignore a `status` in the
 request body (`DataAccessRequestResource`): a new draft or an original DAR submission (including
-submitting an existing draft) gets none, and a draft edit keeps the stored value (`keepStoredStatus`,
-and the edit's UPDATE takes it from the row it updates). A progress report copies its parent's data,
-status included (`DataAccessRequest.populateProgressReportFromJsonString`).
+submitting an existing draft) gets none, and a draft edit keeps the stored value
+(`keepServerManagedFields`, and the edit's UPDATE takes it from the row it updates). A progress
+report copies its parent's data, status included (`DataAccessRequest.populateProgressReportFromJsonString`).
+
+The document fields (`irbDocumentLocation`, `irbDocumentName`, `collaborationLetterLocation`,
+`collaborationLetterName`) are server-managed too: only the document upload endpoints set them
+(`DataAccessRequestData.keepStoredDocuments`). A new draft or a new DAR gets none; a draft edit keeps
+the stored ones (taken from the row it updates); submitting a draft keeps the draft's, read under its
+lock. A client can only remove a document: a missing, null or empty location clears that document's
+location and name (duos-ui sends an empty one on save and leaves it out on submit). A save or submit
+that removes a document deletes its file once it commits, unless something else refers to it (another
+DAR, or a file storage object: DAAs, dataset and draft files share the bucket) or it isn't a DAR upload
+(not UUID-named) (`DataAccessRequestService.deleteRemovedDocuments`). An upload replacing a document,
+and the cleanup after a failed save or a failed progress report, also keep a file something else
+refers to, so a report that committed before a later step failed keeps its documents. Every file
+deleted from the bucket is recorded in `dar_document_deletion` (DAR, document type, blob name,
+reason, the DAR owner's user id, time) by `DataAccessRequestService.recordDocumentDeletion`; a
+failure to record is logged and doesn't fail the request.
 
 ### 1. Draft
 
@@ -67,10 +82,11 @@ status included (`DataAccessRequest.populateProgressReportFromJsonString`).
   `updateDraftToSubmittedForCollection` when submitting an existing draft, or
   `insertDataAccessRequest` when there is no draft. It also syncs `dar_dataset`, snapshots DAAs,
   and flags `requires_so_approval` when needed.
-- Every write to `submission_date`: those two, `insertProgressReport` (`now()`),
-  `updateDataByReferenceId`, which resubmit calls with `NULL`, and
-  `DataAccessRequestServiceDAO.updateByReferenceId`, which saves draft edits (only drafts reach
-  it, so it writes `NULL` back).
+- Every write to `submission_date`: those two, `insertProgressReport` (`now()`), and
+  `updateDataByReferenceId`, which resubmit calls with `NULL`. Draft edits
+  (`DataAccessRequestServiceDAO.updateByReferenceId`) don't write it: they update only rows where
+  `submission_date IS NULL` and fail with 422 otherwise, so an edit that races a submit can't turn
+  the submitted DAR back into a draft. They also fail with 409 on a draft that has elections.
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`). None of
@@ -93,6 +109,21 @@ status included (`DataAccessRequest.populateProgressReportFromJsonString`).
   "the latest DAR" must also read the non-canceled sibling originals; see `DacDashboardDAO` and
   `DarCollectionSummaryDAO`.
 - `validateDar` rejects a `closeoutSupplement`. Original DARs cannot close anything out.
+- A signing official's approval (`approving_so_id`, `approving_so_timestamp`) applies to the
+  content they approved. Resubmit removes it on every DAR in the collection and keeps
+  `requires_so_approval` (`DataAccessRequestDAO.resetDarApprovalSO`); submitting a draft removes
+  any left from older data, resets `requires_so_approval` to NULL and sets it again when needed;
+  and a signing official can't approve a draft, a collection that has one, a canceled DAR, or a
+  DAR whose submission date changed while the approval waited for the collection lock (409).
+  A collection approval names the submission the official reviewed (`SubmissionApproval`: the
+  latest DAR's reference id and submission date); a different submission under the collection
+  lock is a 409. Until every client sends it, a request without it (no body or `{}`) is accepted
+  and logged.
+  DAC automation rules skip a DAR that needs signing official approval and doesn't have it
+  (`DACAutomationRuleService.triggerDACRuleSettings`). Submission also defers auto-open elections
+  and DAC notices for that DAR; the approval runs the rules, then opens those elections and sends
+  those notices if the approved DAR is still the collection's most recent
+  (`DarCollectionService.processApprovedSubmission`).
 
 ### 3. Progress report (renewal, optional)
 
@@ -104,6 +135,10 @@ status included (`DataAccessRequest.populateProgressReportFromJsonString`).
 - `POST /api/dar/v2/progress_report/{parentReferenceId}` →
   `DataAccessRequest.populateProgressReportFromJsonString` (copies the parent's data and overlays
   the report fields) → `DataAccessRequestService.createProgressReport`.
+- Documents: a report's document fields start empty. For each document a dataset requires, the
+  report gets the uploaded file, or without one its own copy of the parent's file
+  (`GCSService.copyDocument`, under a new name), so it can serve the document and a later renewal
+  finds it. A missing parent file is a 400. A failed report deletes only its own files.
 - Preconditions. Closeouts go through the same endpoint; they share the ones not marked
   "ordinary reports only":
   - The caller owns the parent.
@@ -278,7 +313,9 @@ precondition that must hold at commit belongs after `lockCollection`, not only i
   the transaction, so the commit silently rolls back. Let it propagate out of `inTransaction`,
   then handle it (as `DACAutomationRuleService.openElectionAndApprove` does).
 - Submitting a draft locks the DAR row **before** its collection, and so does a draft edit
-  (`DataAccessRequestServiceDAO.updateByReferenceId` updates the DAR, then the collection).
+  (`DataAccessRequestServiceDAO.updateByReferenceId` updates the DAR, then the collection) and a
+  document upload (`DataAccessRequestServiceDAO.saveDocument`), which writes only its own two
+  fields and reads the location it replaces under the row lock.
   Resubmit, researcher cancel and signing official approval lock the collection first and then
   write DAR rows, so either kind can deadlock with the other on the same collection. Postgres
   aborts one of the two; a path maps that to a retryable 409 only if it calls

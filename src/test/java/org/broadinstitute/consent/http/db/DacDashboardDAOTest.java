@@ -284,7 +284,6 @@ class DacDashboardDAOTest extends DAOTestHelper {
   private Integer createDataset(User owner, Integer dacId) {
     return datasetDAO.insertDataset(
         "Dashboard dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         owner.getUserId(),
         UUID.randomUUID().toString(),
         EMPTY_JSON_DOCUMENT,

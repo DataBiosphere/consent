@@ -912,6 +912,20 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testTriggerDACRuleSettingsSkipsDarAwaitingSigningOfficialApproval() {
+    // Requires signing official approval and has none.
+    DataAccessRequest dar = makeDAR();
+    dar.setRequiresSOApproval(true);
+    String referenceId = dar.getReferenceId();
+    when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar);
+
+    service.triggerDACRuleSettings(new User(), List.of(1), referenceId, request);
+
+    verify(datasetDAO, never()).findDatasetById(anyInt());
+    verify(ruleDAO, never()).findAllDACAutomationRulesByDACId(anyInt());
+  }
+
+  @Test
   void testApplyRuleApprove() {
     when(dataAccessRequestDAO.isSubmittedAt(any(), any())).thenReturn(true);
     DACAutomationRule rule = makeDacAutomationRuleGRU();

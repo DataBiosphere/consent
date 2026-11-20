@@ -157,7 +157,7 @@ properties:
     description: IRB Approval Required
   irbDocumentLocation:
     type: string
-    description: IRB Document Location
+    description: Set only by the IRB document upload. Ignored on create and update, except that a missing, null or blank value on update removes the stored document.
   irbProtocolExpiration:
     type: string
     description: IRB Protocol Expiration
@@ -196,7 +196,7 @@ properties:
     description: Collaboration Required
   collaborationLetterLocation:
     type: string
-    description: Collaboration Letter Location
+    description: Set only by the collaboration letter upload. Ignored on create and update, except that a missing, null or blank value on update removes the stored letter.
   forensicActivities:
     type: boolean
     description: Study involves Forensic Activities

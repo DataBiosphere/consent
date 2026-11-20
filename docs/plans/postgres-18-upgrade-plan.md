@@ -91,9 +91,10 @@ Cloud SQL instance. See its results there.
 ## Not confirmed
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
-  for dev. Staging is not confirmed.
+  for dev and for staging. Prod is not confirmed.
 - Consent did not connect directly to a Cloud SQL instance on Postgres 18. In the rehearsal for
-  dev, Consent used an export of the upgraded clone. The DUOS backend did connect to the clone.
+  dev and for staging, Consent used an export of the upgraded clone. In the rehearsal for dev,
+  the DUOS backend did connect to the clone.
 - `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this. The
   rehearsal for dev used a Cloud SQL export, not this script.
 - The BEE test did not compare row counts before and after the upgrade.
@@ -230,21 +231,21 @@ different database in the same session, use `\c`:
 
 ### Results
 
-| Check | Dev, 2026-11-16 | Staging |
+| Check | Dev, 2026-11-16 | Staging, 2026-11-18 |
 | --- | --- | --- |
-| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Not done |
-| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Not done |
-| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Not done |
-| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Not done |
-| 5. Replication slots | Pass. No slots. | Not done |
-| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Not done |
-| 7. Collation | Pass. All databases use `en_US.UTF8`. | Not done |
-| 8. Operations | Pass. No operation in progress. | Not done |
+| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Pass. The same targets. |
+| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Pass. The same result. |
+| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Pass. The same versions. |
+| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Pass. No job was ever made. |
+| 5. Replication slots | Pass. No slots. | Pass. No slots. |
+| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Pass. No rows in the two databases. |
+| 7. Collation | Pass. All databases use `en_US.UTF8`. | Pass. The same result. |
+| 8. Operations | Pass. No operation in progress. | Pass. Do this check again immediately before the upgrade. |
 
-The dev server was on PostgreSQL 16.15.
+The dev server and the staging server were on PostgreSQL 16.15.
 
 The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job.
-Dev has neither job. This does not change the upgrade. It is a different problem.
+Dev and staging have neither job. This does not change the upgrade. It is a different problem.
 
 ## Step 5: Rehearsal on a clone
 
@@ -287,24 +288,24 @@ took 15 to 17 minutes.
 
 ### Results
 
-| Check | Dev, 2026-11-16 | Staging |
+| Check | Dev, 2026-11-16 | Staging, 2026-11-18 |
 | --- | --- | --- |
-| Clone | Completed in 4 minutes 31 seconds. | Not done |
-| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Not done |
-| Version | PostgreSQL 18.6. | Not done |
-| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Not done |
-| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | Not done |
+| Clone | Completed in 4 minutes 31 seconds. | Completed. The time is not recorded. |
+| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Completed in 13 minutes 44 seconds. |
+| Version | PostgreSQL 18.6. | PostgreSQL 18.6. |
+| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Completed, in Cloud SQL Studio, which shows no warnings. |
+| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | The same as dev, and the same as before the upgrade. |
 
 ### Tests with the services
 
 These tests are optional. They show that the services operate on a database that the Cloud SQL
 upgrade made. Do them before you delete the clone. Test 2 needs the clone.
 
-| Test | Database | Dev, 2026-11-17 |
-| --- | --- | --- |
-| 1. Local Consent | An export of the upgraded clone, in the local compose database. | Pass. Sign in works, and `GET /api/user/me` gives the user. The Consent log has no errors. |
-| 2. Local DUOS backend | The upgraded clone, through the Cloud SQL proxy. | Pass. Sign in works, and the UI shows an active session. |
-| 3. Local DUOS backend with local Consent | The same export as test 1. | Pass. Sign in works, and the local database shows the sign in. |
+| Test | Database | Dev, 2026-11-17 | Staging, 2026-11-18 |
+| --- | --- | --- | --- |
+| 1. Local Consent | An export of the upgraded clone, in the local compose database. | Pass. Sign in works, and `GET /api/user/me` gives the user. The Consent log has no errors. | Pass. Sign in works, and `GET /api/user/me` gives the user. |
+| 2. Local DUOS backend | The upgraded clone, through the Cloud SQL proxy. | Pass. Sign in works, and the UI shows an active session. | Not done |
+| 3. Local DUOS backend with local Consent | The same export as test 1. | Pass. Sign in works, and the local database shows the sign in. | Not done |
 
 For test 1, `scripts/export-db.sh` cannot connect to a clone, so make the file by one of these
 methods. Load it as `DEVNOTES.md` describes.
@@ -325,7 +326,7 @@ For test 3, use the `docker-compose.consent.yaml` mode of `duos-ui` with the Con
 test 1.
 
 The upgrade time is the full time of the update operation. It includes the backup before the
-upgrade (41 seconds) and the backup after it (61 seconds). For the dev upgrade, tell the Slack
+upgrade (41 seconds) and the backup after it (61 seconds). For each upgrade, tell the Slack
 channels to expect a downtime of approximately 15 minutes.
 
 Cloud SQL gave version 18.6. The local image is 18.7. A `pg_dump` 18.7 client can read an 18.6

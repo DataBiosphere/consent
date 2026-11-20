@@ -798,7 +798,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       InstitutionService institutionService,
       EmailService emailService,
       DACAutomationRuleService ruleService,
-      CountryValidator countryValidator) {
+      CountryValidator countryValidator,
+      GCSService gcsService) {
     return new DataAccessRequestService(
         jdbi,
         dataAccessRequestServiceDAO,
@@ -809,7 +810,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
         emailService,
         ruleService,
         countryValidator,
-        config);
+        config,
+        gcsService);
   }
 
   @Provides

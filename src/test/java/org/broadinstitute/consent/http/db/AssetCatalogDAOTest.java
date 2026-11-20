@@ -295,12 +295,7 @@ class AssetCatalogDAOTest extends DAOTestHelper {
 
   private Integer insertDataset() {
     return datasetDAO.insertDataset(
-        randomAlphabetic(20),
-        Timestamp.from(Instant.now()),
-        createUser().getUserId(),
-        UUID.randomUUID().toString(),
-        "{}",
-        null);
+        randomAlphabetic(20), createUser().getUserId(), UUID.randomUUID().toString(), "{}", null);
   }
 
   private Integer insertStudy() {

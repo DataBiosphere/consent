@@ -39,12 +39,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     Integer datasetId =
         datasetDAO.insertDataset(
-            "Canceled DAR dataset",
-            FIXED_TIMESTAMP,
-            user.getUserId(),
-            UUID.randomUUID().toString(),
-            "{}",
-            null);
+            "Canceled DAR dataset", user.getUserId(), UUID.randomUUID().toString(), "{}", null);
     Integer collectionId =
         darCollectionDAO.insertDarCollection("DAR-CANCELED", user.getUserId(), FIXED_DATE);
     String referenceId = UUID.randomUUID().toString();
@@ -258,7 +253,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
   private Integer createDataset(User user) {
     return datasetDAO.insertDataset(
         "Dashboard dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",
@@ -337,7 +331,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
     Integer otherDacId = dacDAO.createDac("Other DAC", "other@example.org", "", user.getUserId());
-    daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), otherDacId);
+    daaDAO.createDaa(user.getUserId(), user.getUserId(), otherDacId);
 
     DashboardDatabaseCounts counts =
         jdbi.onDemand(SigningOfficialDashboardDAO.class)

@@ -76,13 +76,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   "dac email: " + randomAlphabetic(10),
                   createUser().getUserId());
           // Data Access Agreement
-          int daaId =
-              daaDAO.createDaa(
-                  superUser.getUserId(),
-                  new Date().toInstant(),
-                  superUser.getUserId(),
-                  new Date().toInstant(),
-                  dacId);
+          int daaId = daaDAO.createDaa(superUser.getUserId(), superUser.getUserId(), dacId);
           // DAC->DAA Association.
           daaDAO.createDacDaaRelation(dacId, daaId, superUser.getUserId());
           // Library Card User
@@ -106,8 +100,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   lcUser.getUserId(),
                   "library card user name: " + randomAlphabetic(10),
                   "library card user email: " + randomAlphabetic(10),
-                  superUser.getUserId(),
-                  new Date());
+                  superUser.getUserId());
           // Library Card User to Data Access Agreement association
           libraryCardDAO.createLibraryCardDaaRelation(
               lcUser.getUserId(), superUser.getUserId(), userLcId, daaId);
@@ -123,7 +116,6 @@ class DacServiceDAOTest extends DAOTestHelper {
           int datasetId =
               datasetDAO.insertDataset(
                   "dataset name: " + randomAlphabetic(10),
-                  Timestamp.from(Instant.now()),
                   superUser.getUserId(),
                   "object id: " + randomAlphabetic(10),
                   new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -227,7 +219,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             "obj-" + randomAlphabetic(10),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -306,7 +297,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             controlledDatasetObjectId,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -314,7 +304,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer openDatasetId =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             openDatasetObjectId,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -774,7 +763,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer datasetIdA =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             datasetObjectIdA,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -782,7 +770,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer datasetIdB =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             datasetObjectIdB,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -860,7 +847,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             "obj-" + randomAlphabetic(10),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -975,7 +961,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
-            Timestamp.from(Instant.now()),
             admin.getUserId(),
             "obj-" + randomAlphabetic(10),
             new DataUseBuilder().setGeneralUse(true).build().toString(),

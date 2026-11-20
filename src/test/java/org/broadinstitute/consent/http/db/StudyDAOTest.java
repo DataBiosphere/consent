@@ -295,8 +295,8 @@ class StudyDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             study.getUuid().toString(),
-            createUser.getUserId(),
-            Instant.ofEpochMilli(100));
+            createUser.getUserId());
+    setFileCreateDate(altFileIdCreatedFirst, Instant.ofEpochMilli(100));
 
     User updateUser = createUser();
 
@@ -314,8 +314,8 @@ class StudyDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             study.getUuid().toString(),
-            createUser.getUserId(),
-            Instant.ofEpochMilli(130));
+            createUser.getUserId());
+    setFileCreateDate(altFileIdCreatedSecond, Instant.ofEpochMilli(130));
 
     Study found = studyDAO.findStudyById(study.getStudyId());
 
@@ -578,7 +578,6 @@ class StudyDAOTest extends DAOTestHelper {
     String bucketName = RandomStringUtils.randomAlphabetic(10);
     String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
     User createUser = createUser();
-    Instant createDate = Instant.now();
 
     Integer newFileStorageObjectId =
         fileStorageObjectDAO.insertNewFile(
@@ -587,8 +586,7 @@ class StudyDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             entityId,
-            createUser.getUserId(),
-            createDate);
+            createUser.getUserId());
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
   }
 
@@ -687,11 +685,10 @@ class StudyDAOTest extends DAOTestHelper {
   private Dataset insertDatasetForStudy(Integer studyId) {
     User user = createUser();
     String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
 
     datasetDAO.updateStudyId(id, studyId);
 
@@ -701,11 +698,10 @@ class StudyDAOTest extends DAOTestHelper {
   private Dataset insertDataset() {
     User user = createUser();
     String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }
 

@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,7 +39,6 @@ public class DraftServiceDAO {
           try {
             draftDAO.insert(
                 draft.getName(),
-                draft.getCreateDate().toInstant(),
                 draft.getCreateUser().getUserId(),
                 draft.getJson(),
                 draft.getUUID(),
@@ -54,14 +52,12 @@ public class DraftServiceDAO {
 
   public DraftInterface updateDraft(DraftInterface draft, User user) {
     draft.setUpdateUser(user);
-    draft.setUpdateDate(new Date());
     strip(draft);
     jdbi.useTransaction(
         handle -> {
           try {
             draftDAO.updateDraftByDraftUUID(
                 draft.getName(),
-                draft.getUpdateDate().toInstant(),
                 draft.getUpdateUser().getUserId(),
                 draft.getJson(),
                 draft.getUUID(),
@@ -110,9 +106,7 @@ public class DraftServiceDAO {
       return jdbi.inTransaction(
           _ -> {
             // First, so a draft deleted during the uploads gets no rows, and a delete waits on it.
-            if (draftDAO.updateDraftByDraftUUID(
-                    draft.getUUID(), new Date().toInstant(), user.getUserId())
-                == 0) {
+            if (draftDAO.updateDraftByDraftUUID(draft.getUUID(), user.getUserId()) == 0) {
               throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draft.getUUID()));
             }
             return draftFileStorageServiceDAO.insertFileRows(uploaded, draft.getUUID(), user);
@@ -137,9 +131,7 @@ public class DraftServiceDAO {
     jdbi.useTransaction(
         _ -> {
           // The draft row first, in the lock order addAttachments and deleteDraft use.
-          if (draftDAO.updateDraftByDraftUUID(
-                  draft.getUUID(), new Date().toInstant(), user.getUserId())
-              == 0) {
+          if (draftDAO.updateDraftByDraftUUID(draft.getUUID(), user.getUserId()) == 0) {
             throw new NotFoundException(DRAFT_NOT_FOUND.formatted(draft.getUUID()));
           }
           draftFileStorageServiceDAO.deleteFileRows(List.of(file), user);

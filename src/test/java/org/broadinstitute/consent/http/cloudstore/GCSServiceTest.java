@@ -20,8 +20,11 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.CopyWriter;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +43,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -135,6 +139,61 @@ class GCSServiceTest extends AbstractTestHelper {
     assertEquals(2, out.size());
     assertArrayEquals(fileContent1.getBytes(), out.get(blobId1).readAllBytes());
     assertArrayEquals(fileContent2.getBytes(), out.get(blobId2).readAllBytes());
+  }
+
+  @Test
+  void testCopyDocument() {
+    initStore();
+    BlobId copy = BlobId.of("bucket", "copy");
+    Blob copied = mock(Blob.class);
+    when(copied.getBlobId()).thenReturn(copy);
+    CopyWriter writer = mock(CopyWriter.class);
+    when(writer.getResult()).thenReturn(copied);
+    when(storage.get(any(BlobId.class))).thenReturn(blob);
+    when(storage.copy(any(Storage.CopyRequest.class))).thenReturn(writer);
+    UUID id = UUID.randomUUID();
+
+    assertEquals(copy, service.copyDocument("source", id));
+    ArgumentCaptor<Storage.CopyRequest> request =
+        ArgumentCaptor.forClass(Storage.CopyRequest.class);
+    verify(storage).copy(request.capture());
+    assertEquals(BlobId.of(config.getBucket(), "source"), request.getValue().getSource());
+    assertEquals(config.getBucket(), request.getValue().getTarget().getBucket());
+    assertEquals(id.toString(), request.getValue().getTarget().getName());
+  }
+
+  @Test
+  void testCopyDocumentOfAMissingDocument() {
+    initStore();
+    when(storage.get(any(BlobId.class))).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () -> service.copyDocument("missing", UUID.randomUUID()));
+    verify(storage, never()).copy(any(Storage.CopyRequest.class));
+  }
+
+  // Deleted between the existence check and the copy.
+  @Test
+  void testCopyDocumentDeletedDuringTheCopy() {
+    initStore();
+    when(storage.get(any(BlobId.class))).thenReturn(blob);
+    when(storage.copy(any(Storage.CopyRequest.class)))
+        .thenThrow(new StorageException(404, "Not Found"));
+
+    assertThrows(NotFoundException.class, () -> service.copyDocument("gone", UUID.randomUUID()));
+  }
+
+  @Test
+  void testCopyDocumentHidesOtherStorageErrors() {
+    initStore();
+    when(storage.get(any(BlobId.class))).thenReturn(blob);
+    when(storage.copy(any(Storage.CopyRequest.class)))
+        .thenThrow(new StorageException(503, "Unavailable: internal detail"));
+
+    ServerErrorException e =
+        assertThrows(
+            ServerErrorException.class, () -> service.copyDocument("source", UUID.randomUUID()));
+    assertEquals(500, e.getResponse().getStatus());
+    assertEquals("Unable to copy the document", e.getMessage());
   }
 
   @Test

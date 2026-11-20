@@ -54,6 +54,33 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   String lockDataAccessRequest(@Bind("referenceId") String referenceId);
 
+  /**
+   * Whether anything refers to the file at this bucket location: a DAR's document fields, or a file
+   * storage object (DAAs, dataset and draft files share the bucket and store gs:// URIs).
+   */
+  @SqlQuery(
+      """
+      SELECT EXISTS (SELECT 1 FROM data_access_request
+          WHERE data ->> 'irbDocumentLocation' = :location
+            OR data ->> 'collaborationLetterLocation' = :location)
+        OR EXISTS (SELECT 1 FROM file_storage_object
+          WHERE right(gcs_file_uri, length(:location) + 1) = '/' || :location)
+      """)
+  boolean isDocumentReferenced(@Bind("location") String location);
+
+  /** Records a DAR document file deleted from the bucket. */
+  @SqlUpdate(
+      """
+      INSERT INTO dar_document_deletion (reference_id, document_type, blob_name, reason, user_id)
+      VALUES (:referenceId, :documentType, :blobName, :reason, :userId)
+      """)
+  void insertDocumentDeletion(
+      @Bind("referenceId") String referenceId,
+      @Bind("documentType") String documentType,
+      @Bind("blobName") String blobName,
+      @Bind("reason") String reason,
+      @Bind("userId") Integer userId);
+
   /** Lock in a stable order for vote batches spanning multiple collections. */
   @SqlQuery(
       """
@@ -809,14 +836,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("eraCommonsId") String eraCommonsId);
 
   /**
-   * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest
+   * Converts a Draft DataAccessRequest into a non-draft DataAccessRequest. Any signing official
+   * approval on the draft is removed: a draft can't be approved, so one there predates the content
+   * being submitted. requires_so_approval goes back to NULL (no requirement); the caller sets it
+   * again when the submission needs it.
    *
    * @param referenceId String
    */
   @SqlUpdate(
       """
           UPDATE data_access_request
-            SET  submission_date = now(), collection_id = :collectionId
+            SET  submission_date = now(), collection_id = :collectionId,
+                 approving_so_id = NULL, approving_so_timestamp = NULL,
+                 requires_so_approval = NULL
           WHERE reference_id = :referenceId
        """)
   void updateDraftToSubmittedForCollection(
@@ -840,6 +872,18 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     """)
   void updateDarApprovalSO(
       @Bind("id") Integer signingOfficialUserId, @Bind("referenceId") String referenceId);
+
+  /**
+   * Removes a signing official's approval, which applies only to the content they approved. The
+   * requirement for one stays until the next submit works it out again.
+   */
+  @SqlUpdate(
+      """
+        UPDATE data_access_request
+          SET approving_so_id = NULL, approving_so_timestamp = NULL
+        WHERE reference_id = :referenceId
+    """)
+  void resetDarApprovalSO(@Bind("referenceId") String referenceId);
 
   @SqlUpdate(
       """
