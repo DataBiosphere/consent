@@ -26,6 +26,7 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -513,6 +514,8 @@ public class DataAccessRequestResource extends Resource {
     // only be read once.
     boolean uploadCollab = false;
     boolean uploadEthics = false;
+    boolean needsCollab = false;
+    boolean needsEthics = false;
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {
@@ -524,29 +527,91 @@ public class DataAccessRequestResource extends Resource {
       }
       if (Boolean.TRUE.equals(dataUse.getCollaboratorRequired())) {
         String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
-        if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
-            && Strings.isNullOrEmpty(parentCollabLocation)) {
+        if (!fileSent(collabFileDetails) && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
         // Without a new file, the parent's document satisfies the requirement.
-        uploadCollab = collabFileDetails != null;
+        needsCollab = true;
+        uploadCollab = fileSent(collabFileDetails);
       }
       if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
-        if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
-            && Strings.isNullOrEmpty(parentEthicsLocation)) {
+        if (!fileSent(ethicsFileDetails) && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
-        uploadEthics = ethicsFileDetails != null;
+        needsEthics = true;
+        uploadEthics = fileSent(ethicsFileDetails);
       }
     }
-    // The report's document locations start empty, so these uploads replace nothing.
+    // The report's document locations start empty, so these uploads replace nothing. Without a
+    // new file the report gets its own copy of the parent's document, so it can serve it and a
+    // later renewal finds it, and a failed report deletes only its copy.
     if (uploadCollab) {
       uploadDocumentContents(
-          DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
+          DarDocumentType.COLLABORATION,
+          childDar,
+          requireContent(collabInputStream, "Collaboration"),
+          collabFileDetails);
+    } else if (needsCollab) {
+      copyParentDocument(DarDocumentType.COLLABORATION, childDar, parentDar);
     }
     if (uploadEthics) {
-      uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
+      uploadDocumentContents(
+          DarDocumentType.IRB,
+          childDar,
+          requireContent(ethicsInputStream, "Ethics approval"),
+          ethicsFileDetails);
+    } else if (needsEthics) {
+      copyParentDocument(DarDocumentType.IRB, childDar, parentDar);
+    }
+  }
+
+  /**
+   * Whether the request carries a file for this part. duos-ui sends an empty part for a document it
+   * has no file for, which still arrives with details but no file name; browsers don't send a size.
+   */
+  private static boolean fileSent(FormDataContentDisposition fileDetails) {
+    return fileDetails != null && !Strings.isNullOrEmpty(fileDetails.getFileName());
+  }
+
+  /**
+   * An empty file doesn't satisfy a required document. Browsers don't send a size, so the first
+   * byte is read to check, then put back for the upload.
+   */
+  private static InputStream requireContent(InputStream content, String document)
+      throws IOException {
+    PushbackInputStream stream =
+        new PushbackInputStream(content == null ? InputStream.nullInputStream() : content, 1);
+    int first = stream.read();
+    if (first == -1) {
+      throw new BadRequestException(document + " document is empty");
+    }
+    stream.unread(first);
+    return stream;
+  }
+
+  /** Gives a progress report its own copy of its parent's document of this type. */
+  private void copyParentDocument(
+      DarDocumentType type, DataAccessRequest report, DataAccessRequest parent) {
+    boolean irb = DarDocumentType.IRB.equals(type);
+    DataAccessRequestData parentData = parent.getData();
+    String location =
+        irb ? parentData.getIrbDocumentLocation() : parentData.getCollaborationLetterLocation();
+    String name = irb ? parentData.getIrbDocumentName() : parentData.getCollaborationLetterName();
+    BlobId copy;
+    try {
+      copy = gcsService.copyDocument(location, UUID.randomUUID());
+    } catch (NotFoundException e) {
+      throw new BadRequestException(
+          "The parent request's %s document is missing; upload a new one"
+              .formatted(irb ? "ethics approval" : "collaboration"));
+    }
+    if (irb) {
+      report.getData().setIrbDocumentLocation(copy.getName());
+      report.getData().setIrbDocumentName(name);
+    } else {
+      report.getData().setCollaborationLetterLocation(copy.getName());
+      report.getData().setCollaborationLetterName(name);
     }
   }
 
