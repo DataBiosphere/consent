@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.AssetCatalogEntry;
 import org.broadinstitute.consent.http.models.Dac;
@@ -702,6 +703,78 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
     assertEquals(1, audits.size());
     assertEquals(AuditActions.UPDATE.name(), audits.getFirst().getAction());
+  }
+
+  @Test
+  void testUpdateDatasetWithMatchingDac() {
+    Dataset dataset = createDataset();
+    Integer dacId = createDac().getDacId();
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dacId);
+    DatasetUpdate update =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            "renamed",
+            dataset.getCreateUserId(),
+            dacId,
+            List.of(),
+            List.of());
+
+    serviceDAO.updateDataset(update);
+
+    Dataset stored = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertEquals("renamed", stored.getName());
+    assertEquals(dacId, stored.getDacId());
+  }
+
+  @Test
+  void testDatasetDacLockBlocksADacChange() throws Exception {
+    Dataset dataset = createDataset();
+    Integer dacId = createDac().getDacId();
+    try (var executor = Executors.newSingleThreadExecutor();
+        var handle = jdbi.open()) {
+      handle.begin();
+      handle.attach(DatasetDAO.class).lockDatasetDacId(dataset.getDatasetId());
+      CountDownLatch started = new CountDownLatch(1);
+      Future<?> move =
+          executor.submit(
+              () -> {
+                started.countDown();
+                datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dacId);
+              });
+      try {
+        assertTrue(started.await(5, TimeUnit.SECONDS));
+        awaitLockWait(move, "SET dac_id");
+      } finally {
+        handle.commit();
+      }
+      move.get(5, TimeUnit.SECONDS);
+
+      assertEquals(dacId, datasetDAO.findDatasetById(dataset.getDatasetId()).getDacId());
+    }
+  }
+
+  @Test
+  void testUpdateDatasetRejectsChangedDac() {
+    Dataset dataset = createDataset();
+    Integer authorizedDacId = createDac().getDacId();
+    Integer movedToDacId = createDac().getDacId();
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), movedToDacId);
+    int audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size();
+    DatasetUpdate update =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            "renamed",
+            dataset.getCreateUserId(),
+            authorizedDacId,
+            List.of(),
+            List.of());
+
+    assertThrows(ConsentConflictException.class, () -> serviceDAO.updateDataset(update));
+
+    Dataset stored = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertEquals(dataset.getName(), stored.getName());
+    assertEquals(movedToDacId, stored.getDacId());
+    assertEquals(audits, datasetDAO.findAuditsByDatasetId(dataset.getDatasetId()).size());
   }
 
   /** A file with no blob fails after the dataset row and its audit are written. */

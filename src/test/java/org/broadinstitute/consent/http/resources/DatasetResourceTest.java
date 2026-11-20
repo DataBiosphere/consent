@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
@@ -1009,6 +1010,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDatasetByDatasetIntakeSuccess() throws IOException {
+    user.addRole(UserRoles.Admin());
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(any(), anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any()))
@@ -1027,6 +1029,97 @@ class DatasetResourceTest extends AbstractTestHelper {
     try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
+    }
+  }
+
+  @Test
+  void testUpdateDatasetChairpersonOfDatasetDac() throws IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(5);
+    UserRole role = UserRoles.Chairperson();
+    role.setDacId(5);
+    user.addRole(role);
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(dataset);
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(dataset);
+    String json = createDataset(user);
+
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(datasetRegistrationService).updateDataset(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateDatasetChairpersonOfOtherDac() throws IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(5);
+    UserRole role = UserRoles.Chairperson();
+    role.setDacId(1);
+    user.addRole(role);
+    UserRole memberRole = UserRoles.Member();
+    memberRole.setDacId(5);
+    user.addRole(memberRole);
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(dataset);
+    String json = createDataset(user);
+
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+    verify(datasetRegistrationService, never()).updateDataset(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateDatasetChairpersonWithNullDac() throws IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(5);
+    user.addRole(UserRoles.Chairperson());
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(dataset);
+    String json = createDataset(user);
+
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+    verify(datasetRegistrationService, never()).updateDataset(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateDatasetSubmitterChairpersonCreatorOfOtherDac() throws IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(5);
+    user.setUserId(1);
+    dataset.setCreateUserId(1);
+    UserRole role = UserRoles.Chairperson();
+    role.setDacId(1);
+    user.addRole(role);
+    user.addRole(UserRoles.DataSubmitter());
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(dataset);
+    String json = createDataset(user);
+
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+    verify(datasetRegistrationService, never()).updateDataset(any(), any(), any(), any());
+  }
+
+  @Test
+  void testUpdateDatasetDacChangedConflict() throws IOException {
+    user.addRole(UserRoles.Admin());
+    FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(new Dataset());
+    when(datasetRegistrationService.updateDataset(any(), any(), any(), any()))
+        .thenThrow(new ConsentConflictException("Dataset DAC changed during the update"));
+    String json = createDataset(user);
+
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
     }
   }
 
@@ -1054,6 +1147,7 @@ class DatasetResourceTest extends AbstractTestHelper {
    */
   @Test
   void testUpdateDatasetWithNoProperties() throws Exception {
+    user.addRole(UserRoles.Admin());
     Dataset dataset = new Dataset();
     FormDataContentDisposition content =
         FormDataContentDisposition.name("file").fileName("validFile.txt").build();
@@ -1085,6 +1179,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDatasetInvalidFileName() {
+    user.addRole(UserRoles.Admin());
     Dataset preexistingDataset = new Dataset();
     when(datasetService.findDatasetById(any(), anyInt())).thenReturn(preexistingDataset);
     String json = createDatasetRegistrationMock(user);

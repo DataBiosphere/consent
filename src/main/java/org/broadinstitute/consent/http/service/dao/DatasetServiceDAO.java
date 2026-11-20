@@ -438,16 +438,21 @@ public class DatasetServiceDAO implements ConsentLogger {
 
   public void updateDataset(DatasetUpdate updates) {
     jdbi.useTransaction(
-        handle ->
-            executeUpdateDatasetWithFiles(
-                handle,
-                updates.datasetId(),
-                updates.name(),
-                updates.userId(),
-                updates.dacId(),
-                updates.props(),
-                updates.files(),
-                true));
+        handle -> {
+          Integer currentDacId = datasetDAO.lockDatasetDacId(updates.datasetId());
+          if (!Objects.equals(currentDacId, updates.dacId())) {
+            throw new ConsentConflictException("Dataset DAC changed during the update");
+          }
+          executeUpdateDatasetWithFiles(
+              handle,
+              updates.datasetId(),
+              updates.name(),
+              updates.userId(),
+              updates.dacId(),
+              updates.props(),
+              updates.files(),
+              true);
+        });
   }
 
   public void executeUpdateDatasetWithFiles(
