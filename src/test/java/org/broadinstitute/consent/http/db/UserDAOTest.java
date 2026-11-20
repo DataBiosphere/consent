@@ -336,8 +336,7 @@ class UserDAOTest extends DAOTestHelper {
             null,
             null,
             null,
-            researcher.getUserId(),
-            new Date());
+            researcher.getUserId());
     userDAO.updateInstitutionId(researcher.getUserId(), institutionId);
     User u1 = userDAO.findUserById(researcher.getUserId());
     assertEquals(institutionId, u1.getInstitutionId());

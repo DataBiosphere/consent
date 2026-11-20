@@ -10,7 +10,6 @@ import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import jakarta.ws.rs.client.Client;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -188,8 +187,7 @@ public abstract class ContainerTests implements ConsentLogger {
                 null,
                 null,
                 null,
-                adminId,
-                new Date())
+                adminId)
             : existing.getFirst().getId();
 
     // Link researcher and signing official to the institution if not already set.
