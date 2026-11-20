@@ -1,0 +1,13 @@
+type: object
+description: >-
+  The submission a signing official approves: the one they reviewed. The approval is refused with
+  409 when the request's current submission differs. Clients that predate it may send no body or
+  {}, which is accepted while clients move to sending it.
+properties:
+  referenceId:
+    type: string
+    description: The approved DAR's reference id, the collection's latest submission
+  submissionDate:
+    type: integer
+    format: int64
+    description: The approved DAR's submission date, in milliseconds from the epoch

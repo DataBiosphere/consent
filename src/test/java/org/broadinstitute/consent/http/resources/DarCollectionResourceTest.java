@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
@@ -40,6 +41,8 @@ import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -703,15 +706,57 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testApproveCollection() {
     DarCollection collection = mock(DarCollection.class);
     when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(collection);
-    try (var response = resource.approveCollection(duosSigningOfficial, 1, request)) {
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
+  }
+
+  // The approval names the submission the signing official reviewed.
+  @Test
+  void testApproveCollectionPassesTheNamedSubmission() {
+    DarCollection collection = mock(DarCollection.class);
+    when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(collection);
+    String body = "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123}";
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(darCollectionService)
+        .approveDarCollection(
+            signingOfficial, collection, request, new SubmissionApproval("ref", 1700000000123L));
+  }
+
+  // Clients that predate the named submission send {}.
+  @Test
+  void testApproveCollectionAcceptsAnEmptyBody() {
+    DarCollection collection = mock(DarCollection.class);
+    when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(collection);
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, " {} ")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+    verify(darCollectionService)
+        .approveDarCollection(
+            signingOfficial, collection, request, new SubmissionApproval(null, null));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{\"referenceId\": \"ref\"}",
+        "{\"submissionDate\": 1700000000123}",
+        "{\"referenceId\": ",
+        "{\"referenceId\": \"ref\", \"submissionDate\": \"yesterday\"}"
+      })
+  void testApproveCollectionRejectsAPartialOrMalformedSubmission(String body) {
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(darCollectionService, never()).approveDarCollection(any(), any(), any(), any());
   }
 
   @Test
   void testApproveCollection_NotFound() {
     when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(null);
-    try (var response = resource.approveCollection(duosSigningOfficial, 1, request)) {
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }

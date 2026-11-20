@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedExce
 import org.broadinstitute.consent.http.exceptions.UnknownIdentifierException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -286,6 +287,25 @@ public abstract class Resource implements ConsentLogger {
         throw e;
       }
     };
+  }
+
+  /**
+   * Reads the submission a signing official's approval names. Clients that predate it send no body
+   * or {}, which reads as null or empty.
+   */
+  protected SubmissionApproval readSubmissionApproval(String body) {
+    if (body == null || body.isBlank()) {
+      return null;
+    }
+    SubmissionApproval approval = GsonUtil.getInstance().fromJson(body, SubmissionApproval.class);
+    if (approval == null || approval.isEmpty()) {
+      return approval;
+    }
+    if (approval.submissionDate() == null || approval.referenceId() == null) {
+      throw new BadRequestException(
+          "Name the approved submission with its referenceId and submissionDate");
+    }
+    return approval;
   }
 
   protected void validateFileDetails(ContentDisposition contentDisposition) {

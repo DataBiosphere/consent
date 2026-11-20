@@ -60,6 +60,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseGroup;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -951,28 +952,40 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
+   * Approves the collection's most recent DAR for a signing official, when it is the submission the
+   * official reviewed.
+   *
    * @param user The User initiating new elections for a collection
    * @param collection The DarCollection
    * @param request The request context
+   * @param approved The submission the official approves. Null or empty is accepted while clients
+   *     move to sending it, and logged.
    * @return The updated DarCollection
-   * @throws ConsentConflictException Can be thrown when the collection no longer requires approval
-   *     or the underlying data access request does not support this operation.
+   * @throws ConsentConflictException Can be thrown when the collection no longer requires approval,
+   *     the underlying data access request does not support this operation, or its most recent
+   *     submission isn't the named one.
    * @throws BadRequestException Can be thrown when a collection required approval but is already
    *     approved
    * @throws ForbiddenException The user is not the specified signing official required to approve
    *     the collection
    */
   public DarCollection approveDarCollection(
-      User user, DarCollection collection, ContainerRequest request)
+      User user, DarCollection collection, ContainerRequest request, SubmissionApproval approved)
       throws ConsentConflictException, BadRequestException, ForbiddenException {
     // A draft can still change, so a collection that holds one can't be approved.
     if (collection.getDars().values().stream()
         .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
       throw new ConsentConflictException("A collection that has a draft cannot be approved.");
     }
+    if (approved == null || approved.isEmpty()) {
+      approved = null;
+      logInfo(
+          "Approval of collection %s doesn't name a submission"
+              .formatted(collection.getDarCollectionId()));
+    }
     DataAccessRequest dar = collection.getMostRecentDar();
     if (dar.getRequiresSOApproval()) {
-      approveDataAccessRequestBySigningOfficial(user, dar, request);
+      approveDataAccessRequestBySigningOfficial(user, dar, request, approved);
       return darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
     }
     throw new ConsentConflictException("This collection does not require approval.");
@@ -1559,7 +1572,10 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private void approveDataAccessRequestBySigningOfficial(
-      User signingOfficial, DataAccessRequest dar, ContainerRequest request) {
+      User signingOfficial,
+      DataAccessRequest dar,
+      ContainerRequest request,
+      SubmissionApproval approved) {
     // Reject a user who can't approve before taking the lock, so they get a 403, not a 409.
     validateSigningOfficialApproval(signingOfficial, dar);
     dataAccessRequestDAO.inTransaction(
@@ -1576,7 +1592,9 @@ public class DarCollectionService implements ConsentLogger {
           // The approval is for the submission read at the start of this request. A different
           // submission date under the lock means different content (compared in milliseconds: the
           // first read's copy keeps no more).
-          if (locked.getSubmissionDate().getTime() != dar.getSubmissionDate().getTime()) {
+          // The official approves the submission they reviewed, which the request names.
+          if (locked.getSubmissionDate().getTime() != dar.getSubmissionDate().getTime()
+              || (approved != null && !approved.matches(locked))) {
             throw new ConsentConflictException(
                 "The data access request changed since it was loaded. Reload it and try again.");
           }
