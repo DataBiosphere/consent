@@ -1051,7 +1051,6 @@ class MailMessageDAOTest extends DAOTestHelper {
             List.of(),
             true,
             user.getUserId(),
-            Instant.now(),
             studyUuid);
     Dataset dataset = createDataset();
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);

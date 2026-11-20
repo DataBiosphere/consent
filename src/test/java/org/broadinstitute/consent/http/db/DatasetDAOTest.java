@@ -315,8 +315,7 @@ class DatasetDAOTest extends DAOTestHelper {
         null,
         study.getDataTypes(),
         study.getPublicVisibility(),
-        updateUser.getUserId(),
-        Instant.now());
+        updateUser.getUserId());
 
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
 
@@ -1126,13 +1125,49 @@ class DatasetDAOTest extends DAOTestHelper {
   void testInsertDatasetAudit() {
     Dataset d = insertDataset();
     DatasetAudit audit =
-        new DatasetAudit(
-            d.getDatasetId(), "objectid", "name", new Date(), d.getCreateUserId(), "action");
-    Integer auditId = datasetDAO.insertDatasetAudit(audit);
+        new DatasetAudit(d.getDatasetId(), "objectid", "name", d.getCreateUserId(), "action");
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    Integer auditId =
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(
+                  h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+              return datasetDAO.insertDatasetAudit(audit);
+            });
     Optional<DatasetAudit> auditResponse =
         Optional.ofNullable(datasetDAO.findAuditsByDatasetId(d.getDatasetId()).getFirst());
     assertTrue(auditResponse.isPresent());
     assertEquals(auditId, auditResponse.get().getDataSetAuditId());
+    assertEquals(transactionNow.get(), auditResponse.get().getDate().toInstant());
+  }
+
+  @Test
+  void testInsertDatasetPropertiesWritesNowToCreateDate() {
+    Dataset d = insertDataset();
+    String schemaProperty = randomAlphanumeric(20);
+    DatasetProperty property = new DatasetProperty();
+    property.setDatasetId(d.getDatasetId());
+    property.setPropertyKey(1);
+    property.setSchemaProperty(schemaProperty);
+    property.setPropertyValue(randomAlphanumeric(10));
+    property.setPropertyType(PropertyType.String);
+
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          datasetDAO.insertDatasetProperties(List.of(property));
+        });
+
+    DatasetProperty stored =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId()).stream()
+            .filter(p -> schemaProperty.equals(p.getSchemaProperty()))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(transactionNow.get(), stored.getCreateDate().toInstant());
   }
 
   @Test
@@ -1868,8 +1903,7 @@ class DatasetDAOTest extends DAOTestHelper {
         "https://example.org",
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
     Dataset dataset = createDataset(true);
     datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
 
@@ -1901,7 +1935,6 @@ class DatasetDAOTest extends DAOTestHelper {
             dataTypes,
             publicVisibility,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
 
     studyDAO.insertStudyProperty(id, "prop1", PropertyType.String.toString(), "asdf");

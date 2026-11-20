@@ -332,7 +332,6 @@ class ShowcaseRankingLookupDAOTest extends DAOTestHelper {
         List.of(),
         publicVisibility,
         user.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
   }
 

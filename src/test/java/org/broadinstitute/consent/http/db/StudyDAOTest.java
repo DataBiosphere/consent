@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -59,15 +61,7 @@ class StudyDAOTest extends DAOTestHelper {
 
     Integer id =
         studyDAO.insertStudy(
-            name,
-            description,
-            piName,
-            null,
-            dataTypes,
-            publicVisibility,
-            u.getUserId(),
-            Instant.now(),
-            uuid);
+            name, description, piName, null, dataTypes, publicVisibility, u.getUserId(), uuid);
 
     studyDAO.insertStudy(
         RandomStringUtils.randomAlphabetic(20),
@@ -77,7 +71,6 @@ class StudyDAOTest extends DAOTestHelper {
         dataTypes,
         publicVisibility,
         u.getUserId(),
-        Instant.now(),
         UUID.randomUUID());
 
     Study study = studyDAO.findStudyById(id);
@@ -120,8 +113,7 @@ class StudyDAOTest extends DAOTestHelper {
         websiteUrl,
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
 
     Study found = studyDAO.findStudyById(study.getStudyId());
     assertEquals(institutionId, found.getPiInstitution().getId());
@@ -149,8 +141,7 @@ class StudyDAOTest extends DAOTestHelper {
         null,
         study.getDataTypes(),
         study.getPublicVisibility(),
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
     Study cleared = studyDAO.findStudyById(study.getStudyId());
     assertNull(cleared.getPiInstitution());
     assertNull(cleared.getPiOrcid());
@@ -181,7 +172,6 @@ class StudyDAOTest extends DAOTestHelper {
             dataTypes,
             publicVisibility,
             u.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
 
     Integer id2 =
@@ -193,7 +183,6 @@ class StudyDAOTest extends DAOTestHelper {
             dataTypes,
             publicVisibility,
             u.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
 
     Integer prop1Id =
@@ -234,15 +223,7 @@ class StudyDAOTest extends DAOTestHelper {
     UUID uuid = UUID.randomUUID();
     Integer id =
         studyDAO.insertStudy(
-            "name",
-            "description",
-            "asdf",
-            null,
-            List.of(),
-            true,
-            u.getUserId(),
-            Instant.now(),
-            uuid);
+            "name", "description", "asdf", null, List.of(), true, u.getUserId(), uuid);
 
     FileStorageObject fso =
         createFileStorageObject(uuid.toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
@@ -373,20 +354,26 @@ class StudyDAOTest extends DAOTestHelper {
     String newDescription = "New Description";
     String newPiName = "New PI Name";
     List<String> newDataTypes = List.of("DT1", "DT2");
-    studyDAO.updateStudy(
-        study.getStudyId(),
-        newName,
-        newDescription,
-        newPiName,
-        null,
-        null,
-        null,
-        null,
-        null,
-        newDataTypes,
-        true,
-        user.getUserId(),
-        Instant.now());
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          studyDAO.updateStudy(
+              study.getStudyId(),
+              newName,
+              newDescription,
+              newPiName,
+              null,
+              null,
+              null,
+              null,
+              null,
+              newDataTypes,
+              true,
+              user.getUserId());
+        });
 
     Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
     assertNotNull(updatedStudy);
@@ -396,6 +383,35 @@ class StudyDAOTest extends DAOTestHelper {
     assertEquals(newDataTypes, updatedStudy.getDataTypes());
     assertTrue(updatedStudy.getPublicVisibility());
     assertEquals(user.getUserId(), updatedStudy.getUpdateUserId());
+    assertEquals(transactionNow.get(), updatedStudy.getUpdateDate().toInstant());
+  }
+
+  @Test
+  void testInsertStudyWritesNowToCreateDate() {
+    User user = createUser();
+
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    Integer studyId =
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(
+                  h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+              return studyDAO.insertStudy(
+                  randomAlphabetic(20),
+                  "description",
+                  "PI",
+                  null,
+                  List.of(),
+                  true,
+                  user.getUserId(),
+                  UUID.randomUUID());
+            });
+
+    Study inserted = studyDAO.findStudyById(studyId);
+    assertEquals(transactionNow.get(), inserted.getCreateDate().toInstant());
+    // A new study has no update date: findStudyIdsToSync relies on that.
+    assertNull(inserted.getUpdateDate());
   }
 
   @Test
@@ -454,7 +470,6 @@ class StudyDAOTest extends DAOTestHelper {
             List.of(),
             true,
             createUser().getUserId(),
-            Instant.now(),
             UUID.randomUUID());
 
     studyDAO.deleteStudyByStudyId(id);
@@ -631,16 +646,18 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   private Integer insertStudyCreatedAt(Instant createDate) {
-    return studyDAO.insertStudy(
-        RandomStringUtils.secure().nextAlphabetic(20),
-        "description",
-        "PI",
-        null,
-        List.of("type"),
-        true,
-        createUser().getUserId(),
-        createDate,
-        UUID.randomUUID());
+    Integer studyId =
+        studyDAO.insertStudy(
+            RandomStringUtils.secure().nextAlphabetic(20),
+            "description",
+            "PI",
+            null,
+            List.of("type"),
+            true,
+            createUser().getUserId(),
+            UUID.randomUUID());
+    setStudyCreateDate(studyId, createDate);
+    return studyId;
   }
 
   private void setUpdateDate(Integer studyId, Instant updateDate) {
@@ -672,7 +689,6 @@ class StudyDAOTest extends DAOTestHelper {
             dataTypes,
             publicVisibility,
             u.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
 
     studyDAO.insertStudyProperty(id, "prop1", PropertyType.String.toString(), "asdf");
@@ -790,7 +806,6 @@ class StudyDAOTest extends DAOTestHelper {
             List.of("dataType"),
             true,
             user.getUserId(),
-            Instant.now(),
             UUID.randomUUID());
     studyDAO.updateStudyPiInstitutionId(studyId, institutionId);
     return studyId;

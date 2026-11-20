@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -952,7 +951,6 @@ public class DatasetService implements ConsentLogger {
                 prop.setSchemaProperty(schemaProperty);
                 prop.setPropertyValue(propValue);
                 prop.setPropertyType(propertyType);
-                prop.setCreateDate(new Date());
                 datasetDAO.insertDatasetProperties(List.of(prop));
               });
     }
@@ -995,7 +993,6 @@ public class DatasetService implements ConsentLogger {
       prop.setSchemaProperty(schemaProperty);
       prop.setPropertyValue(propValue);
       prop.setPropertyType(propertyType);
-      prop.setCreateDate(new Date());
       datasetDAO.insertDatasetProperties(List.of(prop));
     }
     // Neither legacy property nor dictionary term does not exist, log a warning.
@@ -1023,7 +1020,6 @@ public class DatasetService implements ConsentLogger {
               study.getDataTypes(),
               study.getPublicVisibility(),
               userId,
-              Instant.now(),
               UUID.randomUUID());
       study.setStudyId(studyId);
     } else {
@@ -1041,8 +1037,7 @@ public class DatasetService implements ConsentLogger {
           study.getPiWebsiteUrl(),
           studyConversion.getDataTypes(),
           studyConversion.getPublicVisibility(),
-          userId,
-          Instant.now());
+          userId);
     }
     datasetDAO.updateStudyId(dataset.getDatasetId(), studyId);
 
