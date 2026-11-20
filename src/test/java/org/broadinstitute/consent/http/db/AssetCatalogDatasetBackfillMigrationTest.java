@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -161,11 +159,6 @@ class AssetCatalogDatasetBackfillMigrationTest extends DAOTestHelper {
 
   private Integer insertDataset() {
     return datasetDAO.insertDataset(
-        randomAlphabetic(20),
-        Timestamp.from(Instant.now()),
-        createUser().getUserId(),
-        UUID.randomUUID().toString(),
-        "{}",
-        null);
+        randomAlphabetic(20), createUser().getUserId(), UUID.randomUUID().toString(), "{}", null);
   }
 }

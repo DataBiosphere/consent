@@ -119,11 +119,18 @@ public class DarCollection {
     dars.putIfAbsent(dar.getReferenceId(), dar);
   }
 
+  /**
+   * The DAR with the latest submission date. A draft (no submission date) sorts before every
+   * submitted DAR, so it is returned only when the collection holds nothing but drafts.
+   */
   public DataAccessRequest getMostRecentDar() {
     return dars.values().stream()
         .max(
-            Comparator.comparing(DataAccessRequest::getSubmissionDate)
-                .thenComparing(DataAccessRequest::getId))
+            Comparator.comparing(
+                    DataAccessRequest::getSubmissionDate,
+                    Comparator.nullsFirst(Comparator.naturalOrder()))
+                .thenComparing(
+                    DataAccessRequest::getId, Comparator.nullsFirst(Comparator.naturalOrder())))
         .orElse(null);
   }
 

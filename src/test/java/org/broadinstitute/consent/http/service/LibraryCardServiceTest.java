@@ -20,7 +20,6 @@ import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -94,11 +93,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     assertEquals(createdCard, service.createLibraryCard(payload, soUser));
     verify(libraryCardDAO)
         .insertLibraryCard(
-            eq(user.getUserId()),
-            eq(payload.getUserName()),
-            eq(user.getEmail()),
-            eq(payload.getCreateUserId()),
-            any());
+            user.getUserId(), payload.getUserName(), user.getEmail(), payload.getCreateUserId());
   }
 
   @Test
@@ -175,8 +170,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(null);
 
     // last two calls in the function, no need to test within this service test file
-    when(libraryCardDAO.insertLibraryCard(anyInt(), eq(null), anyString(), eq(null), any()))
-        .thenReturn(1);
+    when(libraryCardDAO.insertLibraryCard(anyInt(), eq(null), anyString(), eq(null))).thenReturn(1);
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
     LibraryCard payload = testLibraryCard(soUser.getUserId());
@@ -435,11 +429,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(any())).thenReturn(institution);
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     when(libraryCardDAO.insertLibraryCard(
-            eq(user.getUserId()),
-            eq(user.getDisplayName()),
-            eq(user.getEmail()),
-            eq(signingOfficial.getUserId()),
-            any(Date.class)))
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId()))
         .thenReturn(payload.getId());
     when(libraryCardDAO.findLibraryCardById(payload.getId())).thenReturn(payload);
     when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
@@ -548,7 +538,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
     when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(null);
 
-    when(libraryCardDAO.insertLibraryCard(anyInt(), any(), any(), anyInt(), any())).thenReturn(1);
+    when(libraryCardDAO.insertLibraryCard(anyInt(), any(), any(), anyInt())).thenReturn(1);
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(newLc);
 
     LibraryCard card = service.createLibraryCardForSigningOfficial(user, signingOfficial);
@@ -629,8 +619,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
     assertDoesNotThrow(() -> service.validateNewLibraryCardCreation(user, soUser));
     // Validation must never write anything — the bulk transaction owns the insert.
-    verify(libraryCardDAO, never())
-        .insertLibraryCard(anyInt(), any(), anyString(), anyInt(), any());
+    verify(libraryCardDAO, never()).insertLibraryCard(anyInt(), any(), anyString(), anyInt());
   }
 
   @Test

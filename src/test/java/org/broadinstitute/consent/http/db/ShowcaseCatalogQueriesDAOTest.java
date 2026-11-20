@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -179,11 +178,11 @@ class ShowcaseCatalogQueriesDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(
             "Example Cohort " + UUID.randomUUID(),
-            Timestamp.from(Instant.parse(created)),
             user.getUserId(),
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
+    setDatasetDates(id, Instant.parse(created));
     datasetDAO.updateStudyId(id, studyId);
     insertProperty(id, accessKey, access);
     Integer alias = datasetDAO.findDatasetById(id).getAlias();

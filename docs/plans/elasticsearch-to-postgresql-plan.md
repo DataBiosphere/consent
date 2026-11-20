@@ -390,9 +390,18 @@ conclusions are the opinion of the author:
 - **A refresh in the write transaction needs an explicit lock.** A reviewer checked the
   PostgreSQL 16 source: at the default isolation level, a refresh takes its snapshot before it
   waits for the lock on the view. `CONCURRENTLY` has the same behavior. The author did not check
-  the source. Two possible corrections exist: take the lock on the view with `LOCK TABLE` before
-  the refresh, or run the refresh at `SERIALIZABLE` with a retry. Each makes all writes run one
-  after the other.
+  the source.
+  - `LOCK TABLE` is not a correction. PostgreSQL rejects it for a materialized view. The author
+    and a reviewer each got the error `cannot lock relation` on PostgreSQL 16.
+  - `SERIALIZABLE` is not a simple correction. It aborts a transaction that conflicts, and it does
+    not make that transaction wait. It is also correct only if each writer to the base tables uses
+    it.
+  - A possible correction: each write transaction calls `pg_advisory_xact_lock` with one constant
+    key, in its own statement, before the refresh. The refresh then starts after the previous
+    writer commits, so its snapshot includes that change. A row lock on a small table with one row
+    has the same effect.
+  - With that lock, all C2 writes run one after the other. The author did not test the lock with
+    two writes at the same time.
 - **A refresh of C2 can block readers.** `REFRESH ... CONCURRENTLY` does not block them. It needs
   a unique index on a plain column, for example `dataset_id`, and a view that already has data.
 - **A removal must not wait for a refresh.** If a refresh is late or fails, a dataset that an admin
@@ -479,12 +488,12 @@ Decision still open: keep the three paths, or give them names that do not say "i
 | ES function | PostgreSQL equivalent | Parity risk |
 | --- | --- | --- |
 | `term`, `terms` on a keyword field with one value | `=` and `= ANY(...)` on a column or a `jsonb` path | Low |
-| `term`, `terms` on a keyword field with a list of values (`study.data.tags`, `study.dataTypes`, `study.dataCustodianEmail`, dataset `cloud`) | `?` and `?|` on a `jsonb` array, `&&` on a typed array, or `EXISTS` on the elements. Not `=`. | **Medium.** ES matches if one element matches. `=` on the full value does not. The branded library scopes send `terms` on the study tags, so a study with two tags leaves its library if the map uses `=`. The field registry must record, for each field, if it holds a list. |
+| `term`, `terms` on a keyword field with a list of values (`study.data.tags` and the dataset field `data.tags`) | `?` and `?|` on a `jsonb` array, `&&` on a typed array, or `EXISTS` on the elements. Not `=`. | **Medium.** ES matches if one element matches. `=` on the full value does not. The branded library scopes send `terms` on the study tags, and the NHGRI and NHLBI scopes also send `terms` on the dataset tags (`libraryVersions.ts`). A study or a dataset with two tags thus leaves its library if the map uses `=`. Other list fields get a different query: see the `match` row and the note on the data custodian email below. The field registry must record, for each field, if it holds a list. |
 | `exists` | `IS NOT NULL`, or `?` for a `jsonb` key | Low. Each Data Library query sends `exists: study`, so a dataset without a study is not in the Data Library. |
 | `bool` `should` with `minimum_should_match` | `OR`, in a group with parentheses | Low |
 | Match on `_id` | `dataset_id = ANY(...)` | Low |
 | `term` on an analyzed field (for example `accessManagement: "controlled"`) | `lower(col) = ...` | Low. ES matches the lowercase token. SQL must do the same. |
-| `match`, `match_phrase` in filters | Equality that ignores case, or `@>` on `jsonb` | Medium. ES matches a token. SQL matches the full value, unless the design uses text search. |
+| `match`, `match_phrase` in filters | Equality that ignores case, or `@>` on `jsonb` | Medium. ES matches a token. SQL matches the full value, unless the design uses text search. Some of these fields hold a list of values, for example `study.dataTypes` and `study.assets.*.cloud` (`filterRegistry.ts`). For them, SQL must compare with each element. |
 | `range` on numbers and dates | `>=` and `<=` as two separate comparisons on typed values. Not `BETWEEN`. | Low. duos-ui sends ranges with only a minimum or only a maximum (`filterRegistry.ts`), so each comparison is optional. Dates in assets are strings and need a safe cast. |
 | `must_not` `term`, as in the approved filter (`accessManagement` is not `controlled`) | `IS DISTINCT FROM`, or `<>` with an explicit `IS NULL` case | Medium. `must_not` also matches a dataset that has no `accessManagement` value. A SQL `<>` drops that dataset, so the counts decrease. |
 | Filters on asset arrays | `jsonb_path_exists` or `EXISTS` on `jsonb_array_elements` | **Medium. The results change.** ES matches the full document. Two asset filters can thus match two different assets of one study. The asset tabs check each row again in the browser, but the study and dataset tabs and their counts keep that match. A SQL `EXISTS` on one array element removes it. The team must keep the two behaviors, or product must accept the change (section 11). |
@@ -512,6 +521,19 @@ The parity test (section 9.4) must include a range with only a minimum, a range 
 maximum, a dataset with no `accessManagement` value, and a study where two asset filters match two
 different assets.
 
+**A known difference: the data custodian email.**
+
+- `DatasetSubmissions.tsx` and `DashboardSearchService` send `term` on `study.dataCustodianEmail`,
+  without `.keyword`. This clause is one of three ownership clauses.
+- The field holds a list of email addresses. Under dynamic mapping, the field without `.keyword`
+  is analyzed text, and the ES standard analyzer divides an email address into tokens.
+- A reviewer found that this clause thus never matches a full email address today. The author read
+  the two call sites, but did not test the clause on a live index.
+- If the SQL map compares the email with each element of the list, the clause starts to match. The
+  Submissions results and the dashboard counts then increase for a data custodian.
+- The team must select one behavior: keep the behavior of today, or correct it. If the team
+  corrects it, the parity test must expect this difference and must not report it as a defect.
+
 Notes on the search box:
 
 - ES splits text with its standard analyzer. PostgreSQL text search splits text with a different
@@ -537,7 +559,8 @@ The design of the search box is not complete. These points are open:
   an immutable wrapper function, or a text search configuration that uses the `unaccent`
   dictionary.
 
-Add to the parity test (section 9.4): a study with two tags in a branded library, a facet on a
+Add to the parity test (section 9.4): a study with two tags in a branded library, a dataset with
+two tags in the NHGRI or NHLBI library, a user who is only a data custodian of a study, a facet on a
 field with a list of values, a phrase that crosses two fields, and a search for text with `tsquery`
 operator characters.
 

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -112,13 +111,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           INSERT INTO dataset
               (name, create_date, create_user_id, update_date,
               update_user_id, object_id, dac_id, data_use)
-          VALUES (:name, :createDate, :createUserId, :createDate,
+          VALUES (:name, NOW(), :createUserId, NOW(),
               :createUserId, :objectId, :dacId, :dataUse)
           """)
   @GetGeneratedKeys
   Integer insertDataset(
       @Bind("name") String name,
-      @Bind("createDate") Timestamp createDate,
       @Bind("createUserId") Integer createUserId,
       @Bind("objectId") String objectId,
       @Bind("dataUse") String dataUse,
@@ -128,7 +126,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """
             UPDATE dataset
             SET name = :datasetName,
-                update_date = :updateDate,
+                update_date = NOW(),
                 update_user_id = :updateUserId,
                 dac_id = :dacId
             WHERE dataset_id = :datasetId
@@ -136,7 +134,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   void updateDatasetByDatasetId(
       @Bind("datasetId") Integer datasetId,
       @Bind("datasetName") String datasetName,
-      @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("dacId") Integer updatedDacId);
 
@@ -546,6 +543,9 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
         aliases, FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue());
   }
 
+  @SqlQuery("SELECT dac_id FROM dataset WHERE dataset_id = :datasetId FOR NO KEY UPDATE")
+  Integer lockDatasetDacId(@Bind("datasetId") Integer datasetId);
+
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
   void updateDatasetDacId(@Bind("datasetId") Integer datasetId, @Bind("dacId") Integer dacId);
 
@@ -639,27 +639,24 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """
       UPDATE dataset
       SET name = :datasetName,
-          update_date = :updateDate,
+          update_date = NOW(),
           update_user_id = :updateUserId
       WHERE dataset_id = :datasetId
       """)
   void updateDatasetNameWithUpdateUser(
       @Bind("datasetId") Integer datasetId,
       @Bind("datasetName") String datasetName,
-      @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId);
 
   @SqlUpdate(
       """
       UPDATE dataset
-      SET update_date = :updateDate,
+      SET update_date = NOW(),
           update_user_id = :updateUserId
       WHERE dataset_id = :datasetId
       """)
   void updateDatasetUpdateUser(
-      @Bind("datasetId") Integer datasetId,
-      @Bind("updateDate") Timestamp updateDate,
-      @Bind("updateUserId") Integer updateUserId);
+      @Bind("datasetId") Integer datasetId, @Bind("updateUserId") Integer updateUserId);
 
   @UseRowMapper(DatasetPropertyMapper.class)
   @SqlQuery(

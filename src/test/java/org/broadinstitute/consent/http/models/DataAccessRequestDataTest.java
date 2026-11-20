@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.broadinstitute.consent.http.models.DataAccessRequestData.COLLABORATION_LETTER_KEYS;
+import static org.broadinstitute.consent.http.models.DataAccessRequestData.IRB_DOCUMENT_KEYS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -10,7 +12,10 @@ import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 class DataAccessRequestDataTest {
@@ -664,5 +669,56 @@ class DataAccessRequestDataTest {
     String json = gson.toJson(data);
     DataAccessRequestData data2 = gson.fromJson(json, DataAccessRequestData.class);
     assertEquals(data.getDaaIds(), data2.getDaaIds());
+  }
+
+  private static DataAccessRequestData withDocuments(String irb, String letter) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setIrbDocumentLocation(irb);
+    data.setIrbDocumentName(irb + ".pdf");
+    data.setCollaborationLetterLocation(letter);
+    data.setCollaborationLetterName(letter + ".pdf");
+    return data;
+  }
+
+  @Test
+  void testKeepStoredDocumentsReplacesClientValues() {
+    DataAccessRequestData data = withDocuments("other-irb", "other-letter");
+
+    List<String> kept = data.keepStoredDocuments(withDocuments("own-irb", "own-letter"));
+
+    assertEquals("own-irb", data.getIrbDocumentLocation());
+    assertEquals("own-irb.pdf", data.getIrbDocumentName());
+    assertEquals("own-letter", data.getCollaborationLetterLocation());
+    assertEquals("own-letter.pdf", data.getCollaborationLetterName());
+    assertEquals(
+        Stream.concat(IRB_DOCUMENT_KEYS.stream(), COLLABORATION_LETTER_KEYS.stream()).toList(),
+        kept);
+  }
+
+  // duos-ui sends an empty location on save and leaves it out on submit when a document is removed.
+  @ParameterizedTest
+  @NullAndEmptySource
+  void testKeepStoredDocumentsBlankLocationRemovesThatDocument(String location) {
+    DataAccessRequestData data = withDocuments(location, "other-letter");
+
+    List<String> kept = data.keepStoredDocuments(withDocuments("own-irb", "own-letter"));
+
+    assertNull(data.getIrbDocumentLocation());
+    assertNull(data.getIrbDocumentName());
+    assertEquals("own-letter", data.getCollaborationLetterLocation());
+    assertEquals(COLLABORATION_LETTER_KEYS, kept);
+  }
+
+  @Test
+  void testKeepStoredDocumentsWithoutStoredDataClearsAll() {
+    DataAccessRequestData data = withDocuments("other-irb", "other-letter");
+
+    List<String> kept = data.keepStoredDocuments(null);
+
+    assertNull(data.getIrbDocumentLocation());
+    assertNull(data.getIrbDocumentName());
+    assertNull(data.getCollaborationLetterLocation());
+    assertNull(data.getCollaborationLetterName());
+    assertTrue(kept.isEmpty());
   }
 }

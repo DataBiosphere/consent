@@ -11,7 +11,6 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -161,8 +160,7 @@ public class DaaService implements ConsentLogger {
 
   /** Creates a new DAA for the DAC and links it for DAC document upload workflows. */
   public Integer createAndLinkDaaIdForDac(User user, Integer dacId) {
-    Instant now = Instant.now();
-    Integer daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
+    Integer daaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), dacId);
     addDacToDaa(user.getUserId(), dacId, daaId);
     return daaId;
   }

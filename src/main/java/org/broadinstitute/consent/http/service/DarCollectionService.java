@@ -60,6 +60,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseGroup;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
@@ -649,20 +650,30 @@ public class DarCollectionService implements ConsentLogger {
               throw new ConsentConflictException(
                   "Elections present on DARs; cannot resubmit collection");
             }
-            sourceCollection
-                .getDars()
-                .values()
-                .forEach(
-                    (d) -> {
-                      Date now = new Date();
-                      DataAccessRequestData newData =
-                          new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
-                      newData.setStatus(null);
-                      newData.setReferenceId(d.getReferenceId());
-                      daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
-                      dataAccessRequestDAO.updateDataByReferenceId(
-                          d.getReferenceId(), d.getUserId(), null, now, newData, null);
-                    });
+            // Re-read under the lock: another resubmit may have committed since the caller's read,
+            // and its stale data would put back documents removed (and deleted) since.
+            List<DataAccessRequest> current =
+                sourceCollection.getDars().keySet().stream()
+                    .map(dao::findByReferenceId)
+                    .filter(Objects::nonNull)
+                    .toList();
+            if (current.stream().noneMatch(DataAccessRequest::isCanceled)) {
+              throw new ConsentConflictException("The collection is no longer canceled");
+            }
+            current.forEach(
+                (d) -> {
+                  Date now = new Date();
+                  DataAccessRequestData newData =
+                      new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                  newData.setStatus(null);
+                  newData.setReferenceId(d.getReferenceId());
+                  daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                  // The content can change before it is submitted again, so a signing
+                  // official has to approve it again.
+                  dao.resetDarApprovalSO(d.getReferenceId());
+                  dataAccessRequestDAO.updateDataByReferenceId(
+                      d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                });
             return null;
           });
     } catch (JdbiException e) {
@@ -834,11 +845,18 @@ public class DarCollectionService implements ConsentLogger {
         && !user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
-    return dataAccessRequestDAO.inTransaction(
-        dao -> {
-          CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
-          return cancelDarCollectionByRoleInTransaction(user, collection, role);
-        });
+    try {
+      return dataAccessRequestDAO.inTransaction(
+          dao -> {
+            CollectionLocks.lockOpenCollection(dao, collection.getDarCollectionId());
+            return cancelDarCollectionByRoleInTransaction(user, collection, role);
+          });
+    } catch (JdbiException e) {
+      // A draft edit in this collection updates its DAR row and then the collection, the reverse
+      // of this path, so either can be the deadlock victim. That is a retryable conflict.
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
   }
 
   private DarCollection cancelDarCollectionByRoleInTransaction(
@@ -934,23 +952,40 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
+   * Approves the collection's most recent DAR for a signing official, when it is the submission the
+   * official reviewed.
+   *
    * @param user The User initiating new elections for a collection
    * @param collection The DarCollection
    * @param request The request context
+   * @param approved The submission the official approves. Null or empty is accepted while clients
+   *     move to sending it, and logged.
    * @return The updated DarCollection
-   * @throws ConsentConflictException Can be thrown when the collection no longer requires approval
-   *     or the underlying data access request does not support this operation.
+   * @throws ConsentConflictException Can be thrown when the collection no longer requires approval,
+   *     the underlying data access request does not support this operation, or its most recent
+   *     submission isn't the named one.
    * @throws BadRequestException Can be thrown when a collection required approval but is already
    *     approved
    * @throws ForbiddenException The user is not the specified signing official required to approve
    *     the collection
    */
   public DarCollection approveDarCollection(
-      User user, DarCollection collection, ContainerRequest request)
+      User user, DarCollection collection, ContainerRequest request, SubmissionApproval approved)
       throws ConsentConflictException, BadRequestException, ForbiddenException {
+    // A draft can still change, so a collection that holds one can't be approved.
+    if (collection.getDars().values().stream()
+        .anyMatch(d -> Objects.isNull(d.getSubmissionDate()))) {
+      throw new ConsentConflictException("A collection that has a draft cannot be approved.");
+    }
+    if (approved == null || approved.isEmpty()) {
+      approved = null;
+      logInfo(
+          "Approval of collection %s doesn't name a submission"
+              .formatted(collection.getDarCollectionId()));
+    }
     DataAccessRequest dar = collection.getMostRecentDar();
     if (dar.getRequiresSOApproval()) {
-      approveDataAccessRequestBySigningOfficial(user, dar, request);
+      approveDataAccessRequestBySigningOfficial(user, dar, request, approved);
       return darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
     }
     throw new ConsentConflictException("This collection does not require approval.");
@@ -1097,38 +1132,41 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     DataAccessRequest latestDar = context.latestDar();
-    DacUserClassification classification = context.classification();
     DarCollection darCollection = context.darCollection();
-    String researcherName = context.researcherName();
     User researcher = context.researcher();
 
     if (!latestDar.getRequiresSOApproval()
         || latestDar.getApprovingSigningOfficialUserId() != null) {
-      // Notify users for auto-open DACs, but only where there is an election to vote on
-      notifyUsersForDacs(
-          usersWithOpenElection(classification, latestDar),
-          classification.autoOpenDacs,
-          classification.autoOpenDatasets,
-          latestDar,
-          darCollection,
-          researcherName,
-          true);
-
-      // Notify users for manual DACs
-      notifyUsersForDacs(
-          classification.manualOpenUsers,
-          classification.manualOpenDacs,
-          classification.manualOpenDatasets,
-          latestDar,
-          darCollection,
-          researcherName,
-          false);
+      notifyDacsOfNewDar(context);
     } else {
       notifySpecificSigningOfficialOfApprovalNeeded(latestDar, researcher);
     }
 
     // Notify signing officials of DAR submission
     notifySigningOfficialsOfDARSubmission(latestDar, researcher, darCollection.getDarCode());
+  }
+
+  /** Notifies auto-open DAC users where there is an election to vote on, and manual DAC chairs. */
+  private void notifyDacsOfNewDar(DarCollectionContext context)
+      throws IOException, TemplateException {
+    DacUserClassification classification = context.classification();
+    DataAccessRequest latestDar = context.latestDar();
+    notifyUsersForDacs(
+        usersWithOpenElection(classification, latestDar),
+        classification.autoOpenDacs,
+        classification.autoOpenDatasets,
+        latestDar,
+        context.darCollection(),
+        context.researcherName(),
+        true);
+    notifyUsersForDacs(
+        classification.manualOpenUsers,
+        classification.manualOpenDacs,
+        classification.manualOpenDatasets,
+        latestDar,
+        context.darCollection(),
+        context.researcherName(),
+        false);
   }
 
   /** Helper method to retrieve the DAR collection context for processing. */
@@ -1534,7 +1572,10 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private void approveDataAccessRequestBySigningOfficial(
-      User signingOfficial, DataAccessRequest dar, ContainerRequest request) {
+      User signingOfficial,
+      DataAccessRequest dar,
+      ContainerRequest request,
+      SubmissionApproval approved) {
     // Reject a user who can't approve before taking the lock, so they get a 403, not a 409.
     validateSigningOfficialApproval(signingOfficial, dar);
     dataAccessRequestDAO.inTransaction(
@@ -1548,6 +1589,18 @@ public class DarCollectionService implements ConsentLogger {
                 "Data access request %s not found".formatted(dar.getReferenceId()));
           }
           validateSigningOfficialApproval(signingOfficial, locked);
+          // The approval is for the submission read at the start of this request. A different
+          // submission date under the lock means different content (compared in milliseconds: the
+          // first read's copy keeps no more).
+          // The official approves the submission they reviewed, which the request names, so it
+          // must still be the collection's latest under the lock.
+          if (locked.getSubmissionDate().getTime() != dar.getSubmissionDate().getTime()
+              || (approved != null
+                  && (!isLatestSubmission(approved, dar.getCollectionId())
+                      || !approved.matches(locked)))) {
+            throw new ConsentConflictException(
+                "The data access request changed since it was loaded. Reload it and try again.");
+          }
           dao.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
           return null;
         });
@@ -1557,6 +1610,77 @@ public class DarCollectionService implements ConsentLogger {
       dacAutomationRuleService.triggerDACRuleSettings(
           researcher, datasetIds, dar.getReferenceId(), request);
     }
+    if (!dar.getIsCloseoutProgressReport()) {
+      // Submission skipped auto-open elections and DAC notices while this approval was pending.
+      processApprovedSubmission(dar.getCollectionId(), dar.getReferenceId());
+    }
+  }
+
+  /**
+   * Whether the named submission is the collection's latest. Call it under the collection lock: a
+   * collection that holds a draft has no latest submission.
+   */
+  private boolean isLatestSubmission(SubmissionApproval approved, Integer collectionId) {
+    DarCollection current = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    return current != null
+        && current.getDars().values().stream().noneMatch(d -> d.getSubmissionDate() == null)
+        && approved.matches(current.getMostRecentDar());
+  }
+
+  /**
+   * Opens the auto-open elections and sends the DAC notices that submission deferred until the
+   * signing official's approval. The approval has committed, so a failure here is logged, not
+   * returned.
+   */
+  private void processApprovedSubmission(Integer collectionId, String referenceId) {
+    try {
+      DarCollectionContext context = getDarCollectionContext(collectionId);
+      if (context == null) {
+        return;
+      }
+      // Elections and notices go to the collection's most recent DAR, so it must be the approved
+      // one. A cancel, resubmit or progress report can commit before the lock, so both are checked
+      // again under it.
+      DataAccessRequest latestDar = context.latestDar();
+      boolean current =
+          referenceId.equals(latestDar.getReferenceId())
+              && dataAccessRequestDAO.inTransaction(
+                  dao -> {
+                    CollectionLocks.lockOpenCollection(dao, collectionId);
+                    DarCollection locked =
+                        darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+                    // A resubmit leaves drafts, which have no submission date to order by.
+                    if (locked == null
+                        || locked.getDars().values().stream()
+                            .anyMatch(d -> d.getSubmissionDate() == null)
+                        || !referenceId.equals(locked.getMostRecentDar().getReferenceId())
+                        || !isStillApproved(dao.findByReferenceId(referenceId), latestDar)) {
+                      return false;
+                    }
+                    createElectionsAndVotesForAutoOpenDacs(context.classification(), latestDar);
+                    return true;
+                  });
+      if (!current) {
+        logWarn("Skipping processing of approved DAR %s: it changed".formatted(referenceId));
+        return;
+      }
+      notifyDacsOfNewDar(context);
+    } catch (ConsentConflictException e) {
+      // A closeout committed after the approval. Nothing may be opened on the collection.
+      logWarn("Skipping processing of approved DAR %s: %s".formatted(referenceId, e.getMessage()));
+    } catch (Exception e) {
+      logException("Exception processing the approved DAR for collection id: " + collectionId, e);
+    }
+  }
+
+  /** The DAR read under the lock is approved, not canceled, and the submission that was loaded. */
+  private static boolean isStillApproved(DataAccessRequest locked, DataAccessRequest loaded) {
+    return locked != null
+        && locked.getApprovingSigningOfficialUserId() != null
+        && !DataAccessRequest.isCanceled(locked)
+        && locked.getSubmissionDate() != null
+        && loaded.getSubmissionDate() != null
+        && locked.getSubmissionDate().getTime() == loaded.getSubmissionDate().getTime();
   }
 
   private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {
@@ -1571,6 +1695,13 @@ public class DarCollectionService implements ConsentLogger {
     if (signingOfficial.getEmail() == null
         || !signingOfficial.getEmail().equalsIgnoreCase(darSigningOfficialEmail)) {
       throw new ForbiddenException("You are not the Signing Official for this request.");
+    }
+    // A draft can still change, so an approval would not apply to what gets submitted.
+    if (dar.getSubmissionDate() == null) {
+      throw new ConsentConflictException("A draft cannot be approved.");
+    }
+    if (DataAccessRequest.isCanceled(dar)) {
+      throw new ConsentConflictException("A canceled data access request cannot be approved.");
     }
   }
 

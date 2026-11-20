@@ -12,8 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.core.MediaType;
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
@@ -151,18 +149,13 @@ class DaaServiceDAOTest extends DAOTestHelper {
     int dacId =
         dacDAO.createDac(
             randomAlphabetic(10), randomAlphabetic(10), randomAlphabetic(10), creator.getUserId());
-    Instant now = Instant.now();
-    return daaDAO.createDaa(creator.getUserId(), now, creator.getUserId(), now, dacId);
+    return daaDAO.createDaa(creator.getUserId(), creator.getUserId(), dacId);
   }
 
   private LibraryCard insertCardFor(User user, User creator) {
     Integer id =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            creator.getUserId(),
-            new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), creator.getUserId());
     return libraryCardDAO.findLibraryCardById(id);
   }
 

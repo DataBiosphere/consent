@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -219,13 +218,15 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer dataset(Integer dacId) {
-    return datasetDAO.insertDataset(
-        "Dataset " + UUID.randomUUID(),
-        new Timestamp(IN_RANGE.getTime()),
-        user.getUserId(),
-        UUID.randomUUID().toString(),
-        "{}",
-        dacId);
+    Integer id =
+        datasetDAO.insertDataset(
+            "Dataset " + UUID.randomUUID(),
+            user.getUserId(),
+            UUID.randomUUID().toString(),
+            "{}",
+            dacId);
+    setDatasetDates(id, IN_RANGE.toInstant());
+    return id;
   }
 
   private Integer dac() {

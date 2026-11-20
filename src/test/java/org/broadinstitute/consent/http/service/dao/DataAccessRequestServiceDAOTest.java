@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
+import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -15,9 +17,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -29,6 +35,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.CounterService;
+import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO.RemovedDocument;
 import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,7 +75,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         user.getUserId(),
         old,
-        old,
+        null,
         old,
         new DataAccessRequestData(),
         user.getEraCommonsId());
@@ -119,7 +126,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         user.getUserId(),
         old,
-        old,
+        null,
         old,
         new DataAccessRequestData(),
         user.getEraCommonsId());
@@ -152,7 +159,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         user.getUserId(),
         new Date(),
-        new Date(),
+        null,
         new Date(),
         original,
         user.getEraCommonsId());
@@ -171,6 +178,103 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
     assertEquals("original", stored.getData().getOtherText());
     assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdRejectsSubmittedDar() {
+    Dataset dataset = createDataset();
+    Dataset otherDataset = createDataset();
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData original = new DataAccessRequestData();
+    original.setOtherText("original");
+    Integer collectionId = createDarCollection().getDarCollectionId();
+    // Submitted after the caller read it as a draft.
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        new Date(),
+        new Date(),
+        original,
+        user.getEraCommonsId());
+    dataAccessRequestDAO.insertAllDarDatasets(
+        List.of(new DarDataset(referenceId, dataset.getDatasetId())));
+    // Submitted, with an election: still reported as submitted (422), not 409.
+    electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        referenceId,
+        dataset.getDatasetId());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(referenceId);
+    dar.setCollectionId(collectionId);
+    DataAccessRequestData changed = new DataAccessRequestData();
+    changed.setOtherText("changed");
+    dar.setData(changed);
+    dar.setDatasetIds(List.of(otherDataset.getDatasetId()));
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class, () -> serviceDAO.updateByReferenceId(user, dar));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertFalse(stored.getDraft());
+    assertEquals("original", stored.getData().getOtherText());
+    assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdRejectsDraftWithElections() {
+    Dataset dataset = createDataset();
+    Dataset otherDataset = createDataset();
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData original = new DataAccessRequestData();
+    original.setOtherText("original");
+    // A draft that has an election.
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        original,
+        user.getEraCommonsId());
+    dataAccessRequestDAO.insertAllDarDatasets(
+        List.of(new DarDataset(referenceId, dataset.getDatasetId())));
+    electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.CLOSED.getValue(),
+        new Date(),
+        referenceId,
+        dataset.getDatasetId());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(referenceId);
+    DataAccessRequestData changed = new DataAccessRequestData();
+    changed.setOtherText("changed");
+    dar.setData(changed);
+    dar.setDatasetIds(List.of(otherDataset.getDatasetId()));
+
+    assertThrows(ConsentConflictException.class, () -> serviceDAO.updateByReferenceId(user, dar));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertEquals("original", stored.getData().getOtherText());
+    assertEquals(List.of(dataset.getDatasetId()), stored.getDatasetIds());
+  }
+
+  @Test
+  void testUpdateByReferenceIdOfADeletedDraftIsNotFound() {
+    User user = createUser();
+    DataAccessRequest dar = new DataAccessRequest();
+    // Deleted after the caller read it as a draft.
+    dar.setReferenceId(randomAlphanumeric(10));
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of());
+
+    assertThrows(NotFoundException.class, () -> serviceDAO.updateByReferenceId(user, dar));
   }
 
   @Test
@@ -208,6 +312,220 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     assertEquals("ServerValue", storedArchived.getData().getStatus());
     assertEquals("edited", storedArchived.getData().getOtherText());
     assertNull(dataAccessRequestDAO.findByReferenceId(noStatus).getData().getStatus());
+  }
+
+  private String insertDraftWithIrbDocument(User user, String location) {
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setIrbDocumentLocation(location);
+    data.setIrbDocumentName(location + ".pdf");
+    data.setOtherText("original");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        data,
+        user.getEraCommonsId());
+    return referenceId;
+  }
+
+  @Test
+  void testSaveDocumentKeepsAnEditThatCommittedMeanwhile() {
+    User user = createUser();
+    String referenceId = insertDraftWithIrbDocument(user, "own-irb");
+    // The upload read the draft, then an edit committed before the upload saved.
+    DataAccessRequest upload = dataAccessRequestDAO.findByReferenceId(referenceId);
+    DataAccessRequest edit = dataAccessRequestDAO.findByReferenceId(referenceId);
+    edit.getData().setOtherText("edited");
+    edit.setDatasetIds(List.of());
+    serviceDAO.updateByReferenceId(user, edit);
+    upload.getData().setIrbDocumentLocation("new-irb");
+    upload.getData().setIrbDocumentName("new-irb.pdf");
+
+    var saved = serviceDAO.saveDocument(user, upload, DarDocumentType.IRB);
+
+    assertEquals("own-irb", saved.previousLocation());
+    DataAccessRequestData stored = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
+    assertEquals("new-irb", stored.getIrbDocumentLocation());
+    assertEquals("new-irb.pdf", stored.getIrbDocumentName());
+    assertEquals("edited", stored.getOtherText());
+  }
+
+  @Test
+  void testSaveDocumentWithoutAPreviousDocument() {
+    User user = createUser();
+    String referenceId = insertDraftWithIrbDocument(user, "own-irb");
+    DataAccessRequest upload = dataAccessRequestDAO.findByReferenceId(referenceId);
+    upload.getData().setCollaborationLetterLocation("new-letter");
+    upload.getData().setCollaborationLetterName("new-letter.pdf");
+
+    var saved = serviceDAO.saveDocument(user, upload, DarDocumentType.COLLABORATION);
+
+    assertNull(saved.previousLocation());
+    DataAccessRequestData stored = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
+    assertEquals("new-letter", stored.getCollaborationLetterLocation());
+    assertEquals("own-irb", stored.getIrbDocumentLocation());
+  }
+
+  @Test
+  void testSaveDocumentRejectsASubmittedOrMissingDar() {
+    User user = createUser();
+    String referenceId = insertDraftWithIrbDocument(user, "own-irb");
+    DataAccessRequest upload = dataAccessRequestDAO.findByReferenceId(referenceId);
+    upload.getData().setIrbDocumentLocation("new-irb");
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(upload.getCollectionId(), referenceId);
+
+    assertThrows(
+        SubmittedDARCannotBeEditedException.class,
+        () -> serviceDAO.saveDocument(user, upload, DarDocumentType.IRB));
+    assertEquals(
+        "own-irb",
+        dataAccessRequestDAO.findByReferenceId(referenceId).getData().getIrbDocumentLocation());
+    upload.setReferenceId(randomAlphanumeric(10));
+    assertThrows(
+        NotFoundException.class, () -> serviceDAO.saveDocument(user, upload, DarDocumentType.IRB));
+  }
+
+  @Test
+  void testUpdateByReferenceIdKeepsTheRowsDocuments() {
+    User user = createUser();
+    String referenceId = randomAlphanumeric(10);
+    DataAccessRequestData stored = new DataAccessRequestData();
+    stored.setIrbDocumentLocation("own-irb");
+    stored.setIrbDocumentName("own-irb.pdf");
+    stored.setCollaborationLetterLocation("own-letter");
+    stored.setCollaborationLetterName("own-letter.pdf");
+    dataAccessRequestDAO.insertDataAccessRequest(
+        createDarCollection().getDarCollectionId(),
+        referenceId,
+        user.getUserId(),
+        new Date(),
+        null,
+        new Date(),
+        stored,
+        user.getEraCommonsId());
+
+    // The IRB document is kept from the row whatever the edit sends; the letter was removed.
+    DataAccessRequest edit = new DataAccessRequest();
+    edit.setReferenceId(referenceId);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setIrbDocumentLocation("other-irb");
+    data.setOtherText("edited");
+    edit.setData(data);
+    edit.setDatasetIds(List.of());
+    var result =
+        serviceDAO.updateByReferenceId(
+            user, edit, List.of("status", "irbDocumentLocation", "irbDocumentName"));
+
+    // The removed letter is reported for deletion; the kept IRB document isn't.
+    assertEquals(
+        List.of(new RemovedDocument(DarDocumentType.COLLABORATION, "own-letter")),
+        result.removedDocuments());
+    DataAccessRequestData saved = dataAccessRequestDAO.findByReferenceId(referenceId).getData();
+    assertEquals("own-irb", saved.getIrbDocumentLocation());
+    assertEquals("own-irb.pdf", saved.getIrbDocumentName());
+    assertNull(saved.getCollaborationLetterLocation());
+    assertNull(saved.getCollaborationLetterName());
+    assertEquals("edited", saved.getOtherText());
+  }
+
+  // The edit reports every location it removed; whether another DAR still uses it is checked
+  // after the commit, before the file is deleted.
+  @Test
+  void testUpdateByReferenceIdReportsARemovedLocationAnotherDarUses() {
+    User user = createUser();
+    DataAccessRequestData shared = new DataAccessRequestData();
+    shared.setCollaborationLetterLocation("shared-letter");
+    String draftId = randomAlphanumeric(10);
+    for (String referenceId : List.of(draftId, randomAlphanumeric(10))) {
+      dataAccessRequestDAO.insertDataAccessRequest(
+          createDarCollection().getDarCollectionId(),
+          referenceId,
+          user.getUserId(),
+          new Date(),
+          null,
+          new Date(),
+          shared,
+          user.getEraCommonsId());
+    }
+    DataAccessRequest edit = new DataAccessRequest();
+    edit.setReferenceId(draftId);
+    edit.setData(new DataAccessRequestData());
+    edit.setDatasetIds(List.of());
+
+    var result = serviceDAO.updateByReferenceId(user, edit, List.of("status"));
+
+    assertEquals(
+        List.of(new RemovedDocument(DarDocumentType.COLLABORATION, "shared-letter")),
+        result.removedDocuments());
+    assertNull(
+        dataAccessRequestDAO.findByReferenceId(draftId).getData().getCollaborationLetterLocation());
+  }
+
+  // DAAs, dataset and draft files share the bucket; a planted location may name one of them.
+  @Test
+  void testIsDocumentReferencedFindsAFileStorageObject() {
+    User user = createUser();
+    String blob = UUID.randomUUID().toString();
+    fileStorageObjectDAO.insertNewFile(
+        "daa.pdf",
+        "DATA_ACCESS_AGREEMENT",
+        "gs://bucket/" + blob,
+        "application/pdf",
+        "1",
+        user.getUserId());
+
+    assertTrue(dataAccessRequestDAO.isDocumentReferenced(blob));
+    assertFalse(dataAccessRequestDAO.isDocumentReferenced(UUID.randomUUID().toString()));
+    // A planted location is compared literally, not as a pattern.
+    assertFalse(dataAccessRequestDAO.isDocumentReferenced("%"));
+    assertFalse(dataAccessRequestDAO.isDocumentReferenced("planted\\"));
+  }
+
+  @Test
+  void testInsertDocumentDeletion() {
+    User user = createUser();
+    dataAccessRequestDAO.insertDocumentDeletion(
+        "ref-1", "IRB", "blob-1", "REPLACED", user.getUserId());
+
+    var row =
+        jdbi.withHandle(
+            h ->
+                h.createQuery(
+                        """
+                        SELECT reference_id, document_type, blob_name, reason, user_id,
+                          delete_date IS NOT NULL AS dated
+                        FROM dar_document_deletion WHERE reference_id = 'ref-1'
+                        """)
+                    .mapToMap()
+                    .one());
+    assertEquals("IRB", row.get("document_type"));
+    assertEquals("blob-1", row.get("blob_name"));
+    assertEquals("REPLACED", row.get("reason"));
+    assertEquals(user.getUserId(), row.get("user_id"));
+    assertEquals(true, row.get("dated"));
+    // Only known document types and reasons are stored.
+    assertThrows(
+        Exception.class,
+        () -> dataAccessRequestDAO.insertDocumentDeletion("ref-1", "IRB", "blob-2", "OTHER", null));
+  }
+
+  // The table's CHECK constraints list the enum names, so a new constant needs a migration. Each
+  // combination the service can write must insert.
+  @Test
+  void testInsertDocumentDeletionAcceptsEveryTypeAndReason() {
+    for (DarDocumentType type : DarDocumentType.values()) {
+      for (DarDocumentDeletionReason reason : DarDocumentDeletionReason.values()) {
+        assertDoesNotThrow(
+            () ->
+                dataAccessRequestDAO.insertDocumentDeletion(
+                    "ref-all", type.name(), "blob", reason.name(), null),
+            type + " " + reason);
+      }
+    }
   }
 
   @Test
@@ -250,11 +568,10 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }

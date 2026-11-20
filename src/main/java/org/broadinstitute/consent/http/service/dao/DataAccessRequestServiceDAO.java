@@ -1,18 +1,27 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
@@ -53,17 +62,42 @@ public class DataAccessRequestServiceDAO {
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
+    return updateByReferenceId(user, dar, List.of("status")).dar();
+  }
+
+  /**
+   * A draft edit's save: the saved DAR, and the document locations it removed, for the caller to
+   * delete once the save has committed and nothing else refers to them.
+   */
+  public record DraftSave(DataAccessRequest dar, List<RemovedDocument> removedDocuments) {}
+
+  /** A document a save removed: which document, and its file's location. */
+  public record RemovedDocument(DarDocumentType type, String location) {}
+
+  /**
+   * Saves a draft's data. The keys in {@code keepFromRow} are server-managed: their values come
+   * from the row being updated, not from {@code dar}, so a client can't set them and a change that
+   * commits while this update waits on the row (a cancel, a document upload) is not overwritten.
+   */
+  public DraftSave updateByReferenceId(
+      User user, DataAccessRequest dar, Collection<String> keepFromRow) {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
     final String updateDataByReferenceId =
         """
           UPDATE data_access_request
-          SET data = jsonb_set(
-              regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb - 'status',
-              '{status}', COALESCE(data -> 'status', 'null'::jsonb)),
+          SET data = (regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb
+                  - CAST(:keepFromRow AS text[]))
+              || COALESCE(
+                  (SELECT jsonb_object_agg(k, data -> k)
+                   FROM unnest(CAST(:keepFromRow AS text[])) AS k
+                   WHERE data -> k IS NOT NULL),
+                  '{}'::jsonb),
             user_id = :userId,
-          submission_date = :submissionDate, update_date = :updateDate
-          WHERE reference_id = :referenceId
+          update_date = :updateDate
+          WHERE reference_id = :referenceId AND submission_date IS NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM election e WHERE e.reference_id = data_access_request.reference_id)
         """;
     final String deleteDarDatasetRelationByReferenceId =
         """
@@ -75,22 +109,38 @@ public class DataAccessRequestServiceDAO {
           VALUES (:referenceId, :datasetId)
           ON CONFLICT DO NOTHING
         """;
-    // The row's own status is kept, whatever the edit sends: only the server sets it, and a cancel
-    // that commits while this edit waits on the row is not overwritten.
-    jdbi.useTransaction(
+    final String documentLocations =
+        """
+          SELECT data ->> 'irbDocumentLocation', data ->> 'collaborationLetterLocation'
+          FROM data_access_request WHERE reference_id = :referenceId
+        """;
+    // The saved DAR is read in the same transaction, so a failure after the commit can't lose the
+    // locations this edit removed.
+    return jdbi.inTransaction(
         h -> {
+          // The row lock is taken here, so the locations read before and after are this edit's.
+          List<RemovedDocument> before =
+              readLocations(h, documentLocations + " FOR NO KEY UPDATE", referenceId);
           Update darUpdate = h.createUpdate(updateDataByReferenceId);
           darUpdate.bind("referenceId", referenceId);
           darUpdate.bind("userId", user.getUserId());
           darUpdate.bind("updateDate", now);
           darUpdate.bind("data", dar.getData().toString());
-          darUpdate.bind("submissionDate", dar.getSubmissionDate());
-          darUpdate.execute();
-
-          if (Objects.nonNull(dar.getCollectionId())) {
-            darCollectionDAO.updateDarCollection(
-                dar.getCollectionId(), user.getUserId(), Date.from(now));
+          darUpdate.bindArray("keepFromRow", String.class, List.copyOf(keepFromRow));
+          // Only a draft with no elections can be edited. The caller's draft check ran on an
+          // earlier read, and a submit may have committed since; the guard keeps an edit from
+          // turning a submitted DAR back into a draft.
+          if (darUpdate.execute() == 0) {
+            throwWhyNotUpdated(h, referenceId);
           }
+          checkNoElectionsUnderCollectionLock(h, dar, user, now);
+
+          List<String> after =
+              readLocations(h, documentLocations, referenceId).stream()
+                  .map(RemovedDocument::location)
+                  .toList();
+          List<RemovedDocument> removedDocuments =
+              before.stream().filter(document -> !after.contains(document.location())).toList();
 
           Update darDatasetDelete = h.createUpdate(deleteDarDatasetRelationByReferenceId);
           darDatasetDelete.bind("referenceId", dar.getReferenceId());
@@ -104,7 +154,122 @@ public class DataAccessRequestServiceDAO {
                 darDatasetInsert.bind("datasetId", id);
                 darDatasetInsert.execute();
               });
+          return new DraftSave(
+              h.attach(DataAccessRequestDAO.class).findByReferenceId(referenceId),
+              removedDocuments);
         });
-    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  /** The DAR's documents that have a location, as the query reads them. */
+  private static List<RemovedDocument> readLocations(Handle h, String sql, String referenceId) {
+    return h.createQuery(sql)
+        .bind("referenceId", referenceId)
+        .map(
+            (rs, ctx) ->
+                Stream.of(
+                        new RemovedDocument(DarDocumentType.IRB, rs.getString(1)),
+                        new RemovedDocument(DarDocumentType.COLLABORATION, rs.getString(2)))
+                    .filter(document -> Objects.nonNull(document.location()))
+                    .toList())
+        .findOne()
+        .orElse(List.of());
+  }
+
+  /** A document upload's save: the location it replaced, if any, and the saved DAR. */
+  public record DocumentSave(String previousLocation, DataAccessRequest dar) {}
+
+  /**
+   * Saves an uploaded document's location and name on a draft, and nothing else, so an edit or
+   * another upload that commits meanwhile is not overwritten. Returns the location it replaced, as
+   * read under the row lock, so the caller deletes the document the draft no longer refers to.
+   */
+  public DocumentSave saveDocument(User user, DataAccessRequest dar, DarDocumentType type) {
+    Instant now = Instant.now();
+    String referenceId = dar.getReferenceId();
+    boolean irb = DarDocumentType.IRB.equals(type);
+    String locationField = irb ? "irbDocumentLocation" : "collaborationLetterLocation";
+    JsonObject patch = new JsonObject();
+    patch.addProperty(
+        locationField,
+        irb
+            ? dar.getData().getIrbDocumentLocation()
+            : dar.getData().getCollaborationLetterLocation());
+    patch.addProperty(
+        irb ? "irbDocumentName" : "collaborationLetterName",
+        irb ? dar.getData().getIrbDocumentName() : dar.getData().getCollaborationLetterName());
+    final String saveDocument =
+        """
+          UPDATE data_access_request d
+          SET data = d.data || CAST(:patch AS jsonb), update_date = :updateDate
+          FROM (SELECT reference_id, data ->> :locationField AS previous
+                FROM data_access_request WHERE reference_id = :referenceId FOR NO KEY UPDATE) old
+          WHERE d.reference_id = old.reference_id AND d.submission_date IS NULL
+            AND NOT EXISTS (SELECT 1 FROM election e WHERE e.reference_id = d.reference_id)
+          RETURNING COALESCE(old.previous, '')
+        """;
+    // The saved DAR is read in the same transaction, so a failure after the commit can't lose the
+    // location this save replaced.
+    return jdbi.inTransaction(
+        h -> {
+          Optional<String> saved =
+              h.createQuery(saveDocument)
+                  .bind("patch", patch.toString())
+                  .bind("updateDate", now)
+                  .bind("locationField", locationField)
+                  .bind("referenceId", referenceId)
+                  .mapTo(String.class)
+                  .findOne();
+          if (saved.isEmpty()) {
+            throwWhyNotUpdated(h, referenceId);
+          }
+          checkNoElectionsUnderCollectionLock(h, dar, user, now);
+          return new DocumentSave(
+              saved.get().isEmpty() ? null : saved.get(),
+              h.attach(DataAccessRequestDAO.class).findByReferenceId(referenceId));
+        });
+  }
+
+  /**
+   * Only a draft with no elections can be changed. Explains why an update guarded on that matched
+   * no row: the DAR is gone (404), submitted (422), or a draft with elections (409).
+   */
+  private static void throwWhyNotUpdated(Handle h, String referenceId) {
+    boolean draft =
+        h.createQuery(
+                """
+                  SELECT submission_date IS NULL FROM data_access_request
+                  WHERE reference_id = :referenceId
+                """)
+            .bind("referenceId", referenceId)
+            .mapTo(Boolean.class)
+            .findOne()
+            .orElseThrow(
+                () ->
+                    new NotFoundException(
+                        "Data access request %s not found".formatted(referenceId)));
+    if (!draft) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
+    throw new ConsentConflictException("Elections present on this DAR; it cannot be edited");
+  }
+
+  /**
+   * Takes the DAR's collection lock, under which elections are opened, and fails the change if one
+   * committed while it waited.
+   */
+  private void checkNoElectionsUnderCollectionLock(
+      Handle h, DataAccessRequest dar, User user, Instant now) {
+    if (Objects.isNull(dar.getCollectionId())) {
+      return;
+    }
+    darCollectionDAO.updateDarCollection(dar.getCollectionId(), user.getUserId(), Date.from(now));
+    boolean elections =
+        h.createQuery("SELECT EXISTS (SELECT 1 FROM election WHERE reference_id = :referenceId)")
+            .bind("referenceId", dar.getReferenceId())
+            .mapTo(Boolean.class)
+            .one();
+    if (elections) {
+      throw new ConsentConflictException("Elections present on this DAR; it cannot be edited");
+    }
   }
 }

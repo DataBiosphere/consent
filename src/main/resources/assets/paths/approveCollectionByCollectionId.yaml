@@ -12,6 +12,14 @@ post:
       required: true
       schema:
         type: integer
+  requestBody:
+    description: >-
+      The submission the signing official reviewed, with its referenceId and submissionDate.
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/SubmissionApproval.yaml'
   responses:
     200:
       description: Returns target dar collection
@@ -20,13 +28,19 @@ post:
           schema:
             $ref: '../schemas/DarCollection.yaml'
     400:
-      description: Bad Request.  Check error details
+      description: >-
+        Bad Request. Check error details. A body that names a submission without both its
+        referenceId and submissionDate is rejected.
     401:
       description: Not authorized to perform this action.
     404:
       description: Not Found
     409:
-      description: Conflict. The collection does not require approval, or it has a submitted closeout.
+      description: >-
+        Conflict. The collection does not require approval, has a submitted closeout, or holds a
+        draft, the DAR is canceled, the DAR's submission date changed while the request waited
+        for the collection lock, or the collection's latest submission isn't the one the body
+        names.
     429:
       description: Too Many Requests - rate limit exceeded
       content:

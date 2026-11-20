@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +86,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(System.currentTimeMillis()),
             userId,
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -99,7 +97,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer datasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(20),
-            new Timestamp(System.currentTimeMillis()),
             userId,
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
