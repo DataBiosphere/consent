@@ -115,6 +115,10 @@ failure to record is logged and doesn't fail the request.
   any left from older data, resets `requires_so_approval` to NULL and sets it again when needed;
   and a signing official can't approve a draft, a collection that has one, a canceled DAR, or a
   DAR whose submission date changed while the approval waited for the collection lock (409).
+  A collection approval names the submission the official reviewed (`SubmissionApproval`: the
+  latest DAR's reference id and submission date); a different submission under the collection
+  lock is a 409. Until every client sends it, a request without it (no body or `{}`) is accepted
+  and logged.
   DAC automation rules skip a DAR that needs signing official approval and doesn't have it
   (`DACAutomationRuleService.triggerDACRuleSettings`). Submission also defers auto-open elections
   and DAC notices for that DAR; the approval runs the rules, then opens those elections and sends

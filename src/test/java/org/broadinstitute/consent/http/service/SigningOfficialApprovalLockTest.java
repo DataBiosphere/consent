@@ -92,7 +92,7 @@ class SigningOfficialApprovalLockTest extends DAOTestHelper {
         executor.submit(
             () ->
                 service.approveDarCollection(
-                    signingOfficial, loaded, mock(ContainerRequest.class)));
+                    signingOfficial, loaded, mock(ContainerRequest.class), null));
     awaitATransactionBlockedBy(holderPid.get());
     release.countDown();
     resubmitted.get(10, TimeUnit.SECONDS);
@@ -115,7 +115,7 @@ class SigningOfficialApprovalLockTest extends DAOTestHelper {
     DataAccessRequest dar = createDarAwaitingApprovalBy(signingOfficial);
     DarCollection loaded = darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
 
-    service.approveDarCollection(signingOfficial, loaded, mock(ContainerRequest.class));
+    service.approveDarCollection(signingOfficial, loaded, mock(ContainerRequest.class), null);
 
     // The submission date read under the lock matches the one loaded (to the millisecond).
     assertEquals(

@@ -74,7 +74,6 @@ class DatasetDAOTest extends DAOTestHelper {
   void testInsertDatasetAllocatesUniqueAliasesConcurrently() throws Exception {
     int insertCount = 16;
     User user = createUser();
-    Timestamp now = Timestamp.from(Instant.now());
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     CountDownLatch ready = new CountDownLatch(insertCount);
     CountDownLatch start = new CountDownLatch(1);
@@ -92,7 +91,6 @@ class DatasetDAOTest extends DAOTestHelper {
                             }
                             return datasetDAO.insertDataset(
                                 "Concurrent dataset " + index,
-                                now,
                                 user.getUserId(),
                                 "concurrent-object-" + index,
                                 dataUse.toString(),
@@ -698,19 +696,46 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testInsertDatasetWritesNowToCreateAndUpdateDate() {
+    User user = createUser();
+    String dataUse = new DataUseBuilder().setGeneralUse(true).build().toString();
+
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    Integer datasetId =
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(
+                  h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+              return datasetDAO.insertDataset(
+                  randomAlphanumeric(20), user.getUserId(), null, dataUse, null);
+            });
+    Dataset inserted = datasetDAO.findDatasetById(datasetId);
+
+    assertEquals(transactionNow.get(), inserted.getCreateDate().toInstant());
+    assertEquals(transactionNow.get(), inserted.getUpdateDate().toInstant());
+  }
+
+  @Test
   void testUpdateDatasetByDatasetIdUpdatesNameAuditFieldsAndDac() {
     Dataset d = insertDataset();
     Dac dac = insertDac();
     String name = randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     User user = createUser();
 
-    datasetDAO.updateDatasetByDatasetId(
-        d.getDatasetId(), name, now, user.getUserId(), dac.getDacId());
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          datasetDAO.updateDatasetByDatasetId(
+              d.getDatasetId(), name, user.getUserId(), dac.getDacId());
+        });
     Dataset updated = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(name, updated.getName());
-    assertEquals(now, updated.getUpdateDate());
+    assertEquals(transactionNow.get(), updated.getUpdateDate().toInstant());
     assertEquals(user.getUserId(), updated.getUpdateUserId());
     assertEquals(dac.getDacId(), updated.getDacId());
   }
@@ -1063,10 +1088,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     String newName = randomAlphabetic(dataset.getName().length() + 5);
     datasetDAO.updateDatasetNameWithUpdateUser(
-        dataset.getDatasetId(),
-        newName,
-        new Timestamp(new Date().getTime()),
-        dataset.getCreateUserId());
+        dataset.getDatasetId(), newName, dataset.getCreateUserId());
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(newName, foundDataset.getName());
@@ -1076,8 +1098,7 @@ class DatasetDAOTest extends DAOTestHelper {
   void testUpdateDatasetUpdateUser() {
     Dataset dataset = insertDataset();
     User user = createUser();
-    datasetDAO.updateDatasetUpdateUser(
-        dataset.getDatasetId(), new Timestamp(new Date().getTime()), user.getUserId());
+    datasetDAO.updateDatasetUpdateUser(dataset.getDatasetId(), user.getUserId());
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(user.getUserId(), foundDataset.getUpdateUserId());
@@ -1206,35 +1227,17 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset3 = createDataset(false);
     Dataset dataset4 = createDataset(true);
 
-    Timestamp timestamp = new Timestamp(new Date().getTime());
-
     Dac dac1 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
-        dataset1.getDatasetId(),
-        dataset1.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac1.getDacId());
+        dataset1.getDatasetId(), dataset1.getDatasetName(), user.getUserId(), dac1.getDacId());
     datasetDAO.updateDatasetByDatasetId(
-        dataset2.getDatasetId(),
-        dataset2.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac1.getDacId());
+        dataset2.getDatasetId(), dataset2.getDatasetName(), user.getUserId(), dac1.getDacId());
 
     Dac dac2 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
-        dataset3.getDatasetId(),
-        dataset3.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac2.getDacId());
+        dataset3.getDatasetId(), dataset3.getDatasetName(), user.getUserId(), dac2.getDacId());
     datasetDAO.updateDatasetByDatasetId(
-        dataset4.getDatasetId(),
-        dataset4.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac2.getDacId());
+        dataset4.getDatasetId(), dataset4.getDatasetName(), user.getUserId(), dac2.getDacId());
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
     DarCollection dar2 =
@@ -1285,35 +1288,17 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset3 = createDataset(false);
     Dataset dataset4 = createDataset(true);
 
-    Timestamp timestamp = new Timestamp(new Date().getTime());
-
     Dac dac1 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
-        dataset1.getDatasetId(),
-        dataset1.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac1.getDacId());
+        dataset1.getDatasetId(), dataset1.getDatasetName(), user.getUserId(), dac1.getDacId());
     datasetDAO.updateDatasetByDatasetId(
-        dataset2.getDatasetId(),
-        dataset2.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac1.getDacId());
+        dataset2.getDatasetId(), dataset2.getDatasetName(), user.getUserId(), dac1.getDacId());
 
     Dac dac2 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
-        dataset3.getDatasetId(),
-        dataset3.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac2.getDacId());
+        dataset3.getDatasetId(), dataset3.getDatasetName(), user.getUserId(), dac2.getDacId());
     datasetDAO.updateDatasetByDatasetId(
-        dataset4.getDatasetId(),
-        dataset4.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac2.getDacId());
+        dataset4.getDatasetId(), dataset4.getDatasetName(), user.getUserId(), dac2.getDacId());
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
     DarCollection dar2 =
@@ -1395,21 +1380,11 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset1 = createDataset(false);
     Dataset dataset2 = createDataset(true);
 
-    Timestamp timestamp = new Timestamp(new Date().getTime());
-
     Dac dac1 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
-        dataset1.getDatasetId(),
-        dataset1.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac1.getDacId());
+        dataset1.getDatasetId(), dataset1.getDatasetName(), user.getUserId(), dac1.getDacId());
     datasetDAO.updateDatasetByDatasetId(
-        dataset2.getDatasetId(),
-        dataset2.getDatasetName(),
-        timestamp,
-        user.getUserId(),
-        dac1.getDacId());
+        dataset2.getDatasetId(), dataset2.getDatasetName(), user.getUserId(), dac1.getDacId());
 
     DarCollection dar1 =
         createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1, dataset2));
@@ -1462,7 +1437,6 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @Test
   void testGetApprovedDatasetsForMultiDACElections() {
-    Date now = new Date();
     // user with a mix of approved and unapproved datasets
     User user = createUser();
     User chairperson1 = createUser();
@@ -1475,19 +1449,15 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset3 = createDataset(true);
     Dataset dataset4 = createDataset(true);
 
-    Timestamp timestamp = new Timestamp(now.getTime());
-
     Dac dac1 = insertDac();
     datasetDAO.updateDatasetByDatasetId(
         dataset1.getDatasetId(),
         dataset1.getDatasetName(),
-        timestamp,
         chairperson1.getUserId(),
         dac1.getDacId());
     datasetDAO.updateDatasetByDatasetId(
         dataset2.getDatasetId(),
         dataset2.getDatasetName(),
-        timestamp,
         chairperson1.getUserId(),
         dac1.getDacId());
     datasetDAO.updateDatasetApproval(
@@ -1499,13 +1469,11 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetByDatasetId(
         dataset3.getDatasetId(),
         dataset3.getDatasetName(),
-        timestamp,
         chairperson2.getUserId(),
         dac2.getDacId());
     datasetDAO.updateDatasetByDatasetId(
         dataset4.getDatasetId(),
         dataset4.getDatasetName(),
-        timestamp,
         chairperson2.getUserId(),
         dac2.getDacId());
     datasetDAO.updateDatasetApproval(
@@ -2037,11 +2005,10 @@ class DatasetDAOTest extends DAOTestHelper {
   private Dataset insertDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -2049,12 +2016,11 @@ class DatasetDAOTest extends DAOTestHelper {
   private Dataset createDataset(boolean dacApproval) {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     Instant instant = Instant.now();
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     datasetDAO.updateDatasetApproval(dacApproval, instant, user.getUserId(), id);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
@@ -2063,11 +2029,10 @@ class DatasetDAOTest extends DAOTestHelper {
   private void createStaticDataset() {
     User user = createUser();
     String name = "test_unique_constraint_dataset_name";
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
   }
 

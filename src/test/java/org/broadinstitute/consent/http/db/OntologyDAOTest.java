@@ -11,7 +11,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.FileInputStream;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
@@ -197,13 +196,11 @@ class OntologyDAOTest extends DAOTestHelper {
 
   private Dataset insertDatasetWithDiseaseRestrictions(List<String> restrictions) {
     User user = createUser();
-    Timestamp now = Timestamp.from(FIXED_INSTANT);
     DataUse dataUse =
         new DataUseBuilder().setGeneralUse(true).setDiseaseRestrictions(restrictions).build();
     Integer id =
         datasetDAO.insertDataset(
             "Name_" + randomAlphabetic(20),
-            now,
             user.getUserId(),
             "Object ID_" + randomAlphabetic(20),
             dataUse.toString(),

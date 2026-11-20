@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
@@ -284,14 +285,16 @@ public class DarCollectionResource extends Resource {
   public Response approveCollection(
       @Auth DuosUser duosUser,
       @PathParam("collectionId") Integer collectionId,
-      @Context Request request) {
+      @Context Request request,
+      String body) {
     try {
       User user = duosUser.getUser();
+      SubmissionApproval approved = readSubmissionApproval(body);
       DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       DarCollection updatedCollection =
           darCollectionService.approveDarCollection(
-              user, sourceCollection, (ContainerRequest) request);
+              user, sourceCollection, (ContainerRequest) request, approved);
       return Response.ok(updatedCollection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

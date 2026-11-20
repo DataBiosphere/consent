@@ -276,7 +276,6 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
   private Integer createDataset(Integer dacId) {
     return datasetDAO.insertDataset(
         "Dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",
