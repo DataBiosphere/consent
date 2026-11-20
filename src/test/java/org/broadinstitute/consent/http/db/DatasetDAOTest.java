@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -1103,13 +1105,49 @@ class DatasetDAOTest extends DAOTestHelper {
   void testInsertDatasetAudit() {
     Dataset d = insertDataset();
     DatasetAudit audit =
-        new DatasetAudit(
-            d.getDatasetId(), "objectid", "name", new Date(), d.getCreateUserId(), "action");
-    Integer auditId = datasetDAO.insertDatasetAudit(audit);
+        new DatasetAudit(d.getDatasetId(), "objectid", "name", d.getCreateUserId(), "action");
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    Integer auditId =
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(
+                  h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+              return datasetDAO.insertDatasetAudit(audit);
+            });
     Optional<DatasetAudit> auditResponse =
         Optional.ofNullable(datasetDAO.findAuditsByDatasetId(d.getDatasetId()).getFirst());
     assertTrue(auditResponse.isPresent());
     assertEquals(auditId, auditResponse.get().getDataSetAuditId());
+    assertEquals(transactionNow.get(), auditResponse.get().getDate().toInstant());
+  }
+
+  @Test
+  void testInsertDatasetPropertiesWritesNowToCreateDate() {
+    Dataset d = insertDataset();
+    String schemaProperty = randomAlphanumeric(20);
+    DatasetProperty property = new DatasetProperty();
+    property.setDatasetId(d.getDatasetId());
+    property.setPropertyKey(1);
+    property.setSchemaProperty(schemaProperty);
+    property.setPropertyValue(randomAlphanumeric(10));
+    property.setPropertyType(PropertyType.String);
+
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          datasetDAO.insertDatasetProperties(List.of(property));
+        });
+
+    DatasetProperty stored =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId()).stream()
+            .filter(p -> schemaProperty.equals(p.getSchemaProperty()))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(transactionNow.get(), stored.getCreateDate().toInstant());
   }
 
   @Test

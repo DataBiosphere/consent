@@ -25,6 +25,7 @@ import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -41,6 +42,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.broadinstitute.consent.http.db.AssetCatalogDAO;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -1565,7 +1567,14 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     String newName = randomAlphabetic(10);
     DatasetPatch patch = new DatasetPatch(newName, List.of(patchProp, prop3));
 
-    serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+    // patchDataset joins this transaction, so NOW() here is the value that its inserts write.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          serviceDAO.patchDataset(dataset.getDatasetId(), user, patch);
+        });
     Dataset patched = datasetDAO.findDatasetById(dataset.getDatasetId());
 
     // Validate that the name is updated
@@ -1597,6 +1606,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             .findFirst();
     assertTrue(added.isPresent());
     assertEquals(prop3.getPropertyValue(), added.get().getPropertyValue());
+    assertEquals(transactionNow.get(), added.get().getCreateDate().toInstant());
 
     // Validate that no props were deleted
     assertEquals(3, patched.getProperties().size());
@@ -1604,8 +1614,12 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     // Validate that an audit record was added:
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
     assertFalse(audits.isEmpty());
-    assertTrue(
-        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+    DatasetAudit updateAudit =
+        audits.stream()
+            .filter(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name()))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(transactionNow.get(), updateAudit.getDate().toInstant());
   }
 
   @ParameterizedTest

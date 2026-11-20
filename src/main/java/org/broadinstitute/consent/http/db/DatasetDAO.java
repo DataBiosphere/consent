@@ -557,7 +557,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       INSERT INTO dataset_property
         (dataset_id, property_key, schema_property, property_value, property_type, create_date )
       VALUES
-        (:datasetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, :createDate)
+        (:datasetId, :propertyKey, :schemaProperty, :getPropertyValueAsString, :getPropertyTypeAsString, NOW())
       """)
   void insertDatasetProperties(@BindBean @BindMethods List<DatasetProperty> dataSetPropertiesList);
 
@@ -569,7 +569,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       INSERT INTO dataset_audit
         (dataset_id, change_action, modified_by_user, modification_date, object_id, name)
       VALUES
-        (:datasetId, :action, :user, :date, :objectId, :name)
+        (:datasetId, :action, :user, NOW(), :objectId, :name)
       """)
   @GetGeneratedKeys
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);

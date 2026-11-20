@@ -24,7 +24,7 @@ public class DatasetAuditMapper implements RowMapper<DatasetAudit>, RowMapperHel
       datasetAudit.setUser(rs.getInt("modified_by_user"));
     }
     if (hasColumn(rs, "modification_date")) {
-      datasetAudit.setDate(rs.getDate("modification_date"));
+      datasetAudit.setDate(rs.getTimestamp("modification_date"));
     }
     if (hasColumn(rs, "object_id")) {
       datasetAudit.setObjectId(rs.getString("object_id"));
