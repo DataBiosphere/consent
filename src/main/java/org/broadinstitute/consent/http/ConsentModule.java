@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -350,6 +351,11 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   private TranslationUtil providesTranslationUtil(Jdbi jdbi) {
     return new TranslationUtil(jdbi);
+  }
+
+  @Provides
+  private StoreConfiguration providesStoreConfiguration() {
+    return config.getCloudStoreConfiguration();
   }
 
   @Provides
