@@ -14,18 +14,15 @@ put:
   requestBody:
     description: >-
       The closeout submission the signing official reviewed, with its submissionDate. The path
-      names the DAR, so referenceId may be left out; when given, it must be the path's. Clients
-      that predate it may send no body or {}, which is accepted while clients move to sending it.
-    required: false
+      names the DAR, so referenceId may be left out; when given, it must be the path's.
+    required: true
     content:
       application/json:
         schema:
           type: object
           additionalProperties: false
-          oneOf:
-            - maxProperties: 0
-            - required:
-                - submissionDate
+          required:
+            - submissionDate
           properties:
             referenceId:
               type: string
@@ -39,8 +36,8 @@ put:
       description: Approval recorded
     400:
       description: >-
-        Error, consult response for details. A body that names a submission without its
-        submissionDate is rejected.
+        Error, consult response for details. A request that doesn't name the submission's
+        submissionDate (including no body or {}) is rejected.
     401:
       description: Unauthorized
     404:

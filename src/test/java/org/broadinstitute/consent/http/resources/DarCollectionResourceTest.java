@@ -42,6 +42,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -702,15 +703,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     }
   }
 
-  @Test
-  void testApproveCollection() {
-    DarCollection collection = mock(DarCollection.class);
-    when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(collection);
-    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, null)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-  }
-
   // The approval names the submission the signing official reviewed.
   @Test
   void testApproveCollectionPassesTheNamedSubmission() {
@@ -725,15 +717,15 @@ class DarCollectionResourceTest extends AbstractTestHelper {
             signingOfficial, collection, request, new SubmissionApproval("ref", 1700000000123L));
   }
 
-  // Clients that predate the named submission send {}.
-  @Test
-  void testApproveCollectionAcceptsAnEmptyBody() {
-    DarCollection collection = mock(DarCollection.class);
-    when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(collection);
-    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, " {} ")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  // An approval must name the submission: no body, a blank one, {} or null is refused.
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", " ", " {} ", "null"})
+  void testApproveCollectionRequiresTheNamedSubmission(String body) {
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-    verify(darCollectionService).approveDarCollection(signingOfficial, collection, request, null);
+    verify(darCollectionService, never()).approveDarCollection(any(), any(), any(), any());
   }
 
   @ParameterizedTest
@@ -770,7 +762,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Test
   void testApproveCollection_NotFound() {
     when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(null);
-    try (var response = resource.approveCollection(duosSigningOfficial, 1, request, null)) {
+    try (var response =
+        resource.approveCollection(
+            duosSigningOfficial, 1, request, "{\"referenceId\": \"ref\", \"submissionDate\": 1}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
