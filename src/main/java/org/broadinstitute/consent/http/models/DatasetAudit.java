@@ -26,11 +26,10 @@ public class DatasetAudit {
   public DatasetAudit() {}
 
   public DatasetAudit(
-      Integer datasetId, String objectId, String name, Date date, Integer user, String action) {
+      Integer datasetId, String objectId, String name, Integer user, String action) {
     this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
-    this.date = date;
     this.user = user;
     this.action = action;
   }
