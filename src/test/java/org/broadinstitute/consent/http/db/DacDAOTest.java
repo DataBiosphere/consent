@@ -185,7 +185,7 @@ class DacDAOTest extends DAOTestHelper {
             randomAlphabetic(20),
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), approvedDatasetId);
+    datasetDAO.updateDatasetApproval(true, user.getUserId(), approvedDatasetId);
 
     List<Dac> dacs = dacDAO.findAll();
     Dac dac = dacs.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElseThrow();

@@ -142,7 +142,7 @@ class DatasetMetricsDAOTest extends DAOTestHelper {
   }
 
   private void approve(Integer datasetId, boolean approved) {
-    datasetDAO.updateDatasetApproval(approved, Instant.now(), userId, datasetId);
+    datasetDAO.updateDatasetApproval(approved, userId, datasetId);
   }
 
   private Integer study(LocalDateTime created) {

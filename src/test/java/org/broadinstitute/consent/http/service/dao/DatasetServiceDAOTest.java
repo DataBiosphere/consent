@@ -1714,9 +1714,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDatasetIndexWithDate() throws Exception {
+  void testUpdateDatasetIndexMarksIndexed() throws Exception {
     Dataset dataset = createDataset();
-    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), Instant.now());
+    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), true);
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
 
     // Validate that the indexed date is updated
@@ -1730,9 +1730,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testUpdateDatasetIndexWithNull() throws Exception {
+  void testUpdateDatasetIndexMarksDeindexed() throws Exception {
     Dataset dataset = createDataset();
-    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), null);
+    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), false);
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
 
     // Validate that the indexed date is null
