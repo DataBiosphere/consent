@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
@@ -364,9 +365,12 @@ public class DataAccessRequestResource extends Resource {
   public Response approveCloseout(
       @Auth DuosUser duosUser,
       @Context Request request,
-      @PathParam("referenceId") String referenceId) {
+      @PathParam("referenceId") String referenceId,
+      String body) {
     try {
-      dataAccessRequestService.approveDataAccessRequestCloseout(duosUser.getUser(), referenceId);
+      SubmissionApproval approved = readSubmissionApproval(body, referenceId);
+      dataAccessRequestService.approveDataAccessRequestCloseout(
+          duosUser.getUser(), referenceId, approved);
       DataAccessRequest dar = getDarById(referenceId);
       List<Dataset> datasets =
           datasetService.findDatasetsByIds(duosUser.getUser(), dar.getDatasetIds());
