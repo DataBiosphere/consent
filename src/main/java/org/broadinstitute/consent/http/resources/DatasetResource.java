@@ -182,6 +182,7 @@ public class DatasetResource extends Resource {
       if (Objects.isNull(datasetExists)) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);
       }
+      validateDatasetChairAccess(user, datasetExists);
 
       // key: field name (not file name), value: file body part
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
@@ -488,6 +489,23 @@ public class DatasetResource extends Resource {
       return createExceptionResponse(new BadRequestException("Invalid Data Use JSON"));
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private void validateDatasetChairAccess(User user, Dataset dataset) {
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return;
+    }
+    Integer dacId = dataset.getDacId();
+    boolean chairsDac =
+        dacId != null
+            && user.getRoles().stream()
+                .anyMatch(
+                    r ->
+                        r.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())
+                            && dacId.equals(r.getDacId()));
+    if (!chairsDac) {
+      throw new NotFoundException();
     }
   }
 
