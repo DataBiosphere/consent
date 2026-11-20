@@ -495,8 +495,8 @@ class DatasetDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             dataset.getDatasetId().toString(),
-            createUser.getUserId(),
-            Instant.ofEpochMilli(100));
+            createUser.getUserId());
+    setFileCreateDate(nihFileIdCreatedFirstUpdatedSecond, Instant.ofEpochMilli(100));
 
     Integer nihFileIdCreatedSecondUpdatedFirst =
         fileStorageObjectDAO.insertNewFile(
@@ -505,8 +505,8 @@ class DatasetDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             dataset.getDatasetId().toString(),
-            createUser.getUserId(),
-            Instant.ofEpochMilli(110));
+            createUser.getUserId());
+    setFileCreateDate(nihFileIdCreatedSecondUpdatedFirst, Instant.ofEpochMilli(110));
 
     User updateUser = createUser();
 
@@ -548,8 +548,8 @@ class DatasetDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             dataset.getDatasetId().toString(),
-            createUser.getUserId(),
-            Instant.ofEpochMilli(100));
+            createUser.getUserId());
+    setFileCreateDate(nihFileIdCreatedFirst, Instant.ofEpochMilli(100));
 
     User updateUser = createUser();
 
@@ -567,8 +567,8 @@ class DatasetDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             dataset.getDatasetId().toString(),
-            createUser.getUserId(),
-            Instant.ofEpochMilli(130));
+            createUser.getUserId());
+    setFileCreateDate(nihFileIdCreatedSecond, Instant.ofEpochMilli(130));
 
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 
@@ -1838,8 +1838,8 @@ class DatasetDAOTest extends DAOTestHelper {
             bucketName,
             gcsFileUri,
             entityId,
-            createUser.getUserId(),
-            createDate);
+            createUser.getUserId());
+    setFileCreateDate(newFileStorageObjectId, createDate);
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
   }
 

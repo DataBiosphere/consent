@@ -26,9 +26,9 @@ import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -484,7 +485,7 @@ public class DataAccessRequestResource extends Resource {
       return dataAccessRequestService.createProgressReport(
           user, progressReport, parentDar, request);
     } catch (IOException | RuntimeException e) {
-      rollbackProgressReportDocuments(progressReport);
+      rollbackProgressReportDocuments(progressReport, user.getUserId());
       throw e;
     }
   }
@@ -513,6 +514,8 @@ public class DataAccessRequestResource extends Resource {
     // only be read once.
     boolean uploadCollab = false;
     boolean uploadEthics = false;
+    boolean needsCollab = false;
+    boolean needsEthics = false;
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {
@@ -524,39 +527,106 @@ public class DataAccessRequestResource extends Resource {
       }
       if (Boolean.TRUE.equals(dataUse.getCollaboratorRequired())) {
         String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
-        if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
-            && Strings.isNullOrEmpty(parentCollabLocation)) {
+        if (!fileSent(collabFileDetails) && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
         // Without a new file, the parent's document satisfies the requirement.
-        uploadCollab = collabFileDetails != null;
+        needsCollab = true;
+        uploadCollab = fileSent(collabFileDetails);
       }
       if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
-        if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
-            && Strings.isNullOrEmpty(parentEthicsLocation)) {
+        if (!fileSent(ethicsFileDetails) && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
-        uploadEthics = ethicsFileDetails != null;
+        needsEthics = true;
+        uploadEthics = fileSent(ethicsFileDetails);
       }
     }
-    // The report's document locations start empty, so these uploads replace nothing.
+    // The report's document locations start empty, so these uploads replace nothing. Without a
+    // new file the report gets its own copy of the parent's document, so it can serve it and a
+    // later renewal finds it, and a failed report deletes only its copy.
     if (uploadCollab) {
       uploadDocumentContents(
-          DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
+          DarDocumentType.COLLABORATION,
+          childDar,
+          requireContent(collabInputStream, "Collaboration"),
+          collabFileDetails);
+    } else if (needsCollab) {
+      copyParentDocument(DarDocumentType.COLLABORATION, childDar, parentDar);
     }
     if (uploadEthics) {
-      uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
+      uploadDocumentContents(
+          DarDocumentType.IRB,
+          childDar,
+          requireContent(ethicsInputStream, "Ethics approval"),
+          ethicsFileDetails);
+    } else if (needsEthics) {
+      copyParentDocument(DarDocumentType.IRB, childDar, parentDar);
     }
   }
 
-  private void rollbackProgressReportDocuments(DataAccessRequest progressReport) {
-    Set<String> uploadedDocumentLocations = new HashSet<>();
-    uploadedDocumentLocations.add(progressReport.getData().getCollaborationLetterLocation());
-    uploadedDocumentLocations.add(progressReport.getData().getIrbDocumentLocation());
-    uploadedDocumentLocations.stream()
-        .filter(Objects::nonNull)
-        .forEach(location -> deleteDarDocument(progressReport, location));
+  /**
+   * Whether the request carries a file for this part. duos-ui sends an empty part for a document it
+   * has no file for, which still arrives with details but no file name; browsers don't send a size.
+   */
+  private static boolean fileSent(FormDataContentDisposition fileDetails) {
+    return fileDetails != null && !Strings.isNullOrEmpty(fileDetails.getFileName());
+  }
+
+  /**
+   * An empty file doesn't satisfy a required document. Browsers don't send a size, so the first
+   * byte is read to check, then put back for the upload.
+   */
+  private static InputStream requireContent(InputStream content, String document)
+      throws IOException {
+    PushbackInputStream stream =
+        new PushbackInputStream(content == null ? InputStream.nullInputStream() : content, 1);
+    int first = stream.read();
+    if (first == -1) {
+      throw new BadRequestException(document + " document is empty");
+    }
+    stream.unread(first);
+    return stream;
+  }
+
+  /** Gives a progress report its own copy of its parent's document of this type. */
+  private void copyParentDocument(
+      DarDocumentType type, DataAccessRequest report, DataAccessRequest parent) {
+    boolean irb = DarDocumentType.IRB.equals(type);
+    DataAccessRequestData parentData = parent.getData();
+    String location =
+        irb ? parentData.getIrbDocumentLocation() : parentData.getCollaborationLetterLocation();
+    String name = irb ? parentData.getIrbDocumentName() : parentData.getCollaborationLetterName();
+    BlobId copy;
+    try {
+      copy = gcsService.copyDocument(location, UUID.randomUUID());
+    } catch (NotFoundException e) {
+      throw new BadRequestException(
+          "The parent request's %s document is missing; upload a new one"
+              .formatted(irb ? "ethics approval" : "collaboration"));
+    }
+    if (irb) {
+      report.getData().setIrbDocumentLocation(copy.getName());
+      report.getData().setIrbDocumentName(name);
+    } else {
+      report.getData().setCollaborationLetterLocation(copy.getName());
+      report.getData().setCollaborationLetterName(name);
+    }
+  }
+
+  private void rollbackProgressReportDocuments(DataAccessRequest progressReport, Integer userId) {
+    for (DarDocumentType type : DarDocumentType.values()) {
+      String location = newDocumentLocation(type, progressReport);
+      if (Objects.nonNull(location)) {
+        deleteDarDocument(
+            progressReport,
+            type,
+            location,
+            DarDocumentDeletionReason.FAILED_REPORT_CLEANUP,
+            userId);
+      }
+    }
   }
 
   @GET
@@ -707,7 +777,8 @@ public class DataAccessRequestResource extends Resource {
       throw e;
     }
     if (Objects.nonNull(saved.previousLocation())) {
-      deleteDarDocument(dar, saved.previousLocation());
+      deleteDarDocument(
+          dar, type, saved.previousLocation(), DarDocumentDeletionReason.REPLACED, dar.getUserId());
     }
     return saved.dar();
   }
@@ -719,7 +790,12 @@ public class DataAccessRequestResource extends Resource {
       stored = dataAccessRequestService.findByReferenceId(dar.getReferenceId());
     } catch (NotFoundException e) {
       // The DAR is gone, so nothing refers to the upload.
-      deleteDarDocument(dar, uploadLocation);
+      deleteDarDocument(
+          dar,
+          type,
+          uploadLocation,
+          DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+          dar.getUserId());
       return;
     } catch (RuntimeException e) {
       // Can't tell whether the DAR refers to it: an orphaned blob is better than a missing one.
@@ -731,10 +807,16 @@ public class DataAccessRequestResource extends Resource {
     if (stored.getData() != null && uploadLocation.equals(newDocumentLocation(type, stored))) {
       // The save committed: the previous document is the one nothing refers to now.
       if (Objects.nonNull(previousLocation)) {
-        deleteDarDocument(dar, previousLocation);
+        deleteDarDocument(
+            dar, type, previousLocation, DarDocumentDeletionReason.REPLACED, dar.getUserId());
       }
     } else {
-      deleteDarDocument(dar, uploadLocation);
+      deleteDarDocument(
+          dar,
+          type,
+          uploadLocation,
+          DarDocumentDeletionReason.FAILED_SAVE_CLEANUP,
+          dar.getUserId());
     }
   }
 
@@ -784,7 +866,16 @@ public class DataAccessRequestResource extends Resource {
     return previousLocation;
   }
 
-  private void deleteDarDocument(DataAccessRequest dar, String blobIdName) {
+  /**
+   * Deletes a DAR document's file and records the deletion, unless something else still refers to
+   * the file. The DAR's owner is recorded: only the owner can upload, save or file a report.
+   */
+  private void deleteDarDocument(
+      DataAccessRequest dar,
+      DarDocumentType type,
+      String blobIdName,
+      DarDocumentDeletionReason reason,
+      Integer userId) {
     try {
       // A location planted before document fields were server-managed can name a file that
       // another DAR or a file storage object (DAA, dataset or draft file) still uses.
@@ -794,7 +885,10 @@ public class DataAccessRequestResource extends Resource {
                 .formatted(blobIdName, dar.getReferenceId()));
         return;
       }
-      gcsService.deleteDocument(blobIdName);
+      if (gcsService.deleteDocument(blobIdName)) {
+        dataAccessRequestService.recordDocumentDeletion(
+            dar.getReferenceId(), type, blobIdName, reason, userId);
+      }
     } catch (Exception e) {
       String message =
           String.format(
