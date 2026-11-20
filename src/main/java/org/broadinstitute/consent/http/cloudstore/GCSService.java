@@ -121,15 +121,19 @@ public class GCSService implements ConsentLogger {
     // used: it closes, and so finalizes a partial document, when the stream fails.
     WriteChannel writer = storage.writer(blobInfo);
     writer.setChunkSize(UPLOAD_CHUNK_BYTES);
+    boolean storing = false;
     try {
       byte[] buffer = new byte[COPY_BUFFER_BYTES];
       int read;
       while ((read = limited.read(buffer)) != -1) {
+        storing = true;
         ByteBuffer bytes = ByteBuffer.wrap(buffer, 0, read);
         while (bytes.hasRemaining()) {
           writer.write(bytes);
         }
+        storing = false;
       }
+      storing = true;
       writer.close();
     } catch (IOException | RuntimeException e) {
       // Nothing should be stored, but a document that is would be referenced by no row.
@@ -137,11 +141,14 @@ public class GCSService implements ConsentLogger {
       if (limited.exceeded) {
         throw new UploadTooLargeException(config.getMaxUploadBytes());
       }
-      // The channel wraps a storage failure in an IOException, which resources answer with a 400.
-      // A storage failure is the server's, as it was before uploads streamed.
-      if (e instanceof IOException && e.getCause() instanceof StorageException storageFailure) {
-        throw storageFailure;
+      // The channel reports a storage failure as an IOException, which resources answer with a
+      // 400. It's the server's failure: a 500, with the details only in the log.
+      if (storing) {
+        logException("Unable to store document " + blobId.getName(), e);
+        throw new ServerErrorException(
+            "Unable to store the document", Response.Status.INTERNAL_SERVER_ERROR);
       }
+      // Reading the client's upload failed.
       throw e;
     }
     return blobId;
@@ -155,8 +162,11 @@ public class GCSService implements ConsentLogger {
     }
   }
 
-  /** The upload chunk: the smallest the storage client allows, so an upload holds little memory. */
-  private static final int UPLOAD_CHUNK_BYTES = 256 * 1024;
+  /**
+   * The upload chunk: the memory an upload holds, and one request per chunk (13 for 25 MB). A
+   * multiple of the client's 256 KiB minimum.
+   */
+  private static final int UPLOAD_CHUNK_BYTES = 2 * 1024 * 1024;
 
   private static final int COPY_BUFFER_BYTES = 8 * 1024;
 

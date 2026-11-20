@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.cloudstore;
 
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -31,11 +31,13 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPairGenerator;
@@ -50,6 +52,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -86,8 +90,7 @@ class GCSServiceTest extends AbstractTestHelper {
 
   private void stubWriter() throws IOException {
     when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
-    lenient()
-        .when(writer.write(any(ByteBuffer.class)))
+    when(writer.write(any(ByteBuffer.class)))
         .thenAnswer(
             invocation -> {
               ByteBuffer bytes = invocation.getArgument(0);
@@ -120,7 +123,7 @@ class GCSServiceTest extends AbstractTestHelper {
     verify(storage).writer(info.capture());
     assertEquals(expected, info.getValue().getBlobId());
     assertEquals(MediaType.TEXT_PLAIN, info.getValue().getContentType());
-    verify(writer).setChunkSize(256 * 1024);
+    verify(writer).setChunkSize(2 * 1024 * 1024);
     assertEquals("content", written.toString(Charset.defaultCharset()));
     verify(writer).close();
     verify(storage, never()).delete(any(BlobId.class));
@@ -141,43 +144,138 @@ class GCSServiceTest extends AbstractTestHelper {
   @Test
   void testStoreDocumentOverTheLimit() throws Exception {
     config.setMaxUploadBytes(6);
-    stubWriter();
+    // The first read passes the limit, so nothing is written.
+    when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
     initStore();
 
     UploadTooLargeException e = assertThrows(UploadTooLargeException.class, () -> store("content"));
 
     assertInstanceOf(BadRequestException.class, e);
-    assertEquals("File size is invalid. Max size is: 0 MB", e.getMessage());
+    assertEquals("File size is invalid. Max size is: 0.000006 MB", e.getMessage());
     verify(writer, never()).close();
     verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
   }
 
-  // A storage failure under the limit isn't a size problem: the channel wraps it in an
-  // IOException, and it's passed on as the storage failure. The upload is still cleaned up.
-  @Test
-  void testStoreDocumentRethrowsOtherStorageErrors() throws Exception {
-    StorageException failure = new StorageException(503, "Unavailable");
+  // A storage failure under the limit is the server's, whether the channel wraps a storage
+  // exception or not: a 500 with no storage details. The upload is still cleaned up.
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testStoreDocumentStorageFailureIsAServerError(boolean wrapsAStorageException)
+      throws Exception {
+    IOException failure =
+        wrapsAStorageException
+            ? new IOException(new StorageException(503, "Unavailable"))
+            : new IOException("connection reset");
     when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
-    when(writer.write(any(ByteBuffer.class))).thenThrow(new IOException(failure));
+    when(writer.write(any(ByteBuffer.class))).thenThrow(failure);
     initStore();
 
-    assertSame(failure, assertThrows(StorageException.class, () -> store("content")));
+    ServerErrorException e = assertThrows(ServerErrorException.class, () -> store("content"));
+    assertEquals(500, e.getResponse().getStatus());
+    assertEquals("Unable to store the document", e.getMessage());
     verify(writer, never()).close();
     verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
   }
 
   // Finalizing can fail after the server stored the document; it's deleted, and a failed delete
-  // doesn't hide the original error.
+  // doesn't hide the error.
   @Test
   void testStoreDocumentDeletesWhenFinalizingFails() throws Exception {
     stubWriter();
-    IOException failure = new IOException("connection reset");
-    doThrow(failure).when(writer).close();
+    doThrow(new IOException("connection reset")).when(writer).close();
     when(storage.delete(any(BlobId.class))).thenThrow(new StorageException(500, "delete failed"));
     initStore();
 
-    assertSame(failure, assertThrows(IOException.class, () -> store("content")));
+    assertThrows(ServerErrorException.class, () -> store("content"));
     verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
+  }
+
+  // A failure reading the client's upload, even after part of it was stored, isn't a storage
+  // failure; it's passed on as before.
+  @Test
+  void testStoreDocumentPassesOnAFailedRead() throws Exception {
+    stubWriter();
+    IOException failure = new IOException("client went away");
+    InputStream broken =
+        new InputStream() {
+          private boolean sent;
+
+          @Override
+          public int read() {
+            return -1;
+          }
+
+          @Override
+          public int read(byte[] buffer, int offset, int length) throws IOException {
+            if (sent) {
+              throw failure;
+            }
+            sent = true;
+            buffer[offset] = 'x';
+            return 1;
+          }
+        };
+    initStore();
+
+    assertSame(
+        failure,
+        assertThrows(
+            IOException.class, () -> service.storeDocument(broken, MediaType.TEXT_PLAIN, id)));
+    verify(writer, never()).close();
+  }
+
+  // A payload of many copy buffers and chunks, to a writer that takes part of each buffer, arrives
+  // whole.
+  @Test
+  void testStoreDocumentSpanningManyBuffers() throws Exception {
+    byte[] payload = randomAlphanumeric(5 * 1024 * 1024).getBytes(StandardCharsets.UTF_8);
+    when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
+    when(writer.write(any(ByteBuffer.class)))
+        .thenAnswer(
+            invocation -> {
+              ByteBuffer bytes = invocation.getArgument(0);
+              int n = Math.min(bytes.remaining(), 1000);
+              byte[] part = new byte[n];
+              bytes.get(part);
+              written.write(part);
+              return n;
+            });
+    initStore();
+
+    service.storeDocument(new ByteArrayInputStream(payload), MediaType.TEXT_PLAIN, id);
+
+    assertArrayEquals(payload, written.toByteArray());
+    verify(writer).close();
+  }
+
+  // The limit is cumulative: a rejection after more than an upload chunk (2 MiB) reached the writer
+  // still isn't finalized, and the writer got no more than the limit.
+  @Test
+  void testStoreDocumentOverTheLimitAfterAChunk() throws Exception {
+    config.setMaxUploadBytes(3 * 1024 * 1024);
+    stubWriter();
+    initStore();
+    byte[] payload = randomAlphanumeric(4 * 1024 * 1024).getBytes(StandardCharsets.UTF_8);
+
+    assertThrows(
+        UploadTooLargeException.class,
+        () -> service.storeDocument(new ByteArrayInputStream(payload), MediaType.TEXT_PLAIN, id));
+
+    assertTrue(written.size() > 2 * 1024 * 1024);
+    assertTrue(written.size() <= 3 * 1024 * 1024);
+    verify(writer, never()).close();
+    verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
+  }
+
+  // The message gives the limit exactly.
+  @Test
+  void testUploadTooLargeMessage() {
+    assertEquals(
+        "File size is invalid. Max size is: 25 MB",
+        new UploadTooLargeException(25_000_000).getMessage());
+    assertEquals(
+        "File size is invalid. Max size is: 25.5 MB",
+        new UploadTooLargeException(25_500_000).getMessage());
   }
 
   @Test
