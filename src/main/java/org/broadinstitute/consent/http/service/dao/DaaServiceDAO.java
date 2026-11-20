@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service.dao;
 import com.google.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.function.ToIntFunction;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -168,11 +167,7 @@ public class DaaServiceDAO {
     }
     Integer newId =
         lcDAO.insertLibraryCard(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            signingOfficial.getUserId(),
-            new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId());
     newCardUserIds.add(user.getUserId());
     return newId;
   }

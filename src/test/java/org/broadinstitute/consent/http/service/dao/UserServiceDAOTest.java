@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +18,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,11 +155,7 @@ class UserServiceDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     userDAO.updateInstitutionId(testUser.getUserId(), institution.getId());
     libraryCardDAO.insertLibraryCard(
-        testUser.getUserId(),
-        testUser.getDisplayName(),
-        testUser.getEmail(),
-        testUser.getUserId(),
-        Timestamp.from(Instant.now()));
+        testUser.getUserId(), testUser.getDisplayName(), testUser.getEmail(), testUser.getUserId());
     assertNotNull(libraryCardDAO.findLibraryCardByUserId(testUser.getUserId()));
     User fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
@@ -202,12 +197,14 @@ class UserServiceDAOTest extends DAOTestHelper {
   void testCreateUserWithLibraryCard() throws Exception {
     Institution i = createInstitution();
     User u = generateUnsavedUser(i);
-    libraryCardDAO.insertLibraryCard(
-        null, u.getDisplayName(), u.getEmail(), i.getCreateUserId(), new Date());
+    libraryCardDAO.insertLibraryCard(null, u.getDisplayName(), u.getEmail(), i.getCreateUserId());
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
     User user = serviceDAO.createUser(u);
     assertNotNull(user.getLibraryCard());
+    LibraryCard card = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
+    assertEquals(user.getUserId(), card.getUpdateUserId());
+    assertNotNull(card.getUpdateDate());
   }
 
   @Test
