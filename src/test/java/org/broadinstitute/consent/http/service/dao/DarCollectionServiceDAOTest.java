@@ -457,8 +457,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(
-            name, FIXED_TIMESTAMP, user.getUserId(), objectId, dataUse.toString(), dacId);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }

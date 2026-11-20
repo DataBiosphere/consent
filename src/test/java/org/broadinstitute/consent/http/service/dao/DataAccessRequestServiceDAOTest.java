@@ -11,7 +11,6 @@ import static org.mockito.Mockito.spy;
 
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -477,8 +476,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         "gs://bucket/" + blob,
         "application/pdf",
         "1",
-        user.getUserId(),
-        Instant.now());
+        user.getUserId());
 
     assertTrue(dataAccessRequestDAO.isDocumentReferenced(blob));
     assertFalse(dataAccessRequestDAO.isDocumentReferenced(UUID.randomUUID().toString()));
@@ -570,11 +568,10 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }

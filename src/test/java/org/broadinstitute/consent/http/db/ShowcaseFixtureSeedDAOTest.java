@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Timestamp;
 import java.util.List;
 import org.broadinstitute.consent.http.models.AssetCatalogCheck;
 import org.broadinstitute.consent.http.models.ShowcaseDatasetSummary;
@@ -180,12 +179,7 @@ class ShowcaseFixtureSeedDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer datasetId =
         datasetDAO.insertDataset(
-            "Registered after the fixture",
-            new Timestamp(System.currentTimeMillis()),
-            user.getUserId(),
-            null,
-            "{\"generalUse\":true}",
-            null);
+            "Registered after the fixture", user.getUserId(), null, "{\"generalUse\":true}", null);
 
     long alias =
         jdbi.withHandle(

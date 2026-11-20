@@ -271,7 +271,6 @@ class AdminDashboardDAOTest extends DAOTestHelper {
   private Integer createDataset(User user) {
     return datasetDAO.insertDataset(
         "Dashboard dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",

@@ -28,12 +28,7 @@ abstract class DarLifecycleDAOTestHelper extends DAOTestHelper {
 
   protected Integer createDataset() {
     return datasetDAO.insertDataset(
-        "Dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
-        user.getUserId(),
-        UUID.randomUUID().toString(),
-        "{}",
-        null);
+        "Dataset " + UUID.randomUUID(), user.getUserId(), UUID.randomUUID().toString(), "{}", null);
   }
 
   protected Integer createStudy() {
