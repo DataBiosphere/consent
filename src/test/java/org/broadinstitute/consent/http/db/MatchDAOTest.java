@@ -6,9 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
@@ -60,7 +63,6 @@ class MatchDAOTest extends DAOTestHelper {
     m.setMatch(match);
     m.setFailed(failed);
     m.setAbstain(false);
-    m.setCreateDate(FIXED_DATE);
     m.setAlgorithmVersion(algorithmVersion);
     return m;
   }
@@ -244,6 +246,35 @@ class MatchDAOTest extends DAOTestHelper {
         matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     assertEquals(matchId, matchResults.getFirst().getId());
+  }
+
+  @Test
+  void testInsertMatchWritesCreateDateWithNow() {
+    Dataset dataset = createDataset();
+    // A date on the model must not reach the column.
+    Match match = makeMockMatch(dataset);
+    match.setCreateDate(FIXED_DATE);
+
+    // The insert joins this transaction, so NOW() here is the value that it writes. The mapper
+    // reads create_date as a day only, so read the column directly.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    AtomicReference<Integer> matchId = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          matchId.set(matchDAO.insertMatch(match));
+        });
+
+    Instant createDate =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT create_date FROM match_entity WHERE match_id = :id")
+                    .bind("id", matchId.get())
+                    .mapTo(OffsetDateTime.class)
+                    .one()
+                    .toInstant());
+    assertEquals(transactionNow.get(), createDate);
   }
 
   @Test
