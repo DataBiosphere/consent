@@ -68,7 +68,8 @@ put:
           schema:
             $ref: '../schemas/Dataset.yaml'
     400:
-      description: Bad Request (invalid input)
+      description: >-
+        Bad Request (invalid input). A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default) is also a 400.
     403:
       description: The user is not an Admin or a Chairperson
     404:
