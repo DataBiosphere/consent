@@ -2,7 +2,13 @@ type: object
 description: >-
   The submission a signing official approves: the one they reviewed. The approval is refused with
   409 when the request's current submission differs. Clients that predate it may send no body or
-  {}, which is accepted while clients move to sending it.
+  {}, which is accepted while clients move to sending it. A body that names a submission gives
+  both values.
+oneOf:
+  - maxProperties: 0
+  - required:
+      - referenceId
+      - submissionDate
 properties:
   referenceId:
     type: string

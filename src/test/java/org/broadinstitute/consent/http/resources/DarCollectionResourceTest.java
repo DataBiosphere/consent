@@ -744,7 +744,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
         "{\"referenceId\": \"ref\"}",
         "{\"submissionDate\": 1700000000123}",
         "{\"referenceId\": ",
-        "{\"referenceId\": \"ref\", \"submissionDate\": \"yesterday\"}"
+        "{\"referenceId\": \"ref\", \"submissionDate\": \"yesterday\"}",
+        // Lenient-only syntax: single quotes, an unquoted name, a trailing value.
+        "{'referenceId': 'ref', 'submissionDate': 1700000000123}",
+        "{referenceId: \"ref\", \"submissionDate\": 1700000000123}",
+        "{\"referenceId\": \"ref\", \"submissionDate\": 1700000000123} {}"
       })
   void testApproveCollectionRejectsAPartialOrMalformedSubmission(String body) {
     try (var response = resource.approveCollection(duosSigningOfficial, 1, request, body)) {

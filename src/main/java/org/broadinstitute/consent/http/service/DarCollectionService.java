@@ -1592,9 +1592,12 @@ public class DarCollectionService implements ConsentLogger {
           // The approval is for the submission read at the start of this request. A different
           // submission date under the lock means different content (compared in milliseconds: the
           // first read's copy keeps no more).
-          // The official approves the submission they reviewed, which the request names.
+          // The official approves the submission they reviewed, which the request names, so it
+          // must still be the collection's latest under the lock.
           if (locked.getSubmissionDate().getTime() != dar.getSubmissionDate().getTime()
-              || (approved != null && !approved.matches(locked))) {
+              || (approved != null
+                  && (!isLatestSubmission(approved, dar.getCollectionId())
+                      || !approved.matches(locked)))) {
             throw new ConsentConflictException(
                 "The data access request changed since it was loaded. Reload it and try again.");
           }
@@ -1611,6 +1614,17 @@ public class DarCollectionService implements ConsentLogger {
       // Submission skipped auto-open elections and DAC notices while this approval was pending.
       processApprovedSubmission(dar.getCollectionId(), dar.getReferenceId());
     }
+  }
+
+  /**
+   * Whether the named submission is the collection's latest. Call it under the collection lock: a
+   * collection that holds a draft has no latest submission.
+   */
+  private boolean isLatestSubmission(SubmissionApproval approved, Integer collectionId) {
+    DarCollection current = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    return current != null
+        && current.getDars().values().stream().noneMatch(d -> d.getSubmissionDate() == null)
+        && approved.matches(current.getMostRecentDar());
   }
 
   /**

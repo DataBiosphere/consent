@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.Strictness;
 import com.google.gson.stream.MalformedJsonException;
 import io.sentry.Sentry;
 import io.sentry.SentryEvent;
@@ -289,6 +291,10 @@ public abstract class Resource implements ConsentLogger {
     };
   }
 
+  /** Refuses what isn't strict JSON, such as single quotes, which the shared instance accepts. */
+  private static final Gson STRICT_GSON =
+      GsonUtil.getInstance().newBuilder().setStrictness(Strictness.STRICT).create();
+
   /**
    * Reads the submission a signing official's approval names. Clients that predate it send no body
    * or {}, which reads as null or empty.
@@ -297,7 +303,7 @@ public abstract class Resource implements ConsentLogger {
     if (body == null || body.isBlank()) {
       return null;
     }
-    SubmissionApproval approval = GsonUtil.getInstance().fromJson(body, SubmissionApproval.class);
+    SubmissionApproval approval = STRICT_GSON.fromJson(body, SubmissionApproval.class);
     if (approval == null || approval.isEmpty()) {
       return approval;
     }

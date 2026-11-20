@@ -100,6 +100,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -1208,6 +1209,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    stubStoredCollection(dar);
 
     service.approveDarCollection(
         approvingOfficial(),
@@ -1238,6 +1240,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    stubStoredCollection(dar);
     SubmissionApproval reviewed = new SubmissionApproval(dar.getReferenceId(), 999_999L);
 
     assertThrows(
@@ -1255,12 +1258,61 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
-    SubmissionApproval reviewed = new SubmissionApproval(UUID.randomUUID().toString(), 1_000_000L);
+    DataAccessRequest newer = approvableDar(2_000_000L);
+    stubStoredCollection(dar, newer);
+    SubmissionApproval reviewed = new SubmissionApproval(newer.getReferenceId(), 2_000_000L);
 
     assertThrows(
         ConsentConflictException.class,
         () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
     verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  // The named DAR was the latest when loaded, but a newer submission committed while the approval
+  // waited for the collection lock.
+  @Test
+  void testApproveCollectionRejectsASubmissionNoLongerTheLatest() {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    stubStoredCollection(dar, approvableDar(2_000_000L));
+    SubmissionApproval reviewed = new SubmissionApproval(dar.getReferenceId(), 1_000_000L);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  // A draft or a missing collection under the lock leaves no latest submission to approve.
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testApproveCollectionRejectsWithoutALatestSubmission(boolean draftAdded) {
+    DataAccessRequest dar = approvableDar(1_000_000L);
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    if (draftAdded) {
+      DataAccessRequest draft = approvableDar(0);
+      draft.setSubmissionDate(null);
+      stubStoredCollection(dar, draft);
+    }
+    SubmissionApproval reviewed = new SubmissionApproval(dar.getReferenceId(), 1_000_000L);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(approvingOfficial(), collection, request, reviewed));
+    verify(dataAccessRequestDAO, never()).updateDarApprovalSO(any(), any());
+  }
+
+  /** The collection as stored, read under the lock. */
+  private void stubStoredCollection(DataAccessRequest... dars) {
+    DarCollection stored = new DarCollection();
+    for (DataAccessRequest d : dars) {
+      stored.addDar(d);
+    }
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(stored);
   }
 
   private static User approvingOfficial() {
