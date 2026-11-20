@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
@@ -77,28 +76,25 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           SET gcs_file_uri=:gcsFileUri,
               media_type=:mediaType,
               update_user_id=:updateUserId,
-              update_date=:updateDate
+              update_date=NOW()
           WHERE file_storage_object_id = :fileStorageObjectId
           """)
   void updateFileById(
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
       @Bind("gcsFileUri") String gcsFileUri,
       @Bind("mediaType") String mediaType,
-      @Bind("updateUserId") Integer updateUserId,
-      @Bind("updateDate") Instant updateDate);
+      @Bind("updateUserId") Integer updateUserId);
 
   @SqlUpdate(
       """
           UPDATE file_storage_object
           SET deleted=true,
               delete_user_id=:deleteUserId,
-              delete_date=:deleteDate
+              delete_date=NOW()
           WHERE entity_id = :entityId
           """)
   void deleteFilesByEntityId(
-      @Bind("entityId") String entityId,
-      @Bind("deleteUserId") Integer deleteUserId,
-      @Bind("deleteDate") Instant deleteDate);
+      @Bind("entityId") String entityId, @Bind("deleteUserId") Integer deleteUserId);
 
   @SqlUpdate(
       """

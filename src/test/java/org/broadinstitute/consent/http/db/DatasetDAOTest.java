@@ -515,15 +515,17 @@ class DatasetDAOTest extends DAOTestHelper {
         nihFileIdCreatedSecondUpdatedFirst,
         randomAlphabetic(20),
         randomAlphabetic(20),
-        updateUser.getUserId(),
-        Instant.ofEpochMilli(120));
+        updateUser.getUserId());
+
+    setFileUpdateDate(nihFileIdCreatedSecondUpdatedFirst, Instant.ofEpochMilli(120));
 
     fileStorageObjectDAO.updateFileById(
         nihFileIdCreatedFirstUpdatedSecond,
         randomAlphabetic(20),
         randomAlphabetic(20),
-        updateUser.getUserId(),
-        Instant.ofEpochMilli(130));
+        updateUser.getUserId());
+
+    setFileUpdateDate(nihFileIdCreatedFirstUpdatedSecond, Instant.ofEpochMilli(130));
 
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 
@@ -555,11 +557,9 @@ class DatasetDAOTest extends DAOTestHelper {
     User updateUser = createUser();
 
     fileStorageObjectDAO.updateFileById(
-        nihFileIdCreatedFirst,
-        randomAlphabetic(20),
-        randomAlphabetic(20),
-        updateUser.getUserId(),
-        Instant.ofEpochMilli(120));
+        nihFileIdCreatedFirst, randomAlphabetic(20), randomAlphabetic(20), updateUser.getUserId());
+
+    setFileUpdateDate(nihFileIdCreatedFirst, Instant.ofEpochMilli(120));
 
     Integer nihFileIdCreatedSecond =
         fileStorageObjectDAO.insertNewFile(
