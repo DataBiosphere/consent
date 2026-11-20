@@ -4,7 +4,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.google.cloud.storage.BlobId;
@@ -40,12 +42,9 @@ class DraftDAOTest extends DAOTestHelper {
     User user2 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
     UUID uuid = draft.getUUID();
-    Date createDate = draft.getCreateDate();
-    Date updateDate = draft.getUpdateDate();
     String name = draft.getName();
     draftDAO.insert(
         draft.getName(),
-        createDate.toInstant(),
         user1.getUserId(),
         draft.getJson(),
         draft.getUUID(),
@@ -55,8 +54,9 @@ class DraftDAOTest extends DAOTestHelper {
     DraftInterface returnedDraft = user1submissions.iterator().next();
     assertEquals(jsonText, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
-    assertEquals(createDate.getTime(), returnedDraft.getCreateDate().getTime());
-    assertEquals(updateDate.getTime(), returnedDraft.getUpdateDate().getTime());
+    assertNotNull(returnedDraft.getCreateDate());
+    // Both columns take NOW() in one statement, so a new draft has the same create and update date.
+    assertEquals(returnedDraft.getCreateDate(), returnedDraft.getUpdateDate());
     assertEquals(name, returnedDraft.getName());
     assertEquals(returnedDraft.getCreateUser().getUserId(), user1.getUserId());
     assertEquals(returnedDraft.getCreateUser().getEmail(), user1.getEmail());
@@ -77,7 +77,6 @@ class DraftDAOTest extends DAOTestHelper {
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
     draftDAO.insert(
         draft.getName(),
-        draft.getCreateDate().toInstant(),
         user1.getUserId(),
         draft.getJson(),
         draft.getUUID(),
@@ -87,7 +86,6 @@ class DraftDAOTest extends DAOTestHelper {
         () ->
             draftDAO.insert(
                 draft.getName(),
-                draft.getCreateDate().toInstant(),
                 user1.getUserId(),
                 draft.getJson(),
                 draft.getUUID(),
@@ -100,24 +98,21 @@ class DraftDAOTest extends DAOTestHelper {
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
     UUID uuid = draft.getUUID();
-    Date createDate = draft.getCreateDate();
     draftDAO.insert(
         draft.getName(),
-        createDate.toInstant(),
         user1.getUserId(),
         draft.getJson(),
         draft.getUUID(),
         draft.getType().getValue());
     DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertFalse(Objects.isNull(returnedDraft));
+    Date insertedUpdateDate = returnedDraft.getUpdateDate();
     assertEquals(jsonText, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
     String revisedJson = "{\"Name\": \"Bob\"}";
     returnedDraft.setJson(revisedJson);
-    returnedDraft.setUpdateDate(new Date());
     draftDAO.updateDraftByDraftUUID(
         returnedDraft.getName(),
-        returnedDraft.getUpdateDate().toInstant(),
         user1.getUserId(),
         returnedDraft.getJson(),
         returnedDraft.getUUID(),
@@ -126,6 +121,7 @@ class DraftDAOTest extends DAOTestHelper {
     assertFalse(Objects.isNull(returnedDraft));
     assertEquals(revisedJson, returnedDraft.getJson());
     assertEquals(uuid, returnedDraft.getUUID());
+    assertTrue(returnedDraft.getUpdateDate().after(insertedUpdateDate));
   }
 
   @Test
@@ -135,10 +131,8 @@ class DraftDAOTest extends DAOTestHelper {
     User user2 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
     UUID uuid = draft.getUUID();
-    Date createDate = draft.getCreateDate();
     draftDAO.insert(
         draft.getName(),
-        createDate.toInstant(),
         user1.getUserId(),
         draft.getJson(),
         draft.getUUID(),
@@ -146,12 +140,13 @@ class DraftDAOTest extends DAOTestHelper {
     DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(uuid, returnedDraft.getUUID());
     assertEquals(user1.getUserId(), returnedDraft.getUpdateUser().getUserId());
+    Date insertedUpdateDate = returnedDraft.getUpdateDate();
 
-    Date updateDate = new Date();
-    draftDAO.updateDraftByDraftUUID(uuid, updateDate.toInstant(), user2.getUserId());
+    draftDAO.updateDraftByDraftUUID(uuid, user2.getUserId());
 
     returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(user2.getUserId(), returnedDraft.getUpdateUser().getUserId());
+    assertTrue(returnedDraft.getUpdateDate().after(insertedUpdateDate));
   }
 
   @Test
@@ -162,14 +157,12 @@ class DraftDAOTest extends DAOTestHelper {
     DraftStudyDataset draft2 = new DraftStudyDataset("{\"Name\": \"User2\"}", user2);
     draftDAO.insert(
         draft.getName(),
-        draft.getCreateDate().toInstant(),
         user1.getUserId(),
         draft.getJson(),
         draft.getUUID(),
         draft.getType().getValue());
     draftDAO.insert(
         draft2.getName(),
-        draft2.getCreateDate().toInstant(),
         user2.getUserId(),
         draft2.getJson(),
         draft2.getUUID(),
@@ -206,7 +199,6 @@ class DraftDAOTest extends DAOTestHelper {
     fso.setEntityId(draft.getUUID().toString());
     draftDAO.insert(
         draft.getName(),
-        draft.getCreateDate().toInstant(),
         draft.getCreateUser().getUserId(),
         draft.getJson(),
         draft.getUUID(),
@@ -237,14 +229,12 @@ class DraftDAOTest extends DAOTestHelper {
     DraftStudyDataset draft2 = new DraftStudyDataset("{\"Name\": \"Second\"}", user1);
     draftDAO.insert(
         draft.getName(),
-        draft.getCreateDate().toInstant(),
         user1.getUserId(),
         draft.getJson(),
         draft.getUUID(),
         draft.getType().getValue());
     draftDAO.insert(
         draft2.getName(),
-        draft2.getCreateDate().toInstant(),
         user1.getUserId(),
         draft2.getJson(),
         draft2.getUUID(),

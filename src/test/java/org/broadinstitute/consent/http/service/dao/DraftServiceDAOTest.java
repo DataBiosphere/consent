@@ -33,7 +33,6 @@ import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -325,7 +324,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     DraftDAO failingDraftDAO = mock(DraftDAO.class);
     doThrow(new IllegalStateException("draft update failed"))
         .when(failingDraftDAO)
-        .updateDraftByDraftUUID(any(UUID.class), any(Instant.class), anyInt());
+        .updateDraftByDraftUUID(any(UUID.class), anyInt());
     Jdbi withFailingDraftDAO = spy(jdbi);
     doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
     return new DraftServiceDAO(
@@ -466,6 +465,9 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertEquals(draft.getUUID(), updatedDraft.getUUID());
     assertEquals(newDraftName, updatedDraft.getName());
     assertEquals(updatedJson, updatedDraft.getJson());
+    // The update writes NOW(), and updateDraft reads the draft back, so the date comes from the
+    // row.
+    assertTrue(updatedDraft.getUpdateDate().after(originalDocumentDate));
     assertThinUser(updatedDraft.getCreateUser());
     assertThinUser(updatedDraft.getUpdateUser());
   }
