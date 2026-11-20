@@ -93,10 +93,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     assertEquals(createdCard, service.createLibraryCard(payload, soUser));
     verify(libraryCardDAO)
         .insertLibraryCard(
-            eq(user.getUserId()),
-            eq(payload.getUserName()),
-            eq(user.getEmail()),
-            eq(payload.getCreateUserId()));
+            user.getUserId(), payload.getUserName(), user.getEmail(), payload.getCreateUserId());
   }
 
   @Test
@@ -432,10 +429,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(any())).thenReturn(institution);
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     when(libraryCardDAO.insertLibraryCard(
-            eq(user.getUserId()),
-            eq(user.getDisplayName()),
-            eq(user.getEmail()),
-            eq(signingOfficial.getUserId())))
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId()))
         .thenReturn(payload.getId());
     when(libraryCardDAO.findLibraryCardById(payload.getId())).thenReturn(payload);
     when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
