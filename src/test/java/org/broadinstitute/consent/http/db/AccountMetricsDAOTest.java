@@ -87,8 +87,14 @@ class AccountMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer user(LocalDateTime created, UserRoles... roles) {
-    Integer userId =
-        userDAO.insertUser(UUID.randomUUID() + "@example.org", "Name", null, at(created));
+    Integer userId = userDAO.insertUser(UUID.randomUUID() + "@example.org", "Name", null);
+    // insertUser always writes NOW(), so set the creation time that the test needs.
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE users SET create_date = :createDate WHERE user_id = :userId")
+                .bind("createDate", created.atZone(ZoneId.systemDefault()).toInstant())
+                .bind("userId", userId)
+                .execute());
     for (UserRoles role : roles) {
       userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);
     }

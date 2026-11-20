@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
@@ -328,14 +327,13 @@ public interface UserDAO extends Transactional<UserDAO> {
   @SqlUpdate(
       """
       INSERT INTO users (email, display_name, institution_id, create_date)
-      VALUES (:email, :displayName, :institutionId, :createDate)
+      VALUES (:email, :displayName, :institutionId, NOW())
       """)
   @GetGeneratedKeys
   Integer insertUser(
       @Bind("email") String email,
       @Bind("displayName") String displayName,
-      @Bind("institutionId") Integer institutionId,
-      @Bind("createDate") Date createDate);
+      @Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)

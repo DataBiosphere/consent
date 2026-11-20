@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardDaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
@@ -24,15 +23,14 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlUpdate(
       """
       INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
-      VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
+      VALUES (:userId, :userName, :userEmail, :createUserId, NOW())
       """)
   @GetGeneratedKeys
   Integer insertLibraryCard(
       @Bind("userId") Integer userId,
       @Bind("userName") String userName,
       @Bind("userEmail") String userEmail,
-      @Bind("createUserId") Integer createUserId,
-      @Bind("createDate") Date createDate);
+      @Bind("createUserId") Integer createUserId);
 
   @SqlUpdate(
       """
@@ -42,7 +40,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
             user_name = :userName,
             user_email = :userEmail,
             update_user_id = :updateUserId,
-            update_date = :updateDate
+            update_date = NOW()
             WHERE id = :libraryCardId
       """)
   void updateLibraryCardById(
@@ -50,8 +48,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       @Bind("userId") Integer userId,
       @Bind("userName") String userName,
       @Bind("userEmail") String userEmail,
-      @Bind("updateUserId") Integer updateUserId,
-      @Bind("updateDate") Date updateDate);
+      @Bind("updateUserId") Integer updateUserId);
 
   @SqlUpdate(
       """
