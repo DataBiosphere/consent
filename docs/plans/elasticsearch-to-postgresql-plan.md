@@ -757,7 +757,9 @@ Rules for each scope:
 
 - A request for a scope that the user cannot use gets a 403 response, not an empty result.
 - A request with a target id that the user cannot read gets a 403 or a 404 response. The team must
-  select one and use it for each scope.
+  select one and use it for each scope (question 13 in section 11). The existing check
+  `DatasetService.verifyStudyVisibilityAccess` returns 404, so that a caller cannot learn that
+  the study exists.
 - If the study scope and the dataset scope stay open to each user who signs in, the public
   visibility rule controls discovery in the library only. It does not protect a study from a user
   who has the id. This is the behavior of today. The document must say so to product.
@@ -797,7 +799,8 @@ The contract gives no access for these items. Each is deferred until product app
 | --- | --- | --- |
 | Access contract | `DatasetService`, for the dataset endpoints | Admin, dataset creator, study creator, custodian |
 | Role rule | duos-ui `isRestrictedToPublicVisibility`, and `DashboardSearchService` on the server | Chairperson, Data Submitter, Admin, Signing Official |
-| None | Study page, Dataset page, DAC pages, DAR review, Signing Official dashboard (ES queries) | Each user who signs in |
+| None | Study page, Dataset page, DAC pages, DAR review (ES queries) | Each user who signs in |
+| Role and institution | Signing Official dashboard | The endpoint permits only the Signing Official role. It returns counts only, for the institution of the user. |
 
 **The conflict**
 
@@ -847,8 +850,10 @@ This list applies to each option.
 - `ElasticSearchHealthCheck`, and the `elastic-search` entry in `StatusResource`.
 - `ElasticSearchSupport`, `ElasticSearchConfiguration`, and the Guice providers in `ConsentModule`.
 - The `elasticSearch` configuration block, which includes the unused `indexName` key.
-- The `elasticsearch-rest-client` dependency, the Apache HttpComponents 4 pin, and the Testcontainers
-  ES dependency.
+- The `elasticsearch-rest-client` dependency and the Testcontainers ES dependency.
+- The Apache HttpComponents 4 pin, but only after a check of the dependency tree. `OidcService`
+  imports `org.apache.http.client.utils.URLEncodedUtils`, and the comment on the pin in `pom.xml`
+  also names `java-http-client`. The pin can thus be necessary after ES goes.
 - About 30 test files. Seven Testcontainers classes go. The `ci` profile exclusion goes.
 - `scripts/index-es.sh`, the `elastic` service in the compose template, and `ELASTIC_PASSWORD` in
   `render-configs.sh`.
@@ -902,18 +907,19 @@ Reasons:
 | Phase | Work | Draft size | Repository |
 | --- | --- | --- | --- |
 | 1 | Search document table, write in the transaction, first fill | L | consent |
-| 2 | Dashboard counts in SQL | M | consent |
+| 2 | Dashboard counts in SQL, with a server configuration switch between ES and PostgreSQL | M | consent |
 | 3 | Generic search service: registry, `datasets` view, scopes for the four v1 callers | XL | consent |
 | 4 | `studies` and `counts` views, asset filters, facets | XL | consent |
 | 5 | duos-ui: v1 callers, then the Data Library builders and readers | XL to 2 XL | duos-ui |
-| 6 | Parity test with generated data, shadow comparison in the deployed environment, publication check | L to XL | consent |
+| 6 | Parity test with generated data, the set of query pairs and their replay in the deployed environment, publication check, and the build of the ES index from the published set for rollback | L to XL | consent |
 | 7 | Switch, observe, stop ES use, measure zero traffic, stop the clusters. Then remove the ES code and configuration. | L | all |
 
 Phase 1 also moves the document builder reads and the row write into the transaction of each
 data change (section 4.1). The size of phase 1 does not include that work yet, and it can be
 larger than L.
 
-Phases 1 and 2 have no effect on users and can start immediately. Phases 3 and 5 can run in parallel
+Phases 1 and 2 have no planned effect on users and can start immediately. One effect is possible:
+a failure of the row write in the transaction (see the risk in section 10). Phases 3 and 5 can run in parallel
 after the team agrees on the request.
 
 ### 9.1a Does this fit the date?
@@ -929,17 +935,46 @@ date.
 - One person cannot do it by the target.
 - Four people on the team can do duos-ui work, and all four can work on this migration.
 - Four people for three work sprints is about 24 person-weeks. The milestone needs 5 to 7. Thus the
-  milestone fits the date with a large margin, if the draft sizes are correct to a factor of two.
+  quantity of work fits. But this comparison is not sufficient, because more people cannot make
+  some steps shorter. See the calendar below.
 - A possible division: two people in consent (phases 1 to 4 and 6) and two people in duos-ui
   (phase 5).
 - The team must agree on the request (section 5.3) in the first sprint. This agreement is the item
   that lets the two repositories work in parallel.
 - Product approval of the visibility rules is the other item on the critical path. Ask for it in the
   first sprint.
-- The fallback in section 9.3 is now improbable. It stays in the plan for a late approval or for a
-  loss of people.
 
-These numbers are estimates. The team has not checked the sizes.
+**Calendar.** These items occur in sequence, and each has a time that people cannot decrease:
+
+| Item | Why it cannot run in parallel | Time |
+| --- | --- | --- |
+| Agreement on the request, and product approval of the visibility rules | Phases 3 to 5 need them | Not known. The plan asks for both in the sprint that ends 9 December. |
+| Phase 3, then phase 4 | Phase 4 extends the service of phase 3 | About 2 to 3 weeks with two people |
+| Phase 6 | The replay needs the complete service of phases 3 and 4 | About 1 to 2 weeks |
+| Step 6 of the switch: observe one release | A fixed wait | One release cycle. The team must give its length. |
+| Step 8 of the switch: measure zero ES traffic | A fixed wait | The agreed period. The team must give its length. |
+| An external caller, if the access log finds one | The date of its change is not in the control of the team | Not known (section 9.5) |
+| The holidays | Fewer work days in the sprint that ends 6 January | About one sprint |
+
+A possible sequence, if each item starts on time:
+
+| Sprint end | Work that must be complete |
+| --- | --- |
+| 9 December | Request agreed. Product approval. Phases 1 and 2. Phase 3 started. |
+| 23 December | Phases 3 and 4. duos-ui work of phase 5 in progress. |
+| 6 January | Phase 5. Phase 6. Steps 1 to 5 of the switch. |
+| 20 January | Step 6 (observe one release), step 7, and step 8 (zero traffic). |
+
+Conclusions:
+
+- The last sprint must hold two waits: one release cycle and the zero-traffic period. If the sum
+  of the two is more than two weeks, the milestone does not fit the target of 20 January.
+- No sprint has spare time. A late approval, or transaction work in phase 1 that is larger than
+  its size (section 9.1), moves the milestone after the target.
+- Thus the margin is small, and the author cannot say that the fallback in section 9.3 is
+  improbable. Ask about a short renewal now (question 7 in section 11).
+
+These numbers are estimates. The team has not checked the sizes or the two waits.
 
 ### 9.2 Switch
 
@@ -950,18 +985,24 @@ These numbers are estimates. The team has not checked the sizes.
    dataset, with the lock of a live write, so it cannot undo a removal that occurs during the fill
    (section 4.1). Then compare the table with the published set (second gate in section 9.4). Do
    not continue with a difference.
-4. Release the new endpoint. The old endpoints stay.
+4. Release the new endpoint. The old endpoints stay. Set the dashboard switch to PostgreSQL in
+   this step, one environment at a time. Start the replay of the query pairs (section 9.4).
 5. Change duos-ui to the new endpoint behind a feature flag.
 6. Observe one release. Compare results and database load. In this period:
    - Change `AssetLookupDAO` to the PostgreSQL publication state. Test a publication and a removal.
    - Measure the HTTP traffic on the two old search endpoints, by caller. ES traffic is not a
      sufficient measure, because step 7 stops it for all clients at the same time.
    - Do the second gate of section 9.4 again.
+   - Build and test the tool that builds the ES index from the published set. The rollback after
+     step 7 needs it, and `POST /api/dataset/index` cannot do this work (section 3.4).
 7. Stop all ES use with configuration, not with a code removal. Do this step only when the old
    search endpoints get no traffic, or when each caller that remains has a decision (section 9.5):
    - Stop the ES writes.
    - Make the two old search endpoints return an error, because they read ES.
    - Stop the ES health check, or `/status` reports a degraded service after the cluster stops.
+   - Disable the admin endpoints `/api/elasticSearch/capabilities` and `/api/elasticSearch/license`.
+     They call ES. One admin call makes the measurement in step 8 wrong, and after step 9 they call
+     a cluster that does not exist.
    - Confirm that the dashboards read PostgreSQL.
 8. Measure zero ES traffic from consent in each environment for an agreed period.
 9. Stop the ES clusters. **Steps 1 to 9 must be complete before the renewal.**
@@ -970,7 +1011,9 @@ These numbers are estimates. The team has not checked the sizes.
 
 Rollback:
 
-- Until step 7: set the duos-ui flag off.
+- Until step 7: set the duos-ui flag off, and set the dashboard switch to ES. The duos-ui flag
+  alone is not sufficient: the server computes the dashboard counts, so the flag cannot correct a
+  wrong count or a high database load from those queries.
 - From step 7 to step 9: the cluster still exists, but its documents are old. Do these steps in
   order:
   1. Start the ES writes again.
@@ -1002,10 +1045,20 @@ production data.
   - Studies that are not public, datasets without a study, and controlled datasets without approval.
   - Identifiers, email addresses, and URLs in the text fields.
   - The quantity of production: about 10,000 datasets.
-- **Real data** is compared in the deployed environment, without an export. During the period with
-  two writes (steps 1 to 6 of the switch), the server sends each search to the two systems and
-  records the differences in ids and counts, without the document content. This is the shadow mode
-  of ticket H-3 ([DT-3856](https://broadworkbench.atlassian.net/browse/DT-3856)).
+- **Real data** is compared in the deployed environment, without an export. The method is a
+  replay of query pairs:
+  - The old endpoints get raw ES JSON, and the new endpoint gets a typed request. No translator
+    between the two exists, and the plan does not build one. Thus the server cannot send each
+    live search to the two systems.
+  - Phase 6 writes a fixed set of query pairs. Each pair is one raw ES query from section 3.3 and
+    its typed equivalent. The set includes each caller, each filter, each facet, and each scope.
+  - An admin operation sends each pair to the two systems, as a caller with each role, and
+    records the differences in ids and counts, without the document content.
+  - The replay starts at step 4 of the switch, when the PostgreSQL search exists. It runs again
+    in step 6. It cannot include steps 1 to 3.
+  - This is a smaller method than the shadow mode of ticket H-3
+    ([DT-3856](https://broadworkbench.atlassian.net/browse/DT-3856)). It finds differences only
+    for the pairs in the set, not for each query that a user sends.
 
 **Publication check (gate for step 2 of the switch)**
 
@@ -1081,6 +1134,7 @@ not public through a raw query today can lose those results.
 | Database load | Tab counts run on each filter change. The database connection limit is fixed. | The data is small (about 6,000 to 10,000 rows), so each query is short. Measure in the deployed environment and with generated data of the same quantity. Combine the counts and the page into one request. |
 | Stale documents | Same as today under storage B | Accept for now. Move fields to live joins or to a standard view later (section 4.1). |
 | Result order | Order without a sort changes | Define a default sort. |
+| A failed search write stops the change of the user | Today an index failure causes a log entry, and the registration, the update, or the DAC rule toggle of the user still succeeds. With the row write in the transaction, an exception in the document builder or in the write rolls back that change. | The team must select one behavior (question 14 in section 11): fail the change, or catch the exception, write a log entry, and repair the row later. The second behavior brings back a stale row, so it needs the admin check of section 9.4. |
 | Two repositories | Releases must agree | New endpoint beside the old ones. Feature flag in duos-ui. |
 | External API clients | The team knows of no external caller of the search endpoints. But external API users exist, and one of them is a possible caller. Options 1 and 3 break a client that sends ES queries. | See section 9.5. |
 
@@ -1118,6 +1172,13 @@ not public through a raw query today can lose those results.
 12. For product: two asset filters can match two different assets of one study today, and the
     study and dataset tabs then show that study. Must the new search keep this, or must the two
     filters match the same asset (section 4.2)?
+13. Does a request for a target that the user cannot read get a 403 or a 404 response
+    (section 7.4a)? An existing study check returns 404.
+14. If the search row write fails in the transaction, does the change of the user fail, or does
+    the server write a log entry and repair the row later (section 10)?
+
+Questions 5, 7, 10, and 11 have no owner. Question 5 can change the plan and must have an answer in
+the first sprint (section 9.5). The team must name one owner for each of these four questions.
 
 ## 12. Sources
 
