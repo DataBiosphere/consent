@@ -15,6 +15,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -45,7 +46,7 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   public record UploadedDocument(String fileName, String mediaType, BlobId blobId) {}
 
   /**
-   * Stores the files in GCS, a few at a time, since each upload holds its whole file in memory.
+   * Stores the files in GCS, a few at a time, since each upload holds a chunk buffer in memory.
    * Call it outside any transaction, so no pooled connection waits on the uploads. A failure
    * deletes the documents that were stored.
    */
@@ -99,6 +100,9 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
           gcsService.storeDocument(
               file.getValueAs(InputStream.class), mediaType, UUID.randomUUID());
       return new UploadedDocument(file.getName(), mediaType, blobId);
+    } catch (UploadTooLargeException e) {
+      // The client's error, not a storage failure.
+      throw e;
     } catch (Exception e) {
       logWarn(
           "Error storing file for user: %d, draft id: %s".formatted(user.getUserId(), draftId), e);

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.cloudstore;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -16,14 +17,15 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -111,11 +113,84 @@ public class GCSService implements ConsentLogger {
    * @throws IOException Exception when storing document
    */
   public BlobId storeDocument(InputStream content, String mediaType, UUID id) throws IOException {
-    byte[] bytes = IOUtils.toByteArray(content);
     BlobId blobId = BlobId.of(config.getBucket(), id.toString());
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
-    Blob blob = storage.create(blobInfo, bytes);
-    return blob.getBlobId();
+    LimitedInputStream limited = new LimitedInputStream(content, config.getMaxUploadBytes());
+    // Streamed in small chunks, never read whole into memory. Only close() finalizes the upload,
+    // so it runs once the whole document has arrived within the limit. Storage.createFrom isn't
+    // used: it closes, and so finalizes a partial document, when the stream fails.
+    WriteChannel writer = storage.writer(blobInfo);
+    writer.setChunkSize(UPLOAD_CHUNK_BYTES);
+    try {
+      byte[] buffer = new byte[COPY_BUFFER_BYTES];
+      int read;
+      while ((read = limited.read(buffer)) != -1) {
+        ByteBuffer bytes = ByteBuffer.wrap(buffer, 0, read);
+        while (bytes.hasRemaining()) {
+          writer.write(bytes);
+        }
+      }
+      writer.close();
+    } catch (IOException | RuntimeException e) {
+      // Nothing should be stored, but a document that is would be referenced by no row.
+      deleteQuietly(blobId);
+      if (limited.exceeded) {
+        throw new UploadTooLargeException(config.getMaxUploadBytes());
+      }
+      // The channel wraps a storage failure in an IOException, which resources answer with a 400.
+      // A storage failure is the server's, as it was before uploads streamed.
+      if (e instanceof IOException && e.getCause() instanceof StorageException storageFailure) {
+        throw storageFailure;
+      }
+      throw e;
+    }
+    return blobId;
+  }
+
+  private void deleteQuietly(BlobId blobId) {
+    try {
+      storage.delete(blobId);
+    } catch (RuntimeException e) {
+      logWarn("Unable to delete the failed upload " + blobId.getName() + ": " + e.getMessage());
+    }
+  }
+
+  /** The upload chunk: the smallest the storage client allows, so an upload holds little memory. */
+  private static final int UPLOAD_CHUNK_BYTES = 256 * 1024;
+
+  private static final int COPY_BUFFER_BYTES = 8 * 1024;
+
+  /**
+   * Fails a read once more than {@code max} bytes have passed. Only array reads are counted, the
+   * only kind storeDocument makes.
+   */
+  private static final class LimitedInputStream extends FilterInputStream {
+
+    private final long max;
+    private long count;
+    private boolean exceeded;
+
+    LimitedInputStream(InputStream in, long max) {
+      super(in);
+      this.max = max;
+    }
+
+    @Override
+    public int read(byte[] buffer, int offset, int length) throws IOException {
+      int n = super.read(buffer, offset, length);
+      if (n > 0) {
+        counted(n);
+      }
+      return n;
+    }
+
+    private void counted(long n) throws IOException {
+      count += n;
+      if (count > max) {
+        exceeded = true;
+        throw new IOException("Upload is larger than %d bytes".formatted(max));
+      }
+    }
   }
 
   /**

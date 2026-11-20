@@ -3,12 +3,15 @@ package org.broadinstitute.consent.http.cloudstore;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -17,17 +20,21 @@ import static org.mockito.Mockito.when;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.CopyWriter;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,18 +79,110 @@ class GCSServiceTest extends AbstractTestHelper {
     service.setConfig(config);
   }
 
+  @Mock private WriteChannel writer;
+
+  /** Bytes the writer received. */
+  private final ByteArrayOutputStream written = new ByteArrayOutputStream();
+
+  private void stubWriter() throws IOException {
+    when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
+    lenient()
+        .when(writer.write(any(ByteBuffer.class)))
+        .thenAnswer(
+            invocation -> {
+              ByteBuffer bytes = invocation.getArgument(0);
+              int n = bytes.remaining();
+              byte[] chunk = new byte[n];
+              bytes.get(chunk);
+              written.write(chunk);
+              return n;
+            });
+  }
+
+  private BlobId store(String content) throws IOException {
+    return service.storeDocument(
+        IOUtils.toInputStream(content, Charset.defaultCharset()), MediaType.TEXT_PLAIN, id);
+  }
+
+  private final UUID id = UUID.randomUUID();
+
+  // The upload streams in small chunks, and only a complete one is finalized (closed).
   @Test
   void testStoreDocument() throws Exception {
-    UUID id = UUID.randomUUID();
-    BlobId blobId = BlobId.of(config.getEndpoint(), id.toString());
-    when(blob.getBlobId()).thenReturn(blobId);
-    when(storage.create(any(BlobInfo.class), any(), new Storage.BlobTargetOption[0]))
-        .thenReturn(blob);
+    stubWriter();
     initStore();
 
-    InputStream is = IOUtils.toInputStream("content", Charset.defaultCharset());
-    BlobId storedBlobId = service.storeDocument(is, MediaType.TEXT_PLAIN, id);
-    assertNotNull(storedBlobId);
+    BlobId stored = store("content");
+
+    BlobId expected = BlobId.of(config.getBucket(), id.toString());
+    assertEquals(expected, stored);
+    ArgumentCaptor<BlobInfo> info = ArgumentCaptor.forClass(BlobInfo.class);
+    verify(storage).writer(info.capture());
+    assertEquals(expected, info.getValue().getBlobId());
+    assertEquals(MediaType.TEXT_PLAIN, info.getValue().getContentType());
+    verify(writer).setChunkSize(256 * 1024);
+    assertEquals("content", written.toString(Charset.defaultCharset()));
+    verify(writer).close();
+    verify(storage, never()).delete(any(BlobId.class));
+  }
+
+  @Test
+  void testStoreDocumentAtTheLimit() throws Exception {
+    config.setMaxUploadBytes(7);
+    stubWriter();
+    initStore();
+
+    store("content");
+
+    verify(writer).close();
+  }
+
+  // Past the limit the upload is a 400 and is never finalized; anything stored is deleted.
+  @Test
+  void testStoreDocumentOverTheLimit() throws Exception {
+    config.setMaxUploadBytes(6);
+    stubWriter();
+    initStore();
+
+    UploadTooLargeException e = assertThrows(UploadTooLargeException.class, () -> store("content"));
+
+    assertInstanceOf(BadRequestException.class, e);
+    assertEquals("File size is invalid. Max size is: 0 MB", e.getMessage());
+    verify(writer, never()).close();
+    verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
+  }
+
+  // A storage failure under the limit isn't a size problem: the channel wraps it in an
+  // IOException, and it's passed on as the storage failure. The upload is still cleaned up.
+  @Test
+  void testStoreDocumentRethrowsOtherStorageErrors() throws Exception {
+    StorageException failure = new StorageException(503, "Unavailable");
+    when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
+    when(writer.write(any(ByteBuffer.class))).thenThrow(new IOException(failure));
+    initStore();
+
+    assertSame(failure, assertThrows(StorageException.class, () -> store("content")));
+    verify(writer, never()).close();
+    verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
+  }
+
+  // Finalizing can fail after the server stored the document; it's deleted, and a failed delete
+  // doesn't hide the original error.
+  @Test
+  void testStoreDocumentDeletesWhenFinalizingFails() throws Exception {
+    stubWriter();
+    IOException failure = new IOException("connection reset");
+    doThrow(failure).when(writer).close();
+    when(storage.delete(any(BlobId.class))).thenThrow(new StorageException(500, "delete failed"));
+    initStore();
+
+    assertSame(failure, assertThrows(IOException.class, () -> store("content")));
+    verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
+  }
+
+  @Test
+  void testDefaultUploadLimitIs25Megabytes() {
+    assertEquals(25_000_000L, new StoreConfiguration().getMaxUploadBytes());
   }
 
   @Test

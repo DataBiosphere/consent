@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -122,6 +124,27 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
             ServerErrorException.class,
             () -> draftFileStorageServiceDAO.uploadDocuments(associatedUUID, user, testFiles));
     assertEquals(500, error.getResponse().getStatus());
+
+    verify(gcsService).deleteDocument(anyString());
+  }
+
+  // A file over the upload limit is the client's error: a 400, not a storage failure.
+  @Test
+  void testAFileOverTheLimitIsABadRequest() throws IOException {
+    User user = createUser();
+    Map<String, FormDataBodyPart> testFiles = new LinkedHashMap<>(getRandomFiles(1));
+    FormDataBodyPart large = mock(FormDataBodyPart.class);
+    InputStream content = InputStream.nullInputStream();
+    when(large.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
+    when(large.getValueAs(InputStream.class)).thenReturn(content);
+    when(gcsService.storeDocument(eq(content), anyString(), any()))
+        .thenThrow(new UploadTooLargeException(25_000_000));
+    testFiles.put("large", large);
+
+    UUID draftId = UUID.randomUUID();
+    assertThrows(
+        UploadTooLargeException.class,
+        () -> draftFileStorageServiceDAO.uploadDocuments(draftId, user, testFiles));
 
     verify(gcsService).deleteDocument(anyString());
   }

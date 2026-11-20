@@ -52,6 +52,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.enumeration.DarDocumentDeletionReason;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
@@ -580,7 +581,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("new-irb.pdf");
     when(formData.getType()).thenReturn("pdf");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new-irb"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
@@ -674,11 +674,28 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
 
     Response response = resource.uploadIrbDocument(duosUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
+  }
+
+  // An upload over the limit is the client's error.
+  @Test
+  void testUploadIrbDocumentOverTheLimitIsABadRequest() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
+    when(formData.getFileName()).thenReturn("temp.txt");
+    when(formData.getType()).thenReturn("txt");
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenThrow(new UploadTooLargeException(25_000_000));
+
+    try (Response response =
+        resource.uploadIrbDocument(
+            duosUser, "", IOUtils.toInputStream("test", Charset.defaultCharset()), formData)) {
+      assertEquals(400, response.getStatus());
+    }
   }
 
   @Test
@@ -704,7 +721,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
@@ -734,7 +750,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new"));
 
     Response response =
@@ -757,7 +772,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new"));
 
     Response response =
@@ -785,7 +799,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
 
@@ -810,7 +823,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
 
@@ -835,7 +847,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
 
@@ -860,7 +871,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
     when(gcsService.deleteDocument("new-upload")).thenReturn(true);
@@ -893,7 +903,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
     when(gcsService.deleteDocument(previousLocation)).thenReturn(true);
@@ -928,7 +937,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("bucket", "new-upload"));
     when(gcsService.deleteDocument("new-upload")).thenReturn(true);
@@ -1171,7 +1179,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     InputStream collaborationInput =
         IOUtils.toInputStream("synthetic collaboration", Charset.defaultCharset());
     FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
-    when(collaborationFile.getSize()).thenReturn(1L);
     when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
     when(collaborationFile.getType()).thenReturn("text/plain");
     when(gcsService.storeDocument(any(), eq("text/plain"), any()))
@@ -1218,7 +1225,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dataset.setDataUse(new DataUseBuilder().setCollaboratorRequired(true).build());
     when(datasetService.findDatasetById(user, 1)).thenReturn(dataset);
     FormDataContentDisposition collaborationFile = mock(FormDataContentDisposition.class);
-    when(collaborationFile.getSize()).thenReturn(1L);
     when(collaborationFile.getFileName()).thenReturn("collaboration.txt");
     when(collaborationFile.getType()).thenReturn("text/plain");
     when(gcsService.storeDocument(any(), eq("text/plain"), any()))
@@ -1474,7 +1480,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition file = mock(FormDataContentDisposition.class);
     when(file.getFileName()).thenReturn("irb.pdf");
     when(file.getType()).thenReturn("application/pdf");
-    when(file.getSize()).thenReturn(-1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "new-irb"));
 
     resource.populateProgressReportWithDocuments(
@@ -1552,13 +1557,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition collabFileDetails = mock(FormDataContentDisposition.class);
     when(collabFileDetails.getFileName()).thenReturn("collab_document.txt");
     when(collabFileDetails.getType()).thenReturn("text/plain");
-    when(collabFileDetails.getSize()).thenReturn(1L);
     InputStream ethicsInputStream =
         IOUtils.toInputStream("ethics content", Charset.defaultCharset());
     FormDataContentDisposition ethicsFileDetails = mock(FormDataContentDisposition.class);
     when(ethicsFileDetails.getFileName()).thenReturn("ethics_document.txt");
     when(ethicsFileDetails.getType()).thenReturn("text/plain");
-    when(ethicsFileDetails.getSize()).thenReturn(1L);
     // Record what each upload stores: a drained stream would store nothing.
     List<String> stored = new ArrayList<>();
     when(gcsService.storeDocument(any(), any(), any()))
@@ -1838,7 +1841,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
 
     Response response =
@@ -1870,7 +1872,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
     when(formData.getFileName()).thenReturn("temp.txt");
     when(formData.getType()).thenReturn("txt");
-    when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
 
