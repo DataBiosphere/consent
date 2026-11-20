@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -330,12 +329,7 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer datasetId =
         datasetDAO.insertDataset(
-            randomAlphabetic(20),
-            new Timestamp(new Date().getTime()),
-            user.getUserId(),
-            randomAlphabetic(20),
-            dataUse,
-            null);
+            randomAlphabetic(20), user.getUserId(), randomAlphabetic(20), dataUse, null);
     datasetDAO.updateStudyId(datasetId, studyId);
     return datasetId;
   }

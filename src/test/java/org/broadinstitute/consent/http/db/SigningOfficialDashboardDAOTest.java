@@ -39,12 +39,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     Integer datasetId =
         datasetDAO.insertDataset(
-            "Canceled DAR dataset",
-            FIXED_TIMESTAMP,
-            user.getUserId(),
-            UUID.randomUUID().toString(),
-            "{}",
-            null);
+            "Canceled DAR dataset", user.getUserId(), UUID.randomUUID().toString(), "{}", null);
     Integer collectionId =
         darCollectionDAO.insertDarCollection("DAR-CANCELED", user.getUserId(), FIXED_DATE);
     String referenceId = UUID.randomUUID().toString();
@@ -258,7 +253,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
   private Integer createDataset(User user) {
     return datasetDAO.insertDataset(
         "Dashboard dataset " + UUID.randomUUID(),
-        FIXED_TIMESTAMP,
         user.getUserId(),
         UUID.randomUUID().toString(),
         "{}",

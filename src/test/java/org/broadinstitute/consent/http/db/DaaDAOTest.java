@@ -941,7 +941,6 @@ class DaaDAOTest extends DAOTestHelper {
     int datasetId =
         datasetDAO.insertDataset(
             randomAlphabetic(5),
-            new Timestamp(Instant.now().getEpochSecond()),
             user.getUserId(),
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),

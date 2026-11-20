@@ -23,7 +23,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -1378,7 +1377,6 @@ class DatasetServiceDAOTest extends DAOTestHelper {
           .attach(DatasetDAO.class)
           .insertDataset(
               randomAlphabetic(20),
-              new Timestamp(new Date().getTime()),
               userId,
               UUID.randomUUID().toString(),
               new DataUseBuilder().setGeneralUse(true).build().toString(),
@@ -2972,11 +2970,10 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   private Dataset createDataset() {
     User user = createUser();
     String name = "Name_" + randomAlphanumeric(20);
-    Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
-        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
+        datasetDAO.insertDataset(name, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }
 

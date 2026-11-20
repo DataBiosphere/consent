@@ -10,7 +10,6 @@ import com.google.gson.JsonParser;
 import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -271,11 +270,11 @@ class ShowcaseCatalogLookupDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(
             "Example Cohort " + UUID.randomUUID(),
-            Timestamp.from(Instant.parse("2026-10-02T12:00:00Z")),
             user.getUserId(),
             null,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
+    setDatasetDates(id, Instant.parse("2026-10-02T12:00:00Z"));
     datasetDAO.updateStudyId(id, studyId);
     return id;
   }

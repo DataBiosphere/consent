@@ -219,9 +219,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       List<DatasetProperty> properties,
       List<FileStorageObject> uploadedFiles) {
     // insert dataset
-    Integer datasetId =
-        datasetDAO.insertDataset(
-            name, new Timestamp(new Date().getTime()), userId, null, dataUse.toString(), dacId);
+    Integer datasetId = datasetDAO.insertDataset(name, userId, null, dataUse.toString(), dacId);
 
     addAuditRecord(datasetId, name, userId, AuditActions.CREATE);
 
@@ -466,8 +464,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     String updateName = StringUtils.isBlank(datasetName) ? dataset.getName() : datasetName;
     addAuditRecord(datasetId, updateName, userId, AuditActions.UPDATE);
     // update dataset
-    datasetDAO.updateDatasetByDatasetId(
-        datasetId, updateName, new Timestamp(new Date().getTime()), userId, dacId);
+    datasetDAO.updateDatasetByDatasetId(datasetId, updateName, userId, dacId);
 
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, executeDeletes);
@@ -496,11 +493,10 @@ public class DatasetServiceDAO implements ConsentLogger {
               .formatted(datasetId, userId));
       Dataset dataset = datasetDAO.findDatasetsByIdList(List.of(datasetId)).getFirst();
       addAuditRecord(datasetId, dataset.getDatasetName(), userId, AuditActions.UPDATE);
-      datasetDAO.updateDatasetUpdateUser(datasetId, new Timestamp(new Date().getTime()), userId);
+      datasetDAO.updateDatasetUpdateUser(datasetId, userId);
     } else {
       addAuditRecord(datasetId, datasetName, userId, AuditActions.UPDATE);
-      datasetDAO.updateDatasetNameWithUpdateUser(
-          datasetId, datasetName, new Timestamp(new Date().getTime()), userId);
+      datasetDAO.updateDatasetNameWithUpdateUser(datasetId, datasetName, userId);
     }
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
