@@ -331,7 +331,7 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
     Integer otherDacId = dacDAO.createDac("Other DAC", "other@example.org", "", user.getUserId());
-    daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), otherDacId);
+    daaDAO.createDaa(user.getUserId(), user.getUserId(), otherDacId);
 
     DashboardDatabaseCounts counts =
         jdbi.onDemand(SigningOfficialDashboardDAO.class)

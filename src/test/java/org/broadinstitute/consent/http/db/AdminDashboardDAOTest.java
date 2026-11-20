@@ -214,13 +214,10 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId = dacDAO.createDac("Broad DAC", "broad@example.org", "", user.getUserId());
     Integer deletedDacId = dacDAO.createDac("Old DAC", "old@example.org", "", user.getUserId());
-    Integer deletedDaaId =
-        daaDAO.createDaa(
-            user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), deletedDacId);
+    Integer deletedDaaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), deletedDacId);
     daaDAO.createDacDaaRelation(deletedDacId, deletedDaaId, user.getUserId());
     dacDAO.deleteDac(deletedDacId, user.getUserId());
-    Integer daaId =
-        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
     Integer cardId =
         libraryCardDAO.insertLibraryCard(

@@ -10,11 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.ws.rs.core.MediaType;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DaaAudit;
@@ -44,8 +46,19 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    // createDaa joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    Integer daaId =
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(
+                  h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+              return daaDAO.createDaa(userId, userId, dacId);
+            });
     assertNotNull(daaId);
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    assertEquals(transactionNow.get(), daa.getCreateDate());
+    assertEquals(transactionNow.get(), daa.getUpdateDate());
     // Assert that CREATE audit records are created.
     List<DaaAudit> daaAudits = daaDAO.findAuditsByDaaId(daaId);
     assertNotNull(daaAudits);
@@ -58,9 +71,9 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId3 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId3 = daaDAO.createDaa(userId, userId, dacId);
     assertNotNull(daaId1);
     assertNotNull(daaId2);
     assertNotNull(daaId3);
@@ -77,7 +90,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     assertNotNull(daaId);
     List<DataAccessAgreement> daas = daaDAO.findAll();
     assertNotNull(daas);
@@ -89,15 +102,14 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     fileStorageObjectDAO.insertNewFile(
         randomAlphabetic(10),
         FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
         randomAlphabetic(10),
         MediaType.TEXT_PLAIN_TYPE.getType(),
         daaId.toString(),
-        userId,
-        Instant.now());
+        userId);
     Integer fsoId =
         fileStorageObjectDAO.insertNewFile(
             randomAlphabetic(10),
@@ -105,16 +117,14 @@ class DaaDAOTest extends DAOTestHelper {
             randomAlphabetic(10),
             MediaType.TEXT_PLAIN_TYPE.getType(),
             daaId.toString(),
-            userId,
-            Instant.now());
+            userId);
     fileStorageObjectDAO.insertNewFile(
         randomAlphabetic(10),
         FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
         randomAlphabetic(10),
         MediaType.TEXT_PLAIN_TYPE.getType(),
         daaId.toString(),
-        userId,
-        Instant.now());
+        userId);
     List<DataAccessAgreement> daa = daaDAO.findAll();
     assertNotNull(daa);
     assertEquals(1, daa.size());
@@ -127,9 +137,9 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId3 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId3 = daaDAO.createDaa(userId, userId, dacId);
     assertNotNull(daaId1);
     assertNotNull(daaId2);
     assertNotNull(daaId3);
@@ -150,8 +160,8 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId);
     assertNotNull(daaId1);
     assertNotNull(daaId2);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
@@ -175,8 +185,8 @@ class DaaDAOTest extends DAOTestHelper {
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer dacId2 =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    daaDAO.createDaa(userId, userId, dacId2);
     assertNotNull(daaId1);
     DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
@@ -194,8 +204,8 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
 
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId);
 
     daaDAO.createDacDaaRelation(dacId, daaId1, userId);
     // Re-assignment updates DAC -> DAA mapping to the latest DAA.
@@ -214,7 +224,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer otherDacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
 
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, userId);
 
     assertTrue(daaDAO.isDaaLinkedToDac(dacId, daaId));
@@ -234,8 +244,8 @@ class DaaDAOTest extends DAOTestHelper {
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer otherDacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer oldDaaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), creatorDacId);
-    Integer newDaaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), adopterDacId);
+    Integer oldDaaId = daaDAO.createDaa(userId, userId, creatorDacId);
+    Integer newDaaId = daaDAO.createDaa(userId, userId, adopterDacId);
     daaDAO.createDacDaaRelation(adopterDacId, oldDaaId, userId);
     daaDAO.createDacDaaRelation(adopterDacId, newDaaId, userId);
 
@@ -254,8 +264,8 @@ class DaaDAOTest extends DAOTestHelper {
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer dacId3 =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    daaDAO.createDaa(userId, userId, dacId2);
     assertNotNull(daaId1);
     DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
@@ -300,9 +310,9 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId3 =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
 
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId1);
     assertNotNull(daaId1);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId2);
     assertNotNull(daaId2);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
     assertNotNull(daa1);
@@ -351,7 +361,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     Integer fsoId =
         fileStorageObjectDAO.insertNewFile(
             randomAlphabetic(10),
@@ -359,16 +369,14 @@ class DaaDAOTest extends DAOTestHelper {
             randomAlphabetic(10),
             MediaType.TEXT_PLAIN_TYPE.getType(),
             daaId.toString(),
-            userId,
-            Instant.now());
+            userId);
     fileStorageObjectDAO.insertNewFile(
         randomAlphabetic(10),
         FileCategory.DATA_USE_LETTER.getValue(),
         randomAlphabetic(10),
         MediaType.TEXT_PLAIN_TYPE.getType(),
         daaId.toString(),
-        userId,
-        Instant.now());
+        userId);
     DataAccessAgreement daa = daaDAO.findById(daaId);
     assertNotNull(daa);
     assertNotNull(daa.getFile());
@@ -387,7 +395,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId3 =
         dacDAO.createDac(
             randomAlphabetic(5), "Dac 3", randomAlphabetic(15), createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, userId);
     daaDAO.createDacDaaRelation(dacId2, daaId, userId);
     daaDAO.createDacDaaRelation(dacId3, daaId, userId);
@@ -410,7 +418,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId3 =
         dacDAO.createDac(
             randomAlphabetic(5), "Dac 3", randomAlphabetic(15), createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId1);
     daaDAO.createDacDaaRelation(dacId1, daaId, userId);
     daaDAO.createDacDaaRelation(dacId2, daaId, userId);
     daaDAO.createDacDaaRelation(dacId3, daaId, userId);
@@ -438,7 +446,7 @@ class DaaDAOTest extends DAOTestHelper {
   void testFindById_excludesSoftDeletedDac() {
     Integer userId = createUser().getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, userId);
 
     // Before soft-deletion the DAC is visible in the DAA
@@ -462,7 +470,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUser().getUserId();
     Integer dacId1 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId1);
     daaDAO.createDacDaaRelation(dacId1, daaId, userId);
     daaDAO.createDacDaaRelation(dacId2, daaId, userId);
 
@@ -533,8 +541,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dac1Id =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Dac dac1 = dacDAO.findById(dac1Id);
-    Integer daaId1 =
-        daaDAO.createDaa(dataSubmitterId, Instant.now(), dataSubmitterId, Instant.now(), dac1Id);
+    Integer daaId1 = daaDAO.createDaa(dataSubmitterId, dataSubmitterId, dac1Id);
     daaDAO.createDacDaaRelation(dac1Id, daaId1, dataSubmitterId);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
     Dataset d1 = createRandomDataset(dataSubmitter, dac1);
@@ -543,8 +550,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId2 =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Dac dac2 = dacDAO.findById(dacId2);
-    Integer daaId2 =
-        daaDAO.createDaa(dataSubmitterId, Instant.now(), dataSubmitterId, Instant.now(), dacId2);
+    Integer daaId2 = daaDAO.createDaa(dataSubmitterId, dataSubmitterId, dacId2);
     daaDAO.createDacDaaRelation(dacId2, daaId2, dataSubmitterId);
     DataAccessAgreement daa2 = daaDAO.findById(daaId2);
     Dataset d2 = createRandomDataset(dataSubmitter, dac2);
@@ -553,8 +559,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId3 =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Dac dac3 = dacDAO.findById(dacId3);
-    Integer daaId3 =
-        daaDAO.createDaa(dataSubmitterId, Instant.now(), dataSubmitterId, Instant.now(), dacId3);
+    Integer daaId3 = daaDAO.createDaa(dataSubmitterId, dataSubmitterId, dacId3);
     daaDAO.createDacDaaRelation(dacId3, daaId3, dataSubmitterId);
     DataAccessAgreement daa3 = daaDAO.findById(daaId3);
     createRandomDataset(dataSubmitter, dac3);
@@ -582,7 +587,7 @@ class DaaDAOTest extends DAOTestHelper {
     Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
 
     // Ensure that the DAA is associated to the DAC
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, userId);
 
     Set<Integer> daaIds =
@@ -601,8 +606,8 @@ class DaaDAOTest extends DAOTestHelper {
     Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
     Dataset dataset3 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
 
-    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
-    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daa1 = daaDAO.createDaa(userId, userId, dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, userId, dacId2);
 
     daaDAO.createDacDaaRelation(dacId1, daa1, userId);
     daaDAO.createDacDaaRelation(dacId2, daa2, userId);
@@ -643,8 +648,8 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
     Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
 
-    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
-    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daa1 = daaDAO.createDaa(userId, userId, dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, userId, dacId2);
 
     daaDAO.createDacDaaRelation(dacId1, daa1, userId);
     daaDAO.createDacDaaRelation(dacId2, daa2, userId);
@@ -669,8 +674,8 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
     Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
 
-    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
-    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daa1 = daaDAO.createDaa(userId, userId, dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, userId, dacId2);
 
     daaDAO.createDacDaaRelation(dacId1, daa1, userId);
     daaDAO.createDacDaaRelation(dacId2, daa2, userId);
@@ -703,8 +708,8 @@ class DaaDAOTest extends DAOTestHelper {
     Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId1));
     Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
 
-    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
-    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daa1 = daaDAO.createDaa(userId, userId, dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, userId, dacId2);
     daaDAO.createDacDaaRelation(dacId1, daa1, userId);
     daaDAO.createDacDaaRelation(dacId2, daa2, userId);
 
@@ -734,8 +739,8 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
     Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId1));
     Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
-    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
-    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daa1 = daaDAO.createDaa(userId, userId, dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, userId, dacId2);
     Date now = new Date();
     Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
     String referenceId = UUID.randomUUID().toString();
@@ -781,7 +786,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac("dac", randomAlphabetic(5), "", userId);
     Dataset dataset = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     Date now = new Date();
     Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
     Integer parentDarId =
@@ -824,7 +829,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac("dac", randomAlphabetic(5), "", userId);
     Dataset dataset = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, dacId);
     Date now = new Date();
     Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
 
@@ -887,7 +892,7 @@ class DaaDAOTest extends DAOTestHelper {
     Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
 
     // Create a DAA but do not associate it to the DAC
-    daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    daaDAO.createDaa(userId, userId, dacId);
 
     Set<Integer> daaIds =
         daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
@@ -905,7 +910,7 @@ class DaaDAOTest extends DAOTestHelper {
     // Create a DAA that is associated to a different DAC than the datasets are
     Integer otherDacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), otherDacId);
+    Integer daaId = daaDAO.createDaa(userId, userId, otherDacId);
     daaDAO.createDacDaaRelation(otherDacId, daaId, userId);
 
     Set<Integer> daaIds =
@@ -927,9 +932,7 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   private DataAccessAgreement createRandomDataAccessAgreement(User user, Dac dac) {
-    int daaId =
-        daaDAO.createDaa(
-            user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dac.getDacId());
+    int daaId = daaDAO.createDaa(user.getUserId(), user.getUserId(), dac.getDacId());
     return daaDAO.findById(daaId);
   }
 
@@ -954,8 +957,8 @@ class DaaDAOTest extends DAOTestHelper {
     Integer userId = createUserId();
     Integer dacId1 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId1);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId2);
     daaDAO.createDacDaaRelation(dacId1, daaId1, userId);
     daaDAO.createDacDaaRelation(dacId2, daaId2, userId);
 
@@ -975,8 +978,8 @@ class DaaDAOTest extends DAOTestHelper {
   void testCreateDacDaaRelation_ReplaceExistingRelation() {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId);
 
     // Create initial relation DAC -> DAA1
     daaDAO.createDacDaaRelation(dacId, daaId1, userId);
@@ -1006,9 +1009,9 @@ class DaaDAOTest extends DAOTestHelper {
   void testCreateDacDaaRelation_MultipleReplacements() {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId3 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, userId, dacId);
+    Integer daaId3 = daaDAO.createDaa(userId, userId, dacId);
 
     // First assignment: DAC -> DAA1
     daaDAO.createDacDaaRelation(dacId, daaId1, userId);

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;
@@ -30,8 +29,7 @@ public class DaaServiceDAO {
     List<Integer> createdDaaIds = new ArrayList<>();
     jdbi.useTransaction(
         handle -> {
-          Instant now = Instant.now();
-          Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
+          Integer daaId = daaDAO.createDaa(userId, userId, dacId);
           createdDaaIds.add(daaId);
           daaDAO.createDacDaaRelation(dacId, daaId, userId);
           if (fso != null) {
@@ -50,8 +48,7 @@ public class DaaServiceDAO {
                 fso.getBlobId().toGsUtilUri(),
                 fso.getMediaType(),
                 daaId.toString(),
-                userId,
-                now);
+                userId);
           }
         });
     return createdDaaIds.isEmpty() ? null : createdDaaIds.getFirst();

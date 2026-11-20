@@ -430,8 +430,7 @@ public class DatasetServiceDAO implements ConsentLogger {
           file.getBlobId().toGsUtilUri(),
           file.getMediaType(),
           entityId,
-          userId,
-          Instant.now());
+          userId);
     }
   }
 
