@@ -398,7 +398,7 @@ class StudyDAOTest extends DAOTestHelper {
               transactionNow.set(
                   h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
               return studyDAO.insertStudy(
-                  RandomStringUtils.randomAlphabetic(20),
+                  randomAlphabetic(20),
                   "description",
                   "PI",
                   null,
