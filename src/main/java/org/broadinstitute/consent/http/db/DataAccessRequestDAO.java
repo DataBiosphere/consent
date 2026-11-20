@@ -54,6 +54,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   String lockDataAccessRequest(@Bind("referenceId") String referenceId);
 
+  /**
+   * Whether anything refers to the file at this bucket location: a DAR's document fields, or a file
+   * storage object (DAAs, dataset and draft files share the bucket and store gs:// URIs).
+   */
+  @SqlQuery(
+      """
+      SELECT EXISTS (SELECT 1 FROM data_access_request
+          WHERE data ->> 'irbDocumentLocation' = :location
+            OR data ->> 'collaborationLetterLocation' = :location)
+        OR EXISTS (SELECT 1 FROM file_storage_object
+          WHERE right(gcs_file_uri, length(:location) + 1) = '/' || :location)
+      """)
+  boolean isDocumentReferenced(@Bind("location") String location);
+
   /** Lock in a stable order for vote batches spanning multiple collections. */
   @SqlQuery(
       """

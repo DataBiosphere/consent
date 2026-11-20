@@ -50,7 +50,7 @@ class NihServiceDAOTest extends DAOTestHelper {
     userPropertyDAO.insertAll(List.of(prop1, prop2));
     // Create Library Card
     libraryCardDAO.insertLibraryCard(
-        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
 
     // Build a new NIHUserAccount to update
     NIHUserAccount userAccount = new NIHUserAccount();

@@ -1245,7 +1245,7 @@ class DatasetDAOTest extends DAOTestHelper {
     // user with a mix of approved and unapproved datasets
     User user = createUser();
     libraryCardDAO.insertLibraryCard(
-        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
 
     Dataset dataset1 = createDataset(false);
     Dataset dataset2 = createDataset(true);
@@ -1369,7 +1369,7 @@ class DatasetDAOTest extends DAOTestHelper {
   void testGetApprovedDatasetsLastTheExpirationDuration(long submittedHoursAgo, int expected) {
     User user = createUser();
     libraryCardDAO.insertLibraryCard(
-        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
     Dataset dataset = createDataset(true);
     Dac dac = insertDac();
     DarCollection collection =
@@ -1407,7 +1407,7 @@ class DatasetDAOTest extends DAOTestHelper {
     User chairperson1 = createUser();
     User chairperson2 = createUser();
     libraryCardDAO.insertLibraryCard(
-        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), now);
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
 
     Dataset dataset1 = createDataset(true);
     Dataset dataset2 = createDataset(true);

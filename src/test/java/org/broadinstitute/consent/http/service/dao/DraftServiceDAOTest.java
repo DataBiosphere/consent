@@ -69,6 +69,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftServiceDAOTest extends DAOTestHelper {
+
+  /** A fixed past value, so a check that an update moved update_date forward does not race. */
+  private static final Instant PAST_UPDATE_DATE = Instant.parse("2020-01-01T00:00:00Z");
+
+  private void setUpdateDateInThePast(UUID draftId) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE draft SET update_date = :updateDate WHERE uuid = :uuid")
+                .bind("updateDate", PAST_UPDATE_DATE)
+                .bind("uuid", draftId)
+                .execute());
+  }
+
   private static GCSService gcsService;
   private static DraftServiceDAO draftServiceDAO;
 
@@ -325,7 +338,7 @@ class DraftServiceDAOTest extends DAOTestHelper {
     DraftDAO failingDraftDAO = mock(DraftDAO.class);
     doThrow(new IllegalStateException("draft update failed"))
         .when(failingDraftDAO)
-        .updateDraftByDraftUUID(any(UUID.class), any(Instant.class), anyInt());
+        .updateDraftByDraftUUID(any(UUID.class), anyInt());
     Jdbi withFailingDraftDAO = spy(jdbi);
     doReturn(failingDraftDAO).when(withFailingDraftDAO).onDemand(DraftDAO.class);
     return new DraftServiceDAO(
@@ -462,10 +475,13 @@ class DraftServiceDAOTest extends DAOTestHelper {
     assertNotEquals(newDraftName, draft.getName());
     draft.setName(newDraftName);
     draft.setJson(updatedJson);
+    setUpdateDateInThePast(draft.getUUID());
     DraftInterface updatedDraft = draftServiceDAO.updateDraft(draft, user);
     assertEquals(draft.getUUID(), updatedDraft.getUUID());
     assertEquals(newDraftName, updatedDraft.getName());
     assertEquals(updatedJson, updatedDraft.getJson());
+    // updateDraft reads the draft back, so the update date comes from the row that NOW() wrote.
+    assertTrue(updatedDraft.getUpdateDate().toInstant().isAfter(PAST_UPDATE_DATE));
     assertThinUser(updatedDraft.getCreateUser());
     assertThinUser(updatedDraft.getUpdateUser());
   }

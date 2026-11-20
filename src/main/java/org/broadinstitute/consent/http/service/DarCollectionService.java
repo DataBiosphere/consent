@@ -649,23 +649,30 @@ public class DarCollectionService implements ConsentLogger {
               throw new ConsentConflictException(
                   "Elections present on DARs; cannot resubmit collection");
             }
-            sourceCollection
-                .getDars()
-                .values()
-                .forEach(
-                    (d) -> {
-                      Date now = new Date();
-                      DataAccessRequestData newData =
-                          new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
-                      newData.setStatus(null);
-                      newData.setReferenceId(d.getReferenceId());
-                      daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
-                      // The content can change before it is submitted again, so a signing
-                      // official has to approve it again.
-                      dao.resetDarApprovalSO(d.getReferenceId());
-                      dataAccessRequestDAO.updateDataByReferenceId(
-                          d.getReferenceId(), d.getUserId(), null, now, newData, null);
-                    });
+            // Re-read under the lock: another resubmit may have committed since the caller's read,
+            // and its stale data would put back documents removed (and deleted) since.
+            List<DataAccessRequest> current =
+                sourceCollection.getDars().keySet().stream()
+                    .map(dao::findByReferenceId)
+                    .filter(Objects::nonNull)
+                    .toList();
+            if (current.stream().noneMatch(DataAccessRequest::isCanceled)) {
+              throw new ConsentConflictException("The collection is no longer canceled");
+            }
+            current.forEach(
+                (d) -> {
+                  Date now = new Date();
+                  DataAccessRequestData newData =
+                      new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                  newData.setStatus(null);
+                  newData.setReferenceId(d.getReferenceId());
+                  daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
+                  // The content can change before it is submitted again, so a signing
+                  // official has to approve it again.
+                  dao.resetDarApprovalSO(d.getReferenceId());
+                  dataAccessRequestDAO.updateDataByReferenceId(
+                      d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                });
             return null;
           });
     } catch (JdbiException e) {

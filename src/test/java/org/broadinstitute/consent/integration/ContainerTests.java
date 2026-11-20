@@ -162,11 +162,10 @@ public abstract class ContainerTests implements ConsentLogger {
           new CiUser("ci-member@example.com", "CI DAC Member"));
 
   private static void seedUsers(UserDAO userDAO) {
-    Date now = new Date();
     CI_USERS.forEach(
         u -> {
           if (userDAO.findUserByEmail(u.email()) == null) {
-            userDAO.insertUser(u.email(), u.displayName(), null, now);
+            userDAO.insertUser(u.email(), u.displayName(), null);
           }
         });
   }

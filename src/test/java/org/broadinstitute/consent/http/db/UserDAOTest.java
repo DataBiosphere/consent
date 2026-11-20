@@ -78,7 +78,7 @@ class UserDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     int lcId =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
     int dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), createUser().getUserId());
     int daaId =
@@ -268,11 +268,7 @@ class UserDAOTest extends DAOTestHelper {
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
     int lcId1 =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            signingOfficial.getUserId(),
-            new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(
         user.getUserId(), signingOfficial.getUserId(), lcId1, daaId);
 
@@ -286,8 +282,7 @@ class UserDAOTest extends DAOTestHelper {
             user2.getUserId(),
             user2.getDisplayName(),
             user2.getEmail(),
-            signingOfficial2.getUserId(),
-            new Date());
+            signingOfficial2.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(
         user2.getUserId(), signingOfficial2.getUserId(), lcId2, daaId);
 
@@ -666,7 +661,7 @@ class UserDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     Integer id =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
     return libraryCardDAO.findLibraryCardById(id);
   }
 
@@ -674,12 +669,12 @@ class UserDAOTest extends DAOTestHelper {
   void testInsertUser() {
     String email = "test.user." + randomAlphanumeric(10) + "@test.com";
     String displayName = "Test User " + randomAlphanumeric(10);
-    Date createDate = new Date();
-    Integer userId = userDAO.insertUser(email, displayName, null, createDate);
+    Integer userId = userDAO.insertUser(email, displayName, null);
     assertNotNull(userId);
     User user = userDAO.findUserById(userId);
     assertNotNull(user);
     assertEquals(email, user.getEmail());
     assertEquals(displayName, user.getDisplayName());
+    assertNotNull(user.getCreateDate());
   }
 }

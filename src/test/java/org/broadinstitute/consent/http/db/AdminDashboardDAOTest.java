@@ -224,7 +224,7 @@ class AdminDashboardDAOTest extends DAOTestHelper {
     daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
     Integer cardId =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(), "name", user.getEmail(), user.getUserId(), FIXED_DATE);
+            user.getUserId(), "name", user.getEmail(), user.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), cardId, daaId);
 
     DashboardDatabaseCounts counts = counts();

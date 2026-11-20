@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -35,6 +34,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard();
     List<LibraryCard> all = libraryCardDAO.findAllLibraryCards();
     assertTrue(all.contains(card));
+    assertNotNull(card.getCreateDate());
   }
 
   @Test
@@ -42,8 +42,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User user = createUser();
     // Test FK on library_card.user_id
     try {
-      libraryCardDAO.insertLibraryCard(
-          0, user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+      libraryCardDAO.insertLibraryCard(0, user.getDisplayName(), user.getEmail(), user.getUserId());
       fail("Should have thrown a FOREIGN_KEY_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(
@@ -51,8 +50,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     }
     // Test FK on library_card.create_user_id
     try {
-      libraryCardDAO.insertLibraryCard(
-          user.getUserId(), user.getDisplayName(), user.getEmail(), 0, new Date());
+      libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), 0);
       fail("Should have thrown a FOREIGN_KEY_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(
@@ -65,15 +63,11 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User user1 = createUser();
     // Set up LC that will trigger the unique constraints on subsequent inserts
     libraryCardDAO.insertLibraryCard(
-        user1.getUserId(), user1.getDisplayName(), user1.getEmail(), user1.getUserId(), new Date());
+        user1.getUserId(), user1.getDisplayName(), user1.getEmail(), user1.getUserId());
     // Test Unique on library_card.user_id
     try {
       libraryCardDAO.insertLibraryCard(
-          user1.getUserId(),
-          user1.getDisplayName(),
-          user1.getEmail(),
-          user1.getUserId(),
-          new Date());
+          user1.getUserId(), user1.getDisplayName(), user1.getEmail(), user1.getUserId());
       fail("Should have thrown a UNIQUE_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(
@@ -83,11 +77,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // Test Unique on library_card.user_email - note that we're using the same email as user1
     try {
       libraryCardDAO.insertLibraryCard(
-          user2.getUserId(),
-          user2.getDisplayName(),
-          user1.getEmail(),
-          user2.getUserId(),
-          new Date());
+          user2.getUserId(), user2.getDisplayName(), user1.getEmail(), user2.getUserId());
       fail("Should have thrown a UNIQUE_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(
@@ -226,8 +216,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     int userId = institution.getCreateUserId();
     String stringValue = "value";
-    Integer lcId =
-        libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
+    Integer lcId = libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId);
     userDAO.updateInstitutionId(userId, institution.getId());
     List<LibraryCard> cardsFromDAO =
         libraryCardDAO.findLibraryCardsByInstitutionId(institution.getId());
@@ -413,11 +402,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     Integer lcId =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            signingOfficial.getUserId(),
-            new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId());
 
     // SO associates user to access agreement 1
     User chairperson1 = createUser();
@@ -479,11 +464,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     Integer lcId =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            signingOfficial.getUserId(),
-            new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId());
 
     // SO associates user to data access agreement
     User chairperson = createUser();
@@ -517,11 +498,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     Integer lcId =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(),
-            user.getDisplayName(),
-            user.getEmail(),
-            signingOfficial.getUserId(),
-            new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId());
 
     // SO associates user to data access agreement
     User chairperson = createUser();
@@ -595,7 +572,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
         "user-@domain.com"
       })
   void testFindByUserEmailsWithSpecialCharacters(String email) {
-    Integer userId = userDAO.insertUser(email, "display name", null, new Date());
+    Integer userId = userDAO.insertUser(email, "display name", null);
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
     User user = userDAO.findUserById(userId);
     LibraryCard card1 = createLibraryCard(user);
@@ -615,8 +592,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // Create users with emails that have special characters that could conflict with SQL queries
     emails.forEach(
         email -> {
-          Integer userId =
-              userDAO.insertUser(email, "display name " + randomAlphabetic(25), null, new Date());
+          Integer userId = userDAO.insertUser(email, "display name " + randomAlphabetic(25), null);
           userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
           User user = userDAO.findUserById(userId);
           createLibraryCard(user);
@@ -656,7 +632,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   private void createLibraryCardForIndex() {
     Integer userId = createUser().getUserId();
     String stringValue = "value";
-    libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
+    libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId);
   }
 
   private Institution createInstitution() {
@@ -668,15 +644,14 @@ class LibraryCardDAOTest extends DAOTestHelper {
     int userId = institution.getCreateUserId();
 
     String stringValue = "value";
-    Integer id =
-        libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
+    Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId);
     return libraryCardDAO.findLibraryCardById(id);
   }
 
   private LibraryCard createLibraryCard(User user) {
     Integer id =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
     return libraryCardDAO.findLibraryCardById(id);
   }
 }

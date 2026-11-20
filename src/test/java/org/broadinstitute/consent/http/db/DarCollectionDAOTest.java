@@ -761,7 +761,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   private void createLibraryCard(User user) {
     libraryCardDAO.insertLibraryCard(
-        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), FIXED_DATE);
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
   }
 
   private DarCollection createDarCollectionMultipleUserProperties() {

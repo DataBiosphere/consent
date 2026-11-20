@@ -503,7 +503,7 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
 
   private void giveLibraryCard(User user) {
     libraryCardDAO.insertLibraryCard(
-        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), FIXED_DATE);
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId());
   }
 
   private Integer createDataset(User user) {

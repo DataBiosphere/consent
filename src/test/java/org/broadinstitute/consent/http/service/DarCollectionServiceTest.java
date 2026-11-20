@@ -165,6 +165,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     firstDar.setSubmissionDate(new Timestamp(now.getTime() - 1_000));
     DataAccessRequestData firstData = new DataAccessRequestData();
     firstData.setProjectTitle("project-1");
+    firstData.setStatus("Canceled");
     firstDar.setData(firstData);
 
     DataAccessRequest secondDar = new DataAccessRequest();
@@ -186,6 +187,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     updatedCollection.addDar(firstDar);
     when(darCollectionDAO.findDARCollectionByCollectionId(collectionId))
         .thenReturn(updatedCollection);
+    when(dataAccessRequestDAO.findByReferenceId(any()))
+        .thenAnswer(i -> sourceCollection.getDars().get(i.getArgument(0)));
 
     service.updateCollectionToDraftStatus(sourceCollection);
 
@@ -1108,15 +1111,40 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(1);
     dar.setData(new DataAccessRequestData());
+    dar.getData().setStatus("Canceled");
     DarCollection sourceCollection = new DarCollection();
     sourceCollection.setDarCollectionId(11);
     sourceCollection.addDar(dar);
     when(darCollectionDAO.findDARCollectionByCollectionId(11)).thenReturn(sourceCollection);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
 
     service.updateCollectionToDraftStatus(sourceCollection);
 
     // The researcher can change the content, so a signing official approves it again.
     verify(dataAccessRequestDAO).resetDarApprovalSO(dar.getReferenceId());
+  }
+
+  // A resubmit that committed while this one waited made the DARs drafts again; this one's data is
+  // stale, so it must not write it.
+  @Test
+  void testUpdateCollectionToDraftStatusRejectsACollectionAlreadyResubmitted() {
+    DataAccessRequest loaded = new DataAccessRequest();
+    loaded.setReferenceId(UUID.randomUUID().toString());
+    loaded.setData(new DataAccessRequestData());
+    loaded.getData().setStatus("Canceled");
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(12);
+    sourceCollection.addDar(loaded);
+    DataAccessRequest current = new DataAccessRequest();
+    current.setReferenceId(loaded.getReferenceId());
+    current.setData(new DataAccessRequestData());
+    when(dataAccessRequestDAO.findByReferenceId(loaded.getReferenceId())).thenReturn(current);
+
+    assertThrows(
+        ConsentConflictException.class,
+        () -> service.updateCollectionToDraftStatus(sourceCollection));
+    verify(dataAccessRequestDAO, never())
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
   }
 
   @Test

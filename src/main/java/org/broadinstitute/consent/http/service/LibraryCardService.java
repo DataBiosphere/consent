@@ -5,7 +5,6 @@ import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -47,14 +46,12 @@ public class LibraryCardService implements ConsentLogger {
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
     checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
-    Date createDate = new Date();
     Integer id =
         libraryCardDAO.insertLibraryCard(
             libraryCard.getUserId(),
             libraryCard.getUserName(),
             libraryCard.getUserEmail(),
-            libraryCard.getCreateUserId(),
-            createDate);
+            libraryCard.getCreateUserId());
     User toUser = userDAO.findUserByEmail(libraryCard.getUserEmail());
     if (toUser != null) {
       try {
