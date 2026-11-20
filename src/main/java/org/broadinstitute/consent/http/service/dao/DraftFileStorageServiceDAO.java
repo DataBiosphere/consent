@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -121,8 +120,7 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
                 documents.stream().map(document -> document.blobId().toGsUtilUri()).toList(),
                 documents.stream().map(UploadedDocument::mediaType).toList(),
                 draftId.toString(),
-                user.getUserId(),
-                Instant.now()));
+                user.getUserId()));
   }
 
   /** The draft's files that are not deleted, read in the caller's transaction when there is one. */
