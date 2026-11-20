@@ -973,29 +973,46 @@ date.
 | --- | --- | --- |
 | Agreement on the request, and product approval of the visibility rules | Phases 3 to 5 need them | Not known. The plan asks for both in the sprint that ends 9 December. |
 | Phase 3, then phase 4 | Phase 4 extends the service of phase 3 | About 2 to 3 weeks with two people |
-| Phase 6 | The replay needs the complete service of phases 3 and 4 | About 1 to 2 weeks |
+| Phase 6 | The replay needs the complete service of phases 3 and 4. The generated data and the list of query pairs do not, so that part can start earlier. | About 1 to 2 weeks after phase 4 |
 | Step 6 of the switch: observe one release | A fixed wait | One release cycle. The team must give its length. |
 | Step 8 of the switch: measure zero ES traffic | A fixed wait | The agreed period. The team must give its length. |
 | An external caller, if the access log finds one | The date of its change is not in the control of the team | Not known (section 9.5) |
 | The holidays | Fewer work days in the sprint that ends 6 January | About one sprint |
 
-A possible sequence, if each item starts on time:
+An earlier version of this section put phase 5, phase 6, and steps 1 to 5 of the switch in the
+sprint that ends 6 January. That sequence was not possible:
+
+- That sprint is the holiday sprint, and it has few work days (section 2).
+- Phases 3 and 4 end on 23 December at the earliest, and phase 6 needs 1 to 2 weeks after them.
+
+A sequence that puts no completion in the holiday sprint, if each item starts on time:
 
 | Sprint end | Work that must be complete |
 | --- | --- |
-| 9 December | Request agreed. Product approval. Phases 1 and 2. Phase 3 started. |
-| 23 December | Phases 3 and 4. duos-ui work of phase 5 in progress. |
-| 6 January | Phase 5. Phase 6. Steps 1 to 5 of the switch. |
-| 20 January | Step 6 (observe one release), step 7, and step 8 (zero traffic). |
+| 9 December | Request agreed. Product approval. Phases 1 and 2. Steps 1 to 3 of the switch, which need only phase 1. Phase 3 started. |
+| 23 December | Phases 3 and 4. Phase 5 in progress. Generated data and the list of query pairs of phase 6. |
+| 6 January | Nothing. The work days that remain are spare time for phase 5 and for late items. |
+| 20 January | Phase 5. Phase 6, with the replay. Steps 4 and 5 of the switch. |
+| 3 February | Step 6 (observe one release), step 7, and step 8 (zero traffic). |
 
 Conclusions:
 
+- **This sequence does not meet the target of 20 January.** The earliest date for the milestone is
+  about 3 February. That date is two weeks after the target, and it is after 1 February, the
+  renewal date that this plan uses.
 - The last sprint must hold two waits: one release cycle and the zero-traffic period. If the sum
-  of the two is more than two weeks, the milestone does not fit the target of 20 January.
-- No sprint has spare time. A late approval, or transaction work in phase 1 that is larger than
-  its size (section 9.1), moves the milestone after the target.
-- Thus the margin is small, and the author cannot say that the fallback in section 9.3 is
-  improbable. Ask about a short renewal now (question 7 in section 11).
+  of the two is more than two weeks, the milestone moves again.
+- The holiday sprint is the only spare time. A late approval, or transaction work in phase 1 that
+  is larger than its size (section 9.1), uses it.
+- The exact renewal date is now important (question 1 in section 11). If the renewal is late in
+  February, the milestone fits before the renewal, but not with one sprint of margin.
+- The team can make the sequence shorter in three ways. Each has a cost:
+  - Do step 6 in less than one release cycle, or make the zero-traffic period short. Each gives
+    less evidence before the clusters stop.
+  - Complete phase 5 and phase 6 in the holiday sprint. This needs people who work in that sprint.
+  - Use the fallback in section 9.3.
+- Thus the team must plan now for a short renewal or for the fallback in section 9.3. Ask about a
+  short renewal now (question 7 in section 11).
 
 These numbers are estimates. The team has not checked the sizes or the two waits.
 
@@ -1113,6 +1130,11 @@ or a live write omitted or added. Thus a second comparison is necessary:
 - A missing row and an extra row are each a defect. Correct the cause, not only the row.
 - Do the comparison after the fill, and again before PostgreSQL reads start for users.
 - Keep the comparison as an admin check that can run at any time after the switch.
+- The comparison of ids cannot find a row that exists but has old content. An example is a row
+  with a wrong `soApprovalModel` after a failed write for a DAC rule toggle, because that field
+  depends on the DAC rules. If the team selects "write a log entry and repair later" in question
+  14, the admin check must also compare content: build the document again for each dataset and
+  compare it with the row, or compare a version or a hash that each write stores in the row.
 
 **Negative tests**
 
@@ -1152,12 +1174,12 @@ not public through a raw query today can lose those results.
 
 | Risk | Effect | Mitigation |
 | --- | --- | --- |
-| The date | A late finish causes a renewal for one more year | Start phases 1 and 2 now. Ask if a short renewal is possible. |
+| The date | A late finish causes a renewal for one more year. The sequence in section 9.1a ends about 3 February, after the target. | Start phases 1 and 2 now. Get the exact renewal date. Ask if a short renewal is possible. |
 | Search box parity | Users find different results | The team accepts small differences that are documented. The parity test finds them. `pg_trgm` for identifiers. |
 | Database load | Tab counts run on each filter change. The database connection limit is fixed. | The data is small (about 6,000 to 10,000 rows), so each query is short. Measure in the deployed environment and with generated data of the same quantity. Combine the counts and the page into one request. |
 | Stale documents | Same as today under storage B | Accept for now. Move fields to live joins or to a standard view later (section 4.1). |
 | Result order | Order without a sort changes | Define a default sort. |
-| A failed search write stops the change of the user | Today an index failure causes a log entry, and the registration, the update, or the DAC rule toggle of the user still succeeds. With the row write in the transaction, an exception in the document builder or in the write rolls back that change. | The team must select one behavior (question 14 in section 11): fail the change, or catch the exception, write a log entry, and repair the row later. The second behavior brings back a stale row, so it needs the admin check of section 9.4. |
+| A failed search write stops the change of the user | Today an index failure causes a log entry, and the registration, the update, or the DAC rule toggle of the user still succeeds. With the row write in the transaction, an exception in the document builder or in the write rolls back that change. | The team must select one behavior (question 14 in section 11): fail the change, or write a log entry and repair the row later. The second behavior is not only a `catch`. A Java exception in the document builder can be caught. But a failed SQL statement aborts the full PostgreSQL transaction, and an update already runs in one transaction (`DatasetServiceDAO`), so the change of the user still rolls back. Thus the second behavior needs a savepoint around the row write, or a row write after the commit. It also brings back a stale row. The id comparison of section 9.4 cannot find a stale row, so this behavior also needs the content check in that section. |
 | Two repositories | Releases must agree | New endpoint beside the old ones. Feature flag in duos-ui. |
 | External API clients | The team knows of no external caller of the search endpoints. But external API users exist, and one of them is a possible caller. Options 1 and 3 break a client that sends ES queries. | See section 9.5. |
 
@@ -1198,7 +1220,12 @@ not public through a raw query today can lose those results.
 13. Does a request for a target that the user cannot read get a 403 or a 404 response
     (section 7.4a)? An existing study check returns 404.
 14. If the search row write fails in the transaction, does the change of the user fail, or does
-    the server write a log entry and repair the row later (section 10)?
+    the server write a log entry and repair the row later (section 10)? The second answer needs a
+    savepoint or a write after the commit, and a content check that can find a stale row
+    (section 9.4).
+15. The ownership clause on `study.dataCustodianEmail` possibly never matches today (section 4.2).
+    Does the new search keep that behavior, or does a data custodian start to see those datasets
+    in Submissions and in the dashboard counts?
 
 Questions 5, 7, 10, and 11 have no owner. Question 5 can change the plan and must have an answer in
 the first sprint (section 9.5). The team must name one owner for each of these four questions.
