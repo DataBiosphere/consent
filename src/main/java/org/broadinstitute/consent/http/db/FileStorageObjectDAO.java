@@ -250,7 +250,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM file_storage_object fso
           WHERE fso.entity_id = :entityId
-          ORDER BY fso.create_date DESC
+          ORDER BY fso.create_date DESC, fso.file_storage_object_id DESC
           """)
   List<FileStorageObject> findFileMetadataByEntityId(@Bind("entityId") String entityId);
 
@@ -273,7 +273,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           FROM file_storage_object fso
           WHERE fso.entity_id = :entityId
                 AND fso.category IN (<categories>)
-          ORDER BY fso.create_date DESC
+          ORDER BY fso.create_date DESC, fso.file_storage_object_id DESC
           """)
   List<FileStorageObject> findFileMetadataByEntityIdAndCategories(
       @Bind("entityId") String entityId,

@@ -295,6 +295,37 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindFileMetadataOrdersFilesFromOneTransactionNewestFirst() {
+    String entityId = randomAlphabetic(10);
+    // NOW() gives files that one transaction inserts the same create date, so the id breaks the
+    // tie.
+    List<FileStorageObject> inserted =
+        jdbi.inTransaction(
+            _ ->
+                List.of(
+                    createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER),
+                    createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER),
+                    createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER)));
+    assertEquals(1, inserted.stream().map(FileStorageObject::getCreateDate).distinct().count());
+    List<Integer> newestFirst =
+        inserted.reversed().stream().map(FileStorageObject::getFileStorageObjectId).toList();
+
+    assertEquals(
+        newestFirst,
+        fileStorageObjectDAO.findFileMetadataByEntityId(entityId).stream()
+            .map(FileStorageObject::getFileStorageObjectId)
+            .toList());
+    assertEquals(
+        newestFirst,
+        fileStorageObjectDAO
+            .findFileMetadataByEntityIdAndCategories(
+                entityId, List.of(FileCategory.DATA_USE_LETTER.getValue()))
+            .stream()
+            .map(FileStorageObject::getFileStorageObjectId)
+            .toList());
+  }
+
+  @Test
   void testFindActiveFileByIdAndEntityId() {
     String entityId = randomAlphabetic(10);
     FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
