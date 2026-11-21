@@ -361,7 +361,7 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
 
   private Integer election(String referenceId, Integer datasetId, ElectionStatus status) {
     return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), new Date(), referenceId, datasetId);
+        ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
   }
 
   private void approve(String referenceId, Integer datasetId) {

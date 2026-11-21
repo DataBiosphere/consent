@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +75,6 @@ class ResubmitElectionLockTest extends DAOTestHelper {
                         .insertElection(
                             ElectionType.DATA_ACCESS.getValue(),
                             ElectionStatus.OPEN.getValue(),
-                            new Date(),
                             dar.getReferenceId(),
                             null);
                     holderPid.set(

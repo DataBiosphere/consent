@@ -205,7 +205,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(),
-        new Date(),
         referenceId,
         dataset.getDatasetId());
     DataAccessRequest dar = new DataAccessRequest();
@@ -248,7 +247,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.CLOSED.getValue(),
-        new Date(),
         referenceId,
         dataset.getDatasetId());
     DataAccessRequest dar = new DataAccessRequest();
@@ -610,7 +608,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CANCELED.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);
@@ -642,7 +639,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);

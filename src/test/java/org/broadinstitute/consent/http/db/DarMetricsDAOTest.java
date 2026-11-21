@@ -915,8 +915,12 @@ class DarMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer election(String dar, Integer dataset, ElectionStatus status, Date on) {
-    return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), on, dar, dataset);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(), status.getValue(), dar, dataset);
+    // insertElection always writes NOW(), so set the creation time that the test needs.
+    setElectionCreateDate(electionId, on.toInstant());
+    return electionId;
   }
 
   private void decide(String dar, Integer dataset, VoteType type, boolean value, Date on) {
@@ -928,7 +932,8 @@ class DarMetricsDAOTest extends DAOTestHelper {
         electionDAO.findElectionsByReferenceIdAndDatasetId(dar, dataset).stream()
             .map(e -> e.getElectionId())
             .toList();
-    electionDAO.archiveElectionByIds(earlier, on);
+    electionDAO.archiveElectionByIds(earlier);
+    earlier.forEach(id -> setElectionLastUpdate(id, on.toInstant()));
     election(dar, dataset, status, on);
   }
 

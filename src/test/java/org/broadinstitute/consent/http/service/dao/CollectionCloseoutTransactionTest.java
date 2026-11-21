@@ -127,8 +127,7 @@ class CollectionCloseoutTransactionTest extends DAOTestHelper {
   }
 
   private Election createDataAccessElection(String referenceId, Integer datasetId) {
-    Integer id =
-        electionDAO.insertElection("DataAccess", "Open", FIXED_DATE, referenceId, datasetId);
+    Integer id = electionDAO.insertElection("DataAccess", "Open", referenceId, datasetId);
     return electionDAO.findElectionById(id);
   }
 

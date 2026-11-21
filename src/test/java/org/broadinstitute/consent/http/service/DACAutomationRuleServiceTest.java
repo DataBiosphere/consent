@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -836,7 +835,7 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(dar.getCollectionId());
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(dar.getCollectionId());
-    verify(electionDAO, never()).insertElection(any(), any(), any(), any(), any());
+    verify(electionDAO, never()).insertElection(any(), any(), any(), any());
   }
 
   @Test
@@ -1151,11 +1150,10 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = makeDAR();
     Dataset dataset = makeDataset();
     when(electionDAO.insertElection(
-            eq(ElectionType.DATA_ACCESS.getValue()),
-            eq(ElectionStatus.OPEN.getValue()),
-            any(Date.class),
-            eq(dar.getReferenceId()),
-            eq(dataset.getDatasetId())))
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            dar.getReferenceId(),
+            dataset.getDatasetId()))
         .thenReturn(42);
 
     int result = service.createOpenElectionForDAR(dar, dataset);
@@ -1169,12 +1167,11 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     Dataset dataset = makeDataset();
     ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> statusCaptor = ArgumentCaptor.forClass(String.class);
-    when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
+    when(electionDAO.insertElection(any(), any(), any(), any())).thenReturn(1);
 
     service.createOpenElectionForDAR(dar, dataset);
 
-    verify(electionDAO)
-        .insertElection(typeCaptor.capture(), statusCaptor.capture(), any(), any(), any());
+    verify(electionDAO).insertElection(typeCaptor.capture(), statusCaptor.capture(), any(), any());
     assertEquals(ElectionType.DATA_ACCESS.getValue(), typeCaptor.getValue());
     assertEquals(ElectionStatus.OPEN.getValue(), statusCaptor.getValue());
   }
@@ -1185,28 +1182,14 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     Dataset dataset = makeDataset(7, "Custom Dataset", 3);
     ArgumentCaptor<String> referenceIdCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<Integer> datasetIdCaptor = ArgumentCaptor.forClass(Integer.class);
-    when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
+    when(electionDAO.insertElection(any(), any(), any(), any())).thenReturn(1);
 
     service.createOpenElectionForDAR(dar, dataset);
 
     verify(electionDAO)
-        .insertElection(
-            any(), any(), any(), referenceIdCaptor.capture(), datasetIdCaptor.capture());
+        .insertElection(any(), any(), referenceIdCaptor.capture(), datasetIdCaptor.capture());
     assertEquals(dar.getReferenceId(), referenceIdCaptor.getValue());
     assertEquals(dataset.getDatasetId(), datasetIdCaptor.getValue());
-  }
-
-  @Test
-  void testCreateOpenElectionForDAR_passesNonNullDate() {
-    DataAccessRequest dar = makeDAR();
-    Dataset dataset = makeDataset();
-    ArgumentCaptor<Date> dateCaptor = ArgumentCaptor.forClass(Date.class);
-    when(electionDAO.insertElection(any(), any(), any(), any(), any())).thenReturn(1);
-
-    service.createOpenElectionForDAR(dar, dataset);
-
-    verify(electionDAO).insertElection(any(), any(), dateCaptor.capture(), any(), any());
-    assertNotNull(dateCaptor.getValue());
   }
 
   // createVoteForElection tests

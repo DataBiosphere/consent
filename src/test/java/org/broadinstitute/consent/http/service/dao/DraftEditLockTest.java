@@ -135,7 +135,6 @@ class DraftEditLockTest extends DAOTestHelper {
                         .insertElection(
                             ElectionType.DATA_ACCESS.getValue(),
                             ElectionStatus.OPEN.getValue(),
-                            new Date(),
                             referenceId,
                             null);
                     holderPid.set(
