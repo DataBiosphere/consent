@@ -12,7 +12,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -198,8 +197,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(secondReferenceId);
     verify(dataAccessRequestDAO).hasElectionsInCollection(collectionId);
     verify(dataAccessRequestDAO)
-        .updateDataByReferenceId(
-            eq(firstReferenceId), eq(userId), isNull(), any(), any(), isNull());
+        .updateDataToDraftByReferenceId(eq(firstReferenceId), eq(userId), any());
   }
 
   @Test
@@ -219,8 +217,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(7);
     order.verify(dataAccessRequestDAO).hasSubmittedCloseout(7);
-    verify(dataAccessRequestDAO, never())
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDataToDraftByReferenceId(any(), any(), any());
     verify(daaDAO, never()).deleteDarDatasetDaaSnapshotsByReferenceId(any());
   }
 
@@ -242,8 +239,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         ConsentConflictException.class,
         () -> service.updateCollectionToDraftStatus(sourceCollection));
-    verify(dataAccessRequestDAO, never())
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDataToDraftByReferenceId(any(), any(), any());
   }
 
   @Test
@@ -264,8 +260,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     InOrder order = inOrder(dataAccessRequestDAO);
     order.verify(dataAccessRequestDAO).lockCollection(8);
     order.verify(dataAccessRequestDAO).hasElectionsInCollection(8);
-    verify(dataAccessRequestDAO, never())
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDataToDraftByReferenceId(any(), any(), any());
     verify(daaDAO, never()).deleteDarDatasetDaaSnapshotsByReferenceId(any());
   }
 
@@ -1146,8 +1141,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(
         ConsentConflictException.class,
         () -> service.updateCollectionToDraftStatus(sourceCollection));
-    verify(dataAccessRequestDAO, never())
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDataToDraftByReferenceId(any(), any(), any());
   }
 
   @Test

@@ -662,7 +662,6 @@ public class DarCollectionService implements ConsentLogger {
             }
             current.forEach(
                 (d) -> {
-                  Date now = new Date();
                   DataAccessRequestData newData =
                       new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
                   newData.setStatus(null);
@@ -671,8 +670,8 @@ public class DarCollectionService implements ConsentLogger {
                   // The content can change before it is submitted again, so a signing
                   // official has to approve it again.
                   dao.resetDarApprovalSO(d.getReferenceId());
-                  dataAccessRequestDAO.updateDataByReferenceId(
-                      d.getReferenceId(), d.getUserId(), null, now, newData, null);
+                  dataAccessRequestDAO.updateDataToDraftByReferenceId(
+                      d.getReferenceId(), d.getUserId(), newData);
                 });
             return null;
           });

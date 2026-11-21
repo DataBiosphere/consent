@@ -350,15 +350,13 @@ class DacServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         referenceId,
         darOwner.getUserId(),
-        controlledDarCreatedAt,
-        controlledDarUpdatedAt,
         new org.broadinstitute.consent.http.models.DataAccessRequestData());
+    setDarDates(referenceId, controlledDarCreatedAt, null, controlledDarUpdatedAt);
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         openReferenceId,
         openDarOwner.getUserId(),
-        openDarCreatedAt,
-        openDarUpdatedAt,
         new org.broadinstitute.consent.http.models.DataAccessRequestData());
+    setDarDates(openReferenceId, openDarCreatedAt, null, openDarUpdatedAt);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     dataAccessRequestDAO.insertDARDatasetRelation(openReferenceId, openDatasetId);
     String existingAdminNote = "Existing administrative note";
@@ -804,8 +802,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         referenceId,
         darOwner.getUserId(),
-        new Date(),
-        new Date(),
         new org.broadinstitute.consent.http.models.DataAccessRequestData());
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetIdA);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetIdB);
@@ -867,8 +863,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         referenceId,
         admin.getUserId(),
-        new Date(),
-        new Date(),
         new org.broadinstitute.consent.http.models.DataAccessRequestData());
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
 
