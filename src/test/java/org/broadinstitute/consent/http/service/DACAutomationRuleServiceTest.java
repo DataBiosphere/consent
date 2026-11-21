@@ -1150,10 +1150,10 @@ class DACAutomationRuleServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = makeDAR();
     Dataset dataset = makeDataset();
     when(electionDAO.insertElection(
-            eq(ElectionType.DATA_ACCESS.getValue()),
-            eq(ElectionStatus.OPEN.getValue()),
-            eq(dar.getReferenceId()),
-            eq(dataset.getDatasetId())))
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            dar.getReferenceId(),
+            dataset.getDatasetId()))
         .thenReturn(42);
 
     int result = service.createOpenElectionForDAR(dar, dataset);

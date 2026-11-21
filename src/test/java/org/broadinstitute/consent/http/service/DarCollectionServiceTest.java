@@ -4140,7 +4140,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(electionDAO).archiveElectionByIds(eq(List.of(55)));
+    verify(electionDAO).archiveElectionByIds(List.of(55));
     verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset);
   }
 
@@ -4169,7 +4169,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(electionDAO).archiveElectionByIds(eq(List.of(55)));
+    verify(electionDAO).archiveElectionByIds(List.of(55));
   }
 
   @Test
