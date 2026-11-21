@@ -10,7 +10,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
@@ -548,11 +547,7 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
     Integer researchPurposeElection =
         electionDAO.insertElection(
-            ElectionType.RP.getValue(),
-            ElectionStatus.CLOSED.getValue(),
-            new Date(),
-            referenceId,
-            datasetId);
+            ElectionType.RP.getValue(), ElectionStatus.CLOSED.getValue(), referenceId, datasetId);
     castVote(researchPurposeElection, VoteType.FINAL, false, on.plus(Duration.ofDays(2)));
   }
 

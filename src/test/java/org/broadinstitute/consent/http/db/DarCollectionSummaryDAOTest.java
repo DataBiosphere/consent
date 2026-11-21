@@ -116,7 +116,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   private Election createElection(String status, String referenceId, Integer datasetId) {
     Integer electionId =
         electionDAO.insertElection(
-            ElectionType.DATA_ACCESS.getValue(), status, new Date(), referenceId, datasetId);
+            ElectionType.DATA_ACCESS.getValue(), status, referenceId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
 

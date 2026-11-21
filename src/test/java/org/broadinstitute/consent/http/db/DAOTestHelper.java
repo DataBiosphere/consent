@@ -409,6 +409,29 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
                 .execute());
   }
 
+  /** insertElection always writes NOW() to create_date, so set the date that a test needs. */
+  protected void setElectionCreateDate(Integer electionId, Instant createDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE election SET create_date = :createDate WHERE election_id = :id")
+                .bind("createDate", createDate)
+                .bind("id", electionId)
+                .execute());
+  }
+
+  /**
+   * updateElectionById and archiveElectionByIds always write NOW() to last_update, so set the date
+   * that a test needs.
+   */
+  protected void setElectionLastUpdate(Integer electionId, Instant lastUpdate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate("UPDATE election SET last_update = :lastUpdate WHERE election_id = :id")
+                .bind("lastUpdate", lastUpdate)
+                .bind("id", electionId)
+                .execute());
+  }
+
   /** insertStudy always writes NOW() to create_date, so set the date that a test needs. */
   protected void setStudyCreateDate(Integer studyId, Instant createDate) {
     jdbi.useHandle(

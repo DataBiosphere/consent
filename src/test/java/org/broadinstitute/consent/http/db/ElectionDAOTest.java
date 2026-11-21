@@ -9,12 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -34,6 +36,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
+import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -111,13 +114,11 @@ class ElectionDAOTest extends DAOTestHelper {
     Integer openAccess = createDataAccessElection(referenceId, datasetId).getElectionId();
     // A legacy RP election, which a closeout cancels too
     Integer openRp =
-        electionDAO.insertElection(
-            "RP", ElectionStatus.OPEN.getValue(), new Date(), referenceId, datasetId);
+        electionDAO.insertElection("RP", ElectionStatus.OPEN.getValue(), referenceId, datasetId);
     Integer closed =
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     Integer otherCollection =
@@ -205,7 +206,7 @@ class ElectionDAOTest extends DAOTestHelper {
         .forEach(
             e ->
                 electionDAO.updateElectionById(
-                    e.getElectionId(), ElectionStatus.CANCELED.getValue(), FIXED_DATE, true));
+                    e.getElectionId(), ElectionStatus.CANCELED.getValue(), true));
     // Create a new set of elections
     Election latestD1Election =
         createLaterDataAccessElection(dar.getReferenceId(), d1.getDatasetId());
@@ -355,7 +356,6 @@ class ElectionDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            FIXED_DATE,
             dar.getReferenceId(),
             d.getDatasetId());
     Election e = electionDAO.findElectionById(electionId);
@@ -442,19 +442,24 @@ class ElectionDAOTest extends DAOTestHelper {
     String referenceId = dar.getReferenceId();
     Integer datasetId = dataset.getDatasetId();
 
+    // The insert joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
     Integer id =
-        electionDAO.insertElection(
-            ElectionType.DATA_ACCESS.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            FIXED_DATE,
-            referenceId,
-            datasetId);
+        jdbi.inTransaction(
+            h -> {
+              transactionNow.set(transactionNow(h));
+              return electionDAO.insertElection(
+                  ElectionType.DATA_ACCESS.getValue(),
+                  ElectionStatus.OPEN.getValue(),
+                  referenceId,
+                  datasetId);
+            });
 
     Election e = electionDAO.findElectionById(id);
 
     assertEquals(ElectionType.DATA_ACCESS.getValue(), e.getElectionType());
     assertEquals(ElectionStatus.OPEN.getValue(), e.getStatus());
-    assertNotNull(e.getCreateDate());
+    assertEquals(transactionNow.get(), e.getCreateDate().toInstant());
     assertEquals(referenceId, e.getReferenceId());
     assertEquals(datasetId, e.getDatasetId());
   }
@@ -472,13 +477,18 @@ class ElectionDAOTest extends DAOTestHelper {
     assertEquals(ElectionStatus.OPEN.getValue(), before.getStatus());
     assertNull(before.getLastUpdate());
 
-    electionDAO.updateElectionById(
-        before.getElectionId(), ElectionStatus.FINAL.getValue(), FIXED_DATE);
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(transactionNow(h));
+          electionDAO.updateElectionById(before.getElectionId(), ElectionStatus.FINAL.getValue());
+        });
 
     Election after = electionDAO.findElectionById(before.getElectionId());
 
     assertEquals(ElectionStatus.FINAL.getValue(), after.getStatus());
-    assertNotNull(after.getLastUpdate());
+    assertEquals(transactionNow.get(), after.getLastUpdate().toInstant());
   }
 
   @Test
@@ -495,14 +505,20 @@ class ElectionDAOTest extends DAOTestHelper {
     assertNull(before.getLastUpdate());
     assertNull(before.getFinalAccessVote());
 
-    electionDAO.updateElectionById(
-        before.getElectionId(), ElectionStatus.FINAL.getValue(), FIXED_DATE, true);
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(transactionNow(h));
+          electionDAO.updateElectionById(
+              before.getElectionId(), ElectionStatus.FINAL.getValue(), true);
+        });
 
     Election after = electionDAO.findElectionById(before.getElectionId());
 
     assertEquals(ElectionStatus.FINAL.getValue(), after.getStatus());
     assertEquals(true, after.getFinalAccessVote());
-    assertNotNull(after.getLastUpdate());
+    assertEquals(transactionNow.get(), after.getLastUpdate().toInstant());
   }
 
   @Test
@@ -707,9 +723,20 @@ class ElectionDAOTest extends DAOTestHelper {
         electionDAO.findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), d1.getDatasetId());
     List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
 
-    electionDAO.archiveElectionByIds(electionIds, FIXED_DATE);
+    // The archive joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(transactionNow(h));
+          electionDAO.archiveElectionByIds(electionIds);
+        });
     List<Election> archivedElections = electionDAO.findElectionsByIds(electionIds);
-    archivedElections.forEach(e -> assertTrue(e.getArchived()));
+    assertEquals(2, archivedElections.size());
+    archivedElections.forEach(
+        e -> {
+          assertTrue(e.getArchived());
+          assertEquals(transactionNow.get(), e.getLastUpdate().toInstant());
+        });
   }
 
   @Test
@@ -739,8 +766,7 @@ class ElectionDAOTest extends DAOTestHelper {
     Election e2 = createDataAccessElection(referenceId, datasetId);
     Election e3 = createDataAccessElection(referenceId, datasetId);
     Election closed = createDataAccessElection(referenceId, datasetId);
-    electionDAO.updateElectionById(
-        closed.getElectionId(), ElectionStatus.CLOSED.getValue(), FIXED_DATE);
+    electionDAO.updateElectionById(closed.getElectionId(), ElectionStatus.CLOSED.getValue());
 
     List<Election> found = electionDAO.findOpenElectionsByDacId(dac.getDacId());
 
@@ -757,7 +783,6 @@ class ElectionDAOTest extends DAOTestHelper {
     // there's a timing issue in this test due to the precision of time in the column.
     // it's reliably resolved by setting the query start time early enough so that it
     // includes the SQL inserts contemplated by createElectionAndVote.
-    // the core issue is that we're using Java dates for the election insert, not NOW()
 
     List<UserVoteReminder> userVoteReminders =
         electionDAO.findElectionReminders(
@@ -803,6 +828,10 @@ class ElectionDAOTest extends DAOTestHelper {
     List<UserVoteReminder> userVoteReminders =
         electionDAO.findElectionReminders(-1, emailType, referenceId);
     assertEquals(0, userVoteReminders.size());
+  }
+
+  private static Instant transactionNow(Handle h) {
+    return h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant();
   }
 
   private Vote createElectionAndVote() {
@@ -941,9 +970,9 @@ class ElectionDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
+    setElectionCreateDate(electionId, FIXED_INSTANT);
     return electionDAO.findElectionById(electionId);
   }
 
@@ -952,9 +981,9 @@ class ElectionDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            Date.from(FIXED_INSTANT.plus(Duration.ofDays(1))),
             referenceId,
             datasetId);
+    setElectionCreateDate(electionId, FIXED_INSTANT.plus(Duration.ofDays(1)));
     return electionDAO.findElectionById(electionId);
   }
 }

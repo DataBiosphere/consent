@@ -247,9 +247,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
                     .forEach(
                         e ->
                             electionDAO.updateElectionById(
-                                e.getElectionId(),
-                                ElectionStatus.CANCELED.getValue(),
-                                FIXED_DATE)));
+                                e.getElectionId(), ElectionStatus.CANCELED.getValue())));
 
     List<Integer> canceledElectionIds =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).stream()
@@ -326,8 +324,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     assertEquals(1, canceledElections.size());
     Integer canceledElectionId = canceledElections.getFirst().getElectionId();
-    electionDAO.updateElectionById(
-        canceledElectionId, ElectionStatus.CANCELED.getValue(), FIXED_DATE);
+    electionDAO.updateElectionById(canceledElectionId, ElectionStatus.CANCELED.getValue());
     assertFalse(electionDAO.findElectionById(canceledElectionId).getArchived());
 
     // Reject every new election for this DAR, so the insert fails after the archive runs.

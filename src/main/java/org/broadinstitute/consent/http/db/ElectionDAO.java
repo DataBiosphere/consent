@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
@@ -35,25 +34,23 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING)
           List<String> referenceIds);
 
+  /** The database writes create_date with NOW(). */
   @SqlUpdate(
       """
       INSERT INTO election (election_type, status, create_date, reference_id, dataset_id)
-      VALUES (:electionType, :status, :createDate,:referenceId, :datasetId)
-    """)
+      VALUES (:electionType, :status, NOW(), :referenceId, :datasetId)
+      """)
   @GetGeneratedKeys
   Integer insertElection(
       @Bind("electionType") String electionType,
       @Bind("status") String status,
-      @Bind("createDate") Date createDate,
       @Bind("referenceId") String referenceId,
       @Bind("datasetId") Integer datasetId);
 
+  /** The database writes last_update with NOW(). */
   @SqlUpdate(
-      "UPDATE election SET status = :status, last_update = :lastUpdate WHERE election_id = :electionId ")
-  void updateElectionById(
-      @Bind("electionId") Integer electionId,
-      @Bind("status") String status,
-      @Bind("lastUpdate") Date lastUpdate);
+      "UPDATE election SET status = :status, last_update = NOW() WHERE election_id = :electionId")
+  void updateElectionById(@Bind("electionId") Integer electionId, @Bind("status") String status);
 
   @SqlQuery(
       """
@@ -219,24 +216,24 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   @SqlQuery("SELECT * FROM election e WHERE e.election_id = :electionId")
   Election findElectionById(@Bind("electionId") Integer electionId);
 
+  /** The database writes last_update with NOW(). */
   @SqlUpdate(
-      "UPDATE election SET status = :status, last_update = :lastUpdate, final_access_vote = :finalAccessVote WHERE election_id = :electionId ")
+      "UPDATE election SET status = :status, last_update = NOW(), final_access_vote = :finalAccessVote WHERE election_id = :electionId")
   void updateElectionById(
       @Bind("electionId") Integer electionId,
       @Bind("status") String status,
-      @Bind("lastUpdate") Date lastUpdate,
       @Bind("finalAccessVote") Boolean finalAccessVote);
 
+  /** The database writes last_update with NOW(). */
   @SqlUpdate(
       """
       UPDATE election
-      SET archived = true, last_update = :lastUpdate
+      SET archived = true, last_update = NOW()
       WHERE election_id IN (<electionIds>)
       """)
   void archiveElectionByIds(
       @BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING)
-          List<Integer> electionIds,
-      @Bind("lastUpdate") Date lastUpdate);
+          List<Integer> electionIds);
 
   /**
    * Cancels every open election, of any type, on the DARs of a collection. A closeout calls this

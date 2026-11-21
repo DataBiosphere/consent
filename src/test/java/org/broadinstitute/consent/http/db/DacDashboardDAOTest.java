@@ -370,6 +370,6 @@ class DacDashboardDAOTest extends DAOTestHelper {
 
   private Integer createElection(String referenceId, Integer datasetId, ElectionStatus status) {
     return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), FIXED_DATE, referenceId, datasetId);
+        ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
   }
 }

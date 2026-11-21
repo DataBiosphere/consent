@@ -894,7 +894,6 @@ class MailMessageDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             dar.getReferenceId(),
             elected.getDatasetId());
     generateSendRow(
@@ -918,7 +917,6 @@ class MailMessageDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             dar.getReferenceId(),
             elected.getDatasetId());
     long largeId = 10_000_000_000L + electionId;
@@ -950,7 +948,6 @@ class MailMessageDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             dar.getReferenceId(),
             null);
     generateSendRow(
