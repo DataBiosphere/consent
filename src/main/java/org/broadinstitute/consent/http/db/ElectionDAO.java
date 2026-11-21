@@ -174,21 +174,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING)
           List<String> referenceIds);
 
+  /**
+   * Finds the newest election of a type for a DAR and dataset. The newest election is the one with
+   * the highest id, not the latest create_date: create_date is the transaction start time, so a
+   * transaction that waits on the collection lock can insert a newer election with an earlier date.
+   */
   @SqlQuery(
       """
-    SELECT e.* FROM election e
-     INNER JOIN
-       (SELECT reference_id, dataset_id, MAX(create_date) max_date
-       FROM election
-       WHERE LOWER(election_type) = lower(:type) AND dataset_id = :datasetId
-       GROUP BY reference_id, dataset_id) election_view
-       ON election_view.max_date = e.create_date
-       AND election_view.reference_id = e.reference_id
-       AND election_view.dataset_id = e.dataset_id
-     WHERE LOWER(e.election_type) = lower(:type)
-     AND e.reference_id = :referenceId
-     AND e.dataset_id = :datasetId
-    """)
+      SELECT e.*
+      FROM election e
+      WHERE LOWER(e.election_type) = LOWER(:type)
+        AND e.reference_id = :referenceId
+        AND e.dataset_id = :datasetId
+      ORDER BY e.election_id DESC
+      LIMIT 1
+      """)
   @UseRowMapper(SimpleElectionMapper.class)
   Election findLastElectionByReferenceIdDatasetIdAndType(
       @Bind("referenceId") String referenceId,

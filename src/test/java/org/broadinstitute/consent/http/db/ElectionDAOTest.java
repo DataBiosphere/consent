@@ -228,6 +228,56 @@ class ElectionDAOTest extends DAOTestHelper {
     assertEquals(latestD2Election.getElectionId(), latestAccessForD2.getElectionId());
   }
 
+  /**
+   * NOW() is the transaction start time. A transaction that waits on the collection lock can insert
+   * the newer election with an earlier create_date, so the newest election is the one with the
+   * highest id.
+   */
+  @Test
+  void testFindLastElectionByReferenceIdDatasetIdAndType_PrefersHighestIdOverCreateDate() {
+    User user = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(uniqueDarCode(), user.getUserId(), FIXED_DATE);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
+    Dataset dataset = createDataset();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+
+    Election older = createLaterDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Election newer = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    electionDAO.updateElectionById(newer.getElectionId(), ElectionStatus.CLOSED.getValue());
+
+    Election latest =
+        electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
+            dar.getReferenceId(), dataset.getDatasetId(), ElectionType.DATA_ACCESS.getValue());
+
+    assertNotNull(latest);
+    assertNotEquals(older.getElectionId(), latest.getElectionId());
+    assertEquals(newer.getElectionId(), latest.getElectionId());
+    assertEquals(ElectionStatus.CLOSED.getValue(), latest.getStatus());
+  }
+
+  /** Two elections that one transaction inserts share one create_date, so the id breaks the tie. */
+  @Test
+  void testFindLastElectionByReferenceIdDatasetIdAndType_SameCreateDate() {
+    User user = createUser();
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(uniqueDarCode(), user.getUserId(), FIXED_DATE);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
+    Dataset dataset = createDataset();
+    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
+
+    Election first = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Election second = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+
+    Election latest =
+        electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
+            dar.getReferenceId(), dataset.getDatasetId(), ElectionType.DATA_ACCESS.getValue());
+
+    assertNotNull(latest);
+    assertNotEquals(first.getElectionId(), latest.getElectionId());
+    assertEquals(second.getElectionId(), latest.getElectionId());
+  }
+
   @Test
   void testFindElectionsByReferenceIdAndDatasetId() {
     User user = createUser();
