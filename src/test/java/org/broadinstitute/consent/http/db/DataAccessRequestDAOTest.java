@@ -122,12 +122,15 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(draftDars1.isEmpty());
     assertEquals(1, draftDars1.size());
     DataAccessRequestData darData = draftDars1.getFirst().getData();
-    dataAccessRequestDAO.updateDraftToSubmittedForCollection(
-        dar.getCollectionId(), dar.getReferenceId());
+    Integer collectionId = createDarCollection().getDarCollectionId();
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(
         dar.referenceId, dar.userId, darData, randomAlphabetic(10));
     List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertTrue(draftDars2.isEmpty());
+    DataAccessRequest submitted = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertFalse(submitted.getDraft());
+    assertEquals(collectionId, submitted.getCollectionId());
   }
 
   @Test
@@ -1430,7 +1433,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     setDarSubmissionDate(dar.getReferenceId(), new Date(System.currentTimeMillis() - 60_000));
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
-    return dar;
+    return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }
 
   private void assertSummaryInstitutionName(String expected, Integer studyId, Dataset dataset) {

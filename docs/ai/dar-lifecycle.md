@@ -84,14 +84,16 @@ failure to record is logged and doesn't fail the request.
   and flags `requires_so_approval` when needed.
 - Every write to `submission_date`: those two and `insertProgressReport` write `NOW()`, and
   `updateDataToDraftByReferenceId`, which resubmit calls, writes `NULL`. No `DataAccessRequestDAO`
-  method binds a date from Java, so `submission_date` is on the database clock. Compare it only
-  with dates the database wrote. `DarCollectionService.hasCurrentElection` compares it with an
-  election's `create_date`, which `ElectionDAO` binds from Java until DT-2928 moves it to `NOW()`;
-  until then that comparison mixes the two clocks. `updateDataByReferenceId` doesn't change it.
-  Draft edits
+  write binds a create, update or submission date from Java, so `submission_date` is on the
+  database clock. Compare it only with dates the database wrote.
+  `DarCollectionService.hasCurrentElection` compares it with an election's `create_date`, which
+  `ElectionDAO` binds from Java until DT-2928 moves it to `NOW()`; until then that comparison
+  mixes the two clocks.
+  `updateDataByReferenceId` doesn't change `submission_date`. Draft edits
   (`DataAccessRequestServiceDAO.updateByReferenceId`) don't write it: they update only rows where
   `submission_date IS NULL` and fail with 422 otherwise, so an edit that races a submit can't turn
   the submitted DAR back into a draft. They also fail with 409 on a draft that has elections.
+  They still write `update_date` from Java until DT-2939.
 - Elections are per (DAR reference id, dataset). A chair opens them
   (`DarCollectionService.createElectionsForDarCollection`), or auto-open DACs and DAC automation
   rules open them (`createElectionsForNewDarCollection`, `DACAutomationRuleService`). None of
