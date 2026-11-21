@@ -61,7 +61,8 @@ class DraftEditLockTest extends DAOTestHelper {
     DataAccessRequestData original = new DataAccessRequestData();
     original.setOtherText("submitted content");
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), new Date(), null, new Date(), original, null);
+        collectionId, referenceId, user.getUserId(), original, null);
+    setDarSubmissionDate(referenceId, null);
     AtomicInteger holderPid = new AtomicInteger();
     CountDownLatch locked = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
@@ -119,7 +120,8 @@ class DraftEditLockTest extends DAOTestHelper {
     DataAccessRequestData original = new DataAccessRequestData();
     original.setOtherText("reviewed content");
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), new Date(), null, new Date(), original, null);
+        collectionId, referenceId, user.getUserId(), original, null);
+    setDarSubmissionDate(referenceId, null);
     AtomicInteger holderPid = new AtomicInteger();
     CountDownLatch locked = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
@@ -181,7 +183,8 @@ class DraftEditLockTest extends DAOTestHelper {
     DataAccessRequestData original = new DataAccessRequestData();
     original.setIrbDocumentLocation("original-irb");
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), new Date(), null, new Date(), original, null);
+        collectionId, referenceId, user.getUserId(), original, null);
+    setDarSubmissionDate(referenceId, null);
     // The second upload read the draft while it still pointed to the original document.
     DataAccessRequest second = dataAccessRequestDAO.findByReferenceId(referenceId);
     second.getData().setIrbDocumentLocation("second-irb");

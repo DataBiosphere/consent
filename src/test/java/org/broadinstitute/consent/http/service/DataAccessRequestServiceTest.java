@@ -237,9 +237,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-    doNothing()
-        .when(dataAccessRequestDAO)
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    doNothing().when(dataAccessRequestDAO).updateDataByReferenceId(any(), any(), any(), any());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
@@ -267,10 +265,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     order.verify(dataAccessRequestDAO).lockCollection(5);
     order.verify(electionDAO).findElectionsByReferenceId(dar.getReferenceId());
     verify(dataAccessRequestDAO, never())
-        .insertDataAccessRequest(any(), any(), any(), any(), any(), any(), any(), any());
+        .insertDataAccessRequest(any(), any(), any(), any(), any());
     verify(dataAccessRequestDAO, never()).updateDraftToSubmittedForCollection(any(), any());
-    verify(dataAccessRequestDAO, never())
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+    verify(dataAccessRequestDAO, never()).updateDataByReferenceId(any(), any(), any(), any());
   }
 
   @Test
@@ -555,8 +552,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     ArgumentCaptor<DataAccessRequestData> saved =
         ArgumentCaptor.forClass(DataAccessRequestData.class);
     verify(dataAccessRequestDAO)
-        .updateDataByReferenceId(
-            eq(dar.getReferenceId()), any(), any(), any(), saved.capture(), any());
+        .updateDataByReferenceId(eq(dar.getReferenceId()), any(), saved.capture(), any());
     assertEquals("own-irb", saved.getValue().getIrbDocumentLocation());
     assertEquals("own-irb.pdf", saved.getValue().getIrbDocumentName());
     assertNull(saved.getValue().getCollaborationLetterLocation());
@@ -582,14 +578,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -603,14 +592,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         ArgumentCaptor.forClass(DataAccessRequestData.class);
     verify(dataAccessRequestDAO)
         .insertDataAccessRequest(
-            anyInt(),
-            insertedReferenceId.capture(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            insertedData.capture(),
-            anyString());
+            anyInt(), insertedReferenceId.capture(), anyInt(), insertedData.capture(), anyString());
     assertNull(insertedData.getValue().getIrbDocumentLocation());
     assertNull(insertedData.getValue().getCollaborationLetterLocation());
     verify(dataAccessRequestDAO)
@@ -632,14 +614,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(99);
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(12);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -689,14 +664,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -754,14 +722,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-            anyInt(),
-            anyString(),
-            anyInt(),
-            any(Date.class),
-            any(Date.class),
-            any(Date.class),
-            any(DataAccessRequestData.class),
-            anyString()))
+            anyInt(), anyString(), anyInt(), any(DataAccessRequestData.class), anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
@@ -1984,9 +1945,7 @@ institution or library cards issued: Internal Collaborator member:  \
     user.setUserId(1);
     user.setLibraryCard(new LibraryCard());
     DataAccessRequest draft = generateDataAccessRequest();
-    doNothing()
-        .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any());
+    doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
     assertNotNull(dar);

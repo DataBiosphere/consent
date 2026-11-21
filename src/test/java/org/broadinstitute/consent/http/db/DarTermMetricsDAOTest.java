@@ -207,7 +207,8 @@ class DarTermMetricsDAOTest extends DAOTestHelper {
     data.setStatus(status);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), submitted, submitted, submitted, data, "era");
+        collectionId, referenceId, user.getUserId(), data, "era");
+    setDarDates(referenceId, submitted, submitted, submitted);
     return referenceId;
   }
 

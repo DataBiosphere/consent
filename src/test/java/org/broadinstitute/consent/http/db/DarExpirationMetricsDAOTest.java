@@ -323,7 +323,8 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection("DAR-" + UUID.randomUUID(), user.getUserId(), on);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), on, on, on, data, "era");
+        collectionId, referenceId, user.getUserId(), data, "era");
+    setDarDates(referenceId, on, on, on);
     for (Integer datasetId : datasetIds) {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     }

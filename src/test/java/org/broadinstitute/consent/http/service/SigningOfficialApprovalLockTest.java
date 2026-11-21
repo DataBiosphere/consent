@@ -131,12 +131,7 @@ class SigningOfficialApprovalLockTest extends DAOTestHelper {
     DataAccessRequestData data = dar.getData();
     data.setSigningOfficialEmail(signingOfficial.getEmail());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(),
-        dar.getUserId(),
-        dar.getSubmissionDate(),
-        dar.getUpdateDate(),
-        data,
-        dar.getEraCommonsId());
+        dar.getReferenceId(), dar.getUserId(), data, dar.getEraCommonsId());
     dataAccessRequestDAO.updateRequiresSOApproval(true, dar.getReferenceId());
     // Leave only this DAR in the collection, so it is the one the approval acts on.
     jdbi.useHandle(

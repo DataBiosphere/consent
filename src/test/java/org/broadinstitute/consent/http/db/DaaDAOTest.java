@@ -660,9 +660,6 @@ class DaaDAOTest extends DAOTestHelper {
             darCollectionId,
             UUID.randomUUID().toString(),
             userId,
-            now,
-            now,
-            now,
             new DataAccessRequestData(),
             "`");
     assertDoesNotThrow(() -> daaDAO.insertDarDAARelationship(darId, Set.of(daa1, daa2)));
@@ -684,7 +681,7 @@ class DaaDAOTest extends DAOTestHelper {
     String darUUID = UUID.randomUUID().toString();
     Integer darId =
         dataAccessRequestDAO.insertDataAccessRequest(
-            darCollectionId, darUUID, userId, now, now, now, new DataAccessRequestData(), "`");
+            darCollectionId, darUUID, userId, new DataAccessRequestData(), "`");
     Integer prId =
         dataAccessRequestDAO.insertProgressReport(
             darId,
@@ -746,14 +743,7 @@ class DaaDAOTest extends DAOTestHelper {
     String referenceId = UUID.randomUUID().toString();
     Integer darId =
         dataAccessRequestDAO.insertDataAccessRequest(
-            darCollectionId,
-            referenceId,
-            userId,
-            now,
-            now,
-            now,
-            new DataAccessRequestData(),
-            "eraCommonsId");
+            darCollectionId, referenceId, userId, new DataAccessRequestData(), "eraCommonsId");
     Timestamp capturedAt = snapshotCapturedAt();
 
     daaDAO.insertDarDatasetDaaSnapshots(
@@ -794,9 +784,6 @@ class DaaDAOTest extends DAOTestHelper {
             darCollectionId,
             UUID.randomUUID().toString(),
             userId,
-            now,
-            now,
-            now,
             new DataAccessRequestData(),
             "eraCommonsId");
     String progressReportReferenceId = UUID.randomUUID().toString();
@@ -839,23 +826,13 @@ class DaaDAOTest extends DAOTestHelper {
             darCollectionId,
             targetReferenceId,
             userId,
-            now,
-            now,
-            now,
             new DataAccessRequestData(),
             "eraCommonsId");
 
     String otherReferenceId = UUID.randomUUID().toString();
     Integer otherDarId =
         dataAccessRequestDAO.insertDataAccessRequest(
-            darCollectionId,
-            otherReferenceId,
-            userId,
-            now,
-            now,
-            now,
-            new DataAccessRequestData(),
-            "eraCommonsId");
+            darCollectionId, otherReferenceId, userId, new DataAccessRequestData(), "eraCommonsId");
 
     Timestamp capturedAt = Timestamp.from(Instant.now());
     daaDAO.insertDarDatasetDaaSnapshots(

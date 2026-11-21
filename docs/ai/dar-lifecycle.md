@@ -82,8 +82,11 @@ failure to record is logged and doesn't fail the request.
   `updateDraftToSubmittedForCollection` when submitting an existing draft, or
   `insertDataAccessRequest` when there is no draft. It also syncs `dar_dataset`, snapshots DAAs,
   and flags `requires_so_approval` when needed.
-- Every write to `submission_date`: those two, `insertProgressReport` (`now()`), and
-  `updateDataByReferenceId`, which resubmit calls with `NULL`. Draft edits
+- Every write to `submission_date`: those two and `insertProgressReport` write `NOW()`, and
+  `updateDataToDraftByReferenceId`, which resubmit calls, writes `NULL`. No `DataAccessRequestDAO`
+  method binds a date from Java, so `submission_date` is on the database clock: compare it only
+  with dates the database wrote, as `DarCollectionService.hasCurrentElection` does with an
+  election's `create_date`. `updateDataByReferenceId` doesn't change it. Draft edits
   (`DataAccessRequestServiceDAO.updateByReferenceId`) don't write it: they update only rows where
   `submission_date IS NULL` and fail with 422 otherwise, so an edit that races a submit can't turn
   the submitted DAR back into a draft. They also fail with 409 on a draft that has elections.

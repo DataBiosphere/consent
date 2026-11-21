@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -120,8 +122,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(draftDars1.isEmpty());
     assertEquals(1, draftDars1.size());
     DataAccessRequestData darData = draftDars1.getFirst().getData();
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(
+        dar.getCollectionId(), dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, new Date(), new Date(), darData, randomAlphabetic(10));
+        dar.referenceId, dar.userId, darData, randomAlphabetic(10));
     List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertTrue(draftDars2.isEmpty());
   }
@@ -133,8 +137,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> draftDars1 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertTrue(draftDars1.isEmpty());
 
-    dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), dar.userId, null, new Date(), dar.getData(), randomAlphabetic(10));
+    dataAccessRequestDAO.updateDataToDraftByReferenceId(
+        dar.getReferenceId(), dar.userId, dar.getData());
     List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertFalse(draftDars2.isEmpty());
     assertEquals(1, draftDars2.size());
@@ -146,12 +150,13 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DarCollection darColl = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).getFirst();
 
-    dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, null, new Date(), dar.getData(), randomAlphabetic(10));
+    dataAccessRequestDAO.updateDataToDraftByReferenceId(dar.referenceId, dar.userId, dar.getData());
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     DataAccessRequestData darData = dar.getData();
+    dataAccessRequestDAO.updateDraftToSubmittedForCollection(
+        dar.getCollectionId(), dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, new Date(), new Date(), darData, randomAlphabetic(10));
+        dar.referenceId, dar.userId, darData, randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertFalse(dar.getDraft());
     Timestamp expectedTimestamp =
@@ -166,8 +171,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DarCollection darColl = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).getFirst();
 
-    dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, null, new Date(), dar.getData(), randomAlphabetic(10));
+    dataAccessRequestDAO.updateDataToDraftByReferenceId(dar.referenceId, dar.userId, dar.getData());
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertNull(dar.getSubmissionDate());
     assertTrue(dar.getDraft());
@@ -181,7 +185,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).getFirst();
 
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, new Date(), new Date(), dar.getData(), randomAlphabetic(10));
+        dar.referenceId, dar.userId, dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertFalse(dar.getDraft());
     assertFalse(dar.getExpired());
@@ -198,8 +202,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertFalse(dar.getDraft());
-    dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, null, new Date(), dar.getData(), randomAlphabetic(10));
+    dataAccessRequestDAO.updateDataToDraftByReferenceId(dar.referenceId, dar.userId, dar.getData());
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertTrue(dar.getDraft());
     assertNull(dar.getSubmissionDate());
@@ -262,16 +265,123 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   @Test
   void testUpdateByReferenceId() {
     DataAccessRequest dar = createDataAccessRequestV3();
-    Date now = new Date();
     User user = createUser();
     String rus = randomAlphabetic(10);
     dar.getData().setRus(rus);
     dar.getData().setValidRestriction(false);
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), user.getUserId(), now, now, dar.getData(), randomAlphabetic(10));
+        dar.getReferenceId(), user.getUserId(), dar.getData(), randomAlphabetic(10));
     DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertEquals(rus, updatedDar.getData().getRus());
     assertFalse(updatedDar.getData().getValidRestriction());
+  }
+
+  @Test
+  void testInsertDataAccessRequestWritesNowToEveryDate() {
+    Integer collectionId = createDarCollection().getDarCollectionId();
+    User user = createUser();
+    String referenceId = UUID.randomUUID().toString();
+
+    Instant transactionNow =
+        writeInTransaction(
+            () ->
+                dataAccessRequestDAO.insertDataAccessRequest(
+                    collectionId,
+                    referenceId,
+                    user.getUserId(),
+                    new DataAccessRequestData(),
+                    randomAlphabetic(10)));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertEquals(transactionNow, stored.getCreateDate().toInstant());
+    assertEquals(transactionNow, stored.getSubmissionDate().toInstant());
+    assertEquals(transactionNow, stored.getUpdateDate().toInstant());
+  }
+
+  @Test
+  void testInsertDraftDataAccessRequestWritesNowToCreateAndUpdateDates() {
+    User user = createUser();
+    String referenceId = UUID.randomUUID().toString();
+
+    Instant transactionNow =
+        writeInTransaction(
+            () ->
+                dataAccessRequestDAO.insertDraftDataAccessRequest(
+                    referenceId, user.getUserId(), new DataAccessRequestData()));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(referenceId);
+    assertEquals(transactionNow, stored.getCreateDate().toInstant());
+    assertEquals(transactionNow, stored.getUpdateDate().toInstant());
+    assertNull(stored.getSubmissionDate());
+  }
+
+  @Test
+  void testUpdateDataByReferenceIdWritesNowToUpdateDateOnly() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    setDarDates(dar.getReferenceId(), FIXED_DATE, FIXED_DATE, FIXED_DATE);
+
+    Instant transactionNow =
+        writeInTransaction(
+            () ->
+                dataAccessRequestDAO.updateDataByReferenceId(
+                    dar.getReferenceId(), dar.getUserId(), dar.getData(), randomAlphabetic(10)));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertEquals(transactionNow, stored.getUpdateDate().toInstant());
+    assertEquals(FIXED_INSTANT, stored.getSubmissionDate().toInstant());
+    assertEquals(FIXED_INSTANT, stored.getCreateDate().toInstant());
+  }
+
+  @Test
+  void testUpdateDataToDraftByReferenceId() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    setDarDates(dar.getReferenceId(), FIXED_DATE, FIXED_DATE, FIXED_DATE);
+    String rus = randomAlphabetic(10);
+    dar.getData().setRus(rus);
+
+    Instant transactionNow =
+        writeInTransaction(
+            () ->
+                dataAccessRequestDAO.updateDataToDraftByReferenceId(
+                    dar.getReferenceId(), dar.getUserId(), dar.getData()));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertTrue(stored.getDraft());
+    assertNull(stored.getSubmissionDate());
+    assertNull(stored.getEraCommonsId());
+    assertEquals(rus, stored.getData().getRus());
+    assertEquals(transactionNow, stored.getUpdateDate().toInstant());
+    assertEquals(FIXED_INSTANT, stored.getCreateDate().toInstant());
+  }
+
+  @Test
+  void testUpdateDraftToSubmittedForCollectionWritesNowToSubmissionDate() {
+    DataAccessRequest draft = createDraftDataAccessRequest();
+    Integer collectionId = createDarCollection().getDarCollectionId();
+
+    Instant transactionNow =
+        writeInTransaction(
+            () ->
+                dataAccessRequestDAO.updateDraftToSubmittedForCollection(
+                    collectionId, draft.getReferenceId()));
+
+    DataAccessRequest stored = dataAccessRequestDAO.findByReferenceId(draft.getReferenceId());
+    assertEquals(transactionNow, stored.getSubmissionDate().toInstant());
+  }
+
+  /**
+   * Runs the write in a transaction and returns that transaction's NOW(). An on-demand DAO joins
+   * the open transaction, so NOW() here is the value that the write stores.
+   */
+  private static Instant writeInTransaction(Runnable write) {
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          write.run();
+        });
+    return transactionNow.get();
   }
 
   @Test
@@ -281,14 +391,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setRus(String.format(" unsupported unicode characters: %s ", unsupportedUnicode));
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
         collection.getDarCollectionId(),
         referenceId,
         collection.getCreateUserId(),
-        now,
-        now,
-        now,
         data,
         randomAlphabetic(10));
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
@@ -302,17 +408,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DarCollection collection = createDarCollection();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
-    Date now = new Date();
 
     String rus = randomAlphabetic(10);
     dar.getData().setRus(rus + String.format(" %s ", unsupportedUnicode));
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(),
-        collection.getCreateUserId(),
-        now,
-        now,
-        dar.getData(),
-        randomAlphabetic(10));
+        dar.getReferenceId(), collection.getCreateUserId(), dar.getData(), randomAlphabetic(10));
 
     DataAccessRequest updatedDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertNotNull(updatedDar);
@@ -326,9 +426,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setRus(String.format(" unsupported unicode characters: %s ", unsupportedUnicode));
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        referenceId, user.getUserId(), now, now, data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, user.getUserId(), data);
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     assertNotNull(dar);
     assertFalse(dar.getData().getRus().contains(unsupportedUnicode));
@@ -444,22 +542,22 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         testDar.getCollectionId(),
         testDar.getReferenceId(),
         testDar.getUserId(),
-        testDar.getCreateDate(),
-        testDar.getSubmissionDate(),
-        testDar.getUpdateDate(),
         testDar.getData(),
         randomAlphabetic(10));
+    setDarDates(
+        testDar.getReferenceId(),
+        testDar.getCreateDate(),
+        testDar.getSubmissionDate(),
+        testDar.getUpdateDate());
     dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDatasetId());
     return dataAccessRequestDAO.findByReferenceId(testDar.getReferenceId());
   }
 
   // local method to create a Draft DAR
   protected DataAccessRequest createDraftDAR(User user) {
-    Date now = new Date();
     DataAccessRequestData contents = new DataAccessRequestData();
     String referenceId = UUID.randomUUID().toString();
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        referenceId, user.getUserId(), now, now, contents);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, user.getUserId(), contents);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -704,8 +802,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDataByReferenceId(
         closeoutDAR.getReferenceId(),
         user.getUserId(),
-        now,
-        now,
         closeoutDAR.getData(),
         randomAlphabetic(10));
 
@@ -1037,8 +1133,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDataByReferenceId(
         closeoutDAR.getReferenceId(),
         user.getUserId(),
-        now,
-        now,
         closeoutDAR.getData(),
         randomAlphabetic(10));
 
@@ -1089,10 +1183,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDataByReferenceId(
         closeoutDAR.getReferenceId(),
         user.getUserId(),
-        now,
-        now,
         closeoutDAR.getData(),
         randomAlphabetic(10));
+    // DarMetricsSummaryMapper compares the closeout date with the Java clock, so file it then.
+    setDarSubmissionDate(closeoutDAR.getReferenceId(), now);
 
     // Unsubmitted draft DAR linked to the dataset — should never source a summary
     DataAccessRequest unsubmittedDAR = createDraftDataAccessRequest();
@@ -1108,11 +1202,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         expiredCollectionId,
         expiredReferenceId,
         user.getUserId(),
-        expiredSubmissionDate,
-        expiredSubmissionDate,
-        expiredSubmissionDate,
         createDataAccessRequestData(),
         randomAlphabetic(10));
+    setDarDates(
+        expiredReferenceId, expiredSubmissionDate, expiredSubmissionDate, expiredSubmissionDate);
     dataAccessRequestDAO.insertDARDatasetRelation(expiredReferenceId, dataset.getDatasetId());
     Integer expiredElectionId =
         electionDAO.insertElection(
@@ -1234,7 +1327,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPiName("Recorded PI Name");
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, user.getUserId(), data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, dataset.getDatasetId());
     Election election = createDataAccessElection(referenceId, dataset.getDatasetId());
     Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
@@ -1332,6 +1425,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
   private DataAccessRequest createApprovedDar(User user, Integer collectionId, Dataset dataset) {
     DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
+    // A minute back, so a follow-on that fileFollowOn files now on the Java clock comes after it.
+    // The database clock that wrote the submission date can run ahead of the Java clock.
+    setDarSubmissionDate(dar.getReferenceId(), new Date(System.currentTimeMillis() - 60_000));
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     castFinalVote(dar.getReferenceId(), dataset, new Date(), true);
     return dar;
@@ -1854,14 +1950,15 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
           .setCloseoutSupplement(
               new CloseoutSupplement(List.of("Reason"), "Other Reason", researcher.getUserId()));
     }
-    Date closedOn = new Date(System.currentTimeMillis() - agoMillis);
     dataAccessRequestDAO.updateDataByReferenceId(
         closeoutDar.getReferenceId(),
         researcher.getUserId(),
-        closedOn,
-        closedOn,
         closeoutDar.getData(),
         randomAlphabetic(10));
+    // DarMetricsSummaryMapper tells whether access has lapsed on the Java clock, so file it on
+    // that clock. The database clock can run ahead of it.
+    Date closedOn = new Date(System.currentTimeMillis() - agoMillis);
+    setDarDates(closeoutDar.getReferenceId(), closeoutDar.getCreateDate(), closedOn, closedOn);
     return dataAccessRequestDAO.findByReferenceId(closeoutDar.getReferenceId());
   }
 
@@ -1954,14 +2051,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         new CloseoutSupplement(List.of("Completed"), "", grant.dar().getUserId()));
     String draftReferenceId = "synthetic-draft-closeout";
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        draftReferenceId,
-        grant.dar().getUserId(),
-        new Date(),
-        null,
-        new Date(),
-        draftData,
-        "synthetic-era");
+        collectionId, draftReferenceId, grant.dar().getUserId(), draftData, "synthetic-era");
+    setDarSubmissionDate(draftReferenceId, null);
     dataAccessRequestDAO.insertDARDatasetRelation(
         draftReferenceId, draftOnlyDataset.getDatasetId());
 
@@ -2016,14 +2107,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         new CloseoutSupplement(List.of("Completed"), "", grant.dar().getUserId()));
     String referenceId = "synthetic-original-with-closeout";
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        grant.dar().getUserId(),
-        new Date(),
-        new Date(),
-        new Date(),
-        data,
-        "synthetic-era");
+        collectionId, referenceId, grant.dar().getUserId(), data, "synthetic-era");
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, grant.dataset().getDatasetId());
 
     assertFalse(dataAccessRequestDAO.hasSubmittedCloseout(collectionId));
@@ -2240,7 +2324,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     data.setRus("The technical account of how the data will be used");
     data.setNonTechRus("A lay description of the research");
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), requester.getUserId(), grantedOn, grantedOn, data, null);
+        dar.getReferenceId(), requester.getUserId(), data, null);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     approve(
         createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId()), dataset, grantedOn);
@@ -2885,9 +2969,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = createDataAccessRequestData();
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -2903,19 +2986,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   private static DataAccessRequest createDataAccessRequest(
       Integer collectionId, Integer userId, Date submissionDate) {
     String referenceId = UUID.randomUUID().toString();
-    Date createDate = new Date();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     data.setStatus("test");
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        createDate,
-        submissionDate,
-        new Date(),
-        data,
-        randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
+    setDarSubmissionDate(referenceId, submissionDate);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -3050,11 +3126,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         submitted.dar().getCollectionId(),
         draftReferenceId,
         submitted.dar().getUserId(),
-        new Date(),
-        null,
-        new Date(),
         new DataAccessRequestData(),
         "synthetic-era");
+    setDarSubmissionDate(draftReferenceId, null);
 
     assertTrue(
         dataAccessRequestDAO.isSubmittedAt(stored.getReferenceId(), stored.getSubmissionDate()));
@@ -3201,9 +3275,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        referenceId, user.getUserId(), now, now, data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, user.getUserId(), data);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -3212,9 +3284,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     data.setRus(QUOTED_FREE_TEXT);
     data.setNonTechRus(QUOTED_FREE_TEXT);
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     return referenceId;
   }
 
