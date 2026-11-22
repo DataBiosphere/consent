@@ -104,7 +104,7 @@ Cloud SQL instance. See its results there.
 ## Not confirmed
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
-  for dev and for staging. Prod is not confirmed. Pre-check 1 for prod confirms it.
+  for dev, for staging, and for prod.
 - Consent did not connect directly to a Cloud SQL instance on Postgres 18. In the rehearsal for
   dev and for staging, Consent used an export of the upgraded clone. In the rehearsal for dev,
   the DUOS backend did connect to the clone.
@@ -243,21 +243,21 @@ different database in the same session, use `\c`:
 
 ### Results
 
-| Check | Dev, 2026-11-16 | Staging, 2026-11-18 |
-| --- | --- | --- |
-| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Pass. The same targets. |
-| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Pass. The same result. |
-| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Pass. The same versions. |
-| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Pass. No job was ever made. |
-| 5. Replication slots | Pass. No slots. | Pass. No slots. |
-| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Pass. No rows in the two databases. |
-| 7. Collation | Pass. All databases use `en_US.UTF8`. | Pass. The same result. |
-| 8. Operations | Pass. No operation in progress. | Pass. Do this check again immediately before the upgrade. |
+| Check | Dev, 2026-11-16 | Staging, 2026-11-18 | Prod, 2026-11-22 |
+| --- | --- | --- | --- |
+| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Pass. The same targets. | Pass. The same targets. |
+| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Pass. The same result. | Pass. The same result. |
+| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Pass. The same versions. | Pass. The same versions. |
+| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Pass. No job was ever made. | Pass. No job was ever made. |
+| 5. Replication slots | Pass. No slots. | Pass. No slots. | Pass. No slots. |
+| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Pass. No rows in the two databases. | Pass. No rows in the two databases. |
+| 7. Collation | Pass. All databases use `en_US.UTF8`. | Pass. The same result. | Pass. The same result. |
+| 8. Operations | Pass. No operation in progress. | Pass. | Pass. Do this check again immediately before the upgrade. |
 
-The dev server and the staging server were on PostgreSQL 16.15.
+The dev server, the staging server, and the prod server were on PostgreSQL 16.15.
 
 The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job.
-Dev and staging have neither job. This does not change the upgrade. It is a different problem.
+Dev, staging, and prod have neither job. This does not change the upgrade. It is a different problem.
 
 ## Step 5: Rehearsal on a clone
 
@@ -418,7 +418,7 @@ these differences.
 
 | Step | Difference for prod |
 | --- | --- |
-| 4. Pre-checks | None. Record the results in a new column of the results table. |
+| 4. Pre-checks | None. The results table has the results. |
 | 5. Rehearsal | Do it on a clone of the prod instance. The times for dev and staging do not give the downtime for prod. Use the time from this rehearsal. |
 | 5. Tests with the services | The file from a prod clone has real user data from prod. The rule at the end of that section applies. |
 | 6. Before the upgrade | Also tell the DUOS users about the downtime. Make sure that no release goes to prod during the upgrade. |
