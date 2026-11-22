@@ -300,13 +300,13 @@ took 15 to 17 minutes.
 
 ### Results
 
-| Check | Dev, 2026-11-16 | Staging, 2026-11-18 |
-| --- | --- | --- |
-| Clone | Completed in 4 minutes 31 seconds. | Completed. The time is not recorded. |
-| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Completed in 13 minutes 44 seconds. |
-| Version | PostgreSQL 18.6. | PostgreSQL 18.6. |
-| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Completed, in Cloud SQL Studio, which shows no warnings. |
-| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | The same as dev, and the same as before the upgrade. |
+| Check | Dev, 2026-11-16 | Staging, 2026-11-18 | Prod, 2026-11-22 |
+| --- | --- | --- | --- |
+| Clone | Completed in 4 minutes 31 seconds. | Completed. The time is not recorded. | Completed in 4 minutes 20 seconds. |
+| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Completed in 13 minutes 44 seconds. | Completed in 13 minutes 32 seconds. |
+| Version | PostgreSQL 18.6. | PostgreSQL 18.6. | PostgreSQL 18.6. |
+| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Completed, in Cloud SQL Studio, which shows no warnings. | Completed. |
+| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | The same as dev, and the same as before the upgrade. | The same as dev, and the same as before the upgrade. |
 
 ### Tests with the services
 
@@ -419,7 +419,7 @@ these differences.
 | Step | Difference for prod |
 | --- | --- |
 | 4. Pre-checks | None. The results table has the results. |
-| 5. Rehearsal | Do it on a clone of the prod instance. The times for dev and staging do not give the downtime for prod. Use the time from this rehearsal. |
+| 5. Rehearsal | Do it on a clone of the prod instance. The results table has the results. The upgrade of the clone took 13 minutes 32 seconds, so expect a downtime of approximately 15 minutes. |
 | 5. Tests with the services | The file from a prod clone has real user data from prod. The rule at the end of that section applies. |
 | 6. Before the upgrade | Also tell the DUOS users about the downtime. Make sure that no release goes to prod during the upgrade. |
 | 6. Terraform | Set `db_version` in `prod.tfvars`, and use the Atlantis project for prod. |
