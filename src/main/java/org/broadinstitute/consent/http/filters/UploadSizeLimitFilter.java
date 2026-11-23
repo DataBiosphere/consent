@@ -3,9 +3,6 @@ package org.broadinstitute.consent.http.filters;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.ext.ReaderInterceptor;
-import jakarta.ws.rs.ext.ReaderInterceptorContext;
-import java.io.IOException;
 import java.math.BigDecimal;
 import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.util.ContentLength;
@@ -17,9 +14,10 @@ import org.broadinstitute.consent.http.util.ContentLength;
  *
  * <p>Two guards, as for templates ({@link TemplateSizeLimitFilter}): a {@code Content-Length} past
  * the limit is refused before a byte is read, and the entity stream is bounded, so a chunked body,
- * or one whose length understates it, stops at the limit. Either way the client gets a 413.
+ * or one whose length understates it, stops at the limit. Either way the client gets a 413, from
+ * {@code RequestTooLargeExceptionMapper} when the read was stopped.
  */
-public class UploadSizeLimitFilter implements ContainerRequestFilter, ReaderInterceptor {
+public class UploadSizeLimitFilter implements ContainerRequestFilter {
 
   private final long maxBytes;
   private final String message;
@@ -44,10 +42,5 @@ public class UploadSizeLimitFilter implements ContainerRequestFilter, ReaderInte
     }
     requestContext.setEntityStream(
         new BoundedEntityStream(requestContext.getEntityStream(), maxBytes, message));
-  }
-
-  @Override
-  public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException {
-    return BoundedEntityStream.readOrRefuse(context);
   }
 }

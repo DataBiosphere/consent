@@ -9,11 +9,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.ReaderInterceptorContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,21 +85,6 @@ class UploadSizeLimitFilterTest {
     assertEquals(
         new Error("Request is too large. Max size is: 100 MB", 413),
         refusal.getValue().getEntity());
-  }
-
-  // A read the bound stopped is answered with a 413, after the reader has cleaned up.
-  @Test
-  void testAReadTheStreamStoppedIsAnswered413() throws IOException {
-    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
-    when(context.proceed())
-        .thenThrow(new RequestTooLargeException("Request is too large. Max size is: 0.00001 MB"));
-
-    WebApplicationException e =
-        assertThrows(WebApplicationException.class, () -> filter.aroundReadFrom(context));
-    assertEquals(413, e.getResponse().getStatus());
-    assertEquals(
-        new Error("Request is too large. Max size is: 0.00001 MB", 413),
-        e.getResponse().getEntity());
   }
 
   private static ContainerRequestContext request(String declaredLength, InputStream body) {
