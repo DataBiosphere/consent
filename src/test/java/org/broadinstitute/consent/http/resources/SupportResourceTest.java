@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -18,7 +17,6 @@ import java.util.stream.Stream;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
-import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +26,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -65,7 +65,7 @@ public class SupportResourceTest extends ResourceTest {
         }
         """
             .formatted(type);
-    when(supportRequestService.postTicketToSupport(any())).thenReturn(new JsonObject());
+    when(supportRequestService.submitTicket(any(), any())).thenReturn(new JsonObject());
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
@@ -78,20 +78,24 @@ public class SupportResourceTest extends ResourceTest {
         {"name": "Ada", "email": "ada@example.org", "subject": "Help", "description": "Hi",
          "type": "QUESTION", "url": "https://example.com"}
         """;
-    when(supportRequestService.postTicketToSupport(any())).thenReturn(new JsonObject());
+    when(supportRequestService.submitTicket(any(), any())).thenReturn(new JsonObject());
 
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
-    ArgumentCaptor<DuosTicket> ticket = ArgumentCaptor.forClass(DuosTicket.class);
-    verify(supportRequestService).postTicketToSupport(ticket.capture());
-    assertTrue(
-        ticket
-            .getValue()
-            .request
-            .getComment()
-            .getBody()
-            .startsWith(SupportRequester.unverified().note()));
+    ArgumentCaptor<SupportRequester> requester = ArgumentCaptor.forClass(SupportRequester.class);
+    verify(supportRequestService).submitTicket(any(), requester.capture());
+    assertEquals(SupportRequester.unverified(), requester.getValue());
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(
+      strings = {" ", "null", "[]", "123", "{\"uploads\": \"x\"}", "{\"type\": \"BOGUS\"}"})
+  void testAnEmptyOrMalformedRequestIsABadRequest(String body) {
+    try (Response response = supportResource.postRequest(body)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   private static Stream<Arguments> testPostRequestInvalidFields() {
@@ -176,7 +180,7 @@ public class SupportResourceTest extends ResourceTest {
   void testUnprocessableTicket() throws Exception {
     doThrow(new UnprocessableEntityException("Unprocessable"))
         .when(supportRequestService)
-        .postTicketToSupport(any());
+        .submitTicket(any(), any());
     try (Response response =
         supportResource.postRequest(
             """

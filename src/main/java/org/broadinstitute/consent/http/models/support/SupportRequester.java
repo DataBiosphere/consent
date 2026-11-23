@@ -4,7 +4,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Who sent a support request, as a note at the end of the ticket for support staff. The requester
+ * Who sent a support request, as a note at the start of the ticket for support staff. The requester
  * sees the ticket too, so the note never names a sign-in email: the form's email may belong to
  * someone else.
  */

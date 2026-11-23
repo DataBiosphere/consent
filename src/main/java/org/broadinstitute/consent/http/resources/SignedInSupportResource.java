@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -24,29 +27,30 @@ import org.broadinstitute.consent.http.service.UserService;
 @Path("api/support")
 public class SignedInSupportResource extends Resource {
 
-  private final SupportResource supportResource;
+  private final SupportRequestService supportRequestService;
   private final UserService userService;
 
   @Inject
   public SignedInSupportResource(
       SupportRequestService supportRequestService, UserService userService) {
-    this.supportResource = new SupportResource(supportRequestService);
+    this.supportRequestService = supportRequestService;
     this.userService = userService;
   }
 
   @POST
   @Path("request")
+  @PermitAll
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response postRequest(@Auth AuthUser authUser, String body) {
     try {
-      TicketFields ticketFields = SupportResource.ticketFields(body);
-      // Before the user lookup, so an invalid request costs no query.
-      ticketFields.validate();
+      // Validated before the user lookup, so an invalid request costs no query.
+      TicketFields ticketFields = TicketFields.fromJson(body);
       SupportRequester requester =
           SupportRequester.signedIn(
               authUser.getEmail(), duosUserId(authUser), ticketFields.email());
-      return supportResource.submit(ticketFields, requester);
+      JsonObject request = supportRequestService.submitTicket(ticketFields, requester);
+      return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

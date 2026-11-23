@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,7 +12,7 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,12 +54,10 @@ class SignedInSupportResourceTest {
     user.setUserId(12);
     when(userService.findUserByEmail("ada@example.org")).thenReturn(user);
 
-    String body = postAndCaptureTicketBody("ada@example.org");
+    String body = postAndCaptureNote("ada@example.org");
 
-    assertTrue(
-        body.startsWith(
-            "Requester: signed in as DUOS user 12. The form's email is the sign-in email."),
-        body);
+    assertEquals(
+        "Requester: signed in as DUOS user 12. The form's email is the sign-in email.", body);
   }
 
   // Someone who signed in but has not registered can still ask for help.
@@ -68,12 +65,11 @@ class SignedInSupportResourceTest {
   void testASignInWithoutADuosAccountIsAccepted() throws Exception {
     when(userService.findUserByEmail("ada@example.org")).thenThrow(new NotFoundException());
 
-    String body = postAndCaptureTicketBody("bob@example.org");
+    String body = postAndCaptureNote("bob@example.org");
 
-    assertTrue(
-        body.startsWith(
-            "Requester: signed in, without a DUOS account. The form's email differs from the"
-                + " sign-in email and is not verified."),
+    assertEquals(
+        "Requester: signed in, without a DUOS account. The form's email differs from the"
+            + " sign-in email and is not verified.",
         body);
   }
 
@@ -82,17 +78,26 @@ class SignedInSupportResourceTest {
     try (Response response = resource.postRequest(authUser, "{\"name\": \"Ada\"}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
-    verify(supportRequestService, never()).postTicketToSupport(any());
+    verify(supportRequestService, never()).submitTicket(any(), any());
+    verify(userService, never()).findUserByEmail(any());
   }
 
-  private String postAndCaptureTicketBody(String formEmail) throws Exception {
-    when(supportRequestService.postTicketToSupport(any())).thenReturn(new JsonObject());
+  @Test
+  void testAnEmptyRequestIsABadRequest() throws Exception {
+    try (Response response = resource.postRequest(authUser, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+    verify(supportRequestService, never()).submitTicket(any(), any());
+  }
+
+  private String postAndCaptureNote(String formEmail) throws Exception {
+    when(supportRequestService.submitTicket(any(), any())).thenReturn(new JsonObject());
 
     try (Response response = resource.postRequest(authUser, BODY.formatted(formEmail))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
-    ArgumentCaptor<DuosTicket> ticket = ArgumentCaptor.forClass(DuosTicket.class);
-    verify(supportRequestService).postTicketToSupport(ticket.capture());
-    return ticket.getValue().request.getComment().getBody();
+    ArgumentCaptor<SupportRequester> requester = ArgumentCaptor.forClass(SupportRequester.class);
+    verify(supportRequestService).submitTicket(any(), requester.capture());
+    return requester.getValue().note();
   }
 }

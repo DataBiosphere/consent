@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -13,18 +12,14 @@ import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
 import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
-import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.SupportRequester;
-import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.service.SupportRequestService;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("support")
 public class SupportResource extends Resource {
 
   private final SupportRequestService supportRequestService;
-  private static final Gson gson = GsonUtil.getInstance();
 
   /** The largest attachment, the same limit as stored uploads (googleStore.maxUploadBytes). */
   private final long maxUploadBytes;
@@ -42,24 +37,13 @@ public class SupportResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response postRequest(String body) {
     try {
-      return submit(ticketFields(body), SupportRequester.unverified());
+      JsonObject request =
+          supportRequestService.submitTicket(
+              TicketFields.fromJson(body), SupportRequester.unverified());
+      return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-  }
-
-  static TicketFields ticketFields(String body) {
-    return gson.fromJson(body, TicketFields.class);
-  }
-
-  /**
-   * Sends the ticket to Zendesk; shared with the signed-in route ({@link SignedInSupportResource}).
-   */
-  Response submit(TicketFields ticketFields, SupportRequester requester) throws Exception {
-    DuosTicket ticket = TicketFactory.createTicket(ticketFields, requester);
-    logInfo("Support Request Ticket: " + ticket);
-    JsonObject request = supportRequestService.postTicketToSupport(ticket);
-    return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
   }
 
   @POST
