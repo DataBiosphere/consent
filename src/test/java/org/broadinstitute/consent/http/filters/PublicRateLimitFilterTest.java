@@ -267,6 +267,48 @@ class PublicRateLimitFilterTest {
     verify(requestContext).abortWith(any());
   }
 
+  // Signing in with several accounts must not get a caller past the support limit.
+  @Test
+  void testSignedInSupportRequestsShareTheSupportBucket() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 1);
+    mockRequest("support/upload", "192.0.2.50", null);
+    send(filter, 1);
+    mockRequest("api/support/request", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  // Matrix parameters and empty segments don't change which resource Jersey picks, so they must
+  // not change the bucket either.
+  @Test
+  void testSignedInSupportPathVariantsShareTheSupportBucket() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 3);
+
+    for (String path :
+        List.of("api;x=1/support/request", "api/support;y/request", "//api//support/request")) {
+      mockRequest(path, "192.0.2.50", null);
+      send(filter, 1);
+    }
+    mockRequest("support/upload", "192.0.2.50", null);
+    send(filter, 1);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testOtherApiPathsAndAnApiSupportPrefixAreNotLimited() {
+    PublicRateLimitFilter filter = buildFilter(1, 1, true, 1);
+
+    for (String path : List.of("api", "api/supporting", "api/dar/support")) {
+      mockPath(path);
+      send(filter, 5);
+    }
+
+    verify(requestContext, never()).abortWith(any());
+  }
+
   @Test
   void testSupportAndShowcaseHaveSeparateBuckets() {
     PublicRateLimitFilter filter = buildFilter(1, 1, true, 1);

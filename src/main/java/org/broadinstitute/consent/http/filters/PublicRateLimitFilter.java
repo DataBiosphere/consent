@@ -29,10 +29,10 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 /**
  * Token-bucket rate limiter for the anonymous public {@code showcase/} and {@code support/} routes,
- * keyed by client IP. Each route group has its own limit and buckets, so showcase browsing never
- * uses up the support form's allowance. It is separate from {@link RateLimitFilter}, which skips
- * every request without a principal, and it does not read that filter's {@code enabled} switch:
- * this limit is on in every environment.
+ * and the signed-in {@code api/support/} routes, keyed by client IP. Each route group has its own
+ * limit and buckets, so showcase browsing never uses up the support form's allowance. It is
+ * separate from {@link RateLimitFilter}, which skips every request without a principal, and it does
+ * not read that filter's {@code enabled} switch: this limit is on in every environment.
  *
  * <p>The key comes from {@link ClientIpResolver}. It believes the load balancer's {@code X-Real-IP}
  * only when the socket peer is a configured trusted proxy, so a direct caller cannot choose its own
@@ -59,6 +59,7 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
   static final String REAL_IP_HEADER = "X-Real-IP";
   private static final String SHOWCASE_PATH = "showcase";
   private static final String SUPPORT_PATH = "support";
+  private static final String API_PATH = "api";
   // Larger than RateLimitFilter's cap: anonymous keys are cheap for a caller to rotate, and an
   // evicted bucket starts full again.
   private static final int MAX_TRACKED_KEYS = 100_000;
@@ -160,17 +161,27 @@ public class PublicRateLimitFilter implements ContainerRequestFilter, ConsentLog
   }
 
   /**
-   * The limited route group named by the first non-empty path segment, or null. Jersey matches
+   * The limited route group named by the first non-empty path segment, or null. {@code
+   * api/support/...}, the signed-in support routes, counts as {@code support}, so a caller can't
+   * get past the support limit by signing in with several accounts. The filter runs before
+   * authentication, so every request on those paths counts, signed in or not. Jersey matches
    * resources on segments without their matrix parameters, so {@code showcase;x=1/datasets} reaches
    * the {@code showcase/datasets} resource; a check on the raw path would let that request skip the
    * limit.
    */
   private LimitedRoute limitedRoute(UriInfo uriInfo) {
-    return uriInfo.getPathSegments().stream()
-        .map(PathSegment::getPath)
-        .filter(segment -> !segment.isEmpty())
-        .findFirst()
-        .map(routes::get)
-        .orElse(null);
+    List<String> segments =
+        uriInfo.getPathSegments().stream()
+            .map(PathSegment::getPath)
+            .filter(segment -> !segment.isEmpty())
+            .limit(2)
+            .toList();
+    if (segments.isEmpty()) {
+      return null;
+    }
+    if (segments.size() == 2 && API_PATH.equals(segments.get(0))) {
+      return SUPPORT_PATH.equals(segments.get(1)) ? routes.get(SUPPORT_PATH) : null;
+    }
+    return routes.get(segments.get(0));
   }
 }

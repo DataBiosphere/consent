@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 /**
- * Anonymous per-client-IP limit for the open {@code support/} routes: the Contact Us form and its
- * attachments, which need no DUOS account. Like the showcase limit, it is on in every environment
- * and keyed the same way (see {@link PublicRateLimitConfiguration} for the trusted proxies). Its
- * {@code requestsPerMinute} is for the whole deployment, split across pods with the parent {@link
- * RateLimitConfiguration#getPodCount()}. Unlike the other limits it is not required to be at least
- * {@code podCount}, so a small default can't stop a larger deployment from starting: each pod then
- * allows at least one request a minute.
+ * Per-client-IP limit for the support form: the open {@code support/} routes, which need no DUOS
+ * account, and the signed-in {@code api/support/} routes, which share the same allowance. Like the
+ * showcase limit, it is on in every environment and keyed the same way (see {@link
+ * PublicRateLimitConfiguration} for the trusted proxies). Its {@code requestsPerMinute} is for the
+ * whole deployment, split across pods with the parent {@link RateLimitConfiguration#getPodCount()}.
+ * Unlike the other limits it is not required to be at least {@code podCount}, so a small default
+ * can't stop a larger deployment from starting: each pod then allows at least one request a minute.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SupportRateLimitConfiguration {
