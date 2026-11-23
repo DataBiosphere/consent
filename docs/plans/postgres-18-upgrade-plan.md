@@ -255,8 +255,8 @@ different database in the same session, use `\c`:
 
 The dev server, the staging server, and the prod server were on PostgreSQL 16.15.
 
-The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job.
-Dev, staging, and prod have neither job. This does not change the upgrade. It is a different problem.
+The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job. Dev,
+staging, and prod have neither job. This does not change the upgrade. It is a different problem.
 
 ## Step 5: Rehearsal on a clone
 
