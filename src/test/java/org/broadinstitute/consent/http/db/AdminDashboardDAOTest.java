@@ -264,8 +264,7 @@ class AdminDashboardDAOTest extends DAOTestHelper {
         null,
         null,
         null,
-        createUserId,
-        FIXED_DATE);
+        createUserId);
   }
 
   private Integer createDataset(User user) {

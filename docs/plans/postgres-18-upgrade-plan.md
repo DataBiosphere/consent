@@ -6,6 +6,9 @@ instances in dev and staging from PostgreSQL 16 to 18.
 uses the Cloud SQL major version upgrade in place, started from the Google Cloud console. The
 Terraform changes after the upgrade.
 
+Dev, staging, and prod are on PostgreSQL 18. The prod upgrade was on 2026-11-23. See
+"Prod (DT-4324)" for its results.
+
 This document is the full record of the procedure. It contains no instance names. Each command
 uses `<instance>` and `<project>`. The instance name is the `db_name` value in the Terraform
 variables of the environment. It is also the `instance_name` value in the `consent-postgres-creds`
@@ -17,9 +20,9 @@ Consent has no runtime code that depends on the Postgres version. The work is in
 
 | Repo | Change | Status |
 | --- | --- | --- |
-| `consent` | The Postgres image for the local scripts. The image for the tests stays on 16 until DT-4324. | [#3282](https://github.com/DataBiosphere/consent/pull/3282) |
+| `consent` | The Postgres image for the local scripts. The image for the tests, after the prod upgrade. | [#3282](https://github.com/DataBiosphere/consent/pull/3282). Tests: [#3297](https://github.com/DataBiosphere/consent/pull/3297). |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
-| `duos-ui` | The Postgres image for the local database. The image for the integration tests stays on 16 until DT-4324. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153) |
+| `duos-ui` | The Postgres image for the local database. The image for the integration tests, after the prod upgrade. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153). Tests: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171). |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
@@ -51,21 +54,28 @@ the ones that can apply to Consent.
 | DUOS backend | Its database code needs no change. It uses the `pg` driver 8.21.0 and reads and writes only the `user_sessions` table. Its SQL uses no feature that changes in 17 or 18, and it does not read SQLSTATE codes. The audit triggers on `user_sessions` are in the Consent changesets. |
 | Data directory (18) | The official `postgres:18` image moved its data directory to `/var/lib/postgresql/18/docker`. This affects the local compose file. It does not affect the BEE chart, which sets `PGDATA` to `/data/pgdata`. |
 
-## The tests stay on Postgres 16 until the prod upgrade
+## The tests stayed on Postgres 16 until the prod upgrade
 
-The Consent tests use the image in `DAOTestHelper.POSTGRES_IMAGE`. This image stays on Postgres 16
-until DT-4324 upgrades prod. Thus the tests always run on the version that prod runs. SQL that
-uses a feature from version 17 or 18 fails in the tests, and it cannot go to prod.
+The Consent tests use the image in `DAOTestHelper.POSTGRES_IMAGE`. This image stayed on Postgres 16
+until DT-4324 upgraded prod. Thus the tests always ran on the version that prod ran. SQL that
+used a feature from version 17 or 18 failed in the tests, and it could not go to prod.
 
-The cost is that the tests do not run on the version of dev and staging after their upgrade. SQL
-that operates differently on 18 can pass the tests and fail in dev. Dev and staging find such a
-problem before prod gets the change. The full test suite also passed one time on Postgres 18.7,
-on 2026-11-13.
+The cost was that the tests did not run on the version of dev and staging after their upgrade.
+SQL that operates differently on 18 could pass the tests and fail in dev. Dev and staging find
+such a problem before prod gets the change.
 
-The integration tests of `duos-ui` follow the same rule. Their image in
-`.github/workflows/integration-tests.yml` stays on Postgres 16.
+The integration tests of `duos-ui` followed the same rule, with the image in
+`.github/workflows/integration-tests.yml`.
 
-Set the two test images to Postgres 18 in the work for DT-4324, and run the tests again.
+Prod went to PostgreSQL 18 on 2026-11-23. Two pull requests then set the test images to
+`postgres:18.7-alpine`. They merged on the same day:
+
+- `consent`: [#3297](https://github.com/DataBiosphere/consent/pull/3297) changed
+  `DAOTestHelper.POSTGRES_IMAGE`.
+- `duos-ui`: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171) changed the image in
+  `.github/workflows/integration-tests.yml`.
+
+All tests now run on Postgres 18.
 
 ## Confirmed by test
 
@@ -73,17 +83,19 @@ These tests used Postgres 18.7 in containers or in a BEE. The rehearsal for dev 
 Cloud SQL instance. See its results there.
 
 - Consent: the full test suite passed with the test image set to 18.7 (6393 tests, which include
-  the migration tests). This was one run. The test image in the repo stays on 16.
+  the migration tests). This was one run. At that time, the test image in the repo was on 16.
 - Local Consent database: a dev dump loads into the compose database, and the data stays after
   a container recreate.
 - BEE: a BEE that had Postgres 16 data started from the BEE branch. The export, backup, and
   import steps completed. A sign in to DUOS made a new user record in Consent.
 - DUOS backend: the session schema applies, and the audit triggers on `user_sessions` fire. 42
-  Playwright tests passed in one local run with the servers on Postgres 18. The test image in
-  the repo stays on 16.
+  Playwright tests passed in one local run with the servers on Postgres 18. At that time, the test
+  image in the repo was on 16.
 - DUOS backend with local Consent: the UI with the backend on, and a local Consent stack on
   Postgres 18, operates normally. A new row in `user_sessions` shows the session. The addition
   and removal of user roles work.
+- CI on 18.7: the checks of consent #3297 and duos-ui #4171 passed with the test images set to
+  18.7. For `duos-ui`, this includes the Playwright tests in CI.
 - Dump versions: a `pg_dump` 18 dump of the session schema fails on Postgres 16.13 with
   `unrecognized configuration parameter "transaction_timeout"`. A `pg_dump` 16 dump loads on
   Postgres 18.7.
@@ -91,15 +103,14 @@ Cloud SQL instance. See its results there.
 ## Not confirmed
 
 - The Cloud SQL documents do not state that 16 can go directly to 18. Pre-check 1 confirmed it
-  for dev and for staging. Prod is not confirmed.
+  for dev, for staging, and for prod.
 - Consent did not connect directly to a Cloud SQL instance on Postgres 18. In the rehearsal for
   dev and for staging, Consent used an export of the upgraded clone. In the rehearsal for dev,
   the DUOS backend did connect to the clone.
 - `scripts/export-db.sh` was not run against a Postgres 18 server. Step 7 does this. The
   rehearsal for dev used a Cloud SQL export, not this script.
 - The BEE test did not compare row counts before and after the upgrade.
-- The Playwright tests that need the automation accounts did not run on Postgres 18. They did not
-  run locally, and the `duos-ui` CI stays on Postgres 16.
+- The Playwright tests that need the automation accounts did not run locally on Postgres 18.
 - The rollback procedure was not rehearsed.
 - The note about the sync from Terra Data Repository (TDR) comes from the upgrade from 11 to 16
   in 2024. Make sure that it is still correct.
@@ -113,8 +124,9 @@ Cloud SQL instance. See its results there.
 3. Update `DEVNOTES.md`. A developer must run `docker volume rm consent_pgdata` one time, because
    the 18 image cannot start on a volume that has Postgres 16 data.
 4. Update the image tag in `render-local-configs-plan.md`.
-5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java`. See "The tests stay on Postgres 16
-   until the prod upgrade".
+5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java` in this pull request. The image stayed
+   on 16 until the prod upgrade.
+   [#3297](https://github.com/DataBiosphere/consent/pull/3297) changed it after that upgrade.
 6. Run `./mvnw clean test`.
 7. Start the local compose database with a dev dump. Make sure that the dump loads.
 
@@ -140,8 +152,9 @@ The DUOS backend connects to the same database, and `duos-ui` has its own Postgr
    does not apply.
 2. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
 3. Add the image version to `DEVNOTES.md`.
-4. Do not change the image in `.github/workflows/integration-tests.yml`. See "The tests stay on
-   Postgres 16 until the prod upgrade".
+4. Do not change the image in `.github/workflows/integration-tests.yml` in this pull request. The
+   image stayed on 16 until the prod upgrade.
+   [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171) changed it after that upgrade.
 5. Make sure that the integration tests pass.
 
 Merge this pull request soon after the Consent pull request. The local database of `duos-ui` loads
@@ -222,7 +235,8 @@ different database in the same session, use `\c`:
    SELECT datname, datcollate FROM pg_database;
    ```
 
-8. Make sure that the instance has no operation in progress. Expect an empty list.
+8. Make sure that the instance has no operation in progress. Expect an empty list. Do this check
+   again immediately before the upgrade.
 
    ```bash
    gcloud sql operations list --instance <instance> --project <project> \
@@ -231,21 +245,21 @@ different database in the same session, use `\c`:
 
 ### Results
 
-| Check | Dev, 2026-11-16 | Staging, 2026-11-18 |
-| --- | --- | --- |
-| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Pass. The same targets. |
-| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Pass. The same result. |
-| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Pass. The same versions. |
-| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Pass. No job was ever made. |
-| 5. Replication slots | Pass. No slots. | Pass. No slots. |
-| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Pass. No rows in the two databases. |
-| 7. Collation | Pass. All databases use `en_US.UTF8`. | Pass. The same result. |
-| 8. Operations | Pass. No operation in progress. | Pass. Do this check again immediately before the upgrade. |
+| Check | Dev, 2026-11-16 | Staging, 2026-11-18 | Prod, 2026-11-22 |
+| --- | --- | --- | --- |
+| 1. Upgrade target | Pass. The targets are `POSTGRES_17` and `POSTGRES_18`. | Pass. The same targets. | Pass. The same targets. |
+| 2. Backups and replicas | Pass. Backups are on. The instance has no replicas. | Pass. The same result. | Pass. The same result. |
+| 3. Extensions | Pass. `plpgsql` 1.0 in `consent`. `plpgsql` 1.0 and `pg_cron` 1.6.7 in `postgres`. | Pass. The same versions. | Pass. The same versions. |
+| 4. `pg_cron` jobs | Pass. No job was ever made (`is_called` is `f`). | Pass. No job was ever made. | Pass. No job was ever made. |
+| 5. Replication slots | Pass. No slots. | Pass. No slots. | Pass. No slots. |
+| 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Pass. No rows in the two databases. | Pass. No rows in the two databases. |
+| 7. Collation | Pass. All databases use `en_US.UTF8`. | Pass. The same result. | Pass. The same result. |
+| 8. Operations | Pass. No operation in progress. | Pass. | Pass. |
 
-The dev server and the staging server were on PostgreSQL 16.15.
+The dev server, the staging server, and the prod server were on PostgreSQL 16.15.
 
-The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job.
-Dev and staging have neither job. This does not change the upgrade. It is a different problem.
+The changesets for `user_sessions` describe an hourly `pg_cron` job and a weekly `pg_cron` job. Dev,
+staging, and prod have neither job. This does not change the upgrade. It is a different problem.
 
 ## Step 5: Rehearsal on a clone
 
@@ -288,13 +302,13 @@ took 15 to 17 minutes.
 
 ### Results
 
-| Check | Dev, 2026-11-16 | Staging, 2026-11-18 |
-| --- | --- | --- |
-| Clone | Completed in 4 minutes 31 seconds. | Completed. The time is not recorded. |
-| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Completed in 13 minutes 44 seconds. |
-| Version | PostgreSQL 18.6. | PostgreSQL 18.6. |
-| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Completed, in Cloud SQL Studio, which shows no warnings. |
-| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | The same as dev, and the same as before the upgrade. |
+| Check | Dev, 2026-11-16 | Staging, 2026-11-18 | Prod, 2026-11-22 |
+| --- | --- | --- | --- |
+| Clone | Completed in 4 minutes 31 seconds. | Completed. The time is not recorded. | Completed in 4 minutes 20 seconds. |
+| Upgrade of the clone | Completed in 13 minutes 24 seconds. | Completed in 13 minutes 44 seconds. | Completed in 13 minutes 32 seconds. |
+| Version | PostgreSQL 18.6. | PostgreSQL 18.6. | PostgreSQL 18.6. |
+| `ANALYZE` | Completed. It gave the 11 warnings that step 7 describes. | Completed, in Cloud SQL Studio, which shows no warnings. | Completed. |
+| Extensions in `postgres` | `plpgsql` 1.0 and `pg_cron` 1.6.7, the same as before the upgrade. | The same as dev, and the same as before the upgrade. | The same as dev, and the same as before the upgrade. |
 
 ### Tests with the services
 
@@ -375,7 +389,7 @@ difference.
    change, stop and find the cause.
 4. Apply and merge.
 
-Do not change `prod.tfvars` for DT-3587.
+Do not change `prod.tfvars` for DT-3587. Change it for DT-4324, after the prod upgrade.
 
 ## Step 7: After each upgrade
 
@@ -398,6 +412,40 @@ Do not change `prod.tfvars` for DT-3587.
 7. Run `./scripts/export-db.sh <env>`, and make sure that the dump is complete.
 8. Tell the Slack channels that the upgrade is complete.
 9. Monitor Query Insights for slower queries for some days.
+
+## Prod (DT-4324)
+
+Steps 1, 2, and 3 were complete before the prod work, and prod did not need them again. Steps 4
+to 7 for prod had these differences.
+
+| Step | Difference for prod |
+| --- | --- |
+| 4. Pre-checks | None. The results table has the results. |
+| 5. Rehearsal | Do it on a clone of the prod instance. The results table has the results. The upgrade of the clone took 13 minutes 32 seconds, so expect a downtime of approximately 15 minutes. |
+| 5. Tests with the services | The file from a prod clone has real user data from prod. The rule at the end of that section applies. |
+| 6. Before the upgrade | Also tell the DUOS users about the downtime. Make sure that no release goes to prod during the upgrade. |
+| 6. Terraform | Set `db_version` in `prod.tfvars`, and use the Atlantis project for prod. |
+| 7. After the upgrade | Item 7 does not apply. `scripts/export-db.sh` does not export prod. |
+| Rollback | The same procedure. It was not rehearsed, and data that the services write after the upgrade is lost. |
+
+### Results of the prod upgrade, 2026-11-23
+
+| Item of step 7 | Result |
+| --- | --- |
+| 1. Version | PostgreSQL 18.6. |
+| 2. `ANALYZE` | Completed. |
+| 3. `pg_cron` | Pass. The `postgres` database still lists it. |
+| 4. Consent `/status` | Pass. Healthy. |
+| 5. Migration job in the next deploy | Pass. The Liquibase migration job completed in the release to prod on the same day. |
+| 6. Smoke tests in DUOS | Pass. |
+| 7. `export-db.sh` | Does not apply to prod. |
+| 8. Slack message | Done. |
+| 9. Query Insights | Monitor for some days. |
+
+The update operation took 16 minutes 15 seconds. That is 2 minutes 43 seconds more than the
+rehearsal on the clone, so the upgrade of an instance in use can take more time than its
+rehearsal. The Terraform change for `prod.tfvars` is complete. The two pull requests for the test
+images are merged.
 
 ## Rollback
 
