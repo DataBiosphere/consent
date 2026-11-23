@@ -210,13 +210,13 @@ public class SupportResourceTest extends ResourceTest {
     verify(supportRequestService).postAttachmentToSupport("test".getBytes());
   }
 
-  // Past the limit the attachment is a 400, read no further than one byte past it, and never sent.
+  // Past the limit the attachment is a 413, read no further than one byte past it, and never sent.
   @Test
   void testPostUploadOverTheLimit() throws Exception {
     InputStream body = body("tests and more");
 
     try (Response response = supportResource.postUpload(body)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      assertEquals(413, response.getStatus());
     }
     assertEquals(" and more", new String(body.readAllBytes()));
     verify(supportRequestService, never()).postAttachmentToSupport(any());

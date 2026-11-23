@@ -482,7 +482,7 @@ paths:
         - Data Access Request
       responses:
         400:
-          description: A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default).
+          description: The file name is invalid.
         200:
           description: Stores the document and returns the updated Data Access Request
           content:
@@ -498,6 +498,8 @@ paths:
             Conflict. The draft has elections, or the update lost a lock conflict and can be retried.
         422:
           description: Unprocessable Entity. The DAR has already been submitted.
+        413:
+          $ref: './responses/UploadTooLarge.yaml'
         429:
           description: Too Many Requests - rate limit exceeded
           content:
@@ -559,7 +561,7 @@ paths:
         - Data Access Request
       responses:
         400:
-          description: A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default).
+          description: The file name is invalid.
         200:
           description: Stores the document and returns the updated Data Access Request
           content:
@@ -575,6 +577,8 @@ paths:
             Conflict. The draft has elections, or the update lost a lock conflict and can be retried.
         422:
           description: Unprocessable Entity. The DAR has already been submitted.
+        413:
+          $ref: './responses/UploadTooLarge.yaml'
         429:
           description: Too Many Requests - rate limit exceeded
           content:

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.cloudstore;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,7 +25,6 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.CopyWriter;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
@@ -140,7 +138,7 @@ class GCSServiceTest extends AbstractTestHelper {
     verify(writer).close();
   }
 
-  // Past the limit the upload is a 400 and is never finalized; anything stored is deleted.
+  // Past the limit the upload is a 413 and is never finalized; anything stored is deleted.
   @Test
   void testStoreDocumentOverTheLimit() throws Exception {
     config.setMaxUploadBytes(6);
@@ -150,7 +148,7 @@ class GCSServiceTest extends AbstractTestHelper {
 
     UploadTooLargeException e = assertThrows(UploadTooLargeException.class, () -> store("content"));
 
-    assertInstanceOf(BadRequestException.class, e);
+    assertEquals(413, e.getResponse().getStatus());
     assertEquals("File size is invalid. Max size is: 0.000006 MB", e.getMessage());
     verify(writer, never()).close();
     verify(storage).delete(BlobId.of(config.getBucket(), id.toString()));
