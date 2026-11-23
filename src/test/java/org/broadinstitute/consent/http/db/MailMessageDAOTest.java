@@ -1156,11 +1156,9 @@ class MailMessageDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         user.getUserId(),
-        now,
-        submissionDate,
-        now,
         new DataAccessRequestData(),
         randomAlphabetic(10));
+    setDarDates(referenceId, now, submissionDate, now);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

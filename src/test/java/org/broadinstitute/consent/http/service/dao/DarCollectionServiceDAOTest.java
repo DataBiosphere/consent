@@ -430,12 +430,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(
         dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(),
-        dar.getUserId(),
-        FIXED_DATE,
-        FIXED_DATE,
-        dar.getData(),
-        user.getEraCommonsId());
+        dar.getReferenceId(), dar.getUserId(), dar.getData(), user.getEraCommonsId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -476,11 +471,11 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        dar.getReferenceId(), user.getUserId(), FIXED_DATE, FIXED_DATE, data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), data);
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.referenceId, dar.userId, FIXED_DATE, FIXED_DATE, data, user.getEraCommonsId());
+        dar.referenceId, dar.userId, data, user.getEraCommonsId());
+    setDarDates(dar.getReferenceId(), FIXED_DATE, FIXED_DATE, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
   }
 

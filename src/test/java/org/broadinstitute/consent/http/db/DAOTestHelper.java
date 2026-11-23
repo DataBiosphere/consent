@@ -232,9 +232,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     data.setHmb(true);
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -416,6 +415,42 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
                     "UPDATE dataset SET create_date = :date, update_date = :date WHERE dataset_id = :id")
                 .bind("date", date)
                 .bind("id", datasetId)
+                .execute());
+  }
+
+  /**
+   * The DataAccessRequestDAO inserts write NOW() to every date, so set the dates that a test needs.
+   * A null submission date makes the DAR a draft.
+   */
+  protected static void setDarDates(
+      String referenceId, Date createDate, Date submissionDate, Date updateDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    """
+                    UPDATE data_access_request
+                    SET create_date = :createDate, submission_date = :submissionDate,
+                        update_date = :updateDate
+                    WHERE reference_id = :referenceId
+                    """)
+                .bind("createDate", createDate)
+                .bind("submissionDate", submissionDate)
+                .bind("updateDate", updateDate)
+                .bind("referenceId", referenceId)
+                .execute());
+  }
+
+  /** Set only the submission date of a DAR. A null submission date makes the DAR a draft. */
+  protected static void setDarSubmissionDate(String referenceId, Date submissionDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    """
+                    UPDATE data_access_request SET submission_date = :submissionDate
+                    WHERE reference_id = :referenceId
+                    """)
+                .bind("submissionDate", submissionDate)
+                .bind("referenceId", referenceId)
                 .execute());
   }
 

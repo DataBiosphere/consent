@@ -920,14 +920,8 @@ class ElectionDAOTest extends DAOTestHelper {
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        FIXED_DATE,
-        FIXED_DATE,
-        FIXED_DATE,
-        data,
-        randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
+    setDarDates(referenceId, FIXED_DATE, FIXED_DATE, FIXED_DATE);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

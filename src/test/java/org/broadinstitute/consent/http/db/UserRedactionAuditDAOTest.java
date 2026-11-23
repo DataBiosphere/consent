@@ -34,14 +34,7 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
         darCollectionDAO.insertDarCollection("DAR-" + UUID.randomUUID(), user.getUserId(), now);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        now,
-        now,
-        now,
-        new DataAccessRequestData(),
-        null);
+        collectionId, referenceId, user.getUserId(), new DataAccessRequestData(), null);
     dataAccessRequestDAO.updateSubmissionInstitution(referenceId, user.getInstitutionId());
     return referenceId;
   }

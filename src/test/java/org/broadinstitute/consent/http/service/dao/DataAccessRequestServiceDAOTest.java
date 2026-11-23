@@ -74,11 +74,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         user.getUserId(),
-        old,
-        null,
-        old,
         new DataAccessRequestData(),
         user.getEraCommonsId());
+    setDarDates(referenceId, old, null, old);
     dataAccessRequestDAO.insertAllDarDatasets(List.of(oldDarDataset, oldDarDatasetTwo));
 
     DataAccessRequest dar = new DataAccessRequest();
@@ -125,11 +123,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         user.getUserId(),
-        old,
-        null,
-        old,
         new DataAccessRequestData(),
         user.getEraCommonsId());
+    setDarDates(referenceId, old, null, old);
 
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(referenceId);
@@ -158,11 +154,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         createDarCollection().getDarCollectionId(),
         referenceId,
         user.getUserId(),
-        new Date(),
-        null,
-        new Date(),
         original,
         user.getEraCommonsId());
+    setDarSubmissionDate(referenceId, null);
     dataAccessRequestDAO.insertAllDarDatasets(
         List.of(new DarDataset(referenceId, dataset.getDatasetId())));
     DataAccessRequest dar = spy(new DataAccessRequest());
@@ -191,14 +185,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     Integer collectionId = createDarCollection().getDarCollectionId();
     // Submitted after the caller read it as a draft.
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        new Date(),
-        new Date(),
-        new Date(),
-        original,
-        user.getEraCommonsId());
+        collectionId, referenceId, user.getUserId(), original, user.getEraCommonsId());
     dataAccessRequestDAO.insertAllDarDatasets(
         List.of(new DarDataset(referenceId, dataset.getDatasetId())));
     // Submitted, with an election: still reported as submitted (422), not 409.
@@ -237,11 +224,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         createDarCollection().getDarCollectionId(),
         referenceId,
         user.getUserId(),
-        new Date(),
-        null,
-        new Date(),
         original,
         user.getEraCommonsId());
+    setDarSubmissionDate(referenceId, null);
     dataAccessRequestDAO.insertAllDarDatasets(
         List.of(new DarDataset(referenceId, dataset.getDatasetId())));
     electionDAO.insertElection(
@@ -288,11 +273,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
           createDarCollection().getDarCollectionId(),
           referenceId,
           user.getUserId(),
-          new Date(),
-          null,
-          new Date(),
           referenceId.equals(archived) ? archivedData : new DataAccessRequestData(),
           user.getEraCommonsId());
+      setDarSubmissionDate(referenceId, null);
     }
 
     for (String referenceId : List.of(archived, noStatus)) {
@@ -322,11 +305,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         createDarCollection().getDarCollectionId(),
         referenceId,
         user.getUserId(),
-        new Date(),
-        null,
-        new Date(),
         data,
         user.getEraCommonsId());
+    setDarSubmissionDate(referenceId, null);
     return referenceId;
   }
 
@@ -400,11 +381,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         createDarCollection().getDarCollectionId(),
         referenceId,
         user.getUserId(),
-        new Date(),
-        null,
-        new Date(),
         stored,
         user.getEraCommonsId());
+    setDarSubmissionDate(referenceId, null);
 
     // The IRB document is kept from the row whatever the edit sends; the letter was removed.
     DataAccessRequest edit = new DataAccessRequest();
@@ -443,11 +422,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
           createDarCollection().getDarCollectionId(),
           referenceId,
           user.getUserId(),
-          new Date(),
-          null,
-          new Date(),
           shared,
           user.getEraCommonsId());
+      setDarSubmissionDate(referenceId, null);
     }
     DataAccessRequest edit = new DataAccessRequest();
     edit.setReferenceId(draftId);
@@ -548,9 +525,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
                           collectionId,
                           referenceId,
                           user.getUserId(),
-                          new Date(),
-                          new Date(),
-                          new Date(),
                           new DataAccessRequestData(),
                           user.getEraCommonsId());
                   transactionDAOs
@@ -624,9 +598,8 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     data.setHmb(true);
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

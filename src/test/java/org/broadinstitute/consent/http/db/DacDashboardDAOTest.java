@@ -327,14 +327,8 @@ class DacDashboardDAOTest extends DAOTestHelper {
       DataAccessRequestData data) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        researcher.getUserId(),
-        FIXED_DATE,
-        submissionDate,
-        FIXED_DATE,
-        data,
-        "synthetic-era-id");
+        collectionId, referenceId, researcher.getUserId(), data, "synthetic-era-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     datasetIdsByReferenceId.put(referenceId, datasetId);
     return referenceId;
@@ -355,11 +349,9 @@ class DacDashboardDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         researcher.getUserId(),
-        FIXED_DATE,
-        submissionDate,
-        FIXED_DATE,
         new DataAccessRequestData(),
         "synthetic-era-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }

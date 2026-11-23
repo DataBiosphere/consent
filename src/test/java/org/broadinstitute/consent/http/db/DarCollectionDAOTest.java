@@ -580,11 +580,13 @@ class DarCollectionDAOTest extends DAOTestHelper {
         testDar.getCollectionId(),
         testDar.getReferenceId(),
         testDar.getUserId(),
-        testDar.getCreateDate(),
-        testDar.getSubmissionDate(),
-        testDar.getUpdateDate(),
         testDar.getData(),
         user.getEraCommonsId());
+    setDarDates(
+        testDar.getReferenceId(),
+        testDar.getCreateDate(),
+        testDar.getSubmissionDate(),
+        testDar.getUpdateDate());
     dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDatasetId());
     return testDar;
   }
@@ -727,9 +729,8 @@ class DarCollectionDAOTest extends DAOTestHelper {
     data.setSigningOfficialEmail("test");
     User signingOfficial = createUser();
     String referenceId = UUID.randomUUID().toString();
-    Date now = FIXED_DATE;
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
     dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), referenceId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
@@ -876,9 +877,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     String referenceId = UUID.randomUUID().toString();
-    Date now = FIXED_DATE;
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        referenceId, user.getUserId(), now, now, data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, user.getUserId(), data);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

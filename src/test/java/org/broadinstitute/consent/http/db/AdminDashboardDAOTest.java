@@ -303,14 +303,8 @@ class AdminDashboardDAOTest extends DAOTestHelper {
             "DAR-" + UUID.randomUUID(), user.getUserId(), FIXED_DATE);
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        FIXED_DATE,
-        FIXED_DATE,
-        FIXED_DATE,
-        data,
-        "era-commons-id");
+        collectionId, referenceId, user.getUserId(), data, "era-commons-id");
+    setDarDates(referenceId, FIXED_DATE, FIXED_DATE, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }
@@ -329,14 +323,8 @@ class AdminDashboardDAOTest extends DAOTestHelper {
       DataAccessRequestData data) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        user.getUserId(),
-        FIXED_DATE,
-        submissionDate,
-        FIXED_DATE,
-        data,
-        "era-commons-id");
+        collectionId, referenceId, user.getUserId(), data, "era-commons-id");
+    setDarDates(referenceId, FIXED_DATE, submissionDate, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }

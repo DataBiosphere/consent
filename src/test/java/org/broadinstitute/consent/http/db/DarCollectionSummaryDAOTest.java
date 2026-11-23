@@ -43,21 +43,13 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   private DataAccessRequest createDataAccessRequestWithSOEmail(
       Integer collectionId, Integer userId, String soEmail) {
     String referenceId = UUID.randomUUID().toString();
-    Date createDate = new Date();
-    Date submissionDate = new Date();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(20));
     data.setStatus("test");
     data.setSigningOfficialEmail(soEmail);
+    // The insert writes NOW(), on the same clock as a progress report filed after it.
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        createDate,
-        submissionDate,
-        new Date(),
-        data,
-        randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -660,13 +652,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest dar = createDataAccessRequest(collectionId, userId);
 
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
-    dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(),
-        dar.userId,
-        null,
-        new Date(),
-        dar.getData(),
-        randomAlphabetic(10)); // draft DAR
+    dataAccessRequestDAO.updateDataToDraftByReferenceId(
+        dar.getReferenceId(), dar.userId, dar.getData()); // draft DAR
 
     List<DarCollectionSummary> summaries =
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
@@ -1048,14 +1035,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   private String insertSubmittedDar(Integer collectionId, Integer userId, Integer datasetId) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        FIXED_DATE,
-        FIXED_DATE,
-        FIXED_DATE,
-        new DataAccessRequestData(),
-        randomAlphabetic(10));
+        collectionId, referenceId, userId, new DataAccessRequestData(), randomAlphabetic(10));
+    setDarDates(referenceId, FIXED_DATE, FIXED_DATE, FIXED_DATE);
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return referenceId;
   }

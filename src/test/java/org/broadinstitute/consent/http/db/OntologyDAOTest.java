@@ -225,9 +225,8 @@ class OntologyDAOTest extends DAOTestHelper {
                 })
             .toList());
     String referenceId = UUID.randomUUID().toString();
-    Date now = Date.from(FIXED_INSTANT);
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, user.getUserId(), data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

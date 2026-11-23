@@ -190,9 +190,8 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new LibraryCardRequiredException();
     }
 
-    Date now = new Date();
     dataAccessRequestDAO.insertDraftDataAccessRequest(
-        dar.getReferenceId(), user.getUserId(), now, now, dar.getData());
+        dar.getReferenceId(), user.getUserId(), dar.getData());
     syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
 
     return findByReferenceId(dar.getReferenceId());
@@ -303,12 +302,7 @@ public class DataAccessRequestService implements ConsentLogger {
                 transactionalDarDAO.updateDraftToSubmittedForCollection(
                     collectionId, transactionReferenceId);
                 transactionalDarDAO.updateDataByReferenceId(
-                    transactionReferenceId,
-                    user.getUserId(),
-                    now,
-                    now,
-                    darData,
-                    user.getEraCommonsId());
+                    transactionReferenceId, user.getUserId(), darData, user.getEraCommonsId());
                 transactionalDaaDAO.deleteDarDAARelationship(darId);
               } else {
                 transactionReferenceId = UUID.randomUUID().toString();
@@ -317,9 +311,6 @@ public class DataAccessRequestService implements ConsentLogger {
                         collectionId,
                         transactionReferenceId,
                         user.getUserId(),
-                        now,
-                        now,
-                        now,
                         darData,
                         user.getEraCommonsId());
               }

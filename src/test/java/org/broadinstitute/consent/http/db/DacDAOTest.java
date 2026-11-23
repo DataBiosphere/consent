@@ -702,9 +702,8 @@ class DacDAOTest extends DAOTestHelper {
     data.setHmb(true);
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+        collectionId, referenceId, userId, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -715,9 +714,6 @@ class DacDAOTest extends DAOTestHelper {
         collection.getDarCollectionId(),
         randomUUID,
         user.getUserId(),
-        new Date(),
-        new Date(),
-        new Date(),
         new DataAccessRequestData(),
         user.getEraCommonsId());
     dataAccessRequestDAO.insertDARDatasetRelation(randomUUID, d.getDatasetId());

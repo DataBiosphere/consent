@@ -356,10 +356,9 @@ class StudyRecommendationDAOTest extends DAOTestHelper {
           darCollectionDAO.insertDarCollection(
               "DAR-" + randomAlphabetic(10), user.getUserId(), now);
       dataAccessRequestDAO.insertDataAccessRequest(
-          collectionId, referenceId, user.getUserId(), now, now, now, data, randomAlphabetic(10));
+          collectionId, referenceId, user.getUserId(), data, randomAlphabetic(10));
     } else {
-      dataAccessRequestDAO.insertDraftDataAccessRequest(
-          referenceId, user.getUserId(), now, now, data);
+      dataAccessRequestDAO.insertDraftDataAccessRequest(referenceId, user.getUserId(), data);
     }
     for (Integer datasetId : datasetIds) {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
