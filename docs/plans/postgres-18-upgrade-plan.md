@@ -433,14 +433,16 @@ these differences.
 | 2. `ANALYZE` | Completed. |
 | 3. `pg_cron` | Pass. The `postgres` database still lists it. |
 | 4. Consent `/status` | Pass. Healthy. |
-| 5. Migration job in the next deploy | Not recorded. |
+| 5. Migration job in the next deploy | Pass. The Liquibase migration job completed in the release to prod on the same day. |
 | 6. Smoke tests in DUOS | Pass. |
 | 7. `export-db.sh` | Does not apply to prod. |
 | 8. Slack message | Done. |
 | 9. Query Insights | Monitor for some days. |
 
-The Terraform change for `prod.tfvars` is complete. The time of the update operation is not
-recorded. The two pull requests for the test images are merged.
+The update operation took 16 minutes 15 seconds. That is 2 minutes 43 seconds more than the
+rehearsal on the clone, so the upgrade of an instance in use can take more time than its
+rehearsal. The Terraform change for `prod.tfvars` is complete. The two pull requests for the test
+images are merged.
 
 ## Rollback
 
