@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -300,6 +302,40 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         serviceDAO.createElectionsForDarByUser(chair.get(), collection.getMostRecentDar());
     assertFalse(createdElectionsForProgressReport.isEmpty());
     assertEquals(1, createdElectionsForProgressReport.size());
+  }
+
+  /**
+   * NOW() is the transaction start time. A transaction that waits on the collection lock can give
+   * the new election an earlier create_date than the archived election. The votes must still go to
+   * the new election, which has the highest election_id.
+   */
+  @Test
+  void testCreateElectionsForDarByUserPutsVotesOnNewestElectionWhenOldElectionIsLater() {
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
+    Integer datasetId = dar.getDatasetIds().getFirst();
+    Dac dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst().orElseThrow();
+    User chair =
+        dacDAO.findMembersByDacId(dac.getDacId()).stream()
+            .filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
+            .findFirst()
+            .orElseThrow();
+
+    serviceDAO.createElectionsForDarByUser(chair, dar);
+    Election oldElection =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).getFirst();
+    electionDAO.updateElectionById(oldElection.getElectionId(), ElectionStatus.CANCELED.getValue());
+    setElectionCreateDate(oldElection.getElectionId(), Instant.now().plus(1, ChronoUnit.DAYS));
+    int oldVoteCount = voteDAO.findVotesByElectionIds(List.of(oldElection.getElectionId())).size();
+
+    serviceDAO.createElectionsForDarByUser(chair, dar);
+
+    Election newElection =
+        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).getFirst();
+    assertNotEquals(oldElection.getElectionId(), newElection.getElectionId());
+    assertFalse(voteDAO.findVotesByElectionIds(List.of(newElection.getElectionId())).isEmpty());
+    assertEquals(
+        oldVoteCount, voteDAO.findVotesByElectionIds(List.of(oldElection.getElectionId())).size());
   }
 
   /**
