@@ -432,12 +432,12 @@ these differences.
 | --- | --- |
 | 1. Version | PostgreSQL 18.6. |
 | 2. `ANALYZE` | Completed. |
-| 3. `pg_cron` | Not recorded. |
-| 4. Consent `/status` | Not recorded. |
+| 3. `pg_cron` | Pass. The `postgres` database still lists it. |
+| 4. Consent `/status` | Pass. Healthy. |
 | 5. Migration job in the next deploy | Not recorded. |
-| 6. Smoke tests in DUOS | Not recorded. |
+| 6. Smoke tests in DUOS | Pass. |
 | 7. `export-db.sh` | Does not apply to prod. |
-| 8. Slack message | Not recorded. |
+| 8. Slack message | Done. |
 | 9. Query Insights | Monitor for some days. |
 
 The time of the update operation and the Terraform change for `prod.tfvars` are not recorded.
