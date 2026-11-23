@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -1422,13 +1421,18 @@ class DatasetDAOTest extends DAOTestHelper {
     String referenceId = collection.getDars().keySet().iterator().next();
     createDataAccessElectionWithVotes(
         referenceId, dataset.getDatasetId(), user.getUserId(), true, VoteType.FINAL);
-    Timestamp submitted = Timestamp.from(Instant.now().minus(submittedHoursAgo, ChronoUnit.HOURS));
+    // getApprovedDatasets compares the submission date with now() in the database, so the
+    // database clock sets the date too. That clock can differ from the JVM clock.
     jdbi.useHandle(
         handle ->
             handle
                 .createUpdate(
-                    "UPDATE data_access_request SET submission_date = :on WHERE reference_id = :ref")
-                .bind("on", submitted)
+                    """
+                    UPDATE data_access_request
+                    SET submission_date = NOW() - :hours * INTERVAL '1 hour'
+                    WHERE reference_id = :ref
+                    """)
+                .bind("hours", submittedHoursAgo)
                 .bind("ref", referenceId)
                 .execute());
 
