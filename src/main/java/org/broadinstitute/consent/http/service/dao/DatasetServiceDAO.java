@@ -7,7 +7,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -243,16 +242,16 @@ public class DatasetServiceDAO implements ConsentLogger {
    *
    * @param datasetId The ID of the dataset to update.
    * @param userId The ID of the user performing the update.
-   * @param indexDate The new index date, or null to un-index the dataset.
+   * @param indexed True to set the index date to now, or false to un-index the dataset.
    */
-  public void updateDatasetIndex(Integer datasetId, Integer userId, Instant indexDate) {
+  public void updateDatasetIndex(Integer datasetId, Integer userId, boolean indexed) {
     jdbi.useTransaction(
         _ -> {
           Dataset dataset = datasetDAO.findDatasetById(datasetId);
-          AuditActions action = indexDate == null ? AuditActions.DEINDEXED : AuditActions.INDEXED;
+          AuditActions action = indexed ? AuditActions.INDEXED : AuditActions.DEINDEXED;
           String dsAuditName =
               dataset.getName() == null ? dataset.getDatasetIdentifier() : dataset.getName();
-          datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexDate);
+          datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), indexed);
           addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, action);
         });
   }

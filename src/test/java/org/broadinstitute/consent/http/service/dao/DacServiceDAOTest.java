@@ -223,7 +223,7 @@ class DacServiceDAOTest extends DAOTestHelper {
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
     // Approve the dataset so dac_approval_date is populated
-    datasetDAO.updateDatasetApproval(true, Instant.now(), admin.getUserId(), datasetId);
+    datasetDAO.updateDatasetApproval(true, admin.getUserId(), datasetId);
 
     Timestamp dacApprovalDateBefore =
         jdbi.withHandle(
@@ -338,8 +338,8 @@ class DacServiceDAOTest extends DAOTestHelper {
                 .bind("datasetId", openDatasetId)
                 .bind("propertyKey", accessManagementKeyId)
                 .execute());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), admin.getUserId(), datasetId);
-    datasetDAO.updateDatasetApproval(true, Instant.now(), admin.getUserId(), openDatasetId);
+    datasetDAO.updateDatasetApproval(true, admin.getUserId(), datasetId);
+    datasetDAO.updateDatasetApproval(true, admin.getUserId(), openDatasetId);
     String referenceId = randomAlphabetic(8);
     String openReferenceId = randomAlphabetic(8);
     Date controlledDarCreatedAt = Date.from(Instant.now().minusSeconds(7200));
