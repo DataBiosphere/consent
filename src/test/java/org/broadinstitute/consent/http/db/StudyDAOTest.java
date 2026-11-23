@@ -285,8 +285,9 @@ class StudyDAOTest extends DAOTestHelper {
         altFileIdCreatedFirst,
         org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20),
         org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(20),
-        updateUser.getUserId(),
-        Instant.ofEpochMilli(120));
+        updateUser.getUserId());
+
+    setFileUpdateDate(altFileIdCreatedFirst, Instant.ofEpochMilli(120));
 
     Integer altFileIdCreatedSecond =
         fileStorageObjectDAO.insertNewFile(
