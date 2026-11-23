@@ -6,8 +6,8 @@ instances in dev and staging from PostgreSQL 16 to 18.
 uses the Cloud SQL major version upgrade in place, started from the Google Cloud console. The
 Terraform changes after the upgrade.
 
-Dev and staging are on PostgreSQL 18. Prod is not. See "Prod (DT-4324)" for the work that
-remains.
+Dev, staging, and prod are on PostgreSQL 18. The prod upgrade was on 2026-11-23. See
+"Prod (DT-4324)" for its results and for the work that remains.
 
 This document is the full record of the procedure. It contains no instance names. Each command
 uses `<instance>` and `<project>`. The instance name is the `db_name` value in the Terraform
@@ -425,6 +425,22 @@ these differences.
 | 6. Terraform | Set `db_version` in `prod.tfvars`, and use the Atlantis project for prod. |
 | 7. After the upgrade | Item 7 does not apply. `scripts/export-db.sh` does not export prod. |
 | Rollback | The same procedure. It was not rehearsed, and data that the services write after the upgrade is lost. |
+
+### Results of the prod upgrade, 2026-11-23
+
+| Item of step 7 | Result |
+| --- | --- |
+| 1. Version | PostgreSQL 18.6. |
+| 2. `ANALYZE` | Completed. |
+| 3. `pg_cron` | Not recorded. |
+| 4. Consent `/status` | Not recorded. |
+| 5. Migration job in the next deploy | Not recorded. |
+| 6. Smoke tests in DUOS | Not recorded. |
+| 7. `export-db.sh` | Does not apply to prod. |
+| 8. Slack message | Not recorded. |
+| 9. Query Insights | Monitor for some days. |
+
+The time of the update operation and the Terraform change for `prod.tfvars` are not recorded.
 
 After prod is on PostgreSQL 18:
 
