@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -561,6 +562,100 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertEquals("own-irb.pdf", saved.getValue().getIrbDocumentName());
     assertNull(saved.getValue().getCollaborationLetterLocation());
     assertNull(saved.getValue().getCollaborationLetterName());
+  }
+
+  // Nothing after the commit may fail the request: the submitted DAR is read inside the
+  // transaction.
+  @Test
+  void testCreateDataAccessRequest_ReadsTheDarBeforeTheCommit() {
+    DataAccessRequestDAO transactionDarDAO = mockTransactionalDaosWith();
+    DataAccessRequest dar = newDarToSubmit();
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(transactionDarDAO.findByReferenceId(anyString())).thenReturn(dar);
+
+    assertSame(dar, service.createDataAccessRequest(user, dar, request));
+    // Only the draft lookup before the transaction reads outside it.
+    verify(dataAccessRequestDAO).findByReferenceId(anyString());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_ReadsASubmittedDraftBeforeTheCommit() {
+    DataAccessRequestDAO transactionDarDAO = mockTransactionalDaosWith();
+    DataAccessRequest draft = generateDataAccessRequest();
+    draft.addDatasetIds(List.of(1, 2, 3));
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    mockApprovedDatasets(draft.getDatasetIds());
+    when(dataAccessRequestDAO.findByReferenceId(draft.getReferenceId())).thenReturn(draft);
+    when(transactionDarDAO.findByReferenceId(draft.getReferenceId())).thenReturn(draft);
+
+    assertSame(draft, service.createDataAccessRequest(user, draft, request));
+    // Only the draft lookup before the transaction reads outside it.
+    verify(dataAccessRequestDAO).findByReferenceId(draft.getReferenceId());
+  }
+
+  /**
+   * Runs transactions with their own DAR DAO, so reads inside and outside them can be told apart.
+   */
+  private DataAccessRequestDAO mockTransactionalDaosWith() {
+    DataAccessRequestDAO transactionDarDAO = mock(DataAccessRequestDAO.class);
+    doAnswer(
+            invocation -> {
+              Function<DataAccessRequestServiceDAO.TransactionDAOs, ?> callback =
+                  invocation.getArgument(0);
+              return callback.apply(
+                  new DataAccessRequestServiceDAO.TransactionDAOs(
+                      transactionDarDAO, daaDAO, darCollectionDAO, counterDAO, electionDAO));
+            })
+        .when(dataAccessRequestServiceDAO)
+        .inTransaction(any());
+    return transactionDarDAO;
+  }
+
+  @Test
+  void testCreateDataAccessRequest_RollsBackWhenTheDarCanNotBeRead() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = newDarToSubmit();
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    mockApprovedDatasets(dar.getDatasetIds());
+
+    assertThrows(
+        NotFoundException.class, () -> service.createDataAccessRequest(user, dar, request));
+    verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_IsReturnedWhenTheDACRulesFail() {
+    mockTransactionalDaos();
+    DataAccessRequest dar = newDarToSubmit();
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    mockApprovedDatasets(dar.getDatasetIds());
+    when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
+    when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+    doThrow(new RuntimeException("rules failed"))
+        .when(ruleService)
+        .triggerDACRuleSettings(any(), any(), any(), any());
+
+    assertSame(dar, service.createDataAccessRequest(user, dar, request));
+    verify(ruleService).triggerDACRuleSettings(any(), any(), any(), any());
+  }
+
+  /** A DAR submitted without a draft, with no SO approval required. */
+  private DataAccessRequest newDarToSubmit() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setReferenceId("id");
+    when(counterService.getNextDarSequence(counterDAO)).thenReturn(1);
+    when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
+        .thenReturn(1);
+    when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
+            dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+        .thenReturn(List.of());
+    return dar;
   }
 
   @Test
