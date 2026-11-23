@@ -310,8 +310,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * the new election, which has the highest election_id.
    */
   @Test
-  void testCreateElectionsForDarByUserPutsVotesOnNewestElectionWhenOldElectionIsLater()
-      throws Exception {
+  void testCreateElectionsForDarByUserPutsVotesOnNewestElectionWhenOldElectionIsLater() {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
     Integer datasetId = dar.getDatasetIds().getFirst();
