@@ -1497,13 +1497,14 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            yesterday,
             darCollection.getMostRecentDar().getReferenceId(),
             dataset1.getDatasetId());
     Integer voteId1 =
         voteDAO.insertVote(chairperson1.getUserId(), electionId1, VoteType.FINAL.getValue());
     updateVote(true, "rationale", yesterday, voteId1, false, electionId1, yesterday, false);
-    electionDAO.updateElectionById(electionId1, ElectionStatus.CLOSED.getValue(), yesterday);
+    electionDAO.updateElectionById(electionId1, ElectionStatus.CLOSED.getValue());
+    setElectionCreateDate(electionId1, yesterday.toInstant());
+    setElectionLastUpdate(electionId1, yesterday.toInstant());
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(1, approvedDatasets.size());
     assertEquals(
@@ -1514,13 +1515,14 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            yesterday,
             darCollection.getMostRecentDar().getReferenceId(),
             dataset2.getDatasetId());
     Integer voteId2 =
         voteDAO.insertVote(chairperson1.getUserId(), electionId2, VoteType.FINAL.getValue());
     updateVote(true, "rationale", yesterday, voteId2, false, electionId1, yesterday, false);
-    electionDAO.updateElectionById(electionId2, ElectionStatus.CLOSED.getValue(), yesterday);
+    electionDAO.updateElectionById(electionId2, ElectionStatus.CLOSED.getValue());
+    setElectionCreateDate(electionId2, yesterday.toInstant());
+    setElectionLastUpdate(electionId2, yesterday.toInstant());
     assertEquals(2, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     // Simulate 2 DAC 2 elections for today
@@ -1529,26 +1531,24 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            today,
             darCollection.getMostRecentDar().getReferenceId(),
             dataset3.getDatasetId());
     Integer voteId3 =
         voteDAO.insertVote(chairperson2.getUserId(), electionId3, VoteType.FINAL.getValue());
     updateVote(true, "rationale", today, voteId3, false, electionId3, today, false);
-    electionDAO.updateElectionById(electionId3, ElectionStatus.CLOSED.getValue(), today);
+    electionDAO.updateElectionById(electionId3, ElectionStatus.CLOSED.getValue());
     assertEquals(3, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     Integer electionId4 =
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            today,
             darCollection.getMostRecentDar().getReferenceId(),
             dataset4.getDatasetId());
     Integer voteId4 =
         voteDAO.insertVote(chairperson2.getUserId(), electionId4, VoteType.FINAL.getValue());
     updateVote(true, "rationale", today, voteId4, false, electionId4, today, false);
-    electionDAO.updateElectionById(electionId4, ElectionStatus.CLOSED.getValue(), today);
+    electionDAO.updateElectionById(electionId4, ElectionStatus.CLOSED.getValue());
 
     List<ApprovedDataset> approvedDatasets2 = datasetDAO.getApprovedDatasets(user.getUserId());
     assertNotNull(approvedDatasets2);
@@ -1589,13 +1589,12 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            today,
             progressReport.getReferenceId(),
             dataset3.getDatasetId());
     Integer voteId5 =
         voteDAO.insertVote(chairperson2.getUserId(), electionId5, VoteType.FINAL.getValue());
     updateVote(true, "rationale", today, voteId5, false, electionId5, today, false);
-    electionDAO.updateElectionById(electionId5, ElectionStatus.CLOSED.getValue(), today);
+    electionDAO.updateElectionById(electionId5, ElectionStatus.CLOSED.getValue());
     List<ApprovedDataset> approvedDatasets5 = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(1, approvedDatasets5.size());
     assertEquals(progressReport.getExpiresAt(), approvedDatasets5.getFirst().getExpirationDate());
@@ -1604,14 +1603,13 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            today,
             progressReport.getReferenceId(),
             dataset4.getDatasetId());
     Integer voteId6 =
         voteDAO.insertVote(chairperson2.getUserId(), electionId6, VoteType.FINAL.getValue());
     // vote no on dataset 4
     updateVote(false, "rationale", today, voteId6, false, electionId6, today, false);
-    electionDAO.updateElectionById(electionId6, ElectionStatus.CLOSED.getValue(), today);
+    electionDAO.updateElectionById(electionId6, ElectionStatus.CLOSED.getValue());
 
     List<ApprovedDataset> approvedDatasets6 = datasetDAO.getApprovedDatasets(user.getUserId());
     assertNotNull(approvedDatasets6);
@@ -1631,13 +1629,12 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            today,
             progressReport.getReferenceId(),
             dataset3.getDatasetId());
     Integer voteId7 =
         voteDAO.insertVote(chairperson2.getUserId(), electionId7, VoteType.FINAL.getValue());
     updateVote(false, "rationale", today, voteId7, false, electionId7, today, false);
-    electionDAO.updateElectionById(electionId7, ElectionStatus.CLOSED.getValue(), today);
+    electionDAO.updateElectionById(electionId7, ElectionStatus.CLOSED.getValue());
     assertEquals(0, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     dataset3Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
@@ -2056,13 +2053,12 @@ class DatasetDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(userId, electionId, voteType.getValue());
     updateVote(
         finalVoteApproval, "rationale", new Date(), voteId, false, electionId, new Date(), false);
-    electionDAO.updateElectionById(electionId, ElectionStatus.CLOSED.getValue(), new Date());
+    electionDAO.updateElectionById(electionId, ElectionStatus.CLOSED.getValue());
     datasetDAO.updateDatasetApproval(finalVoteApproval, userId, datasetId);
   }
 }

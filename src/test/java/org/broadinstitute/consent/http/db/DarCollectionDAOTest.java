@@ -55,7 +55,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     Election election = dar.getElections().values().stream().findFirst().orElse(null);
     assertNotNull(election);
     Integer datasetId = election.getDatasetId();
-    electionDAO.insertElection("DataSet", "Open", FIXED_DATE, referenceId, datasetId);
+    electionDAO.insertElection("DataSet", "Open", referenceId, datasetId);
   }
 
   private List<Election> getElectionsFromCollection(DarCollection collection) {
@@ -159,7 +159,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     electionDAO.insertElection(
         otherType,
         ElectionStatus.OPEN.getValue(),
-        FIXED_DATE,
         dar.getReferenceId(),
         dataAccessElection.getDatasetId());
 
@@ -185,7 +184,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     electionDAO.insertElection(
         otherType,
         ElectionStatus.OPEN.getValue(),
-        FIXED_DATE,
         dar.getReferenceId(),
         dataAccessElection.getDatasetId());
 
@@ -845,9 +843,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CANCELED.getValue(),
-            createDate,
             referenceId,
             datasetId);
+    setElectionCreateDate(electionId, createDate.toInstant());
     return electionDAO.findElectionById(electionId);
   }
 
@@ -895,9 +893,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            createDate,
             referenceId,
             datasetId);
+    setElectionCreateDate(electionId, createDate.toInstant());
     return electionDAO.findElectionById(electionId);
   }
 

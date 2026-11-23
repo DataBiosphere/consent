@@ -417,7 +417,7 @@ class MatchDAOTest extends DAOTestHelper {
   private Election createUnknownElection(String referenceId, Integer datasetId) {
     Integer electionId =
         electionDAO.insertElection(
-            "UnknownElection", ElectionStatus.OPEN.getValue(), FIXED_DATE, referenceId, datasetId);
+            "UnknownElection", ElectionStatus.OPEN.getValue(), referenceId, datasetId);
     return electionDAO.findElectionById(electionId);
   }
 
@@ -426,7 +426,6 @@ class MatchDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);

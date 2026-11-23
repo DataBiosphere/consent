@@ -370,10 +370,9 @@ class DacServiceDAOTest extends DAOTestHelper {
                 .bind("referenceId", referenceId)
                 .execute());
     Integer controlledElectionId =
-        electionDAO.insertElection("DataAccess", "Open", new Date(), referenceId, datasetId);
+        electionDAO.insertElection("DataAccess", "Open", referenceId, datasetId);
     Integer openElectionId =
-        electionDAO.insertElection(
-            "DataAccess", "Open", new Date(), openReferenceId, openDatasetId);
+        electionDAO.insertElection("DataAccess", "Open", openReferenceId, openDatasetId);
     DacDatasetExternalizationResponse response =
         serviceDAO.convertDacDatasetsToExternal(
             dacId,

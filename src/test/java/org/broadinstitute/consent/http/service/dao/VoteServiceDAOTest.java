@@ -143,8 +143,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Election election1 = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Election election2 = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     Election election3 = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
-    electionDAO.updateElectionById(
-        election1.getElectionId(), ElectionStatus.CLOSED.getValue(), FIXED_DATE);
+    electionDAO.updateElectionById(election1.getElectionId(), ElectionStatus.CLOSED.getValue());
 
     Vote vote1 = createDacVote(user.getUserId(), election1.getElectionId());
     Vote vote2 = createDacVote(user.getUserId(), election2.getElectionId());
@@ -228,7 +227,6 @@ class VoteServiceDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);

@@ -161,6 +161,9 @@ public class DarCollectionServiceDAO {
     return userVotes;
   }
 
+  /// Add the vote to the newest election, which has the highest election_id. Do not order by
+  /// create_date: NOW() is the transaction start time, so a transaction that waits on the
+  /// collection lock can give the new election an earlier create_date than an older election.
   private Update createVoteInsert(
       Handle handle,
       String voteType,
@@ -176,7 +179,7 @@ public class DarCollectionServiceDAO {
             WHERE election_type = :electionType
             AND reference_id = :referenceId
             AND dataset_id = :datasetId
-            ORDER BY create_date desc
+            ORDER BY election_id DESC
             LIMIT 1)
         """;
     Update insert = handle.createUpdate(sql);

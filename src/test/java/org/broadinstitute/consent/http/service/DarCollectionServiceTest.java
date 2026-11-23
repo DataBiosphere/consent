@@ -568,7 +568,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.setCreateUserId(user.getUserId());
     service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER);
     verify(electionDAO).findLastElectionsByReferenceIds(anyList());
-    verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
+    verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString());
     verify(dataAccessRequestDAO).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, atLeastOnce())
         .findDARCollectionByCollectionId(collection.getDarCollectionId());
@@ -641,7 +641,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.cancelDarCollectionByRole(user, collection, UserRoles.CHAIRPERSON);
     verify(datasetDAO).findDatasetIdsByDACUserId(anyInt());
     verify(electionDAO).findOpenElectionsByReferenceIds(anyList());
-    verify(electionDAO).updateElectionById(anyInt(), anyString(), any());
+    verify(electionDAO).updateElectionById(anyInt(), anyString());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
     verify(darCollectionDAO, atLeastOnce())
         .findDARCollectionByCollectionId(collection.getDarCollectionId());
@@ -4140,7 +4140,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(electionDAO).archiveElectionByIds(eq(List.of(55)), any());
+    verify(electionDAO).archiveElectionByIds(List.of(55));
     verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset);
   }
 
@@ -4169,7 +4169,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
 
-    verify(electionDAO).archiveElectionByIds(eq(List.of(55)), any());
+    verify(electionDAO).archiveElectionByIds(List.of(55));
   }
 
   @Test
