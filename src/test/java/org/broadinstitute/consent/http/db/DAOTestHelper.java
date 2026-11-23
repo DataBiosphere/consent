@@ -394,6 +394,17 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
                 .execute());
   }
 
+  /** updateFileById always writes NOW(), so set the update date that an ordering test needs. */
+  protected void setFileUpdateDate(Integer fileStorageObjectId, Instant updateDate) {
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    "UPDATE file_storage_object SET update_date = :updateDate WHERE file_storage_object_id = :id")
+                .bind("updateDate", updateDate)
+                .bind("id", fileStorageObjectId)
+                .execute());
+  }
+
   /**
    * insertDataset always writes NOW() to create_date and update_date, so set the dates that a
    * metrics or ordering test needs.

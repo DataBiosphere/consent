@@ -87,12 +87,45 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateFileById() {
+    FileStorageObject origFile = createFileStorageObject();
+    FileStorageObject otherFile = createFileStorageObject();
+    String gcsFileUri = BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri();
+    String mediaType = randomAlphabetic(10);
+    User updateUser = createUser();
+
+    assertNull(origFile.getUpdateUserId());
+    assertNull(origFile.getUpdateDate());
+
+    // The update joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          fileStorageObjectDAO.updateFileById(
+              origFile.getFileStorageObjectId(), gcsFileUri, mediaType, updateUser.getUserId());
+        });
+
+    FileStorageObject updatedFile =
+        fileStorageObjectDAO.findFileById(origFile.getFileStorageObjectId());
+    assertEquals(BlobId.fromGsUtilUri(gcsFileUri), updatedFile.getBlobId());
+    assertEquals(mediaType, updatedFile.getMediaType());
+    assertEquals(updateUser.getUserId(), updatedFile.getUpdateUserId());
+    assertEquals(transactionNow.get(), updatedFile.getUpdateDate());
+
+    FileStorageObject unchangedFile =
+        fileStorageObjectDAO.findFileById(otherFile.getFileStorageObjectId());
+    assertNull(unchangedFile.getUpdateUserId());
+    assertNull(unchangedFile.getUpdateDate());
+  }
+
+  @Test
   void testDeleteFileByEntityId() {
     String entityId = randomAlphabetic(10);
     String otherEntityId = randomAlphabetic(8);
 
     User deleteUser = createUser();
-    Instant deleteDate = Instant.now();
 
     FileStorageObject file1 =
         createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
@@ -115,7 +148,15 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertNull(file4.getDeleteUserId());
     assertNull(file4.getDeleteDate());
 
-    fileStorageObjectDAO.deleteFilesByEntityId(entityId, deleteUser.getUserId(), deleteDate);
+    // The delete joins this transaction, so NOW() here is the value that it writes.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(
+              h.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant());
+          fileStorageObjectDAO.deleteFilesByEntityId(entityId, deleteUser.getUserId());
+        });
+    Instant deleteDate = transactionNow.get();
 
     file1 = fileStorageObjectDAO.findFileById(file1.getFileStorageObjectId());
     file2 = fileStorageObjectDAO.findFileById(file2.getFileStorageObjectId());
@@ -124,13 +165,13 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
     assertTrue(file1.getDeleted());
     assertEquals(deleteUser.getUserId(), file1.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(), file1.getDeleteDate().getEpochSecond());
+    assertEquals(deleteDate, file1.getDeleteDate());
     assertTrue(file2.getDeleted());
     assertEquals(deleteUser.getUserId(), file2.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(), file2.getDeleteDate().getEpochSecond());
+    assertEquals(deleteDate, file2.getDeleteDate());
     assertTrue(file3.getDeleted());
     assertEquals(deleteUser.getUserId(), file3.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(), file3.getDeleteDate().getEpochSecond());
+    assertEquals(deleteDate, file3.getDeleteDate());
     assertFalse(file4.getDeleted()); // should not be effected
     assertNull(file4.getDeleteUserId());
     assertNull(file4.getDeleteDate());
