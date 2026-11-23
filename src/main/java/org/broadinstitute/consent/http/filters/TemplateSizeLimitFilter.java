@@ -6,9 +6,6 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.ext.Provider;
-import jakarta.ws.rs.ext.ReaderInterceptor;
-import jakarta.ws.rs.ext.ReaderInterceptorContext;
-import java.io.IOException;
 import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.broadinstitute.consent.http.util.ContentLength;
@@ -24,13 +21,13 @@ import org.broadinstitute.consent.http.util.ContentLength;
  * is refused before a byte of the body is read, which is the honest oversize upload. A body sent
  * chunked, or under a {@code Content-Length} that lies, has no length to check, so the entity
  * stream is bounded as well and stops the read at the cap. That second refusal is raised while
- * Jersey is reading the body, so this also intercepts the read, to answer it with a 413 ({@link
- * BoundedEntityStream#readOrRefuse}) after MIMEPull has deleted what it wrote to temporary disk.
+ * Jersey is reading the body, after MIMEPull has deleted what it wrote to temporary disk, and is
+ * answered with a 413 by {@code RequestTooLargeExceptionMapper}.
  */
 @Provider
 @TemplateSizeLimited
 @Priority(Priorities.USER)
-public class TemplateSizeLimitFilter implements ContainerRequestFilter, ReaderInterceptor {
+public class TemplateSizeLimitFilter implements ContainerRequestFilter {
 
   /**
    * What the multipart envelope adds around the file: the boundaries, the part headers, and the
@@ -56,10 +53,5 @@ public class TemplateSizeLimitFilter implements ContainerRequestFilter, ReaderIn
             requestContext.getEntityStream(),
             MAX_REQUEST_BYTES,
             StudyTemplateValidationService.TOO_LARGE_MESSAGE));
-  }
-
-  @Override
-  public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException {
-    return BoundedEntityStream.readOrRefuse(context);
   }
 }

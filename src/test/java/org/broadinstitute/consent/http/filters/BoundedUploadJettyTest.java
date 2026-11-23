@@ -19,11 +19,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.mappers.RequestTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.service.studytemplate.StudyTemplateValidationService;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.MultiPartProperties;
@@ -32,6 +34,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Sends oversized bodies chunked to a real server, which the in-memory test container can't do (it
@@ -48,7 +51,9 @@ class BoundedUploadJettyTest {
     @Path("template")
     @TemplateSizeLimited
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response template(@FormDataParam("file") InputStream file) throws IOException {
+    public Response template(FormDataMultiPart multipart) throws IOException {
+      // The template resource's parameter: the whole message, not one part.
+      InputStream file = multipart.getField("file").getValueAs(InputStream.class);
       return Response.ok(Long.toString(file.transferTo(java.io.OutputStream.nullOutputStream())))
           .build();
     }
@@ -63,17 +68,17 @@ class BoundedUploadJettyTest {
     }
   }
 
-  private static java.nio.file.Path tempDir;
+  @TempDir private static java.nio.file.Path tempDir;
   private static Server server;
   private static String base;
 
   @BeforeAll
   static void start() throws Exception {
-    tempDir = Files.createTempDirectory("bounded-upload");
     ResourceConfig config =
         new ResourceConfig()
             .register(new UploadResource())
             .register(TemplateSizeLimitFilter.class)
+            .register(RequestTooLargeExceptionMapper.class)
             .register(MultiPartFeature.class)
             .register(new MultiPartProperties().tempDir(tempDir.toString()).resolver());
     server = new Server(0);

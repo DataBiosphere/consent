@@ -8,11 +8,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.ReaderInterceptorContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -157,38 +155,6 @@ class TemplateSizeLimitFilterTest {
     assertEquals(1, bounded.read());
     assertThrows(IOException.class, bounded::reset);
     assertEquals(2, bounded.read());
-  }
-
-  @Test
-  void testAReadTheStreamStoppedIsAnswered413() throws IOException {
-    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
-    when(context.proceed()).thenThrow(new RequestTooLargeException("Template is too large"));
-
-    WebApplicationException e =
-        assertThrows(WebApplicationException.class, () -> filter.aroundReadFrom(context));
-    assertEquals(
-        Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), e.getResponse().getStatus());
-    assertEquals(
-        new Error(
-            "Template is too large", Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode()),
-        e.getResponse().getEntity());
-  }
-
-  @Test
-  void testAReadWithinTheCapIsPassedThrough() throws IOException {
-    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
-    when(context.proceed()).thenReturn("entity");
-
-    assertEquals("entity", filter.aroundReadFrom(context));
-  }
-
-  @Test
-  void testOtherReadFailuresAreLeftAlone() throws IOException {
-    ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
-    IOException failure = new IOException("connection reset");
-    when(context.proceed()).thenThrow(failure);
-
-    assertEquals(failure, assertThrows(IOException.class, () -> filter.aroundReadFrom(context)));
   }
 
   private static void readEveryByte(InputStream stream) throws IOException {

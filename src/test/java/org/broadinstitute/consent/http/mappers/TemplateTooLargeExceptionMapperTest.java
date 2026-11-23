@@ -14,8 +14,7 @@ class TemplateTooLargeExceptionMapperTest {
 
   @Test
   void testToResponseAnswersARefusalWith413() {
-    // The mapped path, which the resource's own catch never sees: a refusal raised from the
-    // bounded stream while Jersey is still reading reaches the client only through here.
+    // The mapped path: a refusal the resource method does not catch itself.
     Response response = mapper.toResponse(new TemplateTooLargeException("Template is too large"));
 
     assertEquals(Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), response.getStatus());

@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.mappers.ForbiddenExceptionMapper;
 import org.broadinstitute.consent.http.mappers.JsonErrorHandler;
 import org.broadinstitute.consent.http.mappers.NotFoundExceptionMapper;
+import org.broadinstitute.consent.http.mappers.RequestTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.mappers.TemplateTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -256,7 +257,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(RateLimitFilter.class));
     env.jersey().register(injector.getInstance(PublicRateLimitFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
-    env.jersey().register(TemplateSizeLimitFilter.class);
+    registerRequestSizeLimits(env.jersey());
     env.jersey().register(EmailSendIdFilter.class);
   }
 
@@ -269,6 +270,15 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
   // liquibase.runOnStartup is an optional config flag that defaults to false. Environments that run
   // the separate Liquibase migration Job omit it. Local configs set it to true.
+  /**
+   * The request size limits, with the mapper that answers a body they stop mid-read: without it the
+   * client gets a 500.
+   */
+  static void registerRequestSizeLimits(JerseyEnvironment jersey) {
+    jersey.register(TemplateSizeLimitFilter.class);
+    jersey.register(RequestTooLargeExceptionMapper.class);
+  }
+
   /** The anonymous showcase lookup is off unless the config turns it on. */
   static void registerPublicShowcaseLookup(
       ConsentConfiguration config, JerseyEnvironment jersey, Injector injector) {
