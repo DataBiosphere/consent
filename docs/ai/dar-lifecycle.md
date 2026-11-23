@@ -85,10 +85,9 @@ failure to record is logged and doesn't fail the request.
 - Every write to `submission_date`: those two and `insertProgressReport` write `NOW()`, and
   `updateDataToDraftByReferenceId`, which resubmit calls, writes `NULL`. No `DataAccessRequestDAO`
   write binds a create, update or submission date from Java, so `submission_date` is on the
-  database clock. Compare it only with dates the database wrote.
-  `DarCollectionService.hasCurrentElection` compares it with an election's `create_date`, which
-  `ElectionDAO` binds from Java until DT-2928 moves it to `NOW()`; until then that comparison
-  mixes the two clocks.
+  database clock. Compare it only with dates the database wrote, as
+  `DarCollectionService.hasCurrentElection` does with an election's `create_date`, which
+  `ElectionDAO` writes with `NOW()`.
   `updateDataByReferenceId` doesn't change `submission_date`. Draft edits
   (`DataAccessRequestServiceDAO.updateByReferenceId`) don't write it: they update only rows where
   `submission_date IS NULL` and fail with 422 otherwise, so an edit that races a submit can't turn

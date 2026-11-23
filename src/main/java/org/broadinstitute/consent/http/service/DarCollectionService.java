@@ -17,7 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -1094,7 +1093,7 @@ public class DarCollectionService implements ConsentLogger {
         election -> {
           if (!election.getStatus().equals(ElectionStatus.CANCELED.getValue())) {
             electionDAO.updateElectionById(
-                election.getElectionId(), ElectionStatus.CANCELED.getValue(), new Date());
+                election.getElectionId(), ElectionStatus.CANCELED.getValue());
           }
         });
   }
@@ -1357,7 +1356,7 @@ public class DarCollectionService implements ConsentLogger {
             .toList();
 
     if (!oldElectionIds.isEmpty()) {
-      electionDAO.archiveElectionByIds(oldElectionIds, new Date());
+      electionDAO.archiveElectionByIds(oldElectionIds);
     }
   }
 

@@ -132,7 +132,7 @@ abstract class DarLifecycleDAOTestHelper extends DAOTestHelper {
 
   protected Integer election(String referenceId, Integer datasetId, ElectionStatus status) {
     return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), new Date(), referenceId, datasetId);
+        ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
   }
 
   /** Closes a new election with a final vote cast {@code on}; null leaves the vote undated. */

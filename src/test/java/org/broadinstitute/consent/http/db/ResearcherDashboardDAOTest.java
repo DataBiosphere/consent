@@ -393,7 +393,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer firstVote =
@@ -403,7 +402,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer secondVote =
@@ -482,7 +480,6 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, voteType.getValue());

@@ -71,7 +71,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, voteType.getValue());
@@ -93,7 +92,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
@@ -307,7 +305,6 @@ class SigningOfficialDashboardDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CLOSED.getValue(),
-            FIXED_DATE,
             referenceId,
             datasetId);
     Integer voteId = voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());

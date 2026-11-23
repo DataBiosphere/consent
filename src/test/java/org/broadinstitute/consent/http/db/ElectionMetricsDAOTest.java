@@ -57,12 +57,13 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
     election(ElectionStatus.OPEN, LocalDateTime.of(2025, 12, 31, 23, 59));
     election(ElectionStatus.OPEN, LocalDateTime.of(2026, 1, 1, 0, 0));
     election(ElectionStatus.OPEN, LocalDateTime.of(2027, 1, 1, 0, 0));
-    electionDAO.insertElection(
-        LEGACY_RP_TYPE,
-        ElectionStatus.OPEN.getValue(),
-        at(LocalDateTime.of(2026, 6, 1, 12, 0)),
-        UUID.randomUUID().toString(),
-        datasetId);
+    Integer legacyElectionId =
+        electionDAO.insertElection(
+            LEGACY_RP_TYPE,
+            ElectionStatus.OPEN.getValue(),
+            UUID.randomUUID().toString(),
+            datasetId);
+    setElectionCreateDate(legacyElectionId, at(LocalDateTime.of(2026, 6, 1, 12, 0)).toInstant());
 
     assertEquals(
         List.of(new ElectionBucket(Q1, ElectionStatus.OPEN.getValue(), 1)),
@@ -100,12 +101,13 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
   void mergesStatusesStoredInAnyCase() {
     LocalDateTime created = LocalDateTime.of(2026, 6, 1, 12, 0);
     election(ElectionStatus.CANCELED, created);
-    electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        "CANCELED",
-        at(created),
-        UUID.randomUUID().toString(),
-        datasetId);
+    Integer upperCaseElectionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            "CANCELED",
+            UUID.randomUUID().toString(),
+            datasetId);
+    setElectionCreateDate(upperCaseElectionId, at(created).toInstant());
 
     assertEquals(
         List.of(new ElectionBucket(Q2, ElectionStatus.CANCELED.getValue(), 2)),
@@ -167,12 +169,15 @@ class ElectionMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer election(ElectionStatus status, LocalDateTime created, Integer onDataset) {
-    return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        status.getValue(),
-        at(created),
-        UUID.randomUUID().toString(),
-        onDataset);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            status.getValue(),
+            UUID.randomUUID().toString(),
+            onDataset);
+    // insertElection always writes NOW(), so set the creation time that the test needs.
+    setElectionCreateDate(electionId, at(created).toInstant());
+    return electionId;
   }
 
   private Integer dataset(Integer dacId) {

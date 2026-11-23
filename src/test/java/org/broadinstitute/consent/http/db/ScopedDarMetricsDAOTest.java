@@ -10,13 +10,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.AccessEndReason;
 import org.broadinstitute.consent.http.enumeration.DecidedVia;
 import org.broadinstitute.consent.http.enumeration.DecisionState;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DecisionBucketCount;
@@ -37,6 +35,7 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
   private static final Instant TO = Instant.parse("2100-01-01T00:00:00Z");
   private static final Instant SUBMITTED = Instant.parse("2026-02-10T12:00:00Z");
   private static final Duration TERM = Duration.ofDays(365);
+  private static final String LEGACY_RP_TYPE = "RP";
 
   private final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
   private ScopedDarMetricsDAO dao;
@@ -548,11 +547,7 @@ class ScopedDarMetricsDAOTest extends DarLifecycleDAOTestHelper {
     voteDAO.insertVote(user.getUserId(), electionId, VoteType.FINAL.getValue());
     Integer researchPurposeElection =
         electionDAO.insertElection(
-            ElectionType.RP.getValue(),
-            ElectionStatus.CLOSED.getValue(),
-            new Date(),
-            referenceId,
-            datasetId);
+            LEGACY_RP_TYPE, ElectionStatus.CLOSED.getValue(), referenceId, datasetId);
     castVote(researchPurposeElection, VoteType.FINAL, false, on.plus(Duration.ofDays(2)));
   }
 

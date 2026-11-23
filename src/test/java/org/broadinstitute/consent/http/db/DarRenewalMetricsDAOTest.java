@@ -319,8 +319,12 @@ class DarRenewalMetricsDAOTest extends DAOTestHelper {
   }
 
   private Integer election(String referenceId, Integer datasetId, ElectionStatus status) {
-    return electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(), status.getValue(), VOTED, referenceId, datasetId);
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(), status.getValue(), referenceId, datasetId);
+    // insertElection always writes NOW(), so set the creation time that the old test used.
+    setElectionCreateDate(electionId, VOTED.toInstant());
+    return electionId;
   }
 
   private void approve(String referenceId, Integer datasetId) {

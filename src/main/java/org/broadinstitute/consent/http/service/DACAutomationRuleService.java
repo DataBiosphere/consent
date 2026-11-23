@@ -7,7 +7,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -383,7 +382,6 @@ public class DACAutomationRuleService implements ConsentLogger {
     return electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(),
-        new Date(),
         dar.getReferenceId(),
         dataset.getDatasetId());
   }

@@ -1214,9 +1214,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            expiredSubmissionDate,
             expiredReferenceId,
             dataset.getDatasetId());
+    setElectionCreateDate(expiredElectionId, expiredSubmissionDate.toInstant());
     Vote expiredVote = createFinalVote(dataset.getCreateUserId(), expiredElectionId);
     updateVote(
         true,
@@ -2088,14 +2088,13 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.RP.getValue(),
             ElectionStatus.CANCELED.getValue(),
-            new Date(),
             sibling.getReferenceId(),
             withElection.dataset().getDatasetId());
 
     assertTrue(dataAccessRequestDAO.hasElectionsInCollection(collectionId));
     assertFalse(dataAccessRequestDAO.hasElectionsInCollection(other.dar().getCollectionId()));
 
-    electionDAO.archiveElectionByIds(List.of(electionId), new Date());
+    electionDAO.archiveElectionByIds(List.of(electionId));
     assertTrue(dataAccessRequestDAO.hasElectionsInCollection(collectionId));
   }
 
@@ -3180,7 +3179,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .stream()
             .map(Election::getElectionId)
             .toList();
-    electionDAO.archiveElectionByIds(earlier, new Date());
+    electionDAO.archiveElectionByIds(earlier);
     return createDataAccessElection(s.dar().getReferenceId(), s.dataset().getDatasetId());
   }
 
@@ -3234,7 +3233,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.CANCELED.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);
@@ -3347,7 +3345,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         electionDAO.insertElection(
             ElectionType.DATA_ACCESS.getValue(),
             ElectionStatus.OPEN.getValue(),
-            new Date(),
             referenceId,
             datasetId);
     return electionDAO.findElectionById(electionId);
