@@ -30,6 +30,8 @@ class DarMetricsSummaryMapperTest extends DAOTestHelper {
           2098-01-01 00:00:00+00 | 2098-03-01 00:00:00.000001+00 | 2098-03-01 00:00:00.000002+00 | true  | a closeout one microsecond before the as-of date
           2098-01-01 00:00:00+00 | 2098-03-01 00:00:00+00 | 2098-03-01 00:00:00+00 | true  | a closeout at the as-of date
           2098-01-01 00:00:00+00 | | 2099-01-01 00:00:00+00 | true  | a term end at the as-of date
+          2098-01-01 00:00:00.123900+00 | | 2099-01-01 00:00:00.123100+00 | false | a term end some microseconds after the as-of date
+          2098-01-01 00:00:00.123100+00 | | 2099-01-01 00:00:00.123900+00 | true  | a term end some microseconds before the as-of date
           """)
   void testLapsedComesFromTheAsOfColumn(
       String expirationBasis, String closeout, String asOf, boolean expected, String description) {

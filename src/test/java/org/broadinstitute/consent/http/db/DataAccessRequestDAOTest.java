@@ -1070,9 +1070,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     // The query compares the submission date with now() in the database. Read the time from the
     // database too: its clock can differ from the JVM clock, which made the 8760 case fail.
-    Instant databaseNow =
-        jdbi.withHandle(
-            handle -> handle.createQuery("SELECT now()").mapTo(Timestamp.class).one().toInstant());
+    Instant databaseNow = databaseNow();
     Timestamp submitted = Timestamp.from(databaseNow.minus(submittedHoursAgo, ChronoUnit.HOURS));
     DataAccessRequest dar = createDAR(user, dataset, uniqueDarCode(), submitted);
     Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
@@ -1424,6 +1422,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertSummaryInstitutionName(null, studyId, dataset);
   }
 
+  /** The time on the database clock, which can differ from the JVM clock. */
+  private static Instant databaseNow() {
+    return jdbi.withHandle(
+        handle -> handle.createQuery("SELECT now()").mapTo(Timestamp.class).one().toInstant());
+  }
+
   private DataAccessRequest createApprovedDar(User user, Integer collectionId, Dataset dataset) {
     DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
@@ -1555,8 +1559,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer collectionId = createDarCollection(user.getUserId());
 
     // A grant old enough that the chip should read "expired"
+    // The summary tells whether access has lapsed on the database clock, so that clock dates
+    // the grant
     Date grantedOn =
-        new Date(System.currentTimeMillis() - DataAccessRequest.EXPIRATION_DURATION_MILLIS - 1000);
+        Date.from(databaseNow().minusMillis(DataAccessRequest.EXPIRATION_DURATION_MILLIS + 1000));
     DataAccessRequest grantedDar =
         createDataAccessRequest(collectionId, user.getUserId(), grantedOn);
     dataAccessRequestDAO.insertDARDatasetRelation(
@@ -1595,8 +1601,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Integer collectionId = createDarCollection(user.getUserId());
 
+    // The summary tells whether access has lapsed on the database clock, so that clock dates
+    // the grant
     Date grantedOn =
-        new Date(System.currentTimeMillis() - DataAccessRequest.EXPIRATION_DURATION_MILLIS - 1000);
+        Date.from(databaseNow().minusMillis(DataAccessRequest.EXPIRATION_DURATION_MILLIS + 1000));
     DataAccessRequest grantedDar =
         createDataAccessRequest(collectionId, user.getUserId(), grantedOn);
     dataAccessRequestDAO.insertDARDatasetRelation(
@@ -2751,9 +2759,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer collectionTwoId = createDarCollection(userTwoId);
     // The query compares the submission date with now() in the database. Read the time from the
     // database too: its clock can be behind the JVM clock, and then darOne is not yet expired.
-    Instant databaseNow =
-        jdbi.withHandle(
-            handle -> handle.createQuery("SELECT now()").mapTo(Timestamp.class).one().toInstant());
+    Instant databaseNow = databaseNow();
     DataAccessRequest darOne =
         createDataAccessRequest(
             collectionOneId, userOneId, Date.from(databaseNow.minus(365, ChronoUnit.DAYS)));

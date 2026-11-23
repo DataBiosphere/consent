@@ -42,10 +42,15 @@ public class DarMetricsSummaryMapper implements RowMapper<DarMetricsSummary> {
    * restate it.
    */
   private static Timestamp termEnd(Timestamp latestApprovedSubmission) {
-    return latestApprovedSubmission == null
-        ? null
-        : new Timestamp(
+    if (latestApprovedSubmission == null) {
+      return null;
+    }
+    Timestamp termEnd =
+        new Timestamp(
             latestApprovedSubmission.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
+    // getTime() has no microseconds. Keep them, or the term ends up to a millisecond early.
+    termEnd.setNanos(latestApprovedSubmission.getNanos());
+    return termEnd;
   }
 
   /**
