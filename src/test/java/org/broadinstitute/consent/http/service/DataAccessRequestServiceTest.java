@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -853,6 +854,83 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
     verify(dataAccessRequestDAO)
         .updateSubmissionInstitution(progressReport.getReferenceId(), user.getInstitutionId());
+  }
+
+  // Nothing after the commit may fail the request: the report is read inside the transaction.
+  @Test
+  void createProgressReportReadsTheReportBeforeTheCommit() {
+    DataAccessRequestDAO transactionDarDAO = mock(DataAccessRequestDAO.class);
+    doAnswer(
+            invocation -> {
+              Function<DataAccessRequestServiceDAO.TransactionDAOs, ?> callback =
+                  invocation.getArgument(0);
+              return callback.apply(
+                  new DataAccessRequestServiceDAO.TransactionDAOs(
+                      transactionDarDAO, daaDAO, darCollectionDAO, counterDAO, electionDAO));
+            })
+        .when(dataAccessRequestServiceDAO)
+        .inTransaction(any());
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = progressReportOf(parentDar);
+    User user = createUserWithPrerequisites();
+    parentDar.setUserId(user.getUserId());
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    when(transactionDarDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(transactionDarDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+
+    assertSame(
+        progressReport, service.createProgressReport(user, progressReport, parentDar, request));
+    verify(dataAccessRequestDAO, never()).findByReferenceId(any());
+  }
+
+  @Test
+  void createProgressReportIsReturnedWhenTheDACRulesFail() {
+    mockTransactionalDaos();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = progressReportOf(parentDar);
+    User user = createUserWithPrerequisites();
+    parentDar.setUserId(user.getUserId());
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    doThrow(new RuntimeException("rules failed"))
+        .when(ruleService)
+        .triggerDACRuleSettings(any(), any(), any(), any());
+
+    assertSame(
+        progressReport, service.createProgressReport(user, progressReport, parentDar, request));
+    verify(ruleService)
+        .triggerDACRuleSettings(
+            user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
+  }
+
+  @Test
+  void createProgressReportFailsInsideTheTransactionWhenTheReportCanNotBeRead() {
+    mockTransactionalDaos();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = progressReportOf(parentDar);
+    User user = createUserWithPrerequisites();
+    parentDar.setUserId(user.getUserId());
+    mockApprovedDatasets(progressReport.getDatasetIds());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+
+    assertThrows(
+        NotFoundException.class,
+        () -> service.createProgressReport(user, progressReport, parentDar, request));
+    verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any());
+  }
+
+  private DataAccessRequest progressReportOf(DataAccessRequest parentDar) {
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(FIXED_TIMESTAMP);
+    return progressReport;
   }
 
   @Test

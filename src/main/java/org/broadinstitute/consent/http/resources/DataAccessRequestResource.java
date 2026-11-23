@@ -434,13 +434,27 @@ public class DataAccessRequestResource extends Resource {
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
         processNewDarCollection(parentDar.getCollectionId());
       }
-      List<Dataset> datasets =
-          datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
-      ComplianceLogger.logDARSubmission(
-          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
+      logProgressReportSubmission(user, progressReport, (ContainerRequest) request);
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  /**
+   * Logs a created progress report for compliance. The report already exists, so a failure is
+   * logged rather than returned: an error would make the researcher submit it again.
+   */
+  private void logProgressReportSubmission(
+      User user, DataAccessRequest progressReport, ContainerRequest request) {
+    try {
+      List<Dataset> datasets =
+          datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
+      ComplianceLogger.logDARSubmission(
+          user, datasets, request, HttpStatusCodes.STATUS_CODE_CREATED);
+    } catch (Exception e) {
+      logException(
+          "Unable to log the submission of progress report " + progressReport.getReferenceId(), e);
     }
   }
 
