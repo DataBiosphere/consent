@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.configurations.PublicRateLimitConfiguration;
 import org.broadinstitute.consent.http.configurations.RateLimitConfiguration;
+import org.broadinstitute.consent.http.configurations.SupportRateLimitConfiguration;
 import org.glassfish.jersey.uri.UriComponent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +56,20 @@ class PublicRateLimitFilterTest {
 
   private PublicRateLimitFilter buildFilter(
       int requestsPerMinute, int podCount, boolean authenticatedLimiterEnabled) {
+    return buildFilter(
+        requestsPerMinute,
+        podCount,
+        authenticatedLimiterEnabled,
+        SupportRateLimitConfiguration.DEFAULT_REQUESTS_PER_MINUTE);
+  }
+
+  private PublicRateLimitFilter buildFilter(
+      int requestsPerMinute,
+      int podCount,
+      boolean authenticatedLimiterEnabled,
+      int supportRequestsPerMinute) {
+    SupportRateLimitConfiguration support = new SupportRateLimitConfiguration();
+    support.setRequestsPerMinute(supportRequestsPerMinute);
     PublicRateLimitConfiguration showcase = new PublicRateLimitConfiguration();
     showcase.setRequestsPerMinute(requestsPerMinute);
     showcase.setTrustedProxies(List.of("127.0.0.1/32"));
@@ -63,6 +78,7 @@ class PublicRateLimitFilterTest {
     config.setRequestsPerMinute(100);
     config.setPodCount(podCount);
     config.setShowcase(showcase);
+    config.setSupport(support);
     return new PublicRateLimitFilter(config, servletRequest);
   }
 
@@ -222,6 +238,45 @@ class PublicRateLimitFilterTest {
     send(filter, 2);
 
     verify(requestContext).abortWith(any());
+  }
+
+  // The open Contact Us form and its attachments have their own, lower limit.
+  @Test
+  void testSupportPathsAreLimitedWithTheirOwnLimit() {
+    PublicRateLimitFilter filter = spy(buildFilter(100, 1, true, 2));
+    mockRequest("support/upload", TRUSTED_PROXY, "192.0.2.1");
+
+    send(filter, 3);
+
+    verify(requestContext).abortWith(any());
+    verify(filter)
+        .logWarn(
+            "Support rate limit exceeded: key=192.0.2.1, source=REAL_IP_HEADER, "
+                + "path=support/upload");
+  }
+
+  @Test
+  void testSupportRequestAndUploadShareOneBucket() {
+    PublicRateLimitFilter filter = buildFilter(100, 1, true, 1);
+    mockRequest("support/upload", "192.0.2.50", null);
+    send(filter, 1);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(requestContext).abortWith(any());
+  }
+
+  @Test
+  void testSupportAndShowcaseHaveSeparateBuckets() {
+    PublicRateLimitFilter filter = buildFilter(1, 1, true, 1);
+    mockRequest("showcase/datasets", "192.0.2.50", null);
+    send(filter, 1);
+    mockRequest("support/request", "192.0.2.50", null);
+
+    send(filter, 1);
+
+    verify(requestContext, never()).abortWith(any());
   }
 
   @Test

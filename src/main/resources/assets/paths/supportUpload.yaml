@@ -26,5 +26,14 @@ post:
     422:
       description: |
         Unprocessable Entity: provided content is not processable
+    429:
+      description: |
+        Too many requests from this client IP; retry after `Retry-After` seconds. Support requests
+        and uploads share one limit (`rateLimit.support.requestsPerMinute`, 30 a minute by default),
+        which is for the whole deployment and split across Consent's pods.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
     500:
       description: Internal Server Error
