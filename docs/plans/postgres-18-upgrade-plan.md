@@ -7,7 +7,7 @@ uses the Cloud SQL major version upgrade in place, started from the Google Cloud
 Terraform changes after the upgrade.
 
 Dev, staging, and prod are on PostgreSQL 18. The prod upgrade was on 2026-11-23. See
-"Prod (DT-4324)" for its results and for the work that remains.
+"Prod (DT-4324)" for its results.
 
 This document is the full record of the procedure. It contains no instance names. Each command
 uses `<instance>` and `<project>`. The instance name is the `db_name` value in the Terraform
@@ -124,8 +124,9 @@ Cloud SQL instance. See its results there.
 3. Update `DEVNOTES.md`. A developer must run `docker volume rm consent_pgdata` one time, because
    the 18 image cannot start on a volume that has Postgres 16 data.
 4. Update the image tag in `render-local-configs-plan.md`.
-5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java`. See "The tests stayed on Postgres 16
-   until the prod upgrade".
+5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java` in this pull request. The image stayed
+   on 16 until the prod upgrade.
+   [#3297](https://github.com/DataBiosphere/consent/pull/3297) changed it after that upgrade.
 6. Run `./mvnw clean test`.
 7. Start the local compose database with a dev dump. Make sure that the dump loads.
 
@@ -151,8 +152,9 @@ The DUOS backend connects to the same database, and `duos-ui` has its own Postgr
    does not apply.
 2. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
 3. Add the image version to `DEVNOTES.md`.
-4. Do not change the image in `.github/workflows/integration-tests.yml`. See "The tests stayed on
-   Postgres 16 until the prod upgrade".
+4. Do not change the image in `.github/workflows/integration-tests.yml` in this pull request. The
+   image stayed on 16 until the prod upgrade.
+   [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171) changed it after that upgrade.
 5. Make sure that the integration tests pass.
 
 Merge this pull request soon after the Consent pull request. The local database of `duos-ui` loads
@@ -233,7 +235,8 @@ different database in the same session, use `\c`:
    SELECT datname, datcollate FROM pg_database;
    ```
 
-8. Make sure that the instance has no operation in progress. Expect an empty list.
+8. Make sure that the instance has no operation in progress. Expect an empty list. Do this check
+   again immediately before the upgrade.
 
    ```bash
    gcloud sql operations list --instance <instance> --project <project> \
@@ -251,7 +254,7 @@ different database in the same session, use `\c`:
 | 5. Replication slots | Pass. No slots. | Pass. No slots. | Pass. No slots. |
 | 6. Views on `pg_stat_*` | Pass. No rows in `consent` or in `postgres`. | Pass. No rows in the two databases. | Pass. No rows in the two databases. |
 | 7. Collation | Pass. All databases use `en_US.UTF8`. | Pass. The same result. | Pass. The same result. |
-| 8. Operations | Pass. No operation in progress. | Pass. | Pass. Do this check again immediately before the upgrade. |
+| 8. Operations | Pass. No operation in progress. | Pass. | Pass. |
 
 The dev server, the staging server, and the prod server were on PostgreSQL 16.15.
 
@@ -412,8 +415,8 @@ Do not change `prod.tfvars` for DT-3587. Change it for DT-4324, after the prod u
 
 ## Prod (DT-4324)
 
-Steps 1, 2, and 3 are complete, and prod does not need them again. Do steps 4 to 7 for prod, with
-these differences.
+Steps 1, 2, and 3 were complete before the prod work, and prod did not need them again. Steps 4
+to 7 for prod had these differences.
 
 | Step | Difference for prod |
 | --- | --- |
