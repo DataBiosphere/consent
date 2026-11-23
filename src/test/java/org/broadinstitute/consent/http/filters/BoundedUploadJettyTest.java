@@ -170,6 +170,9 @@ class BoundedUploadJettyTest {
         sendChunked("binary", "application/binary", new byte[(int) UPLOAD_LIMIT + 1]);
 
     assertEquals(Response.Status.REQUEST_ENTITY_TOO_LARGE.getStatusCode(), response.statusCode());
+    assertEquals(
+        "{\"message\":\"Request is too large. Max size is: 0.1 MB\",\"code\":413}",
+        response.body());
   }
 
   /** A multipart body with one file part of the given size. */

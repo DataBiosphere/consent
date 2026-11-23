@@ -7,16 +7,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.common.reflect.ClassPath;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import org.broadinstitute.consent.http.models.Error;
@@ -94,13 +99,19 @@ class UploadSizeLimitEndpointTest {
   }
 
   // The guard finds an upload however it's declared: by the method's media type, by the class's,
-  // or by a multipart parameter with no media type at all.
+  // by a multipart parameter with no media type at all, or by a raw body of any type but JSON. A
+  // JSON body read as a stream is not an upload.
   @Test
   void testTheGuardFindsEveryKindOfUpload() throws NoSuchMethodException {
     assertTrue(takesAnUpload(UploadResource.class.getMethod("upload", InputStream.class)));
     assertTrue(takesAnUpload(Undeclared.class.getMethod("byClass", InputStream.class)));
     assertTrue(takesAnUpload(Undeclared.class.getMethod("byParameter", FormDataMultiPart.class)));
+    assertTrue(takesAnUpload(RawBody.class.getMethod("bytes", byte[].class)));
+    assertTrue(takesAnUpload(RawBody.class.getMethod("stream", InputStream.class)));
+    assertTrue(takesAnUpload(RawBody.class.getMethod("octetStream", String.class)));
+    assertTrue(takesAnUpload(RawBody.class.getMethod("csv", File.class)));
     assertFalse(takesAnUpload(Undeclared.class.getMethod("json", String.class)));
+    assertFalse(takesAnUpload(RawBody.class.getMethod("jsonStream", InputStream.class)));
     assertFalse(takesAnUpload(Undeclared.class.getMethod("helper", FormDataMultiPart.class)));
   }
 
@@ -120,6 +131,26 @@ class UploadSizeLimitEndpointTest {
     public void helper(FormDataMultiPart multipart) {}
   }
 
+  public static class RawBody {
+    @POST
+    public void bytes(byte[] body) {}
+
+    @PUT
+    public void stream(InputStream body) {}
+
+    @POST
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    public void octetStream(String body) {}
+
+    @POST
+    @Consumes("text/csv")
+    public void csv(@NotNull File body) {}
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void jsonStream(InputStream body) {}
+  }
+
   private static boolean takesAnUpload(Method method) {
     if (Arrays.stream(method.getAnnotations())
         .noneMatch(a -> a.annotationType().isAnnotationPresent(HttpMethod.class))) {
@@ -129,20 +160,38 @@ class UploadSizeLimitEndpointTest {
         method.isAnnotationPresent(Consumes.class)
             ? method.getAnnotation(Consumes.class)
             : method.getDeclaringClass().getAnnotation(Consumes.class);
+    List<String> types = consumes == null ? List.of() : Arrays.asList(consumes.value());
     boolean uploadType =
-        consumes != null
-            && Arrays.stream(consumes.value())
-                .anyMatch(
-                    type ->
-                        type.startsWith(MediaType.MULTIPART_FORM_DATA)
-                            || type.equals("application/binary"));
-    boolean multipartParameter =
-        Arrays.stream(method.getParameters())
+        types.stream()
+            .anyMatch(
+                type ->
+                    type.startsWith(MediaType.MULTIPART_FORM_DATA)
+                        || type.equals(MediaType.APPLICATION_OCTET_STREAM)
+                        || type.equals("application/binary"));
+    boolean anyType =
+        types.isEmpty() || types.stream().anyMatch(t -> !t.startsWith(MediaType.APPLICATION_JSON));
+    return uploadType
+        || Arrays.stream(method.getParameters())
             .anyMatch(
                 parameter ->
                     parameter.isAnnotationPresent(FormDataParam.class)
-                        || MultiPart.class.isAssignableFrom(parameter.getType()));
-    return uploadType || multipartParameter;
+                        || MultiPart.class.isAssignableFrom(parameter.getType())
+                        || (anyType && isRawBody(parameter)));
+  }
+
+  /**
+   * The request body itself, unparsed: a byte[], stream, reader or file parameter that nothing
+   * injects (no JAX-RS or auth annotation).
+   */
+  private static boolean isRawBody(Parameter parameter) {
+    Class<?> type = parameter.getType();
+    return Arrays.stream(parameter.getAnnotations())
+            .map(a -> a.annotationType().getPackageName())
+            .noneMatch(p -> p.startsWith("jakarta.ws.rs") || p.startsWith("io.dropwizard.auth"))
+        && (type == byte[].class
+            || InputStream.class.isAssignableFrom(type)
+            || Reader.class.isAssignableFrom(type)
+            || File.class.isAssignableFrom(type));
   }
 
   private Response post(int fileBytes) throws IOException {
