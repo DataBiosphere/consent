@@ -43,15 +43,13 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   private DataAccessRequest createDataAccessRequestWithSOEmail(
       Integer collectionId, Integer userId, String soEmail) {
     String referenceId = UUID.randomUUID().toString();
-    Date createDate = new Date();
-    Date submissionDate = new Date();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(20));
     data.setStatus("test");
     data.setSigningOfficialEmail(soEmail);
+    // The insert writes NOW(), on the same clock as a progress report filed after it.
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, userId, data, randomAlphabetic(10));
-    setDarDates(referenceId, createDate, submissionDate, new Date());
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
