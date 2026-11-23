@@ -609,7 +609,7 @@ public class DatasetService implements ConsentLogger {
     // If it has, simply returned the dataset in the argument (which was already queried for in the
     // resource)
     if (currentApprovalState == null || !currentApprovalState) {
-      datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
+      datasetDAO.updateDatasetApproval(approval, user.getUserId(), datasetId);
       try {
         elasticSearchService.indexDatasets(List.of(datasetId));
       } catch (IOException ioException) {

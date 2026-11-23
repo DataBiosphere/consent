@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
@@ -1295,7 +1296,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     try (var _ = service.deleteIndex(7, 1)) {
       InOrder order = inOrder(datasetServiceDAO, datasetDAO);
-      order.verify(datasetServiceDAO).updateDatasetIndex(eq(7), any(), any());
+      order.verify(datasetServiceDAO).updateDatasetIndex(eq(7), any(), eq(false));
       order.verify(datasetDAO).currentDatabaseTime();
       order.verify(datasetDAO).clearDatasetIndexConfirmed(7, boundary);
     }
@@ -1619,14 +1620,14 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDatasetIndexDateWithValue() {
-    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, Instant.now()));
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, true));
   }
 
   @Test
   void testDeleteDatasetIndexWhenDatasetExists() throws Exception {
     when(datasetDAO.findDatasetIdById(any())).thenReturn(1);
-    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
-    verify(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, false));
+    verify(datasetServiceDAO).updateDatasetIndex(any(), any(), eq(false));
   }
 
   @Test
@@ -1634,16 +1635,16 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetIdById(any())).thenReturn(1);
     doThrow(new TransactionException("db down"))
         .when(datasetServiceDAO)
-        .updateDatasetIndex(any(), any(), any());
+        .updateDatasetIndex(any(), any(), eq(false));
 
-    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, false));
   }
 
   @Test
   void testDeleteDatasetIndexWhenDatasetIsNull() throws Exception {
     when(datasetDAO.findDatasetIdById(any())).thenReturn(null);
-    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
-    verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), any());
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, false));
+    verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), anyBoolean());
   }
 
   @Test

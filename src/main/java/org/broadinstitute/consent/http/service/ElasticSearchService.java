@@ -256,7 +256,7 @@ public class ElasticSearchService implements ConsentLogger {
     deleteRequest.addParameter("conflicts", "proceed");
     deleteRequest.setEntity(
         new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
-    updateDatasetIndexDate(datasetId, userId, null);
+    updateDatasetIndexDate(datasetId, userId, false);
     // Taken after indexed_date is cleared: a later confirmation needed a newer index to set it
     // again.
     Optional<Instant> intentClearedAt = databaseTime();
@@ -778,12 +778,12 @@ public class ElasticSearchService implements ConsentLogger {
     return term;
   }
 
-  protected void updateDatasetIndexDate(Integer datasetId, Integer userId, Instant indexDate) {
+  protected void updateDatasetIndexDate(Integer datasetId, Integer userId, boolean indexed) {
     // It is possible that a dataset has been deleted. If so, we don't want to try and update it.
     // Only the dataset's existence matters here, so avoid assembling the full dataset.
     if (datasetDAO.findDatasetIdById(datasetId) != null) {
       try {
-        datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+        datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexed);
       } catch (JdbiException e) {
         // We don't want to send these to Sentry, but we do want to log them for follow up off cycle
         logWarn("Error updating dataset indexed date for dataset id: %d ".formatted(datasetId), e);

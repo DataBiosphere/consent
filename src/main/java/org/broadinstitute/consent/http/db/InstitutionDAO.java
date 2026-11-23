@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,6 +22,7 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(InstitutionMapper.class)
 public interface InstitutionDAO extends Transactional<InstitutionDAO> {
 
+  /** The database writes create_date with NOW(). */
   @SqlUpdate(
       """
       INSERT INTO institution
@@ -31,7 +31,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
                organization_type, create_user, create_date)
       VALUES (:institutionName, :itDirectorName, :itDirectorEmail, :institutionUrl,
               :dunsNumber, :orgChartUrl, :verificationUrl, :verificationFilename,
-              :organizationType, :createUser, :createDate)
+              :organizationType, :createUser, NOW())
       """)
   @GetGeneratedKeys
   Integer insertInstitution(
@@ -44,8 +44,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       @Bind("verificationUrl") String verificationUrl,
       @Bind("verificationFilename") String verificationFilename,
       @Bind("organizationType") String organizationType,
-      @Bind("createUser") Integer createUser,
-      @Bind("createDate") Date createDate);
+      @Bind("createUser") Integer createUser);
 
   /**
    * Inserts a full institution record, including domains, into the database. This is the preferred
@@ -58,7 +57,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
    */
   default Institution insertFullInstitution(Institution institution, Integer userId)
       throws SQLException {
-    Date now = new Date();
     AtomicReference<Integer> institutionId = new AtomicReference<>();
     getHandle()
         .useTransaction(
@@ -76,8 +74,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
                       (Objects.nonNull(institution.getOrganizationType())
                           ? institution.getOrganizationType().getValue()
                           : null),
-                      userId,
-                      now);
+                      userId);
               if (institution.getDomains() != null) {
                 String insertDomainQuery =
                     """
@@ -101,6 +98,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
     throw new SQLException("Failed to insert institution");
   }
 
+  /** The database writes update_date with NOW(). */
   @SqlUpdate(
       """
       UPDATE institution
@@ -115,7 +113,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
         verification_filename = :verificationFilename,
         organization_type = :organizationType,
         update_user = :updateUser,
-        update_date = :updateDate
+        update_date = NOW()
       WHERE institution_id = :institutionId
       """)
   void updateInstitutionById(
@@ -129,8 +127,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       @Bind("verificationUrl") String verificationUrl,
       @Bind("verificationFilename") String verificationFilename,
       @Bind("organizationType") String organizationType,
-      @Bind("updateUser") Integer updateUser,
-      @Bind("updateDate") Date updateDate);
+      @Bind("updateUser") Integer updateUser);
 
   /**
    * Updates all fields of an institution, including its domains. This is the preferred method for
@@ -142,7 +139,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
    */
   default Institution updateFullInstitution(Institution institution, Integer userId)
       throws SQLException {
-    Date now = new Date();
     Integer institutionId = institution.getId();
     getHandle()
         .useTransaction(
@@ -160,8 +156,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
                   (Objects.nonNull(institution.getOrganizationType())
                       ? institution.getOrganizationType().getValue()
                       : null),
-                  userId,
-                  now);
+                  userId);
               handle
                   .createUpdate(
                       "DELETE FROM institution_domains WHERE institution_id = :institutionId")

@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -113,8 +112,7 @@ class UserServiceDAOTest extends DAOTestHelper {
         institution.getVerificationUrl(),
         institution.getVerificationFilename(),
         institution.getOrganizationType().getValue(),
-        updateUser.getUserId(),
-        new Date());
+        updateUser.getUserId());
     return institutionDAO.findInstitutionById(institution.getId());
   }
 

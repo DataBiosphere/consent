@@ -7,12 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.SQLException;
-import java.util.Date;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,8 +49,7 @@ class InstitutionDAOTest extends DAOTestHelper {
           null,
           null,
           null,
-          userId,
-          institution.getCreateDate());
+          userId);
       fail("CREATE should fail due to UNIQUE constraint violation (name)");
       // JBDI wraps ALL SQL exceptions under the generic class UnableToExecuteStatementException
       // Test is specifically looking for UNIQUE constraint violations, so I need to catch and
@@ -73,8 +75,7 @@ class InstitutionDAOTest extends DAOTestHelper {
         newValue,
         newValue,
         OrganizationType.FOR_PROFIT.getValue(),
-        userId,
-        new Date());
+        userId);
     Institution updated = institutionDAO.findInstitutionById(institution.getId());
     assertEquals(newValue, updated.getName());
     assertEquals(newValue, updated.getItDirectorName());
@@ -103,8 +104,7 @@ class InstitutionDAOTest extends DAOTestHelper {
           secondInstitution.getVerificationUrl(),
           secondInstitution.getVerificationFilename(),
           secondInstitution.getOrganizationType().getValue(),
-          secondInstitution.getUpdateUserId(),
-          secondInstitution.getUpdateDate());
+          secondInstitution.getUpdateUserId());
       fail("UPDATE should fail due to UNIQUE constraint violation (name)");
     } catch (Exception e) {
       assertEquals("23505", ((PSQLException) e.getCause()).getSQLState());
@@ -207,8 +207,7 @@ class InstitutionDAOTest extends DAOTestHelper {
         institution.getVerificationUrl(),
         institution.getVerificationFilename(),
         institution.getOrganizationType().getValue(),
-        user.getUserId(),
-        new Date());
+        user.getUserId());
     List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
     assertFalse(found.isEmpty());
     assertEquals(1, found.size());
@@ -244,8 +243,7 @@ class InstitutionDAOTest extends DAOTestHelper {
             randomAlphabetic(10),
             randomAlphabetic(10),
             OrganizationType.NON_PROFIT.getValue(),
-            createUser.getUserId(),
-            createUser.getCreateDate());
+            createUser.getUserId());
     Institution institution = institutionDAO.findInstitutionById(id);
     User updateUser = createUser();
     institutionDAO.updateInstitutionById(
@@ -259,8 +257,7 @@ class InstitutionDAOTest extends DAOTestHelper {
         institution.getVerificationUrl(),
         institution.getVerificationFilename(),
         institution.getOrganizationType().getValue(),
-        updateUser.getUserId(),
-        new Date());
+        updateUser.getUserId());
     return institutionDAO.findInstitutionById(id);
   }
 
@@ -409,6 +406,63 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(fullInstitution.getId(), foundId2);
     Integer notFoundId = institutionDAO.findInstitutionIdByDomain("nonexistentdomain.org");
     assertNull(notFoundId, "Should return null for non-existent domain");
+  }
+
+  @Test
+  void testInsertFullInstitutionWritesCreateDateWithNow() throws Exception {
+    User user = createUser();
+    Institution institution = createMockInstitution(randomAlphabetic(10) + ".org");
+
+    // The insert joins this transaction, so NOW() here is the value that it writes. The mapper
+    // reads the dates as a day only, so read the columns directly.
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    AtomicReference<Integer> institutionId = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(selectNow(h));
+          institutionId.set(
+              institutionDAO.insertFullInstitution(institution, user.getUserId()).getId());
+        });
+
+    assertEquals(transactionNow.get(), selectInstitutionDate(institutionId.get(), "create_date"));
+    assertNull(selectInstitutionDate(institutionId.get(), "update_date"));
+  }
+
+  @Test
+  void testUpdateFullInstitutionWritesUpdateDateWithNow() throws Exception {
+    User user = createUser();
+    Institution institution =
+        institutionDAO.insertFullInstitution(
+            createMockInstitution(randomAlphabetic(10) + ".org"), user.getUserId());
+    Instant createDate = selectInstitutionDate(institution.getId(), "create_date");
+    institution.setName(randomAlphabetic(20));
+
+    AtomicReference<Instant> transactionNow = new AtomicReference<>();
+    jdbi.useTransaction(
+        h -> {
+          transactionNow.set(selectNow(h));
+          institutionDAO.updateFullInstitution(institution, user.getUserId());
+        });
+
+    assertEquals(transactionNow.get(), selectInstitutionDate(institution.getId(), "update_date"));
+    assertEquals(createDate, selectInstitutionDate(institution.getId(), "create_date"));
+  }
+
+  private Instant selectNow(Handle handle) {
+    return handle.createQuery("SELECT NOW()").mapTo(OffsetDateTime.class).one().toInstant();
+  }
+
+  /** Reads one date column of an institution. The column name is a constant from this class. */
+  private Instant selectInstitutionDate(Integer institutionId, String column) {
+    OffsetDateTime value =
+        jdbi.withHandle(
+            h ->
+                h.createQuery("SELECT " + column + " FROM institution WHERE institution_id = :id")
+                    .bind("id", institutionId)
+                    .mapTo(OffsetDateTime.class)
+                    .findOne()
+                    .orElse(null));
+    return value == null ? null : value.toInstant();
   }
 
   private Institution createMockInstitution(String domain) {
