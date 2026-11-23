@@ -20,9 +20,9 @@ Consent has no runtime code that depends on the Postgres version. The work is in
 
 | Repo | Change | Status |
 | --- | --- | --- |
-| `consent` | The Postgres image for the local scripts. The image for the tests stays on 16 until DT-4324. | [#3282](https://github.com/DataBiosphere/consent/pull/3282). Tests: [#3297](https://github.com/DataBiosphere/consent/pull/3297), open until the prod upgrade. |
+| `consent` | The Postgres image for the local scripts. The image for the tests, after the prod upgrade. | [#3282](https://github.com/DataBiosphere/consent/pull/3282). Tests: [#3297](https://github.com/DataBiosphere/consent/pull/3297). |
 | `terra-helmfile` | The Postgres image for the Consent BEE (the on-demand test environment). | [#6534](https://github.com/broadinstitute/terra-helmfile/pull/6534) |
-| `duos-ui` | The Postgres image for the local database. The image for the integration tests stays on 16 until DT-4324. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153). Tests: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171), open until the prod upgrade. |
+| `duos-ui` | The Postgres image for the local database. The image for the integration tests, after the prod upgrade. | [#4153](https://github.com/DataBiosphere/duos-ui/pull/4153). Tests: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171). |
 | `terraform-ap-deployments` | The `db_version` value for each environment. | After each upgrade |
 
 The JDBC driver (pgjdbc 42.7.14) and Liquibase (4.33.0) need no change. The full test suite, which
@@ -54,29 +54,28 @@ the ones that can apply to Consent.
 | DUOS backend | Its database code needs no change. It uses the `pg` driver 8.21.0 and reads and writes only the `user_sessions` table. Its SQL uses no feature that changes in 17 or 18, and it does not read SQLSTATE codes. The audit triggers on `user_sessions` are in the Consent changesets. |
 | Data directory (18) | The official `postgres:18` image moved its data directory to `/var/lib/postgresql/18/docker`. This affects the local compose file. It does not affect the BEE chart, which sets `PGDATA` to `/data/pgdata`. |
 
-## The tests stay on Postgres 16 until the prod upgrade
+## The tests stayed on Postgres 16 until the prod upgrade
 
-The Consent tests use the image in `DAOTestHelper.POSTGRES_IMAGE`. This image stays on Postgres 16
-until DT-4324 upgrades prod. Thus the tests always run on the version that prod runs. SQL that
-uses a feature from version 17 or 18 fails in the tests, and it cannot go to prod.
+The Consent tests use the image in `DAOTestHelper.POSTGRES_IMAGE`. This image stayed on Postgres 16
+until DT-4324 upgraded prod. Thus the tests always ran on the version that prod ran. SQL that
+used a feature from version 17 or 18 failed in the tests, and it could not go to prod.
 
-The cost is that the tests do not run on the version of dev and staging after their upgrade. SQL
-that operates differently on 18 can pass the tests and fail in dev. Dev and staging find such a
-problem before prod gets the change. The full test suite also passed one time on Postgres 18.7,
-on 2026-11-13.
+The cost was that the tests did not run on the version of dev and staging after their upgrade.
+SQL that operates differently on 18 could pass the tests and fail in dev. Dev and staging find
+such a problem before prod gets the change.
 
-The integration tests of `duos-ui` follow the same rule. Their image in
-`.github/workflows/integration-tests.yml` stays on Postgres 16.
+The integration tests of `duos-ui` followed the same rule, with the image in
+`.github/workflows/integration-tests.yml`.
 
-Two pull requests set the test images to `postgres:18.7-alpine` for DT-4324:
+Prod went to PostgreSQL 18 on 2026-11-23. Two pull requests then set the test images to
+`postgres:18.7-alpine`. They merged on the same day:
 
-- `consent`: [#3297](https://github.com/DataBiosphere/consent/pull/3297) changes
+- `consent`: [#3297](https://github.com/DataBiosphere/consent/pull/3297) changed
   `DAOTestHelper.POSTGRES_IMAGE`.
-- `duos-ui`: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171) changes the image in
+- `duos-ui`: [#4171](https://github.com/DataBiosphere/duos-ui/pull/4171) changed the image in
   `.github/workflows/integration-tests.yml`.
 
-The CI checks of the two pull requests passed on 18.7 on 2026-11-18. Merge them when prod is on
-PostgreSQL 18, and not before.
+All tests now run on Postgres 18.
 
 ## Confirmed by test
 
@@ -84,14 +83,14 @@ These tests used Postgres 18.7 in containers or in a BEE. The rehearsal for dev 
 Cloud SQL instance. See its results there.
 
 - Consent: the full test suite passed with the test image set to 18.7 (6393 tests, which include
-  the migration tests). This was one run. The test image in the repo stays on 16.
+  the migration tests). This was one run. At that time, the test image in the repo was on 16.
 - Local Consent database: a dev dump loads into the compose database, and the data stays after
   a container recreate.
 - BEE: a BEE that had Postgres 16 data started from the BEE branch. The export, backup, and
   import steps completed. A sign in to DUOS made a new user record in Consent.
 - DUOS backend: the session schema applies, and the audit triggers on `user_sessions` fire. 42
-  Playwright tests passed in one local run with the servers on Postgres 18. The test image in
-  the repo stays on 16.
+  Playwright tests passed in one local run with the servers on Postgres 18. At that time, the test
+  image in the repo was on 16.
 - DUOS backend with local Consent: the UI with the backend on, and a local Consent stack on
   Postgres 18, operates normally. A new row in `user_sessions` shows the session. The addition
   and removal of user roles work.
@@ -125,7 +124,7 @@ Cloud SQL instance. See its results there.
 3. Update `DEVNOTES.md`. A developer must run `docker volume rm consent_pgdata` one time, because
    the 18 image cannot start on a volume that has Postgres 16 data.
 4. Update the image tag in `render-local-configs-plan.md`.
-5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java`. See "The tests stay on Postgres 16
+5. Do not change `POSTGRES_IMAGE` in `DAOTestHelper.java`. See "The tests stayed on Postgres 16
    until the prod upgrade".
 6. Run `./mvnw clean test`.
 7. Start the local compose database with a dev dump. Make sure that the dump loads.
@@ -152,7 +151,7 @@ The DUOS backend connects to the same database, and `duos-ui` has its own Postgr
    does not apply.
 2. Update the text in `docs/plans/ai_chatbot_docs/ADR-001-model-backend.md` that names the image.
 3. Add the image version to `DEVNOTES.md`.
-4. Do not change the image in `.github/workflows/integration-tests.yml`. See "The tests stay on
+4. Do not change the image in `.github/workflows/integration-tests.yml`. See "The tests stayed on
    Postgres 16 until the prod upgrade".
 5. Make sure that the integration tests pass.
 
@@ -440,13 +439,8 @@ these differences.
 | 8. Slack message | Done. |
 | 9. Query Insights | Monitor for some days. |
 
-The time of the update operation and the Terraform change for `prod.tfvars` are not recorded.
-
-After prod is on PostgreSQL 18:
-
-1. Merge [consent #3297](https://github.com/DataBiosphere/consent/pull/3297) and
-   [duos-ui #4171](https://github.com/DataBiosphere/duos-ui/pull/4171).
-2. Update the section "The tests stay on Postgres 16 until the prod upgrade" in this document.
+The Terraform change for `prod.tfvars` is complete. The time of the update operation is not
+recorded. The two pull requests for the test images are merged.
 
 ## Rollback
 
