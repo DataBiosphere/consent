@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
@@ -202,6 +203,7 @@ class SupportRequestServiceTest extends WireMockTestHelper {
             randomAlphabetic(10),
             randomAlphabetic(10),
             randomAlphabetic(10),
-            List.of(randomAlphanumeric(10))));
+            List.of(randomAlphanumeric(10))),
+        SupportRequester.unverified());
   }
 }

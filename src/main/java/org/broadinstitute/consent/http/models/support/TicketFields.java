@@ -29,17 +29,27 @@ public record TicketFields(
     validate(url == null, "URL");
   }
 
-  Ticket toTicket() {
-    Ticket ticket = new Ticket(new Ticket.Requester(name, email), subject, createComment());
+  Ticket toTicket(SupportRequester requester) {
+    Ticket ticket =
+        new Ticket(new Ticket.Requester(name, email), subject, createComment(requester));
     ticket.setCustomFields(createCustomFields());
     // This value specifies tickets as belonging to the DUOS group defined in Zendesk
     ticket.setTicketFormId(360000669472L);
     return ticket;
   }
 
-  private Comment createComment() {
+  /**
+   * The note on who sent the request comes first, before anything the caller wrote, so a line in
+   * the description or URL can't pass for it. The URL is one line.
+   */
+  private Comment createComment(SupportRequester requester) {
     Comment comment = new Comment();
-    comment.setBody(description + "\n\n------------------\nSubmitted from: " + url);
+    comment.setBody(
+        requester.note()
+            + "\n\n"
+            + description
+            + "\n\n------------------\nSubmitted from: "
+            + url.replaceAll("[\\r\\n]+", " "));
     if (uploads != null && !uploads.isEmpty()) {
       comment.setUploads(uploads);
     }

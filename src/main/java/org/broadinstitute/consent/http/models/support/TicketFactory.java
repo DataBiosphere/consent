@@ -54,10 +54,11 @@ public class TicketFactory implements ConsentLogger {
    * Constructs a DuosTicket with the proper structure to request support via Zendesk
    *
    * @param ticketFields TicketFields
+   * @param requester who sent the request, noted on the ticket for support staff
    */
-  public static DuosTicket createTicket(TicketFields ticketFields) {
+  public static DuosTicket createTicket(TicketFields ticketFields, SupportRequester requester) {
     ticketFields.validate();
-    Ticket ticket = ticketFields.toTicket();
+    Ticket ticket = ticketFields.toTicket(requester);
     return new DuosTicket(ticket);
   }
 }

@@ -88,6 +88,7 @@ import org.broadinstitute.consent.http.resources.PublicFeatureFlagResource;
 import org.broadinstitute.consent.http.resources.PublicShowcaseCatalogResource;
 import org.broadinstitute.consent.http.resources.ResearcherDashboardResource;
 import org.broadinstitute.consent.http.resources.SamResource;
+import org.broadinstitute.consent.http.resources.SignedInSupportResource;
 import org.broadinstitute.consent.http.resources.SigningOfficialDashboardResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.resources.StudyAssetResource;
@@ -221,6 +222,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(StudyAssetResource.class));
     env.jersey().register(injector.getInstance(StudyCommentResource.class));
     env.jersey().register(injector.getInstance(SupportResource.class));
+    env.jersey().register(injector.getInstance(SignedInSupportResource.class));
     env.jersey().register(injector.getInstance(TDRResource.class));
     env.jersey().register(injector.getInstance(TosResource.class));
     env.jersey().register(injector.getInstance(UserResource.class));

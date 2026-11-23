@@ -14,6 +14,7 @@ import java.io.InputStream;
 import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
+import org.broadinstitute.consent.http.models.support.SupportRequester;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.service.SupportRequestService;
@@ -41,14 +42,24 @@ public class SupportResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response postRequest(String body) {
     try {
-      TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
-      DuosTicket ticket = TicketFactory.createTicket(ticketFields);
-      logInfo("Support Request Ticket: " + ticket);
-      JsonObject request = supportRequestService.postTicketToSupport(ticket);
-      return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
+      return submit(ticketFields(body), SupportRequester.unverified());
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  static TicketFields ticketFields(String body) {
+    return gson.fromJson(body, TicketFields.class);
+  }
+
+  /**
+   * Sends the ticket to Zendesk; shared with the signed-in route ({@link SignedInSupportResource}).
+   */
+  Response submit(TicketFields ticketFields, SupportRequester requester) throws Exception {
+    DuosTicket ticket = TicketFactory.createTicket(ticketFields, requester);
+    logInfo("Support Request Ticket: " + ticket);
+    JsonObject request = supportRequestService.postTicketToSupport(ticket);
+    return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
   }
 
   @POST
