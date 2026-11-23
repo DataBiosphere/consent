@@ -44,6 +44,17 @@ final class BoundedEntityStream extends FilterInputStream {
     return false;
   }
 
+  /** Does nothing: the wrapped stream must not keep a mark this stream can't count. */
+  @Override
+  public void mark(int readLimit) {
+    // Marks are not supported.
+  }
+
+  @Override
+  public void reset() throws IOException {
+    throw new IOException("mark/reset not supported");
+  }
+
   @Override
   public int read() throws IOException {
     int value = super.read();

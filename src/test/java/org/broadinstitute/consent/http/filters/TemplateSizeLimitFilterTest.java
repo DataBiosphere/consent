@@ -149,6 +149,17 @@ class TemplateSizeLimitFilterTest {
   }
 
   @Test
+  void testTheBoundedStreamCanNotBeRewound() throws IOException {
+    // The wrapped stream supports marks; the bounded one must not pass them on.
+    InputStream bounded = boundedStreamOver(new byte[] {1, 2, 3}, null);
+
+    bounded.mark(3);
+    assertEquals(1, bounded.read());
+    assertThrows(IOException.class, bounded::reset);
+    assertEquals(2, bounded.read());
+  }
+
+  @Test
   void testAReadTheStreamStoppedIsAnswered413() throws IOException {
     ReaderInterceptorContext context = mock(ReaderInterceptorContext.class);
     when(context.proceed()).thenThrow(new RequestTooLargeException("Template is too large"));
