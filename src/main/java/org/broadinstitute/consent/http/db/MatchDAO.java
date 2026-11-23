@@ -75,7 +75,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
 
   /**
    * Bound from the {@link Match} itself. The column list is long enough that positional parameters
-   * were both unreadable and a Sonar finding, and the model already holds exactly these fields.
+   * were both unreadable and a Sonar finding, and the model already holds exactly these fields. The
+   * database writes create_date with NOW(), so any create date on the model is ignored.
    */
   @SqlUpdate(
       """
@@ -83,7 +84,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           (dataset_id, purpose, match_entity, failed, create_date,
            algorithm_version, abstain)
         VALUES
-          (:datasetId, :purpose, :match, :failed, :createDate,
+          (:datasetId, :purpose, :match, :failed, NOW(),
            :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
