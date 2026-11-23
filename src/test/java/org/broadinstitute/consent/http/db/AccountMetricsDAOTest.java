@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
@@ -82,10 +81,6 @@ class AccountMetricsDAOTest extends DAOTestHelper {
     return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
   }
 
-  private static Date at(LocalDateTime time) {
-    return Date.from(time.atZone(ZoneId.systemDefault()).toInstant());
-  }
-
   private Integer user(LocalDateTime created, UserRoles... roles) {
     Integer userId = userDAO.insertUser(UUID.randomUUID() + "@example.org", "Name", null);
     // insertUser always writes NOW(), so set the creation time that the test needs.
@@ -102,18 +97,26 @@ class AccountMetricsDAOTest extends DAOTestHelper {
   }
 
   private void institution(LocalDateTime created, Integer creator) {
-    institutionDAO.insertInstitution(
-        "Institution " + UUID.randomUUID(),
-        "itDirectorName",
-        "itDirectorEmail",
-        null,
-        null,
-        null,
-        null,
-        null,
-        OrganizationType.NON_PROFIT.getValue(),
-        creator,
-        at(created));
+    Integer institutionId =
+        institutionDAO.insertInstitution(
+            "Institution " + UUID.randomUUID(),
+            "itDirectorName",
+            "itDirectorEmail",
+            null,
+            null,
+            null,
+            null,
+            null,
+            OrganizationType.NON_PROFIT.getValue(),
+            creator);
+    // insertInstitution always writes NOW(), so set the creation time that the test needs.
+    jdbi.useHandle(
+        h ->
+            h.createUpdate(
+                    "UPDATE institution SET create_date = :createDate WHERE institution_id = :id")
+                .bind("createDate", created.atZone(ZoneId.systemDefault()).toInstant())
+                .bind("id", institutionId)
+                .execute());
   }
 
   private Integer dac(Integer creator) {
