@@ -3186,9 +3186,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(dataAccessRequestDAO.isUnderReviewAt(draftReferenceId, null));
 
     // Canceled by its researcher: no longer under review, whatever the date.
+    List<String> referenceIds = List.of(micro.getReferenceId(), draftReferenceId);
+    assertFalse(dataAccessRequestDAO.hasCanceledForReferenceIds(referenceIds));
     dataAccessRequestDAO.cancelByReferenceIds(List.of(micro.getReferenceId()));
     assertFalse(
         dataAccessRequestDAO.isUnderReviewAt(micro.getReferenceId(), micro.getSubmissionDate()));
+    assertTrue(dataAccessRequestDAO.hasCanceledForReferenceIds(referenceIds));
   }
 
   /** Archives the pair's elections and opens a new one with no vote cast, as a reopen does. */

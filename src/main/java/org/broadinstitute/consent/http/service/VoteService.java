@@ -646,6 +646,11 @@ public class VoteService implements ConsentLogger {
         && dataAccessRequestDAO.hasSubmittedCloseoutForReferenceIds(referenceIds)) {
       throw new ConsentConflictException("Cannot vote on a closed out collection.");
     }
+    // An election opened on a DAR after its researcher canceled it, before elections refused
+    // that. Its approval would count nowhere, but would still send approval emails.
+    if (!referenceIds.isEmpty() && dataAccessRequestDAO.hasCanceledForReferenceIds(referenceIds)) {
+      throw new ConsentConflictException("Cannot vote on a canceled data access request.");
+    }
 
     // If there are any DataAccess elections in a non-open state, throw an error
     List<Election> nonOpenAccessElections =

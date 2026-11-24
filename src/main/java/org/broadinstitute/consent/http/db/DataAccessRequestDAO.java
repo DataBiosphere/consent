@@ -160,6 +160,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   boolean hasSubmittedCloseoutForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
+  /** Whether any of these DARs was canceled by its researcher. */
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request
+          WHERE reference_id IN (<referenceIds>) AND LOWER(data->>'status') = 'canceled'
+      )
+      """)
+  boolean hasCanceledForReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+
   /**
    * Find all non-draft/partial DataAccessRequests
    *
