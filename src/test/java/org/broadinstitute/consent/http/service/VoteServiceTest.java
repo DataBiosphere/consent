@@ -327,6 +327,25 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateRationaleByVoteIds_CanceledDar() {
+    Election election = new Election();
+    election.setReferenceId("synthetic-canceled-dar");
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
+    when(dataAccessRequestDAO.hasCanceledForReferenceIds(List.of("synthetic-canceled-dar")))
+        .thenReturn(true);
+    List<Integer> votes = List.of(1);
+
+    ConsentConflictException e =
+        assertThrows(
+            ConsentConflictException.class,
+            () -> service.updateRationaleByVoteIds(votes, "rationale"));
+    assertEquals("Cannot vote on a canceled data access request.", e.getMessage());
+    verify(voteDAO, never()).updateRationaleByVoteIds(any(), any());
+  }
+
+  @Test
   void testNotifyResearchersOfProgressReportApproval() throws TemplateException, IOException {
     String referenceId1 = UUID.randomUUID().toString();
 

@@ -102,7 +102,10 @@ failure to record is logged and doesn't fail the request.
   (`DataAccessRequestDAO.isUnderReviewAt`, compared to the millisecond because progress reports
   store microseconds and Java copies keep milliseconds). The automated paths
   skip a DAR that fails the check, and new-DAR processing (elections and new-request emails)
-  skips a collection that holds a draft.
+  skips a collection that holds a draft. Votes and rationale edits on a canceled DAR are refused
+  too (409, `VoteService.validateVotesCanUpdate`, under the collection lock), for an election
+  opened on one before elections refused that; such an election stays open until a chair
+  cancels it.
 - A grant is a (DAR, dataset) pair whose most recent `final` or `radar_approve` vote on a
   DataAccess election approved it. Access runs 8760 hours from **that DAR's own**
   `submission_date` (`DataAccessRequestDAO.findApprovedDARsByDatasetId`,
