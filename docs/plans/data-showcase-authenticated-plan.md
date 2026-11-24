@@ -63,7 +63,7 @@ The showcase eligibility rule is narrower than the readers above: it needs a pub
 no admin, creator or custodian exception. With the date changed and the roles matched, the
 authenticated route needs no new field approval. The S2.1 gate stays with DT-4466, for anonymous
 callers only. A user with none of the four roles, such as a signing official who is not also a
-researcher, gets 403 and cannot see showcases.
+researcher, sees the showcase page but gets 403 from the lookup, so no dataset cards or counts.
 
 ### Reuse the showcase lookup, not the Data Library search
 
