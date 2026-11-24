@@ -28,6 +28,8 @@ post:
         application/json:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
+    400:
+      description: A file over the upload limit (`googleStore.maxUploadBytes`, 25 MB by default).
     403:
       description: User not authorized to create DAA for a DAC.
     404:
