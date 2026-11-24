@@ -2,8 +2,9 @@
 
 Ticket: [DT-4437](https://broadworkbench.atlassian.net/browse/DT-4437)
 
-**Status: draft (2026-11-19). No decision is made.** Section 9 gives a draft recommendation.
-Section 11 lists the questions that the team must answer before the recommendation is final.
+**Status: decided (2026-11-24, [DT-4501](https://broadworkbench.atlassian.net/browse/DT-4501)).**
+The team chose option 3 (a generic search service with a typed request) with storage B (a search
+document table). Section 9 records the decision. Section 11 lists the questions that remain open.
 
 Related documents:
 
@@ -125,6 +126,9 @@ product decision, not only a technical one.
 
 Each storage option and each response projection in the later sections must say which of these
 fields it stores, which it returns, and to whom.
+
+**Decision (DT-4501):** the storage B document keeps all of these fields, as the ES document does
+today.
 
 ### 3.2 Read paths
 
@@ -311,9 +315,10 @@ view. A peer review of this draft added storage C.
 | First fill | Not necessary. | An admin endpoint call after deploy. | Not necessary. | The Liquibase changeset fills the view. No admin call is necessary. |
 | Change to the document shape | Change the queries. | Change `toDatasetTerm`, then build all rows again. | A changeset replaces the view. | A changeset must drop and create the view. `CREATE OR REPLACE` does not exist for a materialized view. |
 
-**Draft position: storage B.** It changes the smallest quantity of logic, and it makes a comparison
-with ES possible document by document. Storage A or storage C1 can replace B later, one field at a
-time.
+**Decision (DT-4501): storage B.** The author's reasons: it changes the smallest quantity of logic,
+and it makes a comparison with ES possible document by document. Storage A or storage C1 can replace B later, one
+field at a time. A view can later replace the table and the writes that keep it current; that is
+separate work, left out of this migration mainly because of time (section 9).
 
 Data size: the table holds about 6,000 rows now and more than 10,000 soon. This is small for
 PostgreSQL. A full scan of the table is fast at this size, so most filters do not need an index.
@@ -426,7 +431,7 @@ conclusions are the opinion of the author:
 - **Access rules do not come from a C2 view,** for the same reason as storage B. They join the
   live tables (section 7).
 
-A combination is possible later, and it does not change the draft position. A standard view can
+A combination is possible later, and it does not change the decision. A standard view can
 join the storage B table with `dac`, `users`, and `institution` to give the current names. That
 view removes the stale name cases of section 3.4, and `toDatasetTerm` stays.
 
@@ -910,7 +915,20 @@ This list applies to each option.
 - Mark the three ES plans as superseded where this design replaces them.
 - `study-asset-records-plan.md` proposes an ES mapping. That part is no longer necessary.
 
-## 9. Draft recommendation
+## 9. Decision
+
+The team chose **option 3 with storage B**. The decision was recorded on 2026-11-24
+([DT-4501](https://broadworkbench.atlassian.net/browse/DT-4501)):
+
+- Storage B keeps the personal data fields of section 3.1a in the stored document, as ES does today.
+- Storage C (views) is not part of this migration, mainly because of time: the work must be done by
+  the end of January 2027 to meet the ES renewal goal (section 9.1a). A view can replace the search
+  document table and its writes later.
+- Questions 10 and 11 in section 11 apply only to storage C, so this migration does not need their
+  answers. The other open questions stay open.
+
+The rest of this section is the author's proposal from the draft: the phases, the `pg_trgm`
+condition and the reasons. The team has not decided them.
 
 **Option 3 with storage B, delivered in phases.** Use `pg_trgm` from option 4 if the parity test
 shows a need.
@@ -1210,10 +1228,13 @@ not public through a raw query today can lose those results.
 9. ~~Do the admin index endpoints keep their paths?~~ **Answered:** admins use the single-dataset
    endpoints to publish a dataset and to remove it from the library, so those two operations stay in
    each storage type. See section 4.1a. Open part: the names of the paths.
-10. Is a delay between a dataset change and its effect in search acceptable? If the answer is yes,
-    how long? Storage C2 with a scheduled refresh is possible only with a yes (section 4.1).
-11. How long does a search box query take on a standard view with 10,000 datasets? Storage C1 is
-    possible only if this time is acceptable (section 4.1).
+10. *(Not needed for this migration: storage C is not part of it, DT-4501. Answer it, with an owner,
+    before the team selects a view later.)* Is a delay between a dataset change and its effect in
+    search acceptable? If the answer is yes, how long? Storage C2 with a scheduled refresh is
+    possible only with a yes (section 4.1).
+11. *(Not needed for this migration: storage C is not part of it, DT-4501. Answer it, with an owner,
+    before the team selects a view later.)* How long does a search box query take on a standard view
+    with 10,000 datasets? Storage C1 is possible only if this time is acceptable (section 4.1).
 12. For product: two asset filters can match two different assets of one study today, and the
     study and dataset tabs then show that study. Must the new search keep this, or must the two
     filters match the same asset (section 4.2)?
@@ -1227,8 +1248,8 @@ not public through a raw query today can lose those results.
     Does the new search keep that behavior, or does a data custodian start to see those datasets
     in Submissions and in the dashboard counts?
 
-Questions 5, 7, 10, and 11 have no owner. Question 5 can change the plan and must have an answer in
-the first sprint (section 9.5). The team must name one owner for each of these four questions.
+Questions 5 and 7 have no owner. Question 5 can change the plan and must have an answer in the
+first sprint (section 9.5). The team must name one owner for each of these two questions.
 
 ## 12. Sources
 
