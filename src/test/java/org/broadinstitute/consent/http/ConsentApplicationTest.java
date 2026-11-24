@@ -33,6 +33,8 @@ import liquibase.exception.LiquibaseException;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.LiquibaseConfiguration;
 import org.broadinstitute.consent.http.configurations.ShowcaseConfiguration;
+import org.broadinstitute.consent.http.filters.TemplateSizeLimitFilter;
+import org.broadinstitute.consent.http.mappers.RequestTooLargeExceptionMapper;
 import org.broadinstitute.consent.http.resources.PublicShowcaseCatalogResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -215,6 +217,16 @@ class ConsentApplicationTest {
     ConsentApplication.registerPublicShowcaseLookup(configuration, jersey, injector);
 
     verify(jersey).register(resource);
+  }
+
+  @Test
+  void registerRequestSizeLimitsAddsTheFilterWithTheMapperThatAnswersIt() {
+    JerseyEnvironment jersey = mock(JerseyEnvironment.class);
+
+    ConsentApplication.registerRequestSizeLimits(jersey);
+
+    verify(jersey).register(TemplateSizeLimitFilter.class);
+    verify(jersey).register(RequestTooLargeExceptionMapper.class);
   }
 
   private void invokeInitializeLiquibase(ConsentConfiguration configuration) throws Exception {
