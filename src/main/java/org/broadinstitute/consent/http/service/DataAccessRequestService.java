@@ -61,6 +61,7 @@ import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DatasetDaaSnapshotDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.SubmissionApproval;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
@@ -603,10 +604,45 @@ public class DataAccessRequestService implements ConsentLogger {
     return result;
   }
 
-  public void approveDataAccessRequestCloseout(User signingOfficial, String referenceId) {
-    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-    validateCloseoutApproval(signingOfficial, dar);
-    dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), referenceId);
+  /**
+   * Records a signing official's approval of a closeout, when it is the submission they reviewed.
+   *
+   * @param approved The submission the official approves. Null or empty is accepted while clients
+   *     move to sending it, and logged.
+   * @throws ConsentConflictException The closeout isn't the named submission
+   */
+  public void approveDataAccessRequestCloseout(
+      User signingOfficial, String referenceId, SubmissionApproval approved) {
+    SubmissionApproval named = approved == null || approved.isEmpty() ? null : approved;
+    if (named == null) {
+      logInfo("Approval of closeout %s doesn't name a submission".formatted(referenceId));
+    }
+    DataAccessRequest dar;
+    try {
+      dar =
+          dataAccessRequestDAO.inTransaction(
+              dao -> {
+                // Compared and recorded under the row lock, so the approval is for the submission
+                // the official reviewed.
+                dao.lockDataAccessRequest(referenceId);
+                DataAccessRequest locked = dao.findByReferenceId(referenceId);
+                if (locked == null) {
+                  throw new NotFoundException(
+                      "Data access request %s not found".formatted(referenceId));
+                }
+                validateCloseoutApproval(signingOfficial, locked);
+                if (named != null && !named.matches(locked)) {
+                  throw new ConsentConflictException(
+                      "The data access request changed since it was loaded. Reload it and try"
+                          + " again.");
+                }
+                dao.updateDarApprovalSO(signingOfficial.getUserId(), referenceId);
+                return locked;
+              });
+    } catch (JdbiException e) {
+      CollectionLocks.throwIfLockFailure(e);
+      throw e;
+    }
     Set<User> chairs = new HashSet<>();
     Set<Dac> dacs = dacService.findByDatasetId(dar.getDatasetIds());
     dacs.forEach(dac -> chairs.addAll(dac.getChairpersons()));
