@@ -21,6 +21,8 @@ import org.broadinstitute.consent.http.models.ExpiredCollection;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class DarExpirationMetricsDAOTest extends DAOTestHelper {
 
@@ -233,14 +235,34 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
         dao.findExpirations(end.minus(Duration.ofDays(1)), end, ALL_DACS, now, 10, 0).isEmpty());
   }
 
-  @Test
-  void archivedDarsGrantNoAccess() {
+  @ParameterizedTest
+  @ValueSource(strings = {"Canceled", "Archived"})
+  void canceledAndArchivedDarsGrantNoAccess(String status) {
     Integer dataset = createDataset();
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus("Archived");
+    data.setStatus(status);
     approve(createDar(data, now.minus(Duration.ofDays(400)), dataset), dataset);
 
     assertTrue(dao.findExpirations(FROM, TO, ALL_DACS, now, 10, 0).isEmpty());
+    assertTrue(dao.countExpirations(FROM, TO, ALL_DACS, now, "quarter").isEmpty());
+  }
+
+  // A canceled DAR approved after the cancel doesn't push its collection's term out: the collection
+  // ends with the approval that does count.
+  @Test
+  void aCanceledDarDoesNotExtendItsCollection() {
+    Integer dataset = createDataset();
+    Instant submitted = now.minus(Duration.ofDays(400));
+    String original = createDar(submitted, dataset);
+    approve(original, dataset);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    String sibling = createSibling(original, canceled, now.minus(Duration.ofDays(360)), dataset);
+    approve(sibling, dataset);
+
+    ExpiredCollection row = only();
+    assertEquals(submitted.plus(TERM), row.accessEnd());
+    assertEquals(AccessEndReason.EXPIRED, row.reason());
   }
 
   @Test
@@ -329,6 +351,21 @@ class DarExpirationMetricsDAOTest extends DAOTestHelper {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     }
     return referenceId;
+  }
+
+  /**
+   * Another original DAR in the same collection, as a pre-2022 submission saved one per dataset.
+   */
+  private String createSibling(
+      String referenceId, DataAccessRequestData data, Instant submitted, Integer datasetId) {
+    Integer collectionId = dataAccessRequestDAO.findByReferenceId(referenceId).getCollectionId();
+    String siblingId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId, siblingId, user.getUserId(), data, "era");
+    Date on = Date.from(submitted);
+    setDarDates(siblingId, on, on, on);
+    dataAccessRequestDAO.insertDARDatasetRelation(siblingId, datasetId);
+    return siblingId;
   }
 
   private String createProgressReport(String parentReferenceId, Instant on, Integer datasetId) {

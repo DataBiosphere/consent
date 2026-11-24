@@ -392,7 +392,9 @@ public interface DarMetricsDAO {
         FROM data_access_request dar
         WHERE dar.submission_date >= CAST(:from AS timestamp) - INTERVAL '366 days'
           AND (dar.parent_id IS NULL OR dar.data->>'closeoutSupplement' IS NULL)
-          AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
+          -- A canceled DAR's approval grants nothing, so it neither starts nor extends a term.
+          AND (dar.data->>'status' IS NULL
+               OR LOWER(dar.data->>'status') NOT IN ('archived', 'canceled'))
       ),
       last_votes AS (
         SELECT DISTINCT ON (e.reference_id, e.dataset_id)
