@@ -124,13 +124,17 @@ Choosing "sign in to see more" changes Task 2 only.
   response as `PublicShowcaseCatalogResource`. Share the code rather than copy it.
 - Date every dataset by `create_date` on this route: a bound `:datedByCreation` switch in the
   existing `CASE` of `findShowcaseSummaries` and `findShowcaseNewestAliases`, like their
-  `:openAccessOnly` switch, so each query stays one text block. The anonymous route keeps its S2.1
+  `:openAccessOnly` switch, so each query stays one text block. `ShowcaseCatalogService` takes the
+  date choice from the resource and passes it on every `findShowcaseSummaries` call (identifiers,
+  ranking and page modes) and to `findShowcaseNewestAliases`. The anonymous route keeps its S2.1
   date.
 - OpenAPI path under `/api`, with the 401, the 403, the 429 and its own `availableDate` description.
 - Tests: contract, eligibility, the exact S2.1 keys, the `create_date` dating and ranking of a
   controlled dataset, 401 without a user, 403 for a user without the roles, and the per-user rate
   limit.
-- Before launch, check that `rateLimit.enabled` is on in each environment (terra-helmfile).
+- Before launch, check in terra-helmfile that `rateLimit.enabled` is on and
+  `showcasePublicLookupEnabled` is off in each environment, so the anonymous route stays
+  unregistered.
 
 ### Task 2: Showcase routes behind sign-in and the authenticated client (duos-ui)
 
@@ -156,7 +160,8 @@ Choosing "sign in to see more" changes Task 2 only.
 
 ### Task 4: Health check on the authenticated route (consent, duos-ui)
 
-duos-ui #4164 runs the S4.3 check daily, on showcase PRs and by hand, against the anonymous lookup.
+duos-ui #4164 adds the S4.3 check, run daily, on showcase PRs and by hand. As written it calls the
+anonymous lookup; this task moves it to the authenticated route.
 
 - Point it at `/api/showcase/datasets` with a dedicated DUOS user that has only the Researcher
   role. A shared service account would also open the endpoints its role allows.
