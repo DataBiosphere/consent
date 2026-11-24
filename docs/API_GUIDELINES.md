@@ -37,8 +37,9 @@ Use these rules when adding or changing endpoints in the Consent service.
   not run on those paths, so a role annotation there grants nothing and misleads readers. Keep such
   resources narrowly scoped, and give each its own input limits and rate limit, because
   `RateLimitFilter` covers only authenticated `api/` requests. `PublicRateLimitFilter` is the
-  anonymous per-client-IP limit for `showcase/`; extend its path check for a new public route
-  rather than adding another filter.
+  per-client-IP limit for `showcase/` and for the support form (`support/` and the signed-in
+  `api/support/`, which share one bucket); extend its route map for a new public route rather
+  than adding another filter.
 - Apply least privilege and avoid broad role access by default.
 - Keep authorization checks consistent between Resource and Service logic.
 
