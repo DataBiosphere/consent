@@ -772,6 +772,28 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
   }
 
+  // A canceled DAR's approval doesn't count, even when elections were opened after the cancel.
+  @Test
+  void testFindDatasetApprovalsByDar_ExcludesCanceled() {
+    Dataset dataset = createDARDAOTestDataset();
+    User user = createUserWithInstitution();
+    DataAccessRequest dar = createDAR(user, dataset, uniqueDarCode());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+    assertEquals(
+        Set.of(dataset.getDatasetId()),
+        dataAccessRequestDAO.findDatasetApprovalsByDar(dar.getReferenceId()));
+
+    assertFalse(dataAccessRequestDAO.isCanceled(dar.getReferenceId()));
+
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(dar.getReferenceId()));
+
+    assertTrue(dataAccessRequestDAO.isCanceled(dar.getReferenceId()));
+    assertTrue(dataAccessRequestDAO.findDatasetApprovalsByDar(dar.getReferenceId()).isEmpty());
+  }
+
   @Test
   void testFindDatasetApprovalsByDAR_ExcludeCloseouts() {
     // Create a dar collection
@@ -1300,6 +1322,41 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     // The requester's institution, as on the study route
     assertNotNull(summaries.getFirst().institutionName());
+  }
+
+  // A canceled DAR's approval counts in none of the approval queries, metrics included.
+  @Test
+  void testApprovalQueriesExcludeACanceledDar() {
+    User user = createUserWithInstitution();
+    Integer studyId = createStudy(user);
+    Dataset dataset = createStudyDataset(studyId);
+    DataAccessRequest dar = createDAR(user, dataset, uniqueDarCode());
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    updateVote(true, "", now, vote.getVoteId(), false, election.getElectionId(), now, false);
+    assertEquals(
+        1, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId()).size());
+    assertEquals(
+        1,
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .size());
+    assertEquals(
+        1,
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId).size());
+
+    dataAccessRequestDAO.cancelByReferenceIds(List.of(dar.getReferenceId()));
+
+    assertTrue(dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId()).isEmpty());
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId())
+            .isEmpty());
+    assertTrue(
+        dataAccessRequestDAO
+            .findSummaryMetricApprovedDARsByStudyIdIncludesExpired(studyId)
+            .isEmpty());
   }
 
   /** The submitter's institution comes through on the study route; their name does not. */

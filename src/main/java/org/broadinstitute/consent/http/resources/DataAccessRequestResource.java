@@ -407,6 +407,7 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
+      DataAccessRequestService.requireParentNotCanceled(parentDar);
       DataAccessRequest payload =
           DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       // Prevent creation if there are open DataAccess elections for the parent DAR. A closeout

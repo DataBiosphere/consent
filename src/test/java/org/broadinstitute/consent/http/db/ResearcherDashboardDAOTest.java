@@ -287,6 +287,22 @@ class ResearcherDashboardDAOTest extends DAOTestHelper {
     assertEquals(0, getCounts(user).approvalsActive());
   }
 
+  // A canceled DAR approved afterwards grants nothing, so the tile matches the approvals page.
+  @Test
+  void doesNotCountApprovalsOnACanceledDar() {
+    User user = createUser();
+    giveLibraryCard(user);
+    Integer datasetId = createDataset(user);
+    DataAccessRequestData canceled = new DataAccessRequestData();
+    canceled.setStatus("Canceled");
+    String referenceId = createSubmittedDar(user, datasetId, canceled, recentDate(5));
+    approve(user, referenceId, datasetId, VoteType.FINAL, true);
+
+    assertEquals(0, pageRowCount(user));
+    assertEquals(0, getCounts(user).approvalsActive());
+    assertEquals(1, getCounts(user).darCanceled());
+  }
+
   @Test
   void doesNotCountApprovalsForResearcherWithoutALibraryCard() {
     User user = createUser();

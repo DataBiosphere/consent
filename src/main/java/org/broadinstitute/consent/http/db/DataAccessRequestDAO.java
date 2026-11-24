@@ -216,7 +216,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       WHERE dd.dataset_id = :datasetId
       AND dar.submission_date > now() - interval '8760 hours'
       AND final_access_vote.last_vote = TRUE
-      AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      AND (LOWER(dar.data->>'status') NOT IN ('archived', 'canceled')
+          OR dar.data->>'status' IS NULL)
       -- Exclude DARs that have a closeoutSupplement
       AND dar.collection_id NOT IN (
         SELECT DISTINCT collection_id
@@ -232,13 +233,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * findApprovedDARsByDatasetId}, expired DARs are included so they appear in dataset usage
    * metrics.
    *
-   * <p>A collection is included when at least one submitted, non-archived DAR in it was approved on
-   * this dataset by its most recently cast {@code final} or {@code radar_approve} vote. The
-   * approval has to be on this dataset: one DAR can be granted some of the datasets it asks for and
-   * denied the rest, and a dataset it was denied has nothing to report. Follow-on submissions
-   * qualify a collection only on the same terms: a progress report gets its own election and counts
-   * once that election approves it, while a closeout has no election at all and so never does.
-   * Otherwise either could speak for an approval that was never given.
+   * <p>A collection is included when at least one submitted DAR in it, neither archived nor
+   * canceled, was approved on this dataset by its most recently cast {@code final} or {@code
+   * radar_approve} vote. The approval has to be on this dataset: one DAR can be granted some of the
+   * datasets it asks for and denied the rest, and a dataset it was denied has nothing to report.
+   * Follow-on submissions qualify a collection only on the same terms: a progress report gets its
+   * own election and counts once that election approves it, while a closeout has no election at all
+   * and so never does. Otherwise either could speak for an approval that was never given.
    *
    * <p>Each summary is sourced from the most recently submitted DAR that qualified the collection,
    * so it always describes a granted request. Only the fields needed for dataset usage metrics are
@@ -279,7 +280,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dd.dataset_id = :datasetId
                   AND dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
-                  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+                  AND (LOWER(dar.data->>'status') NOT IN ('archived', 'canceled')
+                      OR dar.data->>'status' IS NULL)
               GROUP BY dar.reference_id, dar.collection_id
           ), approved_collections AS (
               -- One row per collection, carrying the day access to this dataset began, when the
@@ -418,7 +420,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                   AND final_access_vote.dataset_id = dd.dataset_id
               WHERE dar.submission_date IS NOT NULL
                   AND final_access_vote.last_vote = TRUE
-                  AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+                  AND (LOWER(dar.data->>'status') NOT IN ('archived', 'canceled')
+                      OR dar.data->>'status' IS NULL)
               GROUP BY dar.reference_id, dar.collection_id
           ), approved_collections AS (
               -- One row per collection, carrying the day access to this study began and the
@@ -575,7 +578,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           final_access_vote.dataset_id = dd.dataset_id
       WHERE final_access_vote.last_vote = TRUE
         AND dar.reference_id = :darReferenceId
-        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+        -- A canceled DAR's approval doesn't count, even if elections were opened after the cancel.
+        AND (LOWER(dar.data->>'status') NOT IN ('archived', 'canceled')
+            OR dar.data->>'status' IS NULL)
         -- Exclude DARs that have a closeoutSupplement
         AND dar.collection_id NOT IN (
           SELECT DISTINCT collection_id
@@ -760,6 +765,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         DELETE FROM data_access_request WHERE reference_id = :referenceId
     """)
   void deleteByReferenceId(@Bind("referenceId") String referenceId);
+
+  /** Whether the DAR is canceled. Same test as DataAccessRequest.isCanceled. */
+  @SqlQuery(
+      """
+      SELECT EXISTS (
+          SELECT 1 FROM data_access_request
+          WHERE reference_id = :referenceId AND LOWER(data->>'status') = 'canceled'
+      )
+      """)
+  boolean isCanceled(@Bind("referenceId") String referenceId);
 
   @SqlUpdate(
       """

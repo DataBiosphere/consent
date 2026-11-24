@@ -150,6 +150,9 @@ failure to record is logged and doesn't fail the request.
   "ordinary reports only":
   - The caller owns the parent.
   - The parent is not a draft.
+  - The parent is not canceled (409). `postProgressReport` checks this after the owner check and
+    before uploading documents, and `insertProgressReport` checks it again under the lock
+    (`DataAccessRequestDAO.isCanceled`), since a cancel takes the same lock.
   - The collection has no submitted closeout (409). Checked only under `lockCollection`, in
     `insertProgressReport`, before the checks below that run under the lock.
   - Ordinary reports only: the parent has no open DataAccess elections. `postProgressReport`
@@ -158,7 +161,9 @@ failure to record is logged and doesn't fail the request.
     is not blocked by open elections; it cancels them (see below).
   - Ordinary reports only: the datasets are a subset of the parent's datasets (checked in
     validation) and are currently approved (`findDatasetApprovalsByDar`, checked under the lock
-    after the closeout check). That query finds nothing for a closed-out collection, so running it
+    after the closeout check). A canceled DAR's approvals don't count there, or in any other
+    approval query (`findApprovedDARsByDatasetId`, the metrics summaries,
+    `DatasetDAO.getApprovedDatasets`), even if elections were opened after the cancel. That query finds nothing for a closed-out collection, so running it
     first would turn the 409 into a 400. A closeout's datasets are set by the service instead.
 - `insertProgressReport` sets `parent_id`, `collection_id` and `submission_date = now()` in the
   INSERT. There is no draft step and no later "submit". Only resubmit nulls it afterwards (see
@@ -169,7 +174,7 @@ failure to record is logged and doesn't fail the request.
 ### 4. Closeout (terminal)
 
 - **No interim progress report is needed.** A closeout is filed through the progress-report
-  endpoint against a submitted DAR in the collection: the original DAR when no report exists, or
+  endpoint against a submitted, non-canceled DAR in the collection: the original DAR when no report exists, or
   the latest report otherwise (duos-ui uses the newest DAR). So `parent_id` may point at the
   original DAR.
 - A closeout is a progress report with a `closeoutSupplement` (non-empty `reasons` plus a

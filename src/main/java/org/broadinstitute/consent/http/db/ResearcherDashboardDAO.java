@@ -41,13 +41,15 @@ public interface ResearcherDashboardDAO {
           AND (dar.data->>'status' IS NULL OR LOWER(dar.data->>'status') != 'archived')
       ),
       -- Every submitted DAR, not just the latest per collection: an approval granted on an
-      -- earlier submission still governs access until it expires.
+      -- earlier submission still governs access until it expires. A canceled DAR grants nothing,
+      -- as on the approvals page; latest_dar still reads its votes for the DAR counts.
       submitted_dars AS (
         SELECT dar.reference_id, dar.collection_id, dar.submission_date, c.dar_code
         FROM data_access_request dar
         JOIN dar_collection c ON c.collection_id = dar.collection_id
         WHERE dar.submission_date IS NOT NULL
           AND dar.user_id = :userId
+          AND LOWER(dar.data->>'status') IS DISTINCT FROM 'canceled'
       ),
       final_votes AS (
         SELECT e.reference_id, e.dataset_id, v.vote, v.vote_id, v.create_date, v.update_date
