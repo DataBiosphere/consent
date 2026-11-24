@@ -1266,10 +1266,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Test
   void testApproveCollectionWithNoDarIsNotFound() {
     DarCollection collection = new DarCollection();
+    User signingOfficial = approvingOfficial();
 
     assertThrows(
         NotFoundException.class,
-        () -> service.approveDarCollection(approvingOfficial(), collection, request, null));
+        () -> service.approveDarCollection(signingOfficial, collection, request, null));
     verify(dataAccessRequestDAO, never()).lockCollection(any());
   }
 
