@@ -20,7 +20,7 @@ public class StoreConfiguration {
    * The largest document an upload may store, in bytes. Uploads stream to the bucket and stop past
    * it, whatever size the client declares. Defaults to 25 MB.
    */
-  public long maxUploadBytes = 25_000_000L;
+  private long maxUploadBytes = 25_000_000L;
 
   public String getPassword() {
     return password;

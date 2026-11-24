@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.cloudstore;
 
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -46,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.junit.jupiter.api.BeforeEach;
@@ -228,7 +228,10 @@ class GCSServiceTest extends AbstractTestHelper {
   // whole.
   @Test
   void testStoreDocumentSpanningManyBuffers() throws Exception {
-    byte[] payload = randomAlphanumeric(5 * 1024 * 1024).getBytes(StandardCharsets.UTF_8);
+    byte[] payload =
+        RandomStringUtils.secure()
+            .nextAlphanumeric(5 * 1024 * 1024)
+            .getBytes(StandardCharsets.UTF_8);
     when(storage.writer(any(BlobInfo.class))).thenReturn(writer);
     when(writer.write(any(ByteBuffer.class)))
         .thenAnswer(
@@ -255,11 +258,14 @@ class GCSServiceTest extends AbstractTestHelper {
     config.setMaxUploadBytes(3 * 1024 * 1024);
     stubWriter();
     initStore();
-    byte[] payload = randomAlphanumeric(4 * 1024 * 1024).getBytes(StandardCharsets.UTF_8);
+    byte[] payload =
+        RandomStringUtils.secure()
+            .nextAlphanumeric(4 * 1024 * 1024)
+            .getBytes(StandardCharsets.UTF_8);
 
+    ByteArrayInputStream body = new ByteArrayInputStream(payload);
     assertThrows(
-        UploadTooLargeException.class,
-        () -> service.storeDocument(new ByteArrayInputStream(payload), MediaType.TEXT_PLAIN, id));
+        UploadTooLargeException.class, () -> service.storeDocument(body, MediaType.TEXT_PLAIN, id));
 
     assertTrue(written.size() > 2 * 1024 * 1024);
     assertTrue(written.size() <= 3 * 1024 * 1024);
@@ -285,8 +291,8 @@ class GCSServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetDocument() throws Exception {
-    String fileName = randomAlphanumeric(10);
-    String fileContent = randomAlphanumeric(10);
+    String fileName = RandomStringUtils.secure().nextAlphanumeric(10);
+    String fileContent = RandomStringUtils.secure().nextAlphanumeric(10);
     String urlString = "http://localhost/bucket/" + fileName;
     when(blob.getContent()).thenReturn((fileContent).getBytes());
     when(storage.get(any(BlobId.class))).thenReturn(blob);
@@ -300,7 +306,7 @@ class GCSServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetDocument_ByBlobId() throws Exception {
-    String fileContent = randomAlphanumeric(10);
+    String fileContent = RandomStringUtils.secure().nextAlphanumeric(10);
     when(blob.getContent()).thenReturn((fileContent).getBytes());
     when(storage.get(any(BlobId.class))).thenReturn(blob);
 
@@ -313,10 +319,10 @@ class GCSServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetDocuments() throws Exception {
-    String fileName1 = randomAlphanumeric(10);
-    String fileName2 = randomAlphanumeric(10);
-    String fileContent1 = randomAlphanumeric(10);
-    String fileContent2 = randomAlphanumeric(10);
+    String fileName1 = RandomStringUtils.secure().nextAlphanumeric(10);
+    String fileName2 = RandomStringUtils.secure().nextAlphanumeric(10);
+    String fileContent1 = RandomStringUtils.secure().nextAlphanumeric(10);
+    String fileContent2 = RandomStringUtils.secure().nextAlphanumeric(10);
 
     Blob blob1 = mock(Blob.class);
     BlobId blobId1 = BlobId.of("bucket", fileName1);
@@ -344,19 +350,19 @@ class GCSServiceTest extends AbstractTestHelper {
     BlobId copy = BlobId.of("bucket", "copy");
     Blob copied = mock(Blob.class);
     when(copied.getBlobId()).thenReturn(copy);
-    CopyWriter writer = mock(CopyWriter.class);
-    when(writer.getResult()).thenReturn(copied);
+    CopyWriter copyWriter = mock(CopyWriter.class);
+    when(copyWriter.getResult()).thenReturn(copied);
     when(storage.get(any(BlobId.class))).thenReturn(blob);
-    when(storage.copy(any(Storage.CopyRequest.class))).thenReturn(writer);
-    UUID id = UUID.randomUUID();
+    when(storage.copy(any(Storage.CopyRequest.class))).thenReturn(copyWriter);
+    UUID copyId = UUID.randomUUID();
 
-    assertEquals(copy, service.copyDocument("source", id));
+    assertEquals(copy, service.copyDocument("source", copyId));
     ArgumentCaptor<Storage.CopyRequest> request =
         ArgumentCaptor.forClass(Storage.CopyRequest.class);
     verify(storage).copy(request.capture());
     assertEquals(BlobId.of(config.getBucket(), "source"), request.getValue().getSource());
     assertEquals(config.getBucket(), request.getValue().getTarget().getBucket());
-    assertEquals(id.toString(), request.getValue().getTarget().getName());
+    assertEquals(copyId.toString(), request.getValue().getTarget().getName());
   }
 
   @Test
