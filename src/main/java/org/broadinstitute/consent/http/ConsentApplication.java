@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.filters.RateLimitFilter;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.filters.TemplateSizeLimitFilter;
+import org.broadinstitute.consent.http.filters.UploadSizeLimitFeature;
 import org.broadinstitute.consent.http.health.EcmHealthCheck;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
@@ -257,7 +258,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(RateLimitFilter.class));
     env.jersey().register(injector.getInstance(PublicRateLimitFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
-    registerRequestSizeLimits(env.jersey());
+    registerRequestSizeLimits(env.jersey(), config.getUploadConfiguration().getMaxRequestBytes());
     env.jersey().register(EmailSendIdFilter.class);
   }
 
@@ -274,8 +275,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
    * The request size limits, with the mapper that answers a body they stop mid-read: without it the
    * client gets a 500.
    */
-  static void registerRequestSizeLimits(JerseyEnvironment jersey) {
+  static void registerRequestSizeLimits(JerseyEnvironment jersey, long maxUploadRequestBytes) {
     jersey.register(TemplateSizeLimitFilter.class);
+    jersey.register(new UploadSizeLimitFeature(maxUploadRequestBytes));
     jersey.register(RequestTooLargeExceptionMapper.class);
   }
 
