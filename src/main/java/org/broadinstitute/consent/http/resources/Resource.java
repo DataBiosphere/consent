@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
@@ -154,6 +155,8 @@ public abstract class Resource implements ConsentLogger {
                 .type(MediaType.APPLICATION_JSON)
                 .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
                 .build());
+    // The dispatch matches exact classes, so the subclass needs its own entry.
+    DISPATCH.put(UploadTooLargeException.class, DISPATCH.get(BadRequestException.class));
     DISPATCH.put(
         MalformedJsonException.class,
         e ->
@@ -330,13 +333,8 @@ public abstract class Resource implements ConsentLogger {
     if (!validName) {
       throw new IllegalArgumentException("File name is invalid");
     }
-    boolean validSize = validator.getMaxFileUploadSize() >= contentDisposition.getSize();
-    if (!validSize) {
-      throw new IllegalArgumentException(
-          "File size is invalid. Max size is: "
-              + validator.getMaxFileUploadSize() / 1000000
-              + " MB");
-    }
+    // Size is checked as the upload streams to storage (GCSService.storeDocument): browsers don't
+    // declare it.
   }
 
   /**

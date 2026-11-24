@@ -17,6 +17,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import com.google.cloud.storage.BlobId;
 import freemarker.template.TemplateException;
@@ -43,6 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.cloudstore.UploadTooLargeException;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -82,10 +84,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetRegistrationServiceTest extends AbstractTestHelper {
@@ -1232,6 +1237,40 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
         () -> datasetRegistrationService.updateDataset(dataset, user, update, files));
 
     verify(gcsService).deleteDocument("cert");
+  }
+
+  // A consent group's file over the upload limit fails the whole update, for a new consent group
+  // and an existing one, instead of skipping the group and dropping the client's file.
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testStudyUpdateWithAConsentGroupFileOverTheLimitFails(boolean existingDataset)
+      throws Exception {
+    // The update stops at the upload, before the user id is read.
+    User user = mock(User.class, withSettings().strictness(Strictness.LENIENT));
+    StudyUpdateRequest schema =
+        createRandomCompleteDatasetRegistration(user, StudyUpdateRequest::new);
+    if (existingDataset) {
+      schema.getConsentGroups().getFirst().setDatasetId(7);
+      Dataset dataset = new Dataset();
+      dataset.setDatasetId(7);
+      when(datasetDAO.findDatasetsByIdList(List.of(7))).thenReturn(List.of(dataset));
+    } else {
+      when(dacDAO.findById(any())).thenReturn(new Dac());
+    }
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenThrow(new UploadTooLargeException(25_000_000));
+    FormDataBodyPart certification = mock();
+    when(certification.getContentDisposition())
+        .thenReturn(FormDataContentDisposition.name("file").fileName("cert.pdf").build());
+    when(certification.getValueAs(InputStream.class)).thenReturn(InputStream.nullInputStream());
+    Map<String, FormDataBodyPart> files =
+        Map.of("consentGroups[0].nihInstitutionalCertificationFile", certification);
+
+    assertThrows(
+        UploadTooLargeException.class,
+        () -> datasetRegistrationService.updateStudyFromRegistration(1, schema, user, files));
+
+    verify(datasetServiceDAO, never()).updateStudy(any(), any(), any());
   }
 
   private static FormDataBodyPart textFile() {

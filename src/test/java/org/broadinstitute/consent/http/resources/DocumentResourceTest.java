@@ -387,7 +387,6 @@ class DocumentResourceTest {
     FileStorageObject created = new FileStorageObject();
 
     when(fileDetail.getFileName()).thenReturn("document.pdf");
-    when(fileDetail.getSize()).thenReturn(1024L);
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.uploadDocument(
             user, "dataset", "123", inputStream, fileDetail, "dataUseLetter"))
@@ -409,7 +408,6 @@ class DocumentResourceTest {
     ByteArrayInputStream inputStream = new ByteArrayInputStream("file-content".getBytes());
 
     when(fileDetail.getFileName()).thenReturn("document.pdf");
-    when(fileDetail.getSize()).thenReturn(1024L);
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.uploadDocument(
             user, "dataset", "123", inputStream, fileDetail, "badCategory"))
@@ -429,7 +427,6 @@ class DocumentResourceTest {
     admin.setAdminRole();
 
     when(fileDetail.getFileName()).thenReturn("document.pdf");
-    when(fileDetail.getSize()).thenReturn(1024L);
     when(duosUser.getUser()).thenReturn(admin);
     when(fileStorageObjectService.uploadDocument(
             admin, "dataset", "123", inputStream, fileDetail, "dataUseLetter"))
